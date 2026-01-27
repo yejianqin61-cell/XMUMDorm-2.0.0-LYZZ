@@ -10,7 +10,7 @@
 - **`server.js`** 把这个路由模块挂载到 `/api/auth`：
   - 所以本文件里写的 `router.post('/login')`，最终完整地址是 **`POST /api/auth/login`**
 - **`database.js`** 提供 `query()`：
-  - 本文件用它去 MySQL 查/写 `users` 表
+  - 本文件用它去 MySQL 查/写 `users` 表..
 - **前端 `html/register.js`** 调用： 
   - `POST /api/auth/send-verification-code`
   - `POST /api/auth/register`
