@@ -1,0 +1,236 @@
+/* 注册页面样式 */
+/* 创建时间: 2025-01-26 */
+
+/* 重置样式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.register-container {
+    width: 100%;
+    max-width: 400px;
+}
+
+.register-box {
+    background: white;
+    border-radius: 12px;
+    padding: 40px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.register-title {
+    font-size: 32px;
+    color: #667eea;
+    text-align: center;
+    margin-bottom: 8px;
+    font-weight: 700;
+}
+
+.register-subtitle {
+    font-size: 18px;
+    color: #666;
+    text-align: center;
+    margin-bottom: 30px;
+    font-weight: 400;
+}
+
+.register-form {
+    width: 100%;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #333;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.register-btn {
+    width: 100%;
+    padding: 12px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s;
+    margin-top: 10px;
+}
+
+.register-btn:hover {
+    background: #5568d3;
+}
+
+.register-btn:active {
+    transform: scale(0.98);
+}
+
+.register-footer {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 14px;
+    color: #666;
+}
+
+.register-footer a {
+    color: #667eea;
+    text-decoration: none;
+}
+
+.register-footer a:hover {
+    text-decoration: underline;
+}
+
+.message {
+    margin-top: 20px;
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 14px;
+    display: none;
+}
+
+.message.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    display: block;
+}
+
+.message.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    display: block;
+}
+
+/* 角色选择样式 */
+/* 修改时间: 2025-01-26 */
+.role-selector {
+    display: flex;
+    gap: 15px;
+    margin-top: 8px;
+}
+
+.role-option {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 10px 15px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    transition: all 0.3s;
+    flex: 1;
+}
+
+.role-option input[type="radio"] {
+    margin-right: 8px;
+    cursor: pointer;
+}
+
+.role-option:hover {
+    border-color: #667eea;
+    background-color: #f0f4ff;
+}
+
+.role-option input[type="radio"]:checked + span {
+    color: #667eea;
+    font-weight: 600;
+}
+
+.role-option:has(input[type="radio"]:checked) {
+    border-color: #667eea;
+    background-color: #f0f4ff;
+}
+
+/* 角色字段组 */
+/* 修改时间: 2025-01-26 */
+.role-fields {
+    margin-top: 10px;
+}
+
+/* 必填标记 */
+/* 修改时间: 2025-01-26 */
+.required {
+    color: #e74c3c;
+}
+
+/* 表单提示文字 */
+/* 修改时间: 2025-01-26 */
+.form-hint {
+    display: block;
+    margin-top: 5px;
+    font-size: 12px;
+    color: #999;
+}
+
+/* 验证码输入组 */
+/* 修改时间: 2025-01-26 */
+.code-input-group {
+    display: flex;
+    gap: 10px;
+}
+
+.code-input-group input {
+    flex: 1;
+}
+
+.send-code-btn {
+    padding: 12px 20px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s;
+    white-space: nowrap;
+}
+
+.send-code-btn:hover {
+    background: #5568d3;
+}
+
+.send-code-btn:active {
+    transform: scale(0.98);
+}
+
+.send-code-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+

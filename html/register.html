@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册 - Jack</title>
+    <link rel="stylesheet" href="register.css">
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-box">
+            <h1 class="register-title">Jack</h1>
+            <h2 class="register-subtitle">注册</h2>
+            
+            <form id="registerForm" class="register-form">
+                <!-- 角色选择 -->
+                <!-- 修改时间: 2025-01-26 - 添加角色选择 -->
+                <div class="form-group">
+                    <label>注册类型</label>
+                    <div class="role-selector">
+                        <label class="role-option">
+                            <input type="radio" name="role" value="student" checked>
+                            <span>学生（非商家）</span>
+                        </label>
+                        <label class="role-option">
+                            <input type="radio" name="role" value="merchant">
+                            <span>商家</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- 非商家（学生）字段 -->
+                <!-- 修改时间: 2025-01-26 - 添加邮箱和验证码字段 -->
+                <div id="studentFields" class="role-fields">
+                    <div class="form-group">
+                        <label for="email">邮箱 <span class="required">*</span></label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            placeholder="请输入邮箱（@xmu.edu.my）"
+                            required
+                        >
+                        <small class="form-hint">必须是 @xmu.edu.my 格式的邮箱</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="emailCode">邮箱验证码 <span class="required">*</span></label>
+                        <div class="code-input-group">
+                            <input 
+                                type="text" 
+                                id="emailCode" 
+                                name="emailCode" 
+                                placeholder="请输入验证码"
+                                required
+                                maxlength="6"
+                            >
+                            <button type="button" id="sendCodeBtn" class="send-code-btn">发送验证码</button>
+                        </div>
+                        <small class="form-hint">验证码将发送到您的邮箱（功能待实现）</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="username">用户名 <span class="required">*</span></label>
+                        <input 
+                            type="text" 
+                            id="username" 
+                            name="username" 
+                            placeholder="请输入用户名"
+                            required
+                        >
+                    </div>
+                </div>
+                
+                <!-- 商家字段 -->
+                <!-- 修改时间: 2025-01-26 - 添加邀请码字段 -->
+                <div id="merchantFields" class="role-fields" style="display: none;">
+                    <div class="form-group">
+                        <label for="merchantUsername">用户名 <span class="required">*</span></label>
+                        <input 
+                            type="text" 
+                            id="merchantUsername" 
+                            name="merchantUsername" 
+                            placeholder="请输入用户名"
+                            required
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="inviteCode">邀请码 <span class="required">*</span></label>
+                        <input 
+                            type="text" 
+                            id="inviteCode" 
+                            name="inviteCode" 
+                            placeholder="请输入商家邀请码"
+                            required
+                        >
+                        <small class="form-hint">请联系管理员获取邀请码</small>
+                    </div>
+                </div>
+                
+                <!-- 密码字段（共用） -->
+                <div class="form-group">
+                    <label for="password">密码 <span class="required">*</span></label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        placeholder="请输入密码（至少6个字符）"
+                        required
+                        minlength="6"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirmPassword">确认密码 <span class="required">*</span></label>
+                    <input 
+                        type="password" 
+                        id="confirmPassword" 
+                        name="confirmPassword" 
+                        placeholder="请再次输入密码"
+                        required
+                    >
+                </div>
+                
+                <button type="submit" class="register-btn">注册</button>
+            </form>
+            
+            <div class="register-footer">
+                <p>已有账号？<a href="login.html">立即登录</a></p>
+            </div>
+            
+            <div id="message" class="message"></div>
+        </div>
+    </div>
+    
+    <script src="config.js"></script>
+    <script src="register.js"></script>
+</body>
+</html>
+
