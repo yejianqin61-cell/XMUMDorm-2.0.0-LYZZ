@@ -24,6 +24,8 @@ const { testConnection } = require('./database');
 const authRoutes = require('./routes/auth');
 const postRoutes = require('./routes/posts');
 const canteenRoutes = require('./routes/canteen');
+const notificationRoutes = require('./routes/notifications');
+const userRoutes = require('./routes/users');
 
 // 6. 创建一个 Express 应用实例
 const app = express();
@@ -44,6 +46,15 @@ app.use(express.json());
 // 10. 使用 URL 编码解析中间件
 app.use(express.urlencoded({ extended: true }));
 
+// 10.1 上传文件静态服务（2.0.0）
+const path = require('path');
+const fs = require('fs');
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+app.use('/uploads', express.static(uploadsDir));
+
 // ============================================
 // 路由配置（Routes）
 // ============================================
@@ -60,6 +71,8 @@ app.get('/', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/canteen', canteenRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/users', userRoutes);
 
 // ============================================
 // 错误处理中间件

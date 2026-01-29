@@ -324,17 +324,11 @@ router.post('/register', async (req, res) => {
 // ============================================
 // 用户登录路由
 // ============================================
-// 修改时间: 2025-01-26
-// 最新修改: 2025-01-26 - 支持用户名/邮箱登录
+// 2.0.0：仅支持学号或邮箱 + 密码，不再支持用户名登录
 router.post('/login', async (req, res) => {
   try {
-    // 1. 从请求体中获取登录信息
-    // 修改时间: 2025-01-26
-    // 支持用户名、邮箱或学号登录
-    const { username, email, student_id, password } = req.body;
+    const { email, student_id, password } = req.body;
 
-    // 2. 验证必要字段
-    // 修改时间: 2025-01-26
     if (!password) {
       return res.status(400).json({
         status: -1,
@@ -342,60 +336,41 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // 至少需要提供一种登录方式（用户名、邮箱或学号）
-    if (!username && !email && !student_id) {
+    // 至少提供学号或邮箱其一
+    if (!email && !student_id) {
       return res.status(400).json({
         status: -1,
-        message: '请输入用户名、邮箱或学号'
+        message: '请输入学号或邮箱'
       });
     }
 
-    // 3. 根据提供的登录方式查询用户
-    // 修改时间: 2025-01-26
     let users;
-    let loginField;
-
-    if (username) {
-      // 使用用户名登录
-      users = await query(
-        'SELECT id, student_id, username, email, password_hash, role FROM users WHERE username = ?',
-        [username]
-      );
-      loginField = 'username';
-    } else if (email) {
-      // 使用邮箱登录
-      users = await query(
-        'SELECT id, student_id, username, email, password_hash, role FROM users WHERE email = ?',
-        [email]
-      );
-      loginField = 'email';
-    } else if (student_id) {
-      // 使用学号登录
+    if (student_id) {
       users = await query(
         'SELECT id, student_id, username, email, password_hash, role FROM users WHERE student_id = ?',
         [student_id]
       );
-      loginField = 'student_id';
+    } else {
+      users = await query(
+        'SELECT id, student_id, username, email, password_hash, role FROM users WHERE email = ?',
+        [email]
+      );
     }
 
-    // 4. 检查用户是否存在
     if (users.length === 0) {
       return res.status(401).json({
         status: -1,
-        message: '用户名/邮箱/学号或密码错误'
+        message: '学号/邮箱或密码错误'
       });
     }
 
-    // 获取用户信息（第一条记录）
     const user = users[0];
-
-    // 5. 验证密码
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
 
     if (!isPasswordValid) {
       return res.status(401).json({
         status: -1,
-        message: '用户名/邮箱/学号或密码错误'
+        message: '学号/邮箱或密码错误'
       });
     }
 

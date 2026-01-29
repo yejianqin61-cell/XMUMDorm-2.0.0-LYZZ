@@ -1,42 +1,20 @@
 -- ============================================
--- 数据库初始化脚本
+-- 帖子系统 2.0.0 数据库迁移
 -- ============================================
--- 创建时间: 2025-01-26
--- 功能: 创建数据库和用户表结构
+-- 在已有 jack_campus 库上执行：扩展 users，新建帖子/评论/点赞/通知表
+-- 使用: mysql -u root -p jack_campus < migrations/001_posts_system_2.0.0.sql
 
--- 创建数据库（如果不存在）
-CREATE DATABASE IF NOT EXISTS jack_campus CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- 使用数据库
 USE jack_campus;
 
--- ============================================
--- 用户表 (users)
--- ============================================
--- 修改时间: 2025-01-26
--- 最新修改: 2025-01-26 - 添加 email 字段，student_id 改为可选（商家不需要学号）
-CREATE TABLE IF NOT EXISTS users (
-  id INT AUTO_INCREMENT PRIMARY KEY COMMENT '用户ID，自增主键',
-  student_id VARCHAR(50) NULL UNIQUE COMMENT '学号，唯一标识（非商家必填，商家可为空）',
-  username VARCHAR(100) NOT NULL COMMENT '用户名',
-  email VARCHAR(255) NULL UNIQUE COMMENT '邮箱（非商家必填，格式：xxx@xmu.edu.my）',
-  password_hash VARCHAR(255) NOT NULL COMMENT '加密后的密码',
-  role ENUM('student', 'merchant', 'admin') DEFAULT 'student' COMMENT '用户角色：学生/商家/管理员(官方号)',
-  email_verified TINYINT(1) DEFAULT 0 COMMENT '邮箱是否已验证（0=未验证，1=已验证）',
-  avatar VARCHAR(255) NULL COMMENT '头像路径，NULL 用默认头像',
-  nickname VARCHAR(100) NULL COMMENT '昵称，展示用',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  
-  INDEX idx_student_id (student_id),
-  INDEX idx_username (username),
-  INDEX idx_email (email),
-  INDEX idx_role (role)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户表';
+-- ---------- 1. 扩展 users 表 ----------
+-- 若已执行过迁移，再次执行会报 duplicate column，可忽略或先检查列是否存在
+ALTER TABLE users ADD COLUMN avatar VARCHAR(255) NULL COMMENT '头像路径，NULL 用默认头像' AFTER email_verified;
+ALTER TABLE users ADD COLUMN nickname VARCHAR(100) NULL COMMENT '昵称，展示用' AFTER avatar;
 
--- ============================================
--- 帖子表 (posts) - 2.0.0
--- ============================================
+-- 扩展 role 枚举：增加 admin（官方号=管理员）
+ALTER TABLE users MODIFY COLUMN role ENUM('student', 'merchant', 'admin') DEFAULT 'student' COMMENT '用户角色';
+
+-- ---------- 2. 帖子表 ----------
 CREATE TABLE IF NOT EXISTS posts (
   id INT AUTO_INCREMENT PRIMARY KEY COMMENT '帖子ID',
   user_id INT NOT NULL COMMENT '发帖用户ID',
@@ -53,9 +31,7 @@ CREATE TABLE IF NOT EXISTS posts (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子表';
 
--- ============================================
--- 帖子图片表 (post_images) - 2.0.0
--- ============================================
+-- ---------- 3. 帖子图片表 ----------
 CREATE TABLE IF NOT EXISTS post_images (
   id INT AUTO_INCREMENT PRIMARY KEY,
   post_id INT NOT NULL COMMENT '帖子ID',
@@ -66,9 +42,7 @@ CREATE TABLE IF NOT EXISTS post_images (
   FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子图片';
 
--- ============================================
--- 点赞表 (post_likes) - 2.0.0
--- ============================================
+-- ---------- 4. 点赞表 ----------
 CREATE TABLE IF NOT EXISTS post_likes (
   user_id INT NOT NULL,
   post_id INT NOT NULL,
@@ -79,14 +53,12 @@ CREATE TABLE IF NOT EXISTS post_likes (
   FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子点赞';
 
--- ============================================
--- 评论表 (comments) - 2.0.0
--- ============================================
+-- ---------- 5. 评论表 ----------
 CREATE TABLE IF NOT EXISTS comments (
   id INT AUTO_INCREMENT PRIMARY KEY,
   post_id INT NOT NULL,
   user_id INT NOT NULL COMMENT '评论者ID',
-  parent_id INT NULL COMMENT 'NULL=一级评论，非空=回复(仅二级)',
+  parent_id INT NULL COMMENT 'NULL=一级评论，非空=回复某条评论(仅二级)',
   content TEXT NOT NULL,
   deleted_at TIMESTAMP NULL DEFAULT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -99,9 +71,7 @@ CREATE TABLE IF NOT EXISTS comments (
   FOREIGN KEY (parent_id) REFERENCES comments(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='评论';
 
--- ============================================
--- 通知表 (notifications) - 2.0.0
--- ============================================
+-- ---------- 6. 通知表 ----------
 CREATE TABLE IF NOT EXISTS notifications (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL COMMENT '接收者ID',
@@ -109,7 +79,7 @@ CREATE TABLE IF NOT EXISTS notifications (
   is_read TINYINT(1) DEFAULT 0,
   post_id INT NULL,
   comment_id INT NULL,
-  from_user_id INT NULL COMMENT '触发者',
+  from_user_id INT NULL COMMENT '触发者(评论/点赞者)',
   extra JSON NULL COMMENT '摘要等',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_user_id (user_id),
@@ -119,4 +89,3 @@ CREATE TABLE IF NOT EXISTS notifications (
   FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE SET NULL,
   FOREIGN KEY (from_user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='通知';
-

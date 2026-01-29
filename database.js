@@ -9,22 +9,29 @@
 // 引入 MySQL2 模块
 const mysql = require('mysql2/promise');
 
-// 从环境变量获取数据库配置，如果没有则使用默认值
-const dbConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 3306,
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'jack_campus',
+// 从环境变量获取数据库配置
+// Railway 等平台可能提供单连接串：DATABASE_URL 或 MYSQL_URL（格式：mysql://user:pass@host:port/database）
+const connectionUrl = process.env.DATABASE_URL || process.env.MYSQL_URL;
+const poolOptions = {
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
   enableKeepAlive: true,
   keepAliveInitialDelay: 0
 };
+const dbConfig = connectionUrl
+  ? poolOptions
+  : {
+      host: process.env.DB_HOST || 'localhost',
+      port: process.env.DB_PORT || 3306,
+      user: process.env.DB_USER || 'root',
+      password: process.env.DB_PASSWORD || '',
+      database: process.env.DB_NAME || 'jack_campus',
+      ...poolOptions
+    };
 
-// 创建数据库连接池
-const pool = mysql.createPool(dbConfig);
+// 创建数据库连接池（mysql2 支持连接串或配置对象）
+const pool = connectionUrl ? mysql.createPool(connectionUrl, poolOptions) : mysql.createPool(dbConfig);
 
 /**
  * 执行 SQL 查询的辅助函数
