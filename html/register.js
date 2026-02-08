@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const merchantFields = document.getElementById('merchantFields');
   const sendCodeBtn = document.getElementById('sendCodeBtn');
 
-  // 显示消息函数
+  //======================================================= 显示消息函数=============================================
   // 创建时间: 2025-01-26
   function showMessage(text, type) {
     messageDiv.textContent = text;
@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function () {
       messageDiv.style.display = 'none';
     }, 3000);
   }
-
+//===============================================================================================================
   // 角色切换处理
   // 修改时间: 2025-01-26
 

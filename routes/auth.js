@@ -217,9 +217,10 @@ router.post('/register', async (req, res) => {
       });
 
     } else if (role === 'merchant') {
-      // ========== 商家注册验证 ==========
+      //======================================================================================================================
+      // ========================================================== 商家注册验证 ===============================================
 
-      // 3.1 验证必要字段
+      //=========== 3.1 验证必要字段=========
       // 修改时间: 2025-01-26
       if (!username || !password || !invite_code) {
         return res.status(400).json({
@@ -228,7 +229,7 @@ router.post('/register', async (req, res) => {
         });
       }
 
-      // 3.2 验证邀请码
+      //========= 3.2 验证邀请码===========
       // 修改时间: 2025-01-26
       if (invite_code !== MERCHANT_INVITE_CODE) {
         return res.status(400).json({
@@ -237,7 +238,7 @@ router.post('/register', async (req, res) => {
         });
       }
 
-      // 3.3 验证密码强度
+      // =======3.3 验证密码强度===============
       if (password.length < 6) {
         return res.status(400).json({
           status: -1,
@@ -245,7 +246,7 @@ router.post('/register', async (req, res) => {
         });
       }
 
-      // 3.4 检查用户名是否已存在
+      // ================3.4 检查用户名是否已存在=========
       // 修改时间: 2025-01-26
       const existingUsername = await query(
         'SELECT id FROM users WHERE username = ?',
@@ -259,7 +260,7 @@ router.post('/register', async (req, res) => {
         });
       }
 
-      // 3.5 加密密码
+      //============= 3.5 加密密码==========
       const password_hash = await bcrypt.hash(password, 10);
 
       // 3.6 保存用户信息到数据库（商家）
@@ -269,7 +270,7 @@ router.post('/register', async (req, res) => {
         [username, password_hash, 'merchant']
       );
 
-      // 3.7 生成 JWT 令牌
+      //========= 3.7 生成 JWT 令牌==============
       const token = jwt.sign(
         {
           id: result.insertId,
@@ -280,7 +281,7 @@ router.post('/register', async (req, res) => {
         { expiresIn: JWT_EXPIRES_IN }
       );
 
-      // 3.8 返回成功响应
+      //========== 3.8 返回成功响应===============
       res.status(200).json({
         status: 0,
         message: '注册成功！',
@@ -320,6 +321,8 @@ router.post('/register', async (req, res) => {
     });
   }
 });
+//=============================================================================================
+//=============================================================================================
 
 // ============================================
 // 用户登录路由
