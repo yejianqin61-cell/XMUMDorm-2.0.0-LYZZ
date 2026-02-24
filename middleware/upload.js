@@ -1,8 +1,9 @@
 /**
  * ============================================
- * 上传中间件（帖子图片 / 头像）
+ * 上传中间件（帖子图片 / 头像 / 商品图 / 评论图）
  * ============================================
  * 2.0.0：帖子图片 jpg/png/webp，≤5MB，最多 3 张
+ * 食堂：商品图最多 5 张、评论图最多 3 张，格式与大小与帖子图片一致
  */
 
 const multer = require('multer');
@@ -12,6 +13,8 @@ const fs = require('fs');
 const UPLOAD_ROOT = path.join(__dirname, '..', 'uploads');
 const POSTS_IMAGES_DIR = path.join(UPLOAD_ROOT, 'posts');
 const AVATAR_DIR = path.join(UPLOAD_ROOT, 'avatars');
+const PRODUCTS_IMAGES_DIR = path.join(UPLOAD_ROOT, 'products');
+const COMMENTS_IMAGES_DIR = path.join(UPLOAD_ROOT, 'comments');
 
 const ALLOWED_IMAGE_MIMES = ['image/jpeg', 'image/png', 'image/webp'];
 const ALLOWED_IMAGE_EXT = ['.jpg', '.jpeg', '.png', '.webp'];
@@ -24,6 +27,8 @@ function ensureDir(dir) {
 }
 ensureDir(POSTS_IMAGES_DIR);
 ensureDir(AVATAR_DIR);
+ensureDir(PRODUCTS_IMAGES_DIR);
+ensureDir(COMMENTS_IMAGES_DIR);
 
 /**
  * 帖子图片：内存存储，路由里根据 post_id 再写入 post_<id>_<index>.<ext>
@@ -73,9 +78,6 @@ const avatarUpload = multer({
 
 /**
  * 将内存中的帖子图片写入磁盘：post_<postId>_<index>.<ext>
- * @param {Array} files - req.files (multer memory)
- * @param {number} postId - 帖子 ID
- * @returns {Promise<string[]>} 相对路径数组，如 ['posts/post_102_1.jpg']
  */
 function savePostImages(files, postId) {
   const relativePaths = [];
@@ -91,11 +93,77 @@ function savePostImages(files, postId) {
   return relativePaths;
 }
 
+/**
+ * 商品图：内存存储，最多 5 张，格式/大小同帖子（jpg/png/webp，≤5MB）
+ */
+const productImagesUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_IMAGE_MIMES.includes(file.mimetype) || !ALLOWED_IMAGE_EXT.includes(ext)) {
+      return cb(new Error('仅支持 jpg / png / webp 格式'));
+    }
+    cb(null, true);
+  }
+}).array('images', 5);
+
+/**
+ * 评论图：内存存储，最多 3 张，格式/大小与帖子图片一致
+ */
+const commentImagesUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_IMAGE_MIMES.includes(file.mimetype) || !ALLOWED_IMAGE_EXT.includes(ext)) {
+      return cb(new Error('仅支持 jpg / png / webp 格式'));
+    }
+    cb(null, true);
+  }
+}).array('images', 3);
+
+/** 将内存中的商品图片写入磁盘：product_<productId>_<index>.<ext>，返回相对路径如 ['products/product_101_1.jpg'] */
+function saveProductImages(files, productId) {
+  const relativePaths = [];
+  const extMap = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp' };
+  for (let i = 0; i < (files || []).length; i++) {
+    const file = files[i];
+    const ext = extMap[file.mimetype] || '.jpg';
+    const filename = `product_${productId}_${i + 1}${ext}`;
+    const filePath = path.join(PRODUCTS_IMAGES_DIR, filename);
+    fs.writeFileSync(filePath, file.buffer);
+    relativePaths.push(`products/${filename}`);
+  }
+  return relativePaths;
+}
+
+/** 将内存中的评论图片写入磁盘：comment_<commentId>_<index>.<ext>，返回相对路径如 ['comments/comment_201_1.jpg'] */
+function saveCommentImages(files, commentId) {
+  const relativePaths = [];
+  const extMap = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp' };
+  for (let i = 0; i < (files || []).length; i++) {
+    const file = files[i];
+    const ext = extMap[file.mimetype] || '.jpg';
+    const filename = `comment_${commentId}_${i + 1}${ext}`;
+    const filePath = path.join(COMMENTS_IMAGES_DIR, filename);
+    fs.writeFileSync(filePath, file.buffer);
+    relativePaths.push(`comments/${filename}`);
+  }
+  return relativePaths;
+}
+
 module.exports = {
   postImagesUpload,
   avatarUpload,
   savePostImages,
+  productImagesUpload,
+  commentImagesUpload,
+  saveProductImages,
+  saveCommentImages,
   UPLOAD_ROOT,
   POSTS_IMAGES_DIR,
-  AVATAR_DIR
+  AVATAR_DIR,
+  PRODUCTS_IMAGES_DIR,
+  COMMENTS_IMAGES_DIR
 };
