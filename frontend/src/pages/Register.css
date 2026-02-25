@@ -1,0 +1,126 @@
+.register-page {
+  min-height: 100vh;
+  background: var(--wx-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.register-box {
+  width: 100%;
+  max-width: 360px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 32px 24px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.register-title {
+  margin: 0 0 4px;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--wx-text);
+  text-align: center;
+}
+
+.register-subtitle {
+  margin: 0 0 24px;
+  font-size: 14px;
+  color: var(--wx-text-secondary);
+  text-align: center;
+}
+
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.register-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.register-field label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--wx-text);
+}
+
+.register-field input {
+  padding: 12px 14px;
+  border: 1px solid var(--wx-border);
+  border-radius: 8px;
+  font-size: 15px;
+  background: #fff;
+  color: var(--wx-text);
+}
+
+.register-field input::placeholder {
+  color: var(--wx-text-secondary);
+}
+
+.register-field input:focus {
+  outline: none;
+  border-color: var(--wx-green);
+}
+
+.register-message {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  text-align: center;
+}
+
+.register-message-success {
+  background: rgba(7, 193, 96, 0.12);
+  color: var(--wx-green-dark);
+}
+
+.register-message-error {
+  background: rgba(255, 0, 0, 0.06);
+  color: #c00;
+}
+
+.register-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+}
+
+.register-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.register-btn-primary {
+  background: var(--wx-green);
+  color: #fff;
+}
+
+.register-btn-primary:hover:not(:disabled) {
+  background: var(--wx-green-dark);
+}
+
+.register-footer {
+  margin: 20px 0 0;
+  font-size: 14px;
+  color: var(--wx-text-secondary);
+  text-align: center;
+}
+
+.register-footer a {
+  color: var(--wx-green);
+  text-decoration: none;
+}
+
+.register-footer a:hover {
+  text-decoration: underline;
+}

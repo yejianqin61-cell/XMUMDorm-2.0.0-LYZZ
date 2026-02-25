@@ -1,0 +1,26 @@
+.myposts-page {
+  padding: 12px 16px 24px;
+  min-height: 100%;
+  background: transparent;
+}
+
+.myposts-empty {
+  text-align: center;
+  color: var(--wx-text-secondary);
+  font-size: 14px;
+  margin: 32px 16px;
+}
+
+.myposts-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.myposts-list li {
+  margin-bottom: 12px;
+}
+
+.myposts-list .post-card {
+  margin-bottom: 0;
+}

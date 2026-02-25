@@ -1,0 +1,36 @@
+.app-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: calc(50px + var(--safe-bottom));
+}
+
+.app-main {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  background: var(--wx-bg);
+}
+
+/* 全站统一背景图：与树洞页一致，仅覆盖顶栏与底栏之间 */
+.app-main-bg {
+  position: fixed;
+  top: calc(44px + var(--safe-top, 0px));
+  bottom: calc(50px + var(--safe-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 430px;
+  background-image: url('/background.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: 0;
+}
+
+.app-main-inner {
+  position: relative;
+  z-index: 1;
+  min-height: 100%;
+}

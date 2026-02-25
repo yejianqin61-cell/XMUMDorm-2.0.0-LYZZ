@@ -1,0 +1,96 @@
+.myzone-page {
+  padding: 12px 16px;
+  min-height: 100%;
+  background: transparent;
+}
+
+.myzone-bar {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 20px 20px;
+  min-height: 56px;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: none;
+  color: inherit;
+  font: inherit;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  transition: background 0.2s;
+}
+
+.myzone-bar:hover {
+  background: var(--wx-bar-bg);
+}
+
+.myzone-bar-1 {
+  margin-bottom: 10px;
+}
+
+.myzone-bar-2,
+.myzone-bar-3,
+.myzone-bar-4 {
+  min-height: 52px;
+}
+
+.myzone-bar-4 {
+  cursor: default;
+  justify-content: space-between;
+}
+
+.myzone-bar-4:hover {
+  background: #fff;
+}
+
+.myzone-avatar-wrap {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid var(--wx-border);
+}
+
+.myzone-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.myzone-avatar-default {
+  object-fit: contain;
+  padding: 8px;
+  background: var(--wx-bar-bg);
+}
+
+.myzone-bar1-text {
+  margin-left: 14px;
+  min-width: 0;
+}
+
+.myzone-username {
+  margin: 0 0 4px;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--wx-text);
+}
+
+.myzone-email {
+  margin: 0;
+  font-size: 13px;
+  color: var(--wx-text-secondary);
+}
+
+.myzone-bar-label {
+  font-size: 16px;
+  color: var(--wx-text);
+}
+
+.myzone-bar-value {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--wx-text-secondary);
+}

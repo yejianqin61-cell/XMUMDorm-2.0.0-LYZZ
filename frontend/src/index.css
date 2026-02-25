@@ -1,0 +1,59 @@
+/* 移动端优先、微信风格基调 */
+:root {
+  --wx-green: #07C160;
+  --wx-green-dark: #06AD56;
+  --wx-bg: #EDEDED;
+  --wx-bar-bg: #F7F7F7;
+  --wx-header-bg: #FFFFFF;
+  --wx-text: #191919;
+  --wx-text-secondary: #888888;
+  --wx-border: #ECECEC;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: var(--wx-bg);
+  color: var(--wx-text);
+}
+
+/* 桌面大屏：限制成「手机宽度」并居中，两侧灰底，像真机预览 */
+@media (min-width: 431px) {
+  body {
+    background-color: #333;
+  }
+  #root {
+    max-width: 430px;
+    margin: 0 auto;
+    min-height: 100vh;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+  }
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  max-width: 100vw;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}

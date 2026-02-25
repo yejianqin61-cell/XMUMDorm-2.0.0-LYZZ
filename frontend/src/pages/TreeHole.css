@@ -1,0 +1,57 @@
+/* 单张背景图：仅覆盖顶栏与底栏之间的内容区，不重复；内容可滚动 */
+.treehole-page {
+  position: relative;
+  min-height: 100%;
+  background: transparent;
+}
+
+.treehole-content {
+  position: relative;
+  z-index: 1;
+  padding: 12px 12px 24px;
+}
+
+/* 两列错落，可滚动 */
+.treehole-grid {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.treehole-column {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.treehole-column-right {
+  padding-top: 32px;
+}
+
+/* 右下角悬浮发布按钮 */
+.treehole-fab {
+  position: fixed;
+  right: 20px;
+  bottom: calc(50px + 16px + var(--safe-bottom, 0px));
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--wx-green);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(7, 193, 96, 0.4);
+  z-index: 90;
+}
+
+.treehole-fab:hover {
+  background: var(--wx-green-dark);
+  color: #fff;
+}
+
+.treehole-fab:active {
+  transform: scale(0.96);
+}

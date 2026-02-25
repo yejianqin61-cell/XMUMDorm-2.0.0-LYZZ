@@ -1,0 +1,21 @@
+/* 占位页样式：与树洞一致使用透明底+半白卡片 */
+.page-placeholder {
+  padding: 24px 16px;
+  margin: 16px;
+  text-align: center;
+  color: var(--wx-text);
+  font-size: 15px;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.page-placeholder p {
+  margin: 0 0 8px;
+}
+
+.page-hint {
+  font-size: 13px;
+  color: var(--wx-text-secondary);
+  opacity: 0.9;
+}

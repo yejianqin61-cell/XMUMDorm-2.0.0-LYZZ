@@ -1,0 +1,20 @@
+.myreviews-page {
+  padding: 24px 16px;
+  min-height: 100%;
+  background: transparent;
+}
+
+.myreviews-placeholder {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.myreviews-placeholder {
+  text-align: center;
+  color: var(--wx-text-secondary);
+  font-size: 14px;
+  margin: 0;
+}

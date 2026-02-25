@@ -1,0 +1,115 @@
+.profile-edit-page {
+  padding: 16px;
+  min-height: 100%;
+  background: transparent;
+}
+
+.profile-edit-form {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.profile-edit-field {
+  margin-bottom: 20px;
+}
+
+.profile-edit-field label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--wx-text);
+  margin-bottom: 8px;
+}
+
+.profile-edit-avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.profile-edit-avatar-wrap {
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid var(--wx-border);
+  cursor: pointer;
+  display: block;
+}
+
+.profile-edit-avatar-wrap:hover {
+  border-color: var(--wx-green);
+}
+
+.profile-edit-avatar-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+}
+
+.profile-edit-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-edit-avatar-default {
+  object-fit: contain;
+  padding: 10px;
+  background: var(--wx-bar-bg);
+}
+
+.profile-edit-avatar-hint {
+  font-size: 13px;
+  color: var(--wx-text-secondary);
+}
+
+.profile-edit-field input[type="text"] {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--wx-border);
+  border-radius: 8px;
+  font-size: 15px;
+}
+
+.profile-edit-field input:focus {
+  outline: none;
+  border-color: var(--wx-green);
+}
+
+.profile-edit-message {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.profile-edit-message-success {
+  background: rgba(7, 193, 96, 0.12);
+  color: var(--wx-green-dark);
+}
+
+.profile-edit-message-error {
+  background: rgba(255, 0, 0, 0.06);
+  color: #c00;
+}
+
+.profile-edit-btn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  background: var(--wx-green);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.profile-edit-btn:hover {
+  background: var(--wx-green-dark);
+}
