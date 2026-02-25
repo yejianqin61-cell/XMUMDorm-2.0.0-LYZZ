@@ -15,6 +15,8 @@ const {
   saveProductImages,
   saveCommentImages
 } = require('../middleware/upload');
+const { onPrimaryCommentChange } = require('../services/rankingStats');
+const { shanghaiDaysAgoStart } = require('../utils/timezone');
 
 const UPLOAD_PREFIX = '/uploads/';
 const RATING_ENUM = ['夯爆了', '顶级', '人上人', 'NPC', '拉完了'];
@@ -672,8 +674,9 @@ router.post('/products/:productId/comments', authenticateToken, (req, res, next)
     if (!content) return res.status(400).json({ status: -1, message: '评论内容不能为空' });
     if (content.length > 300) return res.status(400).json({ status: -1, message: '评论最多 300 字' });
 
-    const prod = await query('SELECT id FROM products WHERE id = ? AND deleted_at IS NULL', [productId]);
+    const prod = await query('SELECT id, shop_id FROM products WHERE id = ? AND deleted_at IS NULL', [productId]);
     if (!prod || prod.length === 0) return res.status(404).json({ status: -1, message: '商品不存在' });
+    const shopId = prod[0].shop_id;
 
     if (parentId) {
       const parent = await query('SELECT id FROM product_comments WHERE id = ? AND product_id = ? AND parent_id IS NULL AND deleted_at IS NULL', [parentId, productId]);
@@ -693,6 +696,9 @@ router.post('/products/:productId/comments', authenticateToken, (req, res, next)
       for (let i = 0; i < paths.length; i++) {
         await query('INSERT INTO product_comment_images (comment_id, file_path, sort_order) VALUES (?, ?, ?)', [commentId, paths[i], i]);
       }
+    }
+    if (parentId === null) {
+      await onPrimaryCommentChange(productId, shopId, req.user.id, rating, 1);
     }
 
     const rows = await query(
@@ -785,7 +791,7 @@ router.delete('/products/:productId/comments/:commentId', authenticateToken, asy
     const commentId = parseInt(req.params.commentId, 10);
     if (!productId || !commentId) return res.status(400).json({ status: -1, message: '参数无效' });
     const rows = await query(
-      'SELECT id, user_id FROM product_comments WHERE id = ? AND product_id = ? AND deleted_at IS NULL',
+      'SELECT id, user_id, rating, parent_id, product_id FROM product_comments WHERE id = ? AND product_id = ? AND deleted_at IS NULL',
       [commentId, productId]
     );
     if (!rows || rows.length === 0) {
@@ -796,10 +802,160 @@ router.delete('/products/:productId/comments/:commentId', authenticateToken, asy
     if (!isAuthor && !admin) {
       return res.status(403).json({ status: -1, message: '仅本人或管理员可删除该评论' });
     }
+    const isPrimary = rows[0].parent_id === null;
+    const rating = rows[0].rating;
+    const userId = rows[0].user_id;
+    const prod = await query('SELECT shop_id FROM products WHERE id = ?', [productId]);
+    const shopId = prod && prod[0] ? prod[0].shop_id : null;
+
     await query('UPDATE product_comments SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [commentId]);
+    if (isPrimary && shopId != null) {
+      await onPrimaryCommentChange(productId, shopId, userId, rating, -1);
+    }
     res.status(200).json({ status: 0, message: '已删除（逻辑删除）' });
   } catch (e) {
     console.error('删除评论错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
+// ============================================
+// 排行榜（零点评商品/店铺不参与按评分排序的榜单）
+// ============================================
+
+/** 最夯单品榜：上线至今累计综合评分 Top 5，同分按上架时间越早越前 */
+router.get('/rankings/hot-products', async (req, res) => {
+  try {
+    const rows = await query(
+      `SELECT p.id, p.shop_id, p.name, p.comprehensive_score, p.review_count, p.created_at, s.name AS shop_name
+       FROM products p
+       JOIN shops s ON p.shop_id = s.id AND s.deleted_at IS NULL
+       WHERE p.deleted_at IS NULL AND p.review_count > 0 AND p.comprehensive_score IS NOT NULL
+       ORDER BY p.comprehensive_score DESC, p.created_at ASC
+       LIMIT 5`
+    );
+    const list = (rows || []).map((r) => ({
+      rank: 0,
+      product_id: r.id,
+      product_name: r.name,
+      shop_id: r.shop_id,
+      shop_name: r.shop_name,
+      comprehensive_score: Number(r.comprehensive_score),
+      review_count: r.review_count,
+      created_at: r.created_at
+    }));
+    list.forEach((item, i) => { item.rank = i + 1; });
+    res.status(200).json({ status: 0, message: '获取成功', data: list });
+  } catch (e) {
+    console.error('最夯单品榜错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
+/** 门庭若市商家榜：当周点评数 Top 5 */
+router.get('/rankings/busy-shops', async (req, res) => {
+  try {
+    const rows = await query(
+      `SELECT s.id, s.name, s.region_id, s.weekly_review_count, r.name AS region_name
+       FROM shops s
+       JOIN regions r ON s.region_id = r.id
+       WHERE s.deleted_at IS NULL
+       ORDER BY s.weekly_review_count DESC, s.created_at ASC
+       LIMIT 5`
+    );
+    const list = (rows || []).map((r, i) => ({
+      rank: i + 1,
+      shop_id: r.id,
+      shop_name: r.name,
+      region_id: r.region_id,
+      region_name: r.region_name,
+      weekly_review_count: r.weekly_review_count
+    }));
+    res.status(200).json({ status: 0, message: '获取成功', data: list });
+  } catch (e) {
+    console.error('门庭若市榜错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
+/** 最夯商家榜：商家综合评分 Top 5，零点评不参与 */
+router.get('/rankings/top-shops', async (req, res) => {
+  try {
+    const rows = await query(
+      `SELECT s.id, s.name, s.region_id, s.comprehensive_score, s.review_count, r.name AS region_name
+       FROM shops s
+       JOIN regions r ON s.region_id = r.id
+       WHERE s.deleted_at IS NULL AND s.review_count > 0 AND s.comprehensive_score IS NOT NULL
+       ORDER BY s.comprehensive_score DESC, s.created_at ASC
+       LIMIT 5`
+    );
+    const list = (rows || []).map((r, i) => ({
+      rank: i + 1,
+      shop_id: r.id,
+      shop_name: r.name,
+      region_id: r.region_id,
+      region_name: r.region_name,
+      comprehensive_score: Number(r.comprehensive_score),
+      review_count: r.review_count
+    }));
+    res.status(200).json({ status: 0, message: '获取成功', data: list });
+  } catch (e) {
+    console.error('最夯商家榜错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
+/** 爆款新品：上架距今 ≤7 自然日（东八区），按累计综合评分 Top 3，名额不足可为空 */
+router.get('/rankings/new-hit-products', async (req, res) => {
+  try {
+    const sevenDaysAgo = shanghaiDaysAgoStart(7);
+    const rows = await query(
+      `SELECT p.id, p.shop_id, p.name, p.comprehensive_score, p.review_count, p.created_at, s.name AS shop_name
+       FROM products p
+       JOIN shops s ON p.shop_id = s.id AND s.deleted_at IS NULL
+       WHERE p.deleted_at IS NULL AND p.review_count > 0 AND p.comprehensive_score IS NOT NULL AND p.created_at >= ?
+       ORDER BY p.comprehensive_score DESC, p.created_at ASC
+       LIMIT 3`,
+      [sevenDaysAgo]
+    );
+    const list = (rows || []).map((r, i) => ({
+      rank: i + 1,
+      product_id: r.id,
+      product_name: r.name,
+      shop_id: r.shop_id,
+      shop_name: r.shop_name,
+      comprehensive_score: Number(r.comprehensive_score),
+      review_count: r.review_count,
+      created_at: r.created_at
+    }));
+    res.status(200).json({ status: 0, message: '获取成功', data: list });
+  } catch (e) {
+    console.error('爆款新品榜错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
+/** 点评达人榜：当周点评数 Top 5 */
+router.get('/rankings/active-users', async (req, res) => {
+  try {
+    const rows = await query(
+      `SELECT u.id, u.username, u.nickname, u.avatar, u.weekly_comment_count
+       FROM users u
+       WHERE u.weekly_comment_count > 0
+       ORDER BY u.weekly_comment_count DESC, u.id ASC
+       LIMIT 5`
+    );
+    const list = (rows || []).map((r, i) => ({
+      rank: i + 1,
+      user_id: r.id,
+      username: r.username,
+      nickname: r.nickname,
+      avatar: r.avatar ? UPLOAD_PREFIX + r.avatar : null,
+      weekly_comment_count: r.weekly_comment_count
+    }));
+    res.status(200).json({ status: 0, message: '获取成功', data: list });
+  } catch (e) {
+    console.error('点评达人榜错误:', e);
     res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
   }
 });

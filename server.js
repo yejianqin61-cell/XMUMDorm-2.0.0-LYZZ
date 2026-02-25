@@ -93,7 +93,7 @@ app.use((err, req, res, next) => {
 
 // 13. 监听指定端口，启动服务器
 // 创建时间: 2025-01-26
-// 修改: 添加数据库连接测试
+// 修改: 添加数据库连接测试、排行榜每周一东八区重置
 app.listen(PORT, async () => {
   console.log(`========================================`);
   console.log(`🚀 服务器已启动！`);
@@ -101,8 +101,25 @@ app.listen(PORT, async () => {
   console.log(`🌍 环境: ${process.env.NODE_ENV || 'development'}`);
   
   // 测试数据库连接
-  // 创建时间: 2025-01-26
   await testConnection();
+
+  // 排行榜：每周一 0 点东八区重置店铺/用户当周点评数
+  try {
+    const { resetWeeklyCounts } = require('./services/rankingStats');
+    const { isMondayZeroInShanghai, nowInShanghai, shanghaiDateString } = require('./utils/timezone');
+    let lastResetWeek = '';
+    setInterval(async () => {
+      if (!isMondayZeroInShanghai()) return;
+      const sh = nowInShanghai();
+      const weekKey = `${sh.getFullYear()}-${String(sh.getMonth() + 1).padStart(2, '0')}-${String(sh.getDate()).padStart(2, '0')}`;
+      if (lastResetWeek === weekKey) return;
+      lastResetWeek = weekKey;
+      await resetWeeklyCounts();
+      console.log(`[排行榜] 东八区周一 0 点已重置当周点评数 ${shanghaiDateString()}`);
+    }, 60 * 1000);
+  } catch (e) {
+    console.warn('排行榜每周重置未启动:', e.message);
+  }
   
   console.log(`========================================`);
 });
