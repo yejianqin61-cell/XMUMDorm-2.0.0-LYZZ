@@ -1,0 +1,64 @@
+.merchant-food-detail-page {
+  min-height: 100%;
+  padding: 12px 16px 24px;
+  background: transparent;
+}
+
+.merchant-food-detail-empty {
+  margin: 24px 0 16px;
+  font-size: 14px;
+  color: var(--wx-text-secondary);
+  text-align: center;
+}
+
+.merchant-food-detail-back {
+  display: block;
+  margin: 0 auto;
+  padding: 10px 24px;
+  font-size: 15px;
+  color: var(--wx-green);
+  background: transparent;
+  border: 1px solid var(--wx-green);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.merchant-food-detail-back:hover {
+  background: rgba(7, 193, 96, 0.08);
+}
+
+.merchant-food-detail-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.merchant-food-detail-btn {
+  padding: 12px 20px;
+  font-size: 15px;
+  font-weight: 500;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.merchant-food-detail-btn-edit {
+  background: var(--wx-green);
+  color: #fff;
+}
+
+.merchant-food-detail-btn-edit:hover {
+  background: var(--wx-green-dark);
+}
+
+.merchant-food-detail-btn-back {
+  background: transparent;
+  color: var(--wx-text-secondary);
+  border: 1px solid var(--wx-border);
+}
+
+.merchant-food-detail-btn-back:hover {
+  background: var(--wx-bar-bg);
+}

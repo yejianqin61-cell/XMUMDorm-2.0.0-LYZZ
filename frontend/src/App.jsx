@@ -18,6 +18,7 @@ import CanteenArea from './pages/CanteenArea';
 import MerchantList from './pages/MerchantList';
 import FoodList from './pages/FoodList';
 import FoodDetail from './pages/FoodDetail';
+import FoodReviewPublish from './pages/FoodReviewPublish';
 import StoreCreate from './pages/StoreCreate';
 import FoodManage from './pages/FoodManage';
 import FoodCreate from './pages/FoodCreate';
@@ -52,6 +53,7 @@ function App() {
             <Route path="eat/:area" element={<MerchantList />} />
             <Route path="eat/merchant/:id" element={<FoodList />} />
             <Route path="eat/food/:id" element={<FoodDetail />} />
+            <Route path="eat/food/:id/review" element={<FoodReviewPublish />} />
             <Route path="merchant/create" element={<StoreCreate />} />
             <Route path="merchant/manage" element={<FoodManage />} />
             <Route path="merchant/food/new" element={<FoodCreate />} />

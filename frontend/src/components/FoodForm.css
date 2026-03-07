@@ -1,0 +1,137 @@
+.food-form {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.food-form-field label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--wx-text);
+  margin-bottom: 8px;
+}
+
+.food-form-input,
+.food-form-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--wx-border);
+  border-radius: 8px;
+  font-size: 15px;
+  font-family: inherit;
+  background: #fff;
+}
+
+.food-form-input::placeholder,
+.food-form-textarea::placeholder {
+  color: var(--wx-text-secondary);
+}
+
+.food-form-textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.food-form-image-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.food-form-image-wrap {
+  flex-shrink: 0;
+  width: 80px;
+  height: 80px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--wx-border);
+  cursor: pointer;
+  display: block;
+  background: var(--wx-bar-bg);
+}
+
+.food-form-image-wrap:hover {
+  border-color: var(--wx-green);
+}
+
+.food-form-file-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+}
+
+.food-form-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.food-form-image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: var(--wx-text-secondary);
+}
+
+.food-form-image-hint {
+  font-size: 13px;
+  color: var(--wx-text-secondary);
+}
+
+.food-form-message {
+  margin: 0;
+  font-size: 14px;
+  padding: 8px 0;
+}
+
+.food-form-message-success {
+  color: var(--wx-green);
+}
+
+.food-form-message-error {
+  color: #e64340;
+}
+
+.food-form-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.food-form-btn {
+  padding: 12px 20px;
+  font-size: 16px;
+  font-weight: 500;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.food-form-btn-primary {
+  background: var(--wx-green);
+  color: #fff;
+}
+
+.food-form-btn-primary:hover {
+  background: var(--wx-green-dark);
+}
+
+.food-form-btn-secondary {
+  background: transparent;
+  color: var(--wx-text-secondary);
+  border: 1px solid var(--wx-border);
+}
+
+.food-form-btn-secondary:hover {
+  background: var(--wx-bar-bg);
+}

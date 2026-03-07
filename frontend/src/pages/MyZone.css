@@ -32,13 +32,35 @@
 
 .myzone-bar-2,
 .myzone-bar-3,
-.myzone-bar-4 {
+.myzone-bar-4,
+.myzone-bar-merchant {
   min-height: 52px;
 }
 
 .myzone-bar-4 {
   cursor: default;
   justify-content: space-between;
+}
+
+.myzone-bar-merchant {
+  margin-top: 10px;
+}
+
+.myzone-bar-logout {
+  margin-top: 10px;
+  min-height: 52px;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--wx-text-secondary);
+}
+
+.myzone-bar-logout:hover {
+  background: rgba(230, 67, 64, 0.08);
+  color: #e64340;
+}
+
+.myzone-bar-label-logout {
+  color: inherit;
 }
 
 .myzone-bar-4:hover {

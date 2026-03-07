@@ -28,17 +28,25 @@ function Layout() {
   const pathname = location.pathname;
   let title = TITLE_BY_PATH[pathname];
   if (!title) {
-    if (pathname.startsWith('/eat')) title = '食堂 Eat';
+    if (pathname.startsWith('/eat/food/') && pathname.endsWith('/review')) title = '发布点评 Publish Review';
+    else if (pathname.startsWith('/eat')) title = '食堂 Eat';
     else if (pathname.startsWith('/mailbox')) title = '信箱 Mailbox';
     else if (pathname === '/post/new') title = '发布帖子 Post';
     else if (pathname.startsWith('/post/')) title = '帖子详情 Post';
     else if (pathname === '/myzone/posts') title = '我的帖子 My Posts';
     else if (pathname === '/myzone/reviews') title = '我的点评 My Reviews';
     else if (pathname === '/myzone/profile') title = '修改资料 Profile';
+    else if (pathname === '/merchant/create') title = '店铺创建 Create Store';
+    else if (pathname === '/merchant/manage') title = '菜品管理 Manage Food';
+    else if (pathname === '/merchant/food/new') title = '菜品发布 Publish Food';
+    else if (pathname.startsWith('/merchant/food/')) title = '菜品详情 Food Detail';
+    else if (pathname.startsWith('/merchant/')) title = '商家 Merchant';
     else title = '厦马小筑 XMUM Dorm';
   }
   const showBack =
     pathname.startsWith('/post/') ||
+    (pathname.startsWith('/eat') && pathname !== '/eat') ||
+    pathname.startsWith('/merchant') ||
     pathname === '/myzone/posts' ||
     pathname === '/myzone/reviews' ||
     pathname === '/myzone/profile';

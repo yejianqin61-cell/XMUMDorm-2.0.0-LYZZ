@@ -1,0 +1,105 @@
+.merchant-card-wrap {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.merchant-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 72px;
+}
+
+.merchant-card-logo-wrap {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--wx-border);
+  background: var(--wx-bar-bg);
+}
+
+.merchant-card-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.merchant-card-logo-default {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--wx-text-secondary);
+  object-fit: none;
+}
+
+.merchant-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.merchant-card-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.merchant-card-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--wx-text);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.merchant-card-status {
+  flex-shrink: 0;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.merchant-card-status-open {
+  background: rgba(7, 193, 96, 0.12);
+  color: var(--wx-green);
+}
+
+.merchant-card-status-closed {
+  background: var(--wx-bar-bg);
+  color: var(--wx-text-secondary);
+}
+
+.merchant-card-rating {
+  display: inline-block;
+  font-size: 12px;
+  color: #fa8c16;
+  margin-bottom: 2px;
+}
+
+.merchant-card-desc {
+  margin: 0;
+  font-size: 12px;
+  color: var(--wx-text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.merchant-card-meta {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: var(--wx-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

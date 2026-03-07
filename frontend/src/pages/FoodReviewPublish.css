@@ -1,0 +1,210 @@
+.food-review-publish-page {
+  padding: 16px;
+  min-height: 100%;
+  background: transparent;
+}
+
+.food-review-publish-hint {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--wx-text-secondary);
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 8px;
+  border-left: 3px solid var(--wx-green);
+}
+
+.food-review-publish-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.food-review-publish-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.food-review-publish-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--wx-text);
+}
+
+.food-review-publish-rating-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.food-review-publish-rating-btn {
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid var(--wx-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--wx-text);
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+}
+
+.food-review-publish-rating-btn:hover {
+  border-color: var(--wx-green);
+  color: var(--wx-green);
+}
+
+.food-review-publish-rating-btn.active {
+  border-color: var(--wx-green);
+  background: rgba(7, 193, 96, 0.12);
+  color: var(--wx-green);
+}
+
+.food-review-publish-textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 12px;
+  border: 1px solid var(--wx-border);
+  border-radius: 8px;
+  font-size: 15px;
+  font-family: inherit;
+  resize: vertical;
+  background: #fff;
+}
+
+.food-review-publish-textarea::placeholder {
+  color: var(--wx-text-secondary);
+}
+
+.food-review-publish-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.food-review-publish-image-wrap {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--wx-bar-bg);
+}
+
+.food-review-publish-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.food-review-publish-image-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+.food-review-publish-image-add {
+  width: 96px;
+  height: 96px;
+  border: 1px dashed var(--wx-border);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: var(--wx-bar-bg);
+}
+
+.food-review-publish-image-add:hover {
+  border-color: var(--wx-green);
+  color: var(--wx-green);
+}
+
+.food-review-publish-file-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+}
+
+.food-review-publish-image-add-inner {
+  font-size: 32px;
+  color: var(--wx-text-secondary);
+}
+
+.food-review-publish-image-add:hover .food-review-publish-image-add-inner {
+  color: var(--wx-green);
+}
+
+.food-review-publish-message {
+  margin: 0;
+  font-size: 14px;
+  padding: 8px 0;
+}
+
+.food-review-publish-message-success {
+  color: var(--wx-green);
+}
+
+.food-review-publish-message-error {
+  color: #e64340;
+}
+
+.food-review-publish-submit {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 8px;
+  background: var(--wx-green);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.food-review-publish-submit:hover {
+  background: var(--wx-green-dark);
+}
+
+.food-review-publish-empty {
+  margin: 24px 0 16px;
+  font-size: 14px;
+  color: var(--wx-text-secondary);
+  text-align: center;
+}
+
+.food-review-publish-back {
+  display: block;
+  margin: 0 auto;
+  padding: 10px 24px;
+  font-size: 15px;
+  color: var(--wx-green);
+  background: transparent;
+  border: 1px solid var(--wx-green);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.food-review-publish-back:hover {
+  background: rgba(7, 193, 96, 0.08);
+}

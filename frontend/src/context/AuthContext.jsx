@@ -31,6 +31,9 @@ export function AuthProvider({ children }) {
 
   const isLoggedIn = !!token;
 
+  /** 是否为商家（用于个人页展示「管理店铺」；后端返回 user.role === 'merchant' 或 user.is_merchant 时为 true；接 API 前可用 user.id === 1 做演示） */
+  const isMerchant = user?.role === 'merchant' || user?.is_merchant === true || user?.id === 1;
+
   /** 展示用：用户名、头像（优先使用个人资料中的修改） */
   const displayName = profile.username ?? user?.username ?? '未设置';
   const displayAvatar = profile.avatar ?? user?.avatar ?? null;
@@ -92,6 +95,7 @@ export function AuthProvider({ children }) {
         user,
         token,
         isLoggedIn,
+        isMerchant,
         login,
         logout,
         skipLogin,

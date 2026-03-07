@@ -2,9 +2,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './MyZone.css';
 
-/** 我的：横条1 头像+用户名邮箱，横条2 我的帖子，横条3 我的点评，横条4 本周点评数 */
+/** 我的：头像+用户名邮箱，我的帖子，我的点评，本周点评数；商家显示管理店铺；登录后显示退出登录 */
 function MyZone() {
-  const { isLoggedIn, displayName, displayAvatar, user } = useAuth();
+  const { isLoggedIn, isMerchant, displayName, displayAvatar, user, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleBar1Click = () => {
@@ -13,6 +13,11 @@ function MyZone() {
       return;
     }
     navigate('/myzone/profile');
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/', { replace: true });
   };
 
   return (
@@ -43,6 +48,18 @@ function MyZone() {
         <span className="myzone-bar-label">本周点评数 Weekly Reviews</span>
         <span className="myzone-bar-value">0</span>
       </div>
+
+      {isMerchant && (
+        <Link to="/merchant/manage" className="myzone-bar myzone-bar-merchant">
+          <span className="myzone-bar-label">管理店铺 Manage Store</span>
+        </Link>
+      )}
+
+      {isLoggedIn && (
+        <button type="button" className="myzone-bar myzone-bar-logout" onClick={handleLogout}>
+          <span className="myzone-bar-label myzone-bar-label-logout">退出登录 Log out</span>
+        </button>
+      )}
     </div>
   );
 }

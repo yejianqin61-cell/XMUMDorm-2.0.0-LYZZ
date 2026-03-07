@@ -1,0 +1,317 @@
+.food-detail-page {
+  min-height: 100%;
+  padding: 12px 16px 24px;
+  background: transparent;
+}
+
+.food-detail-empty {
+  margin: 24px 0 16px;
+  font-size: 14px;
+  color: var(--wx-text-secondary);
+  text-align: center;
+}
+
+.food-detail-back-btn {
+  display: block;
+  margin: 0 auto;
+  padding: 10px 24px;
+  font-size: 15px;
+  color: var(--wx-green);
+  background: transparent;
+  border: 1px solid var(--wx-green);
+  border-radius: 8px;
+}
+
+.food-detail-back-btn:hover {
+  background: rgba(7, 193, 96, 0.08);
+}
+
+/* 去点评、收藏 */
+.food-detail-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.food-detail-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px 20px;
+  font-size: 16px;
+  font-weight: 500;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.food-detail-btn-review {
+  background: var(--wx-green);
+  color: #fff;
+}
+
+.food-detail-btn-review:hover {
+  background: var(--wx-green-dark);
+}
+
+.food-detail-btn-fav {
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--wx-text);
+  border: 1px solid var(--wx-border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.food-detail-btn-fav:hover {
+  background: var(--wx-bar-bg);
+}
+
+.food-detail-btn-fav.is-favorited {
+  border-color: #e64340;
+  color: #e64340;
+}
+
+.food-detail-btn-fav.is-favorited:hover {
+  background: rgba(230, 67, 64, 0.06);
+}
+
+.food-detail-btn-fav-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* 点评区：含评级、图片、点赞、回复；一级可点赞，二级仅展示无点赞 */
+.food-detail-reviews {
+  margin-top: 24px;
+  padding-bottom: 80px;
+}
+
+.food-detail-reviews-title {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--wx-text);
+}
+
+.food-detail-reviews-empty {
+  margin: 12px 0 0;
+  font-size: 14px;
+  color: var(--wx-text-secondary);
+}
+
+.food-detail-review-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.food-detail-review {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.food-detail-review-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.food-detail-review-user {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--wx-text);
+}
+
+.food-detail-review-rating {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(7, 193, 96, 0.12);
+  color: var(--wx-green);
+  font-weight: 500;
+}
+
+.food-detail-review-content {
+  margin: 0 0 10px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--wx-text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* 点评图片（买家秀） */
+.food-detail-review-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.food-detail-review-image-wrap {
+  display: block;
+  width: 72px;
+  height: 72px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--wx-bar-bg);
+}
+
+.food-detail-review-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.food-detail-review-image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--wx-text-secondary);
+}
+
+.food-detail-review-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--wx-text-secondary);
+}
+
+.food-detail-review-like {
+  padding: 4px 10px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.06);
+  font-size: 12px;
+  color: var(--wx-text-secondary);
+  cursor: pointer;
+}
+
+.food-detail-review-like:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.food-detail-review-like.is-liked {
+  background: rgba(7, 193, 96, 0.15);
+  color: var(--wx-green);
+}
+
+.food-detail-review-reply-btn {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--wx-green);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.food-detail-review-reply-btn:hover {
+  text-decoration: underline;
+}
+
+/* 二级评论（仅展示，无点赞） */
+.food-detail-reply-list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0 0 0 12px;
+  border-left: 2px solid var(--wx-border);
+}
+
+.food-detail-reply {
+  margin-bottom: 8px;
+}
+
+.food-detail-reply-content {
+  margin: 0 0 4px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--wx-text);
+}
+
+.food-detail-reply-user {
+  color: var(--wx-text-secondary);
+  font-weight: 500;
+}
+
+/* 底部回复框（发布二级评论） */
+.food-detail-form {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(50px + var(--safe-bottom, 0px));
+  padding: 8px 12px;
+  padding-bottom: calc(8px + var(--safe-bottom, 0px));
+  background: var(--wx-bar-bg);
+  border-top: 1px solid var(--wx-border);
+  z-index: 50;
+}
+
+.food-detail-replying {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: var(--wx-text-secondary);
+}
+
+.food-detail-replying button {
+  padding: 2px 8px;
+  border: none;
+  background: none;
+  color: var(--wx-green);
+  cursor: pointer;
+}
+
+.food-detail-form-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.food-detail-input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid var(--wx-border);
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fff;
+  color: var(--wx-text);
+}
+
+.food-detail-input:disabled {
+  background: var(--wx-bar-bg);
+  color: var(--wx-text-secondary);
+}
+
+.food-detail-input::placeholder {
+  color: var(--wx-text-secondary);
+}
+
+.food-detail-send {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background: var(--wx-green);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.food-detail-send:disabled {
+  background: var(--wx-text-secondary);
+  cursor: not-allowed;
+  opacity: 0.7;
+}

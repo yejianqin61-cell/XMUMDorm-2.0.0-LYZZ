@@ -1,0 +1,22 @@
+/* 基础卡片：食堂/商家/菜品卡片共用样式 */
+.card {
+  display: block;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.2s;
+}
+
+.card:hover {
+  background: var(--wx-bar-bg);
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--wx-green);
+  outline-offset: 2px;
+}
