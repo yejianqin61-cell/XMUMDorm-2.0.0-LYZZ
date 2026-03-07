@@ -14,6 +14,14 @@ import MyPosts from './pages/MyPosts';
 import MyReviews from './pages/MyReviews';
 import ProfileEdit from './pages/ProfileEdit';
 import Mailbox from './pages/Mailbox';
+import CanteenArea from './pages/CanteenArea';
+import MerchantList from './pages/MerchantList';
+import FoodList from './pages/FoodList';
+import FoodDetail from './pages/FoodDetail';
+import StoreCreate from './pages/StoreCreate';
+import FoodManage from './pages/FoodManage';
+import FoodCreate from './pages/FoodCreate';
+import MerchantFoodDetail from './pages/MerchantFoodDetail';
 import './App.css';
 
 function App() {
@@ -34,13 +42,20 @@ function App() {
             <Route index element={<TreeHole />} />
             <Route path="post/new" element={<PostNew />} />
             <Route path="post/:id" element={<PostDetail />} />
-            <Route path="eat" element={<Eat />} />
             <Route path="about" element={<AboutUs />} />
             <Route path="myzone" element={<MyZone />} />
             <Route path="myzone/posts" element={<MyPosts />} />
             <Route path="myzone/reviews" element={<MyReviews />} />
             <Route path="myzone/profile" element={<ProfileEdit />} />
             <Route path="mailbox" element={<Mailbox />} />
+            <Route path="eat" element={<CanteenArea />} />
+            <Route path="eat/:area" element={<MerchantList />} />
+            <Route path="eat/merchant/:id" element={<FoodList />} />
+            <Route path="eat/food/:id" element={<FoodDetail />} />
+            <Route path="merchant/create" element={<StoreCreate />} />
+            <Route path="merchant/manage" element={<FoodManage />} />
+            <Route path="merchant/food/new" element={<FoodCreate />} />
+            <Route path="merchant/food/:id" element={<MerchantFoodDetail />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
