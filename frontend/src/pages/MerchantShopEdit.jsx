@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Toast } from '../context/ToastContext';
 import { getShopMe, updateShop } from '../api/canteen';
 import { getUploadUrl } from '../api/config';
 import './MerchantShopEdit.css';
@@ -30,7 +31,7 @@ function MerchantShopEdit() {
           navigate('/merchant/create', { replace: true });
           return;
         }
-        setError(err.message || '加载失败');
+        setError(getApiErrorMessage(err));
       })
       .finally(() => setLoading(false));
   }, [navigate]);
@@ -46,7 +47,7 @@ function MerchantShopEdit() {
     e.preventDefault();
     const nameTrim = name.trim();
     if (!nameTrim) {
-      setError('请填写店铺名称');
+      Toast.error('请填写店铺名称');
       return;
     }
     if (!shop?.id) return;
@@ -58,9 +59,10 @@ function MerchantShopEdit() {
         opening_hours: openingHours.trim() || undefined,
         logoFile: logoFile || undefined,
       });
+      Toast.success('已保存');
       navigate('/merchant/manage', { replace: true });
     } catch (err) {
-      setError(err.message || '保存失败');
+      Toast.error(getApiErrorMessage(err));
     } finally {
       setSubmitting(false);
     }

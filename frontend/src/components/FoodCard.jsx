@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Card from './Card';
+import ImagePreview from './ImagePreview';
 import './Card.css';
 import './FoodCard.css';
 
@@ -14,18 +16,31 @@ import './FoodCard.css';
 function FoodCard({ food, mode = 'user', onDelete }) {
   const { id, name, price, image, description } = food;
   const priceStr = typeof price === 'number' ? price.toFixed(2) : String(price ?? '—');
+  const [imagePreviewOpen, setImagePreviewOpen] = useState(false);
+
+  const imageBlock = image ? (
+    <button
+      type="button"
+      className="food-card-image-wrap food-card-image-wrap-clickable"
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setImagePreviewOpen(true);
+      }}
+    >
+      <img src={image} alt="" className="food-card-image" />
+    </button>
+  ) : (
+    <div className="food-card-image-wrap">
+      <div className="food-card-image food-card-image-default" aria-hidden>
+        Food
+      </div>
+    </div>
+  );
 
   const content = (
     <>
-      <div className="food-card-image-wrap">
-        {image ? (
-          <img src={image} alt="" className="food-card-image" />
-        ) : (
-          <div className="food-card-image food-card-image-default" aria-hidden>
-            Food
-          </div>
-        )}
-      </div>
+      {imageBlock}
       <div className="food-card-body">
         <span className="food-card-name">{name}</span>
         <span className="food-card-price">RM {priceStr}</span>
@@ -61,20 +76,28 @@ function FoodCard({ food, mode = 'user', onDelete }) {
         <Card as="div" className="food-card">
           {content}
         </Card>
+        {imagePreviewOpen && image && (
+          <ImagePreview urls={[image]} initialIndex={0} onClose={() => setImagePreviewOpen(false)} />
+        )}
       </div>
     );
   }
 
   return (
-    <Link
-      to={`/eat/food/${id}`}
-      className="food-card-wrap"
-      aria-label={`查看菜品 ${name}`}
-    >
-      <Card as="div" className="food-card">
-        {content}
-      </Card>
-    </Link>
+    <>
+      <Link
+        to={`/eat/food/${id}`}
+        className="food-card-wrap"
+        aria-label={`查看菜品 ${name}`}
+      >
+        <Card as="div" className="food-card">
+          {content}
+        </Card>
+      </Link>
+      {imagePreviewOpen && image && (
+        <ImagePreview urls={[image]} initialIndex={0} onClose={() => setImagePreviewOpen(false)} />
+      )}
+    </>
   );
 }
 

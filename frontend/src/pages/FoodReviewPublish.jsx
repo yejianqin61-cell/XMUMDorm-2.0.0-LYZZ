@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Toast } from '../context/ToastContext';
+import EmptyState from '../components/EmptyState';
 import { getProduct, postProductComment } from '../api/canteen';
+import { getApiErrorMessage } from '../utils/apiError';
 import './FoodReviewPublish.css';
 
 /** 评级选项：与后端 RATING_ENUM 一致 */
@@ -25,8 +28,6 @@ function FoodReviewPublish() {
   const [imageFiles, setImageFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
   const [submitLoading, setSubmitLoading] = useState(false);
-  const [message, setMessage] = useState({ type: '', text: '' });
-
   useEffect(() => {
     const productId = id ? parseInt(id, 10) : 0;
     if (!productId) {
@@ -43,18 +44,13 @@ function FoodReviewPublish() {
         setFood({ id: data.id, name: data.name });
       })
       .catch((err) => {
-        if (!cancelled) setError(err.message || '加载失败');
+        if (!cancelled) setError(getApiErrorMessage(err));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
   }, [id]);
-
-  const showMsg = (text, type = 'success') => {
-    setMessage({ text, type });
-    setTimeout(() => setMessage({ type: '', text: '' }), 2000);
-  };
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files || []).slice(0, 3 - imageFiles.length);
@@ -73,26 +69,23 @@ function FoodReviewPublish() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (rating == null || rating === '') {
-      setMessage({ text: '请选择评级 Please select a rating', type: 'error' });
-      setTimeout(() => setMessage({ type: '', text: '' }), 2000);
+      Toast.error('请选择评级 Please select a rating');
       return;
     }
     if (!comment.trim()) {
-      setMessage({ text: '请填写评论 Please write a review', type: 'error' });
-      setTimeout(() => setMessage({ type: '', text: '' }), 2000);
+      Toast.error('请填写评论 Please write a review');
       return;
     }
     const productId = id ? parseInt(id, 10) : 0;
     if (!productId) return;
     setSubmitLoading(true);
-    setMessage({ type: '', text: '' });
     postProductComment(productId, { rating, content: comment.trim(), imageFiles })
       .then(() => {
-        showMsg('点评已发布 Review published');
+        Toast.success('点评已发布 Review published');
         setTimeout(() => navigate(`/eat/food/${id}`, { replace: true }), 600);
       })
       .catch((err) => {
-        setMessage({ text: err.message || '发布失败', type: 'error' });
+        Toast.error(getApiErrorMessage(err));
       })
       .finally(() => {
         setSubmitLoading(false);
@@ -121,10 +114,12 @@ function FoodReviewPublish() {
   if (!food) {
     return (
       <div className="food-review-publish-page">
-        <p className="food-review-publish-empty state-empty">菜品不存在 Food not found</p>
-        <button type="button" className="food-review-publish-back" onClick={() => navigate(-1)}>
-          返回 Back
-        </button>
+        <EmptyState
+          title="菜品不存在"
+          description="Food not found"
+          actionLabel="返回"
+          onActionClick={() => navigate(-1)}
+        />
       </div>
     );
   }
@@ -199,11 +194,6 @@ function FoodReviewPublish() {
           </div>
         </div>
 
-        {message.text && (
-          <p className={`food-review-publish-message food-review-publish-message-${message.type}`}>
-            {message.text}
-          </p>
-        )}
 
         <button type="submit" className="food-review-publish-submit" disabled={submitLoading}>
           {submitLoading ? '发布中…' : '发布点评 Publish Review'}

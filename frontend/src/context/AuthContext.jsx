@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { API_BASE_URL } from '../api/config';
 import { getMe } from '../api/users';
+import { getApiErrorMessage } from '../utils/apiError';
 
 const STORAGE_TOKEN = 'token';
 const STORAGE_USER = 'user';
@@ -57,7 +58,7 @@ export function AuthProvider({ children }) {
         return u;
       })
       .catch((err) => {
-        setUserError(err.message || '获取用户信息失败');
+        setUserError(getApiErrorMessage(err));
         throw err;
       })
       .finally(() => setUserLoading(false));
@@ -102,7 +103,7 @@ export function AuthProvider({ children }) {
       setUser(data.data || null);
       return { success: true };
     }
-    return { success: false, message: data.message || '登录失败，请检查邮箱/用户名和密码' };
+    return { success: false, message: getApiErrorMessage() };
   }, []);
 
   const logout = useCallback(() => {

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getMyProductReviews } from '../api/canteen';
+import { getApiErrorMessage } from '../utils/apiError';
 import ReviewCard from '../components/ReviewCard';
+import EmptyState from '../components/EmptyState';
 import './MyReviews.css';
 
 /** 我的点评列表：展示当前用户对商品的一级点评，复用卡片样式，接 API */
@@ -25,7 +27,7 @@ function MyReviews() {
         if (!cancelled) setList(data?.list ?? []);
       })
       .catch((err) => {
-        if (!cancelled) setError(err.message || '加载失败');
+        if (!cancelled) setError(getApiErrorMessage(err));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -36,7 +38,12 @@ function MyReviews() {
   if (!token) {
     return (
       <div className="myreviews-page">
-        <p className="myreviews-empty state-empty">请先登录后查看我的点评。Please log in to view your reviews.</p>
+        <EmptyState
+          title="请先登录"
+          description="登录后查看我的点评。Please log in to view your reviews."
+          actionLabel="去登录"
+          actionTo="/login"
+        />
       </div>
     );
   }
@@ -60,7 +67,12 @@ function MyReviews() {
   if (list.length === 0) {
     return (
       <div className="myreviews-page">
-        <p className="myreviews-empty state-empty">暂无点评，去食堂给喜欢的菜品写一条吧。No reviews yet. Go write one!</p>
+        <EmptyState
+          title="暂无点评"
+          description="去食堂给喜欢的菜品写一条吧。No reviews yet. Go write one!"
+          actionLabel="去食堂"
+          actionTo="/eat"
+        />
       </div>
     );
   }

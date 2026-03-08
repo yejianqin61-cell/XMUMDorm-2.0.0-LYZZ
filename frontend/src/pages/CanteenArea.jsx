@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import AreaCard from '../components/AreaCard';
 import Card from '../components/Card';
 import { getRegions } from '../api/canteen';
+import { getApiErrorMessage } from '../utils/apiError';
 import './CanteenArea.css';
 
 /** 食堂分区页：排行榜入口 + 分区入口（来自 API regions） */
@@ -18,7 +19,7 @@ function CanteenArea() {
         if (!cancelled) setRegions(Array.isArray(data) ? data : []);
       })
       .catch((err) => {
-        if (!cancelled) setError(err.message || '加载失败');
+        if (!cancelled) setError(getApiErrorMessage(err));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

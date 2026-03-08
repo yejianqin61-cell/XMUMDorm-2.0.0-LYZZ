@@ -67,12 +67,19 @@
   margin: 0 0 10px;
 }
 
+.post-card-image-wrap {
+  display: block;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
 .post-card-image {
   width: 72px;
   height: 72px;
   object-fit: cover;
   border-radius: 8px;
   background: var(--wx-bar-bg);
+  display: block;
 }
 
 .post-card-meta {

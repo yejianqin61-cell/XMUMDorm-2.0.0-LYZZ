@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { updateAvatar } from '../api/users';
+import { getApiErrorMessage } from '../utils/apiError';
 import './ProfileEdit.css';
 
 /** 修改个人信息：头像（调 API）、用户名（本地保存，后端暂无昵称接口） */
@@ -36,7 +37,7 @@ function ProfileEdit() {
       setAvatarUrl(URL.createObjectURL(file));
       showMsg('头像已更新 Avatar updated');
     } catch (err) {
-      showMsg(err.message || '头像上传失败', 'error');
+      showMsg(getApiErrorMessage(err), 'error');
     } finally {
       setAvatarLoading(false);
     }

@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getProfile } from '../api/users';
 import PostCard from '../components/PostCard';
+import EmptyState from '../components/EmptyState';
 import { API_BASE_URL } from '../api/config';
+import { getApiErrorMessage } from '../utils/apiError';
 import './MyPosts.css';
 
 /** 我的帖子列表：从 GET /api/users/:id/profile 获取当前用户的帖子 */
@@ -43,7 +45,7 @@ function MyPosts() {
         setList(posts);
       })
       .catch((err) => {
-        if (!cancelled) setError(err.message || '加载失败');
+        if (!cancelled) setError(getApiErrorMessage(err));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -54,7 +56,12 @@ function MyPosts() {
   if (!isLoggedIn) {
     return (
       <div className="myposts-page">
-        <p className="myposts-empty state-empty">请先登录后查看我的帖子。Please log in to view your posts.</p>
+        <EmptyState
+          title="请先登录"
+          description="登录后查看我的帖子。Please log in to view your posts."
+          actionLabel="去登录"
+          actionTo="/login"
+        />
       </div>
     );
   }
@@ -78,7 +85,12 @@ function MyPosts() {
   if (list.length === 0) {
     return (
       <div className="myposts-page">
-        <p className="myposts-empty state-empty">暂无帖子，去首页发一条吧 No posts yet. Post one on the home feed.</p>
+        <EmptyState
+          title="暂无帖子"
+          description="去发布第一条吧"
+          actionLabel="去发布第一条吧 →"
+          actionTo="/post/new"
+        />
       </div>
     );
   }

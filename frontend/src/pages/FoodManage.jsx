@@ -1,6 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import FoodCard from '../components/FoodCard';
+import SkeletonFood from '../components/SkeletonFood';
+import EmptyState from '../components/EmptyState';
+import { Toast } from '../context/ToastContext';
+import { getApiErrorMessage } from '../utils/apiError';
 import { getShopMe, getProducts, deleteProduct, createCategory } from '../api/canteen';
 import { getUploadUrl } from '../api/config';
 import './FoodManage.css';
@@ -53,7 +57,7 @@ function FoodManage() {
           setShop(null);
           setFoods([]);
         } else {
-          setError(err.message || '加载失败');
+          setError(getApiErrorMessage(err));
           setShop(null);
           setFoods([]);
         }
@@ -70,9 +74,12 @@ function FoodManage() {
   const handleDelete = (food) => {
     if (!window.confirm(`确定删除 "${food.name}" 吗？ Delete this dish?`)) return;
     deleteProduct(food.id)
-      .then(() => load())
+      .then(() => {
+        Toast.success('已删除');
+        load();
+      })
       .catch((err) => {
-        setError(err.message || '删除失败');
+        Toast.error(err.message || '删除失败');
       });
   };
 
@@ -86,14 +93,20 @@ function FoodManage() {
         setNewCategoryName('');
         setShowNewCategory(false);
       })
-      .catch((err) => setError(err.message || '创建分类失败'))
+      .catch((err) => Toast.error(getApiErrorMessage(err)))
       .finally(() => setCategorySubmitting(false));
   };
 
   if (loading && !shop) {
     return (
       <div className="food-manage-page">
-        <p className="food-manage-loading state-loading">加载中…</p>
+        <ul className="food-manage-list" aria-hidden>
+          {[1, 2, 3, 4, 5].map((i) => (
+            <li key={i}>
+              <SkeletonFood />
+            </li>
+          ))}
+        </ul>
       </div>
     );
   }
@@ -110,10 +123,12 @@ function FoodManage() {
   if (!shop) {
     return (
       <div className="food-manage-page">
-        <p className="food-manage-empty state-empty">您尚未创建店铺，请先创建店铺。No shop yet. Create one first.</p>
-        <button type="button" className="food-manage-back" onClick={() => navigate('/merchant/create')}>
-          去创建 Go Create
-        </button>
+        <EmptyState
+          title="您尚未创建店铺"
+          description="请先创建店铺。No shop yet. Create one first."
+          actionLabel="去创建 Go Create"
+          actionTo="/merchant/create"
+        />
       </div>
     );
   }
@@ -158,9 +173,10 @@ function FoodManage() {
       )}
 
       {foods.length === 0 ? (
-        <p className="food-manage-empty state-empty">
-          暂无菜品，点击上方发布 No dishes yet. Publish one above.
-        </p>
+        <EmptyState
+          title="暂无菜品"
+          description="点击上方「发布菜品」发布第一个商品。No dishes yet. Publish one above."
+        />
       ) : (
         <ul className="food-manage-list" aria-label="菜品列表">
           {foods.map((food) => (

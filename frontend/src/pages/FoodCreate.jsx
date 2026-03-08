@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FoodForm from '../components/FoodForm';
+import { Toast } from '../context/ToastContext';
 import { getShopMe, createProduct } from '../api/canteen';
+import { getApiErrorMessage } from '../utils/apiError';
 import './FoodCreate.css';
 
 /** 菜品发布页：商家端，getShopMe 取分类，createProduct 提交，成功后跳转菜品管理 */
@@ -19,7 +21,7 @@ function FoodCreate() {
         setCategories(Array.isArray(cats) ? cats : []);
       })
       .catch((err) => {
-        setError(err.message || '加载失败');
+        setError(getApiErrorMessage(err));
       })
       .finally(() => {
         setLoading(false);
@@ -29,7 +31,7 @@ function FoodCreate() {
   const handleSubmit = (values) => {
     const categoryId = values.categoryId != null ? values.categoryId : categories[0]?.id;
     if (!categoryId) {
-      setError('请先创建分类或选择分类');
+      Toast.error('请先创建分类或选择分类');
       return;
     }
     setError(null);
@@ -43,10 +45,11 @@ function FoodCreate() {
       images,
     })
       .then(() => {
+        Toast.success('商品已创建');
         navigate('/merchant/manage', { replace: true });
       })
       .catch((err) => {
-        setError(err.message || '发布失败');
+        Toast.error(getApiErrorMessage(err));
       })
       .finally(() => {
         setSubmitLoading(false);
@@ -81,8 +84,8 @@ function FoodCreate() {
         categories={categories}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
+        loading={submitLoading}
       />
-      {submitLoading && <p className="food-create-loading">提交中…</p>}
     </div>
   );
 }

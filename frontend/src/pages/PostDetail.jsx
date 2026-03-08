@@ -9,7 +9,11 @@ import {
   deletePost,
 } from '../api/posts';
 import { API_BASE_URL } from '../api/config';
+import { Toast } from '../context/ToastContext';
+import EmptyState from '../components/EmptyState';
+import ImagePreview from '../components/ImagePreview';
 import { formatPostTime } from '../utils/formatTime';
+import { getApiErrorMessage } from '../utils/apiError';
 import './PostDetail.css';
 
 function prefixAvatar(url) {
@@ -36,6 +40,7 @@ function PostDetail() {
   const [replyingTo, setReplyingTo] = useState(null);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [imagePreview, setImagePreview] = useState({ open: false, index: 0 });
 
   const requireLogin = useCallback(() => {
     if (!isLoggedIn) {
@@ -75,7 +80,7 @@ function PostDetail() {
         })));
       })
       .catch((err) => {
-        if (!cancelled) setError(err.message || '加载失败');
+        if (!cancelled) setError(getApiErrorMessage(err));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -103,6 +108,7 @@ function PostDetail() {
         parent_id: replyingTo?.id ?? undefined,
       });
       setError(null);
+      Toast.success('评论成功');
       const list = await getPostComments(postId);
       setComments(Array.isArray(list) ? list.map((c) => ({
         ...c,
@@ -115,7 +121,7 @@ function PostDetail() {
       setNewComment('');
       setReplyingTo(null);
     } catch (err) {
-      setError(err.message || '评论失败');
+      Toast.error(getApiErrorMessage(err));
     } finally {
       setSubmitLoading(false);
     }
@@ -130,9 +136,10 @@ function PostDetail() {
     setDeleteLoading(true);
     try {
       await deletePost(postId);
+      Toast.success('已删除');
       navigate('/', { replace: true });
     } catch (err) {
-      setError(err.message || '删除失败');
+      Toast.error(getApiErrorMessage(err));
     } finally {
       setDeleteLoading(false);
     }
@@ -158,8 +165,12 @@ function PostDetail() {
   if (!post) {
     return (
       <div className="post-detail-page">
-        <p className="post-detail-empty state-empty">帖子不存在 Post not found</p>
-        <button type="button" onClick={() => navigate('/')}>返回首页 Back to Home</button>
+        <EmptyState
+          title="帖子不存在"
+          description="Post not found"
+          actionLabel="返回首页"
+          onActionClick={() => navigate('/')}
+        />
       </div>
     );
   }
@@ -205,14 +216,27 @@ function PostDetail() {
         {post.images && post.images.length > 0 && (
           <div className="post-detail-images" aria-label="帖子图片">
             {post.images.map((img, i) => (
-              <img
+              <button
                 key={img.url || i}
-                src={prefixImageUrl(img.url)}
-                alt=""
-                className="post-detail-image"
-              />
+                type="button"
+                className="post-detail-image-wrap"
+                onClick={() => setImagePreview({ open: true, index: i })}
+              >
+                <img
+                  src={prefixImageUrl(img.url)}
+                  alt=""
+                  className="post-detail-image"
+                />
+              </button>
             ))}
           </div>
+        )}
+        {imagePreview.open && post.images?.length > 0 && (
+          <ImagePreview
+            urls={post.images.map((img) => prefixImageUrl(img.url))}
+            initialIndex={imagePreview.index}
+            onClose={() => setImagePreview({ open: false, index: 0 })}
+          />
         )}
         <div className="post-detail-actions">
           <button

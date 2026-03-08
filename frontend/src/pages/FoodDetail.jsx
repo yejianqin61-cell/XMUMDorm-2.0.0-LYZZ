@@ -2,7 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import FoodDetailView from '../components/FoodDetailView';
+import EmptyState from '../components/EmptyState';
+import ImagePreview from '../components/ImagePreview';
 import { getProduct, getProductComments, postProductComment } from '../api/canteen';
+import { getApiErrorMessage } from '../utils/apiError';
 import { RATING_LABELS } from '../constants/rating';
 import { getUploadUrl } from '../api/config';
 import './FoodDetail.css';
@@ -37,6 +40,7 @@ function FoodDetail() {
   const [submitLoading, setSubmitLoading] = useState(false);
   const [likedReviewIds, setLikedReviewIds] = useState(new Set());
   const [reviewLikeCounts, setReviewLikeCounts] = useState({});
+  const [imagePreviewOpen, setImagePreviewOpen] = useState(false);
 
   useEffect(() => {
     const productId = id ? parseInt(id, 10) : 0;
@@ -81,7 +85,7 @@ function FoodDetail() {
         setReviews(mapCommentsToReviews(list));
       })
       .catch((err) => {
-        setReviewError(err.message || '加载点评失败');
+        setReviewError(getApiErrorMessage(err));
       })
       .finally(() => {
         setReviewsLoading(false);
@@ -122,10 +126,12 @@ function FoodDetail() {
   if (!food) {
     return (
       <div className="food-detail-page">
-        <p className="food-detail-empty state-empty">菜品不存在 Food not found</p>
-        <button type="button" className="food-detail-back-btn" onClick={() => navigate(-1)}>
-          返回 Back
-        </button>
+        <EmptyState
+          title="菜品不存在"
+          description="Food not found"
+          actionLabel="返回"
+          onActionClick={() => navigate(-1)}
+        />
       </div>
     );
   }
@@ -166,7 +172,7 @@ function FoodDetail() {
         return loadReviews();
       })
       .catch((err) => {
-        setReviewError(err.message || '回复失败');
+        setReviewError(getApiErrorMessage(err));
       })
       .finally(() => {
         setSubmitLoading(false);
@@ -177,7 +183,17 @@ function FoodDetail() {
 
   return (
     <div className="food-detail-page">
-      <FoodDetailView food={food} />
+      <FoodDetailView
+        food={food}
+        onImageClick={food?.image ? () => setImagePreviewOpen(true) : undefined}
+      />
+      {imagePreviewOpen && food?.image && (
+        <ImagePreview
+          urls={[food.image]}
+          initialIndex={0}
+          onClose={() => setImagePreviewOpen(false)}
+        />
+      )}
       <div className="food-detail-actions">
         <button
           type="button"
@@ -205,7 +221,12 @@ function FoodDetail() {
         {reviewsLoading ? (
           <p className="food-detail-reviews-loading state-loading">加载点评中…</p>
         ) : totalReviews === 0 ? (
-          <p className="food-detail-reviews-empty state-empty">暂无点评，快来第一条吧 No reviews yet.</p>
+          <EmptyState
+            title="暂无点评"
+            description="快来第一条吧 No reviews yet."
+            actionLabel="去点评"
+            onActionClick={handleReview}
+          />
         ) : (
           <ul className="food-detail-review-list">
             {reviews.map((r) => (

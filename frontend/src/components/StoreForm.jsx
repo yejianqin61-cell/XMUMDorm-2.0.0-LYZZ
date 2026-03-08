@@ -7,8 +7,9 @@ import './StoreForm.css';
  * @param {Object} [props.initialValues] 编辑时预填 { name, region_id, description, logo }
  * @param {Function} props.onSubmit(values) values: { name, region_id, description?, logoUrl? }
  * @param {Function} props.onCancel
+ * @param {boolean} [props.loading] 提交中时为 true，按钮禁用并显示「提交中…」
  */
-function StoreForm({ initialValues, onSubmit, onCancel }) {
+function StoreForm({ initialValues, onSubmit, onCancel, loading = false }) {
   const [regions, setRegions] = useState([]);
   const [name, setName] = useState(initialValues?.name ?? '');
   const [regionId, setRegionId] = useState(initialValues?.region_id ?? '');
@@ -127,10 +128,10 @@ function StoreForm({ initialValues, onSubmit, onCancel }) {
       )}
 
       <div className="store-form-actions">
-        <button type="submit" className="store-form-btn store-form-btn-primary">
-          {initialValues ? '保存 Save' : '创建 Create'}
+        <button type="submit" className="store-form-btn store-form-btn-primary" disabled={loading}>
+          {loading ? (initialValues ? '保存中…' : '提交中…') : (initialValues ? '保存 Save' : '创建 Create')}
         </button>
-        <button type="button" className="store-form-btn store-form-btn-secondary" onClick={onCancel}>
+        <button type="button" className="store-form-btn store-form-btn-secondary" onClick={onCancel} disabled={loading}>
           取消 Cancel
         </button>
       </div>

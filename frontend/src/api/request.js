@@ -63,7 +63,9 @@ export async function request(path, options = {}) {
     const message = isHtml
       ? `请求异常 ${res.status}，请检查网络或后端是否启动（若用手机访问请确保与电脑同一局域网且已配置代理）`
       : (text || `请求失败 ${res.status}`);
-    throw new Error(message);
+    const err = new Error(message);
+    err.status = res.status;
+    throw err;
   }
 
   if (data.status !== 0 && data.status !== undefined) {

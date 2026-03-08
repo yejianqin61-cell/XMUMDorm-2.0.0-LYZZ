@@ -111,6 +111,16 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.post-detail-image-wrap {
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: block;
+  border-radius: 8px;
+  overflow: hidden;
   margin: 0 0 12px;
 }
 

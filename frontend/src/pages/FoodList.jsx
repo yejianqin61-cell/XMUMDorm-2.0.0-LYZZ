@@ -3,7 +3,10 @@ import { useParams } from 'react-router-dom';
 import MerchantHeader from '../components/MerchantHeader';
 import CategorySidebar from '../components/CategorySidebar';
 import CategorySection from '../components/CategorySection';
+import SkeletonFood from '../components/SkeletonFood';
+import EmptyState from '../components/EmptyState';
 import { getShop, getCategories, getProducts } from '../api/canteen';
+import { getApiErrorMessage } from '../utils/apiError';
 import { getUploadUrl } from '../api/config';
 import './FoodList.css';
 
@@ -72,7 +75,7 @@ function FoodList() {
         if (activeId === null && cats.length > 0) setActiveId(cats[0].id);
       })
       .catch((err) => {
-        if (!cancelled) setError(err.message || '加载失败');
+        if (!cancelled) setError(getApiErrorMessage(err));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -89,7 +92,18 @@ function FoodList() {
   if (loading) {
     return (
       <div className="food-list-page">
-        <p className="food-list-loading state-loading">加载中…</p>
+        <div className="food-list-layout">
+          <div className="food-list-sidebar-skeleton" aria-hidden />
+          <div className="food-list-main">
+            <ul className="category-section-list" aria-hidden>
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <li key={i}>
+                  <SkeletonFood />
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
       </div>
     );
   }
@@ -105,7 +119,7 @@ function FoodList() {
   if (!merchant) {
     return (
       <div className="food-list-page">
-        <p className="food-list-empty state-empty">商家不存在</p>
+        <EmptyState title="商家不存在" description="该商家可能已下架或不存在。" />
       </div>
     );
   }
@@ -114,7 +128,10 @@ function FoodList() {
     return (
       <div className="food-list-page">
         <MerchantHeader merchant={merchant} />
-        <p className="food-list-empty state-empty">暂无菜品 No dishes yet.</p>
+        <EmptyState
+          title="暂无商品"
+          description="商家还没发布商品。No dishes yet."
+        />
       </div>
     );
   }

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Toast } from '../context/ToastContext';
 import './FoodForm.css';
 
 /**
@@ -8,8 +9,9 @@ import './FoodForm.css';
  * @param {Object} [props.initialValues] 编辑时预填 { name, price, categoryId?, image, description }
  * @param {Function} props.onSubmit(values) values: { name, price?, categoryId?, imageUrl?, imageFile?, description }
  * @param {Function} props.onCancel
+ * @param {boolean} [props.loading] 提交中时为 true，按钮禁用并显示「发布中…」/「保存中…」
  */
-function FoodForm({ categories = [], skipPrice = false, initialValues, onSubmit, onCancel }) {
+function FoodForm({ categories = [], skipPrice = false, initialValues, onSubmit, onCancel, loading = false }) {
   const [name, setName] = useState(initialValues?.name ?? '');
   const [price, setPrice] = useState(
     initialValues?.price != null ? String(initialValues.price) : ''
@@ -20,12 +22,6 @@ function FoodForm({ categories = [], skipPrice = false, initialValues, onSubmit,
   const [imageUrl, setImageUrl] = useState(initialValues?.image ?? '');
   const [imageFile, setImageFile] = useState(null);
   const [description, setDescription] = useState(initialValues?.description ?? '');
-  const [message, setMessage] = useState({ type: '', text: '' });
-
-  const showMsg = (text, type = 'success') => {
-    setMessage({ text, type });
-    setTimeout(() => setMessage({ type: '', text: '' }), 2000);
-  };
 
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
@@ -39,8 +35,7 @@ function FoodForm({ categories = [], skipPrice = false, initialValues, onSubmit,
     e.preventDefault();
     const nameTrim = name.trim();
     if (!nameTrim) {
-      setMessage({ text: '请输入菜品名称 Please enter food name', type: 'error' });
-      setTimeout(() => setMessage({ type: '', text: '' }), 2000);
+      Toast.error('请输入菜品名称 Please enter food name');
       return;
     }
     const out = {
@@ -56,21 +51,18 @@ function FoodForm({ categories = [], skipPrice = false, initialValues, onSubmit,
       } else {
         const priceNum = parseFloat(price);
         if (Number.isNaN(priceNum) || priceNum < 0) {
-          setMessage({ text: '请输入有效价格 Please enter a valid price', type: 'error' });
-          setTimeout(() => setMessage({ type: '', text: '' }), 2000);
+          Toast.error('请输入有效价格 Please enter a valid price');
           return;
         }
         out.price = priceNum;
       }
       if (out.price === null && !initialValues) {
-        setMessage({ text: '请输入有效价格 Please enter a valid price', type: 'error' });
-        setTimeout(() => setMessage({ type: '', text: '' }), 2000);
+        Toast.error('请输入有效价格 Please enter a valid price');
         return;
       }
     }
     if (categories.length > 0 && categoryId) out.categoryId = Number(categoryId) || categoryId;
     onSubmit(out);
-    showMsg(initialValues ? '已保存 Saved' : '发布成功 Published');
   };
 
   return (
@@ -155,17 +147,11 @@ function FoodForm({ categories = [], skipPrice = false, initialValues, onSubmit,
         />
       </div>
 
-      {message.text && (
-        <p className={`food-form-message food-form-message-${message.type}`}>
-          {message.text}
-        </p>
-      )}
-
       <div className="food-form-actions">
-        <button type="submit" className="food-form-btn food-form-btn-primary">
-          {initialValues ? '保存 Save' : '发布 Publish'}
+        <button type="submit" className="food-form-btn food-form-btn-primary" disabled={loading}>
+          {loading ? (initialValues ? '保存中…' : '发布中…') : (initialValues ? '保存 Save' : '发布 Publish')}
         </button>
-        <button type="button" className="food-form-btn food-form-btn-secondary" onClick={onCancel}>
+        <button type="button" className="food-form-btn food-form-btn-secondary" onClick={onCancel} disabled={loading}>
           取消 Cancel
         </button>
       </div>

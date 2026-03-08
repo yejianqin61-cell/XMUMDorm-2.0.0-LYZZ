@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { API_BASE_URL } from '../api/config';
 import { formatPostTime } from '../utils/formatTime';
+import ImagePreview from './ImagePreview';
 import './PostCard.css';
 
 /** 兼容 API 与 Mock：author 为对象时用 nickname/username、avatar（需补全 URL） */
@@ -28,38 +30,66 @@ function PostCard({ post }) {
   const commentNum = comment_count ?? commentCount ?? 0;
   const preview = (content || '').length > 50 ? (content || '').slice(0, 50) + '…' : (content || '');
   const timeStr = formatPostTime(post.created_at);
+  const [imagePreview, setImagePreview] = useState({ open: false, index: 0 });
+  const imageUrls = post.images?.length ? post.images.map((img) => prefixImageUrl(img.url)) : [];
 
   return (
-    <Link to={`/post/${id}`} className="post-card" aria-label={`查看帖子 ${preview}`}>
-      <div className="post-card-header">
-        <div className="post-card-avatar-wrap">
-          {author.avatar ? (
-            <img src={author.avatar} alt="" className="post-card-avatar" />
-          ) : (
-            <img src="/default-avatar.svg" alt="" className="post-card-avatar post-card-avatar-default" />
-          )}
+    <>
+      <Link to={`/post/${id}`} className="post-card" aria-label={`查看帖子 ${preview}`}>
+        <div className="post-card-header">
+          <div className="post-card-avatar-wrap">
+            {author.avatar ? (
+              <img src={author.avatar} alt="" className="post-card-avatar" />
+            ) : (
+              <img src="/default-avatar.svg" alt="" className="post-card-avatar post-card-avatar-default" />
+            )}
+          </div>
+          <span className="post-card-username">{author.username}</span>
         </div>
-        <span className="post-card-username">{author.username}</span>
-      </div>
-      <p className="post-card-content">{preview}</p>
-      {post.images && post.images.length > 0 && (
-        <div className="post-card-images" aria-hidden>
-          {post.images.slice(0, 3).map((img, i) => (
-            <img
-              key={img.url || i}
-              src={prefixImageUrl(img.url)}
-              alt=""
-              className="post-card-image"
-            />
-          ))}
+        <p className="post-card-content">{preview}</p>
+        {post.images && post.images.length > 0 && (
+          <div className="post-card-images" aria-hidden>
+            {post.images.slice(0, 3).map((img, i) => (
+              <span
+                key={img.url || i}
+                role="button"
+                tabIndex={0}
+                className="post-card-image-wrap"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setImagePreview({ open: true, index: i });
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setImagePreview({ open: true, index: i });
+                  }
+                }}
+              >
+                <img
+                  src={prefixImageUrl(img.url)}
+                  alt=""
+                  className="post-card-image"
+                />
+              </span>
+            ))}
+          </div>
+        )}
+        <div className="post-card-meta">
+          {timeStr && <span className="post-card-time">{timeStr}</span>}
+          <span className="post-card-stat">♥ {likeNum}</span>
+          <span className="post-card-stat">💬 {commentNum}</span>
         </div>
+      </Link>
+      {imagePreview.open && imageUrls.length > 0 && (
+        <ImagePreview
+          urls={imageUrls}
+          initialIndex={imagePreview.index}
+          onClose={() => setImagePreview({ open: false, index: 0 })}
+        />
       )}
-      <div className="post-card-meta">
-        {timeStr && <span className="post-card-time">{timeStr}</span>}
-        <span className="post-card-stat">♥ {likeNum}</span>
-        <span className="post-card-stat">💬 {commentNum}</span>
-      </div>
-    </Link>
+    </>
   );
 }
 

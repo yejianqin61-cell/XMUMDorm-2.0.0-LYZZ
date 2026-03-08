@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import FoodDetailView from '../components/FoodDetailView';
 import FoodForm from '../components/FoodForm';
+import EmptyState from '../components/EmptyState';
+import { Toast } from '../context/ToastContext';
 import { getProduct, getCategories, updateProduct, deleteProduct } from '../api/canteen';
+import { getApiErrorMessage } from '../utils/apiError';
 import { getUploadUrl } from '../api/config';
 import './MerchantFoodDetail.css';
 
@@ -16,6 +19,7 @@ function MerchantFoodDetail() {
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
+  const [imagePreviewOpen, setImagePreviewOpen] = useState(false);
 
   useEffect(() => {
     const productId = id ? parseInt(id, 10) : 0;
@@ -50,7 +54,7 @@ function MerchantFoodDetail() {
         setCategories(Array.isArray(cats) ? cats : []);
       })
       .catch((err) => {
-        if (!cancelled) setError(err.message || '加载失败');
+        if (!cancelled) setError(getApiErrorMessage(err));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -77,10 +81,11 @@ function MerchantFoodDetail() {
           categoryId: updated?.category_id ?? prev.categoryId,
           price: updated?.price !== undefined ? updated.price : prev.price,
         }));
+        Toast.success('已保存');
         setIsEditing(false);
       })
       .catch((err) => {
-        setError(err.message || '保存失败');
+        Toast.error(err.message || '保存失败');
       })
       .finally(() => {
         setSubmitLoading(false);
@@ -90,8 +95,11 @@ function MerchantFoodDetail() {
   const handleDelete = () => {
     if (!food || !window.confirm(`确定删除 "${food.name}" 吗？ Delete this dish?`)) return;
     deleteProduct(food.id)
-      .then(() => navigate('/merchant/manage', { replace: true }))
-      .catch((err) => setError(err.message || '删除失败'));
+      .then(() => {
+        Toast.success('已删除');
+        navigate('/merchant/manage', { replace: true });
+      })
+      .catch((err) => Toast.error(getApiErrorMessage(err)));
   };
 
   const handleCancelEdit = () => {
@@ -120,10 +128,12 @@ function MerchantFoodDetail() {
   if (!food) {
     return (
       <div className="merchant-food-detail-page">
-        <p className="merchant-food-detail-empty state-empty">菜品不存在 Food not found</p>
-        <button type="button" className="merchant-food-detail-back" onClick={() => navigate(-1)}>
-          返回 Back
-        </button>
+        <EmptyState
+          title="菜品不存在"
+          description="Food not found"
+          actionLabel="返回"
+          onActionClick={() => navigate(-1)}
+        />
       </div>
     );
   }
@@ -143,10 +153,21 @@ function MerchantFoodDetail() {
           }}
           onSubmit={handleSave}
           onCancel={handleCancelEdit}
+          loading={submitLoading}
         />
       ) : (
         <>
-          <FoodDetailView food={food} />
+          <FoodDetailView
+            food={food}
+            onImageClick={food?.image ? () => setImagePreviewOpen(true) : undefined}
+          />
+          {imagePreviewOpen && food?.image && (
+            <ImagePreview
+              urls={[food.image]}
+              initialIndex={0}
+              onClose={() => setImagePreviewOpen(false)}
+            />
+          )}
           <div className="merchant-food-detail-actions">
             <button
               type="button"
@@ -174,7 +195,6 @@ function MerchantFoodDetail() {
           </div>
         </>
       )}
-      {submitLoading && <p className="merchant-food-detail-loading">保存中…</p>}
     </div>
   );
 }

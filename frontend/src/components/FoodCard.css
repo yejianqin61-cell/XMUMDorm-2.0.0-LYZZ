@@ -21,6 +21,14 @@
   background: var(--wx-bar-bg);
 }
 
+.food-card-image-wrap-clickable {
+  padding: 0;
+  border: 1px solid var(--wx-border);
+  background: var(--wx-bar-bg);
+  cursor: pointer;
+  display: block;
+}
+
 .food-card-image {
   width: 100%;
   height: 100%;

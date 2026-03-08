@@ -1,7 +1,9 @@
 import { useState, useRef } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { Toast } from '../context/ToastContext';
 import { createPost } from '../api/posts';
+import { getApiErrorMessage } from '../utils/apiError';
 import './PostNew.css';
 
 /** 发布帖子页：需登录；调用 createPost API */
@@ -12,7 +14,6 @@ function PostNew() {
   const [imageFiles, setImageFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
 
   if (!isLoggedIn) {
@@ -37,19 +38,19 @@ function PostNew() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!content.trim()) {
-      setError('请输入内容');
+      Toast.error('请输入内容');
       return;
     }
     setLoading(true);
-    setError(null);
     try {
       const created = await createPost({
         content: content.trim(),
         images: imageFiles.length ? imageFiles : undefined,
       });
+      Toast.success('发布成功');
       navigate(created?.id ? `/post/${created.id}` : '/', { replace: true });
     } catch (err) {
-      setError(err.message || '发布失败');
+      Toast.error(getApiErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -60,7 +61,6 @@ function PostNew() {
       <p className="postnew-anonymous-hint">
         发帖为匿名。他人点赞或评论时，会在「信箱」中收到提醒。Posts are anonymous; you'll get like/comment notifications in Mailbox.
       </p>
-      {error && <p className="postnew-error state-inline-error" role="alert">{error}</p>}
       <form className="postnew-form" onSubmit={handleSubmit}>
         <div className="postnew-section">
           <label className="postnew-label">内容 Content</label>

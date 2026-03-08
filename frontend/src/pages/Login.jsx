@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { Toast } from '../context/ToastContext';
 import './Login.css';
 
 /** 登录页：微信风格，学号/邮箱 + 密码；暂不登录可回主页 */
 function Login() {
   const [studentIdOrEmail, setStudentIdOrEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [message, setMessage] = useState({ type: '', text: '' });
   const [loading, setLoading] = useState(false);
 
   const { login, skipLogin } = useAuth();
@@ -15,30 +15,24 @@ function Login() {
   const location = useLocation();
   const from = location.state?.from?.pathname || '/';
 
-  const showMsg = (text, type = 'error') => {
-    setMessage({ text, type });
-    setTimeout(() => setMessage({ type: '', text: '' }), 3000);
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     const sid = studentIdOrEmail.trim();
     if (!sid || !password) {
-      showMsg('请填写邮箱/用户名和密码 Please fill in email / username and password', 'error');
+      Toast.error('请填写邮箱/用户名和密码 Please fill in email / username and password');
       return;
     }
     setLoading(true);
-    setMessage({ type: '', text: '' });
     try {
       const result = await login(sid, password);
       if (result.success) {
-        showMsg('登录成功，正在跳转… Login success, redirecting…', 'success');
+        Toast.success('登录成功，正在跳转… Login success, redirecting…');
         setTimeout(() => navigate(from, { replace: true }), 500);
       } else {
-        showMsg(result.message || '登录失败 Login failed', 'error');
+        Toast.error(result.message);
       }
     } catch (err) {
-      showMsg('网络错误，请稍后重试 Network error, please try again later', 'error');
+      Toast.error('网络错误，请稍后重试 Network error, please try again later');
     } finally {
       setLoading(false);
     }
@@ -80,10 +74,6 @@ function Login() {
               disabled={loading}
             />
           </div>
-
-          {message.text && (
-            <p className={`login-message login-message-${message.type}`}>{message.text}</p>
-          )}
 
           <button type="submit" className="login-btn login-btn-primary" disabled={loading}>
             {loading ? '登录中… Logging in…' : '登录 Login'}

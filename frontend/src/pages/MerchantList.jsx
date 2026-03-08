@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import MerchantCard from '../components/MerchantCard';
+import SkeletonCard from '../components/SkeletonCard';
+import EmptyState from '../components/EmptyState';
 import { AREA_LABELS } from '../components/AreaCard';
 import { getRegions, getShopsByRegion } from '../api/canteen';
 import { getUploadUrl } from '../api/config';
+import { getApiErrorMessage } from '../utils/apiError';
 import './MerchantList.css';
 
 /** 区域商家列表页：展示当前分区下的商家（API），点击进入该商家菜品列表 */
@@ -51,7 +54,7 @@ function MerchantList() {
         );
       })
       .catch((err) => {
-        if (!cancelled) setError(err.message || '加载失败');
+        if (!cancelled) setError(getApiErrorMessage(err));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -62,7 +65,14 @@ function MerchantList() {
   if (loading) {
     return (
       <div className="merchant-list-page">
-        <p className="merchant-list-loading state-loading">加载中…</p>
+        <div className="skeleton-merchant-list-title skeleton skeleton-shimmer" style={{ width: 120, height: 22, borderRadius: 6, marginBottom: 16 }} aria-hidden />
+        <ul className="merchant-list-list" aria-hidden>
+          {[1, 2, 3, 4].map((i) => (
+            <li key={i}>
+              <SkeletonCard />
+            </li>
+          ))}
+        </ul>
       </div>
     );
   }
@@ -79,9 +89,10 @@ function MerchantList() {
     <div className="merchant-list-page">
       <p className="merchant-list-title">{areaLabel}</p>
       {merchants.length === 0 ? (
-        <p className="merchant-list-empty state-empty">
-          该分区暂无商家 No merchants in this area yet.
-        </p>
+        <EmptyState
+          title="暂无商家"
+          description="该分区暂无商家。No merchants in this area yet."
+        />
       ) : (
         <ul className="merchant-list-list" aria-label={`${areaLabel} 商家列表`}>
           {merchants.map((m) => (

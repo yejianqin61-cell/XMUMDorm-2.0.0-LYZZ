@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../api/config';
+import { getApiErrorMessage } from '../utils/apiError';
 import './Register.css';
 
 const ROLE_STUDENT = 'student';
@@ -86,10 +87,10 @@ function Register() {
         showMsg('注册成功，正在跳转… Register success, redirecting…', 'success');
         setTimeout(() => navigate('/', { replace: true }), 500);
       } else {
-        showMsg(data.message || '注册失败 Register failed', 'error');
+        showMsg(getApiErrorMessage(), 'error');
       }
     } catch (err) {
-      showMsg('网络错误，请稍后重试 Network error, try again later', 'error');
+      showMsg(getApiErrorMessage(err), 'error');
     } finally {
       setLoading(false);
     }

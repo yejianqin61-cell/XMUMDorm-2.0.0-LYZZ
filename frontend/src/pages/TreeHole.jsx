@@ -2,7 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import PostCard from '../components/PostCard';
+import SkeletonPost from '../components/SkeletonPost';
 import { getPostList } from '../api/posts';
+import { getApiErrorMessage } from '../utils/apiError';
 import { API_BASE_URL } from '../api/config';
 import './TreeHole.css';
 
@@ -33,7 +35,7 @@ function TreeHole() {
         setHasMore(!!data?.hasMore);
         setPage(pageNum);
       } catch (err) {
-        setError(err.message || '加载失败');
+        setError(getApiErrorMessage(err));
       } finally {
         setLoading(false);
       }
@@ -60,7 +62,20 @@ function TreeHole() {
         </p>
       )}
       {loading && list.length === 0 ? (
-        <p className="treehole-loading state-loading">加载中…</p>
+        <div className="treehole-content">
+          <div className="treehole-grid">
+            <div className="treehole-column">
+              {[1, 2, 3].map((i) => (
+                <SkeletonPost key={i} />
+              ))}
+            </div>
+            <div className="treehole-column treehole-column-right">
+              {[1, 2, 3].map((i) => (
+                <SkeletonPost key={i} />
+              ))}
+            </div>
+          </div>
+        </div>
       ) : (
         <div className="treehole-content">
           <div className="treehole-grid">

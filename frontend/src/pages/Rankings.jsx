@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Card from '../components/Card';
+import EmptyState from '../components/EmptyState';
+import { getApiErrorMessage } from '../utils/apiError';
 import {
   getRankingsHotProducts,
   getRankingsBusyShops,
@@ -53,7 +55,7 @@ function Rankings() {
         });
       })
       .catch((err) => {
-        if (!cancelled) setError(err.message || '加载失败');
+        if (!cancelled) setError(getApiErrorMessage(err));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -95,7 +97,7 @@ function Rankings() {
                 </div>
                 <div className="rankings-section-content">
                   {list.length === 0 && (
-                    <p className="rankings-section-empty state-empty">暂无数据 No data yet.</p>
+                    <EmptyState title="暂无数据" description="No data yet." />
                   )}
                   {section.id === 'hot-products' && list.length > 0 && list.map((item) => (
                     <Link key={item.product_id} to={`/eat/food/${item.product_id}`} className="rankings-row">

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import EmptyState from '../components/EmptyState';
 import { getNotifications, markNotificationRead } from '../api/notifications';
+import { getApiErrorMessage } from '../utils/apiError';
 import './Mailbox.css';
 
 /** 相对时间展示 */
@@ -48,7 +50,7 @@ function Mailbox() {
         });
       })
       .catch((err) => {
-        if (!cancelled) setError(err.message || '加载失败');
+        if (!cancelled) setError(getApiErrorMessage(err));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -65,7 +67,12 @@ function Mailbox() {
   if (!isLoggedIn) {
     return (
       <div className="mailbox-page">
-        <p className="mailbox-empty state-empty">请先登录后查看信箱。Please log in to view mailbox.</p>
+        <EmptyState
+          title="请先登录"
+          description="登录后查看信箱。Please log in to view mailbox."
+          actionLabel="去登录"
+          actionTo="/login"
+        />
       </div>
     );
   }
@@ -94,7 +101,7 @@ function Mailbox() {
         你的帖子收到点赞或评论时，会在这里提醒。Tap to open the post.
       </p>
       {list.length === 0 ? (
-        <p className="mailbox-empty state-empty">暂无通知 No notifications yet.</p>
+        <EmptyState title="暂无通知" description="No notifications yet." />
       ) : (
         <ul className="mailbox-list">
           {list.map((n) => (

@@ -504,6 +504,8 @@ router.post('/products', authenticateToken, (req, res, next) => {
       for (let i = 0; i < paths.length; i++) {
         await query('INSERT INTO product_images (product_id, file_path, sort_order) VALUES (?, ?, ?)', [productId, paths[i], i]);
       }
+    } else if (req.is('multipart/form-data')) {
+      console.warn('[创建商品] 未收到图片：req.files 为空，请确认前端是否用 FormData 并 append("images", file)');
     }
 
     let rows = await query(
