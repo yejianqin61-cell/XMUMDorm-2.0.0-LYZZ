@@ -4,6 +4,31 @@
   background: transparent;
 }
 
+.canteen-area-rankings-link {
+  display: block;
+  margin-bottom: 16px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.canteen-area-rankings-card {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.canteen-area-rankings-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--wx-text);
+}
+
+.canteen-area-rankings-hint {
+  font-size: 12px;
+  color: var(--wx-text-secondary);
+}
+
 .canteen-area-intro {
   margin: 0 0 16px;
   font-size: 14px;

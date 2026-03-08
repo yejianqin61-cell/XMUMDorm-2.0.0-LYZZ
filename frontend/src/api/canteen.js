@@ -57,3 +57,15 @@ export async function postProductComment(productId, { rating = '人上人', cont
   if (data.status !== 0) throw new Error(data.message || '评论失败');
   return data.data;
 }
+
+/** 我的点评列表：GET /api/canteen/my-reviews，需登录 */
+export async function getMyProductReviews(options = {}, token) {
+  const { page = 1, pageSize = 10 } = options;
+  const res = await fetch(
+    `${API_BASE_URL}/api/canteen/my-reviews?page=${page}&pageSize=${pageSize}`,
+    { headers: authHeaders(token) }
+  );
+  const data = await res.json();
+  if (data.status !== 0) throw new Error(data.message || '获取我的点评失败');
+  return data.data;
+}

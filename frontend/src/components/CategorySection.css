@@ -1,0 +1,28 @@
+.category-section {
+  margin-bottom: 20px;
+}
+
+.category-section-title {
+  margin: 0 0 10px;
+  padding: 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--wx-text);
+}
+
+.category-section-empty {
+  margin: 0 0 8px;
+  padding: 8px 4px;
+  font-size: 13px;
+  color: var(--wx-text-tertiary);
+}
+
+.category-section-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.category-section-list li {
+  margin: 0 0 12px 0;
+}

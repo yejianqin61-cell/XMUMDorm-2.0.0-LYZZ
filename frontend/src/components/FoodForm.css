@@ -32,6 +32,11 @@
   color: var(--wx-text-secondary);
 }
 
+.food-form-select {
+  cursor: pointer;
+  appearance: auto;
+}
+
 .food-form-textarea {
   min-height: 80px;
   resize: vertical;

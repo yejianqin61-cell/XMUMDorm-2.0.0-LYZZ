@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import FoodDetailView from '../components/FoodDetailView';
 import FoodForm from '../components/FoodForm';
-import { getFoodById } from '../data/mockCanteen';
+import { getFoodById, getCategoriesByMerchantId } from '../data/mockCanteen';
 import './MerchantFoodDetail.css';
 
 /** 商家端菜品详情：查看 + 编辑（FoodDetailView / FoodForm 切换） */
@@ -28,6 +28,7 @@ function MerchantFoodDetail() {
       ...prev,
       name: values.name,
       price: values.price,
+      categoryId: values.categoryId ?? prev.categoryId,
       image: values.imageUrl ?? prev.image,
       description: values.description ?? prev.description,
     }));
@@ -43,9 +44,11 @@ function MerchantFoodDetail() {
     <div className="merchant-food-detail-page">
       {isEditing ? (
         <FoodForm
+          categories={getCategoriesByMerchantId(food.merchantId)}
           initialValues={{
             name: food.name,
             price: food.price,
+            categoryId: food.categoryId,
             image: food.image,
             description: food.description,
           }}

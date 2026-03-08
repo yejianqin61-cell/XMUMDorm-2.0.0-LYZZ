@@ -820,6 +820,57 @@ router.delete('/products/:productId/comments/:commentId', authenticateToken, asy
 });
 
 // ============================================
+// 我的点评：当前用户对商品的一级点评列表（用于「我的点评」页）
+// ============================================
+router.get('/my-reviews', authenticateToken, async (req, res) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const pageSize = Math.min(30, Math.max(1, parseInt(req.query.pageSize, 10) || 10));
+    const offset = (page - 1) * pageSize;
+    const rows = await query(
+      `SELECT pc.id, pc.product_id, pc.rating, pc.content, pc.created_at,
+        p.name AS product_name, p.shop_id,
+        s.name AS shop_name,
+        pci.file_path AS image_path, pci.sort_order AS image_sort
+       FROM product_comments pc
+       INNER JOIN products p ON p.id = pc.product_id AND p.deleted_at IS NULL
+       INNER JOIN shops s ON s.id = p.shop_id AND s.deleted_at IS NULL
+       LEFT JOIN product_comment_images pci ON pci.comment_id = pc.id
+       WHERE pc.user_id = ? AND pc.parent_id IS NULL AND pc.deleted_at IS NULL
+       ORDER BY pc.created_at DESC
+       LIMIT ? OFFSET ?`,
+      [req.user.id, pageSize + 1, offset]
+    );
+    const byId = {};
+    for (const r of rows || []) {
+      if (!byId[r.id]) {
+        byId[r.id] = {
+          id: r.id,
+          product_id: r.product_id,
+          product_name: r.product_name,
+          shop_id: r.shop_id,
+          shop_name: r.shop_name,
+          rating: r.rating,
+          content: r.content,
+          created_at: r.created_at,
+          images: []
+        };
+      }
+      if (r.image_path) byId[r.id].images.push({ url: UPLOAD_PREFIX + r.image_path, sort_order: r.image_sort });
+    }
+    const list = Object.values(byId).map((item) => {
+      item.images.sort((a, b) => a.sort_order - b.sort_order);
+      return item;
+    });
+    const hasMore = (rows || []).length > pageSize;
+    res.status(200).json({ status: 0, message: '获取成功', data: { list, hasMore, page, pageSize } });
+  } catch (e) {
+    console.error('获取我的点评错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
+// ============================================
 // 排行榜（零点评商品/店铺不参与按评分排序的榜单）
 // ============================================
 

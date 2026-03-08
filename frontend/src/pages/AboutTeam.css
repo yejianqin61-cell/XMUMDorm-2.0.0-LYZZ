@@ -1,0 +1,40 @@
+.about-team-page {
+  min-height: 100%;
+  padding: 12px 16px 24px;
+  background: transparent;
+}
+
+.about-team-card {
+  padding: 18px 16px;
+}
+
+.about-team-title {
+  margin: 0 0 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--wx-text);
+}
+
+.about-team-list {
+  margin: 0;
+}
+
+.about-team-role {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: var(--wx-text-secondary);
+  font-weight: 500;
+}
+
+.about-team-name {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--wx-text);
+}
+
+.about-team-tags {
+  margin: 0;
+  font-size: 13px;
+  color: var(--wx-text-secondary);
+}

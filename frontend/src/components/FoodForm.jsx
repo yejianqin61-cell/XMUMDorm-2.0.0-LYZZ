@@ -2,15 +2,19 @@ import { useState } from 'react';
 import './FoodForm.css';
 
 /**
- * 菜品创建/编辑表单：名称、价格、图片、描述
- * @param {Object} [props.initialValues] 编辑时预填 { name, price, image, description }
- * @param {Function} props.onSubmit(values) values: { name, price, imageUrl?, description }
+ * 菜品创建/编辑表单：名称、价格、分类、图片、描述
+ * @param {Array<{ id: string|number, name: string }>} [props.categories] 可选，有则显示分类下拉
+ * @param {Object} [props.initialValues] 编辑时预填 { name, price, categoryId?, image, description }
+ * @param {Function} props.onSubmit(values) values: { name, price, categoryId?, imageUrl?, description }
  * @param {Function} props.onCancel
  */
-function FoodForm({ initialValues, onSubmit, onCancel }) {
+function FoodForm({ categories = [], initialValues, onSubmit, onCancel }) {
   const [name, setName] = useState(initialValues?.name ?? '');
   const [price, setPrice] = useState(
     initialValues?.price != null ? String(initialValues.price) : ''
+  );
+  const [categoryId, setCategoryId] = useState(
+    initialValues?.categoryId != null ? String(initialValues.categoryId) : (categories[0] ? String(categories[0].id) : '')
   );
   const [imageUrl, setImageUrl] = useState(initialValues?.image ?? '');
   const [description, setDescription] = useState(initialValues?.description ?? '');
@@ -42,12 +46,14 @@ function FoodForm({ initialValues, onSubmit, onCancel }) {
       setTimeout(() => setMessage({ type: '', text: '' }), 2000);
       return;
     }
-    onSubmit({
+    const out = {
       name: nameTrim,
       price: priceNum,
       imageUrl: imageUrl || undefined,
       description: description.trim() || undefined,
-    });
+    };
+    if (categories.length > 0 && categoryId) out.categoryId = Number(categoryId) || categoryId;
+    onSubmit(out);
     showMsg(initialValues ? '已保存 Saved' : '发布成功 Published');
   };
 
@@ -78,6 +84,22 @@ function FoodForm({ initialValues, onSubmit, onCancel }) {
           className="food-form-input"
         />
       </div>
+
+      {categories.length > 0 && (
+        <div className="food-form-field">
+          <label htmlFor="food-form-category">分类 Category *</label>
+          <select
+            id="food-form-category"
+            value={categoryId}
+            onChange={(e) => setCategoryId(e.target.value)}
+            className="food-form-input food-form-select"
+          >
+            {categories.map((c) => (
+              <option key={c.id} value={String(c.id)}>{c.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div className="food-form-field">
         <label>图片 Picture（可选 optional）</label>

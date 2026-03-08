@@ -9,6 +9,7 @@ import PostNew from './pages/PostNew';
 import PostDetail from './pages/PostDetail';
 import Eat from './pages/Eat';
 import AboutUs from './pages/AboutUs';
+import AboutTeam from './pages/AboutTeam';
 import MyZone from './pages/MyZone';
 import MyPosts from './pages/MyPosts';
 import MyReviews from './pages/MyReviews';
@@ -23,6 +24,7 @@ import StoreCreate from './pages/StoreCreate';
 import FoodManage from './pages/FoodManage';
 import FoodCreate from './pages/FoodCreate';
 import MerchantFoodDetail from './pages/MerchantFoodDetail';
+import Rankings from './pages/Rankings';
 import './App.css';
 
 function App() {
@@ -44,12 +46,14 @@ function App() {
             <Route path="post/new" element={<PostNew />} />
             <Route path="post/:id" element={<PostDetail />} />
             <Route path="about" element={<AboutUs />} />
+            <Route path="about/team" element={<AboutTeam />} />
             <Route path="myzone" element={<MyZone />} />
             <Route path="myzone/posts" element={<MyPosts />} />
             <Route path="myzone/reviews" element={<MyReviews />} />
             <Route path="myzone/profile" element={<ProfileEdit />} />
             <Route path="mailbox" element={<Mailbox />} />
             <Route path="eat" element={<CanteenArea />} />
+            <Route path="eat/rankings" element={<Rankings />} />
             <Route path="eat/:area" element={<MerchantList />} />
             <Route path="eat/merchant/:id" element={<FoodList />} />
             <Route path="eat/food/:id" element={<FoodDetail />} />

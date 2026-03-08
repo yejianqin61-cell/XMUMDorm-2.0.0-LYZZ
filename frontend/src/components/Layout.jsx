@@ -29,6 +29,7 @@ function Layout() {
   let title = TITLE_BY_PATH[pathname];
   if (!title) {
     if (pathname.startsWith('/eat/food/') && pathname.endsWith('/review')) title = '发布点评 Publish Review';
+    else if (pathname === '/eat/rankings') title = '排行榜 Rankings';
     else if (pathname.startsWith('/eat')) title = '食堂 Eat';
     else if (pathname.startsWith('/mailbox')) title = '信箱 Mailbox';
     else if (pathname === '/post/new') title = '发布帖子 Post';
@@ -41,6 +42,7 @@ function Layout() {
     else if (pathname === '/merchant/food/new') title = '菜品发布 Publish Food';
     else if (pathname.startsWith('/merchant/food/')) title = '菜品详情 Food Detail';
     else if (pathname.startsWith('/merchant/')) title = '商家 Merchant';
+    else if (pathname === '/about/team') title = '团队介绍 Team';
     else title = '厦马小筑 XMUM Dorm';
   }
   const showBack =
@@ -49,7 +51,8 @@ function Layout() {
     pathname.startsWith('/merchant') ||
     pathname === '/myzone/posts' ||
     pathname === '/myzone/reviews' ||
-    pathname === '/myzone/profile';
+    pathname === '/myzone/profile' ||
+    pathname.startsWith('/about/');
 
   return (
     <div className="app-layout">

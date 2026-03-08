@@ -1,10 +1,12 @@
 import { useNavigate } from 'react-router-dom';
 import FoodForm from '../components/FoodForm';
+import { getCategoriesByMerchantId, MOCK_CURRENT_MERCHANT_ID } from '../data/mockCanteen';
 import './FoodCreate.css';
 
-/** 菜品发布页：商家端，使用 FoodForm，提交后跳转菜品管理 */
+/** 菜品发布页：商家端，使用 FoodForm（含分类），提交后跳转菜品管理 */
 function FoodCreate() {
   const navigate = useNavigate();
+  const categories = getCategoriesByMerchantId(MOCK_CURRENT_MERCHANT_ID);
 
   const handleSubmit = (values) => {
     // TODO: 调用发布菜品 API
@@ -18,7 +20,7 @@ function FoodCreate() {
 
   return (
     <div className="food-create-page">
-      <FoodForm onSubmit={handleSubmit} onCancel={handleCancel} />
+      <FoodForm categories={categories} onSubmit={handleSubmit} onCancel={handleCancel} />
     </div>
   );
 }
