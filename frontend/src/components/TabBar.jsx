@@ -17,6 +17,18 @@ export function getTabIndex(pathname) {
   return 0;
 }
 
+/** Tab 根路径（供 Layout 滑动动画判断是否为主 Tab 切换） */
+export const TAB_ROOT_PATHS = ['/', '/eat', '/about', '/myzone'];
+
+/** 根据 pathname 得到所属 Tab 的根路径 */
+export function getTabRootPath(pathname) {
+  if (pathname.startsWith('/myzone')) return '/myzone';
+  if (pathname.startsWith('/about')) return '/about';
+  if (pathname.startsWith('/eat')) return '/eat';
+  if (pathname === '/' || pathname.startsWith('/post')) return '/';
+  return pathname;
+}
+
 /** 微信风格底部 Tab：四栏，图标+文字，选中绿色；支持左右滑动切换（全屏滑动在 Layout 上） */
 function TabBar() {
   return (

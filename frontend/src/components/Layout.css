@@ -34,3 +34,39 @@
   z-index: 1;
   min-height: 100%;
 }
+
+/* ---------- Tab 滑动过渡（当前页滑出，新页滑入，微信风格缓动）---------- */
+.app-slide-wrap {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.app-slide-track {
+  display: flex;
+  width: 200%;
+  height: 100%;
+}
+
+.app-slide-pane {
+  width: 50%;
+  flex-shrink: 0;
+  height: 100%;
+  overflow: auto;
+}
+
+.app-slide-wrap.app-slide-forward .app-slide-track {
+  transform: translateX(0);
+}
+.app-slide-wrap.app-slide-forward.app-slide-end .app-slide-track {
+  transform: translateX(-50%);
+  transition: transform 280ms cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.app-slide-wrap.app-slide-back .app-slide-track {
+  transform: translateX(-50%);
+}
+.app-slide-wrap.app-slide-back.app-slide-end .app-slide-track {
+  transform: translateX(0);
+  transition: transform 280ms cubic-bezier(0.25, 0.1, 0.25, 1);
+}

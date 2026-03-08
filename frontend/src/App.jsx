@@ -1,32 +1,11 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import AuthGuard from './components/AuthGuard';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import TreeHole from './pages/TreeHole';
-import PostNew from './pages/PostNew';
-import PostDetail from './pages/PostDetail';
-import Eat from './pages/Eat';
-import AboutUs from './pages/AboutUs';
-import AboutTeam from './pages/AboutTeam';
-import MyZone from './pages/MyZone';
-import MyPosts from './pages/MyPosts';
-import MyReviews from './pages/MyReviews';
-import ProfileEdit from './pages/ProfileEdit';
-import Mailbox from './pages/Mailbox';
-import CanteenArea from './pages/CanteenArea';
-import MerchantList from './pages/MerchantList';
-import FoodList from './pages/FoodList';
-import FoodDetail from './pages/FoodDetail';
-import FoodReviewPublish from './pages/FoodReviewPublish';
-import StoreCreate from './pages/StoreCreate';
-import FoodManage from './pages/FoodManage';
-import FoodCreate from './pages/FoodCreate';
-import MerchantFoodDetail from './pages/MerchantFoodDetail';
-import MerchantShopEdit from './pages/MerchantShopEdit';
-import Rankings from './pages/Rankings';
+import { layoutRoutes } from './routes/layoutRoutes';
 import './App.css';
 import './styles/states.css';
 
@@ -46,28 +25,7 @@ function App() {
               </AuthGuard>
             }
           >
-            <Route index element={<TreeHole />} />
-            <Route path="post/new" element={<PostNew />} />
-            <Route path="post/:id" element={<PostDetail />} />
-            <Route path="about" element={<AboutUs />} />
-            <Route path="about/team" element={<AboutTeam />} />
-            <Route path="myzone" element={<MyZone />} />
-            <Route path="myzone/posts" element={<MyPosts />} />
-            <Route path="myzone/reviews" element={<MyReviews />} />
-            <Route path="myzone/profile" element={<ProfileEdit />} />
-            <Route path="mailbox" element={<Mailbox />} />
-            <Route path="eat" element={<CanteenArea />} />
-            <Route path="eat/rankings" element={<Rankings />} />
-            <Route path="eat/:area" element={<MerchantList />} />
-            <Route path="eat/merchant/:id" element={<FoodList />} />
-            <Route path="eat/food/:id" element={<FoodDetail />} />
-            <Route path="eat/food/:id/review" element={<FoodReviewPublish />} />
-            <Route path="merchant/create" element={<StoreCreate />} />
-            <Route path="merchant/manage" element={<FoodManage />} />
-            <Route path="merchant/shop/edit" element={<MerchantShopEdit />} />
-            <Route path="merchant/food/new" element={<FoodCreate />} />
-            <Route path="merchant/food/:id" element={<MerchantFoodDetail />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
+            {layoutRoutes}
           </Route>
         </Routes>
         </ToastProvider>

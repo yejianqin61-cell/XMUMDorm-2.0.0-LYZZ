@@ -1,14 +1,26 @@
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import TopBar from './TopBar';
 import TabBar from './TabBar';
-import { TABS, getTabIndex } from './TabBar';
+import { TABS, getTabIndex, getTabRootPath } from './TabBar';
+import TreeHole from '../pages/TreeHole';
+import CanteenArea from '../pages/CanteenArea';
+import AboutUs from '../pages/AboutUs';
+import MyZone from '../pages/MyZone';
 import './TopBar.css';
 import './TabBar.css';
 import './Layout.css';
 
 const SWIPE_THRESHOLD = 50;
 const SWIPE_MAX_VERTICAL = 80;
+const SLIDE_DURATION_MS = 280;
+
+const TAB_ROOT_COMPONENTS = {
+  '/': TreeHole,
+  '/eat': CanteenArea,
+  '/about': AboutUs,
+  '/myzone': MyZone,
+};
 
 /** 顶栏标题：中英并列（XMUM Dorm 厦马小筑） */
 const TITLE_BY_PATH = {
@@ -26,12 +38,37 @@ const TITLE_BY_PATH = {
 /** 需要显示返回键的路径（含 /post/:id 详情页） */
 const SHOW_BACK_PATHS = ['/post/new', '/post/'];
 
-/** 整体布局：顶栏（标题+信箱）+ 内容区 + 底部 Tab；支持全屏左右滑动切换 Tab */
+/** 整体布局：顶栏（标题+信箱）+ 内容区 + 底部 Tab；支持全屏滑动切换 Tab + 微信风格过渡动画 */
 function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const pathname = location.pathname;
   const touchStart = useRef({ x: 0, y: 0 });
+  const prevPathRef = useRef(pathname);
+  const [slide, setSlide] = useState(null);
+  const [slidePhase, setSlidePhase] = useState('start');
+
+  useEffect(() => {
+    const prevRoot = getTabRootPath(prevPathRef.current);
+    const nextRoot = getTabRootPath(pathname);
+    if (prevRoot !== nextRoot && TAB_ROOT_COMPONENTS[prevRoot] && TAB_ROOT_COMPONENTS[nextRoot]) {
+      const direction = getTabIndex(pathname) > getTabIndex(prevPathRef.current) ? 1 : -1;
+      setSlide({ fromPath: prevRoot, toPath: nextRoot, direction });
+      setSlidePhase('start');
+      const t1 = requestAnimationFrame(() => {
+        requestAnimationFrame(() => setSlidePhase('end'));
+      });
+      const t2 = setTimeout(() => {
+        setSlide(null);
+      }, SLIDE_DURATION_MS);
+      prevPathRef.current = pathname;
+      return () => {
+        cancelAnimationFrame(t1);
+        clearTimeout(t2);
+      };
+    }
+    prevPathRef.current = pathname;
+  }, [pathname]);
 
   const onSwipeTouchStart = (e) => {
     const t = e.touches?.[0];
@@ -47,6 +84,7 @@ function Layout() {
     if (dx < 0 && cur < TABS.length - 1) navigate(TABS[cur + 1].path);
     else if (dx > 0 && cur > 0) navigate(TABS[cur - 1].path);
   };
+
   let title = TITLE_BY_PATH[pathname];
   if (!title) {
     if (pathname.startsWith('/eat/food/') && pathname.endsWith('/review')) title = '发布点评 Publish Review';
@@ -85,7 +123,25 @@ function Layout() {
       <main className="app-main">
         <div className="app-main-bg" aria-hidden="true" />
         <div className="app-main-inner">
-          <Outlet />
+          {slide ? (
+            <div className={`app-slide-wrap app-slide-${slide.direction === 1 ? 'forward' : 'back'} app-slide-${slidePhase}`}>
+              <div className="app-slide-track">
+                {slide.direction === 1 ? (
+                  <>
+                    <div className="app-slide-pane">{(() => { const C = TAB_ROOT_COMPONENTS[slide.fromPath]; return C ? <C /> : null; })()}</div>
+                    <div className="app-slide-pane">{(() => { const C = TAB_ROOT_COMPONENTS[slide.toPath]; return C ? <C /> : null; })()}</div>
+                  </>
+                ) : (
+                  <>
+                    <div className="app-slide-pane">{(() => { const C = TAB_ROOT_COMPONENTS[slide.toPath]; return C ? <C /> : null; })()}</div>
+                    <div className="app-slide-pane">{(() => { const C = TAB_ROOT_COMPONENTS[slide.fromPath]; return C ? <C /> : null; })()}</div>
+                  </>
+                )}
+              </div>
+            </div>
+          ) : (
+            <Outlet />
+          )}
         </div>
       </main>
       <TabBar />
