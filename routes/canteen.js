@@ -561,7 +561,7 @@ router.get('/shops/:shopId/products', async (req, res) => {
     const categoryId = req.query.category_id ? parseInt(req.query.category_id, 10) : null;
     if (!shopId) return res.status(400).json({ status: -1, message: '店铺 ID 无效' });
 
-    let sql = `SELECT p.id, p.shop_id, p.category_id, p.name, p.description, p.price, p.created_at, p.updated_at,
+    let sql = `SELECT p.id, p.shop_id, p.category_id, p.name, p.description, p.price, p.comprehensive_score, p.review_count, p.created_at, p.updated_at,
         c.name AS category_name, pi.file_path, pi.sort_order
        FROM products p
        LEFT JOIN product_categories c ON p.category_id = c.id
@@ -578,7 +578,7 @@ router.get('/shops/:shopId/products', async (req, res) => {
       rows = await query(sql, params);
     } catch (qErr) {
       const msg = (qErr && (qErr.message || qErr.code || '')).toString();
-      if (msg.includes('Unknown column') && msg.includes('price')) {
+      if (msg.includes('Unknown column') && (msg.includes('price') || msg.includes('comprehensive_score'))) {
         sql = `SELECT p.id, p.shop_id, p.category_id, p.name, p.description, p.created_at, p.updated_at,
           c.name AS category_name, pi.file_path, pi.sort_order
          FROM products p
@@ -601,6 +601,8 @@ router.get('/shops/:shopId/products', async (req, res) => {
           name: r.name,
           description: r.description,
           price: r.price != null ? Number(r.price) : null,
+          comprehensive_score: r.comprehensive_score != null ? Number(r.comprehensive_score) : null,
+          review_count: r.review_count != null ? Number(r.review_count) : null,
           created_at: r.created_at,
           updated_at: r.updated_at,
           images: []
@@ -626,7 +628,7 @@ router.get('/products/:productId', async (req, res) => {
     let rows;
     try {
       rows = await query(
-        `SELECT p.id, p.shop_id, p.category_id, p.name, p.description, p.price, p.created_at, p.updated_at,
+        `SELECT p.id, p.shop_id, p.category_id, p.name, p.description, p.price, p.comprehensive_score, p.review_count, p.created_at, p.updated_at,
           c.name AS category_name, s.name AS shop_name, s.region_id, r.name AS region_name,
           pi.file_path, pi.sort_order
          FROM products p
@@ -639,7 +641,7 @@ router.get('/products/:productId', async (req, res) => {
       );
     } catch (qErr) {
       const msg = (qErr && (qErr.message || qErr.code || '')).toString();
-      if (msg.includes('Unknown column') && msg.includes('price')) {
+      if (msg.includes('Unknown column') && (msg.includes('price') || msg.includes('comprehensive_score'))) {
         rows = await query(
           `SELECT p.id, p.shop_id, p.category_id, p.name, p.description, p.created_at, p.updated_at,
             c.name AS category_name, s.name AS shop_name, s.region_id, r.name AS region_name,
@@ -673,6 +675,8 @@ router.get('/products/:productId', async (req, res) => {
           name: r.name,
           description: r.description,
           price: r.price != null ? Number(r.price) : null,
+          comprehensive_score: r.comprehensive_score != null ? Number(r.comprehensive_score) : null,
+          review_count: r.review_count != null ? Number(r.review_count) : null,
           created_at: r.created_at,
           updated_at: r.updated_at,
           images: []

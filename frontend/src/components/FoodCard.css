@@ -61,12 +61,24 @@
   white-space: nowrap;
 }
 
+.food-card-price-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 2px;
+}
+
 .food-card-price {
   font-size: 15px;
   font-weight: 600;
   color: var(--wx-green);
-  display: block;
-  margin-bottom: 2px;
+}
+
+.food-card-rating {
+  font-size: 14px;
+  font-weight: 500;
+  color: #fa8c16;
 }
 
 .food-card-desc {

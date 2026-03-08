@@ -64,6 +64,7 @@ function FoodDetail() {
           description: d.description ?? undefined,
           price: d.price,
           image: firstImg,
+          comprehensiveScore: d.comprehensive_score != null ? Number(d.comprehensive_score) : null,
         });
       })
       .catch((err) => {

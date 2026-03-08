@@ -14,8 +14,10 @@ import './FoodCard.css';
  * @param {Function} [onDelete] 商家端删除回调 (food) => void
  */
 function FoodCard({ food, mode = 'user', onDelete }) {
-  const { id, name, price, image, description } = food;
+  const { id, name, price, image, description, comprehensiveScore } = food;
   const priceStr = typeof price === 'number' ? price.toFixed(2) : String(price ?? '—');
+  /** 后端 0–10 分制转 5 星展示，如 9.2 → 4.6 */
+  const ratingDisplay = comprehensiveScore != null ? (Number(comprehensiveScore) / 10 * 5).toFixed(1) : null;
   const [imagePreviewOpen, setImagePreviewOpen] = useState(false);
 
   const imageBlock = image ? (
@@ -43,7 +45,12 @@ function FoodCard({ food, mode = 'user', onDelete }) {
       {imageBlock}
       <div className="food-card-body">
         <span className="food-card-name">{name}</span>
-        <span className="food-card-price">RM {priceStr}</span>
+        <div className="food-card-price-row">
+          <span className="food-card-price">RM {priceStr}</span>
+          {ratingDisplay != null && (
+            <span className="food-card-rating" aria-label={`评分 ${ratingDisplay}`}>⭐ {ratingDisplay}</span>
+          )}
+        </div>
         {description && (
           <p className="food-card-desc">{description}</p>
         )}

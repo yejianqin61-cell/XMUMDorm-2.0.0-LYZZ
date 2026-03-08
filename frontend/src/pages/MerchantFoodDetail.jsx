@@ -46,6 +46,7 @@ function MerchantFoodDetail() {
           image: firstImg,
           category_id: d.category_id,
           categoryId: d.category_id,
+          comprehensiveScore: d.comprehensive_score != null ? Number(d.comprehensive_score) : null,
         });
         return d.shop_id ? getCategories(d.shop_id) : [];
       })

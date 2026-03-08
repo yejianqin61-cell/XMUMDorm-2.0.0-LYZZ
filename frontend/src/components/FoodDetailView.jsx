@@ -12,8 +12,10 @@ import './FoodDetailView.css';
 function FoodDetailView({ food, onImageClick }) {
   if (!food) return null;
 
-  const { name, price, image, description } = food;
+  const { name, price, image, description, comprehensiveScore } = food;
   const priceStr = typeof price === 'number' ? price.toFixed(2) : String(price ?? '—');
+  /** 后端 0–10 分制转 5 星展示 */
+  const ratingDisplay = comprehensiveScore != null ? (Number(comprehensiveScore) / 10 * 5).toFixed(1) : null;
 
   return (
     <article className="food-detail-view" aria-label={`菜品 ${name}`}>
@@ -34,7 +36,12 @@ function FoodDetailView({ food, onImageClick }) {
       </div>
       <div className="food-detail-view-body">
         <h1 className="food-detail-view-name">{name}</h1>
-        <p className="food-detail-view-price">RM {priceStr}</p>
+        <p className="food-detail-view-price-row">
+          <span className="food-detail-view-price">RM {priceStr}</span>
+          {ratingDisplay != null && (
+            <span className="food-detail-view-rating" aria-label={`评分 ${ratingDisplay}`}>⭐ {ratingDisplay}</span>
+          )}
+        </p>
         {description && (
           <p className="food-detail-view-desc">{description}</p>
         )}

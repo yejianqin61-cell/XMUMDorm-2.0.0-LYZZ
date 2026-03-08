@@ -46,6 +46,7 @@ function FoodManage() {
               price: p.price,
               image: firstImg,
               categoryId: p.category_id,
+              comprehensiveScore: p.comprehensive_score != null ? Number(p.comprehensive_score) : null,
             };
           })
         );

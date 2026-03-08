@@ -46,11 +46,24 @@
   line-height: 1.3;
 }
 
-.food-detail-view-price {
+.food-detail-view-price-row {
   margin: 0 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.food-detail-view-price {
   font-size: 18px;
   font-weight: 600;
   color: var(--wx-green);
+}
+
+.food-detail-view-rating {
+  font-size: 16px;
+  font-weight: 500;
+  color: #fa8c16;
 }
 
 .food-detail-view-desc {

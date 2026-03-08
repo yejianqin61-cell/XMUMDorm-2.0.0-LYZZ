@@ -68,6 +68,7 @@ function FoodList() {
           price: p.price,
           image: firstImage(p),
           categoryId: p.category_id,
+          comprehensiveScore: p.comprehensive_score != null ? Number(p.comprehensive_score) : null,
         }));
         const groupsNext = cats.map((c) => ({
           category: { id: c.id, name: c.name },
