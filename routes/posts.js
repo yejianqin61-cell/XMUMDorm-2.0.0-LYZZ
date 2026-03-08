@@ -57,12 +57,15 @@ function attachPostExtra(rows, req) {
 }
 
 // 聚合相同 post 的多行（多图、多点赞数等已用 GROUP BY 或子查询处理时，这里可能多行一帖）
+// 按 rows 中首次出现的顺序输出，以保持 SQL ORDER BY p.created_at DESC 的新帖在前
 function mergePostRows(rows, req) {
   const byId = {};
+  const order = [];
   for (const row of rows) {
     if (!postVisible(row, req)) continue;
     const id = row.id;
     if (!byId[id]) {
+      order.push(id);
       byId[id] = {
         id: row.id,
         user_id: row.user_id,
@@ -86,7 +89,8 @@ function mergePostRows(rows, req) {
       byId[id].images.push({ url: UPLOAD_PREFIX + row.image_path, sort_order: row.sort_order });
     }
   }
-  return Object.values(byId).map((p) => {
+  return order.map((id) => {
+    const p = byId[id];
     p.images.sort((a, b) => a.sort_order - b.sort_order);
     return p;
   });
@@ -171,7 +175,8 @@ router.post('/', authenticateToken, (req, res, next) => {
     });
   } catch (e) {
     console.error('发布帖子错误:', e);
-    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+    const msg = process.env.NODE_ENV === 'development' ? (e.message || String(e)) : '服务器错误，请稍后重试';
+    res.status(500).json({ status: -1, message: msg });
   }
 });
 
@@ -182,7 +187,8 @@ router.get('/', async (req, res) => {
   try {
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const pageSize = Math.min(50, Math.max(1, parseInt(req.query.pageSize, 10) || 10));
-    const offset = (page - 1) * pageSize;
+    const offset = Math.max(0, (page - 1) * pageSize);
+    const limitCount = pageSize + 1;
     const user = req.headers['authorization'] ? (() => {
       try {
         const jwt = require('jsonwebtoken');
@@ -207,8 +213,7 @@ router.get('/', async (req, res) => {
        LEFT JOIN post_images pi ON pi.post_id = p.id
        WHERE ${where}
        ORDER BY p.created_at DESC
-       LIMIT ? OFFSET ?`,
-      [pageSize + 1, offset]
+       LIMIT ${limitCount} OFFSET ${offset}`
     );
     const list = mergePostRows(rows.map((r) => ({ ...r, deleted_at: null })), { user: user || {} });
     const hasMore = rows.length > pageSize;
@@ -219,7 +224,8 @@ router.get('/', async (req, res) => {
     });
   } catch (e) {
     console.error('获取帖子列表错误:', e);
-    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+    const msg = process.env.NODE_ENV === 'development' ? (e.message || String(e)) : '服务器错误，请稍后重试';
+    res.status(500).json({ status: -1, message: msg });
   }
 });
 
@@ -266,7 +272,8 @@ router.get('/:id', async (req, res) => {
     res.status(200).json({ status: 0, message: '获取成功', data: post });
   } catch (e) {
     console.error('帖子详情错误:', e);
-    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+    const msg = process.env.NODE_ENV === 'development' ? (e.message || String(e)) : '服务器错误，请稍后重试';
+    res.status(500).json({ status: -1, message: msg });
   }
 });
 

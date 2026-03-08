@@ -10,6 +10,18 @@
   margin: 24px 0;
 }
 
+.post-detail-loading,
+.post-detail-error {
+  text-align: center;
+  padding: 24px 16px;
+  font-size: 14px;
+  color: var(--wx-text-secondary);
+}
+
+.post-detail-error {
+  color: var(--wx-red, #ee0a24);
+}
+
 .post-detail-card {
   background: rgba(255, 255, 255, 0.92);
   border-radius: 12px;
@@ -23,6 +35,40 @@
   align-items: center;
   gap: 10px;
   margin-bottom: 12px;
+}
+
+.post-detail-delete-btn {
+  margin-left: auto;
+  padding: 6px 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 8px;
+  color: var(--wx-text-secondary);
+}
+.post-detail-delete-btn:hover:not(:disabled) {
+  background: rgba(238, 10, 36, 0.08);
+  color: var(--wx-red, #ee0a24);
+}
+.post-detail-delete-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.post-detail-delete-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.post-detail-author-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.post-detail-time {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--wx-text-secondary);
 }
 
 .post-detail-avatar-wrap {
@@ -59,6 +105,22 @@
   color: var(--wx-text);
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.post-detail-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.post-detail-image {
+  max-width: 100%;
+  width: auto;
+  max-height: 280px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: var(--wx-bar-bg);
 }
 
 .post-detail-actions {
@@ -100,12 +162,37 @@
   padding: 0;
 }
 
+.post-detail-comment-wrap {
+  margin-bottom: 12px;
+}
+
+.post-detail-comment-wrap:last-child {
+  margin-bottom: 0;
+}
+
 .post-detail-comment {
   background: rgba(255, 255, 255, 0.92);
   border-radius: 10px;
   padding: 12px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.post-detail-reply-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 20px;
+  border-left: 2px solid var(--wx-border);
+  margin-left: 12px;
+}
+
+.post-detail-comment-reply {
+  margin-bottom: 6px;
+  max-width: 100%;
+}
+
+.post-detail-comment-reply:last-child {
+  margin-bottom: 0;
 }
 
 .post-detail-comment-content {

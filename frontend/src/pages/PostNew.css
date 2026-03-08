@@ -4,6 +4,15 @@
   background: transparent;
 }
 
+.postnew-error {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--wx-red, #ee0a24);
+  background: rgba(238, 10, 36, 0.08);
+  border-radius: 8px;
+}
+
 .postnew-anonymous-hint {
   background: rgba(255, 255, 255, 0.92);
 }

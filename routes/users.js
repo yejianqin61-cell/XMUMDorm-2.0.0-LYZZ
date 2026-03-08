@@ -64,6 +64,11 @@ router.get('/:id/profile', async (req, res) => {
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const pageSize = Math.min(30, Math.max(1, parseInt(req.query.pageSize, 10) || 10));
     const offset = (page - 1) * pageSize;
+    const limitNum = Number(pageSize);
+    const offsetNum = Number(offset);
+    if (!Number.isInteger(limitNum) || limitNum < 1 || !Number.isInteger(offsetNum) || offsetNum < 0) {
+      return res.status(400).json({ status: -1, message: '分页参数无效' });
+    }
 
     const posts = await query(
       `SELECT p.id, p.content, p.type, p.created_at,
@@ -72,8 +77,8 @@ router.get('/:id/profile', async (req, res) => {
        FROM posts p
        WHERE p.user_id = ? AND p.deleted_at IS NULL AND p.hidden_by_admin = 0
        ORDER BY p.created_at DESC
-       LIMIT ? OFFSET ?`,
-      [userId, pageSize, offset]
+       LIMIT ${limitNum} OFFSET ${offsetNum}`,
+      [userId]
     );
     const postIds = (posts || []).map((p) => p.id);
     let images = [];

@@ -327,10 +327,10 @@ router.post('/register', async (req, res) => {
 // ============================================
 // 用户登录路由
 // ============================================
-// 2.0.0：仅支持学号或邮箱 + 密码，不再支持用户名登录
+// 学生仅支持邮箱登录；商家支持用户名登录。即：email 或 username（其一）+ 密码
 router.post('/login', async (req, res) => {
   try {
-    const { email, student_id, password } = req.body;
+    const { email, username, password } = req.body;
 
     if (!password) {
       return res.status(400).json({
@@ -339,31 +339,32 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // 至少提供学号或邮箱其一
-    if (!email && !student_id) {
+    const hasEmail = email != null && String(email).trim() !== '';
+    const hasUsername = username != null && String(username).trim() !== '';
+    if (!hasEmail && !hasUsername) {
       return res.status(400).json({
         status: -1,
-        message: '请输入学号或邮箱'
+        message: '请输入邮箱或商家用户名'
       });
     }
 
     let users;
-    if (student_id) {
+    if (hasEmail) {
       users = await query(
-        'SELECT id, student_id, username, email, password_hash, role FROM users WHERE student_id = ?',
-        [student_id]
+        'SELECT id, student_id, username, email, password_hash, role FROM users WHERE email = ?',
+        [String(email).trim()]
       );
     } else {
       users = await query(
-        'SELECT id, student_id, username, email, password_hash, role FROM users WHERE email = ?',
-        [email]
+        'SELECT id, student_id, username, email, password_hash, role FROM users WHERE username = ?',
+        [String(username).trim()]
       );
     }
 
-    if (users.length === 0) {
+    if (!users || users.length === 0) {
       return res.status(401).json({
         status: -1,
-        message: '学号/邮箱或密码错误'
+        message: '邮箱/用户名或密码错误'
       });
     }
 

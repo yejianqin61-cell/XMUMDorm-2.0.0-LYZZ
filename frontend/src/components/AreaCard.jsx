@@ -14,10 +14,11 @@ const AREA_LABELS = {
 
 /**
  * 食堂分区卡片：点击进入该分区商家列表
- * @param {string} area - 分区标识：B1 | LY3 | D6 | BELL | others
+ * @param {string} area - 分区标识（用于 URL，如 code）
+ * @param {string} [label] - 展示名称，不传则用 AREA_LABELS[area] ?? area
  */
-function AreaCard({ area }) {
-  const label = AREA_LABELS[area] ?? area;
+function AreaCard({ area, label: labelProp }) {
+  const label = labelProp ?? AREA_LABELS[area] ?? area;
 
   return (
     <Link to={`/eat/${encodeURIComponent(area)}`} className="area-card-wrap" aria-label={`进入分区 ${label}`}>

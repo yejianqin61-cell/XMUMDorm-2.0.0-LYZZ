@@ -37,6 +37,16 @@
   appearance: auto;
 }
 
+.food-form-category-hint {
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--wx-text-secondary);
+  background: rgba(7, 193, 96, 0.06);
+  border-radius: 8px;
+  border-left: 3px solid var(--wx-green);
+}
+
 .food-form-textarea {
   min-height: 80px;
   resize: vertical;

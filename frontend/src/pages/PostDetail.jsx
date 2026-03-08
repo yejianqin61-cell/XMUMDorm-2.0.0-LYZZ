@@ -1,68 +1,176 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { MOCK_POSTS, getAuthor } from '../data/mockPosts';
-import { getCommentsForPost } from '../data/mockComments';
+import {
+  getPostDetail,
+  getPostComments,
+  toggleLike,
+  createComment,
+  deletePost,
+} from '../api/posts';
+import { API_BASE_URL } from '../api/config';
+import { formatPostTime } from '../utils/formatTime';
 import './PostDetail.css';
+
+function prefixAvatar(url) {
+  return url && !url.startsWith('http') ? `${API_BASE_URL}${url}` : url;
+}
+
+function prefixImageUrl(url) {
+  return url && !url.startsWith('http') ? `${API_BASE_URL}${url}` : url;
+}
 
 function PostDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, token, user } = useAuth();
   const postId = Number(id);
-  const post = MOCK_POSTS.find((p) => p.id === postId);
 
+  const [post, setPost] = useState(null);
+  const [comments, setComments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(post ? post.likeCount : 0);
-  const [comments, setComments] = useState(() => getCommentsForPost(postId));
+  const [likeCount, setLikeCount] = useState(0);
   const [newComment, setNewComment] = useState('');
-  const [replyingTo, setReplyingTo] = useState(null); // { id, content } 正在回复的评论
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const requireLogin = () => {
+  const requireLogin = useCallback(() => {
     if (!isLoggedIn) {
       navigate('/login', { state: { from: { pathname: `/post/${id}` } }, replace: true });
       return true;
     }
     return false;
-  };
+  }, [isLoggedIn, navigate, id]);
 
-  if (!post) {
-    return (
-      <div className="post-detail-page">
-        <p className="post-detail-empty">帖子不存在 Post not found</p>
-        <button type="button" onClick={() => navigate('/')}>返回首页 Back to Home</button>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!postId) {
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    Promise.all([
+      getPostDetail(postId, token),
+      getPostComments(postId),
+    ])
+      .then(([postData, commentsData]) => {
+        if (cancelled) return;
+        setPost({
+          ...postData,
+          author: postData.author ? { ...postData.author, avatar: prefixAvatar(postData.author.avatar) } : postData.author,
+        });
+        setLikeCount(postData.like_count ?? 0);
+        const list = Array.isArray(commentsData) ? commentsData : [];
+        setComments(list.map((c) => ({
+          ...c,
+          author: c.author ? { ...c.author, avatar: prefixAvatar(c.author.avatar) } : c.author,
+          replies: (c.replies || []).map((r) => ({
+            ...r,
+            author: r.author ? { ...r.author, avatar: prefixAvatar(r.author.avatar) } : r.author,
+          })),
+        })));
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err.message || '加载失败');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [postId, token]);
 
-  const handleLike = () => {
+  const handleLike = async () => {
     if (requireLogin()) return;
-    setLiked((prev) => !prev);
-    setLikeCount((c) => (liked ? c - 1 : c + 1));
+    try {
+      const data = await toggleLike(postId);
+      setLiked(data?.liked ?? !liked);
+      setLikeCount((c) => (data?.liked ? c + 1 : c - 1));
+    } catch (_) {}
   };
 
-  const handleSubmitComment = (e) => {
+  const handleSubmitComment = async (e) => {
     e.preventDefault();
     if (requireLogin()) return;
     if (!newComment.trim()) return;
-    const comment = {
-      id: Date.now(),
-      content: newComment.trim(),
-      replyTo: replyingTo ? replyingTo.id : null,
-      likeCount: 0,
-    };
-    setComments((prev) => [...prev, comment]);
-    setNewComment('');
-    setReplyingTo(null);
+    setSubmitLoading(true);
+    try {
+      await createComment(postId, {
+        content: newComment.trim(),
+        parent_id: replyingTo?.id ?? undefined,
+      });
+      setError(null);
+      const list = await getPostComments(postId);
+      setComments(Array.isArray(list) ? list.map((c) => ({
+        ...c,
+        author: c.author ? { ...c.author, avatar: prefixAvatar(c.author.avatar) } : c.author,
+        replies: (c.replies || []).map((r) => ({
+          ...r,
+          author: r.author ? { ...r.author, avatar: prefixAvatar(r.author.avatar) } : r.author,
+        })),
+      })) : []);
+      setNewComment('');
+      setReplyingTo(null);
+    } catch (err) {
+      setError(err.message || '评论失败');
+    } finally {
+      setSubmitLoading(false);
+    }
   };
 
   const startReply = (c) => setReplyingTo({ id: c.id, content: c.content });
   const cancelReply = () => { setReplyingTo(null); setNewComment(''); };
 
-  const author = getAuthor(post.authorId);
+  const isAuthor = post && (post.user_id === user?.id || post.author?.id === user?.id);
+  const handleDeletePost = async () => {
+    if (!window.confirm('确定要删除这条帖子吗？删除后不可恢复。')) return;
+    setDeleteLoading(true);
+    try {
+      await deletePost(postId);
+      navigate('/', { replace: true });
+    } catch (err) {
+      setError(err.message || '删除失败');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  if (loading && !post) {
+    return (
+      <div className="post-detail-page">
+        <p className="post-detail-loading state-loading">加载中…</p>
+      </div>
+    );
+  }
+
+  if (error && !post) {
+    return (
+      <div className="post-detail-page">
+        <p className="post-detail-error state-error">{error}</p>
+        <button type="button" onClick={() => navigate('/')}>返回首页 Back to Home</button>
+      </div>
+    );
+  }
+
+  if (!post) {
+    return (
+      <div className="post-detail-page">
+        <p className="post-detail-empty state-empty">帖子不存在 Post not found</p>
+        <button type="button" onClick={() => navigate('/')}>返回首页 Back to Home</button>
+      </div>
+    );
+  }
+
+  const author = post.author || {};
+  const displayName = author.nickname ?? author.username ?? '匿名';
+  const totalCommentCount = comments.reduce((sum, c) => sum + 1 + (c.replies?.length || 0), 0);
 
   return (
     <div className="post-detail-page">
+      {error && <p className="post-detail-error" role="alert">{error}</p>}
       <article className="post-detail-card">
         <div className="post-detail-author">
           <div className="post-detail-avatar-wrap">
@@ -72,9 +180,40 @@ function PostDetail() {
               <img src="/default-avatar.svg" alt="" className="post-detail-avatar post-detail-avatar-default" />
             )}
           </div>
-          <span className="post-detail-username">{author.username}</span>
+          <div className="post-detail-author-info">
+            <span className="post-detail-username">{displayName}</span>
+            {post.created_at && (
+              <span className="post-detail-time" title={formatPostTime(post.created_at, true)}>
+                {formatPostTime(post.created_at)}
+              </span>
+            )}
+          </div>
+          {isAuthor && (
+            <button
+              type="button"
+              className="post-detail-delete-btn"
+              onClick={handleDeletePost}
+              disabled={deleteLoading}
+              title="删除帖子"
+              aria-label="删除帖子"
+            >
+              <span className="post-detail-delete-icon" aria-hidden>🗑</span>
+            </button>
+          )}
         </div>
         <p className="post-detail-content">{post.content}</p>
+        {post.images && post.images.length > 0 && (
+          <div className="post-detail-images" aria-label="帖子图片">
+            {post.images.map((img, i) => (
+              <img
+                key={img.url || i}
+                src={prefixImageUrl(img.url)}
+                alt=""
+                className="post-detail-image"
+              />
+            ))}
+          </div>
+        )}
         <div className="post-detail-actions">
           <button
             type="button"
@@ -88,30 +227,42 @@ function PostDetail() {
       </article>
 
       <section className="post-detail-comments">
-        <h2 className="post-detail-comments-title">评论 Comments ({comments.length})</h2>
+        <h2 className="post-detail-comments-title">评论 Comments ({totalCommentCount})</h2>
         <ul className="post-detail-comment-list">
           {comments.map((c) => (
-            <li key={c.id} className="post-detail-comment">
-              <p className="post-detail-comment-content">
-                {c.replyTo ? (
-                  <>
-                    <span className="post-detail-reply-label">回复 Reply：</span>
-                    {c.content}
-                  </>
-                ) : (
-                  c.content
-                )}
-              </p>
-              <div className="post-detail-comment-meta">
-                <span className="post-detail-comment-stat">♥ {c.likeCount}</span>
-                <button
-                  type="button"
-                  className="post-detail-reply-btn"
-                  onClick={() => startReply(c)}
-                >
-                  回复 Reply
-                </button>
+            <li key={c.id} className="post-detail-comment-wrap">
+              <div className="post-detail-comment">
+                <p className="post-detail-comment-content">{c.content}</p>
+                <div className="post-detail-comment-meta">
+                  <span className="post-detail-comment-stat">
+                    {(c.author?.nickname ?? c.author?.username) || '匿名'}
+                  </span>
+                  <button
+                    type="button"
+                    className="post-detail-reply-btn"
+                    onClick={() => startReply(c)}
+                  >
+                    回复 Reply
+                  </button>
+                </div>
               </div>
+              {c.replies && c.replies.length > 0 && (
+                <ul className="post-detail-reply-list">
+                  {c.replies.map((r) => (
+                    <li key={r.id} className="post-detail-comment post-detail-comment-reply">
+                      <p className="post-detail-comment-content">
+                        <span className="post-detail-reply-label">回复 Reply：</span>
+                        {r.content}
+                      </p>
+                      <div className="post-detail-comment-meta">
+                        <span className="post-detail-comment-stat">
+                          {(r.author?.nickname ?? r.author?.username) || '匿名'}
+                        </span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </li>
           ))}
         </ul>
@@ -133,8 +284,8 @@ function PostDetail() {
             onChange={(e) => setNewComment(e.target.value)}
             maxLength={500}
           />
-          <button type="submit" className="post-detail-send" disabled={!newComment.trim()}>
-            发送 Send
+          <button type="submit" className="post-detail-send" disabled={!newComment.trim() || submitLoading}>
+            {submitLoading ? '发送中…' : '发送 Send'}
           </button>
         </div>
       </form>

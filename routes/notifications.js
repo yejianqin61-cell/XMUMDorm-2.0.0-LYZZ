@@ -17,6 +17,14 @@ async function attachNotificationExtra(rows) {
   if (!rows || rows.length === 0) return [];
   const list = [];
   for (const r of rows) {
+    let extra = null;
+    if (r.extra) {
+      try {
+        extra = typeof r.extra === 'string' ? JSON.parse(r.extra) : r.extra;
+      } catch (_) {
+        extra = null;
+      }
+    }
     const item = {
       id: r.id,
       type: r.type,
@@ -24,7 +32,7 @@ async function attachNotificationExtra(rows) {
       post_id: r.post_id,
       comment_id: r.comment_id,
       from_user_id: r.from_user_id,
-      extra: r.extra ? (typeof r.extra === 'string' ? JSON.parse(r.extra) : r.extra) : null,
+      extra,
       created_at: r.created_at
     };
     if (r.from_username || r.from_nickname) {
@@ -48,6 +56,11 @@ router.get('/', authenticateToken, async (req, res) => {
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const pageSize = Math.min(50, Math.max(1, parseInt(req.query.pageSize, 10) || 20));
     const offset = (page - 1) * pageSize;
+    const limitNum = Number(pageSize) + 1;
+    const offsetNum = Number(offset);
+    if (!Number.isInteger(limitNum) || limitNum < 1 || !Number.isInteger(offsetNum) || offsetNum < 0) {
+      return res.status(400).json({ status: -1, message: '分页参数无效' });
+    }
     const type = req.query.type; // comment | like | announcement
     const isRead = req.query.is_read; // 0 | 1
 
@@ -61,7 +74,6 @@ router.get('/', authenticateToken, async (req, res) => {
       where += ' AND n.is_read = ?';
       params.push(isRead === '1' ? 1 : 0);
     }
-    params.push(pageSize + 1, offset);
 
     const rows = await query(
       `SELECT n.id, n.type, n.is_read, n.post_id, n.comment_id, n.from_user_id, n.extra, n.created_at,
@@ -70,7 +82,7 @@ router.get('/', authenticateToken, async (req, res) => {
        LEFT JOIN users u ON n.from_user_id = u.id
        WHERE ${where}
        ORDER BY n.created_at DESC
-       LIMIT ? OFFSET ?`,
+       LIMIT ${limitNum} OFFSET ${offsetNum}`,
       params
     );
     const list = await attachNotificationExtra(rows);

@@ -2,10 +2,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './MyZone.css';
 
-/** 我的：头像+用户名邮箱，我的帖子，我的点评，本周点评数；商家显示管理店铺；登录后显示退出登录 */
+/** 我的：头像+用户名邮箱（来自 /me），我的帖子，我的点评，本周点评数；商家显示管理店铺；登录后显示退出登录 */
 function MyZone() {
-  const { isLoggedIn, isMerchant, displayName, displayAvatar, user, logout } = useAuth();
+  const { isLoggedIn, isMerchant, displayName, displayAvatar, user, userLoading, userError, logout } = useAuth();
   const navigate = useNavigate();
+  const weeklyCount = user?.weekly_comment_count ?? 0;
 
   const handleBar1Click = () => {
     if (!isLoggedIn) {
@@ -22,17 +23,24 @@ function MyZone() {
 
   return (
     <div className="myzone-page">
+      {userError && (
+        <p className="myzone-error" role="alert">
+          {userError}
+        </p>
+      )}
       <button type="button" className="myzone-bar myzone-bar-1" onClick={handleBar1Click}>
         <div className="myzone-avatar-wrap">
-          {displayAvatar ? (
+          {userLoading && !displayAvatar ? (
+            <div className="myzone-avatar myzone-avatar-loading" aria-hidden>…</div>
+          ) : displayAvatar ? (
             <img src={displayAvatar} alt="" className="myzone-avatar" />
           ) : (
             <img src="/default-avatar.svg" alt="" className="myzone-avatar myzone-avatar-default" />
           )}
         </div>
         <div className="myzone-bar1-text">
-          <p className="myzone-username">{isLoggedIn ? displayName : '点击登录 Tap to Login'}</p>
-          <p className="myzone-email">{isLoggedIn ? (user?.email || '—') : '登录后同步信息 Sync after login'}</p>
+          <p className="myzone-username">{isLoggedIn ? (userLoading && !displayName ? '加载中…' : displayName) : '点击登录 Tap to Login'}</p>
+          <p className="myzone-email">{isLoggedIn ? (user?.email ?? '—') : '登录后同步信息 Sync after login'}</p>
         </div>
       </button>
 
@@ -46,7 +54,7 @@ function MyZone() {
 
       <div className="myzone-bar myzone-bar-4">
         <span className="myzone-bar-label">本周点评数 Weekly Reviews</span>
-        <span className="myzone-bar-value">0</span>
+        <span className="myzone-bar-value">{isLoggedIn ? weeklyCount : '—'}</span>
       </div>
 
       {isMerchant && (

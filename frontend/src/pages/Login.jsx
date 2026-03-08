@@ -24,7 +24,7 @@ function Login() {
     e.preventDefault();
     const sid = studentIdOrEmail.trim();
     if (!sid || !password) {
-      showMsg('请填写学号/邮箱和密码 Please fill in student ID/email and password', 'error');
+      showMsg('请填写邮箱/用户名和密码 Please fill in email / username and password', 'error');
       return;
     }
     setLoading(true);
@@ -57,11 +57,11 @@ function Login() {
 
         <form className="login-form" onSubmit={handleSubmit}>
           <div className="login-field">
-            <label htmlFor="login-sid">学号 / 邮箱 Student ID / Email</label>
+            <label htmlFor="login-account">邮箱 / 商家用户名 Email / Merchant username</label>
             <input
-              id="login-sid"
+              id="login-account"
               type="text"
-              placeholder="请输入学号或邮箱 Enter student ID or email"
+              placeholder="学生填邮箱、商家填用户名 Email (student) or username (merchant)"
               value={studentIdOrEmail}
               onChange={(e) => setStudentIdOrEmail(e.target.value)}
               autoComplete="username"

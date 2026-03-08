@@ -2,13 +2,14 @@ import { useState } from 'react';
 import './FoodForm.css';
 
 /**
- * 菜品创建/编辑表单：名称、价格、分类、图片、描述
+ * 菜品创建/编辑表单：名称、价格（可选）、分类、图片、描述
  * @param {Array<{ id: string|number, name: string }>} [props.categories] 可选，有则显示分类下拉
+ * @param {boolean} [props.skipPrice] 为 true 时不显示/不校验价格（后端无 price 时用）
  * @param {Object} [props.initialValues] 编辑时预填 { name, price, categoryId?, image, description }
- * @param {Function} props.onSubmit(values) values: { name, price, categoryId?, imageUrl?, description }
+ * @param {Function} props.onSubmit(values) values: { name, price?, categoryId?, imageUrl?, imageFile?, description }
  * @param {Function} props.onCancel
  */
-function FoodForm({ categories = [], initialValues, onSubmit, onCancel }) {
+function FoodForm({ categories = [], skipPrice = false, initialValues, onSubmit, onCancel }) {
   const [name, setName] = useState(initialValues?.name ?? '');
   const [price, setPrice] = useState(
     initialValues?.price != null ? String(initialValues.price) : ''
@@ -17,6 +18,7 @@ function FoodForm({ categories = [], initialValues, onSubmit, onCancel }) {
     initialValues?.categoryId != null ? String(initialValues.categoryId) : (categories[0] ? String(categories[0].id) : '')
   );
   const [imageUrl, setImageUrl] = useState(initialValues?.image ?? '');
+  const [imageFile, setImageFile] = useState(null);
   const [description, setDescription] = useState(initialValues?.description ?? '');
   const [message, setMessage] = useState({ type: '', text: '' });
 
@@ -28,6 +30,7 @@ function FoodForm({ categories = [], initialValues, onSubmit, onCancel }) {
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
     if (!file || !file.type.startsWith('image/')) return;
+    setImageFile(file);
     const url = URL.createObjectURL(file);
     setImageUrl(url);
   };
@@ -40,18 +43,31 @@ function FoodForm({ categories = [], initialValues, onSubmit, onCancel }) {
       setTimeout(() => setMessage({ type: '', text: '' }), 2000);
       return;
     }
-    const priceNum = parseFloat(price);
-    if (Number.isNaN(priceNum) || priceNum < 0) {
-      setMessage({ text: '请输入有效价格 Please enter a valid price', type: 'error' });
-      setTimeout(() => setMessage({ type: '', text: '' }), 2000);
-      return;
-    }
     const out = {
       name: nameTrim,
-      price: priceNum,
       imageUrl: imageUrl || undefined,
+      imageFile: imageFile || undefined,
       description: description.trim() || undefined,
     };
+    if (!skipPrice) {
+      const priceTrim = price.trim();
+      if (priceTrim === '') {
+        out.price = initialValues ? undefined : null;
+      } else {
+        const priceNum = parseFloat(price);
+        if (Number.isNaN(priceNum) || priceNum < 0) {
+          setMessage({ text: '请输入有效价格 Please enter a valid price', type: 'error' });
+          setTimeout(() => setMessage({ type: '', text: '' }), 2000);
+          return;
+        }
+        out.price = priceNum;
+      }
+      if (out.price === null && !initialValues) {
+        setMessage({ text: '请输入有效价格 Please enter a valid price', type: 'error' });
+        setTimeout(() => setMessage({ type: '', text: '' }), 2000);
+        return;
+      }
+    }
     if (categories.length > 0 && categoryId) out.categoryId = Number(categoryId) || categoryId;
     onSubmit(out);
     showMsg(initialValues ? '已保存 Saved' : '发布成功 Published');
@@ -71,33 +87,39 @@ function FoodForm({ categories = [], initialValues, onSubmit, onCancel }) {
         />
       </div>
 
-      <div className="food-form-field">
-        <label htmlFor="food-form-price">价格 Price (RM) *</label>
-        <input
-          id="food-form-price"
-          type="number"
-          step="0.01"
-          min="0"
-          placeholder="0.00"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-          className="food-form-input"
-        />
-      </div>
-
-      {categories.length > 0 && (
+      {!skipPrice && (
         <div className="food-form-field">
-          <label htmlFor="food-form-category">分类 Category *</label>
-          <select
-            id="food-form-category"
-            value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
-            className="food-form-input food-form-select"
-          >
-            {categories.map((c) => (
-              <option key={c.id} value={String(c.id)}>{c.name}</option>
-            ))}
-          </select>
+          <label htmlFor="food-form-price">价格 Price (RM) *</label>
+          <input
+            id="food-form-price"
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="0.00"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            className="food-form-input"
+          />
+        </div>
+      )}
+
+      {(categories.length > 0 || categories) && (
+        <div className="food-form-field">
+          <label htmlFor="food-form-category">菜品分类 Category *</label>
+          {categories.length > 0 ? (
+            <select
+              id="food-form-category"
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              className="food-form-input food-form-select"
+            >
+              {categories.map((c) => (
+                <option key={c.id} value={String(c.id)}>{c.name}</option>
+              ))}
+            </select>
+          ) : (
+            <p className="food-form-category-hint">暂无分类，请先在「管理店铺」页点击「新建分类」创建。No category yet. Create one in Manage Store.</p>
+          )}
         </div>
       )}
 

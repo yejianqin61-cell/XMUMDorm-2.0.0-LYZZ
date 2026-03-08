@@ -4,6 +4,23 @@
   background: transparent;
 }
 
+.myzone-error {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--wx-red, #ee0a24);
+  background: rgba(238, 10, 36, 0.08);
+  border-radius: 8px;
+}
+
+.myzone-avatar-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: var(--wx-text-secondary);
+}
+
 .myzone-bar {
   display: flex;
   align-items: center;

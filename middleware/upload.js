@@ -15,6 +15,7 @@ const POSTS_IMAGES_DIR = path.join(UPLOAD_ROOT, 'posts');
 const AVATAR_DIR = path.join(UPLOAD_ROOT, 'avatars');
 const PRODUCTS_IMAGES_DIR = path.join(UPLOAD_ROOT, 'products');
 const COMMENTS_IMAGES_DIR = path.join(UPLOAD_ROOT, 'comments');
+const SHOPS_IMAGES_DIR = path.join(UPLOAD_ROOT, 'shops');
 
 const ALLOWED_IMAGE_MIMES = ['image/jpeg', 'image/png', 'image/webp'];
 const ALLOWED_IMAGE_EXT = ['.jpg', '.jpeg', '.png', '.webp'];
@@ -29,6 +30,7 @@ ensureDir(POSTS_IMAGES_DIR);
 ensureDir(AVATAR_DIR);
 ensureDir(PRODUCTS_IMAGES_DIR);
 ensureDir(COMMENTS_IMAGES_DIR);
+ensureDir(SHOPS_IMAGES_DIR);
 
 /**
  * 帖子图片：内存存储，路由里根据 post_id 再写入 post_<id>_<index>.<ext>
@@ -75,6 +77,32 @@ const avatarUpload = multer({
     cb(null, true);
   }
 }).single('avatar');
+
+/** 店铺 logo：单张，存 uploads/shops/shop_<id>.<ext> */
+const shopLogoStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, SHOPS_IMAGES_DIR);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
+    if (!ALLOWED_IMAGE_EXT.includes(ext)) {
+      return cb(new Error('仅支持 jpg / png / webp 格式'));
+    }
+    const shopId = req.params.shopId || req.body.shopId || Date.now();
+    cb(null, `shop_${shopId}${ext}`);
+  }
+});
+const shopLogoUpload = multer({
+  storage: shopLogoStorage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_IMAGE_MIMES.includes(file.mimetype) || !ALLOWED_IMAGE_EXT.includes(ext)) {
+      return cb(new Error('仅支持 jpg / png / webp 格式'));
+    }
+    cb(null, true);
+  }
+}).single('logo');
 
 /**
  * 将内存中的帖子图片写入磁盘：post_<postId>_<index>.<ext>
@@ -156,6 +184,7 @@ function saveCommentImages(files, commentId) {
 module.exports = {
   postImagesUpload,
   avatarUpload,
+  shopLogoUpload,
   savePostImages,
   productImagesUpload,
   commentImagesUpload,
@@ -165,5 +194,6 @@ module.exports = {
   POSTS_IMAGES_DIR,
   AVATAR_DIR,
   PRODUCTS_IMAGES_DIR,
-  COMMENTS_IMAGES_DIR
+  COMMENTS_IMAGES_DIR,
+  SHOPS_IMAGES_DIR
 };

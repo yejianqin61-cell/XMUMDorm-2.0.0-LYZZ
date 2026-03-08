@@ -25,10 +25,53 @@
 }
 
 .register-subtitle {
-  margin: 0 0 24px;
+  margin: 0 0 20px;
   font-size: 14px;
   color: var(--wx-text-secondary);
   text-align: center;
+}
+
+.register-role-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 24px;
+  background: var(--wx-bar-bg);
+  border-radius: 10px;
+  padding: 4px;
+  border: 1px solid var(--wx-border);
+}
+
+.register-role-tab {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--wx-text-secondary);
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.register-role-tab:hover {
+  color: var(--wx-text);
+}
+
+.register-role-tab.is-active {
+  background: #fff;
+  color: var(--wx-green);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.register-role-hint {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--wx-text-secondary);
+  background: rgba(7, 193, 96, 0.06);
+  border-radius: 8px;
+  border-left: 3px solid var(--wx-green);
 }
 
 .register-form {

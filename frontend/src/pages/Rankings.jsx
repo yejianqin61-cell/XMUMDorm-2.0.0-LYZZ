@@ -1,6 +1,13 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Card from '../components/Card';
-import { MOCK_RANKINGS } from '../data/mockRankings';
+import {
+  getRankingsHotProducts,
+  getRankingsBusyShops,
+  getRankingsTopShops,
+  getRankingsNewHitProducts,
+  getRankingsActiveUsers,
+} from '../api/rankings';
 import './Rankings.css';
 
 /** 五大榜单标识（与后端接口对应） */
@@ -12,14 +19,70 @@ export const RANKING_SECTIONS = [
   { id: 'active-users', title: '点评达人', titleEn: 'Active Reviewers', desc: '当周点评数 Top 5' },
 ];
 
-/** 排行榜主页：五大榜单，当前用 Mock 展示 */
+/** 排行榜主页：五大榜单，数据来自 API */
 function Rankings() {
+  const [data, setData] = useState({
+    'hot-products': [],
+    'busy-shops': [],
+    'top-shops': [],
+    'new-hit-products': [],
+    'active-users': [],
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    Promise.all([
+      getRankingsHotProducts(),
+      getRankingsBusyShops(),
+      getRankingsTopShops(),
+      getRankingsNewHitProducts(),
+      getRankingsActiveUsers(),
+    ])
+      .then(([hotProducts, busyShops, topShops, newHitProducts, activeUsers]) => {
+        if (cancelled) return;
+        setData({
+          'hot-products': Array.isArray(hotProducts) ? hotProducts : [],
+          'busy-shops': Array.isArray(busyShops) ? busyShops : [],
+          'top-shops': Array.isArray(topShops) ? topShops : [],
+          'new-hit-products': Array.isArray(newHitProducts) ? newHitProducts : [],
+          'active-users': Array.isArray(activeUsers) ? activeUsers : [],
+        });
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err.message || '加载失败');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="rankings-page">
+        <p className="rankings-loading state-loading">加载中…</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rankings-page">
+        <p className="rankings-error state-error">{error}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="rankings-page">
       <p className="rankings-intro">每周一 0 点（东八区）更新 Rankings update weekly</p>
       <ul className="rankings-list" aria-label="排行榜列表">
         {RANKING_SECTIONS.map((section) => {
-          const list = MOCK_RANKINGS[section.id] || [];
+          const list = data[section.id] || [];
           return (
             <li key={section.id}>
               <Card as="div" className="rankings-section-card">
@@ -31,35 +94,38 @@ function Rankings() {
                   <p className="rankings-section-desc">{section.desc}</p>
                 </div>
                 <div className="rankings-section-content">
-                  {section.id === 'hot-products' && list.map((item) => (
+                  {list.length === 0 && (
+                    <p className="rankings-section-empty state-empty">暂无数据 No data yet.</p>
+                  )}
+                  {section.id === 'hot-products' && list.length > 0 && list.map((item) => (
                     <Link key={item.product_id} to={`/eat/food/${item.product_id}`} className="rankings-row">
                       <span className="rankings-rank">{item.rank}</span>
                       <span className="rankings-name">{item.product_name}</span>
                       <span className="rankings-meta">{item.shop_name} · 评分 {item.comprehensive_score?.toFixed(1)}</span>
                     </Link>
                   ))}
-                  {section.id === 'busy-shops' && list.map((item) => (
+                  {section.id === 'busy-shops' && list.length > 0 && list.map((item) => (
                     <Link key={item.shop_id} to={`/eat/merchant/${item.shop_id}`} className="rankings-row">
                       <span className="rankings-rank">{item.rank}</span>
                       <span className="rankings-name">{item.shop_name}</span>
                       <span className="rankings-meta">当周 {item.weekly_review_count} 条点评</span>
                     </Link>
                   ))}
-                  {section.id === 'top-shops' && list.map((item) => (
+                  {section.id === 'top-shops' && list.length > 0 && list.map((item) => (
                     <Link key={item.shop_id} to={`/eat/merchant/${item.shop_id}`} className="rankings-row">
                       <span className="rankings-rank">{item.rank}</span>
                       <span className="rankings-name">{item.shop_name}</span>
                       <span className="rankings-meta">评分 {item.comprehensive_score?.toFixed(1)}</span>
                     </Link>
                   ))}
-                  {section.id === 'new-hit-products' && list.map((item) => (
+                  {section.id === 'new-hit-products' && list.length > 0 && list.map((item) => (
                     <Link key={item.product_id} to={`/eat/food/${item.product_id}`} className="rankings-row">
                       <span className="rankings-rank">{item.rank}</span>
                       <span className="rankings-name">{item.product_name}</span>
                       <span className="rankings-meta">{item.shop_name} · {item.comprehensive_score?.toFixed(1)}</span>
                     </Link>
                   ))}
-                  {section.id === 'active-users' && list.map((item) => (
+                  {section.id === 'active-users' && list.length > 0 && list.map((item) => (
                     <div key={item.user_id} className="rankings-row rankings-row-static">
                       <span className="rankings-rank">{item.rank}</span>
                       <span className="rankings-name">{item.nickname || item.username}</span>

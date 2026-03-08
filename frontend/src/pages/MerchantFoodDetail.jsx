@@ -1,21 +1,115 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import FoodDetailView from '../components/FoodDetailView';
 import FoodForm from '../components/FoodForm';
-import { getFoodById, getCategoriesByMerchantId } from '../data/mockCanteen';
+import { getProduct, getCategories, updateProduct, deleteProduct } from '../api/canteen';
+import { getUploadUrl } from '../api/config';
 import './MerchantFoodDetail.css';
 
-/** 商家端菜品详情：查看 + 编辑（FoodDetailView / FoodForm 切换） */
+/** 商家端菜品详情：getProduct + getCategories，编辑 updateProduct，删除 deleteProduct */
 function MerchantFoodDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [food, setFood] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [food, setFood] = useState(() => getFoodById(id));
+  const [submitLoading, setSubmitLoading] = useState(false);
 
-  if (!food) {
+  useEffect(() => {
+    const productId = id ? parseInt(id, 10) : 0;
+    if (!productId) {
+      setFood(null);
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    getProduct(productId)
+      .then((data) => {
+        if (cancelled) return;
+        const d = data;
+        const imgs = d?.images ?? [];
+        const firstImg = imgs.length ? getUploadUrl(imgs[0].url) : null;
+        setFood({
+          id: d.id,
+          shop_id: d.shop_id,
+          name: d.name,
+          description: d.description ?? undefined,
+          price: d.price,
+          image: firstImg,
+          category_id: d.category_id,
+          categoryId: d.category_id,
+        });
+        return d.shop_id ? getCategories(d.shop_id) : [];
+      })
+      .then((cats) => {
+        if (cancelled) return;
+        setCategories(Array.isArray(cats) ? cats : []);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err.message || '加载失败');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [id]);
+
+  const handleSave = (values) => {
+    if (!food) return;
+    setError(null);
+    setSubmitLoading(true);
+    updateProduct(food.id, {
+      name: values.name,
+      description: values.description,
+      category_id: values.categoryId != null ? values.categoryId : food.category_id,
+      price: values.price !== undefined ? values.price : food.price,
+    })
+      .then((updated) => {
+        setFood((prev) => ({
+          ...prev,
+          name: updated?.name ?? prev.name,
+          description: updated?.description ?? prev.description,
+          category_id: updated?.category_id ?? prev.category_id,
+          categoryId: updated?.category_id ?? prev.categoryId,
+          price: updated?.price !== undefined ? updated.price : prev.price,
+        }));
+        setIsEditing(false);
+      })
+      .catch((err) => {
+        setError(err.message || '保存失败');
+      })
+      .finally(() => {
+        setSubmitLoading(false);
+      });
+  };
+
+  const handleDelete = () => {
+    if (!food || !window.confirm(`确定删除 "${food.name}" 吗？ Delete this dish?`)) return;
+    deleteProduct(food.id)
+      .then(() => navigate('/merchant/manage', { replace: true }))
+      .catch((err) => setError(err.message || '删除失败'));
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+  };
+
+  if (loading) {
     return (
       <div className="merchant-food-detail-page">
-        <p className="merchant-food-detail-empty">菜品不存在 Food not found</p>
+        <p className="merchant-food-detail-loading state-loading">加载中…</p>
+      </div>
+    );
+  }
+
+  if (error && !food) {
+    return (
+      <div className="merchant-food-detail-page">
+        <p className="merchant-food-detail-error state-error">{error}</p>
         <button type="button" className="merchant-food-detail-back" onClick={() => navigate(-1)}>
           返回 Back
         </button>
@@ -23,32 +117,27 @@ function MerchantFoodDetail() {
     );
   }
 
-  const handleSave = (values) => {
-    setFood((prev) => ({
-      ...prev,
-      name: values.name,
-      price: values.price,
-      categoryId: values.categoryId ?? prev.categoryId,
-      image: values.imageUrl ?? prev.image,
-      description: values.description ?? prev.description,
-    }));
-    setIsEditing(false);
-    // TODO: 调用更新菜品 API
-  };
-
-  const handleCancelEdit = () => {
-    setIsEditing(false);
-  };
+  if (!food) {
+    return (
+      <div className="merchant-food-detail-page">
+        <p className="merchant-food-detail-empty state-empty">菜品不存在 Food not found</p>
+        <button type="button" className="merchant-food-detail-back" onClick={() => navigate(-1)}>
+          返回 Back
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="merchant-food-detail-page">
+      {error && <p className="merchant-food-detail-error" role="alert">{error}</p>}
       {isEditing ? (
         <FoodForm
-          categories={getCategoriesByMerchantId(food.merchantId)}
+          categories={categories}
           initialValues={{
             name: food.name,
+            categoryId: food.category_id ?? food.categoryId,
             price: food.price,
-            categoryId: food.categoryId,
             image: food.image,
             description: food.description,
           }}
@@ -63,8 +152,17 @@ function MerchantFoodDetail() {
               type="button"
               className="merchant-food-detail-btn merchant-food-detail-btn-edit"
               onClick={() => setIsEditing(true)}
+              disabled={submitLoading}
             >
               编辑 Edit
+            </button>
+            <button
+              type="button"
+              className="merchant-food-detail-btn merchant-food-detail-btn-delete"
+              onClick={handleDelete}
+              disabled={submitLoading}
+            >
+              删除 Delete
             </button>
             <button
               type="button"
@@ -76,6 +174,7 @@ function MerchantFoodDetail() {
           </div>
         </>
       )}
+      {submitLoading && <p className="merchant-food-detail-loading">保存中…</p>}
     </div>
   );
 }

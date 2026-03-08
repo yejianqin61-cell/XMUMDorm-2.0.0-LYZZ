@@ -4,11 +4,33 @@
   background: transparent;
 }
 
+.merchant-food-detail-loading,
+.merchant-food-detail-error {
+  margin: 24px 0 16px;
+  font-size: 14px;
+  text-align: center;
+  color: var(--wx-text-secondary);
+}
+
+.merchant-food-detail-error {
+  color: var(--wx-red, #ee0a24);
+}
+
 .merchant-food-detail-empty {
   margin: 24px 0 16px;
   font-size: 14px;
   color: var(--wx-text-secondary);
   text-align: center;
+}
+
+.merchant-food-detail-btn-delete {
+  background: transparent;
+  color: var(--wx-red, #ee0a24);
+  border: 1px solid var(--wx-red, #ee0a24);
+}
+
+.merchant-food-detail-btn-delete:hover {
+  background: rgba(238, 10, 36, 0.08);
 }
 
 .merchant-food-detail-back {

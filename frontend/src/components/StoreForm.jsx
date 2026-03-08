@@ -1,19 +1,30 @@
-import { useState } from 'react';
-import { AREAS } from '../data/mockCanteen';
+import { useState, useEffect } from 'react';
+import { getRegions } from '../api/canteen';
 import './StoreForm.css';
 
 /**
- * 店铺创建/编辑表单：名称、分区、简介、logo
- * @param {Object} [props.initialValues] 编辑时预填 { name, area, description, logo }
- * @param {Function} props.onSubmit(values) values: { name, area, description?, logoUrl? }
+ * 店铺创建/编辑表单：名称、分区（API regions）、简介、logo
+ * @param {Object} [props.initialValues] 编辑时预填 { name, region_id, description, logo }
+ * @param {Function} props.onSubmit(values) values: { name, region_id, description?, logoUrl? }
  * @param {Function} props.onCancel
  */
 function StoreForm({ initialValues, onSubmit, onCancel }) {
+  const [regions, setRegions] = useState([]);
   const [name, setName] = useState(initialValues?.name ?? '');
-  const [area, setArea] = useState(initialValues?.area ?? AREAS[0]);
+  const [regionId, setRegionId] = useState(initialValues?.region_id ?? '');
   const [description, setDescription] = useState(initialValues?.description ?? '');
   const [logoUrl, setLogoUrl] = useState(initialValues?.logo ?? '');
   const [message, setMessage] = useState({ type: '', text: '' });
+
+  useEffect(() => {
+    getRegions()
+      .then((data) => {
+        const list = Array.isArray(data) ? data : [];
+        setRegions(list);
+        if (!regionId && list.length > 0) setRegionId(String(list[0].id));
+      })
+      .catch(() => {});
+  }, []);
 
   const showMsg = (text, type = 'success') => {
     setMessage({ text, type });
@@ -35,14 +46,14 @@ function StoreForm({ initialValues, onSubmit, onCancel }) {
       setTimeout(() => setMessage({ type: '', text: '' }), 2000);
       return;
     }
-    if (!area) {
+    if (!regionId) {
       setMessage({ text: '请选择分区 Please select area', type: 'error' });
       setTimeout(() => setMessage({ type: '', text: '' }), 2000);
       return;
     }
     onSubmit({
       name: nameTrim,
-      area,
+      region_id: parseInt(regionId, 10),
       description: description.trim() || undefined,
       logoUrl: logoUrl || undefined,
     });
@@ -67,14 +78,12 @@ function StoreForm({ initialValues, onSubmit, onCancel }) {
         <label htmlFor="store-form-area">分区 Area *</label>
         <select
           id="store-form-area"
-          value={area}
-          onChange={(e) => setArea(e.target.value)}
+          value={regionId}
+          onChange={(e) => setRegionId(e.target.value)}
           className="store-form-select"
         >
-          {AREAS.map((a) => (
-            <option key={a} value={a}>
-              {a === 'others' ? 'Others' : a}
-            </option>
+          {regions.map((r) => (
+            <option key={r.id} value={String(r.id)}>{r.name || r.code}</option>
           ))}
         </select>
       </div>

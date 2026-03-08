@@ -24,8 +24,10 @@ import StoreCreate from './pages/StoreCreate';
 import FoodManage from './pages/FoodManage';
 import FoodCreate from './pages/FoodCreate';
 import MerchantFoodDetail from './pages/MerchantFoodDetail';
+import MerchantShopEdit from './pages/MerchantShopEdit';
 import Rankings from './pages/Rankings';
 import './App.css';
+import './styles/states.css';
 
 function App() {
   return (
@@ -60,6 +62,7 @@ function App() {
             <Route path="eat/food/:id/review" element={<FoodReviewPublish />} />
             <Route path="merchant/create" element={<StoreCreate />} />
             <Route path="merchant/manage" element={<FoodManage />} />
+            <Route path="merchant/shop/edit" element={<MerchantShopEdit />} />
             <Route path="merchant/food/new" element={<FoodCreate />} />
             <Route path="merchant/food/:id" element={<MerchantFoodDetail />} />
             <Route path="*" element={<Navigate to="/" replace />} />

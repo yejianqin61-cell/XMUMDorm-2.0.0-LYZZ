@@ -36,7 +36,7 @@ function MyReviews() {
   if (!token) {
     return (
       <div className="myreviews-page">
-        <p className="myreviews-empty">请先登录后查看我的点评。Please log in to view your reviews.</p>
+        <p className="myreviews-empty state-empty">请先登录后查看我的点评。Please log in to view your reviews.</p>
       </div>
     );
   }
@@ -44,7 +44,7 @@ function MyReviews() {
   if (loading) {
     return (
       <div className="myreviews-page">
-        <p className="myreviews-loading">加载中 Loading…</p>
+        <p className="myreviews-loading state-loading">加载中 Loading…</p>
       </div>
     );
   }
@@ -52,7 +52,7 @@ function MyReviews() {
   if (error) {
     return (
       <div className="myreviews-page">
-        <p className="myreviews-error">{error}</p>
+        <p className="myreviews-error state-error">{error}</p>
       </div>
     );
   }
@@ -60,7 +60,7 @@ function MyReviews() {
   if (list.length === 0) {
     return (
       <div className="myreviews-page">
-        <p className="myreviews-empty">暂无点评，去食堂给喜欢的菜品写一条吧。No reviews yet. Go write one!</p>
+        <p className="myreviews-empty state-empty">暂无点评，去食堂给喜欢的菜品写一条吧。No reviews yet. Go write one!</p>
       </div>
     );
   }

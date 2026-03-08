@@ -1,14 +1,33 @@
 import { Link } from 'react-router-dom';
-import { getAuthor } from '../data/mockPosts';
+import { API_BASE_URL } from '../api/config';
+import { formatPostTime } from '../utils/formatTime';
 import './PostCard.css';
+
+/** 兼容 API 与 Mock：author 为对象时用 nickname/username、avatar（需补全 URL） */
+function useAuthor(post) {
+  if (post.author && typeof post.author === 'object') {
+    const a = post.author;
+    const avatar = a.avatar ? (a.avatar.startsWith('http') ? a.avatar : `${API_BASE_URL}${a.avatar}`) : null;
+    return { username: a.nickname ?? a.username ?? '匿名', avatar };
+  }
+  return { username: '匿名', avatar: null };
+}
+
+function prefixImageUrl(url) {
+  return url && !url.startsWith('http') ? `${API_BASE_URL}${url}` : url;
+}
 
 /**
  * 帖子卡片：头像+用户名，内容摘要，点赞/评论数；点击进入详情
+ * post 支持 API 形状：author, like_count, comment_count 或 Mock：authorId, likeCount, commentCount
  */
 function PostCard({ post }) {
-  const { id, content, likeCount, commentCount, authorId } = post;
-  const author = getAuthor(authorId);
-  const preview = content.length > 50 ? content.slice(0, 50) + '…' : content;
+  const { id, content, like_count, comment_count, likeCount, commentCount } = post;
+  const author = useAuthor(post);
+  const likeNum = like_count ?? likeCount ?? 0;
+  const commentNum = comment_count ?? commentCount ?? 0;
+  const preview = (content || '').length > 50 ? (content || '').slice(0, 50) + '…' : (content || '');
+  const timeStr = formatPostTime(post.created_at);
 
   return (
     <Link to={`/post/${id}`} className="post-card" aria-label={`查看帖子 ${preview}`}>
@@ -23,9 +42,22 @@ function PostCard({ post }) {
         <span className="post-card-username">{author.username}</span>
       </div>
       <p className="post-card-content">{preview}</p>
+      {post.images && post.images.length > 0 && (
+        <div className="post-card-images" aria-hidden>
+          {post.images.slice(0, 3).map((img, i) => (
+            <img
+              key={img.url || i}
+              src={prefixImageUrl(img.url)}
+              alt=""
+              className="post-card-image"
+            />
+          ))}
+        </div>
+      )}
       <div className="post-card-meta">
-        <span className="post-card-stat">♥ {likeCount}</span>
-        <span className="post-card-stat">💬 {commentCount}</span>
+        {timeStr && <span className="post-card-time">{timeStr}</span>}
+        <span className="post-card-stat">♥ {likeNum}</span>
+        <span className="post-card-stat">💬 {commentNum}</span>
       </div>
     </Link>
   );

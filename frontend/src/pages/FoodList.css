@@ -22,6 +22,18 @@
   overflow-y: auto;
 }
 
+.food-list-loading,
+.food-list-error {
+  padding: 24px 16px;
+  font-size: 14px;
+  text-align: center;
+  color: var(--wx-text-secondary);
+}
+
+.food-list-error {
+  color: var(--wx-red, #ee0a24);
+}
+
 .food-list-empty {
   margin: 24px 16px 0;
   font-size: 14px;

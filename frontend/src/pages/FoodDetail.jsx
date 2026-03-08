@@ -1,26 +1,96 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import FoodDetailView from '../components/FoodDetailView';
-import { getFoodById, getReviewsByFoodId, RATING_LABELS } from '../data/mockCanteen';
+import { getProduct, getProductComments, postProductComment } from '../api/canteen';
+import { RATING_LABELS } from '../constants/rating';
+import { getUploadUrl } from '../api/config';
 import './FoodDetail.css';
 
-/** 用户端菜品详情页：菜品信息 + 去点评/收藏 + 点评列表（含回复发布二级评论）；一级可点赞，二级仅展示无点赞 */
+/** 将 API 点评树转为页面使用的结构（userName、images 为 url 数组） */
+function mapCommentsToReviews(list) {
+  return (list || []).map((r) => ({
+    ...r,
+    userName: r.authorName ?? '匿名',
+    images: (r.images || []).map((i) => (typeof i === 'string' ? i : i?.url)).filter(Boolean),
+    replies: (r.replies || []).map((rep) => ({
+      ...rep,
+      userName: rep.authorName ?? '匿名',
+    })),
+  }));
+}
+
+/** 用户端菜品详情页：菜品与点评均来自 API */
 function FoodDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isLoggedIn } = useAuth();
-  const food = getFoodById(id);
+  const [food, setFood] = useState(null);
+  const [foodLoading, setFoodLoading] = useState(true);
+  const [foodError, setFoodError] = useState(null);
   const [favorited, setFavorited] = useState(false);
-  const [reviews, setReviews] = useState(() => getReviewsByFoodId(id));
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [reviewError, setReviewError] = useState(null);
   const [replyingTo, setReplyingTo] = useState(null); // { id, userName }
   const [newReply, setNewReply] = useState('');
+  const [submitLoading, setSubmitLoading] = useState(false);
   const [likedReviewIds, setLikedReviewIds] = useState(new Set());
-  const [reviewLikeCounts, setReviewLikeCounts] = useState(() => {
-    const o = {};
-    (getReviewsByFoodId(id) || []).forEach((r) => { o[r.id] = r.likeCount; });
-    return o;
-  });
+  const [reviewLikeCounts, setReviewLikeCounts] = useState({});
+
+  useEffect(() => {
+    const productId = id ? parseInt(id, 10) : 0;
+    if (!productId) {
+      setFood(null);
+      setFoodLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setFoodLoading(true);
+    setFoodError(null);
+    getProduct(productId)
+      .then((data) => {
+        if (cancelled) return;
+        const d = data;
+        const imgs = d?.images ?? [];
+        const firstImg = imgs.length ? getUploadUrl(imgs[0].url) : null;
+        setFood({
+          id: d.id,
+          name: d.name,
+          description: d.description ?? undefined,
+          price: d.price,
+          image: firstImg,
+        });
+      })
+      .catch((err) => {
+        if (!cancelled) setFoodError(err.message || '加载失败');
+      })
+      .finally(() => {
+        if (!cancelled) setFoodLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [id]);
+
+  const loadReviews = useCallback(() => {
+    const productId = id ? parseInt(id, 10) : 0;
+    if (!productId) return Promise.resolve();
+    setReviewsLoading(true);
+    setReviewError(null);
+    return getProductComments(productId)
+      .then((list) => {
+        setReviews(mapCommentsToReviews(list));
+      })
+      .catch((err) => {
+        setReviewError(err.message || '加载点评失败');
+      })
+      .finally(() => {
+        setReviewsLoading(false);
+      });
+  }, [id]);
+
+  useEffect(() => {
+    loadReviews();
+  }, [loadReviews]);
 
   const requireLogin = () => {
     if (!isLoggedIn) {
@@ -30,10 +100,29 @@ function FoodDetail() {
     return false;
   };
 
+  if (foodLoading) {
+    return (
+      <div className="food-detail-page">
+        <p className="food-detail-loading state-loading">加载中…</p>
+      </div>
+    );
+  }
+
+  if (foodError) {
+    return (
+      <div className="food-detail-page">
+        <p className="food-detail-error state-error">{foodError}</p>
+        <button type="button" className="food-detail-back-btn" onClick={() => navigate(-1)}>
+          返回 Back
+        </button>
+      </div>
+    );
+  }
+
   if (!food) {
     return (
       <div className="food-detail-page">
-        <p className="food-detail-empty">菜品不存在 Food not found</p>
+        <p className="food-detail-empty state-empty">菜品不存在 Food not found</p>
         <button type="button" className="food-detail-back-btn" onClick={() => navigate(-1)}>
           返回 Back
         </button>
@@ -66,22 +155,22 @@ function FoodDetail() {
     e.preventDefault();
     if (requireLogin()) return;
     if (!replyingTo || !newReply.trim()) return;
-    const reply = {
-      id: Date.now(),
-      reviewId: replyingTo.id,
-      userId: 0,
-      userName: '我',
-      content: newReply.trim(),
-    };
-    setReviews((prev) =>
-      prev.map((r) =>
-        r.id === replyingTo.id
-          ? { ...r, replies: [...(r.replies || []), reply] }
-          : r
-      )
-    );
-    setNewReply('');
-    setReplyingTo(null);
+    const productId = id ? parseInt(id, 10) : 0;
+    if (!productId) return;
+    setSubmitLoading(true);
+    setReviewError(null);
+    postProductComment(productId, { content: newReply.trim(), parent_id: replyingTo.id })
+      .then(() => {
+        setNewReply('');
+        setReplyingTo(null);
+        return loadReviews();
+      })
+      .catch((err) => {
+        setReviewError(err.message || '回复失败');
+      })
+      .finally(() => {
+        setSubmitLoading(false);
+      });
   };
 
   const totalReviews = reviews.length;
@@ -112,15 +201,18 @@ function FoodDetail() {
 
       <section className="food-detail-reviews" aria-label="点评列表">
         <h2 className="food-detail-reviews-title">点评 Reviews ({totalReviews})</h2>
-        {totalReviews === 0 ? (
-          <p className="food-detail-reviews-empty">暂无点评，快来第一条吧 No reviews yet.</p>
+        {reviewError && <p className="food-detail-reviews-error state-error">{reviewError}</p>}
+        {reviewsLoading ? (
+          <p className="food-detail-reviews-loading state-loading">加载点评中…</p>
+        ) : totalReviews === 0 ? (
+          <p className="food-detail-reviews-empty state-empty">暂无点评，快来第一条吧 No reviews yet.</p>
         ) : (
           <ul className="food-detail-review-list">
             {reviews.map((r) => (
               <li key={r.id} className="food-detail-review">
                 <div className="food-detail-review-head">
                   <span className="food-detail-review-user">{r.userName}</span>
-                  <span className="food-detail-review-rating">{RATING_LABELS[r.rating] ?? r.rating}</span>
+                  <span className="food-detail-review-rating">{typeof r.rating === 'number' ? (RATING_LABELS[r.rating] ?? r.rating) : r.rating}</span>
                 </div>
                 <p className="food-detail-review-content">{r.content}</p>
                 {r.images && r.images.length > 0 && (
@@ -143,7 +235,7 @@ function FoodDetail() {
                     onClick={() => handleLikeReview(r.id)}
                     aria-pressed={likedReviewIds.has(r.id)}
                   >
-                    ♥ {reviewLikeCounts[r.id] ?? r.likeCount}
+                    ♥ {reviewLikeCounts[r.id] ?? r.likeCount ?? 0}
                   </button>
                   <button
                     type="button"
@@ -185,8 +277,8 @@ function FoodDetail() {
             onChange={(e) => setNewReply(e.target.value)}
             maxLength={500}
           />
-          <button type="submit" className="food-detail-send" disabled={!newReply.trim()}>
-            发送 Send
+          <button type="submit" className="food-detail-send" disabled={!newReply.trim() || submitLoading}>
+            {submitLoading ? '发送中…' : '发送 Send'}
           </button>
         </div>
       </form>

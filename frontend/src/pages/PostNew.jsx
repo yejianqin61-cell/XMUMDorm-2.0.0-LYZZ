@@ -1,48 +1,66 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { createPost } from '../api/posts';
 import './PostNew.css';
 
-/** 发布帖子页：需登录；上方文本框，下方图片区域（最多 3 张） */
+/** 发布帖子页：需登录；调用 createPost API */
 function PostNew() {
   const { isLoggedIn } = useAuth();
   const navigate = useNavigate();
   const [content, setContent] = useState('');
-  const [images, setImages] = useState([]);
+  const [imageFiles, setImageFiles] = useState([]);
+  const [previewUrls, setPreviewUrls] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const fileInputRef = useRef(null);
 
   if (!isLoggedIn) {
     return <Navigate to="/login" replace state={{ from: { pathname: '/post/new' } }} />;
   }
 
   const handleImageChange = (e) => {
-    const files = Array.from(e.target.files || []).slice(0, 3 - images.length);
+    const files = Array.from(e.target.files || []).slice(0, 3 - imageFiles.length);
     if (files.length === 0) return;
     const newUrls = files.map((f) => URL.createObjectURL(f));
-    setImages((prev) => [...prev, ...newUrls].slice(0, 3));
+    setImageFiles((prev) => [...prev, ...files].slice(0, 3));
+    setPreviewUrls((prev) => [...prev, ...newUrls].slice(0, 3));
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const removeImage = (index) => {
-    setImages((prev) => {
-      const next = prev.filter((_, i) => i !== index);
-      return next;
-    });
+    URL.revokeObjectURL(previewUrls[index]);
+    setImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!isLoggedIn) {
-      navigate('/login', { state: { from: { pathname: '/post/new' } }, replace: true });
+    if (!content.trim()) {
+      setError('请输入内容');
       return;
     }
-    // TODO: 调用发布接口
-    console.log('发布', { content, imageCount: images.length });
+    setLoading(true);
+    setError(null);
+    try {
+      const created = await createPost({
+        content: content.trim(),
+        images: imageFiles.length ? imageFiles : undefined,
+      });
+      navigate(created?.id ? `/post/${created.id}` : '/', { replace: true });
+    } catch (err) {
+      setError(err.message || '发布失败');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="postnew-page">
       <p className="postnew-anonymous-hint">
-        发帖为匿名。他人点赞或评论时，会在「信箱」中收到提醒。Posts are anonymous; you’ll get like/comment notifications in Mailbox.
+        发帖为匿名。他人点赞或评论时，会在「信箱」中收到提醒。Posts are anonymous; you'll get like/comment notifications in Mailbox.
       </p>
+      {error && <p className="postnew-error state-inline-error" role="alert">{error}</p>}
       <form className="postnew-form" onSubmit={handleSubmit}>
         <div className="postnew-section">
           <label className="postnew-label">内容 Content</label>
@@ -57,7 +75,7 @@ function PostNew() {
         <div className="postnew-section">
           <label className="postnew-label">图片 Pictures（最多 3 张 / up to 3）</label>
           <div className="postnew-images">
-            {images.map((url, i) => (
+            {previewUrls.map((url, i) => (
               <div key={url} className="postnew-image-wrap">
                 <img src={url} alt="" className="postnew-image" />
                 <button
@@ -70,9 +88,10 @@ function PostNew() {
                 </button>
               </div>
             ))}
-            {images.length < 3 && (
+            {previewUrls.length < 3 && (
               <label className="postnew-image-add">
                 <input
+                  ref={fileInputRef}
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
                   multiple
@@ -84,8 +103,8 @@ function PostNew() {
             )}
           </div>
         </div>
-        <button type="submit" className="postnew-submit">
-          发布 Post
+        <button type="submit" className="postnew-submit" disabled={loading}>
+          {loading ? '发布中…' : '发布 Post'}
         </button>
       </form>
     </div>

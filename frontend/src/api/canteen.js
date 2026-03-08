@@ -1,71 +1,159 @@
 /**
- * 食堂相关 API（商品评论等）
+ * 食堂 API，与后端 /api/canteen 对应
+ * 统一使用 request 工具
  */
-import { API_BASE_URL } from './config';
+import { API_BASE_URL, getUploadUrl } from './config';
+import { get, post, patch, del, request } from './request';
 
-function authHeaders(token) {
-  const h = {};
-  if (token) h['Authorization'] = `Bearer ${token}`;
-  return h;
+// ---------- 区域与店铺 ----------
+export function getRegions() {
+  return get('/api/canteen/regions');
 }
 
-/** 商品评论列表：GET /api/canteen/products/:productId/comments，返回树形（一级带 replies） */
-export async function getProductComments(productId, options = {}) {
+export function getShopsByRegion(regionId) {
+  return get(`/api/canteen/regions/${regionId}/shops`);
+}
+
+export function getShop(shopId) {
+  return get(`/api/canteen/shops/${shopId}`);
+}
+
+export function getShopMe() {
+  return get('/api/canteen/shops/me');
+}
+
+export function createShop(body) {
+  return post('/api/canteen/shops', body);
+}
+
+/**
+ * 更新店铺信息。若传 logoFile 则用 FormData（name, opening_hours, logo），否则用 JSON。
+ */
+export function updateShop(shopId, body) {
+  const { name, opening_hours, logoFile } = body || {};
+  if (logoFile instanceof File || (typeof Blob !== 'undefined' && logoFile instanceof Blob)) {
+    const form = new FormData();
+    if (name != null) form.append('name', String(name).trim());
+    if (opening_hours !== undefined) form.append('opening_hours', String(opening_hours).trim());
+    form.append('logo', logoFile, logoFile instanceof File ? logoFile.name : undefined);
+    return request(`/api/canteen/shops/${shopId}`, { method: 'PATCH', body: form });
+  }
+  return patch(`/api/canteen/shops/${shopId}`, { name, opening_hours });
+}
+
+export function deleteShop(shopId) {
+  return del(`/api/canteen/shops/${shopId}`);
+}
+
+// ---------- 分类 ----------
+export function getCategories(shopId) {
+  return get(`/api/canteen/shops/${shopId}/categories`);
+}
+
+export function createCategory(shopId, body) {
+  return post(`/api/canteen/shops/${shopId}/categories`, body);
+}
+
+export function updateCategory(categoryId, body) {
+  return patch(`/api/canteen/categories/${categoryId}`, body);
+}
+
+export function deleteCategory(categoryId) {
+  return del(`/api/canteen/categories/${categoryId}`);
+}
+
+// ---------- 商品 ----------
+export function getProducts(shopId, options = {}) {
+  const { category_id } = options;
+  const q = category_id != null ? `?category_id=${category_id}` : '';
+  return get(`/api/canteen/shops/${shopId}/products${q}`);
+}
+
+export function getProduct(productId) {
+  return get(`/api/canteen/products/${productId}`);
+}
+
+/**
+ * 创建商品（FormData: category_id, name, description, price?, images[]）
+ * images 为 File 或 Blob 数组，保证逐个 append 同名字段以兼容 multipart
+ */
+export function createProduct(body) {
+  const form = new FormData();
+  if (body.category_id != null) form.append('category_id', String(body.category_id));
+  if (body.name != null) form.append('name', String(body.name).trim());
+  if (body.description != null) form.append('description', String(body.description).trim());
+  if (body.price != null && body.price !== '') {
+    form.append('price', String(Number(body.price)));
+  }
+  if (body.images && Array.isArray(body.images)) {
+    body.images.forEach((f) => {
+      if (f instanceof File || (typeof Blob !== 'undefined' && f instanceof Blob)) {
+        form.append('images', f, f instanceof File ? f.name : undefined);
+      }
+    });
+  }
+  return request('/api/canteen/products', { method: 'POST', body: form });
+}
+
+export function updateProduct(productId, body) {
+  return patch(`/api/canteen/products/${productId}`, body);
+}
+
+export function deleteProduct(productId) {
+  return del(`/api/canteen/products/${productId}`);
+}
+
+// ---------- 商品点评 ----------
+/** 原始列表（扁平），如需树形可在页面或此处再封装 */
+export function getProductCommentsRaw(productId, options = {}) {
   const { page = 1, pageSize = 50 } = options;
-  const res = await fetch(
-    `${API_BASE_URL}/api/canteen/products/${productId}/comments?page=${page}&pageSize=${pageSize}`
-  );
-  const data = await res.json();
-  if (data.status !== 0) throw new Error(data.message || '获取评论失败');
-  const list = data.data?.list || [];
+  return get(`/api/canteen/products/${productId}/comments?page=${page}&pageSize=${pageSize}`);
+}
+
+/** 商品评论列表，转为树形并补全头像/图片 URL */
+export async function getProductComments(productId, options = {}) {
+  const data = await getProductCommentsRaw(productId, options);
+  const list = data?.list || [];
   const top = list.filter((c) => c.parent_id == null);
   const replyList = list.filter((c) => c.parent_id != null);
   return top.map((t) => ({
     id: t.id,
     authorName: t.author?.nickname || t.author?.username || '匿名',
-    authorAvatar: t.author?.avatar ? (t.author.avatar.startsWith('http') ? t.author.avatar : `${API_BASE_URL}${t.author.avatar}`) : null,
+    authorAvatar: t.author?.avatar ? getUploadUrl(t.author.avatar) : null,
     content: t.content,
+    rating: t.rating,
     createdAt: t.created_at,
-    image: (t.images && t.images[0]?.url) ? (t.images[0].url.startsWith('http') ? t.images[0].url : `${API_BASE_URL}${t.images[0].url}`) : null,
+    images: (t.images || []).map((i) => (typeof i === 'string' ? i : i?.url ? getUploadUrl(i.url) : null)).filter(Boolean),
     replies: replyList
       .filter((r) => r.parent_id === t.id)
       .map((r) => ({
         id: r.id,
         authorName: r.author?.nickname || r.author?.username || '匿名',
-        authorAvatar: r.author?.avatar ? (r.author.avatar.startsWith('http') ? r.author.avatar : `${API_BASE_URL}${r.author.avatar}`) : null,
+        authorAvatar: r.author?.avatar ? getUploadUrl(r.author.avatar) : null,
         content: r.content,
         createdAt: r.created_at,
-        image: (r.images && r.images[0]?.url) ? (r.images[0].url.startsWith('http') ? r.images[0].url : `${API_BASE_URL}${r.images[0].url}`) : null,
+        images: (r.images || []).map((i) => (typeof i === 'string' ? i : i?.url ? getUploadUrl(i.url) : null)).filter(Boolean),
       })),
   }));
 }
 
-/** 发表商品评论（一级或二级）：POST multipart，rating 必填 */
-export async function postProductComment(productId, { rating = '人上人', content, parent_id = null, imageFiles = [] }, token) {
+/** 发表商品点评（一级或二级），FormData: rating, content, parent_id?, images[] */
+export function postProductComment(productId, payload) {
+  const { rating = '人上人', content = '', parent_id, imageFiles = [] } = payload || {};
   const form = new FormData();
   form.append('rating', rating);
-  form.append('content', content.trim());
+  form.append('content', String(content).trim());
   if (parent_id != null) form.append('parent_id', String(parent_id));
-  imageFiles.forEach((f) => form.append('images', f));
-
-  const res = await fetch(`${API_BASE_URL}/api/canteen/products/${productId}/comments`, {
-    method: 'POST',
-    headers: authHeaders(token),
-    body: form,
-  });
-  const data = await res.json();
-  if (data.status !== 0) throw new Error(data.message || '评论失败');
-  return data.data;
+  (imageFiles || []).forEach((f) => form.append('images', f));
+  return request(`/api/canteen/products/${productId}/comments`, { method: 'POST', body: form });
 }
 
-/** 我的点评列表：GET /api/canteen/my-reviews，需登录 */
-export async function getMyProductReviews(options = {}, token) {
+export function deleteProductComment(productId, commentId) {
+  return del(`/api/canteen/products/${productId}/comments/${commentId}`);
+}
+
+// ---------- 我的点评 ----------
+export function getMyProductReviews(options = {}) {
   const { page = 1, pageSize = 10 } = options;
-  const res = await fetch(
-    `${API_BASE_URL}/api/canteen/my-reviews?page=${page}&pageSize=${pageSize}`,
-    { headers: authHeaders(token) }
-  );
-  const data = await res.json();
-  if (data.status !== 0) throw new Error(data.message || '获取我的点评失败');
-  return data.data;
+  return get(`/api/canteen/my-reviews?page=${page}&pageSize=${pageSize}`);
 }

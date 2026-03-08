@@ -13,7 +13,8 @@ const {
   productImagesUpload,
   commentImagesUpload,
   saveProductImages,
-  saveCommentImages
+  saveCommentImages,
+  shopLogoUpload
 } = require('../middleware/upload');
 const { onPrimaryCommentChange } = require('../services/rankingStats');
 const { shanghaiDaysAgoStart } = require('../utils/timezone');
@@ -134,22 +135,41 @@ router.get('/regions/:regionId/shops', async (req, res) => {
     if (!regionId) {
       return res.status(400).json({ status: -1, message: '区域 ID 无效' });
     }
-    const rows = await query(
+    let rows = await query(
       `SELECT s.id, s.user_id, s.region_id, s.name, s.created_at, r.code AS region_code, r.name AS region_name
        FROM shops s JOIN regions r ON s.region_id = r.id
        WHERE s.region_id = ? AND s.deleted_at IS NULL
        ORDER BY s.created_at ASC`,
       [regionId]
     );
-    const list = (rows || []).map((r) => ({
-      id: r.id,
-      user_id: r.user_id,
-      region_id: r.region_id,
-      region_code: r.region_code,
-      region_name: r.region_name,
-      name: r.name,
-      created_at: r.created_at
-    }));
+    let withLogo = false;
+    try {
+      const withCols = await query(
+        `SELECT s.id, s.user_id, s.region_id, s.name, s.created_at, s.logo_path, s.opening_hours, r.code AS region_code, r.name AS region_name
+         FROM shops s JOIN regions r ON s.region_id = r.id
+         WHERE s.region_id = ? AND s.deleted_at IS NULL
+         ORDER BY s.created_at ASC`,
+        [regionId]
+      );
+      rows = withCols;
+      withLogo = true;
+    } catch (_) {}
+    const list = (rows || []).map((r) => {
+      const item = {
+        id: r.id,
+        user_id: r.user_id,
+        region_id: r.region_id,
+        region_code: r.region_code,
+        region_name: r.region_name,
+        name: r.name,
+        created_at: r.created_at
+      };
+      if (withLogo && r) {
+        item.logo = r.logo_path ? UPLOAD_PREFIX + r.logo_path : null;
+        item.opening_hours = r.opening_hours || null;
+      }
+      return item;
+    });
     res.status(200).json({ status: 0, message: '获取成功', data: list });
   } catch (e) {
     console.error('按区域获取店铺列表错误:', e);
@@ -162,7 +182,7 @@ router.get('/shops/me', authenticateToken, async (req, res) => {
     if (req.user.role !== 'merchant' && req.user.role !== 'admin') {
       return res.status(403).json({ status: -1, message: '仅商家可查看我的店铺' });
     }
-    const rows = await query(
+    let rows = await query(
       `SELECT s.id, s.user_id, s.region_id, s.name, s.created_at, s.updated_at, r.code AS region_code, r.name AS region_name
        FROM shops s JOIN regions r ON s.region_id = r.id
        WHERE s.user_id = ? AND s.deleted_at IS NULL`,
@@ -172,6 +192,15 @@ router.get('/shops/me', authenticateToken, async (req, res) => {
       return res.status(404).json({ status: -1, message: '您尚未创建店铺' });
     }
     const row = rows[0];
+    let logo = null;
+    let opening_hours = null;
+    try {
+      const ext = await query('SELECT logo_path, opening_hours FROM shops WHERE id = ?', [row.id]);
+      if (ext && ext[0]) {
+        logo = ext[0].logo_path ? UPLOAD_PREFIX + ext[0].logo_path : null;
+        opening_hours = ext[0].opening_hours || null;
+      }
+    } catch (_) {}
     const categories = await query(
       'SELECT id, name, sort_order, created_at FROM product_categories WHERE shop_id = ? AND deleted_at IS NULL ORDER BY sort_order ASC, id ASC',
       [row.id]
@@ -190,6 +219,8 @@ router.get('/shops/me', authenticateToken, async (req, res) => {
         region_code: row.region_code,
         region_name: row.region_name,
         name: row.name,
+        logo,
+        opening_hours,
         created_at: row.created_at,
         updated_at: row.updated_at,
         categories: categories || [],
@@ -216,6 +247,15 @@ router.get('/shops/:shopId', async (req, res) => {
       return res.status(404).json({ status: -1, message: '店铺不存在' });
     }
     const row = rows[0];
+    let logo = null;
+    let opening_hours = null;
+    try {
+      const ext = await query('SELECT logo_path, opening_hours FROM shops WHERE id = ?', [shopId]);
+      if (ext && ext[0]) {
+        logo = ext[0].logo_path ? UPLOAD_PREFIX + ext[0].logo_path : null;
+        opening_hours = ext[0].opening_hours || null;
+      }
+    } catch (_) {}
     const categories = await query(
       'SELECT id, name, sort_order, created_at FROM product_categories WHERE shop_id = ? AND deleted_at IS NULL ORDER BY sort_order ASC, id ASC',
       [shopId]
@@ -234,6 +274,8 @@ router.get('/shops/:shopId', async (req, res) => {
         region_code: row.region_code,
         region_name: row.region_name,
         name: row.name,
+        logo,
+        opening_hours,
         created_at: row.created_at,
         updated_at: row.updated_at,
         categories: categories || [],
@@ -246,7 +288,14 @@ router.get('/shops/:shopId', async (req, res) => {
   }
 });
 
-router.patch('/shops/:shopId', authenticateToken, async (req, res) => {
+router.patch('/shops/:shopId', authenticateToken, (req, res, next) => {
+  shopLogoUpload(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ status: -1, message: err.message || '图片格式或大小不符合要求' });
+    }
+    next();
+  });
+}, async (req, res) => {
   try {
     const shopId = parseInt(req.params.shopId, 10);
     if (!shopId) return res.status(400).json({ status: -1, message: '店铺 ID 无效' });
@@ -254,14 +303,50 @@ router.patch('/shops/:shopId', authenticateToken, async (req, res) => {
     if (!owner) {
       return res.status(403).json({ status: -1, message: '仅店主可修改店铺信息' });
     }
-    const name = (req.body.name || '').trim();
+    const name = (req.body && req.body.name !== undefined) ? String(req.body.name).trim() : '';
+    const opening_hours = (req.body && req.body.opening_hours !== undefined) ? String(req.body.opening_hours).trim() || null : undefined;
     if (!name) return res.status(400).json({ status: -1, message: '店铺名称不能为空' });
-    await query('UPDATE shops SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND deleted_at IS NULL', [name, shopId]);
+
+    const updates = ['name = ?', 'updated_at = CURRENT_TIMESTAMP'];
+    const params = [name];
+    if (opening_hours !== undefined) {
+      updates.push('opening_hours = ?');
+      params.push(opening_hours);
+    }
+    if (req.file && req.file.filename) {
+      updates.push('logo_path = ?');
+      params.push('shops/' + req.file.filename);
+    }
+    params.push(shopId);
+    const sql = `UPDATE shops SET ${updates.join(', ')} WHERE id = ? AND deleted_at IS NULL`;
+    try {
+      await query(sql, params);
+    } catch (updateErr) {
+      const msg = (updateErr && (updateErr.message || updateErr.code || '')).toString();
+      const isUnknownColumn = msg.includes('Unknown column') || msg.includes('ER_BAD_FIELD');
+      if (isUnknownColumn && (opening_hours !== undefined || (req.file && req.file.filename))) {
+        await query(
+          'UPDATE shops SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND deleted_at IS NULL',
+          [name, shopId]
+        );
+      } else {
+        throw updateErr;
+      }
+    }
+
     const rows = await query(
       'SELECT s.id, s.user_id, s.region_id, s.name, s.created_at, s.updated_at FROM shops s WHERE s.id = ?',
       [shopId]
     );
-    res.status(200).json({ status: 0, message: '修改成功', data: rows[0] });
+    let data = rows && rows[0] ? { ...rows[0] } : {};
+    try {
+      const ext = await query('SELECT logo_path, opening_hours FROM shops WHERE id = ?', [shopId]);
+      if (ext && ext[0]) {
+        data.logo = ext[0].logo_path ? UPLOAD_PREFIX + ext[0].logo_path : null;
+        data.opening_hours = ext[0].opening_hours || null;
+      }
+    } catch (_) {}
+    res.status(200).json({ status: 0, message: '修改成功', data });
   } catch (e) {
     console.error('修改店铺错误:', e);
     res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
@@ -395,7 +480,23 @@ router.post('/products', authenticateToken, (req, res, next) => {
     const owner = await isShopOwner(shopId, req.user.id);
     if (!owner) return res.status(403).json({ status: -1, message: '仅可在自己店铺下创建商品' });
 
-    await query('INSERT INTO products (shop_id, category_id, name, description) VALUES (?, ?, ?, ?)', [shopId, categoryId, name, description || null]);
+    const priceInput = req.body.price;
+    const priceNum = priceInput !== undefined && priceInput !== null && priceInput !== '' ? parseFloat(priceInput) : null;
+    const hasPrice = priceNum !== null && Number.isFinite(priceNum);
+    try {
+      if (hasPrice) {
+        await query('INSERT INTO products (shop_id, category_id, name, description, price) VALUES (?, ?, ?, ?, ?)', [shopId, categoryId, name, description || null, priceNum]);
+      } else {
+        await query('INSERT INTO products (shop_id, category_id, name, description) VALUES (?, ?, ?, ?)', [shopId, categoryId, name, description || null]);
+      }
+    } catch (insertErr) {
+      const msg = (insertErr && (insertErr.message || insertErr.code || '')).toString();
+      if (msg.includes('Unknown column') && msg.includes('price')) {
+        await query('INSERT INTO products (shop_id, category_id, name, description) VALUES (?, ?, ?, ?)', [shopId, categoryId, name, description || null]);
+      } else {
+        throw insertErr;
+      }
+    }
     const productId = (await query('SELECT LAST_INSERT_ID() AS id'))[0].id;
     const files = req.files || [];
     if (files.length > 0) {
@@ -405,7 +506,7 @@ router.post('/products', authenticateToken, (req, res, next) => {
       }
     }
 
-    const rows = await query(
+    let rows = await query(
       `SELECT p.id, p.shop_id, p.category_id, p.name, p.description, p.created_at, p.updated_at,
         c.name AS category_name, pi.file_path, pi.sort_order
        FROM products p
@@ -414,6 +515,17 @@ router.post('/products', authenticateToken, (req, res, next) => {
        WHERE p.id = ?`,
       [productId]
     );
+    try {
+      rows = await query(
+        `SELECT p.id, p.shop_id, p.category_id, p.name, p.description, p.price, p.created_at, p.updated_at,
+          c.name AS category_name, pi.file_path, pi.sort_order
+         FROM products p
+         LEFT JOIN product_categories c ON p.category_id = c.id
+         LEFT JOIN product_images pi ON pi.product_id = p.id
+         WHERE p.id = ?`,
+        [productId]
+      );
+    } catch (_) {}
     const byId = {};
     for (const r of rows) {
       if (!byId[r.id]) {
@@ -424,6 +536,7 @@ router.post('/products', authenticateToken, (req, res, next) => {
           category_name: r.category_name,
           name: r.name,
           description: r.description,
+          price: r.price != null ? Number(r.price) : null,
           created_at: r.created_at,
           updated_at: r.updated_at,
           images: []
@@ -446,7 +559,7 @@ router.get('/shops/:shopId/products', async (req, res) => {
     const categoryId = req.query.category_id ? parseInt(req.query.category_id, 10) : null;
     if (!shopId) return res.status(400).json({ status: -1, message: '店铺 ID 无效' });
 
-    let sql = `SELECT p.id, p.shop_id, p.category_id, p.name, p.description, p.created_at, p.updated_at,
+    let sql = `SELECT p.id, p.shop_id, p.category_id, p.name, p.description, p.price, p.created_at, p.updated_at,
         c.name AS category_name, pi.file_path, pi.sort_order
        FROM products p
        LEFT JOIN product_categories c ON p.category_id = c.id
@@ -458,7 +571,23 @@ router.get('/shops/:shopId/products', async (req, res) => {
       params.push(categoryId);
     }
     sql += ' ORDER BY p.created_at DESC';
-    const rows = await query(sql, params);
+    let rows;
+    try {
+      rows = await query(sql, params);
+    } catch (qErr) {
+      const msg = (qErr && (qErr.message || qErr.code || '')).toString();
+      if (msg.includes('Unknown column') && msg.includes('price')) {
+        sql = `SELECT p.id, p.shop_id, p.category_id, p.name, p.description, p.created_at, p.updated_at,
+          c.name AS category_name, pi.file_path, pi.sort_order
+         FROM products p
+         LEFT JOIN product_categories c ON p.category_id = c.id
+         LEFT JOIN product_images pi ON pi.product_id = p.id
+         WHERE p.shop_id = ? AND p.deleted_at IS NULL${categoryId ? ' AND p.category_id = ?' : ''} ORDER BY p.created_at DESC`;
+        rows = await query(sql, categoryId ? [shopId, categoryId] : [shopId]);
+      } else {
+        throw qErr;
+      }
+    }
     const byId = {};
     for (const r of rows) {
       if (!byId[r.id]) {
@@ -469,6 +598,7 @@ router.get('/shops/:shopId/products', async (req, res) => {
           category_name: r.category_name,
           name: r.name,
           description: r.description,
+          price: r.price != null ? Number(r.price) : null,
           created_at: r.created_at,
           updated_at: r.updated_at,
           images: []
@@ -491,18 +621,39 @@ router.get('/products/:productId', async (req, res) => {
   try {
     const productId = parseInt(req.params.productId, 10);
     if (!productId) return res.status(400).json({ status: -1, message: '商品 ID 无效' });
-    const rows = await query(
-      `SELECT p.id, p.shop_id, p.category_id, p.name, p.description, p.created_at, p.updated_at,
-        c.name AS category_name, s.name AS shop_name, s.region_id, r.name AS region_name,
-        pi.file_path, pi.sort_order
-       FROM products p
-       LEFT JOIN product_categories c ON p.category_id = c.id
-       LEFT JOIN shops s ON p.shop_id = s.id
-       LEFT JOIN regions r ON s.region_id = r.id
-       LEFT JOIN product_images pi ON pi.product_id = p.id
-       WHERE p.id = ? AND p.deleted_at IS NULL AND s.deleted_at IS NULL`,
-      [productId]
-    );
+    let rows;
+    try {
+      rows = await query(
+        `SELECT p.id, p.shop_id, p.category_id, p.name, p.description, p.price, p.created_at, p.updated_at,
+          c.name AS category_name, s.name AS shop_name, s.region_id, r.name AS region_name,
+          pi.file_path, pi.sort_order
+         FROM products p
+         LEFT JOIN product_categories c ON p.category_id = c.id
+         LEFT JOIN shops s ON p.shop_id = s.id
+         LEFT JOIN regions r ON s.region_id = r.id
+         LEFT JOIN product_images pi ON pi.product_id = p.id
+         WHERE p.id = ? AND p.deleted_at IS NULL AND s.deleted_at IS NULL`,
+        [productId]
+      );
+    } catch (qErr) {
+      const msg = (qErr && (qErr.message || qErr.code || '')).toString();
+      if (msg.includes('Unknown column') && msg.includes('price')) {
+        rows = await query(
+          `SELECT p.id, p.shop_id, p.category_id, p.name, p.description, p.created_at, p.updated_at,
+            c.name AS category_name, s.name AS shop_name, s.region_id, r.name AS region_name,
+            pi.file_path, pi.sort_order
+           FROM products p
+           LEFT JOIN product_categories c ON p.category_id = c.id
+           LEFT JOIN shops s ON p.shop_id = s.id
+           LEFT JOIN regions r ON s.region_id = r.id
+           LEFT JOIN product_images pi ON pi.product_id = p.id
+           WHERE p.id = ? AND p.deleted_at IS NULL AND s.deleted_at IS NULL`,
+          [productId]
+        );
+      } else {
+        throw qErr;
+      }
+    }
     if (!rows || rows.length === 0) {
       return res.status(404).json({ status: -1, message: '商品不存在' });
     }
@@ -519,6 +670,7 @@ router.get('/products/:productId', async (req, res) => {
           category_name: r.category_name,
           name: r.name,
           description: r.description,
+          price: r.price != null ? Number(r.price) : null,
           created_at: r.created_at,
           updated_at: r.updated_at,
           images: []
@@ -527,11 +679,16 @@ router.get('/products/:productId', async (req, res) => {
       if (r.file_path) byId[r.id].images.push({ url: UPLOAD_PREFIX + r.file_path, sort_order: r.sort_order });
     }
     const product = byId[productId];
-    product.images.sort((a, b) => a.sort_order - b.sort_order);
+    if (product) product.images.sort((a, b) => a.sort_order - b.sort_order);
 
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const pageSize = Math.min(50, Math.max(1, parseInt(req.query.pageSize, 10) || 10));
     const offset = (page - 1) * pageSize;
+    const limitNum = Number(pageSize) + 1;
+    const offsetNum = Number(offset);
+    if (!Number.isInteger(limitNum) || limitNum < 1 || !Number.isInteger(offsetNum) || offsetNum < 0) {
+      return res.status(400).json({ status: -1, message: '分页参数无效' });
+    }
     const commentRows = await query(
       `SELECT pc.id, pc.product_id, pc.user_id, pc.parent_id, pc.rating, pc.content, pc.created_at,
         u.nickname AS author_nickname, u.avatar AS author_avatar,
@@ -541,8 +698,8 @@ router.get('/products/:productId', async (req, res) => {
        LEFT JOIN product_comment_images pci ON pci.comment_id = pc.id
        WHERE pc.product_id = ? AND pc.deleted_at IS NULL
        ORDER BY pc.created_at ASC
-       LIMIT ? OFFSET ?`,
-      [productId, pageSize + 1, offset]
+       LIMIT ${limitNum} OFFSET ${offsetNum}`,
+      [productId]
     );
     const commentById = {};
     for (const c of commentRows || []) {
@@ -592,10 +749,16 @@ router.patch('/products/:productId', authenticateToken, async (req, res) => {
     const description = (req.body.description || '').trim();
     const rawCategoryId = req.body.category_id;
     const categoryId = rawCategoryId !== undefined && rawCategoryId !== '' ? parseInt(rawCategoryId, 10) : undefined;
+    const priceRaw = req.body.price;
+    const price = priceRaw !== undefined && priceRaw !== null && priceRaw !== '' ? parseFloat(priceRaw) : undefined;
     if (!name) return res.status(400).json({ status: -1, message: '商品名称不能为空' });
 
     const updates = ['name = ?', 'description = ?'];
     const params = [name, description || null];
+    if (price !== undefined) {
+      updates.push('price = ?');
+      params.push(Number.isFinite(price) ? price : null);
+    }
     if (rawCategoryId !== undefined) {
       if (categoryId != null && !isNaN(categoryId) && categoryId > 0) {
         const cat = await query('SELECT id, shop_id FROM product_categories WHERE id = ? AND deleted_at IS NULL', [categoryId]);
@@ -612,7 +775,7 @@ router.patch('/products/:productId', authenticateToken, async (req, res) => {
     await query(`UPDATE products SET ${updates.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, params);
 
     const rows = await query(
-      `SELECT p.id, p.shop_id, p.category_id, p.name, p.description, p.created_at, p.updated_at,
+      `SELECT p.id, p.shop_id, p.category_id, p.name, p.description, p.price, p.created_at, p.updated_at,
         c.name AS category_name, pi.file_path, pi.sort_order
        FROM products p LEFT JOIN product_categories c ON p.category_id = c.id
        LEFT JOIN product_images pi ON pi.product_id = p.id WHERE p.id = ?`,
@@ -621,7 +784,7 @@ router.patch('/products/:productId', authenticateToken, async (req, res) => {
     const byId = {};
     for (const r of rows) {
       if (!byId[r.id]) {
-        byId[r.id] = { id: r.id, shop_id: r.shop_id, category_id: r.category_id, category_name: r.category_name, name: r.name, description: r.description, created_at: r.created_at, updated_at: r.updated_at, images: [] };
+        byId[r.id] = { id: r.id, shop_id: r.shop_id, category_id: r.category_id, category_name: r.category_name, name: r.name, description: r.description, price: r.price != null ? Number(r.price) : null, created_at: r.created_at, updated_at: r.updated_at, images: [] };
       }
       if (r.file_path) byId[r.id].images.push({ url: UPLOAD_PREFIX + r.file_path, sort_order: r.sort_order });
     }
@@ -744,6 +907,11 @@ router.get('/products/:productId/comments', async (req, res) => {
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const pageSize = Math.min(50, Math.max(1, parseInt(req.query.pageSize, 10) || 10));
     const offset = (page - 1) * pageSize;
+    const limitNum = Number(pageSize) + 1;
+    const offsetNum = Number(offset);
+    if (!Number.isInteger(limitNum) || limitNum < 1 || !Number.isInteger(offsetNum) || offsetNum < 0) {
+      return res.status(400).json({ status: -1, message: '分页参数无效' });
+    }
     const rows = await query(
       `SELECT pc.id, pc.product_id, pc.user_id, pc.parent_id, pc.rating, pc.content, pc.created_at,
         u.nickname AS author_nickname, u.avatar AS author_avatar,
@@ -753,8 +921,8 @@ router.get('/products/:productId/comments', async (req, res) => {
        LEFT JOIN product_comment_images pci ON pci.comment_id = pc.id
        WHERE pc.product_id = ? AND pc.deleted_at IS NULL
        ORDER BY pc.created_at ASC
-       LIMIT ? OFFSET ?`,
-      [productId, pageSize + 1, offset]
+       LIMIT ${limitNum} OFFSET ${offsetNum}`,
+      [productId]
     );
     const commentById = {};
     for (const c of rows || []) {
@@ -827,6 +995,11 @@ router.get('/my-reviews', authenticateToken, async (req, res) => {
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const pageSize = Math.min(30, Math.max(1, parseInt(req.query.pageSize, 10) || 10));
     const offset = (page - 1) * pageSize;
+    const limitNum = Number(pageSize) + 1;
+    const offsetNum = Number(offset);
+    if (!Number.isInteger(limitNum) || limitNum < 1 || !Number.isInteger(offsetNum) || offsetNum < 0) {
+      return res.status(400).json({ status: -1, message: '分页参数无效' });
+    }
     const rows = await query(
       `SELECT pc.id, pc.product_id, pc.rating, pc.content, pc.created_at,
         p.name AS product_name, p.shop_id,
@@ -838,8 +1011,8 @@ router.get('/my-reviews', authenticateToken, async (req, res) => {
        LEFT JOIN product_comment_images pci ON pci.comment_id = pc.id
        WHERE pc.user_id = ? AND pc.parent_id IS NULL AND pc.deleted_at IS NULL
        ORDER BY pc.created_at DESC
-       LIMIT ? OFFSET ?`,
-      [req.user.id, pageSize + 1, offset]
+       LIMIT ${limitNum} OFFSET ${offsetNum}`,
+      [req.user.id]
     );
     const byId = {};
     for (const r of rows || []) {

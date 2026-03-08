@@ -4,6 +4,18 @@
   background: transparent;
 }
 
+.food-detail-loading,
+.food-detail-error {
+  margin: 24px 0 16px;
+  font-size: 14px;
+  text-align: center;
+  color: var(--wx-text-secondary);
+}
+
+.food-detail-error {
+  color: var(--wx-red, #ee0a24);
+}
+
 .food-detail-empty {
   margin: 24px 0 16px;
   font-size: 14px;
@@ -96,6 +108,13 @@
   color: var(--wx-text);
 }
 
+.food-detail-reviews-error {
+  margin: 12px 0 0;
+  font-size: 14px;
+  color: var(--wx-red, #ee0a24);
+}
+
+.food-detail-reviews-loading,
 .food-detail-reviews-empty {
   margin: 12px 0 0;
   font-size: 14px;
@@ -220,12 +239,13 @@
   text-decoration: underline;
 }
 
-/* 二级评论（仅展示，无点赞） */
+/* 二级评论（仅展示，无点赞，缩进比一级短） */
 .food-detail-reply-list {
   list-style: none;
-  margin: 10px 0 0;
+  margin: 10px 0 0 16px;
   padding: 0 0 0 12px;
   border-left: 2px solid var(--wx-border);
+  max-width: calc(100% - 28px);
 }
 
 .food-detail-reply {

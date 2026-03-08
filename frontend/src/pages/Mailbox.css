@@ -4,11 +4,28 @@
   background: transparent;
 }
 
+.mailbox-loading,
+.mailbox-error,
+.mailbox-empty {
+  margin: 24px 0 0;
+  font-size: 14px;
+  color: var(--wx-text-secondary);
+  text-align: center;
+}
+
+.mailbox-error {
+  color: var(--wx-red, #ee0a24);
+}
+
 .mailbox-intro {
   margin: 0 0 16px;
   font-size: 13px;
   color: var(--wx-text-secondary);
   line-height: 1.45;
+}
+
+.mailbox-item-read {
+  opacity: 0.85;
 }
 
 .mailbox-list {

@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { API_BASE_URL } from '../api/config';
+import { getMe } from '../api/users';
 
 const STORAGE_TOKEN = 'token';
 const STORAGE_USER = 'user';
@@ -15,6 +16,11 @@ function getStoredProfile() {
   }
 }
 
+function normalizeAvatar(url) {
+  if (!url) return null;
+  return url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
+}
+
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
@@ -28,14 +34,45 @@ export function AuthProvider({ children }) {
   });
   const [token, setToken] = useState(() => localStorage.getItem(STORAGE_TOKEN));
   const [profile, setProfile] = useState(getStoredProfile);
+  const [userLoading, setUserLoading] = useState(false);
+  const [userError, setUserError] = useState(null);
 
   const isLoggedIn = !!token;
 
-  /** 是否为商家（用于个人页展示「管理店铺」；后端返回 user.role === 'merchant' 或 user.is_merchant 时为 true；接 API 前可用 user.id === 1 做演示） */
-  const isMerchant = user?.role === 'merchant' || user?.is_merchant === true || user?.id === 1;
+  /** 登录后从 API 拉取当前用户（/me），用于头像、昵称、本周点评数等 */
+  const refreshUser = useCallback(() => {
+    if (!token) return Promise.resolve();
+    setUserLoading(true);
+    setUserError(null);
+    return getMe()
+      .then((data) => {
+        const u = {
+          ...data,
+          avatar: normalizeAvatar(data.avatar),
+        };
+        setUser(u);
+        try {
+          localStorage.setItem(STORAGE_USER, JSON.stringify(u));
+        } catch (_) {}
+        return u;
+      })
+      .catch((err) => {
+        setUserError(err.message || '获取用户信息失败');
+        throw err;
+      })
+      .finally(() => setUserLoading(false));
+  }, [token]);
 
-  /** 展示用：用户名、头像（优先使用个人资料中的修改） */
-  const displayName = profile.username ?? user?.username ?? '未设置';
+  useEffect(() => {
+    if (!token) return;
+    refreshUser();
+  }, [token, refreshUser]);
+
+  /** 是否为商家（后端 user.role === 'merchant'） */
+  const isMerchant = user?.role === 'merchant' || user?.is_merchant === true;
+
+  /** 展示用：用户名、头像（API 返回的 nickname/username、avatar） */
+  const displayName = user?.nickname ?? user?.username ?? profile?.username ?? '未设置';
   const displayAvatar = profile.avatar ?? user?.avatar ?? null;
 
   const updateProfile = useCallback((next) => {
@@ -46,11 +83,10 @@ export function AuthProvider({ children }) {
     });
   }, []);
 
-  const login = useCallback(async (studentIdOrEmail, password) => {
-    const isEmail = typeof studentIdOrEmail === 'string' && studentIdOrEmail.includes('@');
-    const body = isEmail
-      ? { email: studentIdOrEmail, password }
-      : { student_id: studentIdOrEmail, password };
+  const login = useCallback(async (account, password) => {
+    const s = typeof account === 'string' ? account.trim() : '';
+    const isEmail = s.includes('@');
+    const body = isEmail ? { email: s, password } : { username: s, password };
 
     const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
       method: 'POST',
@@ -66,7 +102,7 @@ export function AuthProvider({ children }) {
       setUser(data.data || null);
       return { success: true };
     }
-    return { success: false, message: data.message || '登录失败，请检查学号/邮箱和密码' };
+    return { success: false, message: data.message || '登录失败，请检查邮箱/用户名和密码' };
   }, []);
 
   const logout = useCallback(() => {
@@ -96,6 +132,9 @@ export function AuthProvider({ children }) {
         token,
         isLoggedIn,
         isMerchant,
+        userLoading,
+        userError,
+        refreshUser,
         login,
         logout,
         skipLogin,
