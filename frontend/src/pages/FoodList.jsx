@@ -20,6 +20,8 @@ function FoodList() {
   const [error, setError] = useState(null);
   const [activeId, setActiveId] = useState(null);
   const sectionRefs = useRef({});
+  const mainScrollRef = useRef(null);
+  const scrollTargetRef = useRef(null);
 
   useEffect(() => {
     const shopId = id ? parseInt(id, 10) : 0;
@@ -84,10 +86,62 @@ function FoodList() {
   }, [id]);
 
   const handleCategorySelect = (catId) => {
+    scrollTargetRef.current = catId;
     setActiveId(catId);
     const el = sectionRefs.current[catId];
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
+
+  // 滚动时根据可见区块自动高亮左侧分类（IntersectionObserver）
+  useEffect(() => {
+    if (groups.length === 0 || !mainScrollRef.current) return;
+    const root = mainScrollRef.current;
+
+    const getCatIdFromEl = (el) => {
+      const id = el?.id;
+      if (!id || !id.startsWith('category-')) return null;
+      return id.replace('category-', '');
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const intersecting = entries.filter((e) => e.isIntersecting);
+        if (intersecting.length === 0) return;
+
+        if (scrollTargetRef.current != null) {
+          const targetEntry = intersecting.find(
+            (e) => String(getCatIdFromEl(e.target)) === String(scrollTargetRef.current)
+          );
+          if (targetEntry) {
+            const g = groups.find((gr) => String(gr.category.id) === String(getCatIdFromEl(targetEntry.target)));
+            if (g) setActiveId(g.category.id);
+            scrollTargetRef.current = null;
+          }
+          return;
+        }
+
+        const byTop = [...intersecting].sort(
+          (a, b) => a.boundingClientRect.top - b.boundingClientRect.top
+        );
+        const topEntry = byTop[0];
+        const idStr = getCatIdFromEl(topEntry.target);
+        if (idStr == null) return;
+        const g = groups.find((gr) => String(gr.category.id) === String(idStr));
+        if (g) setActiveId(g.category.id);
+      },
+      {
+        root,
+        rootMargin: '-20% 0px -55% 0px',
+        threshold: 0,
+      }
+    );
+
+    groups.forEach((g) => {
+      const el = sectionRefs.current[g.category.id];
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, [groups]);
 
   if (loading) {
     return (
@@ -145,7 +199,7 @@ function FoodList() {
           activeId={activeId}
           onSelect={handleCategorySelect}
         />
-        <div className="food-list-main">
+        <div ref={mainScrollRef} className="food-list-main">
           {groups.map((g) => (
             <CategorySection
               key={g.category.id}
