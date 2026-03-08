@@ -8,10 +8,23 @@ const TABS = [
   { path: '/myzone', iconKey: 'My Zone', label: 'My Zone 我的' },
 ];
 
-/** 微信风格底部 Tab：四栏，图标+文字，选中绿色 */
+/** 根据当前路径得到对应的 Tab 下标（供 Layout 全屏滑动切换复用） */
+export function getTabIndex(pathname) {
+  if (pathname.startsWith('/myzone')) return 3;
+  if (pathname.startsWith('/about')) return 2;
+  if (pathname.startsWith('/eat')) return 1;
+  if (pathname === '/' || pathname.startsWith('/post')) return 0;
+  return 0;
+}
+
+/** 微信风格底部 Tab：四栏，图标+文字，选中绿色；支持左右滑动切换（全屏滑动在 Layout 上） */
 function TabBar() {
   return (
-    <nav className="tab-bar">
+    <nav
+      className="tab-bar"
+      role="tablist"
+      aria-label="主导航"
+    >
       {TABS.map((tab) => (
         <NavLink
           key={tab.path}

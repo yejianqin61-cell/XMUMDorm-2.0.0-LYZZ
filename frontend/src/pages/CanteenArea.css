@@ -1,61 +1,171 @@
+/* 食堂 Eat 分区页：参考图风格 - 大标题、渐变大卡片、错落分区卡片、虚化背景 */
+
+:root {
+  --eat-primary: #1677FF;
+  --eat-primary-light: #69b1ff;
+  --eat-bg: #F5F5F5;
+  --eat-card: #FFFFFF;
+  --eat-text: #333333;
+  --eat-text-secondary: #888888;
+}
+
 .canteen-area-page {
   min-height: 100%;
-  padding: 12px 16px 24px;
-  background: transparent;
+  position: relative;
+  padding: 24px 16px 32px;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* 背景：校园风景图（后续替换 url），模糊 20px、不透明度 0.6 */
+.canteen-area-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-color: var(--eat-bg);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: blur(20px);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* 无图时用渐变占位，后续替换为 background-image: url(校园图) */
+.canteen-area-bg {
+  background-image: linear-gradient(160deg, #e0e8f0 0%, #c5d4e8 50%, #b0c4e0 100%);
+}
+
+.canteen-area-content {
+  position: relative;
+  z-index: 1;
 }
 
 .canteen-area-loading,
 .canteen-area-error {
+  position: relative;
+  z-index: 1;
   padding: 24px 16px;
   font-size: 14px;
   text-align: center;
-  color: var(--wx-text-secondary);
+  color: var(--eat-text-secondary);
 }
 
 .canteen-area-error {
   color: var(--wx-red, #ee0a24);
 }
 
+/* ---------- 1. 页面标题 ---------- */
+.canteen-area-title {
+  margin: 0 0 20px;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--eat-text);
+  text-align: center;
+}
+
+/* ---------- 2. 排行榜大卡片 ---------- */
 .canteen-area-rankings-link {
   display: block;
-  margin-bottom: 16px;
+  margin: 0 0 24px;
   text-decoration: none;
   color: inherit;
 }
 
 .canteen-area-rankings-card {
-  padding: 14px 16px;
+  height: 120px;
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--eat-primary) 0%, var(--eat-primary-light) 100%);
+  border-radius: 20px;
+  box-shadow: 0 4px 16px rgba(22, 119, 255, 0.35);
+}
+
+.canteen-area-rankings-title {
+  margin: 0 0 6px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.canteen-area-rankings-sub {
+  margin: 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* ---------- 3. 分区选择区（错落布局）---------- */
+.canteen-area-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.canteen-area-section-wrap {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* LY3、BELL：右偏且宽度 80%，比其它卡片短一截，保证不溢出屏幕 */
+.canteen-area-section-offset {
+  margin-left: 20%;
+  width: 80%;
+}
+
+.canteen-area-section-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: var(--eat-card);
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.canteen-area-section-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.canteen-area-section-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  background: var(--eat-primary);
+  color: #fff;
+  border-radius: 50%;
+}
+
+.canteen-area-section-body {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.canteen-area-rankings-label {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--wx-text);
+.canteen-area-section-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--eat-text);
 }
 
-.canteen-area-rankings-hint {
-  font-size: 12px;
-  color: var(--wx-text-secondary);
-}
-
-.canteen-area-intro {
-  margin: 0 0 16px;
+.canteen-area-section-hint {
   font-size: 14px;
-  color: var(--wx-text-secondary);
+  color: var(--eat-text-secondary);
 }
 
-.canteen-area-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.canteen-area-list li {
-  margin: 0;
+.canteen-area-section-arrow {
+  flex-shrink: 0;
+  font-size: 18px;
+  color: var(--eat-text-secondary);
 }

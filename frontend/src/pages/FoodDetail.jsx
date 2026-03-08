@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import FoodDetailView from '../components/FoodDetailView';
 import EmptyState from '../components/EmptyState';
 import ImagePreview from '../components/ImagePreview';
+import LikeBurst from '../components/LikeBurst';
 import { getProduct, getProductComments, postProductComment } from '../api/canteen';
 import { getApiErrorMessage } from '../utils/apiError';
 import { RATING_LABELS } from '../constants/rating';
@@ -41,6 +42,7 @@ function FoodDetail() {
   const [likedReviewIds, setLikedReviewIds] = useState(new Set());
   const [reviewLikeCounts, setReviewLikeCounts] = useState({});
   const [imagePreviewOpen, setImagePreviewOpen] = useState(false);
+  const likeBurstRef = useRef(null);
 
   useEffect(() => {
     const productId = id ? parseInt(id, 10) : 0;
@@ -254,7 +256,10 @@ function FoodDetail() {
                   <button
                     type="button"
                     className={`food-detail-review-like ${likedReviewIds.has(r.id) ? 'is-liked' : ''}`}
-                    onClick={() => handleLikeReview(r.id)}
+                    onClick={(e) => {
+                      likeBurstRef.current?.trigger(e);
+                      handleLikeReview(r.id);
+                    }}
                     aria-pressed={likedReviewIds.has(r.id)}
                   >
                     ♥ {reviewLikeCounts[r.id] ?? r.likeCount ?? 0}
@@ -305,6 +310,7 @@ function FoodDetail() {
         </div>
       </form>
       )}
+      <LikeBurst ref={likeBurstRef} />
     </div>
   );
 }

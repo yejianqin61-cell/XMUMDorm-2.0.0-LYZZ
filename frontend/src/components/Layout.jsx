@@ -1,10 +1,14 @@
-import { Outlet, useLocation } from 'react-router-dom';
+import { useRef } from 'react';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import TopBar from './TopBar';
 import TabBar from './TabBar';
-import { TABS } from './TabBar';
+import { TABS, getTabIndex } from './TabBar';
 import './TopBar.css';
 import './TabBar.css';
 import './Layout.css';
+
+const SWIPE_THRESHOLD = 50;
+const SWIPE_MAX_VERTICAL = 80;
 
 /** 顶栏标题：中英并列（XMUM Dorm 厦马小筑） */
 const TITLE_BY_PATH = {
@@ -22,10 +26,27 @@ const TITLE_BY_PATH = {
 /** 需要显示返回键的路径（含 /post/:id 详情页） */
 const SHOW_BACK_PATHS = ['/post/new', '/post/'];
 
-/** 整体布局：顶栏（标题+信箱）+ 内容区 + 底部 Tab */
+/** 整体布局：顶栏（标题+信箱）+ 内容区 + 底部 Tab；支持全屏左右滑动切换 Tab */
 function Layout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const pathname = location.pathname;
+  const touchStart = useRef({ x: 0, y: 0 });
+
+  const onSwipeTouchStart = (e) => {
+    const t = e.touches?.[0];
+    if (t) touchStart.current = { x: t.clientX, y: t.clientY };
+  };
+  const onSwipeTouchEnd = (e) => {
+    const t = e.changedTouches?.[0];
+    if (!t) return;
+    const dx = t.clientX - touchStart.current.x;
+    const dy = t.clientY - touchStart.current.y;
+    if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dy) > SWIPE_MAX_VERTICAL) return;
+    const cur = getTabIndex(pathname);
+    if (dx < 0 && cur < TABS.length - 1) navigate(TABS[cur + 1].path);
+    else if (dx > 0 && cur > 0) navigate(TABS[cur - 1].path);
+  };
   let title = TITLE_BY_PATH[pathname];
   if (!title) {
     if (pathname.startsWith('/eat/food/') && pathname.endsWith('/review')) title = '发布点评 Publish Review';
@@ -55,7 +76,11 @@ function Layout() {
     pathname.startsWith('/about/');
 
   return (
-    <div className="app-layout">
+    <div
+      className="app-layout"
+      onTouchStart={onSwipeTouchStart}
+      onTouchEnd={onSwipeTouchEnd}
+    >
       <TopBar title={title} showBack={showBack} />
       <main className="app-main">
         <div className="app-main-bg" aria-hidden="true" />

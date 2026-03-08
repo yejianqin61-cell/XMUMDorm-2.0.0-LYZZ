@@ -1010,6 +1010,7 @@ router.get('/my-reviews', authenticateToken, async (req, res) => {
       `SELECT pc.id, pc.product_id, pc.rating, pc.content, pc.created_at,
         p.name AS product_name, p.shop_id,
         s.name AS shop_name,
+        (SELECT pi.file_path FROM product_images pi WHERE pi.product_id = pc.product_id ORDER BY pi.sort_order ASC LIMIT 1) AS product_image_path,
         pci.file_path AS image_path, pci.sort_order AS image_sort
        FROM product_comments pc
        INNER JOIN products p ON p.id = pc.product_id AND p.deleted_at IS NULL
@@ -1032,6 +1033,7 @@ router.get('/my-reviews', authenticateToken, async (req, res) => {
           rating: r.rating,
           content: r.content,
           created_at: r.created_at,
+          product_image: r.product_image_path ? UPLOAD_PREFIX + r.product_image_path : null,
           images: []
         };
       }

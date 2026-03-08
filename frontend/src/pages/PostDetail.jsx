@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -12,6 +12,7 @@ import { API_BASE_URL } from '../api/config';
 import { Toast } from '../context/ToastContext';
 import EmptyState from '../components/EmptyState';
 import ImagePreview from '../components/ImagePreview';
+import LikeBurst from '../components/LikeBurst';
 import { formatPostTime } from '../utils/formatTime';
 import { getApiErrorMessage } from '../utils/apiError';
 import './PostDetail.css';
@@ -41,6 +42,7 @@ function PostDetail() {
   const [submitLoading, setSubmitLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState({ open: false, index: 0 });
+  const likeBurstRef = useRef(null);
 
   const requireLogin = useCallback(() => {
     if (!isLoggedIn) {
@@ -88,8 +90,9 @@ function PostDetail() {
     return () => { cancelled = true; };
   }, [postId, token]);
 
-  const handleLike = async () => {
+  const handleLike = async (e) => {
     if (requireLogin()) return;
+    likeBurstRef.current?.trigger(e);
     try {
       const data = await toggleLike(postId);
       setLiked(data?.liked ?? !liked);
@@ -249,6 +252,7 @@ function PostDetail() {
           </button>
         </div>
       </article>
+      <LikeBurst ref={likeBurstRef} />
 
       <section className="post-detail-comments">
         <h2 className="post-detail-comments-title">评论 Comments ({totalCommentCount})</h2>

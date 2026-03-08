@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import PostCard from '../components/PostCard';
@@ -6,7 +6,10 @@ import SkeletonPost from '../components/SkeletonPost';
 import { getPostList } from '../api/posts';
 import { getApiErrorMessage } from '../utils/apiError';
 import { API_BASE_URL } from '../api/config';
+import { saveScroll, takeScroll } from '../utils/scrollCache';
 import './TreeHole.css';
+
+const SCROLL_CACHE_KEY = 'treehole';
 
 function prefixAvatar(url) {
   return url && !url.startsWith('http') ? `${API_BASE_URL}${url}` : url;
@@ -20,6 +23,8 @@ function TreeHole() {
   const [hasMore, setHasMore] = useState(false);
   const [page, setPage] = useState(1);
   const pageSize = 20;
+  const pageRef = useRef(1);
+  pageRef.current = page;
 
   const loadPage = useCallback(
     async (pageNum = 1, append = false) => {
@@ -43,9 +48,57 @@ function TreeHole() {
     [token]
   );
 
+  // 离开列表时保存滚动位置与页码（scroll position cache）
   useEffect(() => {
-    loadPage(1);
-  }, [loadPage]);
+    return () => {
+      const main = document.querySelector('.app-main');
+      if (main && typeof main.scrollTop === 'number') {
+        saveScroll(SCROLL_CACHE_KEY, main.scrollTop, pageRef.current);
+      }
+    };
+  }, []);
+
+  // 首次进入：有缓存则恢复到离开时的页码并恢复滚动，否则正常加载第一页
+  useEffect(() => {
+    const cached = takeScroll(SCROLL_CACHE_KEY);
+    if (!cached || cached.page <= 0) {
+      loadPage(1);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    (async () => {
+      const allPosts = [];
+      let lastHasMore = false;
+      for (let p = 1; p <= cached.page && !cancelled; p++) {
+        try {
+          const data = await getPostList({ page: p, pageSize, token });
+          const posts = (data?.list || []).map((item) => ({
+            ...item,
+            author: item.author ? { ...item.author, avatar: prefixAvatar(item.author.avatar) } : item.author,
+          }));
+          allPosts.push(...posts);
+          lastHasMore = !!data?.hasMore;
+        } catch (err) {
+          if (!cancelled) setError(getApiErrorMessage(err));
+          break;
+        }
+      }
+      if (cancelled) return;
+      setList(allPosts);
+      setPage(cached.page);
+      setHasMore(lastHasMore);
+      setLoading(false);
+      const main = document.querySelector('.app-main');
+      if (main && cached.scrollTop > 0) {
+        requestAnimationFrame(() => {
+          main.scrollTop = cached.scrollTop;
+        });
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [token, loadPage]);
 
   const loadMore = () => {
     if (!loading && hasMore) loadPage(page + 1, true);

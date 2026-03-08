@@ -1,0 +1,32 @@
+.like-burst-wrap {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 9998;
+  transform: translate(-50%, -50%);
+}
+
+.like-burst-heart {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 18px;
+  color: #ff4d6a;
+  opacity: 0;
+  animation: like-burst-fly 0.65s ease-out forwards;
+  animation-delay: calc(var(--i) * 0.02s);
+}
+
+@keyframes like-burst-fly {
+  0% {
+    transform: translate(0, 0) scale(0.5);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--tx), var(--ty)) scale(1.2);
+    opacity: 0;
+  }
+}
