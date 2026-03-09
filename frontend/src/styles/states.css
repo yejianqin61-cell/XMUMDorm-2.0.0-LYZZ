@@ -29,3 +29,22 @@
   background: rgba(238, 10, 36, 0.08);
   border-radius: 8px;
 }
+
+/* 可复用的按压反馈（移动端风格） */
+.pressable {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  transition: transform 80ms ease-out, box-shadow 80ms ease-out !important;
+}
+
+.pressable:active {
+  transform: scale(var(--pressable-scale, 0.96));
+  box-shadow: var(--pressable-shadow-active);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pressable {
+    transition: none !important;
+  }
+}

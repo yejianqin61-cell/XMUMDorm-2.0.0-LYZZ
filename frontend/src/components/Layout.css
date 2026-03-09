@@ -35,6 +35,101 @@
   min-height: 100%;
 }
 
+/* ---------- 公告弹窗 ---------- */
+.app-ann-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.app-ann-modal {
+  width: 100%;
+  max-width: 360px;
+  max-height: 80vh;
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  padding: 16px 16px 12px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-ann-title {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--wx-text, #111);
+}
+
+.app-ann-list {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.app-ann-item {
+  padding: 10px 8px 8px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.02);
+  margin-bottom: 8px;
+}
+
+.app-ann-item-title {
+  margin: 0 0 4px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--wx-text, #111);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.app-ann-item-meta {
+  margin: 0 0 6px;
+  font-size: 11px;
+  color: var(--wx-text-secondary, #999);
+}
+
+.app-ann-know-btn,
+.app-ann-know-all-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+}
+
+.app-ann-know-btn {
+  background: var(--wx-green, #07c160);
+  color: #fff;
+}
+
+.app-ann-know-all-btn {
+  margin-top: 6px;
+  align-self: flex-end;
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--wx-text-secondary, #666);
+}
+
+.app-ann-know-btn:hover {
+  background: var(--wx-green-dark, #059048);
+}
+
+.app-ann-know-all-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
 /* ---------- Tab 滑动过渡（当前页滑出，新页滑入，微信风格缓动）---------- */
 .app-slide-wrap {
   position: absolute;

@@ -98,7 +98,7 @@ function Mailbox() {
   return (
     <div className="mailbox-page">
       <p className="mailbox-intro">
-        你的帖子收到点赞或评论时，会在这里提醒。Tap to open the post.
+        你的帖子收到点赞或评论，或有全站公告时，都会在这里提醒。Tap to open.
       </p>
       {list.length === 0 ? (
         <EmptyState title="暂无通知" description="No notifications yet." />
@@ -120,9 +120,13 @@ function Mailbox() {
                     {n.type === 'comment' && '有人评论了你的帖子 Someone commented on your post'}
                     {n.type === 'announcement' && (n.extra?.title || '公告 Announcement')}
                   </p>
-                  {n.post_id && (
+                  {n.type === 'announcement' ? (
+                    <p className="mailbox-item-preview">
+                      Announcement <strong>admin</strong>
+                    </p>
+                  ) : n.post_id ? (
                     <p className="mailbox-item-preview">帖子 #{n.post_id}</p>
-                  )}
+                  ) : null}
                   {n.type === 'comment' && n.extra?.content && (
                     <p className="mailbox-item-comment">"{n.extra.content}"</p>
                   )}

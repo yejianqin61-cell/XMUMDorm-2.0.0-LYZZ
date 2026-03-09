@@ -16,7 +16,7 @@ function prefixAvatar(url) {
 }
 
 function TreeHole() {
-  const { token } = useAuth();
+  const { token, isAdmin } = useAuth();
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -150,8 +150,13 @@ function TreeHole() {
           )}
         </div>
       )}
-      <Link to="/post/new" className="treehole-fab" aria-label="发布帖子 Post">
+      <Link
+        to="/post/new"
+        className="treehole-fab pressable"
+        aria-label={isAdmin ? '发布公告 Announcement' : '发布帖子 Post'}
+      >
         <PlusIcon />
+        {isAdmin && <span className="treehole-fab-tag">公告</span>}
       </Link>
     </div>
   );

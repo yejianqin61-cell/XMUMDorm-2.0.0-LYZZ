@@ -207,6 +207,35 @@
   color: var(--wx-text-secondary);
 }
 
+.food-detail-review-delete {
+  margin-left: auto;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--wx-text-secondary);
+}
+
+.food-detail-review-delete:hover {
+  color: var(--wx-red, #ee0a24);
+}
+
+.food-detail-reply-delete {
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--wx-text-secondary);
+  margin-left: 8px;
+}
+
+.food-detail-reply-delete:hover {
+  text-decoration: underline;
+  color: var(--wx-red, #ee0a24);
+}
+
 .food-detail-review-like {
   padding: 4px 10px;
   border: none;

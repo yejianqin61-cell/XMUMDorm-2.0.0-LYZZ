@@ -6,9 +6,9 @@ import { createPost } from '../api/posts';
 import { getApiErrorMessage } from '../utils/apiError';
 import './PostNew.css';
 
-/** 发布帖子页：需登录；调用 createPost API */
+/** 发布帖子 / 公告页：需登录；普通用户发帖子，管理员发公告 */
 function PostNew() {
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [content, setContent] = useState('');
   const [imageFiles, setImageFiles] = useState([]);
@@ -37,17 +37,23 @@ function PostNew() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!content.trim()) {
+    const trimmed = content.trim();
+    if (!trimmed) {
       Toast.error('请输入内容');
       return;
     }
     setLoading(true);
     try {
-      const created = await createPost({
-        content: content.trim(),
+      const payload = {
+        content: trimmed,
         images: imageFiles.length ? imageFiles : undefined,
-      });
-      Toast.success('发布成功');
+      };
+      // 管理员只能发布公告
+      if (isAdmin) {
+        payload.type = 'announcement';
+      }
+      const created = await createPost(payload);
+      Toast.success(isAdmin ? '公告发布成功' : '发布成功');
       navigate(created?.id ? `/post/${created.id}` : '/', { replace: true });
     } catch (err) {
       Toast.error(getApiErrorMessage(err));
@@ -59,14 +65,16 @@ function PostNew() {
   return (
     <div className="postnew-page">
       <p className="postnew-anonymous-hint">
-        发帖为匿名。他人点赞或评论时，会在「信箱」中收到提醒。Posts are anonymous; you'll get like/comment notifications in Mailbox.
+        {isAdmin
+          ? '发布公告后，所有用户在登录时会弹出提示，并在「信箱」中长期保存。Announcements will be shown to all users on login.'
+          : '发帖为匿名。他人点赞或评论时，会在「信箱」中收到提醒。Posts are anonymous; you will get like/comment notifications in Mailbox.'}
       </p>
       <form className="postnew-form" onSubmit={handleSubmit}>
         <div className="postnew-section">
-          <label className="postnew-label">内容 Content</label>
+          <label className="postnew-label">{isAdmin ? '公告内容 Announcement' : '内容 Content'}</label>
           <textarea
             className="postnew-textarea"
-            placeholder="写点什么… Share something…"
+            placeholder={isAdmin ? '写下要通知全站的内容…' : '写点什么… Share something…'}
             value={content}
             onChange={(e) => setContent(e.target.value)}
             rows={6}
@@ -103,8 +111,8 @@ function PostNew() {
             )}
           </div>
         </div>
-        <button type="submit" className="postnew-submit" disabled={loading}>
-          {loading ? '发布中…' : '发布 Post'}
+        <button type="submit" className="postnew-submit pressable" disabled={loading}>
+          {loading ? (isAdmin ? '发布公告中…' : '发布中…') : (isAdmin ? '发布公告 Announcement' : '发布 Post')}
         </button>
       </form>
     </div>

@@ -5,7 +5,8 @@ import FoodDetailView from '../components/FoodDetailView';
 import EmptyState from '../components/EmptyState';
 import ImagePreview from '../components/ImagePreview';
 import LikeBurst from '../components/LikeBurst';
-import { getProduct, getProductComments, postProductComment } from '../api/canteen';
+import { Toast } from '../context/ToastContext';
+import { getProduct, getProductComments, postProductComment, deleteProductComment, deleteProduct } from '../api/canteen';
 import { getApiErrorMessage } from '../utils/apiError';
 import { RATING_LABELS } from '../constants/rating';
 import { getUploadUrl } from '../api/config';
@@ -28,7 +29,7 @@ function mapCommentsToReviews(list) {
 function FoodDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, user, isAdmin } = useAuth();
   const [food, setFood] = useState(null);
   const [foodLoading, setFoodLoading] = useState(true);
   const [foodError, setFoodError] = useState(null);
@@ -182,6 +183,20 @@ function FoodDetail() {
       });
   };
 
+  const handleDeleteReview = async (commentId) => {
+    if (requireLogin()) return;
+    const productId = id ? parseInt(id, 10) : 0;
+    if (!productId) return;
+    if (!window.confirm('确定要删除这条点评/回复吗？删除后不可恢复。')) return;
+    try {
+      await deleteProductComment(productId, commentId);
+      Toast.success('已删除');
+      await loadReviews();
+    } catch (err) {
+      Toast.error(getApiErrorMessage(err));
+    }
+  };
+
   const totalReviews = reviews.length;
 
   return (
@@ -189,6 +204,18 @@ function FoodDetail() {
       <FoodDetailView
         food={food}
         onImageClick={food?.image ? () => setImagePreviewOpen(true) : undefined}
+        canDelete={isAdmin}
+        onDelete={async () => {
+          if (!isAdmin) return;
+          if (!food || !window.confirm(`确定删除 "${food.name}" 吗？删除后不可恢复。`)) return;
+          try {
+            await deleteProduct(food.id);
+            Toast.success('商品已删除');
+            navigate(-1);
+          } catch (err) {
+            Toast.error(getApiErrorMessage(err));
+          }
+        }}
       />
       {imagePreviewOpen && food?.image && (
         <ImagePreview
@@ -271,6 +298,17 @@ function FoodDetail() {
                   >
                     回复 Reply
                   </button>
+                  {(r.userId === user?.id || isAdmin) && (
+                    <button
+                      type="button"
+                      className="food-detail-review-delete"
+                      onClick={() => handleDeleteReview(r.id)}
+                      aria-label="删除点评"
+                      title="删除点评"
+                    >
+                      <span aria-hidden>🗑</span>
+                    </button>
+                  )}
                 </div>
                 {r.replies && r.replies.length > 0 && (
                   <ul className="food-detail-reply-list">
@@ -279,6 +317,15 @@ function FoodDetail() {
                         <p className="food-detail-reply-content">
                           <span className="food-detail-reply-user">{rep.userName}</span>：{rep.content}
                         </p>
+                        {(rep.userId === user?.id || isAdmin) && (
+                          <button
+                            type="button"
+                            className="food-detail-reply-delete"
+                            onClick={() => handleDeleteReview(rep.id)}
+                          >
+                            删除
+                          </button>
+                        )}
                       </li>
                     ))}
                   </ul>

@@ -808,7 +808,8 @@ router.delete('/products/:productId', authenticateToken, async (req, res) => {
     const productId = parseInt(req.params.productId, 10);
     if (!productId) return res.status(400).json({ status: -1, message: '商品 ID 无效' });
     const owner = await isProductOwner(productId, req.user.id);
-    if (!owner) return res.status(403).json({ status: -1, message: '仅店主可删除商品' });
+    const admin = isAdmin(req);
+    if (!owner && !admin) return res.status(403).json({ status: -1, message: '仅店主或管理员可删除商品' });
     await query('UPDATE products SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [productId]);
     res.status(200).json({ status: 0, message: '已删除（逻辑删除）' });
   } catch (e) {
@@ -846,6 +847,23 @@ router.post('/products/:productId/comments', authenticateToken, (req, res, next)
     const prod = await query('SELECT id, shop_id FROM products WHERE id = ? AND deleted_at IS NULL', [productId]);
     if (!prod || prod.length === 0) return res.status(404).json({ status: -1, message: '商品不存在' });
     const shopId = prod[0].shop_id;
+
+    const isMerchantUser = req.user && req.user.role === 'merchant';
+    const isAdminUser = req.user && req.user.role === 'admin';
+
+    // 商家点评限制：
+    // - 不能对任何商品发表一级点评（parentId 为 null）
+    // - 不能给其他商家的商品回复二级评论
+    // - 仅允许给自家商品的一级点评回复二级评论
+    if (isMerchantUser && !isAdminUser) {
+      const isOwner = await isProductOwner(productId, req.user.id);
+      if (parentId === null) {
+        return res.status(403).json({ status: -1, message: '商家不能对商品进行一级点评' });
+      }
+      if (!isOwner) {
+        return res.status(403).json({ status: -1, message: '商家只能给自家商品的点评回复二级评论' });
+      }
+    }
 
     if (parentId) {
       const parent = await query('SELECT id FROM product_comments WHERE id = ? AND product_id = ? AND parent_id IS NULL AND deleted_at IS NULL', [parentId, productId]);

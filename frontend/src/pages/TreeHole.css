@@ -78,7 +78,21 @@
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 12px rgba(7, 193, 96, 0.4);
+  --pressable-shadow-active: 0 3px 10px rgba(7, 193, 96, 0.28);
   z-index: 90;
+}
+
+.treehole-fab-tag {
+  position: absolute;
+  top: -4px;
+  left: -6px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #faad14;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.5;
 }
 
 .treehole-fab:hover {
@@ -86,6 +100,3 @@
   color: #fff;
 }
 
-.treehole-fab:active {
-  transform: scale(0.96);
-}

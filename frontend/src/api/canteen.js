@@ -118,6 +118,7 @@ export async function getProductComments(productId, options = {}) {
   const replyList = list.filter((c) => c.parent_id != null);
   return top.map((t) => ({
     id: t.id,
+    userId: t.user_id,
     authorName: t.author?.nickname || t.author?.username || '匿名',
     authorAvatar: t.author?.avatar ? getUploadUrl(t.author.avatar) : null,
     content: t.content,
@@ -128,6 +129,7 @@ export async function getProductComments(productId, options = {}) {
       .filter((r) => r.parent_id === t.id)
       .map((r) => ({
         id: r.id,
+        userId: r.user_id,
         authorName: r.author?.nickname || r.author?.username || '匿名',
         authorAvatar: r.author?.avatar ? getUploadUrl(r.author.avatar) : null,
         content: r.content,

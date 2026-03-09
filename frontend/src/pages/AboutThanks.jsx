@@ -12,8 +12,8 @@ const THANKS_LIST = [
     en: 'Xiamen University Malaysia Prof. Li Jing',
   },
   {
-    zh: '黑马程序员 pink 老师',
-    en: 'ITheima Institute Pink (Instructor)',
+    zh: '黑马程序员 pink 刘晓强老师',
+    en: 'ITheima Institute Instructor Pink Liu Xiaoqiang',
   },
   {
     zh: '中国科学院大学 郑贤教授',

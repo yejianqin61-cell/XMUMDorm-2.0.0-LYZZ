@@ -7,6 +7,7 @@ import {
   toggleLike,
   createComment,
   deletePost,
+  deleteComment,
 } from '../api/posts';
 import { API_BASE_URL } from '../api/config';
 import { Toast } from '../context/ToastContext';
@@ -28,7 +29,7 @@ function prefixImageUrl(url) {
 function PostDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isLoggedIn, token, user } = useAuth();
+  const { isLoggedIn, token, user, isAdmin } = useAuth();
   const postId = Number(id);
 
   const [post, setPost] = useState(null);
@@ -133,7 +134,31 @@ function PostDetail() {
   const startReply = (c) => setReplyingTo({ id: c.id, content: c.content });
   const cancelReply = () => { setReplyingTo(null); setNewComment(''); };
 
-  const isAuthor = post && (post.user_id === user?.id || post.author?.id === user?.id);
+  const reloadComments = async () => {
+    const list = await getPostComments(postId);
+    setComments(Array.isArray(list) ? list.map((c) => ({
+      ...c,
+      author: c.author ? { ...c.author, avatar: prefixAvatar(c.author.avatar) } : c.author,
+      replies: (c.replies || []).map((r) => ({
+        ...r,
+        author: r.author ? { ...r.author, avatar: prefixAvatar(r.author.avatar) } : r.author,
+      })),
+    })) : []);
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    if (requireLogin()) return;
+    if (!window.confirm('确定要删除这条评论吗？删除后不可恢复。')) return;
+    try {
+      await deleteComment(postId, commentId);
+      Toast.success('已删除');
+      await reloadComments();
+    } catch (err) {
+      Toast.error(getApiErrorMessage(err));
+    }
+  };
+
+  const isAuthor = post && (post.user_id === user?.id || post.author?.id === user?.id || isAdmin);
   const handleDeletePost = async () => {
     if (!window.confirm('确定要删除这条帖子吗？删除后不可恢复。')) return;
     setDeleteLoading(true);
@@ -187,13 +212,22 @@ function PostDetail() {
       {error && <p className="post-detail-error" role="alert">{error}</p>}
       <article className="post-detail-card">
         <div className="post-detail-author">
-          <div className="post-detail-avatar-wrap">
+          <button
+            type="button"
+            className="post-detail-avatar-wrap"
+            onClick={() => {
+              if (author.id) {
+                navigate(`/user/${author.id}`);
+              }
+            }}
+            aria-label={`查看 ${displayName} 的主页`}
+          >
             {author.avatar ? (
               <img src={author.avatar} alt="" className="post-detail-avatar" />
             ) : (
               <img src="/default-avatar.svg" alt="" className="post-detail-avatar post-detail-avatar-default" />
             )}
-          </div>
+          </button>
           <div className="post-detail-author-info">
             <span className="post-detail-username">{displayName}</span>
             {post.created_at && (
@@ -272,6 +306,17 @@ function PostDetail() {
                   >
                     回复 Reply
                   </button>
+                  {(c.user_id === user?.id || isAdmin) && (
+                    <button
+                      type="button"
+                      className="post-detail-comment-delete"
+                      onClick={() => handleDeleteComment(c.id)}
+                      title="删除评论"
+                      aria-label="删除评论"
+                    >
+                      <span aria-hidden>🗑</span>
+                    </button>
+                  )}
                 </div>
               </div>
               {c.replies && c.replies.length > 0 && (
@@ -286,6 +331,15 @@ function PostDetail() {
                         <span className="post-detail-comment-stat">
                           {(r.author?.nickname ?? r.author?.username) || '匿名'}
                         </span>
+                        {(r.user_id === user?.id || isAdmin) && (
+                          <button
+                            type="button"
+                            className="post-detail-reply-delete"
+                            onClick={() => handleDeleteComment(r.id)}
+                          >
+                            删除
+                          </button>
+                        )}
                       </div>
                     </li>
                   ))}

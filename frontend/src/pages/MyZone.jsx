@@ -22,6 +22,7 @@ function MyZone() {
   const {
     isLoggedIn,
     isMerchant,
+    isAdmin,
     displayName,
     displayAvatar,
     user,
@@ -125,6 +126,7 @@ function MyZone() {
             <div className="myzone-header-card">
               <p className="myzone-header-name">
                 {isLoggedIn ? (userLoading && !displayName ? '加载中…' : displayName) : '点击登录'}
+                {isAdmin && <span className="myzone-admin-badge">管理员</span>}
               </p>
               <div className="myzone-header-stats">
                 <span className="myzone-header-stat">

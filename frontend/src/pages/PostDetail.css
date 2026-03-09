@@ -225,6 +225,34 @@
   color: var(--wx-text-secondary);
 }
 
+.post-detail-comment-delete {
+  margin-left: auto;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--wx-text-secondary);
+  font-size: 14px;
+}
+
+.post-detail-comment-delete:hover {
+  color: var(--wx-red, #ee0a24);
+}
+
+.post-detail-reply-delete {
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--wx-text-secondary);
+}
+
+.post-detail-reply-delete:hover {
+  text-decoration: underline;
+  color: var(--wx-red, #ee0a24);
+}
+
 .post-detail-reply-btn {
   padding: 0;
   border: none;

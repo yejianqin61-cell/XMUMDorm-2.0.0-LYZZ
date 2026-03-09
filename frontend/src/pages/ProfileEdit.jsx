@@ -7,7 +7,7 @@ import './ProfileEdit.css';
 
 /** 修改个人信息：头像（调 API）、用户名（本地保存，后端暂无昵称接口） */
 function ProfileEdit() {
-  const { user, isLoggedIn, displayName, displayAvatar, updateProfile, refreshUser } = useAuth();
+  const { user, isLoggedIn, displayName, displayAvatar, updateProfile, refreshUser, isAdmin } = useAuth();
   const [username, setUsername] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [message, setMessage] = useState({ type: '', text: '' });
@@ -49,6 +49,13 @@ function ProfileEdit() {
     if (!name) {
       setMessage({ text: '请输入用户名 Please enter username', type: 'error' });
       setTimeout(() => setMessage({ type: '', text: '' }), 2000);
+      return;
+    }
+    const lower = name.toLowerCase();
+    const forbidden = ['admin', 'xmumdorm_official'];
+    if (!isAdmin && forbidden.includes(lower)) {
+      setMessage({ text: '该昵称为官方保留名称，无法使用 This nickname is reserved.', type: 'error' });
+      setTimeout(() => setMessage({ type: '', text: '' }), 2500);
       return;
     }
     updateProfile({ username: name });

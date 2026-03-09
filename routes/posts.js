@@ -115,10 +115,15 @@ router.post('/', authenticateToken, (req, res, next) => {
     if (!content) {
       return res.status(400).json({ status: -1, message: '内容不能为空' });
     }
-    const type = (req.body && req.body.type) === 'announcement' ? 'announcement' : 'normal';
-    if (type === 'announcement' && req.user.role !== 'admin') {
+    const requestedType = (req.body && req.body.type) === 'announcement' ? 'announcement' : 'normal';
+    // 仅管理员可发公告，且管理员只能发公告（不能发普通树洞帖）
+    if (requestedType === 'announcement' && req.user.role !== 'admin') {
       return res.status(403).json({ status: -1, message: '仅管理员可发公告' });
     }
+    if (requestedType === 'normal' && req.user.role === 'admin') {
+      return res.status(403).json({ status: -1, message: '管理员只能发布公告' });
+    }
+    const type = requestedType;
 
     const result = await query(
       'INSERT INTO posts (user_id, content, type) VALUES (?, ?, ?)',
@@ -199,7 +204,7 @@ router.get('/', async (req, res) => {
     })() : null;
     const isAdminUser = user && user.role === 'admin';
 
-    let where = 'p.deleted_at IS NULL';
+    let where = "p.deleted_at IS NULL AND p.type <> 'announcement'";
     if (!isAdminUser) where += ' AND p.hidden_by_admin = 0';
 
     const rows = await query(

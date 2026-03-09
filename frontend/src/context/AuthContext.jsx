@@ -71,6 +71,8 @@ export function AuthProvider({ children }) {
 
   /** 是否为商家（后端 user.role === 'merchant'） */
   const isMerchant = user?.role === 'merchant' || user?.is_merchant === true;
+  /** 是否为管理员（后端 user.role === 'admin'） */
+  const isAdmin = user?.role === 'admin';
 
   /** 展示用：用户名、头像（API 返回的 nickname/username、avatar） */
   const displayName = user?.nickname ?? user?.username ?? profile?.username ?? '未设置';
@@ -133,6 +135,7 @@ export function AuthProvider({ children }) {
         token,
         isLoggedIn,
         isMerchant,
+        isAdmin,
         userLoading,
         userError,
         refreshUser,

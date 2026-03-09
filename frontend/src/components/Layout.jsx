@@ -7,6 +7,9 @@ import TreeHole from '../pages/TreeHole';
 import CanteenArea from '../pages/CanteenArea';
 import AboutUs from '../pages/AboutUs';
 import MyZone from '../pages/MyZone';
+import { enterFullscreen } from '../utils/fullscreen';
+import { useAuth } from '../context/AuthContext';
+import { getUnreadAnnouncements, markNotificationRead, markNotificationsReadBatch } from '../api/notifications';
 import './TopBar.css';
 import './TabBar.css';
 import './Layout.css';
@@ -38,15 +41,20 @@ const TITLE_BY_PATH = {
 /** 需要显示返回键的路径（含 /post/:id 详情页） */
 const SHOW_BACK_PATHS = ['/post/new', '/post/'];
 
-/** 整体布局：顶栏（标题+信箱）+ 内容区 + 底部 Tab；支持全屏滑动切换 Tab + 微信风格过渡动画 */
+/** 整体布局：顶栏（标题+信箱）+ 内容区 + 底部 Tab；支持全屏滑动切换 Tab + 微信风格过渡动画 + 公告弹窗 */
 function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const pathname = location.pathname;
+  const { isLoggedIn } = useAuth();
   const touchStart = useRef({ x: 0, y: 0 });
   const prevPathRef = useRef(pathname);
+  // 只在用户第一次交互时尝试进入全屏
+  const hasTriedFullscreenRef = useRef(false);
   const [slide, setSlide] = useState(null);
   const [slidePhase, setSlidePhase] = useState('start');
+  const [announcements, setAnnouncements] = useState([]);
+  const [showAnnouncements, setShowAnnouncements] = useState(false);
 
   useEffect(() => {
     const prevRoot = getTabRootPath(prevPathRef.current);
@@ -70,6 +78,49 @@ function Layout() {
     prevPathRef.current = pathname;
   }, [pathname]);
 
+  // 加载未读公告，用于登录后弹窗
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setAnnouncements([]);
+      setShowAnnouncements(false);
+      return;
+    }
+    let cancelled = false;
+    getUnreadAnnouncements()
+      .then((list) => {
+        if (cancelled) return;
+        const arr = Array.isArray(list) ? list : [];
+        setAnnouncements(arr);
+        setShowAnnouncements(arr.length > 0);
+      })
+      .catch(() => {
+        // 忽略公告加载错误，避免影响主流程
+      });
+    return () => { cancelled = true; };
+  }, [isLoggedIn]);
+
+  const handleAnnouncementKnow = async (id) => {
+    setAnnouncements((prev) => prev.filter((n) => n.id !== id));
+    try {
+      await markNotificationRead(id);
+    } catch (_) {
+      // 忽略单条失败
+    }
+    setShowAnnouncements((prev) => prev && announcements.filter((n) => n.id !== id).length > 0);
+  };
+
+  const handleAnnouncementKnowAll = async () => {
+    const ids = announcements.map((n) => n.id);
+    setAnnouncements([]);
+    setShowAnnouncements(false);
+    if (ids.length === 0) return;
+    try {
+      await markNotificationsReadBatch(ids);
+    } catch (_) {
+      // 忽略批量失败
+    }
+  };
+
   const onSwipeTouchStart = (e) => {
     const t = e.touches?.[0];
     if (t) touchStart.current = { x: t.clientX, y: t.clientY };
@@ -83,6 +134,12 @@ function Layout() {
     const cur = getTabIndex(pathname);
     if (dx < 0 && cur < TABS.length - 1) navigate(TABS[cur + 1].path);
     else if (dx > 0 && cur > 0) navigate(TABS[cur - 1].path);
+  };
+
+  const handleFirstInteraction = () => {
+    if (hasTriedFullscreenRef.current) return;
+    hasTriedFullscreenRef.current = true;
+    enterFullscreen();
   };
 
   let title = TITLE_BY_PATH[pathname];
@@ -119,6 +176,7 @@ function Layout() {
       className="app-layout"
       onTouchStart={onSwipeTouchStart}
       onTouchEnd={onSwipeTouchEnd}
+      onClick={handleFirstInteraction}
     >
       <TopBar title={title} showBack={showBack} />
       <main className="app-main">
@@ -145,6 +203,40 @@ function Layout() {
           )}
         </div>
       </main>
+      {showAnnouncements && announcements.length > 0 && (
+        <div className="app-ann-modal-backdrop" role="dialog" aria-modal="true" aria-label="全站公告">
+          <div className="app-ann-modal">
+            <h2 className="app-ann-title">全站公告</h2>
+            <div className="app-ann-list">
+              {announcements.map((n) => (
+                <div key={n.id} className="app-ann-item">
+                  <p className="app-ann-item-title">{n.extra?.title || '公告 Announcement'}</p>
+                  <p className="app-ann-item-meta">
+                    {n.from_user?.nickname || n.from_user?.username || '管理员'} ·{' '}
+                    {n.created_at ? new Date(n.created_at).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''}
+                  </p>
+                  <button
+                    type="button"
+                    className="app-ann-know-btn"
+                    onClick={() => handleAnnouncementKnow(n.id)}
+                  >
+                    知道了
+                  </button>
+                </div>
+              ))}
+            </div>
+            {announcements.length > 1 && (
+              <button
+                type="button"
+                className="app-ann-know-all-btn"
+                onClick={handleAnnouncementKnowAll}
+              >
+                全部知道了
+              </button>
+            )}
+          </div>
+        </div>
+      )}
       <TabBar />
     </div>
   );

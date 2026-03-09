@@ -82,6 +82,8 @@
   background: linear-gradient(135deg, var(--eat-primary) 0%, var(--eat-primary-light) 100%);
   border-radius: 20px;
   box-shadow: 0 4px 16px rgba(22, 119, 255, 0.35);
+  --pressable-scale: 0.93;
+  --pressable-shadow-active: 0 3px 12px rgba(22, 119, 255, 0.25);
 }
 
 .canteen-area-rankings-title {
@@ -123,6 +125,8 @@
   background: var(--eat-card);
   border-radius: 16px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  --pressable-scale: 0.93;
+  --pressable-shadow-active: 0 1px 8px rgba(0, 0, 0, 0.05);
   text-decoration: none;
   color: inherit;
   transition: box-shadow 0.2s, transform 0.2s;

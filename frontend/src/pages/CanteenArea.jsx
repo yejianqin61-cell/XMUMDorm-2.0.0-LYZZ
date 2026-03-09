@@ -64,11 +64,13 @@ function CanteenArea() {
       <div className="canteen-area-content">
         <h1 className="canteen-area-title">食堂 Eat</h1>
 
-        <Link to="/eat/rankings" className="canteen-area-rankings-link" aria-label="进入排行榜">
-          <div className="canteen-area-rankings-card">
-            <h2 className="canteen-area-rankings-title">排行榜 Rankings</h2>
-            <p className="canteen-area-rankings-sub">最夯单品 · 门庭若市 · 点评达人</p>
-          </div>
+        <Link
+          to="/eat/rankings"
+          className="canteen-area-rankings-link canteen-area-rankings-card pressable"
+          aria-label="进入排行榜"
+        >
+          <h2 className="canteen-area-rankings-title">排行榜 Rankings</h2>
+          <p className="canteen-area-rankings-sub">最夯单品 · 门庭若市 · 点评达人</p>
         </Link>
 
         <section className="canteen-area-sections" aria-label="分区选择">
@@ -82,7 +84,7 @@ function CanteenArea() {
               >
                 <Link
                   to={`/eat/${encodeURIComponent(section.code)}`}
-                  className="canteen-area-section-card"
+                  className="canteen-area-section-card pressable"
                   aria-label={`进入分区 ${name}`}
                 >
                   <span className="canteen-area-section-icon" aria-hidden>

@@ -8,8 +8,10 @@ import './FoodDetailView.css';
  * @param {string} [food.image]
  * @param {string} [food.description]
  * @param {Function} [onImageClick] 点击大图时回调，用于打开全屏预览
+ * @param {boolean} [canDelete] 是否显示删除按钮（仅管理员或店主）
+ * @param {Function} [onDelete] 点击删除按钮时的回调
  */
-function FoodDetailView({ food, onImageClick }) {
+function FoodDetailView({ food, onImageClick, canDelete, onDelete }) {
   if (!food) return null;
 
   const { name, price, image, description, comprehensiveScore } = food;
@@ -35,7 +37,20 @@ function FoodDetailView({ food, onImageClick }) {
         )}
       </div>
       <div className="food-detail-view-body">
-        <h1 className="food-detail-view-name">{name}</h1>
+        <div className="food-detail-view-name-row">
+          <h1 className="food-detail-view-name">{name}</h1>
+          {canDelete && onDelete && (
+            <button
+              type="button"
+              className="food-detail-view-delete"
+              onClick={onDelete}
+              title="删除商品"
+              aria-label="删除商品"
+            >
+              🗑
+            </button>
+          )}
+        </div>
         <p className="food-detail-view-price-row">
           <span className="food-detail-view-price">RM {priceStr}</span>
           {ratingDisplay != null && (
