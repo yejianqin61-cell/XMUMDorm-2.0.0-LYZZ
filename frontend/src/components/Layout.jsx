@@ -101,6 +101,7 @@ function Layout() {
     else if (pathname === '/merchant/food/new') title = '菜品发布 Publish Food';
     else if (pathname.startsWith('/merchant/food/')) title = '菜品详情 Food Detail';
     else if (pathname.startsWith('/merchant/')) title = '商家 Merchant';
+    else if (pathname === '/about/thanks') title = '特别鸣谢 Special Thanks';
     else if (pathname === '/about/team') title = '团队介绍 Team';
     else title = '厦马小筑 XMUM Dorm';
   }
