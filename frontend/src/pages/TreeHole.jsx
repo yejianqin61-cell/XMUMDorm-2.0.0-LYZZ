@@ -7,6 +7,7 @@ import { getPostList } from '../api/posts';
 import { getApiErrorMessage } from '../utils/apiError';
 import { API_BASE_URL } from '../api/config';
 import { saveScroll, takeScroll } from '../utils/scrollCache';
+import { getRegions } from '../api/canteen';
 import './TreeHole.css';
 
 const SCROLL_CACHE_KEY = 'treehole';
@@ -25,6 +26,7 @@ function TreeHole() {
   const pageSize = 20;
   const pageRef = useRef(1);
   pageRef.current = page;
+  const prefetchRef = useRef(false);
 
   const loadPage = useCallback(
     async (pageNum = 1, append = false) => {
@@ -58,9 +60,35 @@ function TreeHole() {
     };
   }, []);
 
-  // 首次进入：有缓存则恢复到离开时的页码并恢复滚动，否则正常加载第一页
+  // 首次进入：优先使用缓存的帖子列表 + 滚动位置，否则按之前逻辑加载
   useEffect(() => {
-    const cached = takeScroll(SCROLL_CACHE_KEY);
+    const cachedScroll = takeScroll(SCROLL_CACHE_KEY);
+    try {
+      const raw = sessionStorage.getItem('treehole_data');
+      if (raw) {
+        const data = JSON.parse(raw);
+        const cachedList = Array.isArray(data.list) ? data.list : [];
+        const cachedPage = Number(data.page) || 1;
+        const cachedHasMore = !!data.hasMore;
+        if (cachedList.length > 0) {
+          setList(cachedList);
+          setPage(cachedPage);
+          setHasMore(cachedHasMore);
+          setLoading(false);
+          const main = document.querySelector('.app-main');
+          if (main && cachedScroll && cachedScroll.scrollTop > 0) {
+            requestAnimationFrame(() => {
+              main.scrollTop = cachedScroll.scrollTop;
+            });
+          }
+          return;
+        }
+      }
+    } catch (_) {
+      // 忽略缓存解析错误，走正常加载逻辑
+    }
+
+    const cached = cachedScroll;
     if (!cached || cached.page <= 0) {
       loadPage(1);
       return;
@@ -103,6 +131,23 @@ function TreeHole() {
   const loadMore = () => {
     if (!loading && hasMore) loadPage(page + 1, true);
   };
+
+  // 缓存当前帖子列表到 sessionStorage，便于返回时秒开
+  useEffect(() => {
+    try {
+      const data = { list, hasMore, page };
+      sessionStorage.setItem('treehole_data', JSON.stringify(data));
+    } catch (_) {
+      // 忽略缓存失败
+    }
+  }, [list, hasMore, page]);
+
+  // 后台预取食堂分区数据，加速用户切到 Eat 页时的加载
+  useEffect(() => {
+    if (prefetchRef.current) return;
+    prefetchRef.current = true;
+    getRegions().catch(() => {});
+  }, []);
 
   const leftColumn = list.filter((_, i) => i % 2 === 0);
   const rightColumn = list.filter((_, i) => i % 2 === 1);

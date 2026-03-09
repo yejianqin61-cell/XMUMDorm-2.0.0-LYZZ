@@ -19,7 +19,11 @@ function TopBar({ title, showBack }) {
         ) : (
           <div className="top-bar-placeholder" />
         )}
-        <h1 className="top-bar-title">{title}</h1>
+        <h1 className="top-bar-title">
+          <span className="top-bar-title-decor top-bar-title-decor-left" aria-hidden />
+          <span className="top-bar-title-text">{title}</span>
+          <span className="top-bar-title-decor top-bar-title-decor-right" aria-hidden />
+        </h1>
         <button
           type="button"
           className="top-bar-mailbox"

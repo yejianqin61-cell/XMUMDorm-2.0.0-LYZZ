@@ -12,25 +12,28 @@ const express = require('express');
 // 2. 引入 CORS 中间件
 const cors = require('cors');
 
-// 3. 引入环境变量配置
+// 3. Rate Limit 防刷中间件
+const rateLimit = require('express-rate-limit');
+
+// 4. 引入环境变量配置
 require('dotenv').config();
 
-// 4. 引入数据库连接
+// 5. 引入数据库连接
 // 创建时间: 2025-01-26
 // 在服务器启动时测试数据库连接
 const { testConnection } = require('./database');
 
-// 5. 引入路由文件
+// 6. 引入路由文件
 const authRoutes = require('./routes/auth');
 const postRoutes = require('./routes/posts');
 const canteenRoutes = require('./routes/canteen');
 const notificationRoutes = require('./routes/notifications');
 const userRoutes = require('./routes/users');
 
-// 6. 创建一个 Express 应用实例
+// 7. 创建一个 Express 应用实例
 const app = express();
 
-// 7. 定义服务器端口
+// 8. 定义服务器端口
 const PORT = process.env.PORT || 4040;
 
 // ============================================
@@ -46,6 +49,30 @@ app.use(express.json());
 // 10. 使用 URL 编码解析中间件
 app.use(express.urlencoded({ extended: true }));
 
+// 10.2 全局 Rate Limit（防止接口被暴力刷）
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 分钟
+  max: 100, // 同一 IP 15 分钟内最多 100 次 /api 请求
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    status: -1,
+    message: '请求过于频繁，请稍后再试'
+  }
+});
+
+// 登录 / 注册额外再加一层更严的限流
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    status: -1,
+    message: '登录/注册请求过于频繁，请稍后再试'
+  }
+});
+
 // 10.1 上传文件静态服务（2.0.0）
 const path = require('path');
 const fs = require('fs');
@@ -54,6 +81,9 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 app.use('/uploads', express.static(uploadsDir));
+
+// 10.3 将 Rate Limit 应用于所有 /api 开头的接口
+app.use('/api', apiLimiter);
 
 // ============================================
 // 路由配置（Routes）
@@ -68,7 +98,8 @@ app.get('/', (req, res) => {
 });
 
 // 12. API 路由前缀
-app.use('/api/auth', authRoutes);
+// 为认证接口单独挂载更严格的限流中间件
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/canteen', canteenRoutes);
 app.use('/api/notifications', notificationRoutes);

@@ -49,7 +49,7 @@ function PostCard({ post }) {
         <p className="post-card-content">{preview}</p>
         {post.images && post.images.length > 0 && (
           <div className="post-card-images" aria-hidden>
-            {post.images.slice(0, 3).map((img, i) => (
+            {post.images.slice(0, 1).map((img, i) => (
               <span
                 key={img.url || i}
                 role="button"

@@ -83,8 +83,10 @@ router.get('/:id/profile', async (req, res) => {
     const postIds = (posts || []).map((p) => p.id);
     let images = [];
     if (postIds.length > 0) {
+      const placeholders = postIds.map(() => '?').join(',');
       images = await query(
-        `SELECT post_id, file_path, sort_order FROM post_images WHERE post_id IN (${postIds.join(',')}) ORDER BY post_id, sort_order`
+        `SELECT post_id, file_path, sort_order FROM post_images WHERE post_id IN (${placeholders}) ORDER BY post_id, sort_order`,
+        postIds
       );
     }
     const imagesByPost = {};
@@ -138,6 +140,28 @@ router.get('/:id/profile', async (req, res) => {
     res.status(200).json({ status: 0, message: '获取成功', data });
   } catch (e) {
     console.error('个人空间错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
+// ============================================
+// 更新当前用户资料（仅昵称）
+// ============================================
+router.patch('/me', authenticateToken, async (req, res) => {
+  try {
+    const rawName = (req.body && (req.body.nickname ?? req.body.username)) || '';
+    const nickname = String(rawName).trim();
+    if (!nickname) {
+      return res.status(400).json({ status: -1, message: '昵称不能为空' });
+    }
+    const lower = nickname.toLowerCase();
+    if (lower === 'admin' || lower === 'xmumdorm_official') {
+      return res.status(400).json({ status: -1, message: '该昵称为官方保留名称，无法使用' });
+    }
+    await query('UPDATE users SET nickname = ? WHERE id = ?', [nickname, req.user.id]);
+    res.status(200).json({ status: 0, message: '资料已更新', data: { nickname } });
+  } catch (e) {
+    console.error('更新资料错误:', e);
     res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
   }
 });

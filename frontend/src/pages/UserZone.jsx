@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { getProfile } from '../api/users';
 import { getMyProductReviews } from '../api/canteen';
 import { API_BASE_URL } from '../api/config';
@@ -194,13 +194,30 @@ function UserZone() {
               />
             ) : (
               <div className="myzone-grid myzone-grid-reviews">
-                {reviews.map((r) => (
-                  <Link key={r.id} to={`/eat/food/${r.product_id}`} className="myzone-grid-item myzone-grid-item-review">
-                    <div className="myzone-grid-item-media">
-                      <div className="myzone-grid-item-placeholder">⭐</div>
-                    </div>
-                  </Link>
-                ))}
+                {reviews.map((r) => {
+                  const cover = r.product_image || (r.images && r.images[0]?.url);
+                  const imgUrl =
+                    cover && typeof cover === 'string'
+                      ? cover
+                      : cover && cover.url
+                      ? cover.url
+                      : null;
+                  return (
+                    <Link
+                      key={r.id}
+                      to={`/eat/food/${r.product_id}`}
+                      className="myzone-grid-item myzone-grid-item-review"
+                    >
+                      <div className="myzone-grid-item-media">
+                        {imgUrl ? (
+                          <img src={imgUrl} alt="" />
+                        ) : (
+                          <div className="myzone-grid-item-placeholder">⭐</div>
+                        )}
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </div>

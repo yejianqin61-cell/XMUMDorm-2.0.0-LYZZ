@@ -19,6 +19,14 @@ export function getProfile(userId, options = {}) {
 }
 
 /**
+ * 更新当前用户资料（目前仅支持昵称 nickname）
+ * @param {{ nickname?: string, username?: string }} body
+ */
+export function updateProfileInfo(body) {
+  return patch('/api/users/me', body);
+}
+
+/**
  * 上传头像（FormData，字段名 avatar）
  * @param {File} file
  */

@@ -49,13 +49,40 @@
   left: 50%;
   transform: translateX(-50%);
   margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 17px;
   font-weight: 600;
   color: var(--wx-text);
   white-space: nowrap;
+}
+
+.top-bar-title-text {
+  margin: 0 4px;
+  max-width: 60vw;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 60%;
+}
+
+.top-bar-title-decor {
+  width: 36px;
+  height: 36px; /* 尽量贴近上下边，又不裁剪 */
+  flex-shrink: 0;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+/* 具体的图片等你提供后再补背景图即可 */
+.top-bar-title-decor-left {
+  margin-right: 2px;
+  background-image: url('/topbar-left.png');
+}
+
+.top-bar-title-decor-right {
+  margin-left: 2px;
+  background-image: url('/topbar-right.png');
 }
 
 .top-bar-mailbox {

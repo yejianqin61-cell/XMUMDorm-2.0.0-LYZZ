@@ -18,9 +18,20 @@ const {
 } = require('../middleware/upload');
 const { onPrimaryCommentChange } = require('../services/rankingStats');
 const { shanghaiDaysAgoStart } = require('../utils/timezone');
+const sanitizeHtml = require('sanitize-html');
 
 const UPLOAD_PREFIX = '/uploads/';
 const RATING_ENUM = ['夯爆了', '顶级', '人上人', 'NPC', '拉完了'];
+
+// 统一的文本清洗，防止 XSS 注入（去掉所有 HTML 标签，只保留纯文本）
+function cleanText(input) {
+  const raw = input == null ? '' : String(input);
+  const cleaned = sanitizeHtml(raw, {
+    allowedTags: [],
+    allowedAttributes: {}
+  });
+  return cleaned.trim();
+}
 
 function isAdmin(req) {
   return req.user && req.user.role === 'admin';
@@ -836,7 +847,7 @@ router.post('/products/:productId/comments', authenticateToken, (req, res, next)
     const productId = parseInt(req.params.productId, 10);
     if (!productId) return res.status(400).json({ status: -1, message: '商品 ID 无效' });
     const rating = (req.body.rating || '').trim();
-    const content = (req.body.content || '').trim();
+    const content = cleanText(req.body.content || '');
     const parentId = req.body.parent_id ? parseInt(req.body.parent_id, 10) : null;
     if (!RATING_ENUM.includes(rating)) {
       return res.status(400).json({ status: -1, message: '请选择评级：' + RATING_ENUM.join(' / ') });

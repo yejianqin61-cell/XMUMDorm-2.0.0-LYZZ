@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { updateAvatar } from '../api/users';
+import { updateAvatar, updateProfileInfo } from '../api/users';
 import { getApiErrorMessage } from '../utils/apiError';
 import './ProfileEdit.css';
 
@@ -43,7 +43,7 @@ function ProfileEdit() {
     }
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
     const name = username.trim();
     if (!name) {
@@ -58,8 +58,15 @@ function ProfileEdit() {
       setTimeout(() => setMessage({ type: '', text: '' }), 2500);
       return;
     }
-    updateProfile({ username: name });
-    showMsg('已保存 Saved');
+    try {
+      // 调后端接口更新昵称（实际写入 users.nickname）
+      await updateProfileInfo({ nickname: name });
+      await refreshUser();
+      updateProfile({ username: name });
+      showMsg('已保存 Saved');
+    } catch (err) {
+      showMsg(getApiErrorMessage(err), 'error');
+    }
   };
 
   return (

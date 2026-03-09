@@ -10,8 +10,19 @@ const router = express.Router();
 const { query } = require('../database');
 const authenticateToken = require('../middleware/auth');
 const { postImagesUpload, savePostImages } = require('../middleware/upload');
+const sanitizeHtml = require('sanitize-html');
 
 const UPLOAD_PREFIX = '/uploads/'; // 前端拼接图片 URL 用
+
+// 统一的文本清洗，防止 XSS 注入（去掉所有 HTML 标签，只保留纯文本）
+function cleanText(input) {
+  const raw = input == null ? '' : String(input);
+  const cleaned = sanitizeHtml(raw, {
+    allowedTags: [],
+    allowedAttributes: {}
+  });
+  return cleaned.trim();
+}
 
 // 辅助：当前用户是否为 admin
 function isAdmin(req) {
@@ -111,7 +122,7 @@ router.post('/', authenticateToken, (req, res, next) => {
   });
 }, async (req, res) => {
   try {
-    const content = (req.body && req.body.content) ? req.body.content.trim() : '';
+    const content = cleanText(req.body && req.body.content);
     if (!content) {
       return res.status(400).json({ status: -1, message: '内容不能为空' });
     }
@@ -399,8 +410,9 @@ router.post('/:id/comments', authenticateToken, async (req, res) => {
   try {
     const postId = parseInt(req.params.id, 10);
     const { content, parent_id: parentId } = req.body || {};
+    const safeContent = cleanText(content);
     if (!postId) return res.status(400).json({ status: -1, message: '帖子 ID 无效' });
-    if (!content || !String(content).trim()) {
+    if (!safeContent) {
       return res.status(400).json({ status: -1, message: '评论内容不能为空' });
     }
     const posts = await query('SELECT id FROM posts WHERE id = ? AND deleted_at IS NULL', [postId]);
@@ -420,7 +432,7 @@ router.post('/:id/comments', authenticateToken, async (req, res) => {
     }
     const result = await query(
       'INSERT INTO comments (post_id, user_id, parent_id, content) VALUES (?, ?, ?, ?)',
-      [postId, req.user.id, parentIdNum, String(content).trim()]
+      [postId, req.user.id, parentIdNum, safeContent]
     );
     // 通知帖子作者（排除自己评论）
     const [postRow] = await query('SELECT user_id FROM posts WHERE id = ?', [postId]);
@@ -438,7 +450,7 @@ router.post('/:id/comments', authenticateToken, async (req, res) => {
     const data = row ? {
       ...row,
       author: { username: row.username, nickname: row.nickname, avatar: row.avatar ? UPLOAD_PREFIX + row.avatar : null }
-    } : { id: result.insertId, content: String(content).trim(), created_at: new Date().toISOString() };
+    } : { id: result.insertId, content: safeContent, created_at: new Date().toISOString() };
     res.status(200).json({ status: 0, message: '评论成功！', data });
   } catch (e) {
     console.error('评论错误:', e);
