@@ -12,28 +12,34 @@ const express = require('express');
 // 2. 引入 CORS 中间件
 const cors = require('cors');
 
-// 3. Rate Limit 防刷中间件
+// 3. HTTP 头安全加固（Helmet）
+const helmet = require('helmet');
+
+// 4. Rate Limit 防刷中间件
 const rateLimit = require('express-rate-limit');
 
-// 4. 引入环境变量配置
+// 5. 引入环境变量配置
 require('dotenv').config();
 
-// 5. 引入数据库连接
+// 当前是否生产环境
+const IS_PROD = process.env.NODE_ENV === 'production';
+
+// 6. 引入数据库连接
 // 创建时间: 2025-01-26
 // 在服务器启动时测试数据库连接
 const { testConnection } = require('./database');
 
-// 6. 引入路由文件
+// 7. 引入路由文件
 const authRoutes = require('./routes/auth');
 const postRoutes = require('./routes/posts');
 const canteenRoutes = require('./routes/canteen');
 const notificationRoutes = require('./routes/notifications');
 const userRoutes = require('./routes/users');
 
-// 7. 创建一个 Express 应用实例
+// 8. 创建一个 Express 应用实例
 const app = express();
 
-// 8. 定义服务器端口
+// 9. 定义服务器端口
 const PORT = process.env.PORT || 4040;
 
 // ============================================
@@ -43,35 +49,43 @@ const PORT = process.env.PORT || 4040;
 // 8. 使用 CORS 中间件
 app.use(cors());
 
-// 9. 使用 JSON 解析中间件
-app.use(express.json());
+// 8.5 使用 Helmet 设置常见安全响应头
+app.use(helmet());
 
-// 10. 使用 URL 编码解析中间件
-app.use(express.urlencoded({ extended: true }));
+// 9. 使用 JSON 解析中间件，并限制单次请求体大小，防止大包 DoS
+app.use(express.json({ limit: '1mb' }));
+
+// 10. 使用 URL 编码解析中间件，同样限制大小
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 // 10.2 全局 Rate Limit（防止接口被暴力刷）
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 分钟
-  max: 100, // 同一 IP 15 分钟内最多 100 次 /api 请求
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: {
-    status: -1,
-    message: '请求过于频繁，请稍后再试'
-  }
-});
+// 开发环境下放开限流，避免本机调试频繁触发 429；生产环境开启
+const apiLimiter = IS_PROD
+  ? rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 分钟
+      max: 100, // 同一 IP 15 分钟内最多 100 次 /api 请求
+      standardHeaders: true,
+      legacyHeaders: false,
+      message: {
+        status: -1,
+        message: '请求过于频繁，请稍后再试'
+      }
+    })
+  : (req, res, next) => next();
 
-// 登录 / 注册额外再加一层更严的限流
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 20,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: {
-    status: -1,
-    message: '登录/注册请求过于频繁，请稍后再试'
-  }
-});
+// 登录 / 注册额外再加一层更严的限流（同样仅生产环境启用）
+const authLimiter = IS_PROD
+  ? rateLimit({
+      windowMs: 15 * 60 * 1000,
+      max: 20,
+      standardHeaders: true,
+      legacyHeaders: false,
+      message: {
+        status: -1,
+        message: '登录/注册请求过于频繁，请稍后再试'
+      }
+    })
+  : (req, res, next) => next();
 
 // 10.1 上传文件静态服务（2.0.0）
 const path = require('path');

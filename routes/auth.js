@@ -24,6 +24,7 @@ const jwt = require('jsonwebtoken');
 
 // 引入数据库查询函数
 const { query } = require('../database');
+const { logAudit } = require('../services/auditLog');
 
 // 从环境变量获取 JWT 密钥
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
@@ -390,6 +391,27 @@ router.post('/login', async (req, res) => {
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN }
     );
+
+    // 写审计日志 + 控制台日志
+    const ip = req.ip || req.headers['x-forwarded-for'] || req.connection?.remoteAddress || null;
+    const ua = req.headers['user-agent'] || null;
+    console.log('[AUDIT][LOGIN_SUCCESS]', {
+      userId: user.id,
+      role: user.role,
+      ip,
+      email: email || null,
+      username: username || null,
+    });
+    logAudit({
+      userId: user.id,
+      role: user.role,
+      action: 'LOGIN',
+      targetType: 'user',
+      targetId: user.id,
+      ip,
+      userAgent: ua,
+      meta: { email: email || null, username: username || null },
+    });
 
     // 7. 返回成功响应
     res.status(200).json({

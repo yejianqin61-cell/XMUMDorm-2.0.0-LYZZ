@@ -10,6 +10,7 @@ import MyZone from '../pages/MyZone';
 import { enterFullscreen } from '../utils/fullscreen';
 import { useAuth } from '../context/AuthContext';
 import { getUnreadAnnouncements, markNotificationRead, markNotificationsReadBatch } from '../api/notifications';
+import { BACKGROUND_IMAGES, BACKGROUND_SWITCH_INTERVAL_MS } from '../config/backgrounds';
 import './TopBar.css';
 import './TabBar.css';
 import './Layout.css';
@@ -55,6 +56,10 @@ function Layout() {
   const [slidePhase, setSlidePhase] = useState('start');
   const [announcements, setAnnouncements] = useState([]);
   const [showAnnouncements, setShowAnnouncements] = useState(false);
+  const [bgIndex, setBgIndex] = useState(() => {
+    if (!Array.isArray(BACKGROUND_IMAGES) || BACKGROUND_IMAGES.length === 0) return 0;
+    return Math.floor(Math.random() * BACKGROUND_IMAGES.length);
+  });
 
   useEffect(() => {
     const prevRoot = getTabRootPath(prevPathRef.current);
@@ -77,6 +82,15 @@ function Layout() {
     }
     prevPathRef.current = pathname;
   }, [pathname]);
+
+  // 全站背景轮播：在 BACKGROUND_SWITCH_INTERVAL_MS 间隔内轮播 BACKGROUND_IMAGES
+  useEffect(() => {
+    if (!Array.isArray(BACKGROUND_IMAGES) || BACKGROUND_IMAGES.length <= 1) return undefined;
+    const timer = setInterval(() => {
+      setBgIndex((prev) => (prev + 1) % BACKGROUND_IMAGES.length);
+    }, BACKGROUND_SWITCH_INTERVAL_MS);
+    return () => clearInterval(timer);
+  }, []);
 
   // 加载未读公告，用于登录后弹窗
   useEffect(() => {
@@ -180,7 +194,13 @@ function Layout() {
     >
       <TopBar title={title} showBack={showBack} />
       <main className="app-main">
-        <div className="app-main-bg" aria-hidden="true" />
+        <div
+          className="app-main-bg"
+          aria-hidden="true"
+          style={{
+            backgroundImage: `url('${(Array.isArray(BACKGROUND_IMAGES) && BACKGROUND_IMAGES[bgIndex]) || '/background.jpg'}')`,
+          }}
+        />
         <div className="app-main-inner">
           {slide ? (
             <div className={`app-slide-wrap app-slide-${slide.direction === 1 ? 'forward' : 'back'} app-slide-${slidePhase}`}>

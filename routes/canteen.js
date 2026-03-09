@@ -17,6 +17,7 @@ const {
   shopLogoUpload
 } = require('../middleware/upload');
 const { onPrimaryCommentChange } = require('../services/rankingStats');
+const { logAudit } = require('../services/auditLog');
 const { shanghaiDaysAgoStart } = require('../utils/timezone');
 const sanitizeHtml = require('sanitize-html');
 
@@ -822,6 +823,23 @@ router.delete('/products/:productId', authenticateToken, async (req, res) => {
     const admin = isAdmin(req);
     if (!owner && !admin) return res.status(403).json({ status: -1, message: '仅店主或管理员可删除商品' });
     await query('UPDATE products SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [productId]);
+    const ip = req.ip || req.headers['x-forwarded-for'] || req.connection?.remoteAddress || null;
+    const ua = req.headers['user-agent'] || null;
+    console.log('[AUDIT][PRODUCT_DELETE]', {
+      userId: req.user.id,
+      role: req.user.role,
+      productId,
+      ip,
+    });
+    logAudit({
+      userId: req.user.id,
+      role: req.user.role,
+      action: admin ? 'ADMIN_PRODUCT_DELETE' : 'PRODUCT_DELETE',
+      targetType: 'product',
+      targetId: productId,
+      ip,
+      userAgent: ua,
+    });
     res.status(200).json({ status: 0, message: '已删除（逻辑删除）' });
   } catch (e) {
     console.error('删除商品错误:', e);
@@ -898,6 +916,28 @@ router.post('/products/:productId/comments', authenticateToken, (req, res, next)
     if (parentId === null) {
       await onPrimaryCommentChange(productId, shopId, req.user.id, rating, 1);
     }
+
+    const ip = req.ip || req.headers['x-forwarded-for'] || req.connection?.remoteAddress || null;
+    const ua = req.headers['user-agent'] || null;
+    console.log('[AUDIT][PRODUCT_COMMENT_CREATE]', {
+      userId: req.user.id,
+      role: req.user.role,
+      productId,
+      commentId,
+      rating,
+      parentId,
+      ip,
+    });
+    logAudit({
+      userId: req.user.id,
+      role: req.user.role,
+      action: 'PRODUCT_COMMENT_CREATE',
+      targetType: 'product_comment',
+      targetId: commentId,
+      ip,
+      userAgent: ua,
+      meta: { productId, rating, parentId },
+    });
 
     const rows = await query(
       `SELECT pc.id, pc.product_id, pc.user_id, pc.parent_id, pc.rating, pc.content, pc.created_at,
@@ -1015,6 +1055,25 @@ router.delete('/products/:productId/comments/:commentId', authenticateToken, asy
     if (isPrimary && shopId != null) {
       await onPrimaryCommentChange(productId, shopId, userId, rating, -1);
     }
+    const ip = req.ip || req.headers['x-forwarded-for'] || req.connection?.remoteAddress || null;
+    const ua = req.headers['user-agent'] || null;
+    console.log('[AUDIT][PRODUCT_COMMENT_DELETE]', {
+      userId: req.user.id,
+      role: req.user.role,
+      productId,
+      commentId,
+      ip,
+    });
+    logAudit({
+      userId: req.user.id,
+      role: req.user.role,
+      action: admin ? 'ADMIN_PRODUCT_COMMENT_DELETE' : 'PRODUCT_COMMENT_DELETE',
+      targetType: 'product_comment',
+      targetId: commentId,
+      ip,
+      userAgent: ua,
+      meta: { productId, isPrimary },
+    });
     res.status(200).json({ status: 0, message: '已删除（逻辑删除）' });
   } catch (e) {
     console.error('删除评论错误:', e);

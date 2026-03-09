@@ -22,7 +22,6 @@
   transform: translateX(-50%);
   width: 100%;
   max-width: 430px;
-  background-image: url('/background.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

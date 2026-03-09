@@ -11,6 +11,7 @@ const { query } = require('../database');
 const authenticateToken = require('../middleware/auth');
 const { postImagesUpload, savePostImages } = require('../middleware/upload');
 const sanitizeHtml = require('sanitize-html');
+const { logAudit } = require('../services/auditLog');
 
 const UPLOAD_PREFIX = '/uploads/'; // 前端拼接图片 URL 用
 
@@ -163,6 +164,26 @@ router.post('/', authenticateToken, (req, res, next) => {
       }
     }
 
+    // 审计日志：发帖 / 发布公告
+    const ip = req.ip || req.headers['x-forwarded-for'] || req.connection?.remoteAddress || null;
+    const ua = req.headers['user-agent'] || null;
+    console.log('[AUDIT][POST_CREATE]', {
+      userId: req.user.id,
+      role: req.user.role,
+      postId,
+      type,
+      ip,
+    });
+    logAudit({
+      userId: req.user.id,
+      role: req.user.role,
+      action: type === 'announcement' ? 'ANNOUNCEMENT_CREATE' : 'POST_CREATE',
+      targetType: 'post',
+      targetId: postId,
+      ip,
+      userAgent: ua,
+    });
+
     const rows = await query(
       `SELECT p.id, p.user_id, p.content, p.type, p.created_at, p.updated_at, p.hidden_by_admin,
         u.id AS author_id, u.username AS author_username, u.nickname AS author_nickname, u.avatar AS author_avatar,
@@ -309,6 +330,23 @@ router.delete('/:id', authenticateToken, async (req, res) => {
       return res.status(403).json({ status: -1, message: '只能删除自己的帖子' });
     }
     await query('UPDATE posts SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?', [id]);
+    const ip = req.ip || req.headers['x-forwarded-for'] || req.connection?.remoteAddress || null;
+    const ua = req.headers['user-agent'] || null;
+    console.log('[AUDIT][POST_DELETE]', {
+      userId: req.user.id,
+      role: req.user.role,
+      postId: id,
+      ip,
+    });
+    logAudit({
+      userId: req.user.id,
+      role: req.user.role,
+      action: 'POST_DELETE',
+      targetType: 'post',
+      targetId: id,
+      ip,
+      userAgent: ua,
+    });
     res.status(200).json({ status: 0, message: '删除成功' });
   } catch (e) {
     console.error('删除帖子错误:', e);
@@ -331,6 +369,23 @@ router.patch('/:id/hide', authenticateToken, async (req, res) => {
       return res.status(404).json({ status: -1, message: '帖子不存在' });
     }
     await query('UPDATE posts SET hidden_by_admin = 1 WHERE id = ?', [id]);
+    const ip = req.ip || req.headers['x-forwarded-for'] || req.connection?.remoteAddress || null;
+    const ua = req.headers['user-agent'] || null;
+    console.log('[AUDIT][ADMIN_POST_HIDE]', {
+      userId: req.user.id,
+      role: req.user.role,
+      postId: id,
+      ip,
+    });
+    logAudit({
+      userId: req.user.id,
+      role: req.user.role,
+      action: 'ADMIN_POST_HIDE',
+      targetType: 'post',
+      targetId: id,
+      ip,
+      userAgent: ua,
+    });
     res.status(200).json({ status: 0, message: '已隐藏' });
   } catch (e) {
     console.error('隐藏帖子错误:', e);
@@ -475,6 +530,25 @@ router.delete('/:id/comments/:commentId', authenticateToken, async (req, res) =>
       return res.status(403).json({ status: -1, message: '只能删除自己的评论' });
     }
     await query('UPDATE comments SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?', [commentId]);
+    const ip = req.ip || req.headers['x-forwarded-for'] || req.connection?.remoteAddress || null;
+    const ua = req.headers['user-agent'] || null;
+    console.log('[AUDIT][COMMENT_DELETE]', {
+      userId: req.user.id,
+      role: req.user.role,
+      commentId,
+      postId,
+      ip,
+    });
+    logAudit({
+      userId: req.user.id,
+      role: req.user.role,
+      action: 'COMMENT_DELETE',
+      targetType: 'comment',
+      targetId: commentId,
+      ip,
+      userAgent: ua,
+      meta: { postId },
+    });
     res.status(200).json({ status: 0, message: '删除成功' });
   } catch (e) {
     console.error('删除评论错误:', e);
