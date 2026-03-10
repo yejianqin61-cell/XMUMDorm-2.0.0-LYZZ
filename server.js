@@ -115,6 +115,11 @@ app.get('/', (req, res) => {
   });
 });
 
+// 健康检查（供 Railway 等平台探测存活，避免误判为崩溃）
+app.get('/health', (req, res) => {
+  res.status(200).send('ok');
+});
+
 // 12. API 路由前缀
 // 为认证接口单独挂载更严格的限流中间件
 app.use('/api/auth', authLimiter, authRoutes);
