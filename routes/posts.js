@@ -12,8 +12,7 @@ const authenticateToken = require('../middleware/auth');
 const { postImagesUpload, savePostImages } = require('../middleware/upload');
 const sanitizeHtml = require('sanitize-html');
 const { logAudit } = require('../services/auditLog');
-
-const UPLOAD_PREFIX = '/uploads/'; // 前端拼接图片 URL 用
+const { assetUrl } = require('../utils/assets');
 
 // 统一的文本清洗，防止 XSS 注入（去掉所有 HTML 标签，只保留纯文本）
 function cleanText(input) {
@@ -53,14 +52,14 @@ function attachPostExtra(rows, req) {
         id: row.author_id,
         username: row.author_username,
         nickname: row.author_nickname,
-        avatar: row.author_avatar ? UPLOAD_PREFIX + row.author_avatar : null
+        avatar: assetUrl(row.author_avatar)
       } : null,
       images: [],
       like_count: row.like_count != null ? Number(row.like_count) : 0,
       comment_count: row.comment_count != null ? Number(row.comment_count) : 0
     };
     if (row.image_path) {
-      base.images.push({ url: UPLOAD_PREFIX + row.image_path, sort_order: row.sort_order });
+      base.images.push({ url: assetUrl(row.image_path), sort_order: row.sort_order });
     }
     base.deleted_at = row.deleted_at || null;
     if (!visible) base.hidden = true;
@@ -90,7 +89,7 @@ function mergePostRows(rows, req) {
           id: row.author_id,
           username: row.author_username,
           nickname: row.author_nickname,
-          avatar: row.author_avatar ? UPLOAD_PREFIX + row.author_avatar : null
+          avatar: assetUrl(row.author_avatar)
         } : null,
         images: [],
         like_count: row.like_count != null ? Number(row.like_count) : 0,
@@ -98,7 +97,7 @@ function mergePostRows(rows, req) {
       };
     }
     if (row.image_path) {
-      byId[id].images.push({ url: UPLOAD_PREFIX + row.image_path, sort_order: row.sort_order });
+      byId[id].images.push({ url: assetUrl(row.image_path), sort_order: row.sort_order });
     }
   }
   return order.map((id) => {
@@ -144,7 +143,7 @@ router.post('/', authenticateToken, (req, res, next) => {
     const postId = result.insertId;
     const files = req.files || [];
     if (files.length > 0) {
-      const paths = savePostImages(files, postId);
+      const paths = await savePostImages(files, postId);
       for (let i = 0; i < paths.length; i++) {
         await query(
           'INSERT INTO post_images (post_id, file_path, sort_order) VALUES (?, ?, ?)',
@@ -445,10 +444,10 @@ router.get('/:id/comments', async (req, res) => {
     const replies = (rows || []).filter((r) => r.parent_id != null);
     const list = top.map((t) => ({
       ...t,
-      author: { username: t.username, nickname: t.nickname, avatar: t.avatar ? UPLOAD_PREFIX + t.avatar : null },
+      author: { username: t.username, nickname: t.nickname, avatar: assetUrl(t.avatar) },
       replies: replies.filter((r) => r.parent_id === t.id).map((r) => ({
         ...r,
-        author: { username: r.username, nickname: r.nickname, avatar: r.avatar ? UPLOAD_PREFIX + r.avatar : null }
+        author: { username: r.username, nickname: r.nickname, avatar: assetUrl(r.avatar) }
       }))
     }));
     res.status(200).json({ status: 0, message: '获取成功', data: list });
@@ -504,7 +503,7 @@ router.post('/:id/comments', authenticateToken, async (req, res) => {
     const row = rows && rows[0];
     const data = row ? {
       ...row,
-      author: { username: row.username, nickname: row.nickname, avatar: row.avatar ? UPLOAD_PREFIX + row.avatar : null }
+      author: { username: row.username, nickname: row.nickname, avatar: assetUrl(row.avatar) }
     } : { id: result.insertId, content: safeContent, created_at: new Date().toISOString() };
     res.status(200).json({ status: 0, message: '评论成功！', data });
   } catch (e) {

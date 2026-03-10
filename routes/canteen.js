@@ -20,8 +20,10 @@ const { onPrimaryCommentChange } = require('../services/rankingStats');
 const { logAudit } = require('../services/auditLog');
 const { shanghaiDaysAgoStart } = require('../utils/timezone');
 const sanitizeHtml = require('sanitize-html');
+const path = require('path');
+const { assetUrl } = require('../utils/assets');
+const { uploadBuffer, guessContentType } = require('../services/objectStorage');
 
-const UPLOAD_PREFIX = '/uploads/';
 const RATING_ENUM = ['夯爆了', '顶级', '人上人', 'NPC', '拉完了'];
 
 // 统一的文本清洗，防止 XSS 注入（去掉所有 HTML 标签，只保留纯文本）
@@ -177,7 +179,7 @@ router.get('/regions/:regionId/shops', async (req, res) => {
         created_at: r.created_at
       };
       if (withLogo && r) {
-        item.logo = r.logo_path ? UPLOAD_PREFIX + r.logo_path : null;
+        item.logo = assetUrl(r.logo_path);
         item.opening_hours = r.opening_hours || null;
       }
       return item;
@@ -209,7 +211,7 @@ router.get('/shops/me', authenticateToken, async (req, res) => {
     try {
       const ext = await query('SELECT logo_path, opening_hours FROM shops WHERE id = ?', [row.id]);
       if (ext && ext[0]) {
-        logo = ext[0].logo_path ? UPLOAD_PREFIX + ext[0].logo_path : null;
+        logo = assetUrl(ext[0].logo_path);
         opening_hours = ext[0].opening_hours || null;
       }
     } catch (_) {}
@@ -264,7 +266,7 @@ router.get('/shops/:shopId', async (req, res) => {
     try {
       const ext = await query('SELECT logo_path, opening_hours FROM shops WHERE id = ?', [shopId]);
       if (ext && ext[0]) {
-        logo = ext[0].logo_path ? UPLOAD_PREFIX + ext[0].logo_path : null;
+        logo = assetUrl(ext[0].logo_path);
         opening_hours = ext[0].opening_hours || null;
       }
     } catch (_) {}
@@ -325,9 +327,13 @@ router.patch('/shops/:shopId', authenticateToken, (req, res, next) => {
       updates.push('opening_hours = ?');
       params.push(opening_hours);
     }
-    if (req.file && req.file.filename) {
+    if (req.file && req.file.buffer) {
+      const ext = path.extname(req.file.originalname || '').toLowerCase() || '.jpg';
+      const safeExt = ['.jpg', '.jpeg', '.png', '.webp'].includes(ext) ? (ext === '.jpeg' ? '.jpg' : ext) : '.jpg';
+      const key = `shops/shop_${shopId}${safeExt}`;
+      await uploadBuffer({ key, body: req.file.buffer, contentType: guessContentType(req.file.mimetype, safeExt) });
       updates.push('logo_path = ?');
-      params.push('shops/' + req.file.filename);
+      params.push(key);
     }
     params.push(shopId);
     const sql = `UPDATE shops SET ${updates.join(', ')} WHERE id = ? AND deleted_at IS NULL`;
@@ -354,7 +360,7 @@ router.patch('/shops/:shopId', authenticateToken, (req, res, next) => {
     try {
       const ext = await query('SELECT logo_path, opening_hours FROM shops WHERE id = ?', [shopId]);
       if (ext && ext[0]) {
-        data.logo = ext[0].logo_path ? UPLOAD_PREFIX + ext[0].logo_path : null;
+        data.logo = assetUrl(ext[0].logo_path);
         data.opening_hours = ext[0].opening_hours || null;
       }
     } catch (_) {}
@@ -512,7 +518,7 @@ router.post('/products', authenticateToken, (req, res, next) => {
     const productId = (await query('SELECT LAST_INSERT_ID() AS id'))[0].id;
     const files = req.files || [];
     if (files.length > 0) {
-      const paths = saveProductImages(files, productId);
+      const paths = await saveProductImages(files, productId);
       for (let i = 0; i < paths.length; i++) {
         await query('INSERT INTO product_images (product_id, file_path, sort_order) VALUES (?, ?, ?)', [productId, paths[i], i]);
       }
@@ -556,7 +562,7 @@ router.post('/products', authenticateToken, (req, res, next) => {
           images: []
         };
       }
-      if (r.file_path) byId[r.id].images.push({ url: UPLOAD_PREFIX + r.file_path, sort_order: r.sort_order });
+      if (r.file_path) byId[r.id].images.push({ url: assetUrl(r.file_path), sort_order: r.sort_order });
     }
     const product = byId[productId];
     if (product) product.images.sort((a, b) => a.sort_order - b.sort_order);
@@ -620,7 +626,7 @@ router.get('/shops/:shopId/products', async (req, res) => {
           images: []
         };
       }
-      if (r.file_path) byId[r.id].images.push({ url: UPLOAD_PREFIX + r.file_path, sort_order: r.sort_order });
+      if (r.file_path) byId[r.id].images.push({ url: assetUrl(r.file_path), sort_order: r.sort_order });
     }
     const list = Object.values(byId).map((p) => {
       p.images.sort((a, b) => a.sort_order - b.sort_order);
@@ -694,7 +700,7 @@ router.get('/products/:productId', async (req, res) => {
           images: []
         };
       }
-      if (r.file_path) byId[r.id].images.push({ url: UPLOAD_PREFIX + r.file_path, sort_order: r.sort_order });
+      if (r.file_path) byId[r.id].images.push({ url: assetUrl(r.file_path), sort_order: r.sort_order });
     }
     const product = byId[productId];
     if (product) product.images.sort((a, b) => a.sort_order - b.sort_order);
@@ -730,11 +736,11 @@ router.get('/products/:productId', async (req, res) => {
           rating: c.rating,
           content: c.content,
           created_at: c.created_at,
-          author: { nickname: c.author_nickname, avatar: c.author_avatar ? UPLOAD_PREFIX + c.author_avatar : null },
+          author: { nickname: c.author_nickname, avatar: assetUrl(c.author_avatar) },
           images: []
         };
       }
-      if (c.image_path) commentById[c.id].images.push({ url: UPLOAD_PREFIX + c.image_path, sort_order: c.image_sort });
+      if (c.image_path) commentById[c.id].images.push({ url: assetUrl(c.image_path), sort_order: c.image_sort });
     }
     const comments = Object.values(commentById).map((c) => {
       c.images.sort((a, b) => a.sort_order - b.sort_order);
@@ -804,7 +810,7 @@ router.patch('/products/:productId', authenticateToken, async (req, res) => {
       if (!byId[r.id]) {
         byId[r.id] = { id: r.id, shop_id: r.shop_id, category_id: r.category_id, category_name: r.category_name, name: r.name, description: r.description, price: r.price != null ? Number(r.price) : null, created_at: r.created_at, updated_at: r.updated_at, images: [] };
       }
-      if (r.file_path) byId[r.id].images.push({ url: UPLOAD_PREFIX + r.file_path, sort_order: r.sort_order });
+      if (r.file_path) byId[r.id].images.push({ url: assetUrl(r.file_path), sort_order: r.sort_order });
     }
     const product = byId[productId];
     if (product) product.images.sort((a, b) => a.sort_order - b.sort_order);
@@ -908,7 +914,7 @@ router.post('/products/:productId/comments', authenticateToken, (req, res, next)
     const commentId = (await query('SELECT LAST_INSERT_ID() AS id'))[0].id;
     const files = req.files || [];
     if (files.length > 0) {
-      const paths = saveCommentImages(files, commentId);
+      const paths = await saveCommentImages(files, commentId);
       for (let i = 0; i < paths.length; i++) {
         await query('INSERT INTO product_comment_images (comment_id, file_path, sort_order) VALUES (?, ?, ?)', [commentId, paths[i], i]);
       }
@@ -960,11 +966,11 @@ router.post('/products/:productId/comments', authenticateToken, (req, res, next)
           rating: c.rating,
           content: c.content,
           created_at: c.created_at,
-          author: { nickname: c.author_nickname, avatar: c.author_avatar ? UPLOAD_PREFIX + c.author_avatar : null },
+          author: { nickname: c.author_nickname, avatar: assetUrl(c.author_avatar) },
           images: []
         };
       }
-      if (c.image_path) commentById[c.id].images.push({ url: UPLOAD_PREFIX + c.image_path, sort_order: c.image_sort });
+      if (c.image_path) commentById[c.id].images.push({ url: assetUrl(c.image_path), sort_order: c.image_sort });
     }
     const comment = Object.values(commentById)[0];
     if (comment) comment.images.sort((a, b) => a.sort_order - b.sort_order);
@@ -1010,11 +1016,11 @@ router.get('/products/:productId/comments', async (req, res) => {
           rating: c.rating,
           content: c.content,
           created_at: c.created_at,
-          author: { nickname: c.author_nickname, avatar: c.author_avatar ? UPLOAD_PREFIX + c.author_avatar : null },
+          author: { nickname: c.author_nickname, avatar: assetUrl(c.author_avatar) },
           images: []
         };
       }
-      if (c.image_path) commentById[c.id].images.push({ url: UPLOAD_PREFIX + c.image_path, sort_order: c.image_sort });
+      if (c.image_path) commentById[c.id].images.push({ url: assetUrl(c.image_path), sort_order: c.image_sort });
     }
     const list = Object.values(commentById).map((c) => {
       c.images.sort((a, b) => a.sort_order - b.sort_order);
@@ -1121,11 +1127,11 @@ router.get('/my-reviews', authenticateToken, async (req, res) => {
           rating: r.rating,
           content: r.content,
           created_at: r.created_at,
-          product_image: r.product_image_path ? UPLOAD_PREFIX + r.product_image_path : null,
+          product_image: assetUrl(r.product_image_path),
           images: []
         };
       }
-      if (r.image_path) byId[r.id].images.push({ url: UPLOAD_PREFIX + r.image_path, sort_order: r.image_sort });
+      if (r.image_path) byId[r.id].images.push({ url: assetUrl(r.image_path), sort_order: r.image_sort });
     }
     const list = Object.values(byId).map((item) => {
       item.images.sort((a, b) => a.sort_order - b.sort_order);
@@ -1135,6 +1141,108 @@ router.get('/my-reviews', authenticateToken, async (req, res) => {
     res.status(200).json({ status: 0, message: '获取成功', data: { list, hasMore, page, pageSize } });
   } catch (e) {
     console.error('获取我的点评错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
+// ============================================
+// 商品收藏：加收藏、取消收藏、当前用户是否已收藏、我的收藏列表
+// ============================================
+
+/** 检查当前用户是否已收藏该商品（可选登录，未登录返回 false） */
+router.get('/products/:productId/favorite', (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token) {
+    return res.status(200).json({ status: 0, message: '获取成功', data: { favorited: false } });
+  }
+  const jwt = require('jsonwebtoken');
+  const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+  jwt.verify(token, JWT_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(200).json({ status: 0, message: '获取成功', data: { favorited: false } });
+    }
+    req.user = decoded;
+    next();
+  });
+}, async (req, res) => {
+  try {
+    const productId = parseInt(req.params.productId, 10);
+    if (!productId) return res.status(400).json({ status: -1, message: '商品 ID 无效' });
+    const prod = await query('SELECT id FROM products WHERE id = ? AND deleted_at IS NULL', [productId]);
+    if (!prod || prod.length === 0) return res.status(404).json({ status: -1, message: '商品不存在' });
+    const rows = await query('SELECT 1 FROM product_favorites WHERE user_id = ? AND product_id = ?', [req.user.id, productId]);
+    const favorited = rows && rows.length > 0;
+    res.status(200).json({ status: 0, message: '获取成功', data: { favorited } });
+  } catch (e) {
+    console.error('查询收藏状态错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
+/** 添加收藏（已收藏则幂等成功） */
+router.post('/products/:productId/favorite', authenticateToken, async (req, res) => {
+  try {
+    const productId = parseInt(req.params.productId, 10);
+    if (!productId) return res.status(400).json({ status: -1, message: '商品 ID 无效' });
+    const prod = await query('SELECT id FROM products WHERE id = ? AND deleted_at IS NULL', [productId]);
+    if (!prod || prod.length === 0) return res.status(404).json({ status: -1, message: '商品不存在' });
+    await query('INSERT IGNORE INTO product_favorites (user_id, product_id) VALUES (?, ?)', [req.user.id, productId]);
+    res.status(200).json({ status: 0, message: '已收藏', data: { favorited: true } });
+  } catch (e) {
+    console.error('添加收藏错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
+/** 取消收藏 */
+router.delete('/products/:productId/favorite', authenticateToken, async (req, res) => {
+  try {
+    const productId = parseInt(req.params.productId, 10);
+    if (!productId) return res.status(400).json({ status: -1, message: '商品 ID 无效' });
+    await query('DELETE FROM product_favorites WHERE user_id = ? AND product_id = ?', [req.user.id, productId]);
+    res.status(200).json({ status: 0, message: '已取消收藏', data: { favorited: false } });
+  } catch (e) {
+    console.error('取消收藏错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
+/** 我的收藏列表（用于个人主页收藏栏，缩略卡片：商品图+名称+店铺） */
+router.get('/my-favorites', authenticateToken, async (req, res) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const pageSize = Math.min(50, Math.max(1, parseInt(req.query.pageSize, 10) || 20));
+    const offset = (page - 1) * pageSize;
+    const limitNum = Number(pageSize) + 1;
+    const offsetNum = Number(offset);
+    if (!Number.isInteger(limitNum) || limitNum < 1 || offsetNum < 0) {
+      return res.status(400).json({ status: -1, message: '分页参数无效' });
+    }
+    const rows = await query(
+      `SELECT pf.product_id, pf.created_at AS favorited_at,
+        p.name AS product_name, p.shop_id,
+        s.name AS shop_name,
+        (SELECT pi.file_path FROM product_images pi WHERE pi.product_id = pf.product_id ORDER BY pi.sort_order ASC LIMIT 1) AS product_image_path
+       FROM product_favorites pf
+       INNER JOIN products p ON p.id = pf.product_id AND p.deleted_at IS NULL
+       INNER JOIN shops s ON s.id = p.shop_id AND s.deleted_at IS NULL
+       WHERE pf.user_id = ?
+       ORDER BY pf.created_at DESC
+       LIMIT ${limitNum} OFFSET ${offsetNum}`,
+      [req.user.id]
+    );
+    const list = (rows || []).slice(0, pageSize).map((r) => ({
+      product_id: r.product_id,
+      product_name: r.product_name,
+      shop_name: r.shop_name,
+      product_image: assetUrl(r.product_image_path),
+      favorited_at: r.favorited_at,
+    }));
+    const hasMore = (rows || []).length > pageSize;
+    res.status(200).json({ status: 0, message: '获取成功', data: { list, hasMore, page, pageSize } });
+  } catch (e) {
+    console.error('获取我的收藏错误:', e);
     res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
   }
 });
@@ -1270,7 +1378,7 @@ router.get('/rankings/active-users', async (req, res) => {
       user_id: r.id,
       username: r.username,
       nickname: r.nickname,
-      avatar: r.avatar ? UPLOAD_PREFIX + r.avatar : null,
+      avatar: assetUrl(r.avatar),
       weekly_comment_count: r.weekly_comment_count
     }));
     res.status(200).json({ status: 0, message: '获取成功', data: list });

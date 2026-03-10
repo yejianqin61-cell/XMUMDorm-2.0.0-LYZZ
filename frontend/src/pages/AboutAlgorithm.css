@@ -1,0 +1,105 @@
+.about-alg-page {
+  min-height: 100%;
+  padding: 12px 16px 24px;
+  background: transparent;
+}
+
+.about-alg-card {
+  padding: 18px 16px;
+}
+
+.about-alg-title {
+  margin: 0 0 14px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--wx-text, #111);
+}
+
+.about-alg-section {
+  margin: 0;
+}
+
+.about-alg-h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--wx-text, #111);
+}
+
+.about-alg-h4 {
+  margin: 14px 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--wx-text, #111);
+}
+
+.about-alg-p {
+  margin: 0 0 10px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--wx-text, #111);
+}
+
+.about-alg-ul {
+  margin: 0 0 10px;
+  padding-left: 18px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--wx-text, #111);
+}
+
+.about-alg-ul-nested {
+  margin-top: 6px;
+}
+
+.about-alg-formula {
+  margin: 8px 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.04);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-size: 13px;
+  color: var(--wx-text, #111);
+  overflow-x: auto;
+}
+
+.about-alg-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  margin: 8px 0 10px;
+}
+
+.about-alg-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 520px;
+}
+
+.about-alg-table th,
+.about-alg-table td {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 10px 10px;
+  vertical-align: top;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--wx-text, #111);
+}
+
+.about-alg-table th {
+  background: rgba(0, 0, 0, 0.03);
+  font-weight: 700;
+}
+
+.about-alg-hr {
+  margin: 16px 0;
+  border: 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.about-alg-note {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--wx-text-secondary, #888);
+}
+

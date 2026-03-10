@@ -6,7 +6,16 @@ import EmptyState from '../components/EmptyState';
 import ImagePreview from '../components/ImagePreview';
 import LikeBurst from '../components/LikeBurst';
 import { Toast } from '../context/ToastContext';
-import { getProduct, getProductComments, postProductComment, deleteProductComment, deleteProduct } from '../api/canteen';
+import {
+  getProduct,
+  getProductComments,
+  postProductComment,
+  deleteProductComment,
+  deleteProduct,
+  getProductFavoriteStatus,
+  addFavoriteProduct,
+  removeFavoriteProduct,
+} from '../api/canteen';
 import { getApiErrorMessage } from '../utils/apiError';
 import { RATING_LABELS } from '../constants/rating';
 import { getUploadUrl } from '../api/config';
@@ -78,6 +87,23 @@ function FoodDetail() {
       });
     return () => { cancelled = true; };
   }, [id]);
+
+  useEffect(() => {
+    const productId = id ? parseInt(id, 10) : 0;
+    if (!productId || !isLoggedIn) {
+      if (!isLoggedIn) setFavorited(false);
+      return;
+    }
+    let cancelled = false;
+    getProductFavoriteStatus(productId)
+      .then((data) => {
+        if (!cancelled && data && typeof data.favorited === 'boolean') setFavorited(data.favorited);
+      })
+      .catch(() => {
+        if (!cancelled) setFavorited(false);
+      });
+    return () => { cancelled = true; };
+  }, [id, isLoggedIn]);
 
   const loadReviews = useCallback(() => {
     const productId = id ? parseInt(id, 10) : 0;
@@ -236,7 +262,24 @@ function FoodDetail() {
         <button
           type="button"
           className={`food-detail-btn food-detail-btn-fav ${favorited ? 'is-favorited' : ''}`}
-          onClick={() => setFavorited((prev) => !prev)}
+          onClick={async () => {
+            if (requireLogin()) return;
+            const productId = food?.id;
+            if (!productId) return;
+            try {
+              if (favorited) {
+                await removeFavoriteProduct(productId);
+                setFavorited(false);
+                Toast.success('已取消收藏');
+              } else {
+                await addFavoriteProduct(productId);
+                setFavorited(true);
+                Toast.success('已收藏');
+              }
+            } catch (err) {
+              Toast.error(getApiErrorMessage(err));
+            }
+          }}
           aria-label={favorited ? '取消收藏' : '收藏'}
           aria-pressed={favorited}
         >

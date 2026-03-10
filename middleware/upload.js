@@ -8,29 +8,13 @@
 
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
-
-const UPLOAD_ROOT = path.join(__dirname, '..', 'uploads');
-const POSTS_IMAGES_DIR = path.join(UPLOAD_ROOT, 'posts');
-const AVATAR_DIR = path.join(UPLOAD_ROOT, 'avatars');
-const PRODUCTS_IMAGES_DIR = path.join(UPLOAD_ROOT, 'products');
-const COMMENTS_IMAGES_DIR = path.join(UPLOAD_ROOT, 'comments');
-const SHOPS_IMAGES_DIR = path.join(UPLOAD_ROOT, 'shops');
+const { uploadBuffer, guessContentType } = require('../services/objectStorage');
 
 const ALLOWED_IMAGE_MIMES = ['image/jpeg', 'image/png', 'image/webp'];
 const ALLOWED_IMAGE_EXT = ['.jpg', '.jpeg', '.png', '.webp'];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
-function ensureDir(dir) {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-}
-ensureDir(POSTS_IMAGES_DIR);
-ensureDir(AVATAR_DIR);
-ensureDir(PRODUCTS_IMAGES_DIR);
-ensureDir(COMMENTS_IMAGES_DIR);
-ensureDir(SHOPS_IMAGES_DIR);
+// 云存储模式下不再确保本地 uploads 目录存在；旧 /uploads 静态服务可用于过渡期兼容历史数据。
 
 /**
  * 帖子图片：内存存储，路由里根据 post_id 再写入 post_<id>_<index>.<ext>
@@ -50,24 +34,10 @@ const postImagesUpload = multer({
 }).array('images', 3);
 
 /**
- * 头像：直接存到 uploads/avatars，文件名 user_<user_id>.<ext>
+ * 头像：内存存储，路由中上传到对象存储，key 为 avatars/user_<userId>.<ext>
  */
-const avatarStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, AVATAR_DIR);
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
-    if (!ALLOWED_IMAGE_EXT.includes(ext)) {
-      return cb(new Error('仅支持 jpg / png / webp 格式'));
-    }
-    const uid = req.user && req.user.id ? req.user.id : Date.now();
-    cb(null, `user_${uid}${ext}`);
-  }
-});
-
 const avatarUpload = multer({
-  storage: avatarStorage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: MAX_FILE_SIZE },
   fileFilter: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
@@ -78,22 +48,9 @@ const avatarUpload = multer({
   }
 }).single('avatar');
 
-/** 店铺 logo：单张，存 uploads/shops/shop_<id>.<ext> */
-const shopLogoStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, SHOPS_IMAGES_DIR);
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
-    if (!ALLOWED_IMAGE_EXT.includes(ext)) {
-      return cb(new Error('仅支持 jpg / png / webp 格式'));
-    }
-    const shopId = req.params.shopId || req.body.shopId || Date.now();
-    cb(null, `shop_${shopId}${ext}`);
-  }
-});
+/** 店铺 logo：内存存储，路由中上传到对象存储，key 为 shops/shop_<shopId>.<ext> */
 const shopLogoUpload = multer({
-  storage: shopLogoStorage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: MAX_FILE_SIZE },
   fileFilter: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
@@ -105,20 +62,20 @@ const shopLogoUpload = multer({
 }).single('logo');
 
 /**
- * 将内存中的帖子图片写入磁盘：post_<postId>_<index>.<ext>
+ * 将内存中的帖子图片上传到对象存储：posts/post_<postId>_<index>.<ext>
  */
-function savePostImages(files, postId) {
-  const relativePaths = [];
+async function savePostImages(files, postId) {
+  const keys = [];
   const extMap = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp' };
   for (let i = 0; i < (files || []).length; i++) {
     const file = files[i];
     const ext = extMap[file.mimetype] || '.jpg';
     const filename = `post_${postId}_${i + 1}${ext}`;
-    const filePath = path.join(POSTS_IMAGES_DIR, filename);
-    fs.writeFileSync(filePath, file.buffer);
-    relativePaths.push(`posts/${filename}`);
+    const key = `posts/${filename}`;
+    await uploadBuffer({ key, body: file.buffer, contentType: guessContentType(file.mimetype, ext) });
+    keys.push(key);
   }
-  return relativePaths;
+  return keys;
 }
 
 /**
@@ -151,34 +108,34 @@ const commentImagesUpload = multer({
   }
 }).array('images', 3);
 
-/** 将内存中的商品图片写入磁盘：product_<productId>_<index>.<ext>，返回相对路径如 ['products/product_101_1.jpg'] */
-function saveProductImages(files, productId) {
-  const relativePaths = [];
+/** 将内存中的商品图片上传到对象存储：products/product_<productId>_<index>.<ext>，返回 key 如 ['products/product_101_1.jpg'] */
+async function saveProductImages(files, productId) {
+  const keys = [];
   const extMap = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp' };
   for (let i = 0; i < (files || []).length; i++) {
     const file = files[i];
     const ext = extMap[file.mimetype] || '.jpg';
     const filename = `product_${productId}_${i + 1}${ext}`;
-    const filePath = path.join(PRODUCTS_IMAGES_DIR, filename);
-    fs.writeFileSync(filePath, file.buffer);
-    relativePaths.push(`products/${filename}`);
+    const key = `products/${filename}`;
+    await uploadBuffer({ key, body: file.buffer, contentType: guessContentType(file.mimetype, ext) });
+    keys.push(key);
   }
-  return relativePaths;
+  return keys;
 }
 
-/** 将内存中的评论图片写入磁盘：comment_<commentId>_<index>.<ext>，返回相对路径如 ['comments/comment_201_1.jpg'] */
-function saveCommentImages(files, commentId) {
-  const relativePaths = [];
+/** 将内存中的评论图片上传到对象存储：comments/comment_<commentId>_<index>.<ext>，返回 key 如 ['comments/comment_201_1.jpg'] */
+async function saveCommentImages(files, commentId) {
+  const keys = [];
   const extMap = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp' };
   for (let i = 0; i < (files || []).length; i++) {
     const file = files[i];
     const ext = extMap[file.mimetype] || '.jpg';
     const filename = `comment_${commentId}_${i + 1}${ext}`;
-    const filePath = path.join(COMMENTS_IMAGES_DIR, filename);
-    fs.writeFileSync(filePath, file.buffer);
-    relativePaths.push(`comments/${filename}`);
+    const key = `comments/${filename}`;
+    await uploadBuffer({ key, body: file.buffer, contentType: guessContentType(file.mimetype, ext) });
+    keys.push(key);
   }
-  return relativePaths;
+  return keys;
 }
 
 module.exports = {
@@ -190,10 +147,5 @@ module.exports = {
   commentImagesUpload,
   saveProductImages,
   saveCommentImages,
-  UPLOAD_ROOT,
-  POSTS_IMAGES_DIR,
-  AVATAR_DIR,
-  PRODUCTS_IMAGES_DIR,
-  COMMENTS_IMAGES_DIR,
-  SHOPS_IMAGES_DIR
+  // 兼容旧逻辑：不再导出本地目录常量
 };

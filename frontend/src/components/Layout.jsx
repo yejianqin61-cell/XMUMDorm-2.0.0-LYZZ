@@ -37,6 +37,7 @@ const TITLE_BY_PATH = {
   '/myzone/posts': '我的帖子 My Posts',
   '/myzone/reviews': '我的点评 My Reviews',
   '/myzone/profile': '修改资料 Profile',
+  '/about/algorithm': '评分算法说明 Scoring Algorithm',
 };
 
 /** 需要显示返回键的路径（含 /post/:id 详情页） */
@@ -174,6 +175,8 @@ function Layout() {
     else if (pathname.startsWith('/merchant/')) title = '商家 Merchant';
     else if (pathname === '/about/thanks') title = '特别鸣谢 Special Thanks';
     else if (pathname === '/about/team') title = '团队介绍 Team';
+    else if (pathname === '/about/editor-note') title = '编者的话 Editor\'s Note';
+    else if (pathname === '/about/algorithm') title = '评分算法说明 Scoring Algorithm';
     else title = '厦马小筑 XMUM Dorm';
   }
   const showBack =

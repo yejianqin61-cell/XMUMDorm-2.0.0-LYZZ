@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getProfile } from '../api/users';
-import { getMyProductReviews } from '../api/canteen';
+import { getMyProductReviews, getMyFavorites } from '../api/canteen';
 import { API_BASE_URL } from '../api/config';
 import { getApiErrorMessage } from '../utils/apiError';
 import EmptyState from '../components/EmptyState';
@@ -36,8 +36,11 @@ function MyZone() {
   const [reviews, setReviews] = useState([]);
   const [postsLoading, setPostsLoading] = useState(false);
   const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [favorites, setFavorites] = useState([]);
+  const [favoritesLoading, setFavoritesLoading] = useState(false);
   const [postsError, setPostsError] = useState(null);
   const [reviewsError, setReviewsError] = useState(null);
+  const [favoritesError, setFavoritesError] = useState(null);
 
   const avatarBg = displayAvatar ? prefixAvatar(displayAvatar) : '';
 
@@ -91,6 +94,25 @@ function MyZone() {
     return () => { cancelled = true; };
   }, [isLoggedIn]);
 
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    let cancelled = false;
+    setFavoritesLoading(true);
+    setFavoritesError(null);
+    getMyFavorites({ page: 1, pageSize: 50 })
+      .then((data) => {
+        if (cancelled) return;
+        setFavorites(data?.list ?? []);
+      })
+      .catch((err) => {
+        if (!cancelled) setFavoritesError(getApiErrorMessage(err));
+      })
+      .finally(() => {
+        if (!cancelled) setFavoritesLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [isLoggedIn]);
+
   const goLogin = () => navigate('/login', { state: { from: { pathname: '/myzone' } } });
   const goProfile = () => {
     if (!isLoggedIn) return goLogin();
@@ -103,6 +125,7 @@ function MyZone() {
 
   const postCount = posts.length;
   const reviewCount = reviews.length;
+  const favoriteCount = favorites.length;
 
   return (
     <div className="myzone-page">
@@ -135,6 +158,9 @@ function MyZone() {
                 <span className="myzone-header-stat">
                   <strong>{reviewCount}</strong> 点评
                 </span>
+                <span className="myzone-header-stat">
+                  <strong>{favoriteCount}</strong> 收藏
+                </span>
                 {isMerchant && (
                   <Link to="/merchant/manage" className="myzone-header-stat myzone-header-stat-link">
                     <strong>店铺</strong>
@@ -165,11 +191,10 @@ function MyZone() {
           <span className="myzone-entry-icon" aria-hidden>⭐</span>
           <span className="myzone-entry-label">我的点评</span>
         </button>
-        <div className="myzone-entry myzone-entry-disabled" aria-disabled="true">
+        <button type="button" className="myzone-entry myzone-entry-btn" onClick={() => setActiveTab(TAB_FAVORITES)}>
           <span className="myzone-entry-icon" aria-hidden>❤️</span>
           <span className="myzone-entry-label">我的收藏</span>
-          <span className="myzone-entry-hint">敬请期待</span>
-        </div>
+        </button>
       </section>
 
       {/* 3. 内容 Tab 栏 */}
@@ -265,7 +290,31 @@ function MyZone() {
         )}
         {activeTab === TAB_FAVORITES && (
           <div className="myzone-grid-wrap">
-            <EmptyState title="暂无收藏" description="收藏功能敬请期待。" />
+            {!isLoggedIn ? (
+              <EmptyState
+                title="请先登录"
+                description="登录后查看我的收藏。"
+                actionLabel="去登录"
+                actionTo="/login"
+              />
+            ) : favoritesLoading ? (
+              <p className="myzone-loading">加载中…</p>
+            ) : favoritesError ? (
+              <p className="myzone-error-inline">{favoritesError}</p>
+            ) : favorites.length === 0 ? (
+              <EmptyState
+                title="暂无收藏"
+                description="去食堂看到喜欢的菜品点个收藏吧。"
+                actionLabel="去食堂"
+                actionTo="/eat"
+              />
+            ) : (
+              <div className="myzone-grid myzone-grid-reviews">
+                {favorites.map((item) => (
+                  <FavoriteGridItem key={item.product_id} item={item} />
+                ))}
+              </div>
+            )}
           </div>
         )}
       </section>
@@ -319,6 +368,27 @@ function ReviewGridItem({ review }) {
         )}
         <span className="myzone-grid-item-title">{product_name}</span>
         <span className="myzone-grid-item-rating">{rating}</span>
+      </div>
+    </Link>
+  );
+}
+
+function FavoriteGridItem({ item }) {
+  const { product_id, product_name, shop_name, product_image } = item;
+  const imgUrl = product_image && typeof product_image === 'string'
+    ? (product_image.startsWith('http') ? product_image : `${API_BASE_URL}${product_image}`)
+    : null;
+
+  return (
+    <Link to={`/eat/food/${product_id}`} className="myzone-grid-item myzone-grid-item-review">
+      <div className="myzone-grid-item-media">
+        {imgUrl ? (
+          <img src={imgUrl} alt="" />
+        ) : (
+          <div className="myzone-grid-item-placeholder myzone-grid-item-placeholder-review">❤️</div>
+        )}
+        <span className="myzone-grid-item-title">{product_name}</span>
+        {shop_name && <span className="myzone-grid-item-shop">{shop_name}</span>}
       </div>
     </Link>
   );

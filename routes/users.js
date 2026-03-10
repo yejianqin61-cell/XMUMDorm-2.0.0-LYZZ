@@ -11,9 +11,10 @@ const path = require('path');
 const { query } = require('../database');
 const authenticateToken = require('../middleware/auth');
 const { avatarUpload } = require('../middleware/upload');
+const { assetUrl } = require('../utils/assets');
+const { uploadBuffer, guessContentType } = require('../services/objectStorage');
 
-const UPLOAD_PREFIX_URL = '/uploads/';
-const DEFAULT_AVATAR = '/uploads/default-avatar.png'; // 无头像时前端用此路径
+const DEFAULT_AVATAR = '/uploads/default-avatar.png'; // 无头像时前端用此路径（可保留本地静态或后续迁移到 CDN）
 
 // ============================================
 // 当前用户资料（/me）
@@ -35,7 +36,7 @@ router.get('/me', authenticateToken, async (req, res) => {
       email: u.email,
       role: u.role,
       nickname: u.nickname,
-      avatar: u.avatar ? UPLOAD_PREFIX_URL + u.avatar : DEFAULT_AVATAR,
+      avatar: u.avatar ? assetUrl(u.avatar) : DEFAULT_AVATAR,
       weekly_comment_count: u.weekly_comment_count != null ? u.weekly_comment_count : 0,
       created_at: u.created_at
     };
@@ -92,7 +93,7 @@ router.get('/:id/profile', async (req, res) => {
     const imagesByPost = {};
     for (const img of images || []) {
       if (!imagesByPost[img.post_id]) imagesByPost[img.post_id] = [];
-      imagesByPost[img.post_id].push({ url: UPLOAD_PREFIX_URL + img.file_path, sort_order: img.sort_order });
+      imagesByPost[img.post_id].push({ url: assetUrl(img.file_path), sort_order: img.sort_order });
     }
     const postList = (posts || []).map((p) => ({
       id: p.id,
@@ -123,7 +124,7 @@ router.get('/:id/profile', async (req, res) => {
         username: u.username,
         nickname: u.nickname,
         email: u.email,
-        avatar: u.avatar ? UPLOAD_PREFIX_URL + u.avatar : DEFAULT_AVATAR,
+        avatar: u.avatar ? assetUrl(u.avatar) : DEFAULT_AVATAR,
         role: u.role,
         weekly_comment_count: u.weekly_comment_count != null ? u.weekly_comment_count : 0
       },
@@ -181,15 +182,19 @@ router.patch('/me/avatar', authenticateToken, (req, res, next) => {
   });
 }, async (req, res) => {
   try {
-    if (!req.file || !req.file.filename) {
+    if (!req.file || !req.file.buffer) {
       return res.status(400).json({ status: -1, message: '请上传图片' });
     }
-    const relativePath = 'avatars/' + req.file.filename;
+    const ext = path.extname(req.file.originalname || '').toLowerCase() || '.jpg';
+    const safeExt = ['.jpg', '.jpeg', '.png', '.webp'].includes(ext) ? (ext === '.jpeg' ? '.jpg' : ext) : '.jpg';
+    const key = `avatars/user_${req.user.id}${safeExt}`;
+    await uploadBuffer({ key, body: req.file.buffer, contentType: guessContentType(req.file.mimetype, safeExt) });
+    const relativePath = key;
     await query('UPDATE users SET avatar = ? WHERE id = ?', [relativePath, req.user.id]);
     res.status(200).json({
       status: 0,
       message: '头像更新成功',
-      data: { avatar: UPLOAD_PREFIX_URL + relativePath }
+      data: { avatar: assetUrl(relativePath) }
     });
   } catch (e) {
     console.error('头像上传错误:', e);

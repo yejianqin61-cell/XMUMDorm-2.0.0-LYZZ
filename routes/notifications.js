@@ -9,8 +9,7 @@ const express = require('express');
 const router = express.Router();
 const { query } = require('../database');
 const authenticateToken = require('../middleware/auth');
-
-const UPLOAD_PREFIX = '/uploads/';
+const { assetUrl } = require('../utils/assets');
 
 // 为通知附加帖子/发送者等摘要
 async function attachNotificationExtra(rows) {
@@ -40,7 +39,7 @@ async function attachNotificationExtra(rows) {
         id: r.from_user_id,
         username: r.from_username,
         nickname: r.from_nickname,
-        avatar: r.from_avatar ? UPLOAD_PREFIX + r.from_avatar : null
+        avatar: assetUrl(r.from_avatar)
       };
     }
     list.push(item);

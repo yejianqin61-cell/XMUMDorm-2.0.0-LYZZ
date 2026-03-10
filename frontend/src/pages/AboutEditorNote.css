@@ -1,0 +1,59 @@
+.about-editor-page {
+  min-height: 100%;
+  padding: 12px 16px 24px;
+  background: transparent;
+}
+
+.about-editor-card {
+  padding: 18px 16px;
+}
+
+.about-editor-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.about-editor-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--wx-text, #111);
+}
+
+.about-editor-date {
+  font-size: 12px;
+  color: var(--wx-text-secondary, #888);
+}
+
+.about-editor-section {
+  margin: 0 0 8px;
+}
+
+.about-editor-p {
+  margin: 0 0 8px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--wx-text, #111);
+}
+
+.about-editor-quote {
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+.about-editor-sign {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: right;
+  color: var(--wx-text-secondary, #666);
+}
+
+.about-editor-divider {
+  margin: 8px 0 10px;
+  border: 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}

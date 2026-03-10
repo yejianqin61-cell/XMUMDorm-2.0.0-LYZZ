@@ -1,36 +1,108 @@
 import { Link } from 'react-router-dom';
-import Card from '../components/Card';
 import './AboutUs.css';
 
-/** 关于我们：两个卡片（团队介绍 → 详情页；评分算法说明 → 暂空），复用站内 Card 风格 */
+/** 关于我们：白底 70% 透明、左侧图标、右侧箭头、无缝排列 */
 function AboutUs() {
   return (
     <div className="about-page">
-      <ul className="about-card-list" aria-label="关于我们入口列表">
-        <li>
-          <Link to="/about/thanks" className="about-card-link" aria-label="特别鸣谢">
-            <Card as="div" className="about-card">
-              <span className="about-card-label">特别鸣谢 Special Thanks</span>
-              <span className="about-card-hint">点击查看 Tap to view</span>
-            </Card>
+      <ul className="about-list" aria-label="关于我们入口列表">
+        <li className="about-list-item">
+          <Link to="/about/thanks" className="about-list-row about-list-row-link">
+            <span className="about-list-icon" aria-hidden>
+              <ThanksIcon />
+            </span>
+            <div className="about-list-body">
+              <span className="about-list-label">特别鸣谢 Special Thanks</span>
+              <span className="about-list-hint">点击查看 Tap to view</span>
+            </div>
+            <span className="about-list-arrow" aria-hidden>
+              &gt;
+            </span>
           </Link>
         </li>
-        <li>
-          <Link to="/about/team" className="about-card-link" aria-label="团队介绍">
-            <Card as="div" className="about-card">
-              <span className="about-card-label">团队介绍 Team Intro</span>
-              <span className="about-card-hint">点击查看 Tap to view</span>
-            </Card>
+        <li className="about-list-item">
+          <Link to="/about/team" className="about-list-row about-list-row-link">
+            <span className="about-list-icon" aria-hidden>
+              <TeamIcon />
+            </span>
+            <div className="about-list-body">
+              <span className="about-list-label">团队介绍 Team Intro</span>
+              <span className="about-list-hint">点击查看 Tap to view</span>
+            </div>
+            <span className="about-list-arrow" aria-hidden>
+              &gt;
+            </span>
           </Link>
         </li>
-        <li>
-          <Card as="div" className="about-card about-card-static">
-            <span className="about-card-label">评分算法说明 Scoring Algorithm</span>
-            <span className="about-card-hint">暂无内容 Empty</span>
-          </Card>
+        <li className="about-list-item">
+          <Link to="/about/editor-note" className="about-list-row about-list-row-link">
+            <span className="about-list-icon" aria-hidden>
+              <EditorNoteIcon />
+            </span>
+            <div className="about-list-body">
+              <span className="about-list-label">编者的话 Editor&apos;s Note</span>
+              <span className="about-list-hint">点击查看 Tap to view</span>
+            </div>
+            <span className="about-list-arrow" aria-hidden>
+              &gt;
+            </span>
+          </Link>
+        </li>
+        <li className="about-list-item">
+          <Link to="/about/algorithm" className="about-list-row about-list-row-link">
+            <span className="about-list-icon" aria-hidden>
+              <AlgorithmIcon />
+            </span>
+            <div className="about-list-body">
+              <span className="about-list-label">评分算法说明 Scoring Algorithm</span>
+              <span className="about-list-hint">点击查看 Tap to view</span>
+            </div>
+            <span className="about-list-arrow" aria-hidden>
+              &gt;
+            </span>
+          </Link>
         </li>
       </ul>
     </div>
+  );
+}
+
+function ThanksIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <path d="M12 2l3 7h7l-5.5 5 2 7L12 17l-6.5 4 2-7L3 9h7l3-7z" />
+    </svg>
+  );
+}
+
+function TeamIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <circle cx="9" cy="7" r="3" />
+      <path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" />
+      <circle cx="17" cy="10" r="3" />
+      <path d="M14 21v-2a3 3 0 0 1 1.5-2.6 3 3 0 0 0 3-2.6" />
+    </svg>
+  );
+}
+
+function EditorNoteIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" />
+    </svg>
+  );
+}
+
+function AlgorithmIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <path d="M4 6h16M4 12h10M4 18h6" />
+      <circle cx="18" cy="6" r="2" />
+      <circle cx="14" cy="12" r="2" />
+      <circle cx="10" cy="18" r="2" />
+    </svg>
   );
 }
 

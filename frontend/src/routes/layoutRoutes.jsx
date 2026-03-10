@@ -5,6 +5,8 @@ import PostDetail from '../pages/PostDetail';
 import AboutUs from '../pages/AboutUs';
 import AboutTeam from '../pages/AboutTeam';
 import AboutThanks from '../pages/AboutThanks';
+import AboutEditorNote from '../pages/AboutEditorNote';
+import AboutAlgorithm from '../pages/AboutAlgorithm';
 import MyZone from '../pages/MyZone';
 import UserZone from '../pages/UserZone';
 import MyPosts from '../pages/MyPosts';
@@ -32,6 +34,8 @@ export const layoutRoutes = (
     <Route path="about" element={<AboutUs />} />
     <Route path="about/thanks" element={<AboutThanks />} />
     <Route path="about/team" element={<AboutTeam />} />
+    <Route path="about/editor-note" element={<AboutEditorNote />} />
+    <Route path="about/algorithm" element={<AboutAlgorithm />} />
     <Route path="myzone" element={<MyZone />} />
     <Route path="user/:id" element={<UserZone />} />
     <Route path="myzone/posts" element={<MyPosts />} />

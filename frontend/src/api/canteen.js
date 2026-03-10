@@ -159,3 +159,23 @@ export function getMyProductReviews(options = {}) {
   const { page = 1, pageSize = 10 } = options;
   return get(`/api/canteen/my-reviews?page=${page}&pageSize=${pageSize}`);
 }
+
+// ---------- 商品收藏 ----------
+/** 当前用户是否已收藏该商品，返回 { favorited: boolean } */
+export function getProductFavoriteStatus(productId) {
+  return get(`/api/canteen/products/${productId}/favorite`);
+}
+
+export function addFavoriteProduct(productId) {
+  return post(`/api/canteen/products/${productId}/favorite`, {});
+}
+
+export function removeFavoriteProduct(productId) {
+  return del(`/api/canteen/products/${productId}/favorite`);
+}
+
+/** 我的收藏列表，用于个人主页收藏栏 */
+export function getMyFavorites(options = {}) {
+  const { page = 1, pageSize = 20 } = options;
+  return get(`/api/canteen/my-favorites?page=${page}&pageSize=${pageSize}`);
+}
