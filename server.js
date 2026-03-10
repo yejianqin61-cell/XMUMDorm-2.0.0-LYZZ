@@ -39,6 +39,10 @@ const userRoutes = require('./routes/users');
 // 8. 创建一个 Express 应用实例
 const app = express();
 
+// 如果部署在 Vercel / Railway 等反向代理之后，需要开启 trust proxy
+// 否则 express-rate-limit 在看到 X-Forwarded-For 头时会报错
+app.set('trust proxy', 1);
+
 // 9. 定义服务器端口
 const PORT = process.env.PORT || 4040;
 
