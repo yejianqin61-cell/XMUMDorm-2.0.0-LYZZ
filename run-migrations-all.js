@@ -58,15 +58,20 @@ const dbConfig = connectionUrl
     };
 
 // 按顺序执行的迁移文件列表
+// 说明：
+// - 对于全新数据库，先执行 init-db.sql（创建 users/posts 等基础表结构）
+// - 然后依次执行 002~008 增量迁移
+// - 001_posts_system_2.0.0.sql 属于旧版本增量迁移，已被整合进 init-db.sql，
+//   在新库上再次执行会因缺少旧版 users 结构而报错，所以这里不再执行 001
 const MIGRATIONS = [
-  '001_posts_system_2.0.0.sql',
-  '002_canteen_system.sql',
-  '003_ranking_system.sql',
-  '004_product_price.sql',
-  '005_shops_logo_opening_hours.sql',
-  '006_audit_logs.sql',
-  '007_product_favorites.sql',
-  '008_email_verification_codes.sql',
+  { file: 'init-db.sql', dir: __dirname },
+  { file: '002_canteen_system.sql', dir: path.join(__dirname, 'migrations') },
+  { file: '003_ranking_system.sql', dir: path.join(__dirname, 'migrations') },
+  { file: '004_product_price.sql', dir: path.join(__dirname, 'migrations') },
+  { file: '005_shops_logo_opening_hours.sql', dir: path.join(__dirname, 'migrations') },
+  { file: '006_audit_logs.sql', dir: path.join(__dirname, 'migrations') },
+  { file: '007_product_favorites.sql', dir: path.join(__dirname, 'migrations') },
+  { file: '008_email_verification_codes.sql', dir: path.join(__dirname, 'migrations') },
 ];
 
 async function run() {
@@ -89,11 +94,9 @@ async function run() {
     await conn.query(`CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`);
     await conn.query(`USE \`${DB_NAME}\`;`);
 
-    const migrationsDir = path.join(__dirname, 'migrations');
-
-    for (const file of MIGRATIONS) {
-      const fullPath = path.join(migrationsDir, file);
-      console.log(`\n=== 正在执行迁移：${file} ===`);
+    for (const item of MIGRATIONS) {
+      const fullPath = path.join(item.dir, item.file);
+      console.log(`\n=== 正在执行迁移：${item.file} ===`);
 
       if (!fs.existsSync(fullPath)) {
         console.warn(`跳过：文件不存在 ${fullPath}`);
@@ -107,7 +110,7 @@ async function run() {
 
       try {
         await conn.query(sql);
-        console.log(`迁移 ${file} 执行完成。`);
+        console.log(`迁移 ${item.file} 执行完成。`);
       } catch (err) {
         const msg = (err && (err.message || err.code || '')).toString();
         // 对已存在的列/表等重复执行场景做宽容处理，只打印提示但不中断后续迁移
@@ -118,10 +121,10 @@ async function run() {
           msg.includes('already exists') ||
           msg.includes('Duplicate entry')
         ) {
-          console.warn(`迁移 ${file} 已执行过或部分执行：${msg}`);
+          console.warn(`迁移 ${item.file} 已执行过或部分执行：${msg}`);
           continue;
         }
-        console.error(`迁移 ${file} 执行失败：`, msg);
+        console.error(`迁移 ${item.file} 执行失败：`, msg);
         throw err;
       }
     }
