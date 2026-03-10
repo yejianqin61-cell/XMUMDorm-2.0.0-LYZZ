@@ -25,6 +25,7 @@ const jwt = require('jsonwebtoken');
 // 引入数据库查询函数
 const { query } = require('../database');
 const { logAudit } = require('../services/auditLog');
+const { sendVerificationEmail } = require('../services/email');
 
 // 从环境变量获取 JWT 密钥
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
@@ -40,7 +41,6 @@ const MERCHANT_INVITE_CODE = 'yejianqinnb';
 // ============================================
 // 创建时间: 2025-01-26
 // 功能: 发送邮箱验证码到指定邮箱（@xmu.edu.my）
-// 状态: 接口已预留，功能待实现
 router.post('/send-verification-code', async (req, res) => {
   try {
     const { email } = req.body;
@@ -63,24 +63,52 @@ router.post('/send-verification-code', async (req, res) => {
       });
     }
 
-    // TODO: 实现邮箱验证码发送功能
-    // 修改时间: 2025-01-26
-    // 这里需要：
-    // 1. 生成6位随机验证码
-    // 2. 将验证码存储到数据库或缓存（设置过期时间，如5分钟）
-    // 3. 发送邮件到指定邮箱
-    // 4. 返回成功响应
+    // 频率限制：同一邮箱 60 秒内只允许发送一次
+    const recentRows = await query(
+      'SELECT created_at FROM email_verification_codes WHERE email = ? AND scene = ? ORDER BY created_at DESC LIMIT 1',
+      [email, 'register']
+    );
+    if (recentRows && recentRows[0]) {
+      const lastTime = new Date(recentRows[0].created_at);
+      const now = new Date();
+      if (now.getTime() - lastTime.getTime() < 60 * 1000) {
+        return res.status(429).json({
+          status: -1,
+          message: '发送太频繁，请稍后再试'
+        });
+      }
+    }
 
-    // 暂时返回成功（功能待实现）
-    // 修改时间: 2025-01-26
+    // 每日最大发送次数（简单策略：10 次）
+    const dailyRows = await query(
+      'SELECT COUNT(*) AS cnt FROM email_verification_codes WHERE email = ? AND scene = ? AND DATE(created_at) = CURDATE()',
+      [email, 'register']
+    );
+    const dailyCount = dailyRows && dailyRows[0] ? Number(dailyRows[0].cnt) : 0;
+    if (dailyCount >= 10) {
+      return res.status(429).json({
+        status: -1,
+        message: '当日验证码发送次数已达上限，请明天再试'
+      });
+    }
+
+    // 生成 6 位数字验证码
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const codeHash = await bcrypt.hash(code, 10);
+
+    // 有效期 10 分钟
+    await query(
+      'INSERT INTO email_verification_codes (email, scene, code_hash, expires_at) VALUES (?, ?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE))',
+      [email, 'register', codeHash]
+    );
+
+    // 发送邮件
+    await sendVerificationEmail(email, code, 10);
+
     res.status(200).json({
       status: 0,
-      message: '验证码已发送（功能待实现）',
-      // 开发阶段可以返回验证码用于测试
-      // 生产环境必须删除此字段
-      ...(process.env.NODE_ENV === 'development' && {
-        verification_code: '123456' // 临时测试用
-      })
+      message: '验证码已发送，请查收邮箱',
+      ...(process.env.NODE_ENV === 'development' && { verification_code: code })
     });
 
   } catch (error) {
@@ -89,6 +117,125 @@ router.post('/send-verification-code', async (req, res) => {
       status: -1,
       message: '服务器错误，请稍后重试'
     });
+  }
+});
+
+// ============================================
+// 忘记密码：发送重置验证码
+// ============================================
+router.post('/send-reset-code', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ status: -1, message: '邮箱不能为空' });
+    }
+    if (!email.endsWith('@xmu.edu.my')) {
+      return res.status(400).json({ status: -1, message: '邮箱必须是 @xmu.edu.my 格式' });
+    }
+
+    // 必须是已注册邮箱
+    const users = await query('SELECT id FROM users WHERE email = ?', [email]);
+    if (!users || users.length === 0) {
+      return res.status(400).json({ status: -1, message: '该邮箱未注册' });
+    }
+
+    // 频率限制：60 秒
+    const recentRows = await query(
+      'SELECT created_at FROM email_verification_codes WHERE email = ? AND scene = ? ORDER BY created_at DESC LIMIT 1',
+      [email, 'reset_password']
+    );
+    if (recentRows && recentRows[0]) {
+      const lastTime = new Date(recentRows[0].created_at);
+      if (Date.now() - lastTime.getTime() < 60 * 1000) {
+        return res.status(429).json({ status: -1, message: '发送太频繁，请稍后再试' });
+      }
+    }
+
+    // 每日上限 10 次
+    const dailyRows = await query(
+      'SELECT COUNT(*) AS cnt FROM email_verification_codes WHERE email = ? AND scene = ? AND DATE(created_at) = CURDATE()',
+      [email, 'reset_password']
+    );
+    const dailyCount = dailyRows && dailyRows[0] ? Number(dailyRows[0].cnt) : 0;
+    if (dailyCount >= 10) {
+      return res.status(429).json({ status: -1, message: '当日验证码发送次数已达上限，请明天再试' });
+    }
+
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const codeHash = await bcrypt.hash(code, 10);
+    await query(
+      'INSERT INTO email_verification_codes (email, scene, code_hash, expires_at) VALUES (?, ?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE))',
+      [email, 'reset_password', codeHash]
+    );
+
+    await sendVerificationEmail(email, code, 10);
+
+    res.status(200).json({
+      status: 0,
+      message: '重置验证码已发送，请查收邮箱',
+      ...(process.env.NODE_ENV === 'development' && { verification_code: code }),
+    });
+  } catch (error) {
+    console.error('发送重置验证码错误:', error);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
+// ============================================
+// 忘记密码：提交验证码 + 新密码
+// ============================================
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { email, verification_code, new_password } = req.body || {};
+
+    if (!email || !verification_code || !new_password) {
+      return res.status(400).json({ status: -1, message: '邮箱、验证码和新密码不能为空' });
+    }
+    if (!email.endsWith('@xmu.edu.my')) {
+      return res.status(400).json({ status: -1, message: '邮箱必须是 @xmu.edu.my 格式' });
+    }
+    if (String(new_password).length < 6) {
+      return res.status(400).json({ status: -1, message: '新密码长度至少为6个字符' });
+    }
+
+    const users = await query('SELECT id FROM users WHERE email = ?', [email]);
+    if (!users || users.length === 0) {
+      return res.status(400).json({ status: -1, message: '该邮箱未注册' });
+    }
+    const userId = users[0].id;
+
+    const rows = await query(
+      `SELECT id, code_hash, expires_at, used_at
+       FROM email_verification_codes
+       WHERE email = ? AND scene = 'reset_password'
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [email]
+    );
+    if (!rows || rows.length === 0) {
+      return res.status(400).json({ status: -1, message: '验证码不存在或已过期' });
+    }
+    const latest = rows[0];
+    if (latest.used_at) {
+      return res.status(400).json({ status: -1, message: '验证码已被使用，请重新获取' });
+    }
+    if (new Date(latest.expires_at).getTime() <= Date.now()) {
+      return res.status(400).json({ status: -1, message: '验证码已过期，请重新获取' });
+    }
+    const ok = await bcrypt.compare(String(verification_code), latest.code_hash);
+    if (!ok) {
+      return res.status(400).json({ status: -1, message: '验证码错误' });
+    }
+
+    const newHash = await bcrypt.hash(String(new_password), 10);
+    await query('UPDATE users SET password_hash = ? WHERE id = ?', [newHash, userId]);
+    await query('UPDATE email_verification_codes SET used_at = NOW() WHERE id = ?', [latest.id]);
+
+    res.status(200).json({ status: 0, message: '密码重置成功，请使用新密码登录' });
+  } catch (error) {
+    console.error('重置密码错误:', error);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
   }
 });
 
@@ -136,16 +283,47 @@ router.post('/register', async (req, res) => {
         });
       }
 
-      // 3.3 验证邮箱验证码（接口预留，暂时不验证）
-      // 修改时间: 2025-01-26
-      // TODO: 实现验证码验证逻辑
-      // if (!verification_code) {
-      //   return res.status(400).json({
-      //     status: -1,
-      //     message: '请输入邮箱验证码'
-      //   });
-      // }
-      // TODO: 验证验证码是否正确和是否过期
+      // 3.3 验证邮箱验证码：必须填写且正确、未过期、未使用
+      if (!verification_code) {
+        return res.status(400).json({
+          status: -1,
+          message: '请输入邮箱验证码'
+        });
+      }
+      const rows = await query(
+        `SELECT id, code_hash, expires_at, used_at
+         FROM email_verification_codes
+         WHERE email = ? AND scene = 'register'
+         ORDER BY created_at DESC
+         LIMIT 1`,
+        [email]
+      );
+      if (!rows || rows.length === 0) {
+        return res.status(400).json({
+          status: -1,
+          message: '验证码不存在或已过期'
+        });
+      }
+      const latest = rows[0];
+      if (latest.used_at) {
+        return res.status(400).json({
+          status: -1,
+          message: '验证码已被使用，请重新获取'
+        });
+      }
+      if (new Date(latest.expires_at).getTime() <= Date.now()) {
+        return res.status(400).json({
+          status: -1,
+          message: '验证码已过期，请重新获取'
+        });
+      }
+      const ok = await bcrypt.compare(String(verification_code), latest.code_hash);
+      if (!ok) {
+        return res.status(400).json({
+          status: -1,
+          message: '验证码错误'
+        });
+      }
 
       // 3.4 验证密码强度
       if (password.length < 6) {
@@ -190,8 +368,11 @@ router.post('/register', async (req, res) => {
       // 修改时间: 2025-01-26
       const result = await query(
         'INSERT INTO users (username, email, password_hash, role, email_verified) VALUES (?, ?, ?, ?, ?)',
-        [username, email, password_hash, 'student', 0] // email_verified 暂时设为 0，待实现验证功能后改为 1
+        [username, email, password_hash, 'student', 1]
       );
+
+      // 3.8.1 标记验证码已使用
+      await query('UPDATE email_verification_codes SET used_at = NOW() WHERE id = ?', [latest.id]);
 
       // 3.9 生成 JWT 令牌
       const token = jwt.sign(

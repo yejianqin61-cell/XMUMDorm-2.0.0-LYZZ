@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../api/config';
 import { getApiErrorMessage } from '../utils/apiError';
+import { sendVerificationCode, register as apiRegister } from '../api/auth';
 import './Register.css';
 
 const ROLE_STUDENT = 'student';
@@ -17,6 +18,8 @@ function Register() {
   const [inviteCode, setInviteCode] = useState('');
   const [message, setMessage] = useState({ type: '', text: '' });
   const [loading, setLoading] = useState(false);
+  const [sendingCode, setSendingCode] = useState(false);
+  const [codeCountdown, setCodeCountdown] = useState(0);
 
   const navigate = useNavigate();
 
@@ -66,7 +69,7 @@ function Register() {
               email: email.trim(),
               username: username.trim(),
               password,
-              verification_code: verificationCode.trim() || undefined,
+              verification_code: verificationCode.trim(),
             }
           : {
               role: ROLE_MERCHANT,
@@ -75,19 +78,14 @@ function Register() {
               invite_code: inviteCode.trim(),
             };
 
-      const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      const data = await res.json();
-      if (data.status === 0) {
-        if (data.token) localStorage.setItem('token', data.token);
-        if (data.data) localStorage.setItem('user', JSON.stringify(data.data));
+      const result = await apiRegister(body);
+      if (result.success) {
+        if (result.token) localStorage.setItem('token', result.token);
+        if (result.data) localStorage.setItem('user', JSON.stringify(result.data));
         showMsg('注册成功，正在跳转… Register success, redirecting…', 'success');
         setTimeout(() => navigate('/', { replace: true }), 500);
       } else {
-        showMsg(getApiErrorMessage(), 'error');
+        showMsg(result.message || getApiErrorMessage(), 'error');
       }
     } catch (err) {
       showMsg(getApiErrorMessage(err), 'error');
@@ -163,15 +161,58 @@ function Register() {
                 />
               </div>
               <div className="register-field">
-                <label htmlFor="reg-code">验证码 Verification code（可选 optional）</label>
-                <input
-                  id="reg-code"
-                  type="text"
-                  placeholder="邮箱验证码（功能待开放）Email code (coming soon)"
-                  value={verificationCode}
-                  onChange={(e) => setVerificationCode(e.target.value)}
-                  disabled={loading}
-                />
+                <label htmlFor="reg-code">验证码 Verification code</label>
+                <div className="register-code-row">
+                  <input
+                    id="reg-code"
+                    type="text"
+                    placeholder="请输入邮箱验证码 Enter email code"
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value)}
+                    disabled={loading}
+                  />
+                  <button
+                    type="button"
+                    className="register-btn-code"
+                    disabled={loading || sendingCode || codeCountdown > 0 || !email.trim().endsWith('@xmu.edu.my')}
+                    onClick={async () => {
+                      const em = email.trim();
+                      if (!em) {
+                        showMsg('请先填写邮箱 Please fill in email first', 'error');
+                        return;
+                      }
+                      if (!em.endsWith('@xmu.edu.my')) {
+                        showMsg('邮箱必须是 @xmu.edu.my 格式 Email must be @xmu.edu.my', 'error');
+                        return;
+                      }
+                      try {
+                        setSendingCode(true);
+                        const res = await sendVerificationCode(em);
+                        if (res.success) {
+                          showMsg(res.message || '验证码已发送，请查收邮箱 Code sent', 'success');
+                          setCodeCountdown(60);
+                          const timer = setInterval(() => {
+                            setCodeCountdown((prev) => {
+                              if (prev <= 1) {
+                                clearInterval(timer);
+                                return 0;
+                              }
+                              return prev - 1;
+                            });
+                          }, 1000);
+                        } else {
+                          showMsg(res.message || '验证码发送失败 Code send failed', 'error');
+                        }
+                      } catch (err) {
+                        showMsg(getApiErrorMessage(err), 'error');
+                      } finally {
+                        setSendingCode(false);
+                      }
+                    }}
+                  >
+                    {codeCountdown > 0 ? `${codeCountdown}s` : sendingCode ? '发送中…' : '发送验证码'}
+                  </button>
+                </div>
               </div>
             </>
           ) : (

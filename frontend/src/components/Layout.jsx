@@ -30,7 +30,7 @@ const TAB_ROOT_COMPONENTS = {
 const TITLE_BY_PATH = {
   '/': '厦马小筑 XMUM Dorm',
   '/eat': '食堂 Eat',
-  '/about': '关于我们 About us',
+  '/about': '广场 Square',
   '/myzone': '我的 My Zone',
   '/mailbox': '信箱 Mailbox',
   '/post/new': '发布帖子 Post',
@@ -38,6 +38,7 @@ const TITLE_BY_PATH = {
   '/myzone/reviews': '我的点评 My Reviews',
   '/myzone/profile': '修改资料 Profile',
   '/about/algorithm': '评分算法说明 Scoring Algorithm',
+  '/about/profile': '关于我们 About us',
 };
 
 /** 需要显示返回键的路径（含 /post/:id 详情页） */
@@ -57,7 +58,7 @@ function Layout() {
   const [slidePhase, setSlidePhase] = useState('start');
   const [announcements, setAnnouncements] = useState([]);
   const [showAnnouncements, setShowAnnouncements] = useState(false);
-  const [bgIndex, setBgIndex] = useState(() => {
+  const [bgIndex] = useState(() => {
     if (!Array.isArray(BACKGROUND_IMAGES) || BACKGROUND_IMAGES.length === 0) return 0;
     return Math.floor(Math.random() * BACKGROUND_IMAGES.length);
   });
@@ -83,15 +84,6 @@ function Layout() {
     }
     prevPathRef.current = pathname;
   }, [pathname]);
-
-  // 全站背景轮播：在 BACKGROUND_SWITCH_INTERVAL_MS 间隔内轮播 BACKGROUND_IMAGES
-  useEffect(() => {
-    if (!Array.isArray(BACKGROUND_IMAGES) || BACKGROUND_IMAGES.length <= 1) return undefined;
-    const timer = setInterval(() => {
-      setBgIndex((prev) => (prev + 1) % BACKGROUND_IMAGES.length);
-    }, BACKGROUND_SWITCH_INTERVAL_MS);
-    return () => clearInterval(timer);
-  }, []);
 
   // 加载未读公告，用于登录后弹窗
   useEffect(() => {
@@ -227,15 +219,15 @@ function Layout() {
         </div>
       </main>
       {showAnnouncements && announcements.length > 0 && (
-        <div className="app-ann-modal-backdrop" role="dialog" aria-modal="true" aria-label="全站公告">
+        <div className="app-ann-modal-backdrop" role="dialog" aria-modal="true" aria-label="全站公告 Site-wide announcements">
           <div className="app-ann-modal">
-            <h2 className="app-ann-title">全站公告</h2>
+            <h2 className="app-ann-title">全站公告 Site-wide Announcements</h2>
             <div className="app-ann-list">
               {announcements.map((n) => (
                 <div key={n.id} className="app-ann-item">
                   <p className="app-ann-item-title">{n.extra?.title || '公告 Announcement'}</p>
                   <p className="app-ann-item-meta">
-                    {n.from_user?.nickname || n.from_user?.username || '管理员'} ·{' '}
+                    {n.from_user?.nickname || n.from_user?.username || '管理员 Admin'} ·{' '}
                     {n.created_at ? new Date(n.created_at).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''}
                   </p>
                   <button
@@ -243,7 +235,7 @@ function Layout() {
                     className="app-ann-know-btn"
                     onClick={() => handleAnnouncementKnow(n.id)}
                   >
-                    知道了
+                    知道了 Got it
                   </button>
                 </div>
               ))}
@@ -254,7 +246,7 @@ function Layout() {
                 className="app-ann-know-all-btn"
                 onClick={handleAnnouncementKnowAll}
               >
-                全部知道了
+                全部知道了 Mark all as read
               </button>
             )}
           </div>

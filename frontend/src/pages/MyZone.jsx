@@ -159,7 +159,7 @@ function MyZone() {
                   <strong>{reviewCount}</strong> 点评
                 </span>
                 <span className="myzone-header-stat">
-                  <strong>{favoriteCount}</strong> 收藏
+                  <strong>{favoriteCount}</strong> 收藏 Favorites
                 </span>
                 {isMerchant && (
                   <Link to="/merchant/manage" className="myzone-header-stat myzone-header-stat-link">
@@ -169,7 +169,7 @@ function MyZone() {
               </div>
             </div>
             <button type="button" className="myzone-header-edit" onClick={goProfile}>
-              {isLoggedIn ? '编辑资料' : '去登录'}
+              {isLoggedIn ? '编辑资料 Edit profile' : '去登录 Login'}
             </button>
           </div>
         </div>
@@ -182,23 +182,23 @@ function MyZone() {
       )}
 
       {/* 2. 功能入口：3 个卡片（前两个切换 Tab，收藏占位） */}
-      <section className="myzone-entries" aria-label="功能入口">
+      <section className="myzone-entries" aria-label="功能入口 Entry shortcuts">
         <button type="button" className="myzone-entry myzone-entry-btn" onClick={() => setActiveTab(TAB_POSTS)}>
           <span className="myzone-entry-icon" aria-hidden>📝</span>
-          <span className="myzone-entry-label">我的帖子</span>
+          <span className="myzone-entry-label">我的帖子 My posts</span>
         </button>
         <button type="button" className="myzone-entry myzone-entry-btn" onClick={() => setActiveTab(TAB_REVIEWS)}>
           <span className="myzone-entry-icon" aria-hidden>⭐</span>
-          <span className="myzone-entry-label">我的点评</span>
+          <span className="myzone-entry-label">我的点评 My reviews</span>
         </button>
         <button type="button" className="myzone-entry myzone-entry-btn" onClick={() => setActiveTab(TAB_FAVORITES)}>
           <span className="myzone-entry-icon" aria-hidden>❤️</span>
-          <span className="myzone-entry-label">我的收藏</span>
+          <span className="myzone-entry-label">我的收藏 My favorites</span>
         </button>
       </section>
 
       {/* 3. 内容 Tab 栏 */}
-      <div className="myzone-tabs" role="tablist" aria-label="内容切换">
+      <div className="myzone-tabs" role="tablist" aria-label="内容切换 Content tabs">
         <button
           type="button"
           role="tab"
@@ -206,7 +206,7 @@ function MyZone() {
           className={`myzone-tab ${activeTab === TAB_POSTS ? 'active' : ''}`}
           onClick={() => setActiveTab(TAB_POSTS)}
         >
-          帖子
+          帖子 Posts
         </button>
         <button
           type="button"
@@ -215,7 +215,7 @@ function MyZone() {
           className={`myzone-tab ${activeTab === TAB_REVIEWS ? 'active' : ''}`}
           onClick={() => setActiveTab(TAB_REVIEWS)}
         >
-          点评
+          点评 Reviews
         </button>
         <button
           type="button"
@@ -224,7 +224,7 @@ function MyZone() {
           className={`myzone-tab ${activeTab === TAB_FAVORITES ? 'active' : ''}`}
           onClick={() => setActiveTab(TAB_FAVORITES)}
         >
-          收藏
+          收藏 Favorites
         </button>
       </div>
 
@@ -234,20 +234,20 @@ function MyZone() {
           <div className="myzone-grid-wrap">
             {!isLoggedIn ? (
               <EmptyState
-                title="请先登录"
-                description="登录后查看我的帖子。"
-                actionLabel="去登录"
+                title="请先登录 Please log in"
+                description="登录后查看我的帖子。Please log in to view your posts."
+                actionLabel="去登录 Login"
                 actionTo="/login"
               />
             ) : postsLoading ? (
-              <p className="myzone-loading">加载中…</p>
+              <p className="myzone-loading">加载中… Loading…</p>
             ) : postsError ? (
               <p className="myzone-error-inline">{postsError}</p>
             ) : posts.length === 0 ? (
               <EmptyState
-                title="暂无帖子"
-                description="去发布第一条吧"
-                actionLabel="去发布"
+                title="暂无帖子 No posts yet"
+                description="去发布第一条吧 Post your first one"
+                actionLabel="去发布 Post now"
                 actionTo="/post/new"
               />
             ) : (
@@ -263,20 +263,20 @@ function MyZone() {
           <div className="myzone-grid-wrap">
             {!isLoggedIn ? (
               <EmptyState
-                title="请先登录"
-                description="登录后查看我的点评。"
-                actionLabel="去登录"
+                title="请先登录 Please log in"
+                description="登录后查看我的点评。Please log in to view your reviews."
+                actionLabel="去登录 Login"
                 actionTo="/login"
               />
             ) : reviewsLoading ? (
-              <p className="myzone-loading">加载中…</p>
+              <p className="myzone-loading">加载中… Loading…</p>
             ) : reviewsError ? (
               <p className="myzone-error-inline">{reviewsError}</p>
             ) : reviews.length === 0 ? (
               <EmptyState
-                title="暂无点评"
-                description="去食堂给喜欢的菜品写一条吧。"
-                actionLabel="去食堂"
+                title="暂无点评 No reviews yet"
+                description="去食堂给喜欢的菜品写一条吧。Go review your favorite dishes."
+                actionLabel="去食堂 Eat now"
                 actionTo="/eat"
               />
             ) : (
@@ -292,20 +292,20 @@ function MyZone() {
           <div className="myzone-grid-wrap">
             {!isLoggedIn ? (
               <EmptyState
-                title="请先登录"
-                description="登录后查看我的收藏。"
-                actionLabel="去登录"
+                title="请先登录 Please log in"
+                description="登录后查看我的收藏。Please log in to view your favorites."
+                actionLabel="去登录 Login"
                 actionTo="/login"
               />
             ) : favoritesLoading ? (
-              <p className="myzone-loading">加载中…</p>
+              <p className="myzone-loading">加载中… Loading…</p>
             ) : favoritesError ? (
               <p className="myzone-error-inline">{favoritesError}</p>
             ) : favorites.length === 0 ? (
               <EmptyState
-                title="暂无收藏"
-                description="去食堂看到喜欢的菜品点个收藏吧。"
-                actionLabel="去食堂"
+                title="暂无收藏 No favorites yet"
+                description="去食堂看到喜欢的菜品点个收藏吧。Go to canteen and favorite dishes you like."
+                actionLabel="去食堂 Eat now"
                 actionTo="/eat"
               />
             ) : (

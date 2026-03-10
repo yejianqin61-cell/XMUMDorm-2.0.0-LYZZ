@@ -4,7 +4,7 @@ import { NavLink } from 'react-router-dom';
 const TABS = [
   { path: '/', iconKey: 'TreeHole', label: 'TreeHole 树洞' },
   { path: '/eat', iconKey: 'Eat', label: 'Eat 食堂' },
-  { path: '/about', iconKey: 'About us', label: 'About us 关于我们' },
+  { path: '/about', iconKey: 'Square', label: 'Square 广场' },
   { path: '/myzone', iconKey: 'My Zone', label: 'My Zone 我的' },
 ];
 
@@ -76,7 +76,7 @@ function getIcon(label, filled) {
             <circle cx="14" cy="2.5" r="1.5" />
           </svg>
         );
-      case 'About us':
+      case 'Square':
         return (
           <svg {...common} fill="currentColor">
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
@@ -109,7 +109,7 @@ function getIcon(label, filled) {
           <line x1="14" y1="1" x2="14" y2="4" />
         </svg>
       );
-    case 'About us':
+    case 'Square':
       return (
         <svg {...common} fill="none" stroke="currentColor" strokeWidth="2">
           <circle cx="12" cy="12" r="10" />

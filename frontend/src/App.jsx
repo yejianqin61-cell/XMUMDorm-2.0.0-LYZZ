@@ -6,6 +6,7 @@ import AuthGuard from './components/AuthGuard';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ResetPassword from './pages/ResetPassword';
 import { layoutRoutes } from './routes/layoutRoutes';
 import './App.css';
 import './styles/states.css';
@@ -57,6 +58,7 @@ function MainApp() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route
             path="/"
             element={

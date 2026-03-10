@@ -167,3 +167,30 @@
 .register-footer a:hover {
   text-decoration: underline;
 }
+
+.register-code-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.register-code-row input {
+  flex: 1;
+}
+
+.register-btn-code {
+  flex-shrink: 0;
+  padding: 8px 10px;
+  font-size: 12px;
+  border-radius: 999px;
+  border: none;
+  background: #2563eb;
+  color: #fff;
+  cursor: pointer;
+}
+
+.register-btn-code:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+

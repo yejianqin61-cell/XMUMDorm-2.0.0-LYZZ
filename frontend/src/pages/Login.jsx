@@ -92,6 +92,9 @@ function Login() {
         <p className="login-footer">
           还没有账号？No account? <Link to="/register">立即注册 Register</Link>
         </p>
+        <p className="login-footer">
+          忘记密码？Forgot password? <Link to="/reset-password">重置密码 Reset</Link>
+        </p>
       </div>
     </div>
   );
