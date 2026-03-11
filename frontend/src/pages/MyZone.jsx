@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { getProfile } from '../api/users';
 import { getMyProductReviews, getMyFavorites } from '../api/canteen';
 import { API_BASE_URL } from '../api/config';
+import { formatRatingLabel } from '../constants/rating';
 import { getApiErrorMessage } from '../utils/apiError';
 import EmptyState from '../components/EmptyState';
 import './MyZone.css';
@@ -367,7 +368,7 @@ function ReviewGridItem({ review }) {
           <div className="myzone-grid-item-placeholder myzone-grid-item-placeholder-review">无图</div>
         )}
         <span className="myzone-grid-item-title">{product_name}</span>
-        <span className="myzone-grid-item-rating">{rating}</span>
+        <span className="myzone-grid-item-rating">{formatRatingLabel(rating)}</span>
       </div>
     </Link>
   );

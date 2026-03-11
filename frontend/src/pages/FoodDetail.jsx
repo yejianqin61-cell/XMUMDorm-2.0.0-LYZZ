@@ -17,7 +17,7 @@ import {
   removeFavoriteProduct,
 } from '../api/canteen';
 import { getApiErrorMessage } from '../utils/apiError';
-import { RATING_LABELS } from '../constants/rating';
+import { formatRatingLabel } from '../constants/rating';
 import { getUploadUrl } from '../api/config';
 import './FoodDetail.css';
 
@@ -306,7 +306,7 @@ function FoodDetail() {
               <li key={r.id} className="food-detail-review">
                 <div className="food-detail-review-head">
                   <span className="food-detail-review-user">{r.userName}</span>
-                  <span className="food-detail-review-rating">{typeof r.rating === 'number' ? (RATING_LABELS[r.rating] ?? r.rating) : r.rating}</span>
+                  <span className="food-detail-review-rating">{formatRatingLabel(r.rating)}</span>
                 </div>
                 <p className="food-detail-review-content">{r.content}</p>
                 {r.images && r.images.length > 0 && (
