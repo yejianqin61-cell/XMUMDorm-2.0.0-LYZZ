@@ -106,11 +106,11 @@ export function getFoodById(id) {
 
 /** 评级 1-5 对应文案 */
 export const RATING_LABELS = {
-  1: '拉完了',
-  2: 'NPC',
-  3: '顶尖',
-  4: '人上人',
-  5: '夯爆了',
+  1: '拉完了 just soso',
+  2: 'NPC ordinary',
+  3: '顶级 great',
+  4: '人上人 excellent',
+  5: '夯爆了 Amaizing',
 };
 
 /**
