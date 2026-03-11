@@ -1,19 +1,27 @@
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 import './AboutUs.css';
 
 /** 关于我们详情页：团队介绍 / 编者的话 / 评分算法说明，使用与广场相同的列表布局 */
 function AboutProfile() {
+  const { lang } = useLanguage();
+  const isZh = lang !== 'en';
+
   return (
     <div className="about-page">
-      <ul className="about-list" aria-label="关于我们详情列表">
+      <ul className="about-list" aria-label={isZh ? '关于我们详情列表' : 'About details'}>
         <li className="about-list-item">
           <Link to="/about/team" className="about-list-row about-list-row-link">
             <span className="about-list-icon" aria-hidden>
               <TeamIcon />
             </span>
             <div className="about-list-body">
-              <span className="about-list-label">团队介绍 Team</span>
-              <span className="about-list-hint">哈基米方阵 team</span>
+              <span className="about-list-label">
+                {isZh ? '团队介绍' : 'Team'}
+              </span>
+              <span className="about-list-hint">
+                {isZh ? '哈基米方阵' : 'Hakimi Matrix team'}
+              </span>
             </div>
             <span className="about-list-arrow" aria-hidden>
               &gt;
@@ -26,8 +34,12 @@ function AboutProfile() {
               <EditorNoteIcon />
             </span>
             <div className="about-list-body">
-              <span className="about-list-label">编者的话 Editor&apos;s Note</span>
-              <span className="about-list-hint">Dorm 的故事 Story behind Dorm</span>
+              <span className="about-list-label">
+                {isZh ? '编者的话' : "Editor's Note"}
+              </span>
+              <span className="about-list-hint">
+                {isZh ? 'Dorm 的故事' : 'Story behind Dorm'}
+              </span>
             </div>
             <span className="about-list-arrow" aria-hidden>
               &gt;
@@ -40,8 +52,12 @@ function AboutProfile() {
               <AlgorithmIcon />
             </span>
             <div className="about-list-body">
-              <span className="about-list-label">评分算法说明 Scoring Algorithm</span>
-              <span className="about-list-hint">如何计算菜品/商家评分 Scoring rules</span>
+              <span className="about-list-label">
+                {isZh ? '评分算法说明' : 'Scoring Algorithm'}
+              </span>
+              <span className="about-list-hint">
+                {isZh ? '如何计算菜品/商家评分' : 'How scores are calculated'}
+              </span>
             </div>
             <span className="about-list-arrow" aria-hidden>
               &gt;

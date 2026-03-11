@@ -14,11 +14,11 @@ import './Rankings.css';
 
 /** 五大榜单标识（与后端接口对应） */
 export const RANKING_SECTIONS = [
-  { id: 'hot-products', title: '最夯单品', titleEn: 'Hot Products', desc: '上线至今综合评分 Top 5' },
-  { id: 'busy-shops', title: '门庭若市', titleEn: 'Busy Shops', desc: '当周点评量 Top 5' },
-  { id: 'top-shops', title: '最夯商家', titleEn: 'Top Shops', desc: '商家综合评分 Top 5' },
-  { id: 'new-hit-products', title: '爆款新品', titleEn: 'New Hits', desc: '上架 7 天内评分 Top 3' },
-  { id: 'active-users', title: '点评达人', titleEn: 'Active Reviewers', desc: '当周点评数 Top 5' },
+  { id: 'hot-products', title: 'Hot Products', titleEn: '最夯单品', desc: '上线至今综合评分 Top 5' },
+  { id: 'busy-shops', title: 'Busy Shops', titleEn: '门庭若市', desc: '当周点评量 Top 5' },
+  { id: 'top-shops', title: 'Top Shops', titleEn: '最夯商家', desc: '商家综合评分 Top 5' },
+  { id: 'new-hit-products', title: 'New Hits', titleEn: '爆款新品', desc: '上架 7 天内评分 Top 3' },
+  { id: 'active-users', title: 'Active Reviewers', titleEn: '点评达人', desc: '当周点评数 Top 5' },
 ];
 
 /** 排行榜主页：五大榜单，数据来自 API */

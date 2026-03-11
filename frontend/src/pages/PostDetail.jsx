@@ -148,10 +148,10 @@ function PostDetail() {
 
   const handleDeleteComment = async (commentId) => {
     if (requireLogin()) return;
-    if (!window.confirm('确定要删除这条评论吗？删除后不可恢复。')) return;
+    if (!window.confirm('Delete this comment? This action cannot be undone.')) return;
     try {
       await deleteComment(postId, commentId);
-      Toast.success('已删除');
+      Toast.success('Deleted');
       await reloadComments();
     } catch (err) {
       Toast.error(getApiErrorMessage(err));
@@ -160,11 +160,11 @@ function PostDetail() {
 
   const isAuthor = post && (post.user_id === user?.id || post.author?.id === user?.id || isAdmin);
   const handleDeletePost = async () => {
-    if (!window.confirm('确定要删除这条帖子吗？删除后不可恢复。')) return;
+    if (!window.confirm('Delete this post? This action cannot be undone.')) return;
     setDeleteLoading(true);
     try {
       await deletePost(postId);
-      Toast.success('已删除');
+      Toast.success('Deleted');
       navigate('/', { replace: true });
     } catch (err) {
       Toast.error(getApiErrorMessage(err));
@@ -176,7 +176,7 @@ function PostDetail() {
   if (loading && !post) {
     return (
       <div className="post-detail-page">
-        <p className="post-detail-loading state-loading">加载中…</p>
+        <p className="post-detail-loading state-loading">Loading…</p>
       </div>
     );
   }
@@ -185,7 +185,7 @@ function PostDetail() {
     return (
       <div className="post-detail-page">
         <p className="post-detail-error state-error">{error}</p>
-        <button type="button" onClick={() => navigate('/')}>返回首页 Back to Home</button>
+        <button type="button" onClick={() => navigate('/')}>Back to Home</button>
       </div>
     );
   }
@@ -194,9 +194,9 @@ function PostDetail() {
     return (
       <div className="post-detail-page">
         <EmptyState
-          title="帖子不存在"
+          title="Post not found"
           description="Post not found"
-          actionLabel="返回首页"
+          actionLabel="Back to Home"
           onActionClick={() => navigate('/')}
         />
       </div>
@@ -204,7 +204,7 @@ function PostDetail() {
   }
 
   const author = post.author || {};
-  const displayName = author.nickname ?? author.username ?? '匿名';
+  const displayName = author.nickname ?? author.username ?? 'Anonymous';
   const totalCommentCount = comments.reduce((sum, c) => sum + 1 + (c.replies?.length || 0), 0);
 
   return (
@@ -289,7 +289,7 @@ function PostDetail() {
       <LikeBurst ref={likeBurstRef} />
 
       <section className="post-detail-comments">
-        <h2 className="post-detail-comments-title">评论 Comments ({totalCommentCount})</h2>
+        <h2 className="post-detail-comments-title">Comments ({totalCommentCount})</h2>
         <ul className="post-detail-comment-list">
           {comments.map((c) => (
             <li key={c.id} className="post-detail-comment-wrap">
@@ -297,14 +297,14 @@ function PostDetail() {
                 <p className="post-detail-comment-content">{c.content}</p>
                 <div className="post-detail-comment-meta">
                   <span className="post-detail-comment-stat">
-                    {(c.author?.nickname ?? c.author?.username) || '匿名'}
+                    {(c.author?.nickname ?? c.author?.username) || 'Anonymous'}
                   </span>
                   <button
                     type="button"
                     className="post-detail-reply-btn"
                     onClick={() => startReply(c)}
-                  >
-                    回复 Reply
+                    >
+                    Reply
                   </button>
                   {(c.user_id === user?.id || isAdmin) && (
                     <button
@@ -324,12 +324,12 @@ function PostDetail() {
                   {c.replies.map((r) => (
                     <li key={r.id} className="post-detail-comment post-detail-comment-reply">
                       <p className="post-detail-comment-content">
-                        <span className="post-detail-reply-label">回复 Reply：</span>
+                        <span className="post-detail-reply-label">Reply:</span>
                         {r.content}
                       </p>
                       <div className="post-detail-comment-meta">
                         <span className="post-detail-comment-stat">
-                          {(r.author?.nickname ?? r.author?.username) || '匿名'}
+                          {(r.author?.nickname ?? r.author?.username) || 'Anonymous'}
                         </span>
                         {(r.user_id === user?.id || isAdmin) && (
                           <button
@@ -337,7 +337,7 @@ function PostDetail() {
                             className="post-detail-reply-delete"
                             onClick={() => handleDeleteComment(r.id)}
                           >
-                            删除
+                            Delete
                           </button>
                         )}
                       </div>
@@ -353,21 +353,21 @@ function PostDetail() {
       <form className="post-detail-form" onSubmit={handleSubmitComment}>
         {replyingTo && (
           <div className="post-detail-replying">
-            <span>回复 Reply：{replyingTo.content.slice(0, 20)}{replyingTo.content.length > 20 ? '…' : ''}</span>
-            <button type="button" onClick={cancelReply}>取消 Cancel</button>
+            <span>Reply: {replyingTo.content.slice(0, 20)}{replyingTo.content.length > 20 ? '…' : ''}</span>
+            <button type="button" onClick={cancelReply}>Cancel</button>
           </div>
         )}
         <div className="post-detail-form-row">
           <input
             type="text"
             className="post-detail-input"
-            placeholder={replyingTo ? '输入回复… Reply…' : '写一条评论… Write a comment…'}
+            placeholder={replyingTo ? 'Reply…' : 'Write a comment…'}
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             maxLength={500}
           />
           <button type="submit" className="post-detail-send" disabled={!newComment.trim() || submitLoading}>
-            {submitLoading ? '发送中…' : '发送 Send'}
+            {submitLoading ? 'Sending…' : 'Send'}
           </button>
         </div>
       </form>

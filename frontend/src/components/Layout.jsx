@@ -7,6 +7,7 @@ import TreeHole from '../pages/TreeHole';
 import CanteenArea from '../pages/CanteenArea';
 import AboutUs from '../pages/AboutUs';
 import MyZone from '../pages/MyZone';
+import { useLanguage } from '../context/LanguageContext';
 import { enterFullscreen } from '../utils/fullscreen';
 import { useAuth } from '../context/AuthContext';
 import { getUnreadAnnouncements, markNotificationRead, markNotificationsReadBatch } from '../api/notifications';
@@ -26,19 +27,32 @@ const TAB_ROOT_COMPONENTS = {
   '/myzone': MyZone,
 };
 
-/** 顶栏标题：中英并列（XMUM Dorm 厦马小筑） */
-const TITLE_BY_PATH = {
-  '/': '厦马小筑 XMUM Dorm',
-  '/eat': '食堂 Eat',
-  '/about': '广场 Square',
-  '/myzone': '我的 My Zone',
-  '/mailbox': '信箱 Mailbox',
-  '/post/new': '发布帖子 Post',
-  '/myzone/posts': '我的帖子 My Posts',
-  '/myzone/reviews': '我的点评 My Reviews',
-  '/myzone/profile': '修改资料 Profile',
-  '/about/algorithm': '评分算法说明 Scoring Algorithm',
-  '/about/profile': '关于我们 About us',
+const TITLE_BY_PATH_ZH = {
+  '/': '厦马小筑',
+  '/eat': '食堂',
+  '/about': '广场',
+  '/myzone': '我的',
+  '/mailbox': '信箱',
+  '/post/new': '发布帖子',
+  '/myzone/posts': '我的帖子',
+  '/myzone/reviews': '我的点评',
+  '/myzone/profile': '修改资料',
+  '/about/algorithm': '评分算法说明',
+  '/about/profile': '关于我们',
+};
+
+const TITLE_BY_PATH_EN = {
+  '/': 'XMUM Dorm',
+  '/eat': 'Canteen',
+  '/about': 'Square',
+  '/myzone': 'My Zone',
+  '/mailbox': 'Mailbox',
+  '/post/new': 'Post',
+  '/myzone/posts': 'My Posts',
+  '/myzone/reviews': 'My Reviews',
+  '/myzone/profile': 'Profile',
+  '/about/algorithm': 'Scoring Algorithm',
+  '/about/profile': 'About us',
 };
 
 /** 需要显示返回键的路径（含 /post/:id 详情页） */
@@ -50,6 +64,8 @@ function Layout() {
   const navigate = useNavigate();
   const pathname = location.pathname;
   const { isLoggedIn } = useAuth();
+  const { lang } = useLanguage();
+  const isZh = lang !== 'en';
   const touchStart = useRef({ x: 0, y: 0 });
   const prevPathRef = useRef(pathname);
   // 只在用户第一次交互时尝试进入全屏
@@ -149,27 +165,48 @@ function Layout() {
     enterFullscreen();
   };
 
+  const TITLE_BY_PATH = isZh ? TITLE_BY_PATH_ZH : TITLE_BY_PATH_EN;
   let title = TITLE_BY_PATH[pathname];
   if (!title) {
-    if (pathname.startsWith('/eat/food/') && pathname.endsWith('/review')) title = '发布点评 Publish Review';
-    else if (pathname === '/eat/rankings') title = '排行榜 Rankings';
-    else if (pathname.startsWith('/eat')) title = '食堂 Eat';
-    else if (pathname.startsWith('/mailbox')) title = '信箱 Mailbox';
-    else if (pathname === '/post/new') title = '发布帖子 Post';
-    else if (pathname.startsWith('/post/')) title = '帖子详情 Post';
-    else if (pathname === '/myzone/posts') title = '我的帖子 My Posts';
-    else if (pathname === '/myzone/reviews') title = '我的点评 My Reviews';
-    else if (pathname === '/myzone/profile') title = '修改资料 Profile';
-    else if (pathname === '/merchant/create') title = '店铺创建 Create Store';
-    else if (pathname === '/merchant/manage') title = '菜品管理 Manage Food';
-    else if (pathname === '/merchant/food/new') title = '菜品发布 Publish Food';
-    else if (pathname.startsWith('/merchant/food/')) title = '菜品详情 Food Detail';
-    else if (pathname.startsWith('/merchant/')) title = '商家 Merchant';
-    else if (pathname === '/about/thanks') title = '特别鸣谢 Special Thanks';
-    else if (pathname === '/about/team') title = '团队介绍 Team';
-    else if (pathname === '/about/editor-note') title = '编者的话 Editor\'s Note';
-    else if (pathname === '/about/algorithm') title = '评分算法说明 Scoring Algorithm';
-    else title = '厦马小筑 XMUM Dorm';
+    if (pathname.startsWith('/eat/food/') && pathname.endsWith('/review')) {
+      title = isZh ? '发布点评' : 'Publish Review';
+    } else if (pathname === '/eat/rankings') {
+      title = isZh ? '排行榜' : 'Rankings';
+    } else if (pathname.startsWith('/eat')) {
+      title = isZh ? '食堂' : 'Canteen';
+    } else if (pathname.startsWith('/mailbox')) {
+      title = isZh ? '信箱' : 'Mailbox';
+    } else if (pathname === '/post/new') {
+      title = isZh ? '发布帖子' : 'Post';
+    } else if (pathname.startsWith('/post/')) {
+      title = isZh ? '帖子详情' : 'Post';
+    } else if (pathname === '/myzone/posts') {
+      title = isZh ? '我的帖子' : 'My Posts';
+    } else if (pathname === '/myzone/reviews') {
+      title = isZh ? '我的点评' : 'My Reviews';
+    } else if (pathname === '/myzone/profile') {
+      title = isZh ? '修改资料' : 'Profile';
+    } else if (pathname === '/merchant/create') {
+      title = isZh ? '店铺创建' : 'Create Store';
+    } else if (pathname === '/merchant/manage') {
+      title = isZh ? '菜品管理' : 'Manage Food';
+    } else if (pathname === '/merchant/food/new') {
+      title = isZh ? '菜品发布' : 'Publish Food';
+    } else if (pathname.startsWith('/merchant/food/')) {
+      title = isZh ? '菜品详情' : 'Food Detail';
+    } else if (pathname.startsWith('/merchant/')) {
+      title = isZh ? '商家' : 'Merchant';
+    } else if (pathname === '/about/thanks') {
+      title = isZh ? '特别鸣谢' : 'Special Thanks';
+    } else if (pathname === '/about/team') {
+      title = isZh ? '团队介绍' : 'Team';
+    } else if (pathname === '/about/editor-note') {
+      title = isZh ? '编者的话' : "Editor's Note";
+    } else if (pathname === '/about/algorithm') {
+      title = isZh ? '评分算法说明' : 'Scoring Algorithm';
+    } else {
+      title = isZh ? '厦马小筑' : 'XMUM Dorm';
+    }
   }
   const showBack =
     pathname.startsWith('/post/') ||

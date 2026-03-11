@@ -45,14 +45,14 @@
 
 .rankings-section-title {
   margin: 0 0 4px;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--wx-text);
 }
 
 .rankings-section-title-en {
   margin-left: 6px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 400;
   color: var(--wx-text-secondary);
 }

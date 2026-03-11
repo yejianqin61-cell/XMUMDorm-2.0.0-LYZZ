@@ -9,12 +9,13 @@ export function formatPostTime(createdAt, absolute = false) {
   if (Number.isNaN(date.getTime())) return '';
 
   if (absolute) {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    const h = String(date.getHours()).padStart(2, '0');
-    const min = String(date.getMinutes()).padStart(2, '0');
-    return `${y}-${m}-${d} ${h}:${min}`;
+    return date.toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   }
 
   const now = new Date();
@@ -23,10 +24,10 @@ export function formatPostTime(createdAt, absolute = false) {
   const diffHour = Math.floor(diffMs / 3600000);
   const diffDay = Math.floor(diffMs / 86400000);
 
-  if (diffMin < 1) return '刚刚';
-  if (diffMin < 60) return `${diffMin} 分钟前`;
-  if (diffHour < 24) return `${diffHour} 小时前`;
-  if (diffDay === 1) return '昨天';
-  if (diffDay < 7) return `${diffDay} 天前`;
-  return date.toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' });
+  if (diffMin < 1) return 'just now';
+  if (diffMin < 60) return `${diffMin} min ago`;
+  if (diffHour < 24) return `${diffHour} h ago`;
+  if (diffDay === 1) return 'yesterday';
+  if (diffDay < 7) return `${diffDay} days ago`;
+  return date.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
 }

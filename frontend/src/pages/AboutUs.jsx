@@ -1,19 +1,44 @@
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 import './AboutUs.css';
 
 /** 关于我们：白底 70% 透明、左侧图标、右侧箭头、无缝排列 */
 function AboutUs() {
+  const { lang, setLang } = useLanguage();
+  const isZh = lang !== 'en';
+
   return (
     <div className="about-page">
-      <ul className="about-list" aria-label="关于我们入口列表">
+      <div className="about-lang-toggle" role="group" aria-label={isZh ? '语言切换' : 'Language switch'}>
+        <button
+          type="button"
+          className={`about-lang-btn ${isZh ? 'active' : ''}`}
+          onClick={() => setLang('zh')}
+        >
+          {isZh ? '中文' : 'Chinese'}
+        </button>
+        <span className="about-lang-sep">/</span>
+        <button
+          type="button"
+          className={`about-lang-btn ${!isZh ? 'active' : ''}`}
+          onClick={() => setLang('en')}
+        >
+          English
+        </button>
+      </div>
+      <ul className="about-list" aria-label={isZh ? '关于我们入口列表' : 'About entries'}>
         <li className="about-list-item">
           <Link to="/about/thanks" className="about-list-row about-list-row-link">
             <span className="about-list-icon" aria-hidden>
               <ThanksIcon />
             </span>
             <div className="about-list-body">
-              <span className="about-list-label">特别鸣谢 Special Thanks</span>
-              <span className="about-list-hint">点击查看 Tap to view</span>
+              <span className="about-list-label">
+                {isZh ? '特别鸣谢' : 'Special Thanks'}
+              </span>
+              <span className="about-list-hint">
+                {isZh ? '点击查看' : 'Tap to view'}
+              </span>
             </div>
             <span className="about-list-arrow" aria-hidden>
               &gt;
@@ -26,8 +51,12 @@ function AboutUs() {
               <TeamIcon />
             </span>
             <div className="about-list-body">
-              <span className="about-list-label">关于我们 About us</span>
-              <span className="about-list-hint">点击查看 Tap to view</span>
+              <span className="about-list-label">
+                {isZh ? '关于我们' : 'About us'}
+              </span>
+              <span className="about-list-hint">
+                {isZh ? '点击查看' : 'Tap to view'}
+              </span>
             </div>
             <span className="about-list-arrow" aria-hidden>
               &gt;

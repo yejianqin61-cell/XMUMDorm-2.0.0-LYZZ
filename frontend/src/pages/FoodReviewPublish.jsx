@@ -69,11 +69,11 @@ function FoodReviewPublish() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (rating == null || rating === '') {
-      Toast.error('请选择评级 Please select a rating');
+      Toast.error('Please select a rating');
       return;
     }
     if (!comment.trim()) {
-      Toast.error('请填写评论 Please write a review');
+      Toast.error('Please write a review');
       return;
     }
     const productId = id ? parseInt(id, 10) : 0;
@@ -81,7 +81,7 @@ function FoodReviewPublish() {
     setSubmitLoading(true);
     postProductComment(productId, { rating, content: comment.trim(), imageFiles })
       .then(() => {
-        Toast.success('点评已发布 Review published');
+        Toast.success('Review published');
         setTimeout(() => navigate(`/eat/food/${id}`, { replace: true }), 600);
       })
       .catch((err) => {
@@ -95,7 +95,7 @@ function FoodReviewPublish() {
   if (loading) {
     return (
       <div className="food-review-publish-page">
-        <p className="food-review-publish-loading state-loading">加载中…</p>
+        <p className="food-review-publish-loading state-loading">Loading…</p>
       </div>
     );
   }
@@ -105,7 +105,7 @@ function FoodReviewPublish() {
       <div className="food-review-publish-page">
         <p className="food-review-publish-error state-error">{error}</p>
         <button type="button" className="food-review-publish-back" onClick={() => navigate(-1)}>
-          返回 Back
+          Back
         </button>
       </div>
     );
@@ -115,9 +115,9 @@ function FoodReviewPublish() {
     return (
       <div className="food-review-publish-page">
         <EmptyState
-          title="菜品不存在"
+          title="Food not found"
           description="Food not found"
-          actionLabel="返回"
+          actionLabel="Back"
           onActionClick={() => navigate(-1)}
         />
       </div>
@@ -127,13 +127,13 @@ function FoodReviewPublish() {
   return (
     <div className="food-review-publish-page">
       <p className="food-review-publish-hint">
-        正在点评：{food.name} · Reviewing: {food.name}
+        Reviewing: {food.name}
       </p>
 
       <form className="food-review-publish-form" onSubmit={handleSubmit}>
         <div className="food-review-publish-section">
-          <label className="food-review-publish-label">评级 Rating *</label>
-          <div className="food-review-publish-rating-row" role="group" aria-label="选择评级">
+          <label className="food-review-publish-label">Rating *</label>
+          <div className="food-review-publish-rating-row" role="group" aria-label="Select rating">
             {RATING_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
@@ -151,12 +151,12 @@ function FoodReviewPublish() {
 
         <div className="food-review-publish-section">
           <label className="food-review-publish-label" htmlFor="food-review-comment">
-            评论 Comment *
+            Comment *
           </label>
           <textarea
             id="food-review-comment"
             className="food-review-publish-textarea"
-            placeholder="说说你的用餐体验… Share your experience…"
+            placeholder="Share your experience…"
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             rows={5}
@@ -164,7 +164,7 @@ function FoodReviewPublish() {
         </div>
 
         <div className="food-review-publish-section">
-          <label className="food-review-publish-label">买家秀 Buyer show（选填 optional，最多 3 张）</label>
+          <label className="food-review-publish-label">Buyer show (optional, up to 3 images)</label>
           <div className="food-review-publish-images">
             {previewUrls.map((url, i) => (
               <div key={url} className="food-review-publish-image-wrap">
@@ -173,7 +173,7 @@ function FoodReviewPublish() {
                   type="button"
                   className="food-review-publish-image-remove"
                   onClick={() => removeImage(i)}
-                  aria-label="移除 Remove"
+                  aria-label="Remove"
                 >
                   ×
                 </button>

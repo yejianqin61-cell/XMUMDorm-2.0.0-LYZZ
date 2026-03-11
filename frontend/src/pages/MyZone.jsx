@@ -148,28 +148,28 @@ function MyZone() {
             </div>
             <div className="myzone-header-card">
               <p className="myzone-header-name">
-                {isLoggedIn ? (userLoading && !displayName ? '加载中…' : displayName) : '点击登录'}
-                {isAdmin && <span className="myzone-admin-badge">管理员</span>}
+                {isLoggedIn ? (userLoading && !displayName ? 'Loading…' : displayName) : 'Tap to log in'}
+                {isAdmin && <span className="myzone-admin-badge">Admin</span>}
               </p>
               <div className="myzone-header-stats">
                 <span className="myzone-header-stat">
-                  <strong>{postCount}</strong> 帖子
+                  <strong>{postCount}</strong> Posts
                 </span>
                 <span className="myzone-header-stat">
-                  <strong>{reviewCount}</strong> 点评
+                  <strong>{reviewCount}</strong> Reviews
                 </span>
                 <span className="myzone-header-stat">
-                  <strong>{favoriteCount}</strong> 收藏 Favorites
+                  <strong>{favoriteCount}</strong> Favorites
                 </span>
                 {isMerchant && (
                   <Link to="/merchant/manage" className="myzone-header-stat myzone-header-stat-link">
-                    <strong>店铺</strong>
+                    <strong>Store</strong>
                   </Link>
                 )}
               </div>
             </div>
             <button type="button" className="myzone-header-edit" onClick={goProfile}>
-              {isLoggedIn ? '编辑资料 Edit profile' : '去登录 Login'}
+              {isLoggedIn ? 'Edit profile' : 'Log in'}
             </button>
           </div>
         </div>
@@ -182,23 +182,23 @@ function MyZone() {
       )}
 
       {/* 2. 功能入口：3 个卡片（前两个切换 Tab，收藏占位） */}
-      <section className="myzone-entries" aria-label="功能入口 Entry shortcuts">
+      <section className="myzone-entries" aria-label="Entry shortcuts">
         <button type="button" className="myzone-entry myzone-entry-btn" onClick={() => setActiveTab(TAB_POSTS)}>
           <span className="myzone-entry-icon" aria-hidden>📝</span>
-          <span className="myzone-entry-label">我的帖子 My posts</span>
+          <span className="myzone-entry-label">My posts</span>
         </button>
         <button type="button" className="myzone-entry myzone-entry-btn" onClick={() => setActiveTab(TAB_REVIEWS)}>
           <span className="myzone-entry-icon" aria-hidden>⭐</span>
-          <span className="myzone-entry-label">我的点评 My reviews</span>
+          <span className="myzone-entry-label">My reviews</span>
         </button>
         <button type="button" className="myzone-entry myzone-entry-btn" onClick={() => setActiveTab(TAB_FAVORITES)}>
           <span className="myzone-entry-icon" aria-hidden>❤️</span>
-          <span className="myzone-entry-label">我的收藏 My favorites</span>
+          <span className="myzone-entry-label">My favorites</span>
         </button>
       </section>
 
       {/* 3. 内容 Tab 栏 */}
-      <div className="myzone-tabs" role="tablist" aria-label="内容切换 Content tabs">
+      <div className="myzone-tabs" role="tablist" aria-label="Content tabs">
         <button
           type="button"
           role="tab"
@@ -206,7 +206,7 @@ function MyZone() {
           className={`myzone-tab ${activeTab === TAB_POSTS ? 'active' : ''}`}
           onClick={() => setActiveTab(TAB_POSTS)}
         >
-          帖子 Posts
+          Posts
         </button>
         <button
           type="button"
@@ -215,7 +215,7 @@ function MyZone() {
           className={`myzone-tab ${activeTab === TAB_REVIEWS ? 'active' : ''}`}
           onClick={() => setActiveTab(TAB_REVIEWS)}
         >
-          点评 Reviews
+          Reviews
         </button>
         <button
           type="button"
@@ -224,7 +224,7 @@ function MyZone() {
           className={`myzone-tab ${activeTab === TAB_FAVORITES ? 'active' : ''}`}
           onClick={() => setActiveTab(TAB_FAVORITES)}
         >
-          收藏 Favorites
+          Favorites
         </button>
       </div>
 
@@ -234,20 +234,20 @@ function MyZone() {
           <div className="myzone-grid-wrap">
             {!isLoggedIn ? (
               <EmptyState
-                title="请先登录 Please log in"
-                description="登录后查看我的帖子。Please log in to view your posts."
-                actionLabel="去登录 Login"
+                title="Please log in"
+                description="Log in to view your posts."
+                actionLabel="Log in"
                 actionTo="/login"
               />
             ) : postsLoading ? (
-              <p className="myzone-loading">加载中… Loading…</p>
+              <p className="myzone-loading">Loading…</p>
             ) : postsError ? (
               <p className="myzone-error-inline">{postsError}</p>
             ) : posts.length === 0 ? (
               <EmptyState
-                title="暂无帖子 No posts yet"
-                description="去发布第一条吧 Post your first one"
-                actionLabel="去发布 Post now"
+                title="No posts yet"
+                description="Post your first one."
+                actionLabel="Post now"
                 actionTo="/post/new"
               />
             ) : (
@@ -263,20 +263,20 @@ function MyZone() {
           <div className="myzone-grid-wrap">
             {!isLoggedIn ? (
               <EmptyState
-                title="请先登录 Please log in"
-                description="登录后查看我的点评。Please log in to view your reviews."
-                actionLabel="去登录 Login"
+                title="Please log in"
+                description="Log in to view your reviews."
+                actionLabel="Log in"
                 actionTo="/login"
               />
             ) : reviewsLoading ? (
-              <p className="myzone-loading">加载中… Loading…</p>
+              <p className="myzone-loading">Loading…</p>
             ) : reviewsError ? (
               <p className="myzone-error-inline">{reviewsError}</p>
             ) : reviews.length === 0 ? (
               <EmptyState
-                title="暂无点评 No reviews yet"
-                description="去食堂给喜欢的菜品写一条吧。Go review your favorite dishes."
-                actionLabel="去食堂 Eat now"
+                title="No reviews yet"
+                description="Go review your favorite dishes."
+                actionLabel="Eat now"
                 actionTo="/eat"
               />
             ) : (
@@ -292,20 +292,20 @@ function MyZone() {
           <div className="myzone-grid-wrap">
             {!isLoggedIn ? (
               <EmptyState
-                title="请先登录 Please log in"
-                description="登录后查看我的收藏。Please log in to view your favorites."
-                actionLabel="去登录 Login"
+                title="Please log in"
+                description="Log in to view your favorites."
+                actionLabel="Log in"
                 actionTo="/login"
               />
             ) : favoritesLoading ? (
-              <p className="myzone-loading">加载中… Loading…</p>
+              <p className="myzone-loading">Loading…</p>
             ) : favoritesError ? (
               <p className="myzone-error-inline">{favoritesError}</p>
             ) : favorites.length === 0 ? (
               <EmptyState
-                title="暂无收藏 No favorites yet"
-                description="去食堂看到喜欢的菜品点个收藏吧。Go to canteen and favorite dishes you like."
-                actionLabel="去食堂 Eat now"
+                title="No favorites yet"
+                description="Go to the canteen and favorite dishes you like."
+                actionLabel="Eat now"
                 actionTo="/eat"
               />
             ) : (
@@ -321,7 +321,7 @@ function MyZone() {
 
       {isLoggedIn && (
         <button type="button" className="myzone-logout" onClick={handleLogout}>
-          退出登录
+          Log out
         </button>
       )}
     </div>

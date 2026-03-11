@@ -1,4 +1,5 @@
 import Card from '../components/Card';
+import { useLanguage } from '../context/LanguageContext';
 import './AboutTeam.css';
 
 /** 特别鸣谢（静态）：致谢名单，中英结合，中文在上、英文在下；复用团队介绍卡片样式 */
@@ -46,19 +47,29 @@ const THANKS_LIST = [
 ];
 
 function AboutThanks() {
+  const { lang } = useLanguage();
+  const isZh = lang !== 'en';
+
   return (
     <div className="about-team-page">
       <Card as="div" className="about-team-card about-thanks-intro-card">
         <p className="about-thanks-intro">
-          The growth of Dorm would not have been possible without the advice and support of many teachers, friends, and mentors. The following are friends who have provided guidance, suggestions, or encouragement to this project. We extend our sincerest thanks to them.
+          {isZh
+            ? 'Dorm 的成长离不开许多老师、朋友与前辈的指导和支持。以下是为本项目提供过建议、鼓励或帮助的朋友，在此一并致以最诚挚的谢意。'
+            : 'The growth of Dorm would not have been possible without the advice and support of many teachers, friends, and mentors. The following are friends who have provided guidance, suggestions, or encouragement to this project. We extend our sincerest thanks to them.'}
         </p>
       </Card>
-      <h2 className="about-thanks-page-title">特别鸣谢 Special Thanks <span className="about-thanks-no-order">排名不分先后 In no particular order</span></h2>
+      <h2 className="about-thanks-page-title">
+        {isZh ? '特别鸣谢' : 'Special Thanks'}
+        <span className="about-thanks-no-order">
+          {isZh ? '排名不分先后' : 'In no particular order'}
+        </span>
+      </h2>
       <ul className="about-thanks-cards">
         {THANKS_LIST.map((item, i) => (
           <li key={i}>
             <Card as="div" className="about-team-card">
-              <p className="about-team-name">{item.zh}</p>
+              {isZh && <p className="about-team-name">{item.zh}</p>}
               <p className="about-thanks-en">{item.en}</p>
             </Card>
           </li>

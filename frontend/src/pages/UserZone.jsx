@@ -18,7 +18,6 @@ function UserZone() {
   const navigate = useNavigate();
   const userId = id ? parseInt(id, 10) : 0;
 
-  const [activeTab, setActiveTab] = useState(TAB_POSTS);
   const [profileUser, setProfileUser] = useState(null);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -87,7 +86,7 @@ function UserZone() {
 
   const avatarBg = profileUser?.avatar ? prefixAvatar(profileUser.avatar) : '';
   const postCount = posts.length;
-  const displayName = profileUser?.nickname ?? profileUser?.username ?? '未设置';
+  const displayName = profileUser?.nickname ?? profileUser?.username ?? 'Not set';
 
   return (
     <div className="myzone-page">
@@ -112,7 +111,7 @@ function UserZone() {
               </p>
               <div className="myzone-header-stats">
                 <span className="myzone-header-stat">
-                  <strong>{postCount}</strong> 帖子
+                  <strong>{postCount}</strong> Posts
                 </span>
               </div>
             </div>
@@ -126,45 +125,30 @@ function UserZone() {
         </p>
       )}
 
-      {/* Tab 栏：仅帖子 / 点评 */}
-      <div className="myzone-tabs" role="tablist" aria-label="内容切换">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === TAB_POSTS}
-          className={`myzone-tab ${activeTab === TAB_POSTS ? 'active' : ''}`}
-          onClick={() => setActiveTab(TAB_POSTS)}
-        >
-          帖子
-        </button>
-      </div>
-
-      {/* 内容区：帖子/点评网格，复用 MyZone 的网格样式组件结构（略简化为空态提示） */}
+      {/* Content area: posts grid (read-only) */}
       <section className="myzone-content" role="tabpanel">
-        {activeTab === TAB_POSTS && (
-          <div className="myzone-grid-wrap">
-            {posts.length === 0 ? (
-              <EmptyState
-                title="暂无帖子"
-                description="该用户还没有发布帖子。"
-              />
-            ) : (
-              <div className="myzone-grid">
-                {posts.map((post) => (
-                  <Link key={post.id} to={`/post/${post.id}`} className="myzone-grid-item myzone-grid-item-post">
-                    <div className="myzone-grid-item-media">
-                      {post.images && post.images[0]?.url ? (
-                        <img src={prefixAvatar(post.images[0].url)} alt="" />
-                      ) : (
-                        <div className="myzone-grid-item-placeholder">📝</div>
-                      )}
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+        <div className="myzone-grid-wrap">
+          {posts.length === 0 ? (
+            <EmptyState
+              title="No posts yet"
+              description="This user has not posted anything yet."
+            />
+          ) : (
+            <div className="myzone-grid">
+              {posts.map((post) => (
+                <Link key={post.id} to={`/post/${post.id}`} className="myzone-grid-item myzone-grid-item-post">
+                  <div className="myzone-grid-item-media">
+                    {post.images && post.images[0]?.url ? (
+                      <img src={prefixAvatar(post.images[0].url)} alt="" />
+                    ) : (
+                      <div className="myzone-grid-item-placeholder">📝</div>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
       </section>
     </div>
   );

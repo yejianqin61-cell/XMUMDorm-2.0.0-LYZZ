@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
+import { LanguageProvider } from './context/LanguageContext';
 import AuthGuard from './components/AuthGuard';
 import Layout from './components/Layout';
 import Login from './pages/Login';
@@ -55,21 +56,23 @@ function MainApp() {
     <BrowserRouter>
       <AuthProvider>
         <ToastProvider>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route
-            path="/"
-            element={
-              <AuthGuard>
-                <Layout />
-              </AuthGuard>
-            }
-          >
-            {layoutRoutes}
-          </Route>
-        </Routes>
+          <LanguageProvider>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route
+                path="/"
+                element={
+                  <AuthGuard>
+                    <Layout />
+                  </AuthGuard>
+                }
+              >
+                {layoutRoutes}
+              </Route>
+            </Routes>
+          </LanguageProvider>
         </ToastProvider>
       </AuthProvider>
     </BrowserRouter>

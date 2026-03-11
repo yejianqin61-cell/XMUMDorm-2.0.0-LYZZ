@@ -35,7 +35,7 @@ function ProfileEdit() {
       await updateAvatar(file);
       await refreshUser();
       setAvatarUrl(URL.createObjectURL(file));
-      showMsg('头像已更新 Avatar updated');
+      showMsg('Avatar updated');
     } catch (err) {
       showMsg(getApiErrorMessage(err), 'error');
     } finally {
@@ -47,14 +47,14 @@ function ProfileEdit() {
     e.preventDefault();
     const name = username.trim();
     if (!name) {
-      setMessage({ text: '请输入用户名 Please enter username', type: 'error' });
+      setMessage({ text: 'Please enter username', type: 'error' });
       setTimeout(() => setMessage({ type: '', text: '' }), 2000);
       return;
     }
     const lower = name.toLowerCase();
     const forbidden = ['admin', 'xmumdorm_official'];
     if (!isAdmin && forbidden.includes(lower)) {
-      setMessage({ text: '该昵称为官方保留名称，无法使用 This nickname is reserved.', type: 'error' });
+      setMessage({ text: 'This nickname is reserved.', type: 'error' });
       setTimeout(() => setMessage({ type: '', text: '' }), 2500);
       return;
     }
@@ -63,7 +63,7 @@ function ProfileEdit() {
       await updateProfileInfo({ nickname: name });
       await refreshUser();
       updateProfile({ username: name });
-      showMsg('已保存 Saved');
+      showMsg('Saved');
     } catch (err) {
       showMsg(getApiErrorMessage(err), 'error');
     }
@@ -73,7 +73,7 @@ function ProfileEdit() {
     <div className="profile-edit-page">
       <form className="profile-edit-form" onSubmit={handleSave}>
         <div className="profile-edit-field">
-          <label>头像</label>
+          <label>Avatar</label>
           <div className="profile-edit-avatar-row">
             <label className="profile-edit-avatar-wrap">
               <input
@@ -84,7 +84,7 @@ function ProfileEdit() {
                 disabled={avatarLoading}
               />
               {avatarLoading ? (
-                <div className="profile-edit-avatar profile-edit-avatar-loading">上传中…</div>
+                <div className="profile-edit-avatar profile-edit-avatar-loading">Uploading…</div>
               ) : avatarUrl ? (
                 <img src={avatarUrl} alt="" className="profile-edit-avatar" />
               ) : (
@@ -95,16 +95,16 @@ function ProfileEdit() {
                 />
               )}
             </label>
-            <span className="profile-edit-avatar-hint">{avatarLoading ? '上传中…' : '点击更换头像 Tap to change avatar'}</span>
+            <span className="profile-edit-avatar-hint">{avatarLoading ? 'Uploading…' : 'Tap to change avatar'}</span>
           </div>
         </div>
 
         <div className="profile-edit-field">
-          <label htmlFor="profile-username">用户名 Username</label>
+          <label htmlFor="profile-username">Username</label>
           <input
             id="profile-username"
             type="text"
-            placeholder="请输入用户名 Enter username"
+            placeholder="Enter username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
           />
@@ -117,7 +117,7 @@ function ProfileEdit() {
         )}
 
         <button type="submit" className="profile-edit-btn">
-          保存 Save
+          Save
         </button>
       </form>
     </div>

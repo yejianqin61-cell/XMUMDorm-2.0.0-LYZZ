@@ -1,11 +1,12 @@
 import { NavLink } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 
-/** 中英并列，方便非中文用户（厦门大学马来西亚分校） */
+/** 底部 Tab：根据语言显示纯中文或纯英文 */
 const TABS = [
-  { path: '/', iconKey: 'TreeHole', label: 'TreeHole 树洞' },
-  { path: '/eat', iconKey: 'Eat', label: 'Eat 食堂' },
-  { path: '/about', iconKey: 'Square', label: 'Square 广场' },
-  { path: '/myzone', iconKey: 'My Zone', label: 'My Zone 我的' },
+  { path: '/', iconKey: 'TreeHole', labelZh: '树洞', labelEn: 'TreeHole' },
+  { path: '/eat', iconKey: 'Eat', labelZh: '食堂', labelEn: 'Eat' },
+  { path: '/about', iconKey: 'Square', labelZh: '广场', labelEn: 'Square' },
+  { path: '/myzone', iconKey: 'My Zone', labelZh: '我的', labelEn: 'My Zone' },
 ];
 
 /** 根据当前路径得到对应的 Tab 下标（供 Layout 全屏滑动切换复用） */
@@ -31,6 +32,9 @@ export function getTabRootPath(pathname) {
 
 /** 微信风格底部 Tab：四栏，图标+文字，选中绿色；支持左右滑动切换（全屏滑动在 Layout 上） */
 function TabBar() {
+  const { lang } = useLanguage();
+  const isZh = lang !== 'en';
+
   return (
     <nav
       className="tab-bar"
@@ -47,7 +51,7 @@ function TabBar() {
           {({ isActive }) => (
             <>
               <span className="tab-icon">{getIcon(tab.iconKey, isActive)}</span>
-              <span className="tab-label">{tab.label}</span>
+              <span className="tab-label">{isZh ? tab.labelZh : tab.labelEn}</span>
             </>
           )}
         </NavLink>
