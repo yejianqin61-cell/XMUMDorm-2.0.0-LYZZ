@@ -8,6 +8,12 @@
   padding: 18px 16px;
 }
 
+.about-team-section + .about-team-section {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
 .about-team-title {
   margin: 0 0 16px;
   font-size: 16px;
