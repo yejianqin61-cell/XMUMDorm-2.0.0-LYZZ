@@ -37,6 +37,9 @@ function AboutTeam() {
 
             <dd className="about-team-name">叶健钦 Ye Jianqin</dd>
             <dd className="about-team-subtitle">CST student in Xiamen University Malaysia</dd>
+
+            <dd className="about-team-name">王琳晰 Wang Linxi</dd>
+            <dd className="about-team-subtitle">COS student in Xiamen University Malaysia</dd>
           </dl>
         </section>
       </Card>
