@@ -13,7 +13,7 @@ function AboutProfile() {
             </span>
             <div className="about-list-body">
               <span className="about-list-label">团队介绍 Team</span>
-              <span className="about-list-hint">创始人与背景 Founder & background</span>
+              <span className="about-list-hint">哈基米方阵 team</span>
             </div>
             <span className="about-list-arrow" aria-hidden>
               &gt;
