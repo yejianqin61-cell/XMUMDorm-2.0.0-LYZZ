@@ -10,7 +10,7 @@ function AboutTeam() {
         <section className="about-team-section">
           <dl className="about-team-list">
             <dt className="about-team-role">创始人&开发者 Founder&Developer </dt>
-            <dd className="about-team-name">叶健钦 YeJianqin</dd>
+            <dd className="about-team-name">叶健钦 Ye Jianqin</dd>
             <dd className="about-team-subtitle">CST Student in Xiamen University Malaysia</dd>
             <dd className="about-team-tags">哈基米</dd>
           </dl>
