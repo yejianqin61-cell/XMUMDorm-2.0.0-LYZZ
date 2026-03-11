@@ -119,7 +119,7 @@ export async function getProductComments(productId, options = {}) {
   return top.map((t) => ({
     id: t.id,
     userId: t.user_id,
-    authorName: t.author?.nickname || t.author?.username || '匿名',
+    authorName: t.author?.nickname || t.author?.username || '匿名 Anonymous',
     authorAvatar: t.author?.avatar ? getUploadUrl(t.author.avatar) : null,
     content: t.content,
     rating: t.rating,
@@ -130,7 +130,7 @@ export async function getProductComments(productId, options = {}) {
       .map((r) => ({
         id: r.id,
         userId: r.user_id,
-        authorName: r.author?.nickname || r.author?.username || '匿名',
+        authorName: r.author?.nickname || r.author?.username || '匿名 Anonymous',
         authorAvatar: r.author?.avatar ? getUploadUrl(r.author.avatar) : null,
         content: r.content,
         createdAt: r.created_at,

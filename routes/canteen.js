@@ -715,7 +715,7 @@ router.get('/products/:productId', async (req, res) => {
     }
     const commentRows = await query(
       `SELECT pc.id, pc.product_id, pc.user_id, pc.parent_id, pc.rating, pc.content, pc.created_at,
-        u.nickname AS author_nickname, u.avatar AS author_avatar,
+        u.nickname AS author_nickname, u.avatar AS author_avatar, u.role AS author_role,
         pci.file_path AS image_path, pci.sort_order AS image_sort
        FROM product_comments pc
        LEFT JOIN users u ON pc.user_id = u.id
@@ -727,6 +727,9 @@ router.get('/products/:productId', async (req, res) => {
     );
     const commentById = {};
     for (const c of commentRows || []) {
+      const isMerchantReply = c.parent_id !== null && c.author_role === 'merchant';
+      const nick = isMerchantReply ? c.author_nickname : null;
+      const avatar = isMerchantReply ? assetUrl(c.author_avatar) : null;
       if (!commentById[c.id]) {
         commentById[c.id] = {
           id: c.id,
@@ -736,7 +739,7 @@ router.get('/products/:productId', async (req, res) => {
           rating: c.rating,
           content: c.content,
           created_at: c.created_at,
-          author: { nickname: c.author_nickname, avatar: assetUrl(c.author_avatar) },
+          author: { nickname: nick, avatar },
           images: []
         };
       }
@@ -947,7 +950,7 @@ router.post('/products/:productId/comments', authenticateToken, (req, res, next)
 
     const rows = await query(
       `SELECT pc.id, pc.product_id, pc.user_id, pc.parent_id, pc.rating, pc.content, pc.created_at,
-        u.nickname AS author_nickname, u.avatar AS author_avatar,
+        u.nickname AS author_nickname, u.avatar AS author_avatar, u.role AS author_role,
         pci.file_path AS image_path, pci.sort_order AS image_sort
        FROM product_comments pc
        LEFT JOIN users u ON pc.user_id = u.id
@@ -957,6 +960,9 @@ router.post('/products/:productId/comments', authenticateToken, (req, res, next)
     );
     const commentById = {};
     for (const c of rows || []) {
+      const isMerchantReply = c.parent_id !== null && c.author_role === 'merchant';
+      const nick = isMerchantReply ? c.author_nickname : null;
+      const avatar = isMerchantReply ? assetUrl(c.author_avatar) : null;
       if (!commentById[c.id]) {
         commentById[c.id] = {
           id: c.id,
@@ -966,7 +972,7 @@ router.post('/products/:productId/comments', authenticateToken, (req, res, next)
           rating: c.rating,
           content: c.content,
           created_at: c.created_at,
-          author: { nickname: c.author_nickname, avatar: assetUrl(c.author_avatar) },
+          author: { nickname: nick, avatar },
           images: []
         };
       }
@@ -995,7 +1001,7 @@ router.get('/products/:productId/comments', async (req, res) => {
     }
     const rows = await query(
       `SELECT pc.id, pc.product_id, pc.user_id, pc.parent_id, pc.rating, pc.content, pc.created_at,
-        u.nickname AS author_nickname, u.avatar AS author_avatar,
+        u.nickname AS author_nickname, u.avatar AS author_avatar, u.role AS author_role,
         pci.file_path AS image_path, pci.sort_order AS image_sort
        FROM product_comments pc
        LEFT JOIN users u ON pc.user_id = u.id
@@ -1007,6 +1013,9 @@ router.get('/products/:productId/comments', async (req, res) => {
     );
     const commentById = {};
     for (const c of rows || []) {
+      const isMerchantReply = c.parent_id !== null && c.author_role === 'merchant';
+      const nick = isMerchantReply ? c.author_nickname : null;
+      const avatar = isMerchantReply ? assetUrl(c.author_avatar) : null;
       if (!commentById[c.id]) {
         commentById[c.id] = {
           id: c.id,
@@ -1016,7 +1025,7 @@ router.get('/products/:productId/comments', async (req, res) => {
           rating: c.rating,
           content: c.content,
           created_at: c.created_at,
-          author: { nickname: c.author_nickname, avatar: assetUrl(c.author_avatar) },
+          author: { nickname: nick, avatar },
           images: []
         };
       }

@@ -25,11 +25,11 @@ import './FoodDetail.css';
 function mapCommentsToReviews(list) {
   return (list || []).map((r) => ({
     ...r,
-    userName: r.authorName ?? '匿名',
+    userName: r.authorName ?? '匿名 Anonymous',
     images: (r.images || []).map((i) => (typeof i === 'string' ? i : i?.url)).filter(Boolean),
     replies: (r.replies || []).map((rep) => ({
       ...rep,
-      userName: rep.authorName ?? '匿名',
+      userName: rep.authorName ?? '匿名 Anonymous',
     })),
   }));
 }
