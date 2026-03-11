@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { getProfile } from '../api/users';
-import { getMyProductReviews } from '../api/canteen';
 import { API_BASE_URL } from '../api/config';
 import { getApiErrorMessage } from '../utils/apiError';
 import EmptyState from '../components/EmptyState';
 import './MyZone.css';
 
 const TAB_POSTS = 'posts';
-const TAB_REVIEWS = 'reviews';
 
 function prefixAvatar(url) {
   return url && !url.startsWith('http') ? `${API_BASE_URL}${url}` : url;
@@ -23,7 +21,6 @@ function UserZone() {
   const [activeTab, setActiveTab] = useState(TAB_POSTS);
   const [profileUser, setProfileUser] = useState(null);
   const [posts, setPosts] = useState([]);
-  const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -36,11 +33,8 @@ function UserZone() {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    Promise.all([
-      getProfile(userId, { page: 1, pageSize: 50 }),
-      getMyProductReviews({ page: 1, pageSize: 50, userId }),
-    ])
-      .then(([profileData, reviewsData]) => {
+    getProfile(userId, { page: 1, pageSize: 50 })
+      .then((profileData) => {
         if (cancelled) return;
         const u = profileData?.user || null;
         setProfileUser(u ? { ...u, avatar: u.avatar ? prefixAvatar(u.avatar) : null } : null);
@@ -50,7 +44,6 @@ function UserZone() {
           author: u ? { ...u, avatar: u.avatar } : null,
         }));
         setPosts(postList);
-        setReviews(reviewsData?.list ?? []);
       })
       .catch((err) => {
         if (!cancelled) setError(getApiErrorMessage(err));
@@ -94,7 +87,6 @@ function UserZone() {
 
   const avatarBg = profileUser?.avatar ? prefixAvatar(profileUser.avatar) : '';
   const postCount = posts.length;
-  const reviewCount = reviews.length;
   const displayName = profileUser?.nickname ?? profileUser?.username ?? '未设置';
 
   return (
@@ -122,9 +114,6 @@ function UserZone() {
                 <span className="myzone-header-stat">
                   <strong>{postCount}</strong> 帖子
                 </span>
-                <span className="myzone-header-stat">
-                  <strong>{reviewCount}</strong> 点评
-                </span>
               </div>
             </div>
           </div>
@@ -147,15 +136,6 @@ function UserZone() {
           onClick={() => setActiveTab(TAB_POSTS)}
         >
           帖子
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === TAB_REVIEWS}
-          className={`myzone-tab ${activeTab === TAB_REVIEWS ? 'active' : ''}`}
-          onClick={() => setActiveTab(TAB_REVIEWS)}
-        >
-          点评
         </button>
       </div>
 
@@ -181,43 +161,6 @@ function UserZone() {
                     </div>
                   </Link>
                 ))}
-              </div>
-            )}
-          </div>
-        )}
-        {activeTab === TAB_REVIEWS && (
-          <div className="myzone-grid-wrap">
-            {reviews.length === 0 ? (
-              <EmptyState
-                title="暂无点评"
-                description="该用户还没有发表过食堂点评。"
-              />
-            ) : (
-              <div className="myzone-grid myzone-grid-reviews">
-                {reviews.map((r) => {
-                  const cover = r.product_image || (r.images && r.images[0]?.url);
-                  const imgUrl =
-                    cover && typeof cover === 'string'
-                      ? cover
-                      : cover && cover.url
-                      ? cover.url
-                      : null;
-                  return (
-                    <Link
-                      key={r.id}
-                      to={`/eat/food/${r.product_id}`}
-                      className="myzone-grid-item myzone-grid-item-review"
-                    >
-                      <div className="myzone-grid-item-media">
-                        {imgUrl ? (
-                          <img src={imgUrl} alt="" />
-                        ) : (
-                          <div className="myzone-grid-item-placeholder">⭐</div>
-                        )}
-                      </div>
-                    </Link>
-                  );
-                })}
               </div>
             )}
           </div>
