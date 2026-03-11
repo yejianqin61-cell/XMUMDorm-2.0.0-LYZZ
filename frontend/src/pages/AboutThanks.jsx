@@ -35,6 +35,14 @@ const THANKS_LIST = [
     zh: '同安区五显镇赖秀娇诊所 程新招医生',
     en: 'Lai Xiujiao Clinic, Wuxian Town, Tong\'an District Dr. Cheng Xinzhao',
   },
+  {
+    zh: '厦门大学马来西亚分校 Zhu Xiaofan教授',
+    en: 'Xiamen University Malaysia Prof. Zhu Xiaofan',
+  },
+  {
+    zh: '厦门 涂宜晖女士',
+    en: 'Xiamen Ms. Tu Yihui',
+  },
 ];
 
 function AboutThanks() {
