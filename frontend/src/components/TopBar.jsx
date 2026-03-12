@@ -1,8 +1,11 @@
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 
-/** 微信风格顶部栏：标题居中，可选左侧返回、右侧邮箱 */
+/** 微信风格顶部栏：标题居中，可选左侧返回、右侧语言切换+信箱 */
 function TopBar({ title, showBack }) {
   const navigate = useNavigate();
+  const { lang, setLang } = useLanguage();
+  const isZh = lang !== 'en';
 
   return (
     <header className="top-bar">
@@ -24,14 +27,33 @@ function TopBar({ title, showBack }) {
           <span className="top-bar-title-text">{title}</span>
           <span className="top-bar-title-decor top-bar-title-decor-right" aria-hidden />
         </h1>
-        <button
-          type="button"
-          className="top-bar-mailbox"
-          onClick={() => navigate('/mailbox')}
-          aria-label="信箱 Mailbox"
-        >
-          <MailboxIcon />
-        </button>
+        <div className="top-bar-right">
+          <div className="top-bar-lang" role="group" aria-label={isZh ? '语言切换' : 'Language switch'}>
+            <button
+              type="button"
+              className={`top-bar-lang-btn ${isZh ? 'active' : ''}`}
+              onClick={() => setLang('zh')}
+            >
+              {isZh ? '中文' : 'Chinese'}
+            </button>
+            <span className="top-bar-lang-sep">/</span>
+            <button
+              type="button"
+              className={`top-bar-lang-btn ${!isZh ? 'active' : ''}`}
+              onClick={() => setLang('en')}
+            >
+              English
+            </button>
+          </div>
+          <button
+            type="button"
+            className="top-bar-mailbox"
+            onClick={() => navigate('/mailbox')}
+            aria-label="信箱 Mailbox"
+          >
+            <MailboxIcon />
+          </button>
+        </div>
       </div>
     </header>
   );

@@ -2,30 +2,13 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import './AboutUs.css';
 
-/** 关于我们：白底 70% 透明、左侧图标、右侧箭头、无缝排列 */
+/** 关于我们：白底 70% 透明、左侧图标、右侧箭头、无缝排列（语言切换已移至顶栏） */
 function AboutUs() {
-  const { lang, setLang } = useLanguage();
+  const { lang } = useLanguage();
   const isZh = lang !== 'en';
 
   return (
     <div className="about-page">
-      <div className="about-lang-toggle" role="group" aria-label={isZh ? '语言切换' : 'Language switch'}>
-        <button
-          type="button"
-          className={`about-lang-btn ${isZh ? 'active' : ''}`}
-          onClick={() => setLang('zh')}
-        >
-          {isZh ? '中文' : 'Chinese'}
-        </button>
-        <span className="about-lang-sep">/</span>
-        <button
-          type="button"
-          className={`about-lang-btn ${!isZh ? 'active' : ''}`}
-          onClick={() => setLang('en')}
-        >
-          English
-        </button>
-      </div>
       <ul className="about-list" aria-label={isZh ? '关于我们入口列表' : 'About entries'}>
         <li className="about-list-item">
           <Link to="/about/thanks" className="about-list-row about-list-row-link">
