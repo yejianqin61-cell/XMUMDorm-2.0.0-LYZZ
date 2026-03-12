@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dorm-cache-v1';
+const CACHE_NAME = 'dorm-cache-v2';
 const URLS_TO_CACHE = [
   '/',
   '/index.html',
@@ -24,14 +24,20 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// 网络优先：先请求网络，失败或离线时才用缓存，这样网站更新后手机无需清缓存
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
 
   event.respondWith(
-    caches.match(request).then((cached) => {
-      if (cached) return cached;
-      return fetch(request).catch(() => cached);
-    })
+    fetch(request)
+      .then((response) => {
+        const clone = response.clone();
+        if (response.ok) {
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        }
+        return response;
+      })
+      .catch(() => caches.match(request))
   );
 });
