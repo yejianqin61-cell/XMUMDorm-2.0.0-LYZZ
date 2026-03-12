@@ -16,6 +16,17 @@
   padding: 0 16px;
 }
 
+.top-bar-left {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-left: 8px;
+}
+
 .top-bar-placeholder {
   width: 24px;
   height: 24px;
@@ -23,10 +34,9 @@
 }
 
 .top-bar-back {
-  position: absolute;
-  left: 8px;
   width: 44px;
   height: 44px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -85,15 +95,19 @@
   background-image: url('/topbar-right.png');
 }
 
-.top-bar-right {
+.top-bar-mailbox {
   position: absolute;
-  right: 0;
+  right: 8px;
   top: 0;
+  width: 44px;
   height: 44px;
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding-right: 8px;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--wx-text);
 }
 
 .top-bar-lang {
@@ -124,19 +138,6 @@
 
 .top-bar-lang-sep {
   opacity: 0.6;
-}
-
-.top-bar-mailbox {
-  width: 44px;
-  height: 44px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: var(--wx-text);
 }
 
 .top-bar-mailbox:hover {

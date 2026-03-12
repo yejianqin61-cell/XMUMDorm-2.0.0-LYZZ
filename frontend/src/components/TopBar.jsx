@@ -10,24 +10,19 @@ function TopBar({ title, showBack }) {
   return (
     <header className="top-bar">
       <div className="top-bar-inner">
-        {showBack ? (
-          <button
-            type="button"
-            className="top-bar-back"
-            onClick={() => navigate(-1)}
-            aria-label="返回 Back"
-          >
-            <BackIcon />
-          </button>
-        ) : (
-          <div className="top-bar-placeholder" />
-        )}
-        <h1 className="top-bar-title">
-          <span className="top-bar-title-decor top-bar-title-decor-left" aria-hidden />
-          <span className="top-bar-title-text">{title}</span>
-          <span className="top-bar-title-decor top-bar-title-decor-right" aria-hidden />
-        </h1>
-        <div className="top-bar-right">
+        <div className="top-bar-left">
+          {showBack ? (
+            <button
+              type="button"
+              className="top-bar-back"
+              onClick={() => navigate(-1)}
+              aria-label="返回 Back"
+            >
+              <BackIcon />
+            </button>
+          ) : (
+            <div className="top-bar-placeholder" />
+          )}
           <div className="top-bar-lang" role="group" aria-label={isZh ? '语言切换' : 'Language switch'}>
             <button
               type="button"
@@ -45,15 +40,20 @@ function TopBar({ title, showBack }) {
               English
             </button>
           </div>
-          <button
-            type="button"
-            className="top-bar-mailbox"
-            onClick={() => navigate('/mailbox')}
-            aria-label="信箱 Mailbox"
-          >
-            <MailboxIcon />
-          </button>
         </div>
+        <h1 className="top-bar-title">
+          <span className="top-bar-title-decor top-bar-title-decor-left" aria-hidden />
+          <span className="top-bar-title-text">{title}</span>
+          <span className="top-bar-title-decor top-bar-title-decor-right" aria-hidden />
+        </h1>
+        <button
+          type="button"
+          className="top-bar-mailbox"
+          onClick={() => navigate('/mailbox')}
+          aria-label="信箱 Mailbox"
+        >
+          <MailboxIcon />
+        </button>
       </div>
     </header>
   );
