@@ -91,7 +91,14 @@ function AboutTeam() {
               {isZh ? '林灏云' : 'Lin Haoyun'}
             </dd>
             <dd className="about-team-subtitle">
-              {isZh ? '厦门大学马来西亚分校 计算机科学与技术专业学生' : 'CST student in Xiamen University Malaysia'}
+              {isZh ? '厦门大学马来西亚分校 计算机科学与技术专业' : 'CST student in Xiamen University Malaysia'}
+            </dd>
+
+            <dd className="about-team-name">
+              {isZh ? '夏悠然' : 'Xia Youran'}
+            </dd>
+            <dd className="about-team-subtitle">
+              {isZh ? '厦门大学马来西亚分校 计算机科学与技术' : 'CYS student in Xiamen University Malaysia'}
             </dd>
           </dl>
         </section>
