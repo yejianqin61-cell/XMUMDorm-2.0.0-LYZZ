@@ -29,7 +29,7 @@ function TopBar({ title, showBack }) {
               className={`top-bar-lang-btn ${isZh ? 'active' : ''}`}
               onClick={() => setLang('zh')}
             >
-              {isZh ? '中文' : 'Chinese'}
+              中
             </button>
             <span className="top-bar-lang-sep">/</span>
             <button
@@ -37,7 +37,7 @@ function TopBar({ title, showBack }) {
               className={`top-bar-lang-btn ${!isZh ? 'active' : ''}`}
               onClick={() => setLang('en')}
             >
-              English
+              EN
             </button>
           </div>
         </div>
