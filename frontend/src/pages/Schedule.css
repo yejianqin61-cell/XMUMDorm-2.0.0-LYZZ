@@ -69,20 +69,10 @@
   margin-bottom: 10px;
 }
 
-.schedule-week-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  color: var(--wx-text, #111);
-}
-
-.schedule-week-input {
-  width: 76px;
-  border-radius: 10px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  padding: 8px 10px;
-  background: rgba(255, 255, 255, 0.85);
+.schedule-week-fixed {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--wx-text-secondary, #666);
 }
 
 .schedule-days {
@@ -177,6 +167,30 @@
   font-weight: 700;
   color: var(--wx-text, #111);
   margin-bottom: 8px;
+}
+
+.schedule-import-guide {
+  margin-bottom: 10px;
+  padding: 10px 10px;
+  border-radius: 12px;
+  background: rgba(7, 193, 96, 0.08);
+  border: 1px solid rgba(7, 193, 96, 0.18);
+}
+
+.schedule-import-guide-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--wx-green, #07c160);
+  margin-bottom: 6px;
+}
+
+.schedule-import-guide-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: var(--wx-text, #111);
+  opacity: 0.92;
+  line-height: 1.5;
 }
 
 .schedule-preview-stats {

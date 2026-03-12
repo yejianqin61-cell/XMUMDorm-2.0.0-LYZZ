@@ -5,7 +5,8 @@
 -- - timetable_meetings：一门课的具体上课时间/地点/周次（可多条）
 -- - timetable_import_logs：导入日志（便于排查解析问题）
 
-USE jack_campus;
+-- 注意：不要在迁移里硬编码库名（Railway 可能是 railway，本地可能是 jack_campus）。
+-- 建议通过连接串选择数据库，本文件将使用当前连接的默认 database。
 
 CREATE TABLE IF NOT EXISTS timetable_courses (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,

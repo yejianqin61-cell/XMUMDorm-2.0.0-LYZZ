@@ -12,7 +12,7 @@ function Schedule() {
   const isZh = lang !== 'en';
   const [tab, setTab] = useState('view'); // 'view' | 'import'
 
-  const [week, setWeek] = useState(1);
+  const FIXED_WEEK = 1;
   const [loadingWeek, setLoadingWeek] = useState(false);
   const [weekData, setWeekData] = useState(null);
 
@@ -35,7 +35,7 @@ function Schedule() {
   };
 
   useEffect(() => {
-    loadWeek(week);
+    loadWeek(FIXED_WEEK);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -67,7 +67,7 @@ function Schedule() {
       Toast.success(isZh ? '导入成功' : 'Imported');
       setTab('view');
       setPreview(null);
-      await loadWeek(week);
+      await loadWeek(FIXED_WEEK);
     } catch (e) {
       Toast.error(e?.message || (isZh ? '导入失败' : 'Import failed'));
     } finally {
@@ -80,21 +80,13 @@ function Schedule() {
     return (
       <div className="schedule-week">
         <div className="schedule-week-toolbar">
-          <label className="schedule-week-label">
-            {isZh ? '周次' : 'Week'}
-            <input
-              className="schedule-week-input"
-              type="number"
-              min="1"
-              max="60"
-              value={week}
-              onChange={(e) => setWeek(Number(e.target.value) || 1)}
-            />
-          </label>
+          <div className="schedule-week-fixed">
+            {isZh ? '固定课表（仅在重新导入后更新）' : 'Fixed schedule (updates only after re-import)'}
+          </div>
           <button
             type="button"
             className="schedule-btn schedule-btn-primary"
-            onClick={() => loadWeek(week)}
+            onClick={() => loadWeek(FIXED_WEEK)}
             disabled={loadingWeek}
           >
             {loadingWeek ? (isZh ? '加载中…' : 'Loading…') : (isZh ? '刷新' : 'Refresh')}
@@ -142,6 +134,20 @@ function Schedule() {
       <div className="schedule-import">
         <div className="schedule-import-card">
           <div className="schedule-import-title">{isZh ? '粘贴课程表文本' : 'Paste timetable text'}</div>
+          <div className="schedule-import-guide">
+            <div className="schedule-import-guide-title">{isZh ? '使用方法' : 'How to use'}</div>
+            <ol className="schedule-import-guide-list">
+              <li>{isZh ? '进入学校 AC 系统' : 'Open the university AC system'}</li>
+              <li>{isZh ? '进入 Course List' : 'Go to Course List'}</li>
+              <li>
+                {isZh
+                  ? '从表格左上角复制到右下角的所有文字'
+                  : 'Select and copy all text from the top-left to the bottom-right of the table'}
+              </li>
+              <li>{isZh ? '粘贴至导入框' : 'Paste into the import box'}</li>
+              <li>{isZh ? '点击导入' : 'Click Import'}</li>
+            </ol>
+          </div>
           <textarea
             className="schedule-import-textarea"
             value={text}
