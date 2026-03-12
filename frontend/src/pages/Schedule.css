@@ -138,11 +138,25 @@
   color: var(--wx-text-secondary, #666);
 }
 
+.schedule-class-time,
+.schedule-class-venue {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--wx-text, #111);
+}
+
+.schedule-class-venue {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.05);
+}
+
 .schedule-class-code {
   flex-shrink: 0;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--wx-green, #07c160);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--wx-text-secondary, #888);
+  opacity: 0.7;
 }
 
 .schedule-import-card,
