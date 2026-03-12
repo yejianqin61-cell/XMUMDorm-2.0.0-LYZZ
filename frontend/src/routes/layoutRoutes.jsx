@@ -8,6 +8,7 @@ import AboutThanks from '../pages/AboutThanks';
 import AboutEditorNote from '../pages/AboutEditorNote';
 import AboutAlgorithm from '../pages/AboutAlgorithm';
 import AboutProfile from '../pages/AboutProfile';
+import Schedule from '../pages/Schedule';
 import MyZone from '../pages/MyZone';
 import UserZone from '../pages/UserZone';
 import MyPosts from '../pages/MyPosts';
@@ -35,6 +36,7 @@ export const layoutRoutes = (
     <Route path="about" element={<AboutUs />} />
     <Route path="about/thanks" element={<AboutThanks />} />
     <Route path="about/profile" element={<AboutProfile />} />
+    <Route path="about/schedule" element={<Schedule />} />
     <Route path="about/team" element={<AboutTeam />} />
     <Route path="about/editor-note" element={<AboutEditorNote />} />
     <Route path="about/algorithm" element={<AboutAlgorithm />} />
