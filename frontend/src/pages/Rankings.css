@@ -118,9 +118,8 @@
   font-size: 14px;
   font-weight: 500;
   color: var(--wx-text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  /* 允许名称自动换行，显示完整内容 */
+  white-space: normal;
 }
 
 .rankings-meta {

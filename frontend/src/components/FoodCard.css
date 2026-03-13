@@ -56,9 +56,8 @@
   color: var(--wx-text);
   display: block;
   margin-bottom: 4px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  /* 允许菜品名称自动换行，显示完整内容 */
+  white-space: normal;
 }
 
 .food-card-price-row {
