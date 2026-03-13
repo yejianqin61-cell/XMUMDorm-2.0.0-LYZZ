@@ -85,6 +85,7 @@ function FoodReviewPublish() {
         setTimeout(() => navigate(`/eat/food/${id}`, { replace: true }), 600);
       })
       .catch((err) => {
+        // 对于点评发布这种强业务场景，优先展示后端的具体报错信息
         Toast.error(getApiErrorMessage(err));
       })
       .finally(() => {
