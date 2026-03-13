@@ -84,7 +84,7 @@ function AboutTeam() {
               {isZh ? '凌邦耀' : 'Ling Bangyao'}
             </dd>
             <dd className="about-team-subtitle">
-              {isZh ? '厦门大学马来西亚分校网络安全专业学生' : 'CYS student in Xiamen Universiry Malaysia'}
+              {isZh ? '厦门大学马来西亚分校 网络安全专业' : 'CYS student in Xiamen Universiry Malaysia'}
             </dd>
 
             <dd className="about-team-name">
@@ -98,7 +98,7 @@ function AboutTeam() {
               {isZh ? '夏悠然' : 'Xia Youran'}
             </dd>
             <dd className="about-team-subtitle">
-              {isZh ? '厦门大学马来西亚分校 计算机科学与技术' : 'CYS student in Xiamen University Malaysia'}
+              {isZh ? '厦门大学马来西亚分校 计算机科学与技术专业' : 'CST student in Xiamen University Malaysia'}
             </dd>
           </dl>
         </section>
