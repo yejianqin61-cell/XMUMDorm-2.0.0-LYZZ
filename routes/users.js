@@ -175,7 +175,7 @@ router.patch('/me/avatar', authenticateToken, (req, res, next) => {
     if (err) {
       return res.status(400).json({
         status: -1,
-        message: err.message || '仅支持 jpg/png/webp，单张≤5MB'
+        message: err.message || '仅支持 jpg/png/webp，单张≤8MB'
       });
     }
     next();
@@ -187,7 +187,9 @@ router.patch('/me/avatar', authenticateToken, (req, res, next) => {
     }
     const ext = path.extname(req.file.originalname || '').toLowerCase() || '.jpg';
     const safeExt = ['.jpg', '.jpeg', '.png', '.webp'].includes(ext) ? (ext === '.jpeg' ? '.jpg' : ext) : '.jpg';
-    const key = `avatars/user_${req.user.id}${safeExt}`;
+    // 每次更新头像使用带时间戳的新文件名，避免浏览器长时间缓存旧头像
+    const ts = Date.now();
+    const key = `avatars/user_${req.user.id}_${ts}${safeExt}`;
     await uploadBuffer({ key, body: req.file.buffer, contentType: guessContentType(req.file.mimetype, safeExt) });
     const relativePath = key;
     await query('UPDATE users SET avatar = ? WHERE id = ?', [relativePath, req.user.id]);
