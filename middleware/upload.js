@@ -2,7 +2,7 @@
  * ============================================
  * 上传中间件（帖子图片 / 头像 / 商品图 / 评论图）
  * ============================================
- * 2.0.0：帖子图片 jpg/png/webp，≤5MB，最多 3 张
+ * 2.0.0：帖子图片 jpg/png/webp，≤8MB，最多 3 张
  * 食堂：商品图最多 5 张、评论图最多 3 张，格式与大小与帖子图片一致
  */
 
@@ -12,7 +12,7 @@ const { uploadBuffer, guessContentType } = require('../services/objectStorage');
 
 const ALLOWED_IMAGE_MIMES = ['image/jpeg', 'image/png', 'image/webp'];
 const ALLOWED_IMAGE_EXT = ['.jpg', '.jpeg', '.png', '.webp'];
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = 8 * 1024 * 1024; // 8MB
 
 // 云存储模式下不再确保本地 uploads 目录存在；旧 /uploads 静态服务可用于过渡期兼容历史数据。
 

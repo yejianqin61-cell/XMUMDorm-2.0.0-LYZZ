@@ -101,7 +101,7 @@ function MerchantShopEdit() {
                 <div className="merchant-shop-edit-logo merchant-shop-edit-logo-placeholder">Logo</div>
               )}
             </label>
-            <span className="merchant-shop-edit-hint">点击上传，jpg/png/webp 单张≤5MB</span>
+            <span className="merchant-shop-edit-hint">点击上传，jpg/png/webp 单张≤8MB</span>
           </div>
         </div>
         <div className="merchant-shop-edit-field">

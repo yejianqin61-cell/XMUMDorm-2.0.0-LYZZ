@@ -115,7 +115,7 @@ router.post('/', authenticateToken, (req, res, next) => {
     if (err) {
       return res.status(400).json({
         status: -1,
-        message: err.message || '图片格式或大小不符合要求（仅 jpg/png/webp，单张≤5MB，最多3张）'
+        message: err.message || '图片格式或大小不符合要求（仅 jpg/png/webp，单张≤8MB，最多3张）'
       });
     }
     next();
