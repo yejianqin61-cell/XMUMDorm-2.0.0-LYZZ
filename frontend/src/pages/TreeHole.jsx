@@ -81,6 +81,8 @@ function TreeHole() {
               main.scrollTop = cachedScroll.scrollTop;
             });
           }
+          // 使用缓存秒开后，仍然主动刷新第一页，确保能看到最新动态
+          loadPage(1);
           return;
         }
       }
