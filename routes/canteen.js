@@ -562,7 +562,7 @@ router.post('/products', authenticateToken, (req, res, next) => {
           images: []
         };
       }
-      if (r.file_path) byId[r.id].images.push({ url: assetUrl(r.file_path), sort_order: r.sort_order });
+      if (r.file_path) byId[r.id].images.push({ url: assetUrl(r.file_path, r.updated_at), sort_order: r.sort_order });
     }
     const product = byId[productId];
     if (product) product.images.sort((a, b) => a.sort_order - b.sort_order);
@@ -626,7 +626,7 @@ router.get('/shops/:shopId/products', async (req, res) => {
           images: []
         };
       }
-      if (r.file_path) byId[r.id].images.push({ url: assetUrl(r.file_path), sort_order: r.sort_order });
+      if (r.file_path) byId[r.id].images.push({ url: assetUrl(r.file_path, r.updated_at), sort_order: r.sort_order });
     }
     const list = Object.values(byId).map((p) => {
       p.images.sort((a, b) => a.sort_order - b.sort_order);
@@ -700,7 +700,7 @@ router.get('/products/:productId', async (req, res) => {
           images: []
         };
       }
-      if (r.file_path) byId[r.id].images.push({ url: assetUrl(r.file_path), sort_order: r.sort_order });
+      if (r.file_path) byId[r.id].images.push({ url: assetUrl(r.file_path, r.updated_at), sort_order: r.sort_order });
     }
     const product = byId[productId];
     if (product) product.images.sort((a, b) => a.sort_order - b.sort_order);
@@ -813,7 +813,7 @@ router.patch('/products/:productId', authenticateToken, async (req, res) => {
       if (!byId[r.id]) {
         byId[r.id] = { id: r.id, shop_id: r.shop_id, category_id: r.category_id, category_name: r.category_name, name: r.name, description: r.description, price: r.price != null ? Number(r.price) : null, created_at: r.created_at, updated_at: r.updated_at, images: [] };
       }
-      if (r.file_path) byId[r.id].images.push({ url: assetUrl(r.file_path), sort_order: r.sort_order });
+      if (r.file_path) byId[r.id].images.push({ url: assetUrl(r.file_path, r.updated_at), sort_order: r.sort_order });
     }
     const product = byId[productId];
     if (product) product.images.sort((a, b) => a.sort_order - b.sort_order);
