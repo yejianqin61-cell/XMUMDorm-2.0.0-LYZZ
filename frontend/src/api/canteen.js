@@ -95,8 +95,32 @@ export function createProduct(body) {
   return request('/api/canteen/products', { method: 'POST', body: form });
 }
 
+/**
+ * 更新商品。若传 imageFile 或 images 则用 FormData（会替换商品图），否则用 JSON。
+ */
 export function updateProduct(productId, body) {
-  return patch(`/api/canteen/products/${productId}`, body);
+  const { name, description, category_id, price, imageFile, images } = body || {};
+  const hasImages = (imageFile && (imageFile instanceof File || (typeof Blob !== 'undefined' && imageFile instanceof Blob))) ||
+    (images && Array.isArray(images) && images.length > 0);
+  if (hasImages) {
+    const form = new FormData();
+    if (name != null) form.append('name', String(name).trim());
+    if (description !== undefined) form.append('description', String(description).trim());
+    if (category_id != null) form.append('category_id', String(category_id));
+    if (price !== undefined && price !== null && price !== '') form.append('price', String(Number(price)));
+    if (imageFile instanceof File || (typeof Blob !== 'undefined' && imageFile instanceof Blob)) {
+      form.append('images', imageFile, imageFile instanceof File ? imageFile.name : undefined);
+    }
+    if (images && Array.isArray(images)) {
+      images.forEach((f) => {
+        if (f instanceof File || (typeof Blob !== 'undefined' && f instanceof Blob)) {
+          form.append('images', f, f instanceof File ? f.name : undefined);
+        }
+      });
+    }
+    return request(`/api/canteen/products/${productId}`, { method: 'PATCH', body: form });
+  }
+  return patch(`/api/canteen/products/${productId}`, { name, description, category_id, price });
 }
 
 export function deleteProduct(productId) {

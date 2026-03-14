@@ -1,0 +1,9 @@
+{
+  "shopId": 1,
+  "categoryId": 1,
+  "products": [
+    { "name": "宫保鸡丁", "price": 12.5, "description": "经典川菜" },
+    { "name": "宫保鸡丁", "price": 12.5, "description": "经典川菜" },
+    { "name": "宫保鸡丁", "price": 12.5, "description": "经典川菜" }
+  ]
+}

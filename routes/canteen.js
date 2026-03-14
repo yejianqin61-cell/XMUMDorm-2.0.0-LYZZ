@@ -765,7 +765,18 @@ router.get('/products/:productId', async (req, res) => {
   }
 });
 
-router.patch('/products/:productId', authenticateToken, async (req, res) => {
+// 编辑商品：支持 JSON 或 multipart（带新图片时用 FormData，会替换旧图）
+router.patch('/products/:productId', authenticateToken, (req, res, next) => {
+  const isMultipart = (req.headers['content-type'] || '').toLowerCase().includes('multipart/form-data');
+  if (isMultipart) {
+    productImagesUpload(req, res, (err) => {
+      if (err) return res.status(400).json({ status: -1, message: err.message || '图片格式或大小不符合要求' });
+      next();
+    });
+  } else {
+    next();
+  }
+}, async (req, res) => {
   try {
     const productId = parseInt(req.params.productId, 10);
     if (!productId) return res.status(400).json({ status: -1, message: '商品 ID 无效' });
@@ -800,6 +811,15 @@ router.patch('/products/:productId', authenticateToken, async (req, res) => {
     }
     params.push(productId);
     await query(`UPDATE products SET ${updates.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, params);
+
+    const files = req.files || [];
+    if (files.length > 0) {
+      await query('DELETE FROM product_images WHERE product_id = ?', [productId]);
+      const paths = await saveProductImages(files, productId);
+      for (let i = 0; i < paths.length; i++) {
+        await query('INSERT INTO product_images (product_id, file_path, sort_order) VALUES (?, ?, ?)', [productId, paths[i], i]);
+      }
+    }
 
     const rows = await query(
       `SELECT p.id, p.shop_id, p.category_id, p.name, p.description, p.price, p.created_at, p.updated_at,

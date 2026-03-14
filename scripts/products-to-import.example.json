@@ -1,0 +1,6 @@
+[
+  { "name": "宫保鸡丁", "price": 12.5, "description": "经典川菜，鸡丁配花生" },
+  { "name": "鱼香肉丝", "price": 11, "description": "鱼香味型，下饭" },
+  { "name": "番茄炒蛋", "price": 8, "description": "家常菜" },
+  { "name": "青椒土豆丝", "price": 6.5, "description": "素菜" }
+]

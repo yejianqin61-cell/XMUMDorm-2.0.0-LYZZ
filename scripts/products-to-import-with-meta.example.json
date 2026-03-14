@@ -1,0 +1,9 @@
+{
+  "shopId": 1,
+  "categoryId": 2,
+  "products": [
+    { "name": "宫保鸡丁", "price": 12.5, "description": "经典川菜" },
+    { "name": "鱼香肉丝", "price": 11, "description": "鱼香味型" },
+    { "name": "番茄炒蛋", "price": 8, "description": "家常菜" }
+  ]
+}

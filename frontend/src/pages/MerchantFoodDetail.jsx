@@ -67,13 +67,17 @@ function MerchantFoodDetail() {
     if (!food) return;
     setError(null);
     setSubmitLoading(true);
-    updateProduct(food.id, {
+    const payload = {
       name: values.name,
       description: values.description,
       category_id: values.categoryId != null ? values.categoryId : food.category_id,
       price: values.price !== undefined ? values.price : food.price,
-    })
+    };
+    if (values.imageFile) payload.imageFile = values.imageFile;
+    updateProduct(food.id, payload)
       .then((updated) => {
+        const imgs = updated?.images ?? [];
+        const firstImgUrl = imgs.length ? getUploadUrl(imgs[0].url) : null;
         setFood((prev) => ({
           ...prev,
           name: updated?.name ?? prev.name,
@@ -81,6 +85,7 @@ function MerchantFoodDetail() {
           category_id: updated?.category_id ?? prev.category_id,
           categoryId: updated?.category_id ?? prev.categoryId,
           price: updated?.price !== undefined ? updated.price : prev.price,
+          image: firstImgUrl ?? prev.image,
         }));
         Toast.success('已保存');
         setIsEditing(false);
