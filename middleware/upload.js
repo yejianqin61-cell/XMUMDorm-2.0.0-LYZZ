@@ -8,7 +8,8 @@
 
 const multer = require('multer');
 const path = require('path');
-const { uploadBuffer, guessContentType } = require('../services/objectStorage');
+const fs = require('fs');
+const { uploadBuffer, guessContentType, isObjectStorageConfigured } = require('../services/objectStorage');
 
 const ALLOWED_IMAGE_MIMES = ['image/jpeg', 'image/png', 'image/webp'];
 const ALLOWED_IMAGE_EXT = ['.jpg', '.jpeg', '.png', '.webp'];
@@ -62,17 +63,30 @@ const shopLogoUpload = multer({
 }).single('logo');
 
 /**
- * 将内存中的帖子图片上传到对象存储：posts/post_<postId>_<index>.<ext>
+ * 将内存中的帖子图片上传：若已配置对象存储则上传到云存储，否则写入本地 uploads/posts/
+ * 返回的 key 统一为 posts/post_<postId>_<index>.<ext>，供 assetUrl 拼接 URL
  */
 async function savePostImages(files, postId) {
   const keys = [];
   const extMap = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp' };
+  const useObjectStorage = isObjectStorageConfigured();
+
+  if (!useObjectStorage) {
+    const dir = path.join(process.cwd(), 'uploads', 'posts');
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  }
+
   for (let i = 0; i < (files || []).length; i++) {
     const file = files[i];
     const ext = extMap[file.mimetype] || '.jpg';
     const filename = `post_${postId}_${i + 1}${ext}`;
     const key = `posts/${filename}`;
-    await uploadBuffer({ key, body: file.buffer, contentType: guessContentType(file.mimetype, ext) });
+    if (useObjectStorage) {
+      await uploadBuffer({ key, body: file.buffer, contentType: guessContentType(file.mimetype, ext) });
+    } else {
+      const filePath = path.join(process.cwd(), 'uploads', key);
+      fs.writeFileSync(filePath, file.buffer);
+    }
     keys.push(key);
   }
   return keys;

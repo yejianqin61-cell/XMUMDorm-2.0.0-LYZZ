@@ -17,6 +17,11 @@ function requireEnv(name) {
   return v;
 }
 
+/** 是否已配置对象存储（未配置时上传会由上层回退到本地存储） */
+function isObjectStorageConfigured() {
+  return !!getEnv('OBJECT_STORAGE_BUCKET');
+}
+
 function createS3Client() {
   const endpoint = getEnv('OBJECT_STORAGE_ENDPOINT');
   const region = getEnv('OBJECT_STORAGE_REGION', 'auto');
@@ -83,5 +88,6 @@ module.exports = {
   publicUrlForKey,
   sanitizeKey,
   guessContentType,
+  isObjectStorageConfigured,
 };
 
