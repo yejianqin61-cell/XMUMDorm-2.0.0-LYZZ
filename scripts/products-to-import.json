@@ -1,12 +1,9 @@
 {
   "shopId": 11,
-  "categoryId": 59,
+  "categoryId": 60,
   "products": [
-    { "name": "Char Siew Wan Tan Mee", "price": 7.00, "description": "叉烧云吞面" },
-    { "name": "Wan Tan Mee Soup", "price": 7.00, "description": "云吞面汤" },
-    { "name": "Roasted Duck Wan Tan Mee", "price": 8.50, "description": "烧鸭云吞面" },
-    { "name": "Curry Chicken Wan Tan Mee", "price": 7.00, "description": "咖喱鸡云吞面" },
-    { "name": "Steam Chicken Wan Tan Mee", "price": 7.00, "description": "滑鸡云吞面" },
-    { "name": "Hakka Mee", "price": 7.00, "description": "客家面" }
+    { "name": "Marinated Egg", "price": 1.50, "description": "卤蛋" },
+    { "name": "Marinated Taufu", "price": 2.00, "description": "卤豆腐" },
+    { "name": "Marinated Chicken Feet", "price": 2.00, "description": "卤鸡脚" }
   ]
 }
