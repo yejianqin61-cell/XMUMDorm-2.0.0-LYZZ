@@ -1,9 +1,9 @@
 {
-  "shopId": 11,
-  "categoryId": 60,
+  "shopId": 23,
+  "categoryId": 144,
   "products": [
-    { "name": "Marinated Egg", "price": 1.50, "description": "卤蛋" },
-    { "name": "Marinated Taufu", "price": 2.00, "description": "卤豆腐" },
-    { "name": "Marinated Chicken Feet", "price": 2.00, "description": "卤鸡脚" }
+    { "name": "Chrysanthemum Tea", "price": 2, "description": "菊花茶" },
+    { "name": "Sour Plum Soup", "price": 3.5, "description": "酸梅汤" },
+    { "name": "Signature Pure Soy Milk", "price": 5.8, "description": "小云招牌豆奶" }
   ]
 }
