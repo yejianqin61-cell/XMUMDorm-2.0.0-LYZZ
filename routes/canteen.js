@@ -26,6 +26,15 @@ const { uploadBuffer, guessContentType } = require('../services/objectStorage');
 
 const RATING_ENUM = ['夯爆了', '顶级', '人上人', 'NPC', '拉完了'];
 
+/** 未上传图片的商品使用的默认图，从后端 public 目录提供，路径为 /products/default.jpg */
+const DEFAULT_PRODUCT_IMAGE_PATH = process.env.DEFAULT_PRODUCT_IMAGE_PATH || '/products/default.jpg';
+function ensureProductDefaultImage(product) {
+  if (product && product.images && product.images.length === 0) {
+    product.images = [{ url: DEFAULT_PRODUCT_IMAGE_PATH, sort_order: 0 }];
+  }
+  return product;
+}
+
 // 统一的文本清洗，防止 XSS 注入（去掉所有 HTML 标签，只保留纯文本）
 function cleanText(input) {
   const raw = input == null ? '' : String(input);
@@ -566,6 +575,7 @@ router.post('/products', authenticateToken, (req, res, next) => {
     }
     const product = byId[productId];
     if (product) product.images.sort((a, b) => a.sort_order - b.sort_order);
+    ensureProductDefaultImage(product);
     res.status(200).json({ status: 0, message: '创建成功', data: product });
   } catch (e) {
     console.error('创建商品错误:', e);
@@ -630,7 +640,7 @@ router.get('/shops/:shopId/products', async (req, res) => {
     }
     const list = Object.values(byId).map((p) => {
       p.images.sort((a, b) => a.sort_order - b.sort_order);
-      return p;
+      return ensureProductDefaultImage(p);
     });
     res.status(200).json({ status: 0, message: '获取成功', data: list });
   } catch (e) {
@@ -704,6 +714,7 @@ router.get('/products/:productId', async (req, res) => {
     }
     const product = byId[productId];
     if (product) product.images.sort((a, b) => a.sort_order - b.sort_order);
+    ensureProductDefaultImage(product);
 
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const pageSize = Math.min(50, Math.max(1, parseInt(req.query.pageSize, 10) || 10));
@@ -837,6 +848,7 @@ router.patch('/products/:productId', authenticateToken, (req, res, next) => {
     }
     const product = byId[productId];
     if (product) product.images.sort((a, b) => a.sort_order - b.sort_order);
+    ensureProductDefaultImage(product);
     res.status(200).json({ status: 0, message: '修改成功', data: product });
   } catch (e) {
     console.error('修改商品错误:', e);

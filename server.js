@@ -101,6 +101,13 @@ if (!fs.existsSync(uploadsDir)) {
 }
 app.use('/uploads', express.static(uploadsDir));
 
+// 10.2 静态资源 public（默认图等，随代码部署，不写 .gitignore）
+const publicDir = path.join(__dirname, 'public');
+if (!fs.existsSync(publicDir)) {
+  fs.mkdirSync(publicDir, { recursive: true });
+}
+app.use(express.static(publicDir));
+
 // 10.3 将 Rate Limit 应用于所有 /api 开头的接口
 app.use('/api', apiLimiter);
 

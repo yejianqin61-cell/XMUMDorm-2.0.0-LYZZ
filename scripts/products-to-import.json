@@ -1,9 +1,12 @@
 {
-  "shopId": 1,
-  "categoryId": 1,
+  "shopId": 11,
+  "categoryId": 59,
   "products": [
-    { "name": "宫保鸡丁", "price": 12.5, "description": "经典川菜" },
-    { "name": "宫保鸡丁", "price": 12.5, "description": "经典川菜" },
-    { "name": "宫保鸡丁", "price": 12.5, "description": "经典川菜" }
+    { "name": "Char Siew Wan Tan Mee", "price": 7.00, "description": "叉烧云吞面" },
+    { "name": "Wan Tan Mee Soup", "price": 7.00, "description": "云吞面汤" },
+    { "name": "Roasted Duck Wan Tan Mee", "price": 8.50, "description": "烧鸭云吞面" },
+    { "name": "Curry Chicken Wan Tan Mee", "price": 7.00, "description": "咖喱鸡云吞面" },
+    { "name": "Steam Chicken Wan Tan Mee", "price": 7.00, "description": "滑鸡云吞面" },
+    { "name": "Hakka Mee", "price": 7.00, "description": "客家面" }
   ]
 }
