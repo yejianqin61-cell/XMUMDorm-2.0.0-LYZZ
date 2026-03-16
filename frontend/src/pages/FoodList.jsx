@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import MerchantHeader from '../components/MerchantHeader';
 import CategorySidebar from '../components/CategorySidebar';
 import CategorySection from '../components/CategorySection';
@@ -13,6 +13,7 @@ import './FoodList.css';
 /** 商家菜品列表页：MerchantHeader + 双栏（左侧分类导航 + 右侧按分类分组的 FoodCard），数据来自 API */
 function FoodList() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [merchant, setMerchant] = useState(null);
   const [categories, setCategories] = useState([]);
   const [groups, setGroups] = useState([]);
@@ -144,6 +145,12 @@ function FoodList() {
     return () => observer.disconnect();
   }, [groups]);
 
+  const handleGoHot = () => {
+    const shopId = id ? parseInt(id, 10) : 0;
+    if (!shopId) return;
+    navigate(`/eat/merchant/${shopId}/hot`);
+  };
+
   if (loading) {
     return (
       <div className="food-list-page">
@@ -183,6 +190,15 @@ function FoodList() {
     return (
       <div className="food-list-page">
         <MerchantHeader merchant={merchant} />
+        <div className="food-shop-hot-entry">
+          <button
+            type="button"
+            className="food-shop-hot-entry-btn pressable"
+            onClick={handleGoHot}
+          >
+            本店热门 · Top dishes
+          </button>
+        </div>
         <EmptyState
           title="暂无商品"
           description="商家还没发布商品。No dishes yet."
@@ -194,6 +210,15 @@ function FoodList() {
   return (
     <div className="food-list-page">
       <MerchantHeader merchant={merchant} />
+      <div className="food-shop-hot-entry">
+        <button
+          type="button"
+          className="food-shop-hot-entry-btn pressable"
+          onClick={handleGoHot}
+        >
+          本店热门 · Top dishes
+        </button>
+      </div>
       <div className="food-list-layout">
         <CategorySidebar
           categories={categories.map((c) => ({ id: c.id, name: c.name }))}

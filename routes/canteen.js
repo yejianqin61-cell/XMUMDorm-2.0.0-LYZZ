@@ -649,6 +649,71 @@ router.get('/shops/:shopId/products', async (req, res) => {
   }
 });
 
+// 本店热门商品：按综合评分从高到低取前 10 名（仅统计有评分的商品）
+router.get('/shops/:shopId/hot-products', async (req, res) => {
+  try {
+    const shopId = parseInt(req.params.shopId, 10);
+    if (!shopId) return res.status(400).json({ status: -1, message: '店铺 ID 无效' });
+    let sql = `SELECT p.id, p.shop_id, p.category_id, p.name, p.description, p.price, p.comprehensive_score, p.review_count, p.created_at, p.updated_at,
+        c.name AS category_name, pi.file_path, pi.sort_order
+       FROM products p
+       LEFT JOIN product_categories c ON p.category_id = c.id
+       LEFT JOIN product_images pi ON pi.product_id = p.id
+       WHERE p.shop_id = ? AND p.deleted_at IS NULL
+         AND p.review_count > 0 AND p.comprehensive_score IS NOT NULL
+       ORDER BY p.comprehensive_score DESC, p.created_at ASC
+       LIMIT 10`;
+    let rows;
+    try {
+      rows = await query(sql, [shopId]);
+    } catch (qErr) {
+      const msg = (qErr && (qErr.message || qErr.code || '')).toString();
+      if (msg.includes('Unknown column') && msg.includes('comprehensive_score')) {
+        // 兼容旧库：若还没有综合评分字段，则退化为按创建时间排序的前 10 个有该店评价的商品
+        sql = `SELECT p.id, p.shop_id, p.category_id, p.name, p.description, p.price, p.created_at, p.updated_at,
+            c.name AS category_name, pi.file_path, pi.sort_order
+           FROM products p
+           LEFT JOIN product_categories c ON p.category_id = c.id
+           LEFT JOIN product_images pi ON pi.product_id = p.id
+           WHERE p.shop_id = ? AND p.deleted_at IS NULL
+           ORDER BY p.created_at DESC
+           LIMIT 10`;
+        rows = await query(sql, [shopId]);
+      } else {
+        throw qErr;
+      }
+    }
+    const byId = {};
+    for (const r of rows || []) {
+      if (!byId[r.id]) {
+        byId[r.id] = {
+          id: r.id,
+          shop_id: r.shop_id,
+          category_id: r.category_id,
+          category_name: r.category_name,
+          name: r.name,
+          description: r.description,
+          price: r.price != null ? Number(r.price) : null,
+          comprehensive_score: r.comprehensive_score != null ? Number(r.comprehensive_score) : null,
+          review_count: r.review_count != null ? Number(r.review_count) : null,
+          created_at: r.created_at,
+          updated_at: r.updated_at,
+          images: []
+        };
+      }
+      if (r.file_path) byId[r.id].images.push({ url: assetUrl(r.file_path, r.updated_at), sort_order: r.sort_order });
+    }
+    const list = Object.values(byId).map((p) => {
+      p.images.sort((a, b) => a.sort_order - b.sort_order);
+      return ensureProductDefaultImage(p);
+    });
+    res.status(200).json({ status: 0, message: '获取成功', data: list });
+  } catch (e) {
+    console.error('获取本店热门商品错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
 router.get('/products/:productId', async (req, res) => {
   try {
     const productId = parseInt(req.params.productId, 10);

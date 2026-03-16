@@ -69,6 +69,11 @@ export function getProducts(shopId, options = {}) {
   return get(`/api/canteen/shops/${shopId}/products${q}`);
 }
 
+// 本店热门商品：按综合评分排序前 10 名
+export function getShopHotProducts(shopId) {
+  return get(`/api/canteen/shops/${shopId}/hot-products`);
+}
+
 export function getProduct(productId) {
   return get(`/api/canteen/products/${productId}`);
 }

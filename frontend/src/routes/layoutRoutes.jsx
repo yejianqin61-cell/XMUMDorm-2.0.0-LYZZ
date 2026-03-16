@@ -18,6 +18,7 @@ import Mailbox from '../pages/Mailbox';
 import CanteenArea from '../pages/CanteenArea';
 import MerchantList from '../pages/MerchantList';
 import FoodList from '../pages/FoodList';
+import FoodShopHot from '../pages/FoodShopHot';
 import FoodDetail from '../pages/FoodDetail';
 import FoodReviewPublish from '../pages/FoodReviewPublish';
 import StoreCreate from '../pages/StoreCreate';
@@ -50,6 +51,7 @@ export const layoutRoutes = (
     <Route path="eat/rankings" element={<Rankings />} />
     <Route path="eat/:area" element={<MerchantList />} />
     <Route path="eat/merchant/:id" element={<FoodList />} />
+    <Route path="eat/merchant/:id/hot" element={<FoodShopHot />} />
     <Route path="eat/food/:id" element={<FoodDetail />} />
     <Route path="eat/food/:id/review" element={<FoodReviewPublish />} />
     <Route path="merchant/create" element={<StoreCreate />} />
