@@ -71,10 +71,10 @@ function AboutUs() {
             </span>
             <div className="about-list-body">
               <span className="about-list-label">
-                {isZh ? '日记本' : 'Diary'}
+                {isZh ? '往年今日' : 'On this day'}
               </span>
               <span className="about-list-hint">
-                {isZh ? '记录每天的想法' : 'Write your daily thoughts'}
+                {isZh ? '看看时间留下的脚注' : 'A small diary for this day'}
               </span>
             </div>
             <span className="about-list-arrow" aria-hidden>

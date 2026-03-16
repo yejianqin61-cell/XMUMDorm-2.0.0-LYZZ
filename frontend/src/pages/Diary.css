@@ -108,12 +108,12 @@
   -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(0, 0, 0, 0.06);
   padding: 10px;
-  min-height: 260px;
+  min-height: 520px;
 }
 
 .diary-textarea {
   width: 100%;
-  min-height: 220px;
+  min-height: 440px;
   border: none;
   outline: none;
   resize: vertical;
