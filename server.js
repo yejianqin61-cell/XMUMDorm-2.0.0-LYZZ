@@ -36,6 +36,7 @@ const canteenRoutes = require('./routes/canteen');
 const notificationRoutes = require('./routes/notifications');
 const userRoutes = require('./routes/users');
 const scheduleRoutes = require('./routes/schedule');
+const diaryRoutes = require('./routes/diary');
 
 // 8. 创建一个 Express 应用实例
 const app = express();
@@ -136,6 +137,7 @@ app.use('/api/canteen', canteenRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/schedule', scheduleRoutes);
+app.use('/api/diary', diaryRoutes);
 
 // ============================================
 // 错误处理中间件

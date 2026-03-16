@@ -64,6 +64,24 @@ function AboutUs() {
             </span>
           </Link>
         </li>
+        <li className="about-list-item">
+          <Link to="/about/diary" className="about-list-row about-list-row-link">
+            <span className="about-list-icon" aria-hidden>
+              <ScheduleIcon />
+            </span>
+            <div className="about-list-body">
+              <span className="about-list-label">
+                {isZh ? '日记本' : 'Diary'}
+              </span>
+              <span className="about-list-hint">
+                {isZh ? '记录每天的想法' : 'Write your daily thoughts'}
+              </span>
+            </div>
+            <span className="about-list-arrow" aria-hidden>
+              &gt;
+            </span>
+          </Link>
+        </li>
       </ul>
     </div>
   );

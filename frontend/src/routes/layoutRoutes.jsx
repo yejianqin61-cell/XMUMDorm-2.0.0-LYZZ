@@ -9,6 +9,7 @@ import AboutEditorNote from '../pages/AboutEditorNote';
 import AboutAlgorithm from '../pages/AboutAlgorithm';
 import AboutProfile from '../pages/AboutProfile';
 import Schedule from '../pages/Schedule';
+import Diary from '../pages/Diary';
 import MyZone from '../pages/MyZone';
 import UserZone from '../pages/UserZone';
 import MyPosts from '../pages/MyPosts';
@@ -41,6 +42,7 @@ export const layoutRoutes = (
     <Route path="about/team" element={<AboutTeam />} />
     <Route path="about/editor-note" element={<AboutEditorNote />} />
     <Route path="about/algorithm" element={<AboutAlgorithm />} />
+    <Route path="about/diary" element={<Diary />} />
     <Route path="myzone" element={<MyZone />} />
     <Route path="user/:id" element={<UserZone />} />
     <Route path="myzone/posts" element={<MyPosts />} />
