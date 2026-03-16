@@ -216,13 +216,24 @@ function FoodList() {
       <div className="food-list-page">
         <MerchantHeader merchant={merchant} />
         <div className="food-shop-hot-entry">
-          <button
-            type="button"
-            className="food-shop-hot-entry-btn pressable"
-            onClick={handleGoHot}
-          >
-            本店热门 · Top dishes
-          </button>
+          <div className="food-shop-hot-controls">
+            <button
+              type="button"
+              className="food-shop-hot-entry-btn pressable"
+              onClick={handleGoHot}
+            >
+              本店热门 · Top dishes
+            </button>
+            <div className="food-shop-search-wrap">
+              <input
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="food-shop-search-input"
+                placeholder="搜索本店菜品… Search dishes"
+              />
+            </div>
+          </div>
         </div>
         <EmptyState
           title="暂无商品"
