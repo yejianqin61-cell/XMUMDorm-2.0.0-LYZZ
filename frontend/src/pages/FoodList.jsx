@@ -17,6 +17,8 @@ function FoodList() {
   const [merchant, setMerchant] = useState(null);
   const [categories, setCategories] = useState([]);
   const [groups, setGroups] = useState([]);
+  const [allFoods, setAllFoods] = useState([]);
+  const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeId, setActiveId] = useState(null);
@@ -71,6 +73,7 @@ function FoodList() {
           categoryId: p.category_id,
           comprehensiveScore: p.comprehensive_score != null ? Number(p.comprehensive_score) : null,
         }));
+        setAllFoods(foodList);
         const groupsNext = cats.map((c) => ({
           category: { id: c.id, name: c.name },
           foods: foodList.filter((f) => f.categoryId === c.id),
@@ -151,6 +154,28 @@ function FoodList() {
     navigate(`/eat/merchant/${shopId}/hot`);
   };
 
+  const filteredGroups = search.trim()
+    ? (() => {
+        const q = search.trim().toLowerCase();
+        const matchedIds = new Set(
+          allFoods
+            .filter((f) => {
+              const name = (f.name || '').toLowerCase();
+              const desc = (f.description || '').toLowerCase();
+              return name.includes(q) || desc.includes(q);
+            })
+            .map((f) => f.id)
+        );
+        if (matchedIds.size === 0) return [];
+        return groups
+          .map((g) => ({
+            category: g.category,
+            foods: g.foods.filter((f) => matchedIds.has(f.id)),
+          }))
+          .filter((g) => g.foods.length > 0);
+      })()
+    : groups;
+
   if (loading) {
     return (
       <div className="food-list-page">
@@ -211,13 +236,24 @@ function FoodList() {
     <div className="food-list-page">
       <MerchantHeader merchant={merchant} />
       <div className="food-shop-hot-entry">
-        <button
-          type="button"
-          className="food-shop-hot-entry-btn pressable"
-          onClick={handleGoHot}
-        >
-          本店热门 · Top dishes
-        </button>
+        <div className="food-shop-hot-controls">
+          <button
+            type="button"
+            className="food-shop-hot-entry-btn pressable"
+            onClick={handleGoHot}
+          >
+            本店热门 · Top dishes
+          </button>
+          <div className="food-shop-search-wrap">
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="food-shop-search-input"
+              placeholder="搜索本店菜品… Search dishes"
+            />
+          </div>
+        </div>
       </div>
       <div className="food-list-layout">
         <CategorySidebar
@@ -226,7 +262,13 @@ function FoodList() {
           onSelect={handleCategorySelect}
         />
         <div ref={mainScrollRef} className="food-list-main">
-          {groups.map((g) => (
+          {filteredGroups.length === 0 ? (
+            <EmptyState
+              title="未找到相关菜品"
+              description="换个关键词试试，或清空搜索查看全部。"
+            />
+          ) : (
+          filteredGroups.map((g) => (
             <CategorySection
               key={g.category.id}
               ref={(el) => { sectionRefs.current[g.category.id] = el; }}

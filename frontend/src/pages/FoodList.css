@@ -52,6 +52,12 @@
   padding: 8px 16px 0;
 }
 
+.food-shop-hot-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .food-shop-hot-entry-btn {
   display: inline-flex;
   align-items: center;
@@ -69,6 +75,24 @@
 .food-shop-hot-entry-btn:active {
   transform: translateY(1px);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+}
+
+.food-shop-search-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.food-shop-search-input {
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.food-shop-search-input::placeholder {
+  color: var(--wx-text-secondary);
 }
 
 .food-shop-hot-header {
