@@ -268,14 +268,15 @@ function FoodList() {
               description="换个关键词试试，或清空搜索查看全部。"
             />
           ) : (
-          filteredGroups.map((g) => (
-            <CategorySection
-              key={g.category.id}
-              ref={(el) => { sectionRefs.current[g.category.id] = el; }}
-              category={g.category}
-              foods={g.foods}
-            />
-          ))}
+            filteredGroups.map((g) => (
+              <CategorySection
+                key={g.category.id}
+                ref={(el) => { sectionRefs.current[g.category.id] = el; }}
+                category={g.category}
+                foods={g.foods}
+              />
+            ))
+          )}
         </div>
       </div>
     </div>
