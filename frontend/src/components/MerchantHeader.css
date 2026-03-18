@@ -48,6 +48,52 @@
   margin-bottom: 4px;
 }
 
+.merchant-header-help-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.merchant-header-help-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--wx-text-secondary, #666);
+  font-weight: 800;
+  font-size: 14px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.merchant-header-help-card {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: min(320px, 76vw);
+  padding: 10px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.16);
+  z-index: 50;
+}
+
+.merchant-header-help-card p {
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--wx-text, #111);
+}
+
+.merchant-header-help-card p:last-child {
+  margin-bottom: 0;
+}
+
 .merchant-header-name {
   margin: 0;
   font-size: 18px;
