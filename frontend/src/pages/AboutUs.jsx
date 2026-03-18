@@ -100,6 +100,24 @@ function AboutUs() {
             </span>
           </Link>
         </li>
+        <li className="about-list-item">
+          <Link to="/about/contact" className="about-list-row about-list-row-link">
+            <span className="about-list-icon" aria-hidden>
+              <ContactIcon />
+            </span>
+            <div className="about-list-body">
+              <span className="about-list-label">
+                {isZh ? '联系我们' : 'Contact us'}
+              </span>
+              <span className="about-list-hint">
+                {isZh ? '建议反馈与商家认领' : 'Feedback & merchant requests'}
+              </span>
+            </div>
+            <span className="about-list-arrow" aria-hidden>
+              &gt;
+            </span>
+          </Link>
+        </li>
       </ul>
     </div>
   );
@@ -140,6 +158,14 @@ function DisclaimerIcon() {
       <path d="M12 2l8 4v6c0 5-3.5 9.5-8 10-4.5-.5-8-5-8-10V6l8-4z" />
       <path d="M12 7v6" />
       <path d="M12 17h.01" />
+    </svg>
+  );
+}
+
+function ContactIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <path d="M22 16.92V19a2 2 0 0 1-2.18 2 19.86 19.86 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.86 19.86 0 0 1 2 4.18 2 2 0 0 1 4 2h2.08a2 2 0 0 1 2 1.72c.12.86.32 1.7.57 2.5a2 2 0 0 1-.45 2.11L7.1 9.9a16 16 0 0 0 6 6l1.57-1.1a2 2 0 0 1 2.11-.45c.8.25 1.64.45 2.5.57A2 2 0 0 1 22 16.92z" />
     </svg>
   );
 }
