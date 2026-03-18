@@ -1,0 +1,36 @@
+.disclaimer-page {
+  min-height: 100%;
+  padding: 12px 12px 16px;
+}
+
+.disclaimer-card {
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 14px 14px;
+}
+
+.disclaimer-title {
+  margin: 0 0 10px;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--wx-text, #111);
+}
+
+.disclaimer-body {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--wx-text, #111);
+}
+
+.disclaimer-body p {
+  margin: 0 0 10px;
+  color: var(--wx-text, #111);
+}
+
+.disclaimer-body p:last-child {
+  margin-bottom: 0;
+}
+

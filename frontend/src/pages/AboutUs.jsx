@@ -82,6 +82,24 @@ function AboutUs() {
             </span>
           </Link>
         </li>
+        <li className="about-list-item">
+          <Link to="/about/disclaimer" className="about-list-row about-list-row-link">
+            <span className="about-list-icon" aria-hidden>
+              <DisclaimerIcon />
+            </span>
+            <div className="about-list-body">
+              <span className="about-list-label">
+                {isZh ? '特别说明' : 'Notice'}
+              </span>
+              <span className="about-list-hint">
+                {isZh ? '免责声明与内容来源' : 'Disclaimer & content sources'}
+              </span>
+            </div>
+            <span className="about-list-arrow" aria-hidden>
+              &gt;
+            </span>
+          </Link>
+        </li>
       </ul>
     </div>
   );
@@ -112,6 +130,16 @@ function ScheduleIcon() {
       <rect x="3" y="4" width="18" height="18" rx="2" />
       <path d="M16 2v4M8 2v4M3 10h18" />
       <path d="M7 14h3M7 18h3M14 14h3M14 18h3" />
+    </svg>
+  );
+}
+
+function DisclaimerIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <path d="M12 2l8 4v6c0 5-3.5 9.5-8 10-4.5-.5-8-5-8-10V6l8-4z" />
+      <path d="M12 7v6" />
+      <path d="M12 17h.01" />
     </svg>
   );
 }
