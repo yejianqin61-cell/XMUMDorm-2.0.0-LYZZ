@@ -29,16 +29,7 @@ function AboutTeam() {
           </dl>
         </section>
 
-        <section className="about-team-section">
-          <dl className="about-team-list">
-            <dt className="about-team-role">
-              {isZh ? '美术顾问' : 'Art advisor'}
-            </dt>
-            <dd className="about-team-name">
-              {isZh ? '厦门 涂宜晖女士' : 'Ms. Tu Yihui, Xiamen'}
-            </dd>
-          </dl>
-        </section>
+
 
         <section className="about-team-section">
           <dl className="about-team-list">
@@ -99,6 +90,25 @@ function AboutTeam() {
             </dd>
             <dd className="about-team-subtitle">
               {isZh ? '厦门大学马来西亚分校 计算机科学与技术专业' : 'CST student in Xiamen University Malaysia'}
+            </dd>
+
+            <dd className="about-team-name">
+              {isZh ? '阴沛森' : 'Yin Peisen'}
+            </dd>
+            <dd className="about-team-subtitle">
+              {isZh ? '厦门大学马来西亚分校 计算机科学与技术专业' : 'CST student in Xiamen University Malaysia'}
+            </dd>
+
+          </dl>
+        </section>
+
+        <section className="about-team-section">
+          <dl className="about-team-list">
+            <dt className="about-team-role">
+              {isZh ? '美术顾问' : 'Art advisor'}
+            </dt>
+            <dd className="about-team-name">
+              {isZh ? '厦门 涂宜晖女士' : 'Ms. Tu Yihui, Xiamen'}
             </dd>
           </dl>
         </section>

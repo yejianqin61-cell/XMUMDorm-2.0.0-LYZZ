@@ -1,10 +1,23 @@
 {
-  "shopId": 27,
-  "categoryId": 169,
+  "shopId": 32,
+  "categoryId": 204,
   "products": [
-    { "name": "Soy Sauce Braised Beef", "price": 6.9, "description": "老卤酱牛肉" },
-    { "name": "Iced Tofu Pudding", "price": 5.9, "description": "冰醉豆花" },
-    { "name": "Osmanthus Fermented Rice Tofu Pudding", "price": 6.9, "description": "茉莉酒酿冰豆花" },
-    { "name": "Spicy Cold Noodles", "price": 5.9, "description": "麻辣小面筋" }
+    { "name": "Sprite", "price": 4, "description": "雪碧" },
+    { "name": "100plus", "price": 4, "description": "100号运动饮料" },
+    { "name": "Coca-Cola", "price": 3, "description": "可乐" },
+    { "name": "Wanglaoji Herbal Tea", "price": 3.5, "description": "加多宝凉茶" },
+    { "name": "Rock Sugar Pear Drink", "price": 3.5, "description": "冰糖雪梨饮品" },
+    { "name": "Black Tea/Green Tea", "price": 3.5, "description": "冰红茶/绿茶" },
+    { "name": "Chrysanthemum and Luo Han Guo Tea", "price": 4.5, "description": "甘梅罗汉果茶" },
+    { "name": "Honeysuckle Herbal Tea", "price": 4.5, "description": "金银花凉茶" },
+    { "name": "Sour Plum Drink", "price": 3.5, "description": "酸梅汤" },
+    { "name": "Red Bull", "price": 6, "description": "红牛功能饮料" },
+    { "name": "Kumquat Lemon Tea", "price": 3.5, "description": "金桔柠檬茶" },
+    { "name": "Glucose Hydration Drink", "price": 3.5, "description": "葡萄糖补水液" },
+    { "name": "Baijia Peach Flavored Tea", "price": 3.5, "description": "百家水蜜桃风味茶" },
+    { "name": "Baijia Strawberry Flavored Tea", "price": 3.5, "description": "百家草莓风味茶" },
+    { "name": "Baijia Pineapple Flavored Tea", "price": 3.5, "description": "百家菠萝风味茶" },
+    { "name": "Baijia Mango Flavored Tea", "price": 3.5, "description": "百家芒果风味茶" },
+    { "name": "Baijia Lemon Flavored Tea", "price": 3.5, "description": "百家柠檬风味茶" }
   ]
 }
