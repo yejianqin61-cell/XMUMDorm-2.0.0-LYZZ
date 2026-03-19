@@ -8,9 +8,9 @@ import './FoodReviewPublish.css';
 
 /** 评级选项：与后端 RATING_ENUM 一致 */
 const RATING_OPTIONS = [
-  { value: '夯爆了', label: '夯爆了 Amaizing' },
-  { value: '人上人', label: '人上人 excellent' },
-  { value: '顶级', label: '顶级 great' },
+  { value: '夯爆了', label: '夯爆了 amazing' },
+  { value: '顶级', label: '顶级 excellent' },
+  { value: '人上人', label: '人上人 great' },
   { value: 'NPC', label: 'NPC ordinary' },
   { value: '拉完了', label: '拉完了 just soso' },
 ];

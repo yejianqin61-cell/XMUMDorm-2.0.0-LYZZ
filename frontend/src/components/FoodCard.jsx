@@ -16,8 +16,8 @@ import './FoodCard.css';
 function FoodCard({ food, mode = 'user', onDelete }) {
   const { id, name, price, image, description, comprehensiveScore } = food;
   const priceStr = typeof price === 'number' ? price.toFixed(2) : String(price ?? '—');
-  /** 后端 0–10 分制转 5 星展示，如 9.2 → 4.6 */
-  const ratingDisplay = comprehensiveScore != null ? (Number(comprehensiveScore) / 10 * 5).toFixed(1) : null;
+  /** 统一显示为 10 分制（与排行榜一致） */
+  const ratingDisplay = comprehensiveScore != null ? Number(comprehensiveScore).toFixed(1) : null;
   const [imagePreviewOpen, setImagePreviewOpen] = useState(false);
 
   const imageBlock = image ? (
@@ -48,7 +48,7 @@ function FoodCard({ food, mode = 'user', onDelete }) {
         <div className="food-card-price-row">
           <span className="food-card-price">RM {priceStr}</span>
           {ratingDisplay != null && (
-            <span className="food-card-rating" aria-label={`评分 ${ratingDisplay}`}>⭐ {ratingDisplay}</span>
+            <span className="food-card-rating" aria-label={`评分 ${ratingDisplay} / 10`}>⭐ {ratingDisplay}/10</span>
           )}
         </div>
         {description && (

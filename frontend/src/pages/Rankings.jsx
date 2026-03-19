@@ -103,7 +103,7 @@ function Rankings() {
                     <Link key={item.product_id} to={`/eat/food/${item.product_id}`} className="rankings-row">
                       <span className="rankings-rank">{item.rank}</span>
                       <span className="rankings-name">{item.product_name}</span>
-                      <span className="rankings-meta">{item.shop_name} · 评分 {item.comprehensive_score?.toFixed(1)}</span>
+                      <span className="rankings-meta">{item.shop_name} · 评分 {item.comprehensive_score?.toFixed(1)}/10</span>
                     </Link>
                   ))}
                   {section.id === 'busy-shops' && list.length > 0 && list.map((item) => (
@@ -117,14 +117,14 @@ function Rankings() {
                     <Link key={item.shop_id} to={`/eat/merchant/${item.shop_id}`} className="rankings-row">
                       <span className="rankings-rank">{item.rank}</span>
                       <span className="rankings-name">{item.shop_name}</span>
-                      <span className="rankings-meta">评分 {item.comprehensive_score?.toFixed(1)}</span>
+                      <span className="rankings-meta">评分 {item.comprehensive_score?.toFixed(1)}/10</span>
                     </Link>
                   ))}
                   {section.id === 'new-hit-products' && list.length > 0 && list.map((item) => (
                     <Link key={item.product_id} to={`/eat/food/${item.product_id}`} className="rankings-row">
                       <span className="rankings-rank">{item.rank}</span>
                       <span className="rankings-name">{item.product_name}</span>
-                      <span className="rankings-meta">{item.shop_name} · {item.comprehensive_score?.toFixed(1)}</span>
+                      <span className="rankings-meta">{item.shop_name} · {item.comprehensive_score?.toFixed(1)}/10</span>
                     </Link>
                   ))}
                   {section.id === 'active-users' && list.length > 0 && list.map((item) => (

@@ -36,9 +36,9 @@ function AboutAlgorithm() {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr><td>Excellent</td><td>10</td></tr>
-                  <tr><td>Great</td><td>7</td></tr>
-                  <tr><td>Good</td><td>4</td></tr>
+                  <tr><td>Amazing</td><td>10</td></tr>
+                  <tr><td>Excellent</td><td>7</td></tr>
+                  <tr><td>Great</td><td>4</td></tr>
                   <tr><td>Ordinary</td><td>1</td></tr>
                   <tr><td>Just soso</td><td>-1</td></tr>
                 </tbody>
@@ -52,7 +52,7 @@ function AboutAlgorithm() {
               <li>
                 <strong>Formula</strong>:
                 <ul className="about-alg-ul about-alg-ul-nested">
-                  <li>Counts: n1(Excellent), n2(Great), n3(Good), n4(Ordinary), n5(Just soso).</li>
+                  <li>Counts: n1(Amazing), n2(Excellent), n3(Great), n4(Ordinary), n5(Just soso).</li>
                   <li>Total: N = n1 + n2 + n3 + n4 + n5.</li>
                   <li>Sum: sum = 10·n1 + 7·n2 + 4·n3 + 1·n4 + (-1)·n5.</li>
                   <li>Score: S_dish = sum / N, rounded to 2 decimals.</li>

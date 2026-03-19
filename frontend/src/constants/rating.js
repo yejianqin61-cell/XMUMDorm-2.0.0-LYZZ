@@ -2,18 +2,18 @@
 export const RATING_LABELS = {
   1: '拉完了 just soso',
   2: 'NPC ordinary',
-  3: '顶级 great',
-  4: '人上人 excellent',
-  5: '夯爆了 amaizing',
+  3: '顶级 excellent',
+  4: '人上人 great',
+  5: '夯爆了 amazing',
 };
 
 /** 后端枚举档位文本（中文）→ 双语展示 */
 export const RATING_LABELS_BY_TEXT = {
   '拉完了': '拉完了 just soso',
   NPC: 'NPC ordinary',
-  '顶级': '顶级 great',
-  '人上人': '人上人 excellent',
-  '夯爆了': '夯爆了 amaizing',
+  '顶级': '顶级 excellent',
+  '人上人': '人上人 great',
+  '夯爆了': '夯爆了 amazing',
 };
 
 /**

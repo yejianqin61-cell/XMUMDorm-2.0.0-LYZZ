@@ -1,9 +1,10 @@
 {
-  "shopId": 23,
-  "categoryId": 144,
+  "shopId": 27,
+  "categoryId": 169,
   "products": [
-    { "name": "Chrysanthemum Tea", "price": 2, "description": "菊花茶" },
-    { "name": "Sour Plum Soup", "price": 3.5, "description": "酸梅汤" },
-    { "name": "Signature Pure Soy Milk", "price": 5.8, "description": "小云招牌豆奶" }
+    { "name": "Soy Sauce Braised Beef", "price": 6.9, "description": "老卤酱牛肉" },
+    { "name": "Iced Tofu Pudding", "price": 5.9, "description": "冰醉豆花" },
+    { "name": "Osmanthus Fermented Rice Tofu Pudding", "price": 6.9, "description": "茉莉酒酿冰豆花" },
+    { "name": "Spicy Cold Noodles", "price": 5.9, "description": "麻辣小面筋" }
   ]
 }
