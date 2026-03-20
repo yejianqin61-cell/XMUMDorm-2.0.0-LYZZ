@@ -11,6 +11,9 @@ export const API_BASE_URL =
 /** 商品默认图路径，由前端 public 提供，不拼后端地址 */
 export const DEFAULT_PRODUCT_IMAGE_PATH = '/products/default.jpg';
 
+/** 商家 logo 默认占位图路径（前端 public 提供，不拼后端地址） */
+export const DEFAULT_SHOP_LOGO_PATH = '/shops/default.jpg';
+
 /**
  * 将后端返回的图片/logo 相对路径转为前端可请求的完整 URL
  * - 商品默认图 /products/default.jpg 从前端 public 提供，直接返回路径（不拼 API_BASE_URL）

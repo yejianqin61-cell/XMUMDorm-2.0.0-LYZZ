@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import Card from './Card';
 import './Card.css';
 import './MerchantCard.css';
+import { DEFAULT_PRODUCT_IMAGE_PATH, DEFAULT_SHOP_LOGO_PATH } from '../api/config';
 
 /**
  * 商家卡片：展示 logo、名称、简介、评分、营业状态，点击进入该商家菜品列表
@@ -27,13 +28,16 @@ function MerchantCard({ merchant }) {
     >
       <Card as="div" className="merchant-card">
         <div className="merchant-card-logo-wrap">
-          {logo ? (
-            <img src={logo} alt="" className="merchant-card-logo" />
-          ) : (
-            <div className="merchant-card-logo merchant-card-logo-default" aria-hidden>
-              Store
-            </div>
-          )}
+          <img
+            src={logo || DEFAULT_SHOP_LOGO_PATH}
+            alt=""
+            className="merchant-card-logo"
+            onError={(e) => {
+              // 如果你尚未把默认商家 logo 放到 frontend/public，那么回退到商品默认图，避免坏图
+              // eslint-disable-next-line no-param-reassign
+              e.currentTarget.src = DEFAULT_PRODUCT_IMAGE_PATH;
+            }}
+          />
         </div>
         <div className="merchant-card-body">
           <div className="merchant-card-row">

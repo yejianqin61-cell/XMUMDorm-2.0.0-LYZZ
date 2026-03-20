@@ -1,10 +1,10 @@
 {
-  "shopId": 37,
-  "categoryId": 244,
+  "shopId": 51,
+  "categoryId": 347,
   "products": [
-    { "name": "Crispy Crab Stick", "price": 20.9, "description": "香脆蟹柳丝" },
-    { "name": "Kuih Kapit", "price": 20, "description": "鸡蛋卷" },
-    { "name": "Pineapple Roll", "price": 21.9, "description": "黄梨酥" },
-    { "name": "Arrow Head Crackers", "price": 20.9, "description": "香脆牙菇片" }
+    { "name": "Beef chow fun", "price": 15.9, "description": "干炒牛河" },
+    { "name": "Stir-fry Horfun", "price": 11, "description": "干炒河粉" },
+    { "name": "Fish Fillet CF Soup", "price": 14.9, "description": "鱼片肠粉鲜味汤" },
+    { "name": "Soft Shell Crab CF Soup", "price": 17.9, "description": "软壳蟹肠粉鲜味汤" }
   ]
 }

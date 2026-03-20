@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import './MerchantHeader.css';
+import { DEFAULT_PRODUCT_IMAGE_PATH, DEFAULT_SHOP_LOGO_PATH } from '../api/config';
 
 /**
  * 商家信息头部：在菜品列表页顶部展示当前商家（logo、名称、简介、评分、营业状态、地址、营业时间）
@@ -42,13 +43,16 @@ function MerchantHeader({ merchant }) {
   return (
     <header className="merchant-header" aria-label={`商家 ${name}`}>
       <div className="merchant-header-logo-wrap">
-        {logo ? (
-          <img src={logo} alt="" className="merchant-header-logo" />
-        ) : (
-          <div className="merchant-header-logo merchant-header-logo-default" aria-hidden>
-            Store
-          </div>
-        )}
+        <img
+          src={logo || DEFAULT_SHOP_LOGO_PATH}
+          alt=""
+          className="merchant-header-logo"
+          onError={(e) => {
+            // 如果你尚未把默认商家 logo 放到 frontend/public，那么回退到商品默认图
+            // eslint-disable-next-line no-param-reassign
+            e.currentTarget.src = DEFAULT_PRODUCT_IMAGE_PATH;
+          }}
+        />
       </div>
       <div className="merchant-header-body">
         <div className="merchant-header-row">
