@@ -29,6 +29,73 @@ function isAdmin(req) {
   return req.user && req.user.role === 'admin';
 }
 
+/** 从 Authorization 解析用户（可选，不抛错） */
+function parseOptionalUser(req) {
+  if (!req.headers.authorization) return null;
+  try {
+    const jwt = require('jsonwebtoken');
+    const token = (req.headers.authorization || '').split(' ')[1];
+    if (!token) return null;
+    return jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-in-production');
+  } catch (_) {
+    return null;
+  }
+}
+
+/** 生成 URL slug（拉丁字母与数字） */
+function slugifyLatin(input) {
+  const s = String(input || '').trim().toLowerCase();
+  const slug = s.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+  return slug || '';
+}
+
+async function ensureUniqueTagSlug(base) {
+  let slug = (base && base.length > 0 ? base : 'topic').slice(0, 60);
+  let n = 0;
+  while (n < 200) {
+    const rows = await query('SELECT id FROM tags WHERE slug = ?', [slug]);
+    if (!rows || rows.length === 0) return slug;
+    n += 1;
+    slug = `${(base && base.length > 0 ? base : 'topic').slice(0, 50)}-${n}`;
+  }
+  return `topic-${Date.now()}`;
+}
+
+/** 为帖子列表/详情附加 tags 数组（表不存在时返回空数组） */
+async function enrichPostsWithTags(posts) {
+  if (!posts || posts.length === 0) return posts;
+  const ids = [...new Set(posts.map((p) => p.id))];
+  const placeholders = ids.map(() => '?').join(',');
+  let rows = [];
+  try {
+    rows = await query(
+      `SELECT ptm.post_id, t.id, t.slug, t.name_zh, t.name_en
+       FROM post_tag_map ptm
+       INNER JOIN tags t ON t.id = ptm.tag_id
+       WHERE ptm.post_id IN (${placeholders})
+       ORDER BY t.created_at ASC, t.id ASC`,
+      ids
+    );
+  } catch (e) {
+    if (e.code === 'ER_NO_SUCH_TABLE') {
+      return posts.map((p) => ({ ...p, tags: [] }));
+    }
+    throw e;
+  }
+  const byPost = {};
+  ids.forEach((id) => { byPost[id] = []; });
+  for (const r of rows || []) {
+    if (!byPost[r.post_id]) byPost[r.post_id] = [];
+    byPost[r.post_id].push({
+      id: r.id,
+      slug: r.slug,
+      name_zh: r.name_zh,
+      name_en: r.name_en,
+    });
+  }
+  return posts.map((p) => ({ ...p, tags: byPost[p.id] || [] }));
+}
+
 // 辅助：帖子是否对当前用户可见（未逻辑删除，且非隐藏或当前用户是 admin）
 function postVisible(row, req) {
   if (row.deleted_at) return false;
@@ -152,6 +219,34 @@ router.post('/', authenticateToken, (req, res, next) => {
       }
     }
 
+    // 普通帖：可选最多 3 个标签（公告不支持标签）
+    let tagIds = [];
+    try {
+      const raw = req.body && req.body.tag_ids;
+      if (typeof raw === 'string' && raw.trim()) {
+        tagIds = JSON.parse(raw);
+      } else if (Array.isArray(raw)) {
+        tagIds = raw;
+      }
+    } catch (_) {
+      tagIds = [];
+    }
+    tagIds = [...new Set(tagIds.map((x) => parseInt(x, 10)).filter((n) => Number.isFinite(n) && n > 0))].slice(0, 3);
+    if (type === 'normal' && tagIds.length > 0) {
+      try {
+        const ph = tagIds.map(() => '?').join(',');
+        const found = await query(`SELECT id FROM tags WHERE id IN (${ph})`, tagIds);
+        if (!found || found.length !== tagIds.length) {
+          return res.status(400).json({ status: -1, message: '标签无效 Invalid tags' });
+        }
+        for (const tid of tagIds) {
+          await query('INSERT INTO post_tag_map (post_id, tag_id) VALUES (?, ?)', [postId, tid]);
+        }
+      } catch (e) {
+        if (e.code !== 'ER_NO_SUCH_TABLE') throw e;
+      }
+    }
+
     // 公告：给全站用户各插入一条未读通知
     if (type === 'announcement') {
       const allUsers = await query('SELECT id FROM users');
@@ -196,7 +291,7 @@ router.post('/', authenticateToken, (req, res, next) => {
       [postId]
     );
     const merged = mergePostRows(rows, req);
-    const post = merged[0];
+    let post = merged[0];
     if (!post) {
       return res.status(200).json({
         status: 0,
@@ -204,6 +299,8 @@ router.post('/', authenticateToken, (req, res, next) => {
         data: { id: postId, content, type, created_at: new Date().toISOString(), images: [] }
       });
     }
+    const [withTags] = await enrichPostsWithTags([post]);
+    post = withTags;
     res.status(200).json({
       status: 0,
       message: '发布成功！',
@@ -225,18 +322,34 @@ router.get('/', async (req, res) => {
     const pageSize = Math.min(50, Math.max(1, parseInt(req.query.pageSize, 10) || 10));
     const offset = Math.max(0, (page - 1) * pageSize);
     const limitCount = pageSize + 1;
-    const user = req.headers['authorization'] ? (() => {
-      try {
-        const jwt = require('jsonwebtoken');
-        const token = (req.headers['authorization'] || '').split(' ')[1];
-        if (!token) return null;
-        return jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-in-production');
-      } catch (_) { return null; }
-    })() : null;
+    const user = parseOptionalUser(req);
     const isAdminUser = user && user.role === 'admin';
 
     let where = "p.deleted_at IS NULL AND p.type <> 'announcement'";
     if (!isAdminUser) where += ' AND p.hidden_by_admin = 0';
+
+    const sqlParams = [];
+
+    const qRaw = (req.query.q || '').trim().slice(0, 200);
+    if (qRaw) {
+      const safe = qRaw.replace(/[%_\\]/g, '');
+      if (safe) {
+        where += ' AND p.content LIKE ?';
+        sqlParams.push(`%${safe}%`);
+      }
+    }
+
+    const tagIdNum = parseInt(req.query.tagId, 10);
+    if (Number.isFinite(tagIdNum) && tagIdNum > 0) {
+      where += ' AND EXISTS (SELECT 1 FROM post_tag_map ptm WHERE ptm.post_id = p.id AND ptm.tag_id = ?)';
+      sqlParams.push(tagIdNum);
+    } else {
+      const tagSlug = (req.query.tagSlug || '').trim().slice(0, 80);
+      if (tagSlug) {
+        where += ' AND EXISTS (SELECT 1 FROM post_tag_map ptm INNER JOIN tags tg ON tg.id = ptm.tag_id WHERE ptm.post_id = p.id AND tg.slug = ?)';
+        sqlParams.push(tagSlug);
+      }
+    }
 
     const rows = await query(
       `SELECT p.id, p.user_id, p.content, p.type, p.deleted_at, p.hidden_by_admin, p.created_at, p.updated_at,
@@ -249,9 +362,11 @@ router.get('/', async (req, res) => {
        LEFT JOIN post_images pi ON pi.post_id = p.id
        WHERE ${where}
        ORDER BY p.created_at DESC
-       LIMIT ${limitCount} OFFSET ${offset}`
+       LIMIT ${limitCount} OFFSET ${offset}`,
+      sqlParams
     );
-    const list = mergePostRows(rows.map((r) => ({ ...r, deleted_at: null })), { user: user || {} });
+    let list = mergePostRows(rows.map((r) => ({ ...r, deleted_at: null })), { user: user || {} });
+    list = await enrichPostsWithTags(list);
     const hasMore = rows.length > pageSize;
     res.status(200).json({
       status: 0,
@@ -262,6 +377,89 @@ router.get('/', async (req, res) => {
     console.error('获取帖子列表错误:', e);
     const msg = process.env.NODE_ENV === 'development' ? (e.message || String(e)) : '服务器错误，请稍后重试';
     res.status(500).json({ status: -1, message: msg });
+  }
+});
+
+// ============================================
+// 标签列表（按创建时间升序：最先创建的在前）
+// ============================================
+router.get('/tags', async (req, res) => {
+  try {
+    const rows = await query(
+      'SELECT id, slug, name_zh, name_en, created_at FROM tags ORDER BY created_at ASC, id ASC'
+    );
+    res.status(200).json({ status: 0, message: 'ok', data: rows || [] });
+  } catch (e) {
+    if (e.code === 'ER_NO_SUCH_TABLE') {
+      return res.status(200).json({ status: 0, message: 'ok', data: [] });
+    }
+    console.error('标签列表错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
+// ============================================
+// 创建标签（仅管理员）
+// ============================================
+router.post('/tags', authenticateToken, async (req, res) => {
+  try {
+    if (!isAdmin(req)) {
+      return res.status(403).json({ status: -1, message: '仅管理员可创建标签 Admins only' });
+    }
+    const nameZh = cleanText(req.body && req.body.name_zh).slice(0, 100);
+    const nameEn = cleanText(req.body && req.body.name_en).slice(0, 100);
+    if (!nameZh || !nameEn) {
+      return res.status(400).json({ status: -1, message: '请填写中文与英文名称 Name (ZH) & (EN) required' });
+    }
+    let base = slugifyLatin(req.body && req.body.slug) || slugifyLatin(nameEn) || slugifyLatin(nameZh);
+    if (!base) base = 'topic';
+    const slug = await ensureUniqueTagSlug(base);
+    const result = await query(
+      'INSERT INTO tags (slug, name_zh, name_en, created_by) VALUES (?, ?, ?, ?)',
+      [slug, nameZh, nameEn, req.user.id]
+    );
+    res.status(200).json({
+      status: 0,
+      message: '创建成功 Created',
+      data: { id: result.insertId, slug, name_zh: nameZh, name_en: nameEn },
+    });
+  } catch (e) {
+    if (e.code === 'ER_NO_SUCH_TABLE') {
+      return res.status(503).json({ status: -1, message: '请先执行数据库迁移 011_post_tags.sql Run migration 011' });
+    }
+    console.error('创建标签错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
+// ============================================
+// 删除标签（仅管理员，关联帖子自动解绑）
+// ============================================
+router.delete('/tags/:tagId', authenticateToken, async (req, res) => {
+  try {
+    if (!isAdmin(req)) {
+      return res.status(403).json({ status: -1, message: '仅管理员可删除标签 Admins only' });
+    }
+    const tagId = parseInt(req.params.tagId, 10);
+    if (!tagId) {
+      return res.status(400).json({ status: -1, message: '标签 ID 无效' });
+    }
+    await query('DELETE FROM tags WHERE id = ?', [tagId]);
+    const ip = req.ip || req.headers['x-forwarded-for'] || req.connection?.remoteAddress || null;
+    const ua = req.headers['user-agent'] || null;
+    logAudit({
+      userId: req.user.id,
+      role: req.user.role,
+      action: 'TAG_DELETE',
+      targetType: 'tag',
+      targetId: tagId,
+      ip,
+      userAgent: ua,
+    });
+    res.status(200).json({ status: 0, message: '已删除 Deleted' });
+  } catch (e) {
+    console.error('删除标签错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
   }
 });
 
@@ -289,22 +487,17 @@ router.get('/:id', async (req, res) => {
     if (!rows || rows.length === 0) {
       return res.status(404).json({ status: -1, message: '帖子不存在' });
     }
-    const user = req.headers['authorization'] ? (() => {
-      try {
-        const jwt = require('jsonwebtoken');
-        const token = (req.headers['authorization'] || '').split(' ')[1];
-        if (!token) return null;
-        return jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-in-production');
-      } catch (_) { return null; }
-    })() : null;
+    const user = parseOptionalUser(req);
     const merged = mergePostRows(rows, { user: user || {} });
-    const post = merged[0];
+    let post = merged[0];
     if (!post) {
       return res.status(404).json({ status: -1, message: '帖子不存在或已隐藏' });
     }
     if (rows[0].deleted_at) {
       return res.status(404).json({ status: -1, message: '帖子已删除' });
     }
+    const [enriched] = await enrichPostsWithTags([post]);
+    post = enriched;
     res.status(200).json({ status: 0, message: '获取成功', data: post });
   } catch (e) {
     console.error('帖子详情错误:', e);

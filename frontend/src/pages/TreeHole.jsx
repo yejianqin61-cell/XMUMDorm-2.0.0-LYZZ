@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import PostCard from '../components/PostCard';
+import TreeHoleToolbar from '../components/TreeHoleToolbar';
 import SkeletonPost from '../components/SkeletonPost';
 import { getPostList } from '../api/posts';
 import { getApiErrorMessage } from '../utils/apiError';
@@ -156,6 +157,7 @@ function TreeHole() {
 
   return (
     <div className="treehole-page">
+      <TreeHoleToolbar />
       {error && (
         <p className="treehole-error state-error" role="alert">
           {error}

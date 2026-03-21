@@ -1,0 +1,24 @@
+.post-tag-feed-page .post-tag-feed-hint {
+  margin: 0 0 8px;
+  padding: 0 4px;
+  font-size: 13px;
+  color: var(--wx-text-secondary, #666);
+}
+
+.post-tag-feed-page .post-tag-feed-hint strong {
+  color: var(--wx-text, #111);
+}
+
+.post-tag-feed-empty {
+  margin: 12px 4px;
+  font-size: 14px;
+  color: var(--wx-text-secondary, #666);
+}
+
+.post-tag-feed-back {
+  display: block;
+  margin: 16px auto 24px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--wx-green, #07c160);
+}

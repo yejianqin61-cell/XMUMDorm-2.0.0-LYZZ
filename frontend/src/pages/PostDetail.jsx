@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import {
   getPostDetail,
   getPostComments,
@@ -29,6 +30,8 @@ function prefixImageUrl(url) {
 function PostDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { lang } = useLanguage();
+  const isEn = lang === 'en';
   const { isLoggedIn, token, user, isAdmin } = useAuth();
   const postId = Number(id);
 
@@ -207,6 +210,18 @@ function PostDetail() {
   const displayName = author.nickname ?? author.username ?? 'Anonymous';
   const totalCommentCount = comments.reduce((sum, c) => sum + 1 + (c.replies?.length || 0), 0);
 
+  const detailTags = (() => {
+    if (post.type === 'announcement') {
+      return [{ key: 'ann', slug: null, label: isEn ? 'Announcement' : '公告' }];
+    }
+    const arr = Array.isArray(post.tags) ? post.tags : [];
+    return arr.map((t) => ({
+      key: t.id,
+      slug: t.slug,
+      label: isEn ? (t.name_en || t.name_zh || t.slug) : (t.name_zh || t.name_en || t.slug),
+    }));
+  })();
+
   return (
     <div className="post-detail-page">
       {error && <p className="post-detail-error" role="alert">{error}</p>}
@@ -229,7 +244,28 @@ function PostDetail() {
             )}
           </button>
           <div className="post-detail-author-info">
-            <span className="post-detail-username">{displayName}</span>
+            <div className="post-detail-name-tags">
+              <span className="post-detail-username">{displayName}</span>
+              {detailTags.length > 0 && (
+                <div className="post-detail-tags" aria-label={isEn ? 'Tags' : '标签'}>
+                  {detailTags.map((t) =>
+                    t.slug ? (
+                      <Link
+                        key={t.key}
+                        to={`/posts/tag/${encodeURIComponent(t.slug)}`}
+                        className="post-detail-tag"
+                      >
+                        {t.label}
+                      </Link>
+                    ) : (
+                      <span key={t.key} className="post-detail-tag post-detail-tag--static">
+                        {t.label}
+                      </span>
+                    )
+                  )}
+                </div>
+              )}
+            </div>
             {post.created_at && (
               <span className="post-detail-time" title={formatPostTime(post.created_at, true)}>
                 {formatPostTime(post.created_at)}
@@ -289,7 +325,9 @@ function PostDetail() {
       <LikeBurst ref={likeBurstRef} />
 
       <section className="post-detail-comments">
-        <h2 className="post-detail-comments-title">Comments ({totalCommentCount})</h2>
+        <h2 className="post-detail-comments-title">
+          {isEn ? `Comments (${totalCommentCount})` : `评论 Comments (${totalCommentCount})`}
+        </h2>
         <ul className="post-detail-comment-list">
           {comments.map((c) => (
             <li key={c.id} className="post-detail-comment-wrap">
@@ -303,8 +341,8 @@ function PostDetail() {
                     type="button"
                     className="post-detail-reply-btn"
                     onClick={() => startReply(c)}
-                    >
-                    Reply
+                  >
+                    {isEn ? 'Reply' : '回复 Reply'}
                   </button>
                   {(c.user_id === user?.id || isAdmin) && (
                     <button
@@ -324,7 +362,7 @@ function PostDetail() {
                   {c.replies.map((r) => (
                     <li key={r.id} className="post-detail-comment post-detail-comment-reply">
                       <p className="post-detail-comment-content">
-                        <span className="post-detail-reply-label">Reply:</span>
+                        <span className="post-detail-reply-label">{isEn ? 'Reply:' : '回复:'}</span>
                         {r.content}
                       </p>
                       <div className="post-detail-comment-meta">
@@ -337,7 +375,7 @@ function PostDetail() {
                             className="post-detail-reply-delete"
                             onClick={() => handleDeleteComment(r.id)}
                           >
-                            Delete
+                            {isEn ? 'Delete' : '删除 Delete'}
                           </button>
                         )}
                       </div>

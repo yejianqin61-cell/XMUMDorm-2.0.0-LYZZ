@@ -1,0 +1,25 @@
+.post-search-page .post-search-hint {
+  margin: 0 0 8px;
+  padding: 0 4px;
+  font-size: 13px;
+  color: var(--wx-text-secondary, #666);
+}
+
+.post-search-page .post-search-hint strong {
+  color: var(--wx-text, #111);
+}
+
+.post-search-empty-msg,
+.post-search-no-result {
+  margin: 12px 4px;
+  font-size: 14px;
+  color: var(--wx-text-secondary, #666);
+}
+
+.post-search-back-home {
+  display: block;
+  margin: 16px auto 24px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--wx-green, #07c160);
+}

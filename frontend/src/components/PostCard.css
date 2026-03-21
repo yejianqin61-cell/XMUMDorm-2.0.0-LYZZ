@@ -1,49 +1,53 @@
 .post-card {
-  display: block;
+  display: flex;
+  flex-direction: column;
   background: rgba(255, 255, 255, 0.85);
   border-radius: 12px;
-  padding: 14px;
   margin-bottom: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  min-height: 80px;
+  min-height: 120px;
   border: 1px solid rgba(255, 255, 255, 0.5);
+  overflow: hidden;
+  padding: 14px 14px 0;
 }
 
-.post-card-header {
+/* 可点击进详情（不含顶栏标签，避免标签链接嵌套） */
+.post-card-body {
+  display: block;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0 0 10px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.post-card-tags {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 6px;
   margin-bottom: 10px;
 }
 
-.post-card-avatar-wrap {
-  flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 1px solid var(--wx-border);
+.post-card-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--wx-green, #07c160);
+  background: rgba(7, 193, 96, 0.12);
+  border: 1px solid rgba(7, 193, 96, 0.25);
 }
 
-.post-card-avatar {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.post-card-tag--link {
+  text-decoration: none;
+  cursor: pointer;
 }
 
-.post-card-avatar-default {
-  object-fit: contain;
-  padding: 4px;
-  background: var(--wx-bar-bg);
-}
-
-.post-card-username {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--wx-text-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.post-card-tag--link:active {
+  opacity: 0.85;
 }
 
 .post-card-content {
@@ -102,4 +106,94 @@
   display: inline-flex;
   align-items: center;
   gap: 2px;
+}
+
+/* 下约 1/4：底栏分隔 */
+.post-card-footer {
+  flex-shrink: 0;
+  min-height: 52px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  background: rgba(250, 250, 250, 0.75);
+}
+
+.post-card-footer-author {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.post-card-avatar-wrap {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid var(--wx-border);
+}
+
+.post-card-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.post-card-avatar-default {
+  object-fit: contain;
+  padding: 4px;
+  background: var(--wx-bar-bg);
+}
+
+.post-card-username {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--wx-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.post-card-like-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 72px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--wx-text-secondary);
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+
+.post-card-like-btn:active {
+  transform: scale(0.96);
+}
+
+.post-card-like-btn--active {
+  color: #e54d42;
+  background: rgba(229, 77, 66, 0.12);
+}
+
+.post-card-like-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.post-card-like-count {
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
 }

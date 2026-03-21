@@ -48,6 +48,7 @@ Jack/
 ├── scripts/                # 辅助脚本
 │   ├── migrate_009_timetable_import.js
 │   ├── migrate_010_diaries.js
+│   ├── migrate_011_post_tags.js
 │   ├── migrate_init_and_009.js
 │   ├── bulk-import-products.js
 │   ├── add-categories.js
@@ -304,6 +305,7 @@ npm run dev
 - 初始化数据库 + 课程表表：`node scripts/migrate_init_and_009.js`
 - 单独执行课程表迁移：`node scripts/migrate_009_timetable_import.js`
 - 创建日记本表：`node scripts/migrate_010_diaries.js`
+- 帖子标签/话题表：`node scripts/migrate_011_post_tags.js`
 - 食堂商品批量导入示例：`npm run import-products`
 
 前端（在 `frontend/`）：

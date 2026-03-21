@@ -1,20 +1,44 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { Toast } from '../context/ToastContext';
-import { createPost } from '../api/posts';
+import { createPost, getPostTagsList } from '../api/posts';
 import { getApiErrorMessage } from '../utils/apiError';
 import './PostNew.css';
 
 /** 发布帖子 / 公告页：需登录；普通用户发帖子，管理员发公告 */
 function PostNew() {
   const { isLoggedIn, isAdmin } = useAuth();
+  const { lang } = useLanguage();
+  const isEn = lang === 'en';
   const navigate = useNavigate();
   const [content, setContent] = useState('');
   const [imageFiles, setImageFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [allTags, setAllTags] = useState([]);
+  const [selectedTagIds, setSelectedTagIds] = useState([]);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    getPostTagsList()
+      .then((d) => setAllTags(Array.isArray(d) ? d : []))
+      .catch(() => setAllTags([]));
+  }, []);
+
+  const tagLabel = (t) => (isEn ? (t.name_en || t.name_zh) : (t.name_zh || t.name_en));
+
+  const toggleTag = (tagId) => {
+    setSelectedTagIds((prev) => {
+      if (prev.includes(tagId)) return prev.filter((x) => x !== tagId);
+      if (prev.length >= 3) {
+        Toast.error(isEn ? 'Up to 3 tags' : '最多选择 3 个标签');
+        return prev;
+      }
+      return [...prev, tagId];
+    });
+  };
 
   if (!isLoggedIn) {
     return <Navigate to="/login" replace state={{ from: { pathname: '/post/new' } }} />;
@@ -51,6 +75,8 @@ function PostNew() {
       // 管理员只能发布公告
       if (isAdmin) {
         payload.type = 'announcement';
+      } else if (selectedTagIds.length > 0) {
+        payload.tagIds = selectedTagIds;
       }
       const created = await createPost(payload);
       Toast.success(isAdmin ? '公告发布成功' : '发布成功');
@@ -70,6 +96,33 @@ function PostNew() {
           : '发帖为匿名。他人点赞或评论时，会在「信箱」中收到提醒。Posts are anonymous; you will get like/comment notifications in Mailbox.'}
       </p>
       <form className="postnew-form" onSubmit={handleSubmit}>
+        {!isAdmin && allTags.length > 0 && (
+          <div className="postnew-section">
+            <label className="postnew-label">
+              {isEn ? 'Tags (max 3) 标签（最多3个）' : '标签 Tags（最多 3 个 / max 3）'}
+            </label>
+            <p className="postnew-tag-hint">
+              {isEn
+                ? 'Tap to select. Only admins can create tags.'
+                : '点击选择；仅管理员可创建标签。'}
+            </p>
+            <div className="postnew-tag-pool">
+              {allTags.map((t) => {
+                const on = selectedTagIds.includes(t.id);
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    className={`postnew-tag-chip ${on ? 'postnew-tag-chip--on' : ''}`}
+                    onClick={() => toggleTag(t.id)}
+                  >
+                    {tagLabel(t)}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
         <div className="postnew-section">
           <label className="postnew-label">{isAdmin ? '公告内容 Announcement' : '内容 Content'}</label>
           <textarea

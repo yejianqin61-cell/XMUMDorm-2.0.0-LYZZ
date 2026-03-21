@@ -57,8 +57,8 @@ const TITLE_BY_PATH_EN = {
   '/about/schedule': 'Schedule',
 };
 
-/** 需要显示返回键的路径（含 /post/:id 详情页） */
-const SHOW_BACK_PATHS = ['/post/new', '/post/'];
+/** 需要显示返回键的路径（含 /post/:id 详情页、帖子搜索/话题） */
+const SHOW_BACK_PATHS = ['/post/new', '/post/', '/posts/'];
 
 /** 整体布局：顶栏（标题+信箱）+ 内容区 + 底部 Tab；支持全屏滑动切换 Tab + 微信风格过渡动画 + 公告弹窗 */
 function Layout() {
@@ -180,6 +180,10 @@ function Layout() {
       title = isZh ? '信箱' : 'Mailbox';
     } else if (pathname === '/post/new') {
       title = isZh ? '发布帖子' : 'Post';
+    } else if (pathname.startsWith('/posts/search')) {
+      title = isZh ? '搜索帖子' : 'Search posts';
+    } else if (pathname.startsWith('/posts/tag/')) {
+      title = isZh ? '话题帖子' : 'Posts by tag';
     } else if (pathname.startsWith('/post/')) {
       title = isZh ? '帖子详情' : 'Post';
     } else if (pathname === '/myzone/posts') {
@@ -211,6 +215,7 @@ function Layout() {
     }
   }
   const showBack =
+    pathname.startsWith('/posts/') ||
     pathname.startsWith('/post/') ||
     (pathname.startsWith('/eat') && pathname !== '/eat') ||
     pathname.startsWith('/merchant') ||

@@ -2,6 +2,8 @@ import { Route, Navigate } from 'react-router-dom';
 import TreeHole from '../pages/TreeHole';
 import PostNew from '../pages/PostNew';
 import PostDetail from '../pages/PostDetail';
+import PostSearch from '../pages/PostSearch';
+import PostTagFeed from '../pages/PostTagFeed';
 import AboutUs from '../pages/AboutUs';
 import AboutTeam from '../pages/AboutTeam';
 import AboutThanks from '../pages/AboutThanks';
@@ -37,6 +39,8 @@ export const layoutRoutes = (
     <Route index element={<TreeHole />} />
     <Route path="post/new" element={<PostNew />} />
     <Route path="post/:id" element={<PostDetail />} />
+    <Route path="posts/search" element={<PostSearch />} />
+    <Route path="posts/tag/:slug" element={<PostTagFeed />} />
     <Route path="about" element={<AboutUs />} />
     <Route path="about/thanks" element={<AboutThanks />} />
     <Route path="about/profile" element={<AboutProfile />} />
