@@ -1,9 +1,8 @@
 -- ============================================
 -- 帖子标签 / 话题（双语）与多对多关联
 -- ============================================
--- 用法: mysql -u root -p jack_campus < migrations/011_post_tags.sql
-
-USE jack_campus;
+-- 用法（请换成你的库名）: mysql -u root -p 你的库名 < migrations/011_post_tags.sql
+-- 或通过 node scripts/migrate_011_post_tags.js（使用 .env 里当前连接的数据库，勿写死库名）
 
 CREATE TABLE IF NOT EXISTS tags (
   id INT AUTO_INCREMENT PRIMARY KEY COMMENT '标签ID',

@@ -34,9 +34,11 @@ async function main() {
     ? await mysql.createConnection({ uri: opt.url, multipleStatements: true })
     : await mysql.createConnection({ ...opt, multipleStatements: true });
   try {
-    console.log('✅ MySQL 已连接，开始执行 011_post_tags.sql ...');
+    const [[dbRow]] = await conn.query('SELECT DATABASE() AS db');
+    console.log('✅ MySQL 已连接，当前数据库:', dbRow?.db || '(未知)');
+    console.log('   开始执行 011_post_tags.sql …');
     await conn.query(sql);
-    console.log('🎉 执行完成：tags / post_tag_map 已就绪。');
+    console.log('🎉 执行完成：tags / post_tag_map 已就绪（与后端 .env 为同一库即可）。');
   } catch (e) {
     console.error('❌ 执行失败：', e && e.message ? e.message : e);
     process.exit(1);
