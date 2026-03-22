@@ -154,40 +154,94 @@ router.post('/shops', authenticateToken, async (req, res) => {
 
 /**
  * 分区内商品排行榜数据（供多路由复用）
- * 规则：综合评分降序；同分则上架时间更晚（created_at）在前；再按 id 降序。
- * 默认仅含已有点评且综合评分非空的商品；旧库无评分列时退化为按上架时间。
- * 返回项含 rank（1-based）。
+ * 排序分：优先用一级点评实时加权均值（与 rankingStats 等级分一致）；若无点评聚合行则用商品表 comprehensive_score。
+ * 入选条件：存在至少一条有效一级点评，或（review_count>0 且 comprehensive_score 非空）。
+ * 解决：历史点评已写入 product_comments，但 products 上 review_count/综合分未回填时仍会上榜。
+ * 同分则 created_at 更晚在前，再 id 降序。返回项含 rank（1-based）。
  */
 async function buildRegionTopProductsList(regionId, limitRaw) {
   const limit = Math.min(50, Math.max(1, parseInt(limitRaw, 10) || 20));
+  const ratingCase = `SUM(
+      CASE rating
+        WHEN '夯爆了' THEN 10
+        WHEN '顶级' THEN 7
+        WHEN '人上人' THEN 4
+        WHEN 'NPC' THEN 1
+        WHEN '拉完了' THEN -1
+      END
+    ) / NULLIF(COUNT(*), 0)`;
+
   let idRows;
   try {
     idRows = await query(
-      `SELECT p.id FROM products p
+      `SELECT p.id AS id,
+        ROUND(COALESCE(
+          IF(ca.cc IS NOT NULL AND ca.cc > 0, ca.live_score, NULL),
+          p.comprehensive_score
+        ), 2) AS rank_score
+       FROM products p
        INNER JOIN shops s ON p.shop_id = s.id AND s.deleted_at IS NULL AND s.region_id = ?
+       LEFT JOIN (
+         SELECT product_id,
+           COUNT(*) AS cc,
+           ${ratingCase} AS live_score
+         FROM product_comments
+         WHERE parent_id IS NULL AND deleted_at IS NULL
+           AND rating IN ('夯爆了','顶级','人上人','NPC','拉完了')
+         GROUP BY product_id
+       ) ca ON ca.product_id = p.id
        WHERE p.deleted_at IS NULL
-         AND p.review_count > 0 AND p.comprehensive_score IS NOT NULL
-       ORDER BY p.comprehensive_score DESC, p.created_at DESC, p.id DESC
+         AND (
+           (ca.cc IS NOT NULL AND ca.cc > 0)
+           OR (p.review_count > 0 AND p.comprehensive_score IS NOT NULL)
+         )
+       ORDER BY rank_score DESC, p.created_at DESC, p.id DESC
        LIMIT ?`,
       [regionId, limit]
     );
   } catch (qErr) {
     const msg = (qErr && (qErr.message || qErr.code || '')).toString();
     if (msg.includes('Unknown column') && msg.includes('comprehensive_score')) {
-      idRows = await query(
-        `SELECT p.id FROM products p
-         INNER JOIN shops s ON p.shop_id = s.id AND s.deleted_at IS NULL AND s.region_id = ?
-         WHERE p.deleted_at IS NULL
-         ORDER BY p.created_at DESC, p.id DESC
-         LIMIT ?`,
-        [regionId, limit]
-      );
+      try {
+        idRows = await query(
+          `SELECT p.id AS id,
+            ROUND(ca.live_score, 2) AS rank_score
+           FROM products p
+           INNER JOIN shops s ON p.shop_id = s.id AND s.deleted_at IS NULL AND s.region_id = ?
+           INNER JOIN (
+             SELECT product_id,
+               ${ratingCase} AS live_score
+             FROM product_comments
+             WHERE parent_id IS NULL AND deleted_at IS NULL
+               AND rating IN ('夯爆了','顶级','人上人','NPC','拉完了')
+             GROUP BY product_id
+             HAVING COUNT(*) > 0
+           ) ca ON ca.product_id = p.id
+           WHERE p.deleted_at IS NULL
+           ORDER BY rank_score DESC, p.created_at DESC, p.id DESC
+           LIMIT ?`,
+          [regionId, limit]
+        );
+      } catch (e2) {
+        idRows = await query(
+          `SELECT p.id AS id, NULL AS rank_score
+           FROM products p
+           INNER JOIN shops s ON p.shop_id = s.id AND s.deleted_at IS NULL AND s.region_id = ?
+           WHERE p.deleted_at IS NULL
+           ORDER BY p.created_at DESC, p.id DESC
+           LIMIT ?`,
+          [regionId, limit]
+        );
+      }
     } else {
       throw qErr;
     }
   }
 
   const ids = (idRows || []).map((r) => r.id);
+  const scoreById = new Map(
+    (idRows || []).map((r) => [r.id, r.rank_score != null ? Number(r.rank_score) : null])
+  );
   if (ids.length === 0) return [];
 
   const ph = ids.map(() => '?').join(',');
@@ -249,7 +303,12 @@ async function buildRegionTopProductsList(regionId, limitRaw) {
       if (!p) return null;
       p.images.sort((a, b) => a.sort_order - b.sort_order);
       const ensured = ensureProductDefaultImage({ ...p });
-      return { ...ensured, rank: index + 1 };
+      const rs = scoreById.get(id);
+      return {
+        ...ensured,
+        rank: index + 1,
+        comprehensive_score: rs != null && !Number.isNaN(rs) ? rs : ensured.comprehensive_score,
+      };
     })
     .filter(Boolean);
 }
