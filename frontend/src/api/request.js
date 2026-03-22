@@ -95,9 +95,22 @@ export async function requestRaw(path, options = {}) {
   const res = await fetch(url, fetchOptions);
   const contentType = res.headers.get('content-type');
   if (contentType && contentType.includes('application/json')) {
-    return await res.json();
+    try {
+      const body = await res.json();
+      if (body && typeof body === 'object') {
+        body.__httpStatus = res.status;
+      }
+      return body;
+    } catch {
+      const err = new Error(`服务器返回异常（${res.status}），请稍后重试`);
+      err.status = res.status;
+      throw err;
+    }
   }
-  throw new Error(await res.text() || `请求失败 ${res.status}`);
+  const text = await res.text();
+  const err = new Error(text?.trim() || `请求失败 ${res.status}`);
+  err.status = res.status;
+  throw err;
 }
 
 /** GET 请求 */

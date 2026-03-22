@@ -6,6 +6,8 @@ import { getRegions, getRegionTopProductsByCode } from '../api/canteen';
 import { getApiErrorMessage } from '../utils/apiError';
 import { AREA_LABELS } from '../components/AreaCard';
 import { findRegionByCode, normalizeAreaCodeParam } from '../utils/regionCode';
+import { useLanguage } from '../context/LanguageContext';
+import { getCanteenAreaRankingStrings } from '../i18n/canteenAreaRanking';
 import './Rankings.css';
 import './AreaProductRanking.css';
 
@@ -16,8 +18,10 @@ const FULL_LIMIT = 50;
  * 路由：/eat/:area/ranking
  */
 function AreaProductRanking() {
+  const { lang } = useLanguage();
+  const t = getCanteenAreaRankingStrings(lang, FULL_LIMIT);
   const { area } = useParams();
-  const code = area ?? '';
+  const code = normalizeAreaCodeParam(area ?? '');
   const [areaLabel, setAreaLabel] = useState(AREA_LABELS[code] ?? code ?? '');
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -54,7 +58,7 @@ function AreaProductRanking() {
   if (loading) {
     return (
       <div className="area-ranking-page">
-        <p className="rankings-loading state-loading">加载中…</p>
+        <p className="rankings-loading state-loading">{t.loading}</p>
       </div>
     );
   }
@@ -64,7 +68,7 @@ function AreaProductRanking() {
       <div className="area-ranking-page">
         <p className="rankings-error state-error">{error}</p>
         <Link to={`/eat/${encodeURIComponent(code)}`} className="area-ranking-back-link">
-          返回分区
+          {t.backToArea}
         </Link>
       </div>
     );
@@ -74,26 +78,23 @@ function AreaProductRanking() {
     <div className="area-ranking-page">
       <p className="area-ranking-back">
         <Link to={`/eat/${encodeURIComponent(code)}`} className="area-ranking-back-link">
-          ← 返回 {areaLabel}
+          {t.backToZone(areaLabel)}
         </Link>
       </p>
 
       <Card as="div" className="rankings-section-card area-ranking-main-card">
         <div className="rankings-section-header">
           <h1 className="rankings-section-title area-ranking-h1">
-            分区商品榜
-            <span className="rankings-section-title-en">{areaLabel}</span>
+            {t.pageTitle}
+            <span className="rankings-section-title-en">
+              {areaLabel} · {t.pageTitleAlt}
+            </span>
           </h1>
-          <p className="rankings-section-desc">
-            本区域内有点评的商品按综合评分排名；同分则更晚上架在前。最多展示 {FULL_LIMIT} 名。
-          </p>
+          <p className="rankings-section-desc">{t.pageDesc}</p>
         </div>
         <div className="rankings-section-content">
           {list.length === 0 ? (
-            <EmptyState
-              title="暂无榜单数据"
-              description="本区商品产生点评后将按综合评分自动上榜。No ranked items in this area yet."
-            />
+            <EmptyState title={t.emptyListTitle} description={t.emptyListDesc} />
           ) : (
             list.map((item) => (
               <Link key={item.id} to={`/eat/food/${item.id}`} className="rankings-row">
@@ -101,9 +102,7 @@ function AreaProductRanking() {
                 <span className="rankings-name">{item.name}</span>
                 <span className="rankings-meta">
                   {item.shop_name}
-                  {item.comprehensive_score != null && (
-                    <> · 评分 {Number(item.comprehensive_score).toFixed(1)}/10</>
-                  )}
+                  {item.comprehensive_score != null && <>{t.scoreMeta(item.comprehensive_score)}</>}
                   {item.price != null && Number(item.price) > 0 && (
                     <> · RM {Number(item.price).toFixed(2)}</>
                   )}
@@ -114,9 +113,7 @@ function AreaProductRanking() {
         </div>
       </Card>
 
-      <p className="area-ranking-footnote">
-        在分区商家列表页顶部可横向滑动预览前 20 名；本页展示完整榜单（最多 {FULL_LIMIT} 条）。
-      </p>
+      <p className="area-ranking-footnote">{t.footnote}</p>
     </div>
   );
 }

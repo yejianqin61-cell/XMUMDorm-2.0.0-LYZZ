@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { API_BASE_URL } from '../api/config';
 import { getMe } from '../api/users';
-import { getApiErrorMessage } from '../utils/apiError';
+import { getApiErrorMessage, apiFailureFromResponse } from '../utils/apiError';
 
 const STORAGE_TOKEN = 'token';
 const STORAGE_USER = 'user';
@@ -91,21 +91,51 @@ export function AuthProvider({ children }) {
     const isEmail = s.includes('@');
     const body = isEmail ? { email: s, password } : { username: s, password };
 
-    const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    const data = await res.json();
+    let res;
+    try {
+      res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+    } catch {
+      return { success: false, message: getApiErrorMessage() };
+    }
 
-    if (data.status === 0 && data.token) {
+    let data = null;
+    try {
+      const ct = res.headers.get('content-type');
+      if (ct && ct.includes('application/json')) {
+        data = await res.json();
+      } else {
+        const text = (await res.text()).trim();
+        return {
+          success: false,
+          message: getApiErrorMessage({
+            message: text || undefined,
+            status: res.status,
+          }),
+        };
+      }
+    } catch {
+      return {
+        success: false,
+        message: getApiErrorMessage({ status: res.status }),
+      };
+    }
+
+    if (data && data.status === 0 && data.token) {
       localStorage.setItem(STORAGE_TOKEN, data.token);
       if (data.data) localStorage.setItem(STORAGE_USER, JSON.stringify(data.data));
       setToken(data.token);
       setUser(data.data || null);
       return { success: true };
     }
-    return { success: false, message: getApiErrorMessage() };
+
+    return {
+      success: false,
+      message: getApiErrorMessage(apiFailureFromResponse(res, data)),
+    };
   }, []);
 
   const logout = useCallback(() => {

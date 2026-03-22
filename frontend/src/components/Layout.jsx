@@ -184,9 +184,10 @@ function Layout() {
       !pathname.startsWith('/eat/food') &&
       pathname !== '/eat/rankings'
     ) {
-      // 分区商家页 /eat/D6、/eat/LY3 … 顶栏显示分区代码，与下方「本区商品榜」呼应
+      // 分区商家页 /eat/D6 …：中文仅分区代码；英文附带 Merchants，与下方 Top foods 卡片呼应
       const seg = pathname.split('/')[2];
-      title = seg ? decodeURIComponent(seg) : (isZh ? '食堂' : 'Canteen');
+      const codeLabel = seg ? decodeURIComponent(seg) : '';
+      title = codeLabel ? (isZh ? codeLabel : `${codeLabel} · Merchants`) : (isZh ? '食堂' : 'Canteen');
     } else if (pathname.startsWith('/eat')) {
       title = isZh ? '食堂' : 'Canteen';
     } else if (pathname.startsWith('/mailbox')) {

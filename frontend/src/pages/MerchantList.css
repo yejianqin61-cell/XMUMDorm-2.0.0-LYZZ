@@ -93,6 +93,15 @@
   letter-spacing: 0.02em;
 }
 
+.merchant-list-ranking-card-title-alt {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--wx-text-secondary);
+  letter-spacing: 0;
+}
+
 .merchant-list-ranking-card-zone {
   margin: 4px 0 0;
   font-size: 14px;

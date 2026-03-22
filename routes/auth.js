@@ -546,7 +546,8 @@ router.post('/login', async (req, res) => {
     if (!users || users.length === 0) {
       return res.status(401).json({
         status: -1,
-        message: '邮箱/用户名或密码错误'
+        message:
+          '该邮箱或用户名尚未注册，请先注册；若已注册请核对账号是否输入正确。 / This email or username is not registered. Please sign up first.'
       });
     }
 
@@ -556,7 +557,7 @@ router.post('/login', async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).json({
         status: -1,
-        message: '学号/邮箱或密码错误'
+        message: '密码不正确，请重试或使用「重置密码」。 / Incorrect password. Try again or use Reset password.'
       });
     }
 

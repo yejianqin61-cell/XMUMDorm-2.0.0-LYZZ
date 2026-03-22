@@ -9,10 +9,14 @@ import { getRegions, getShopsByRegion, getRegionTopProducts } from '../api/cante
 import { getUploadUrl, DEFAULT_PRODUCT_IMAGE_PATH } from '../api/config';
 import { getApiErrorMessage } from '../utils/apiError';
 import { findRegionByCode, normalizeAreaCodeParam } from '../utils/regionCode';
+import { useLanguage } from '../context/LanguageContext';
+import { getCanteenAreaRankingStrings } from '../i18n/canteenAreaRanking';
 import './MerchantList.css';
 
 /** 区域商家列表页：本区最夯商品 Top20 + 当前分区下的商家（API） */
 function MerchantList() {
+  const { lang } = useLanguage();
+  const t = getCanteenAreaRankingStrings(lang, 50);
   const { area } = useParams();
   const [merchants, setMerchants] = useState([]);
   const [hotProducts, setHotProducts] = useState([]);
@@ -122,17 +126,18 @@ function MerchantList() {
       {/*
         分区排行榜入口：始终在第一个商家之上；无数据时也展示说明，保证 UI 完备
       */}
-      <Card as="section" className="merchant-list-ranking-card" aria-label={`${areaLabel} 分区商品榜`}>
+      <Card as="section" className="merchant-list-ranking-card" aria-label={t.cardAria(areaLabel)}>
         <div className="merchant-list-ranking-card-head">
           <span className="merchant-list-ranking-icon" aria-hidden>
             🏆
           </span>
           <div className="merchant-list-ranking-card-titles">
-            <h2 className="merchant-list-ranking-card-title">分区商品榜</h2>
+            <h2 className="merchant-list-ranking-card-title">
+              {t.cardTitle}
+              <span className="merchant-list-ranking-card-title-alt">{t.cardTitleAlt}</span>
+            </h2>
             <p className="merchant-list-ranking-card-zone">{areaLabel}</p>
-            <p className="merchant-list-ranking-card-rule">
-              按综合评分排序 · 同分则更晚上架在前 · 仅统计已有点评的商品
-            </p>
+            <p className="merchant-list-ranking-card-rule">{t.cardRule}</p>
           </div>
         </div>
 
@@ -156,7 +161,7 @@ function MerchantList() {
                     <span className="merchant-list-hot-shop">{p.shopName}</span>
                     <div className="merchant-list-hot-meta">
                       {p.score != null && (
-                        <span className="merchant-list-hot-score">{Number(p.score).toFixed(1)} 分</span>
+                        <span className="merchant-list-hot-score">{t.scoreLabel(p.score)}</span>
                       )}
                       {p.price != null && Number(p.price) > 0 && (
                         <span className="merchant-list-hot-price">RM {Number(p.price).toFixed(2)}</span>
@@ -170,33 +175,28 @@ function MerchantList() {
               to={`/eat/${encodeURIComponent(area)}/ranking`}
               className="merchant-list-ranking-full-link pressable"
             >
-              查看完整榜单（最多 50 名）→
+              {t.fullListLink}
             </Link>
           </>
         ) : (
           <div className="merchant-list-ranking-empty">
-            <p className="merchant-list-ranking-empty-text">
-              本区暂无上榜商品。用户发表点评后，系统将按综合评分自动生成榜单。
-            </p>
+            <p className="merchant-list-ranking-empty-text">{t.emptyRankingText}</p>
             <Link
               to={`/eat/${encodeURIComponent(area)}/ranking`}
               className="merchant-list-ranking-full-link merchant-list-ranking-full-link--ghost pressable"
             >
-              打开榜单页（规则说明）
+              {t.emptyRankingLink}
             </Link>
           </div>
         )}
       </Card>
 
-      <p className="merchant-list-title merchant-list-title--merchants-section">本区商家</p>
+      <p className="merchant-list-title merchant-list-title--merchants-section">{t.merchantsSection}</p>
 
       {merchants.length === 0 ? (
-        <EmptyState
-          title="暂无商家"
-          description="该分区暂无商家。No merchants in this area yet."
-        />
+        <EmptyState title={t.emptyMerchantsTitle} description={t.emptyMerchantsDesc} />
       ) : (
-        <ul className="merchant-list-list" aria-label={`${areaLabel} 商家列表`}>
+        <ul className="merchant-list-list" aria-label={t.merchantsListAria(areaLabel)}>
           {merchants.map((m) => (
             <li key={m.id}>
               <MerchantCard merchant={m} />

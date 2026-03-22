@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Toast } from '../context/ToastContext';
+import { getApiErrorMessage } from '../utils/apiError';
 import './Login.css';
 
 /** 登录页：微信风格，学号/邮箱 + 密码；暂不登录可回主页 */
@@ -32,7 +33,7 @@ function Login() {
         Toast.error(result.message);
       }
     } catch (err) {
-      Toast.error('网络错误，请稍后重试 Network error, please try again later');
+      Toast.error(getApiErrorMessage(err));
     } finally {
       setLoading(false);
     }

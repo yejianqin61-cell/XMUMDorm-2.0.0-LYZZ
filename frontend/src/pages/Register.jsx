@@ -85,7 +85,7 @@ function Register() {
         showMsg('注册成功，正在跳转… Register success, redirecting…', 'success');
         setTimeout(() => navigate('/', { replace: true }), 500);
       } else {
-        showMsg(result.message || getApiErrorMessage(), 'error');
+        showMsg(result.message || getApiErrorMessage({}), 'error');
       }
     } catch (err) {
       showMsg(getApiErrorMessage(err), 'error');
