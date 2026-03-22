@@ -201,7 +201,11 @@ async function buildRegionTopProductsList(regionId, limitRaw) {
     );
   } catch (qErr) {
     const msg = (qErr && (qErr.message || qErr.code || '')).toString();
-    if (msg.includes('Unknown column') && msg.includes('comprehensive_score')) {
+    // 未跑 migrations/003 时可能缺 review_count / comprehensive_score / count_rating_*，不能只匹配 comprehensive_score
+    const missingProductRankingCols =
+      msg.includes('Unknown column') &&
+      /comprehensive_score|review_count|count_rating/i.test(msg);
+    if (missingProductRankingCols) {
       try {
         idRows = await query(
           `SELECT p.id AS id,
@@ -259,7 +263,10 @@ async function buildRegionTopProductsList(regionId, limitRaw) {
     );
   } catch (qErr) {
     const msg = (qErr && (qErr.message || qErr.code || '')).toString();
-    if (msg.includes('Unknown column') && (msg.includes('price') || msg.includes('comprehensive_score'))) {
+    if (
+      msg.includes('Unknown column') &&
+      /price|comprehensive_score|review_count|count_rating/i.test(msg)
+    ) {
       rows = await query(
         `SELECT p.id, p.shop_id, p.category_id, p.name, p.description, p.created_at, p.updated_at,
           c.name AS category_name, s.name AS shop_name, pi.file_path, pi.sort_order

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dorm-cache-v2';
+const CACHE_NAME = 'dorm-cache-v3';
 const URLS_TO_CACHE = [
   '/',
   '/index.html',
@@ -25,19 +25,34 @@ self.addEventListener('activate', (event) => {
 });
 
 // 网络优先：先请求网络，失败或离线时才用缓存，这样网站更新后手机无需清缓存
+// API 请求不写入缓存，且网络失败时必须返回合法 Response（否则 Uncaught: Failed to convert value to 'Response'）
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
 
+  const url = request.url;
+  const isApi = url.includes('/api/');
+
   event.respondWith(
     fetch(request)
       .then((response) => {
-        const clone = response.clone();
-        if (response.ok) {
+        if (!isApi && response.ok) {
+          const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
         }
         return response;
       })
-      .catch(() => caches.match(request))
+      .catch(() =>
+        caches.match(request).then((cached) => {
+          if (cached) return cached;
+          if (isApi) {
+            return new Response(
+              JSON.stringify({ status: -1, message: '网络不可用或未缓存该接口' }),
+              { status: 503, headers: { 'Content-Type': 'application/json' } }
+            );
+          }
+          return new Response('', { status: 503, statusText: 'Offline' });
+        })
+      )
   );
 });
