@@ -488,6 +488,7 @@ router.get('/:id', async (req, res) => {
     if (!id) {
       return res.status(400).json({ status: -1, message: '帖子 ID 无效' });
     }
+    const user = parseOptionalUser(req);
     const viewerUid = user && user.id != null ? parseInt(user.id, 10) : 0;
     const likeUserParam = Number.isFinite(viewerUid) && viewerUid > 0 ? viewerUid : 0;
 
@@ -507,7 +508,6 @@ router.get('/:id', async (req, res) => {
     if (!rows || rows.length === 0) {
       return res.status(404).json({ status: -1, message: '帖子不存在' });
     }
-    const user = parseOptionalUser(req);
     const merged = mergePostRows(rows, { user: user || {} });
     let post = merged[0];
     if (!post) {

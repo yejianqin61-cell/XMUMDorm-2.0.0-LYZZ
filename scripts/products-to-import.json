@@ -1,15 +1,13 @@
 {
-  "shopId": 61,
-  "categoryId": 431,
+  "shopId": 62,
+  "categoryId": 435,
   "products": [
-    { "name": "Ginger Red Dates with Brown Sugar (Hot)", "price": 5.9, "description": "红枣姜丝老红糖" },
-    { "name": "Jasmine Pear with Rock Sugar (Hot)", "price": 5.9, "description": "冰糖雪梨茉莉" },
-    { "name": "100 Plus", "price": 3.9, "description": "100号" },
-    { "name": "Coke", "price": 3.9, "description": "可口可乐" },
-    { "name": "Jia Duo Bao", "price": 5.9, "description": "加多宝" },
-    { "name": "Filtered Water", "price": 2, "description": "过滤水" },
-    { "name": "Melon Tea", "price": 6.9, "description": "冬瓜茶" },
-    { "name": "Watermelon Juice", "price": 8.9, "description": "西瓜汁" },
-    { "name": "Watermelon Jelly", "price": 14.9, "description": "西瓜冰粉" }
+    { "name": "Salmon Tataki Maki", "price": 20.9, "description": "三文鱼炙烧卷" },
+    { "name": "Una Maki", "price": 20.9, "description": "鳗鱼卷" },
+    { "name": "Ebi Ten Maki", "price": 18.9, "description": "虾天妇罗卷" },
+    { "name": "Tuna Salada Maki", "price": 8.9, "description": "金枪鱼沙拉卷" },
+    { "name": "Kani Maki", "price": 3.9, "description": "蟹肉卷" },
+    { "name": "Tamago Maki", "price": 4.9, "description": "玉子卷" },
+    { "name": "Kappa Maki", "price": 5.9, "description": "黄瓜卷" }
   ]
 }
