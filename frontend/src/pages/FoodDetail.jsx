@@ -128,7 +128,7 @@ function FoodDetail() {
 
   const requireLogin = () => {
     if (!isLoggedIn) {
-      navigate('/login', { state: { from: { pathname: `/eat/food/${id}` } }, replace: true });
+      navigate('/login', { replace: true, state: { from: { pathname: `/eat/food/${id}` } } });
       return true;
     }
     return false;

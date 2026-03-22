@@ -50,7 +50,7 @@ function PostDetail() {
 
   const requireLogin = useCallback(() => {
     if (!isLoggedIn) {
-      navigate('/login', { state: { from: { pathname: `/post/${id}` } }, replace: true });
+      navigate('/login', { replace: true, state: { from: { pathname: `/post/${id}` } } });
       return true;
     }
     return false;
@@ -75,6 +75,7 @@ function PostDetail() {
           author: postData.author ? { ...postData.author, avatar: prefixAvatar(postData.author.avatar) } : postData.author,
         });
         setLikeCount(postData.like_count ?? 0);
+        setLiked(!!postData.user_liked);
         const list = Array.isArray(commentsData) ? commentsData : [];
         setComments(list.map((c) => ({
           ...c,

@@ -16,6 +16,26 @@ const { uploadBuffer, guessContentType } = require('../services/objectStorage');
 
 const DEFAULT_AVATAR = '/uploads/default-avatar.png'; // 无头像时前端用此路径（可保留本地静态或后续迁移到 CDN）
 
+/** 从 Authorization 解析用户（可选，不抛错） */
+function parseOptionalUser(req) {
+  if (!req.headers.authorization) return null;
+  try {
+    const jwt = require('jsonwebtoken');
+    const token = (req.headers.authorization || '').split(' ')[1];
+    if (!token) return null;
+    return jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-in-production');
+  } catch (_) {
+    return null;
+  }
+}
+
+function rowTruthyLike(v) {
+  if (v === true || v === 1) return true;
+  if (v === false || v === 0 || v == null) return false;
+  if (typeof Buffer !== 'undefined' && Buffer.isBuffer(v)) return v.length > 0 && v[0] === 1;
+  return Boolean(v);
+}
+
 // ============================================
 // 当前用户资料（/me）
 // ============================================
@@ -102,6 +122,7 @@ router.get('/:id/profile', async (req, res) => {
       created_at: p.created_at,
       like_count: Number(p.like_count),
       comment_count: Number(p.comment_count),
+      user_liked: rowTruthyLike(p.user_liked),
       images: (imagesByPost[p.id] || []).sort((a, b) => a.sort_order - b.sort_order)
     }));
 

@@ -1,10 +1,15 @@
 {
-  "shopId": 51,
-  "categoryId": 347,
+  "shopId": 61,
+  "categoryId": 431,
   "products": [
-    { "name": "Beef chow fun", "price": 15.9, "description": "干炒牛河" },
-    { "name": "Stir-fry Horfun", "price": 11, "description": "干炒河粉" },
-    { "name": "Fish Fillet CF Soup", "price": 14.9, "description": "鱼片肠粉鲜味汤" },
-    { "name": "Soft Shell Crab CF Soup", "price": 17.9, "description": "软壳蟹肠粉鲜味汤" }
+    { "name": "Ginger Red Dates with Brown Sugar (Hot)", "price": 5.9, "description": "红枣姜丝老红糖" },
+    { "name": "Jasmine Pear with Rock Sugar (Hot)", "price": 5.9, "description": "冰糖雪梨茉莉" },
+    { "name": "100 Plus", "price": 3.9, "description": "100号" },
+    { "name": "Coke", "price": 3.9, "description": "可口可乐" },
+    { "name": "Jia Duo Bao", "price": 5.9, "description": "加多宝" },
+    { "name": "Filtered Water", "price": 2, "description": "过滤水" },
+    { "name": "Melon Tea", "price": 6.9, "description": "冬瓜茶" },
+    { "name": "Watermelon Juice", "price": 8.9, "description": "西瓜汁" },
+    { "name": "Watermelon Jelly", "price": 14.9, "description": "西瓜冰粉" }
   ]
 }

@@ -136,6 +136,14 @@ function attachPostExtra(rows, req) {
 
 // 聚合相同 post 的多行（多图、多点赞数等已用 GROUP BY 或子查询处理时，这里可能多行一帖）
 // 按 rows 中首次出现的顺序输出，以保持 SQL ORDER BY p.created_at DESC 的新帖在前
+/** MySQL 可能返回 0/1、true/false 或 bit Buffer */
+function rowTruthyLike(v) {
+  if (v === true || v === 1) return true;
+  if (v === false || v === 0 || v == null) return false;
+  if (typeof Buffer !== 'undefined' && Buffer.isBuffer(v)) return v.length > 0 && v[0] === 1;
+  return Boolean(v);
+}
+
 function mergePostRows(rows, req) {
   const byId = {};
   const order = [];
@@ -160,7 +168,8 @@ function mergePostRows(rows, req) {
         } : null,
         images: [],
         like_count: row.like_count != null ? Number(row.like_count) : 0,
-        comment_count: row.comment_count != null ? Number(row.comment_count) : 0
+        comment_count: row.comment_count != null ? Number(row.comment_count) : 0,
+        user_liked: rowTruthyLike(row.user_liked)
       };
     }
     if (row.image_path) {
@@ -278,17 +287,20 @@ router.post('/', authenticateToken, (req, res, next) => {
       userAgent: ua,
     });
 
+    const posterUid = req.user && req.user.id != null ? parseInt(req.user.id, 10) : 0;
+    const likeUserParam = Number.isFinite(posterUid) && posterUid > 0 ? posterUid : 0;
     const rows = await query(
       `SELECT p.id, p.user_id, p.content, p.type, p.created_at, p.updated_at, p.hidden_by_admin,
         u.id AS author_id, u.username AS author_username, u.nickname AS author_nickname, u.avatar AS author_avatar,
         pi.file_path AS image_path, pi.sort_order,
         (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
-        (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count
+        (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count,
+        (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id AND pl.user_id = ?) > 0 AS user_liked
        FROM posts p
        LEFT JOIN users u ON p.user_id = u.id
        LEFT JOIN post_images pi ON pi.post_id = p.id
        WHERE p.id = ?`,
-      [postId]
+      [likeUserParam, postId]
     );
     const merged = mergePostRows(rows, req);
     let post = merged[0];
@@ -351,19 +363,23 @@ router.get('/', async (req, res) => {
       }
     }
 
+    const viewerUid = user && user.id != null ? parseInt(user.id, 10) : 0;
+    const likeUserParam = Number.isFinite(viewerUid) && viewerUid > 0 ? viewerUid : 0;
+
     const rows = await query(
       `SELECT p.id, p.user_id, p.content, p.type, p.deleted_at, p.hidden_by_admin, p.created_at, p.updated_at,
         u.id AS author_id, u.username AS author_username, u.nickname AS author_nickname, u.avatar AS author_avatar,
         pi.file_path AS image_path, pi.sort_order,
         (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
-        (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count
+        (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count,
+        (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id AND pl.user_id = ?) > 0 AS user_liked
        FROM posts p
        LEFT JOIN users u ON p.user_id = u.id
        LEFT JOIN post_images pi ON pi.post_id = p.id
        WHERE ${where}
        ORDER BY p.created_at DESC
        LIMIT ${limitCount} OFFSET ${offset}`,
-      sqlParams
+      [...sqlParams, likeUserParam]
     );
     let list = mergePostRows(rows.map((r) => ({ ...r, deleted_at: null })), { user: user || {} });
     list = await enrichPostsWithTags(list);
@@ -472,17 +488,21 @@ router.get('/:id', async (req, res) => {
     if (!id) {
       return res.status(400).json({ status: -1, message: '帖子 ID 无效' });
     }
+    const viewerUid = user && user.id != null ? parseInt(user.id, 10) : 0;
+    const likeUserParam = Number.isFinite(viewerUid) && viewerUid > 0 ? viewerUid : 0;
+
     const rows = await query(
       `SELECT p.id, p.user_id, p.content, p.type, p.deleted_at, p.hidden_by_admin, p.created_at, p.updated_at,
         u.id AS author_id, u.username AS author_username, u.nickname AS author_nickname, u.avatar AS author_avatar,
         pi.file_path AS image_path, pi.sort_order,
         (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
-        (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count
+        (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count,
+        (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id AND pl.user_id = ?) > 0 AS user_liked
        FROM posts p
        LEFT JOIN users u ON p.user_id = u.id
        LEFT JOIN post_images pi ON pi.post_id = p.id
        WHERE p.id = ?`,
-      [id]
+      [likeUserParam, id]
     );
     if (!rows || rows.length === 0) {
       return res.status(404).json({ status: -1, message: '帖子不存在' });

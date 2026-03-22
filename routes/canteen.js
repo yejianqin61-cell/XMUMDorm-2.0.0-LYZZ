@@ -152,6 +152,113 @@ router.post('/shops', authenticateToken, async (req, res) => {
   }
 });
 
+// 区域内最夯商品 Top N：按商品综合评分降序，同分则上架时间更晚（created_at 更新）在前
+router.get('/regions/:regionId/top-products', async (req, res) => {
+  try {
+    const regionId = parseInt(req.params.regionId, 10);
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 20));
+    if (!regionId) {
+      return res.status(400).json({ status: -1, message: '区域 ID 无效' });
+    }
+
+    let idRows;
+    try {
+      idRows = await query(
+        `SELECT p.id FROM products p
+         INNER JOIN shops s ON p.shop_id = s.id AND s.deleted_at IS NULL AND s.region_id = ?
+         WHERE p.deleted_at IS NULL
+           AND p.review_count > 0 AND p.comprehensive_score IS NOT NULL
+         ORDER BY p.comprehensive_score DESC, p.created_at DESC, p.id DESC
+         LIMIT ?`,
+        [regionId, limit]
+      );
+    } catch (qErr) {
+      const msg = (qErr && (qErr.message || qErr.code || '')).toString();
+      if (msg.includes('Unknown column') && msg.includes('comprehensive_score')) {
+        idRows = await query(
+          `SELECT p.id FROM products p
+           INNER JOIN shops s ON p.shop_id = s.id AND s.deleted_at IS NULL AND s.region_id = ?
+           WHERE p.deleted_at IS NULL
+           ORDER BY p.created_at DESC, p.id DESC
+           LIMIT ?`,
+          [regionId, limit]
+        );
+      } else {
+        throw qErr;
+      }
+    }
+
+    const ids = (idRows || []).map((r) => r.id);
+    if (ids.length === 0) {
+      return res.status(200).json({ status: 0, message: '获取成功', data: [] });
+    }
+
+    const ph = ids.map(() => '?').join(',');
+    let rows;
+    try {
+      rows = await query(
+        `SELECT p.id, p.shop_id, p.category_id, p.name, p.description, p.price, p.comprehensive_score, p.review_count, p.created_at, p.updated_at,
+          c.name AS category_name, s.name AS shop_name, pi.file_path, pi.sort_order
+         FROM products p
+         LEFT JOIN product_categories c ON p.category_id = c.id
+         INNER JOIN shops s ON p.shop_id = s.id AND s.deleted_at IS NULL
+         LEFT JOIN product_images pi ON pi.product_id = p.id
+         WHERE p.id IN (${ph}) AND p.deleted_at IS NULL`,
+        ids
+      );
+    } catch (qErr) {
+      const msg = (qErr && (qErr.message || qErr.code || '')).toString();
+      if (msg.includes('Unknown column') && (msg.includes('price') || msg.includes('comprehensive_score'))) {
+        rows = await query(
+          `SELECT p.id, p.shop_id, p.category_id, p.name, p.description, p.created_at, p.updated_at,
+            c.name AS category_name, s.name AS shop_name, pi.file_path, pi.sort_order
+           FROM products p
+           LEFT JOIN product_categories c ON p.category_id = c.id
+           INNER JOIN shops s ON p.shop_id = s.id AND s.deleted_at IS NULL
+           LEFT JOIN product_images pi ON pi.product_id = p.id
+           WHERE p.id IN (${ph}) AND p.deleted_at IS NULL`,
+          ids
+        );
+      } else {
+        throw qErr;
+      }
+    }
+
+    const byId = {};
+    for (const r of rows || []) {
+      if (!byId[r.id]) {
+        byId[r.id] = {
+          id: r.id,
+          shop_id: r.shop_id,
+          shop_name: r.shop_name,
+          category_id: r.category_id,
+          category_name: r.category_name,
+          name: r.name,
+          description: r.description,
+          price: r.price != null ? Number(r.price) : null,
+          comprehensive_score: r.comprehensive_score != null ? Number(r.comprehensive_score) : null,
+          review_count: r.review_count != null ? Number(r.review_count) : null,
+          created_at: r.created_at,
+          updated_at: r.updated_at,
+          images: []
+        };
+      }
+      if (r.file_path) byId[r.id].images.push({ url: assetUrl(r.file_path, r.updated_at), sort_order: r.sort_order });
+    }
+    const list = ids.map((id) => {
+      const p = byId[id];
+      if (!p) return null;
+      p.images.sort((a, b) => a.sort_order - b.sort_order);
+      return ensureProductDefaultImage({ ...p });
+    }).filter(Boolean);
+
+    res.status(200).json({ status: 0, message: '获取成功', data: list });
+  } catch (e) {
+    console.error('获取区域热门商品错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
 router.get('/regions/:regionId/shops', async (req, res) => {
   try {
     const regionId = parseInt(req.params.regionId, 10);
@@ -661,7 +768,7 @@ router.get('/shops/:shopId/hot-products', async (req, res) => {
        LEFT JOIN product_images pi ON pi.product_id = p.id
        WHERE p.shop_id = ? AND p.deleted_at IS NULL
          AND p.review_count > 0 AND p.comprehensive_score IS NOT NULL
-       ORDER BY p.comprehensive_score DESC, p.created_at ASC
+       ORDER BY p.comprehensive_score DESC, p.created_at DESC
        LIMIT 10`;
     let rows;
     try {

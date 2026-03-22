@@ -14,6 +14,13 @@ export function getShopsByRegion(regionId) {
   return get(`/api/canteen/regions/${regionId}/shops`);
 }
 
+/** 区域内最夯商品：按综合评分降序，同分更晚上架在前；默认 20 条 */
+export function getRegionTopProducts(regionId, options = {}) {
+  const limit = options.limit != null ? Number(options.limit) : 20;
+  const q = Number.isFinite(limit) && limit > 0 ? `?limit=${Math.min(50, limit)}` : '?limit=20';
+  return get(`/api/canteen/regions/${regionId}/top-products${q}`);
+}
+
 export function getShop(shopId) {
   return get(`/api/canteen/shops/${shopId}`);
 }

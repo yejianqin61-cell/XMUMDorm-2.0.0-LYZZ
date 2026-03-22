@@ -39,3 +39,130 @@
   color: var(--wx-text-secondary);
   text-align: center;
 }
+
+/* 本区最夯商品横向滑动 */
+.merchant-list-hot {
+  margin-bottom: 20px;
+}
+
+.merchant-list-hot-head {
+  margin-bottom: 10px;
+}
+
+.merchant-list-hot-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--wx-text);
+}
+
+.merchant-list-hot-sub {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--wx-text-secondary);
+}
+
+.merchant-list-hot-scroll {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.merchant-list-hot-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+
+.merchant-list-hot-card {
+  flex: 0 0 132px;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+  background: var(--wx-bg-elevated, #fff);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--wx-border, rgba(0, 0, 0, 0.06));
+  position: relative;
+}
+
+.merchant-list-hot-rank {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 1;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+  border-radius: 10px;
+}
+
+.merchant-list-hot-img-wrap {
+  width: 100%;
+  aspect-ratio: 1;
+  background: var(--wx-bg, #f5f5f5);
+}
+
+.merchant-list-hot-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.merchant-list-hot-body {
+  padding: 8px 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 72px;
+}
+
+.merchant-list-hot-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--wx-text);
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.merchant-list-hot-shop {
+  font-size: 11px;
+  color: var(--wx-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.merchant-list-hot-meta {
+  margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.merchant-list-hot-score {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--wx-orange, #ff976a);
+}
+
+.merchant-list-hot-price {
+  font-size: 11px;
+  color: var(--wx-text-secondary);
+}

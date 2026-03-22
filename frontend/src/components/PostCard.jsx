@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -66,11 +66,16 @@ function PostCard({ post }) {
   const [likeNum, setLikeNum] = useState(initialLike);
   const [liked, setLiked] = useState(!!post.user_liked);
 
+  useEffect(() => {
+    setLikeNum(like_count ?? likeCount ?? 0);
+    setLiked(!!post.user_liked);
+  }, [post.id, post.user_liked, post.like_count, post.likeCount, like_count, likeCount]);
+
   const handleLikeClick = async (e) => {
     e.preventDefault();
     e.stopPropagation();
     if (!isLoggedIn) {
-      navigate('/login', { state: { from: { pathname: `/post/${id}` } }, replace: true });
+      navigate('/login', { replace: true, state: { from: { pathname: `/post/${id}` } } });
       return;
     }
     try {

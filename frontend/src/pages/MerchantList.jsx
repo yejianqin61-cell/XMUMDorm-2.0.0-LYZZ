@@ -1,18 +1,19 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import MerchantCard from '../components/MerchantCard';
 import SkeletonCard from '../components/SkeletonCard';
 import EmptyState from '../components/EmptyState';
 import { AREA_LABELS } from '../components/AreaCard';
-import { getRegions, getShopsByRegion } from '../api/canteen';
-import { getUploadUrl } from '../api/config';
+import { getRegions, getShopsByRegion, getRegionTopProducts } from '../api/canteen';
+import { getUploadUrl, DEFAULT_PRODUCT_IMAGE_PATH } from '../api/config';
 import { getApiErrorMessage } from '../utils/apiError';
 import './MerchantList.css';
 
-/** 区域商家列表页：展示当前分区下的商家（API），点击进入该商家菜品列表 */
+/** 区域商家列表页：本区最夯商品 Top20 + 当前分区下的商家（API） */
 function MerchantList() {
   const { area } = useParams();
   const [merchants, setMerchants] = useState([]);
+  const [hotProducts, setHotProducts] = useState([]);
   const [areaLabel, setAreaLabel] = useState(AREA_LABELS[area] ?? area ?? '');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -21,6 +22,7 @@ function MerchantList() {
     const code = area ?? '';
     if (!code) {
       setMerchants([]);
+      setHotProducts([]);
       setLoading(false);
       return;
     }
@@ -35,13 +37,17 @@ function MerchantList() {
         setAreaLabel(region?.name ?? AREA_LABELS[code] ?? code);
         if (!region) {
           setMerchants([]);
-          return;
+          setHotProducts([]);
+          return null;
         }
-        return getShopsByRegion(region.id);
+        return Promise.all([
+          getShopsByRegion(region.id),
+          getRegionTopProducts(region.id, { limit: 20 }).catch(() => []),
+        ]).then(([shops, hot]) => ({ shops, hot }));
       })
-      .then((shops) => {
-        if (cancelled || shops === undefined) return;
-        const list = Array.isArray(shops) ? shops : [];
+      .then((pack) => {
+        if (cancelled || pack == null) return;
+        const list = Array.isArray(pack.shops) ? pack.shops : [];
         setMerchants(
           list.map((s) => ({
             id: s.id,
@@ -51,6 +57,20 @@ function MerchantList() {
             status: 'open',
             openingHours: s.opening_hours ?? undefined,
           }))
+        );
+        const hotRaw = Array.isArray(pack.hot) ? pack.hot : [];
+        setHotProducts(
+          hotRaw.map((p) => {
+            const img0 = p.images?.[0]?.url;
+            return {
+              id: p.id,
+              name: p.name,
+              shopName: p.shop_name,
+              score: p.comprehensive_score,
+              price: p.price,
+              image: img0 ? getUploadUrl(img0) : DEFAULT_PRODUCT_IMAGE_PATH,
+            };
+          })
         );
       })
       .catch((err) => {
@@ -88,6 +108,42 @@ function MerchantList() {
   return (
     <div className="merchant-list-page">
       <p className="merchant-list-title">{areaLabel}</p>
+
+      {hotProducts.length > 0 && (
+        <section className="merchant-list-hot" aria-label="本区域最夯商品">
+          <div className="merchant-list-hot-head">
+            <h2 className="merchant-list-hot-title">本区最夯 Top 20</h2>
+            <p className="merchant-list-hot-sub">按综合评分 · 同分则更晚上架在前</p>
+          </div>
+          <div className="merchant-list-hot-scroll">
+            {hotProducts.map((p, idx) => (
+              <Link
+                key={p.id}
+                to={`/eat/food/${p.id}`}
+                className="merchant-list-hot-card pressable"
+              >
+                <span className="merchant-list-hot-rank" aria-hidden>{idx + 1}</span>
+                <div className="merchant-list-hot-img-wrap">
+                  <img src={p.image} alt="" className="merchant-list-hot-img" />
+                </div>
+                <div className="merchant-list-hot-body">
+                  <span className="merchant-list-hot-name">{p.name}</span>
+                  <span className="merchant-list-hot-shop">{p.shopName}</span>
+                  <div className="merchant-list-hot-meta">
+                    {p.score != null && (
+                      <span className="merchant-list-hot-score">{Number(p.score).toFixed(1)} 分</span>
+                    )}
+                    {p.price != null && Number(p.price) > 0 && (
+                      <span className="merchant-list-hot-price">RM {Number(p.price).toFixed(2)}</span>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
       {merchants.length === 0 ? (
         <EmptyState
           title="暂无商家"
