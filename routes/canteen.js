@@ -186,7 +186,7 @@ async function buildRegionTopProductsList(regionId, limitRaw) {
            COUNT(*) AS cc,
            ${ratingCase} AS live_score
          FROM product_comments
-         WHERE parent_id IS NULL AND deleted_at IS NULL
+         WHERE (parent_id IS NULL OR parent_id = 0) AND deleted_at IS NULL
            AND rating IN ('夯爆了','顶级','人上人','NPC','拉完了')
          GROUP BY product_id
        ) ca ON ca.product_id = p.id
@@ -212,7 +212,7 @@ async function buildRegionTopProductsList(regionId, limitRaw) {
              SELECT product_id,
                ${ratingCase} AS live_score
              FROM product_comments
-             WHERE parent_id IS NULL AND deleted_at IS NULL
+             WHERE (parent_id IS NULL OR parent_id = 0) AND deleted_at IS NULL
                AND rating IN ('夯爆了','顶级','人上人','NPC','拉完了')
              GROUP BY product_id
              HAVING COUNT(*) > 0
@@ -316,12 +316,16 @@ async function buildRegionTopProductsList(regionId, limitRaw) {
 // 按区域 code（如 D6、LY3）取分区商品榜，与 /regions/:id/top-products 数据一致
 router.get('/regions/code/:regionCode/top-products', async (req, res) => {
   try {
-    const regionCode = String(req.params.regionCode || '').trim();
+    let regionCode = String(req.params.regionCode || '').trim();
     const limit = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 20));
     if (!regionCode) {
       return res.status(400).json({ status: -1, message: '区域代码无效' });
     }
-    const found = await query('SELECT id FROM regions WHERE code = ?', [regionCode]);
+    if (/^others$/i.test(regionCode)) regionCode = 'other';
+    const found = await query(
+      'SELECT id FROM regions WHERE LOWER(code) = LOWER(?)',
+      [regionCode]
+    );
     if (!found || !found[0]) {
       return res.status(404).json({ status: -1, message: '区域不存在' });
     }

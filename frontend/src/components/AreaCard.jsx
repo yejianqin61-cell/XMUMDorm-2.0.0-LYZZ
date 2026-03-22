@@ -9,6 +9,7 @@ const AREA_LABELS = {
   LY3: 'LY3',
   D6: 'D6',
   BELL: 'BELL',
+  other: 'Other',
   others: 'Others',
 };
 

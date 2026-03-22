@@ -5,6 +5,7 @@ import EmptyState from '../components/EmptyState';
 import { getRegions, getRegionTopProductsByCode } from '../api/canteen';
 import { getApiErrorMessage } from '../utils/apiError';
 import { AREA_LABELS } from '../components/AreaCard';
+import { findRegionByCode, normalizeAreaCodeParam } from '../utils/regionCode';
 import './Rankings.css';
 import './AreaProductRanking.css';
 
@@ -35,7 +36,7 @@ function AreaProductRanking() {
       .then(([regions, products]) => {
         if (cancelled) return;
         const arr = Array.isArray(regions) ? regions : [];
-        const r = arr.find((x) => x.code === code);
+        const r = findRegionByCode(arr, code);
         setAreaLabel(r?.name ?? AREA_LABELS[code] ?? code);
         setList(Array.isArray(products) ? products : []);
       })

@@ -34,7 +34,7 @@ async function main() {
            2
          ) AS sc
        FROM product_comments
-       WHERE parent_id IS NULL AND deleted_at IS NULL
+       WHERE (parent_id IS NULL OR parent_id = 0) AND deleted_at IS NULL
          AND rating IN ('夯爆了', '顶级', '人上人', 'NPC', '拉完了')
        GROUP BY product_id
      ) t ON t.product_id = p.id

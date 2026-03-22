@@ -8,6 +8,7 @@ import { AREA_LABELS } from '../components/AreaCard';
 import { getRegions, getShopsByRegion, getRegionTopProducts } from '../api/canteen';
 import { getUploadUrl, DEFAULT_PRODUCT_IMAGE_PATH } from '../api/config';
 import { getApiErrorMessage } from '../utils/apiError';
+import { findRegionByCode, normalizeAreaCodeParam } from '../utils/regionCode';
 import './MerchantList.css';
 
 /** 区域商家列表页：本区最夯商品 Top20 + 当前分区下的商家（API） */
@@ -20,7 +21,7 @@ function MerchantList() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const code = area ?? '';
+    const code = normalizeAreaCodeParam(area ?? '');
     if (!code) {
       setMerchants([]);
       setHotProducts([]);
@@ -34,7 +35,7 @@ function MerchantList() {
       .then((regions) => {
         if (cancelled) return;
         const list = Array.isArray(regions) ? regions : [];
-        const region = list.find((r) => r.code === code);
+        const region = findRegionByCode(list, code);
         setAreaLabel(region?.name ?? AREA_LABELS[code] ?? code);
         if (!region) {
           setMerchants([]);
