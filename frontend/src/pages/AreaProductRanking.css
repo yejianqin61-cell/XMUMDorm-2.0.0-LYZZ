@@ -1,0 +1,34 @@
+.area-ranking-page {
+  min-height: 100%;
+  padding: 8px 16px 24px;
+  background: transparent;
+}
+
+.area-ranking-back {
+  margin: 0 0 12px;
+}
+
+.area-ranking-back-link {
+  font-size: 14px;
+  color: var(--wx-link, #576b95);
+  text-decoration: none;
+}
+
+.area-ranking-back-link:hover {
+  text-decoration: underline;
+}
+
+.area-ranking-main-card {
+  padding: 16px;
+}
+
+.area-ranking-h1 {
+  font-size: 17px;
+}
+
+.area-ranking-footnote {
+  margin: 14px 0 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--wx-text-secondary);
+}

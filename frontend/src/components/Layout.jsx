@@ -174,6 +174,10 @@ function Layout() {
       title = isZh ? '发布点评' : 'Publish Review';
     } else if (pathname === '/eat/rankings') {
       title = isZh ? '排行榜' : 'Rankings';
+    } else if (/\/eat\/[^/]+\/ranking\/?$/.test(pathname)) {
+      const seg = pathname.split('/')[2];
+      const code = seg ? decodeURIComponent(seg) : '';
+      title = isZh ? `${code || '分区'} 商品榜` : `${code || 'Area'} · Top foods`;
     } else if (
       pathname.startsWith('/eat/') &&
       !pathname.startsWith('/eat/merchant') &&

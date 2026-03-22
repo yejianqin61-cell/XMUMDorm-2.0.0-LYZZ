@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import Card from '../components/Card';
 import MerchantCard from '../components/MerchantCard';
 import SkeletonCard from '../components/SkeletonCard';
 import EmptyState from '../components/EmptyState';
@@ -64,6 +65,7 @@ function MerchantList() {
             const img0 = p.images?.[0]?.url;
             return {
               id: p.id,
+              rank: p.rank,
               name: p.name,
               shopName: p.shop_name,
               score: p.comprehensive_score,
@@ -117,57 +119,75 @@ function MerchantList() {
   return (
     <div className="merchant-list-page">
       {/*
-        布局顺序（顶栏 TopBar 之下、底部 Tab 之上）：
-        1. 本区商品排行榜 — 紧贴主内容顶部，在商家列表之上
-        2. 分区标题 + 商家列表
+        分区排行榜入口：始终在第一个商家之上；无数据时也展示说明，保证 UI 完备
       */}
-      {hotProducts.length > 0 && (
-        <section
-          className="merchant-list-hot merchant-list-hot--page-top"
-          aria-label={`${areaLabel} 本区商品榜`}
-        >
-          <div className="merchant-list-hot-head">
-            <h2 className="merchant-list-hot-title">{areaLabel} · 商品榜 Top 20</h2>
-            <p className="merchant-list-hot-sub">按综合评分 · 同分则更晚上架在前</p>
+      <Card as="section" className="merchant-list-ranking-card" aria-label={`${areaLabel} 分区商品榜`}>
+        <div className="merchant-list-ranking-card-head">
+          <span className="merchant-list-ranking-icon" aria-hidden>
+            🏆
+          </span>
+          <div className="merchant-list-ranking-card-titles">
+            <h2 className="merchant-list-ranking-card-title">分区商品榜</h2>
+            <p className="merchant-list-ranking-card-zone">{areaLabel}</p>
+            <p className="merchant-list-ranking-card-rule">
+              按综合评分排序 · 同分则更晚上架在前 · 仅统计已有点评的商品
+            </p>
           </div>
-          <div className="merchant-list-hot-scroll">
-            {hotProducts.map((p, idx) => (
-              <Link
-                key={p.id}
-                to={`/eat/food/${p.id}`}
-                className="merchant-list-hot-card pressable"
-              >
-                <span className="merchant-list-hot-rank" aria-hidden>{idx + 1}</span>
-                <div className="merchant-list-hot-img-wrap">
-                  <img src={p.image} alt="" className="merchant-list-hot-img" />
-                </div>
-                <div className="merchant-list-hot-body">
-                  <span className="merchant-list-hot-name">{p.name}</span>
-                  <span className="merchant-list-hot-shop">{p.shopName}</span>
-                  <div className="merchant-list-hot-meta">
-                    {p.score != null && (
-                      <span className="merchant-list-hot-score">{Number(p.score).toFixed(1)} 分</span>
-                    )}
-                    {p.price != null && Number(p.price) > 0 && (
-                      <span className="merchant-list-hot-price">RM {Number(p.price).toFixed(2)}</span>
-                    )}
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
+        </div>
 
-      <p
-        className={
-          hotProducts.length > 0
-            ? 'merchant-list-title merchant-list-title--merchants-section'
-            : 'merchant-list-title'
-        }
-      >
-        {hotProducts.length > 0 ? '本区商家' : areaLabel}
-      </p>
+        {hotProducts.length > 0 ? (
+          <>
+            <div className="merchant-list-hot-scroll merchant-list-hot-scroll--in-card">
+              {hotProducts.map((p, idx) => (
+                <Link
+                  key={p.id}
+                  to={`/eat/food/${p.id}`}
+                  className="merchant-list-hot-card pressable"
+                >
+                  <span className="merchant-list-hot-rank" aria-hidden>
+                    {p.rank ?? idx + 1}
+                  </span>
+                  <div className="merchant-list-hot-img-wrap">
+                    <img src={p.image} alt="" className="merchant-list-hot-img" />
+                  </div>
+                  <div className="merchant-list-hot-body">
+                    <span className="merchant-list-hot-name">{p.name}</span>
+                    <span className="merchant-list-hot-shop">{p.shopName}</span>
+                    <div className="merchant-list-hot-meta">
+                      {p.score != null && (
+                        <span className="merchant-list-hot-score">{Number(p.score).toFixed(1)} 分</span>
+                      )}
+                      {p.price != null && Number(p.price) > 0 && (
+                        <span className="merchant-list-hot-price">RM {Number(p.price).toFixed(2)}</span>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+            <Link
+              to={`/eat/${encodeURIComponent(area)}/ranking`}
+              className="merchant-list-ranking-full-link pressable"
+            >
+              查看完整榜单（最多 50 名）→
+            </Link>
+          </>
+        ) : (
+          <div className="merchant-list-ranking-empty">
+            <p className="merchant-list-ranking-empty-text">
+              本区暂无上榜商品。用户发表点评后，系统将按综合评分自动生成榜单。
+            </p>
+            <Link
+              to={`/eat/${encodeURIComponent(area)}/ranking`}
+              className="merchant-list-ranking-full-link merchant-list-ranking-full-link--ghost pressable"
+            >
+              打开榜单页（规则说明）
+            </Link>
+          </div>
+        )}
+      </Card>
+
+      <p className="merchant-list-title merchant-list-title--merchants-section">本区商家</p>
 
       {merchants.length === 0 ? (
         <EmptyState

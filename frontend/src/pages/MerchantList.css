@@ -4,13 +4,14 @@
   background: transparent;
 }
 
-/* 有商品榜时：榜单贴顶，商家区标题略收紧 */
+/* 排行榜卡片下方：商家区块标题 */
 .merchant-list-title--merchants-section {
-  margin-top: 4px;
+  margin-top: 18px;
   margin-bottom: 12px;
   font-size: 16px;
-  padding-top: 4px;
-  border-top: 1px solid var(--wx-border, rgba(0, 0, 0, 0.06));
+  font-weight: 600;
+  padding-top: 0;
+  border-top: none;
 }
 
 .merchant-list-title {
@@ -49,11 +50,97 @@
   text-align: center;
 }
 
-/* 本区商品榜：主内容区最上方（TopBar 下方第一块） */
-.merchant-list-hot--page-top {
+/* 分区排行榜入口卡片（顶栏下第一块） */
+.merchant-list-ranking-card {
   margin-top: 0;
-  margin-bottom: 16px;
-  padding-top: 0;
+  margin-bottom: 0;
+  padding: 14px 14px 12px;
+  background: linear-gradient(165deg, rgba(255, 248, 235, 0.95) 0%, #fff 38%);
+  border: 1px solid rgba(255, 180, 100, 0.25);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.merchant-list-ranking-card-head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.merchant-list-ranking-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.merchant-list-ranking-card-titles {
+  min-width: 0;
+  flex: 1;
+}
+
+.merchant-list-ranking-card-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--wx-text);
+  letter-spacing: 0.02em;
+}
+
+.merchant-list-ranking-card-zone {
+  margin: 4px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--wx-orange, #ff976a);
+}
+
+.merchant-list-ranking-card-rule {
+  margin: 6px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--wx-text-secondary);
+}
+
+.merchant-list-hot-scroll--in-card {
+  margin-bottom: 10px;
+}
+
+.merchant-list-ranking-full-link {
+  display: block;
+  text-align: center;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--wx-link, #576b95);
+  text-decoration: none;
+  border-radius: 10px;
+  background: rgba(87, 107, 149, 0.08);
+}
+
+.merchant-list-ranking-full-link:hover {
+  background: rgba(87, 107, 149, 0.12);
+}
+
+.merchant-list-ranking-full-link--ghost {
+  margin-top: 8px;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.merchant-list-ranking-empty {
+  padding: 8px 0 4px;
+}
+
+.merchant-list-ranking-empty-text {
+  margin: 0 0 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--wx-text-secondary);
 }
 
 /* 本区最夯商品横向滑动 */

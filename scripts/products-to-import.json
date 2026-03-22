@@ -1,10 +1,18 @@
 {
   "shopId": 63,
-  "categoryId": 438,
+  "categoryId": 439,
   "products": [
-    { "name": "Orange Juice", "price": 6.9, "description": "香橙汁" },
-    { "name": "Apple Juice", "price": 6.9, "description": "苹果汁" },
-    { "name": "Mango Juice", "price": 6.9, "description": "芒果汁" },
-    { "name": "Watermelon Juice", "price": 6.9, "description": "西瓜汁" }
+    { "name": "Apple + Orange Juice", "price": 9.9, "description": "苹果+香橙果汁" },
+    { "name": "Orange + Mango Juice", "price": 9.9, "description": "香橙+芒果汁" },
+    { "name": "Orange + Pineapple Juice", "price": 9.9, "description": "香橙+凤梨汁" },
+    { "name": "Carrot + Orange Juice", "price": 9.9, "description": "萝卜+香橙汁" },
+    { "name": "Carrot + Fresh Milk Juice", "price": 9.9, "description": "萝卜+鲜奶" },
+    { "name": "Papaya + Fresh Milk Juice", "price": 9.9, "description": "木瓜+鲜奶" },
+    { "name": "Kiwi + Green Apple Juice", "price": 10.9, "description": "奇异果+青苹果汁" },
+    { "name": "Kiwi + Orange Juice", "price": 10.9, "description": "奇异果+香橙汁" },
+    { "name": "Dragon Fruit + Apple Juice", "price": 10.9, "description": "火龙果+苹果汁" },
+    { "name": "Dragon Fruit + Banana Juice", "price": 10.9, "description": "火龙果+香蕉汁" },
+    { "name": "Avocado + Banana Juice", "price": 10.9, "description": "牛油果+香蕉汁" },
+    { "name": "Avocado + Chocolate Milk Juice", "price": 10.9, "description": "牛油果+巧克力奶" }
   ]
 }
