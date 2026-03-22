@@ -160,7 +160,7 @@ router.post('/shops', authenticateToken, async (req, res) => {
  * 同分则 created_at 更晚在前，再 id 降序。返回项含 rank（1-based）。
  */
 async function buildRegionTopProductsList(regionId, limitRaw) {
-  const limit = Math.min(50, Math.max(1, parseInt(limitRaw, 10) || 20));
+  const safeLimit = Math.min(50, Math.max(1, parseInt(limitRaw, 10) || 20));
   const ratingCase = `SUM(
       CASE rating
         WHEN '夯爆了' THEN 10
@@ -171,8 +171,11 @@ async function buildRegionTopProductsList(regionId, limitRaw) {
       END
     ) / NULLIF(COUNT(*), 0)`;
 
+  const orderRank = `ORDER BY (rank_score IS NULL) ASC, rank_score DESC, p.created_at DESC, p.id DESC`;
+
   let idRows;
   try {
+    // LIMIT 使用内联整数：部分托管 MySQL + mysql2 对 LIMIT ? 预处理偶发异常
     idRows = await query(
       `SELECT p.id AS id,
         ROUND(COALESCE(
@@ -195,9 +198,9 @@ async function buildRegionTopProductsList(regionId, limitRaw) {
            (ca.cc IS NOT NULL AND ca.cc > 0)
            OR (p.review_count > 0 AND p.comprehensive_score IS NOT NULL)
          )
-       ORDER BY rank_score DESC, p.created_at DESC, p.id DESC
-       LIMIT ?`,
-      [regionId, limit]
+       ${orderRank}
+       LIMIT ${safeLimit}`,
+      [regionId]
     );
   } catch (qErr) {
     const msg = (qErr && (qErr.message || qErr.code || '')).toString();
@@ -205,6 +208,8 @@ async function buildRegionTopProductsList(regionId, limitRaw) {
     const missingProductRankingCols =
       msg.includes('Unknown column') &&
       /comprehensive_score|review_count|count_rating/i.test(msg);
+    const missingDeletedAtCol = msg.includes('Unknown column') && /deleted_at/i.test(msg);
+
     if (missingProductRankingCols) {
       try {
         idRows = await query(
@@ -222,9 +227,9 @@ async function buildRegionTopProductsList(regionId, limitRaw) {
              HAVING COUNT(*) > 0
            ) ca ON ca.product_id = p.id
            WHERE p.deleted_at IS NULL
-           ORDER BY rank_score DESC, p.created_at DESC, p.id DESC
-           LIMIT ?`,
-          [regionId, limit]
+           ${orderRank}
+           LIMIT ${safeLimit}`,
+          [regionId]
         );
       } catch (e2) {
         idRows = await query(
@@ -233,11 +238,39 @@ async function buildRegionTopProductsList(regionId, limitRaw) {
            INNER JOIN shops s ON p.shop_id = s.id AND s.deleted_at IS NULL AND s.region_id = ?
            WHERE p.deleted_at IS NULL
            ORDER BY p.created_at DESC, p.id DESC
-           LIMIT ?`,
-          [regionId, limit]
+           LIMIT ${safeLimit}`,
+          [regionId]
         );
       }
+    } else if (missingDeletedAtCol) {
+      // 极老库无 deleted_at：不做逻辑删除过滤（宁可多显示也不要 500）
+      idRows = await query(
+        `SELECT p.id AS id,
+          ROUND(COALESCE(
+            IF(ca.cc IS NOT NULL AND ca.cc > 0, ca.live_score, NULL),
+            p.comprehensive_score
+          ), 2) AS rank_score
+         FROM products p
+         INNER JOIN shops s ON p.shop_id = s.id AND s.region_id = ?
+         LEFT JOIN (
+           SELECT product_id,
+             COUNT(*) AS cc,
+             ${ratingCase} AS live_score
+           FROM product_comments
+           WHERE (parent_id IS NULL OR parent_id = 0)
+             AND rating IN ('夯爆了','顶级','人上人','NPC','拉完了')
+           GROUP BY product_id
+         ) ca ON ca.product_id = p.id
+         WHERE (
+             (ca.cc IS NOT NULL AND ca.cc > 0)
+             OR (p.review_count > 0 AND p.comprehensive_score IS NOT NULL)
+           )
+         ${orderRank}
+         LIMIT ${safeLimit}`,
+        [regionId]
+      );
     } else {
+      console.error('[buildRegionTopProductsList] id query failed:', qErr.sqlMessage || qErr.message);
       throw qErr;
     }
   }
@@ -277,7 +310,19 @@ async function buildRegionTopProductsList(regionId, limitRaw) {
          WHERE p.id IN (${ph}) AND p.deleted_at IS NULL`,
         ids
       );
+    } else if (msg.includes('Unknown column') && /deleted_at/i.test(msg)) {
+      rows = await query(
+        `SELECT p.id, p.shop_id, p.category_id, p.name, p.description, p.price, p.comprehensive_score, p.review_count, p.created_at, p.updated_at,
+          c.name AS category_name, s.name AS shop_name, pi.file_path, pi.sort_order
+         FROM products p
+         LEFT JOIN product_categories c ON p.category_id = c.id
+         INNER JOIN shops s ON p.shop_id = s.id
+         LEFT JOIN product_images pi ON pi.product_id = p.id
+         WHERE p.id IN (${ph})`,
+        ids
+      );
     } else {
+      console.error('[buildRegionTopProductsList] detail query failed:', qErr.sqlMessage || qErr.message);
       throw qErr;
     }
   }

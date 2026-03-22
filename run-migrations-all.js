@@ -38,10 +38,10 @@ function getDbNameFromUrl(url) {
 const dbNameFromUrl = connectionUrl ? getDbNameFromUrl(connectionUrl) : null;
 
 // 最终使用的数据库名：
-// 1) 优先 DB_NAME
-// 2) 然后连接串中的路径
-// 3) 最后兜底 'jack_campus'
-const DB_NAME = process.env.DB_NAME || dbNameFromUrl || 'jack_campus';
+// 1) 若使用 DATABASE_URL / MYSQL_URL：优先用连接串路径里的库名（Railway 多为 railway）
+// 2) 否则用 DB_NAME
+// 3) 最后兜底 jack_campus
+const DB_NAME = dbNameFromUrl || process.env.DB_NAME || 'jack_campus';
 
 const dbConfig = connectionUrl
   ? {

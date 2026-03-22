@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dorm-cache-v3';
+const CACHE_NAME = 'dorm-cache-v4';
 const URLS_TO_CACHE = [
   '/',
   '/index.html',
@@ -36,9 +36,19 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(request)
       .then((response) => {
-        if (!isApi && response.ok) {
+        // Cache API 不允许缓存 206 Partial Content / opaque；否则会报错并污染控制台
+        const canCache =
+          !isApi &&
+          response.ok &&
+          response.status === 200 &&
+          !response.headers.get('Content-Range') &&
+          (response.type === 'basic' || response.type === 'cors');
+        if (canCache) {
           const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          caches
+            .open(CACHE_NAME)
+            .then((cache) => cache.put(request, clone))
+            .catch(() => {});
         }
         return response;
       })
