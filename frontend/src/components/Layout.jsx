@@ -174,6 +174,15 @@ function Layout() {
       title = isZh ? '发布点评' : 'Publish Review';
     } else if (pathname === '/eat/rankings') {
       title = isZh ? '排行榜' : 'Rankings';
+    } else if (
+      pathname.startsWith('/eat/') &&
+      !pathname.startsWith('/eat/merchant') &&
+      !pathname.startsWith('/eat/food') &&
+      pathname !== '/eat/rankings'
+    ) {
+      // 分区商家页 /eat/D6、/eat/LY3 … 顶栏显示分区代码，与下方「本区商品榜」呼应
+      const seg = pathname.split('/')[2];
+      title = seg ? decodeURIComponent(seg) : (isZh ? '食堂' : 'Canteen');
     } else if (pathname.startsWith('/eat')) {
       title = isZh ? '食堂' : 'Canteen';
     } else if (pathname.startsWith('/mailbox')) {

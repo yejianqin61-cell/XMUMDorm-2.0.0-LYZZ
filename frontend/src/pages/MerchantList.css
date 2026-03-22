@@ -1,7 +1,16 @@
 .merchant-list-page {
   min-height: 100%;
-  padding: 12px 16px 24px;
+  padding: 8px 16px 24px;
   background: transparent;
+}
+
+/* 有商品榜时：榜单贴顶，商家区标题略收紧 */
+.merchant-list-title--merchants-section {
+  margin-top: 4px;
+  margin-bottom: 12px;
+  font-size: 16px;
+  padding-top: 4px;
+  border-top: 1px solid var(--wx-border, rgba(0, 0, 0, 0.06));
 }
 
 .merchant-list-title {
@@ -40,9 +49,41 @@
   text-align: center;
 }
 
+/* 本区商品榜：主内容区最上方（TopBar 下方第一块） */
+.merchant-list-hot--page-top {
+  margin-top: 0;
+  margin-bottom: 16px;
+  padding-top: 0;
+}
+
 /* 本区最夯商品横向滑动 */
 .merchant-list-hot {
   margin-bottom: 20px;
+}
+
+/* 加载骨架：与正式页「先榜后商家」一致 */
+.merchant-list-hot-skeleton {
+  margin-bottom: 16px;
+}
+
+.merchant-list-hot-skeleton-title {
+  width: 70%;
+  max-width: 240px;
+  height: 18px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.merchant-list-hot-skeleton-row {
+  display: flex;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.merchant-list-hot-skeleton-card {
+  flex: 0 0 100px;
+  height: 168px;
+  border-radius: 12px;
 }
 
 .merchant-list-hot-head {

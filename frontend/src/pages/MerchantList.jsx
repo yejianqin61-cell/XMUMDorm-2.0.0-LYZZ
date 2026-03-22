@@ -85,6 +85,15 @@ function MerchantList() {
   if (loading) {
     return (
       <div className="merchant-list-page">
+        {/* 与正式页一致：顶栏下先占位「商品榜」再商家 */}
+        <div className="merchant-list-hot-skeleton" aria-hidden>
+          <div className="merchant-list-hot-skeleton-title skeleton skeleton-shimmer" />
+          <div className="merchant-list-hot-skeleton-row">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="merchant-list-hot-skeleton-card skeleton skeleton-shimmer" />
+            ))}
+          </div>
+        </div>
         <div className="skeleton-merchant-list-title skeleton skeleton-shimmer" style={{ width: 120, height: 22, borderRadius: 6, marginBottom: 16 }} aria-hidden />
         <ul className="merchant-list-list" aria-hidden>
           {[1, 2, 3, 4].map((i) => (
@@ -107,12 +116,18 @@ function MerchantList() {
 
   return (
     <div className="merchant-list-page">
-      <p className="merchant-list-title">{areaLabel}</p>
-
+      {/*
+        布局顺序（顶栏 TopBar 之下、底部 Tab 之上）：
+        1. 本区商品排行榜 — 紧贴主内容顶部，在商家列表之上
+        2. 分区标题 + 商家列表
+      */}
       {hotProducts.length > 0 && (
-        <section className="merchant-list-hot" aria-label="本区域最夯商品">
+        <section
+          className="merchant-list-hot merchant-list-hot--page-top"
+          aria-label={`${areaLabel} 本区商品榜`}
+        >
           <div className="merchant-list-hot-head">
-            <h2 className="merchant-list-hot-title">本区最夯 Top 20</h2>
+            <h2 className="merchant-list-hot-title">{areaLabel} · 商品榜 Top 20</h2>
             <p className="merchant-list-hot-sub">按综合评分 · 同分则更晚上架在前</p>
           </div>
           <div className="merchant-list-hot-scroll">
@@ -143,6 +158,16 @@ function MerchantList() {
           </div>
         </section>
       )}
+
+      <p
+        className={
+          hotProducts.length > 0
+            ? 'merchant-list-title merchant-list-title--merchants-section'
+            : 'merchant-list-title'
+        }
+      >
+        {hotProducts.length > 0 ? '本区商家' : areaLabel}
+      </p>
 
       {merchants.length === 0 ? (
         <EmptyState

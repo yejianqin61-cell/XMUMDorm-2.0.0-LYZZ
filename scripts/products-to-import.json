@@ -1,13 +1,10 @@
 {
-  "shopId": 62,
-  "categoryId": 435,
+  "shopId": 63,
+  "categoryId": 438,
   "products": [
-    { "name": "Salmon Tataki Maki", "price": 20.9, "description": "三文鱼炙烧卷" },
-    { "name": "Una Maki", "price": 20.9, "description": "鳗鱼卷" },
-    { "name": "Ebi Ten Maki", "price": 18.9, "description": "虾天妇罗卷" },
-    { "name": "Tuna Salada Maki", "price": 8.9, "description": "金枪鱼沙拉卷" },
-    { "name": "Kani Maki", "price": 3.9, "description": "蟹肉卷" },
-    { "name": "Tamago Maki", "price": 4.9, "description": "玉子卷" },
-    { "name": "Kappa Maki", "price": 5.9, "description": "黄瓜卷" }
+    { "name": "Orange Juice", "price": 6.9, "description": "香橙汁" },
+    { "name": "Apple Juice", "price": 6.9, "description": "苹果汁" },
+    { "name": "Mango Juice", "price": 6.9, "description": "芒果汁" },
+    { "name": "Watermelon Juice", "price": 6.9, "description": "西瓜汁" }
   ]
 }
