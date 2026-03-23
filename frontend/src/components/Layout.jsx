@@ -1,8 +1,8 @@
 import { useRef, useState, useEffect } from 'react';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import TopBar from './TopBar';
 import TabBar from './TabBar';
-import { TABS, getTabIndex, getTabRootPath } from './TabBar';
+import { getTabIndex, getTabRootPath } from './TabBar';
 import TreeHole from '../pages/TreeHole';
 import CanteenArea from '../pages/CanteenArea';
 import AboutUs from '../pages/AboutUs';
@@ -16,8 +16,6 @@ import './TopBar.css';
 import './TabBar.css';
 import './Layout.css';
 
-const SWIPE_THRESHOLD = 50;
-const SWIPE_MAX_VERTICAL = 80;
 const SLIDE_DURATION_MS = 280;
 
 const TAB_ROOT_COMPONENTS = {
@@ -60,15 +58,13 @@ const TITLE_BY_PATH_EN = {
 /** 需要显示返回键的路径（含 /post/:id 详情页、帖子搜索/话题） */
 const SHOW_BACK_PATHS = ['/post/new', '/post/', '/posts/'];
 
-/** 整体布局：顶栏（标题+信箱）+ 内容区 + 底部 Tab；支持全屏滑动切换 Tab + 微信风格过渡动画 + 公告弹窗 */
+/** 整体布局：顶栏（标题+信箱）+ 内容区 + 底部 Tab；Tab 仅能通过底部点击切换；主 Tab 间切换带过渡动画 + 公告弹窗 */
 function Layout() {
   const location = useLocation();
-  const navigate = useNavigate();
   const pathname = location.pathname;
   const { isLoggedIn } = useAuth();
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
-  const touchStart = useRef({ x: 0, y: 0 });
   const prevPathRef = useRef(pathname);
   // 只在用户第一次交互时尝试进入全屏
   const hasTriedFullscreenRef = useRef(false);
@@ -144,21 +140,6 @@ function Layout() {
     } catch (_) {
       // 忽略批量失败
     }
-  };
-
-  const onSwipeTouchStart = (e) => {
-    const t = e.touches?.[0];
-    if (t) touchStart.current = { x: t.clientX, y: t.clientY };
-  };
-  const onSwipeTouchEnd = (e) => {
-    const t = e.changedTouches?.[0];
-    if (!t) return;
-    const dx = t.clientX - touchStart.current.x;
-    const dy = t.clientY - touchStart.current.y;
-    if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dy) > SWIPE_MAX_VERTICAL) return;
-    const cur = getTabIndex(pathname);
-    if (dx < 0 && cur < TABS.length - 1) navigate(TABS[cur + 1].path);
-    else if (dx > 0 && cur > 0) navigate(TABS[cur - 1].path);
   };
 
   const handleFirstInteraction = () => {
@@ -239,12 +220,7 @@ function Layout() {
     pathname.startsWith('/about/');
 
   return (
-    <div
-      className="app-layout"
-      onTouchStart={onSwipeTouchStart}
-      onTouchEnd={onSwipeTouchEnd}
-      onClick={handleFirstInteraction}
-    >
+    <div className="app-layout" onClick={handleFirstInteraction}>
       <TopBar title={title} showBack={showBack} />
       <main className="app-main">
         <div
