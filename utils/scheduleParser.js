@@ -123,7 +123,8 @@ function parseCourseBlock(blockLines) {
   const code = cols[1];
   const name = cols[2];
   const credit = cols[3] != null ? Number(cols[3]) : null;
-  const lecturer = cols[4] || null;
+  const lecturerParts = [];
+  if (cols[4]) lecturerParts.push(String(cols[4]).trim());
 
   if (!code || !COURSE_CODE_RE.test(code)) errors.push(`课程号解析失败：${first}`);
   if (!name) errors.push(`课程名解析失败：${first}`);
@@ -135,12 +136,69 @@ function parseCourseBlock(blockLines) {
     if (mt) meetings.push(mt);
   }
   for (const line of blockLines.slice(1)) {
+    // 兼容“Lecturer 与 Time&Venue 跨行”的情况：
+    // 例如：`Lim Min\tTuesday 2.00pm-5.00pm(...)`
+    const lineCols = splitColumns(line);
+    const lineSegs = extractMeetingSegments(line);
+
+    // 兜底：只要该行里出现了上课时间片段，就先解析时间；
+    // 若片段前是人名（且不是星期），则并入 lecturer。
+    if (lineSegs.length > 0) {
+      for (const seg of lineSegs) {
+        const mt = parseMeetingLine(seg);
+        if (mt) meetings.push(mt);
+      }
+      const firstSeg = lineSegs[0];
+      const firstIdx = line.indexOf(firstSeg);
+      if (firstIdx > 0) {
+        const prefix = line.slice(0, firstIdx).replace(/[\t|]+/g, ' ').trim();
+        if (
+          prefix &&
+          !/^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b/i.test(prefix) &&
+          !/Week\s*\d+\s*-\s*\d+/i.test(prefix)
+        ) {
+          lecturerParts.push(prefix);
+        }
+      }
+      continue;
+    }
+
+    if (lineCols.length >= 2) {
+      const c0 = String(lineCols[0] || '').trim();
+      const c1 = String(lineCols[1] || '').trim();
+      const c0IsDay = /^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b/i.test(c0);
+      const c1HasDay = /^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b/i.test(c1);
+      if (c0 && !c0IsDay && c1HasDay) {
+        lecturerParts.push(c0);
+        const mt = parseMeetingLine(c1);
+        if (mt) {
+          meetings.push(mt);
+          continue;
+        }
+      }
+    }
+
     const mt = parseMeetingLine(line);
-    if (mt) meetings.push(mt);
+    if (mt) {
+      meetings.push(mt);
+      continue;
+    }
+
+    // 若该行不是上课时间且看起来像人名，作为“额外教师”并入 lecturer
+    if (
+      lineCols.length === 1 &&
+      !/^\d+$/.test(lineCols[0]) &&
+      !/Week\s*\d+\s*-\s*\d+/i.test(lineCols[0]) &&
+      !/^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b/i.test(lineCols[0])
+    ) {
+      lecturerParts.push(String(lineCols[0]).trim());
+    }
   }
   if (meetings.length === 0) {
     errors.push(`未解析到上课时间（Course Code=${code || 'unknown'}）`);
   }
+
+  const lecturer = [...new Set(lecturerParts.filter(Boolean))].join(' / ') || null;
 
   return {
     course: {
