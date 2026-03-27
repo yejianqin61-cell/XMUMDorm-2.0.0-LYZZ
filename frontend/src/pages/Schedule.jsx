@@ -79,12 +79,12 @@ function Schedule() {
         ? '微信内置浏览器不支持 Web 推送，所以「开启提醒」不可用。请点右上角 ··· →「在浏览器打开」/「用 Safari 打开」，用系统自带 Safari 或 Chrome 打开本站后再开启。'
         : 'WeChat’s in-app browser cannot use Web Push. Use ⋯ → Open in Safari/Chrome, then enable reminders.';
     }
-    const looksHuaweiFamily =
-      /HuaweiBrowser|HBPC\/|HonorBrowser|OpenHarmony|ArkWeb/i.test(ua);
-    if (looksHuaweiFamily) {
+    const looksVendorBrowser =
+      /HuaweiBrowser|HBPC\/|HonorBrowser|OpenHarmony|ArkWeb|MiuiBrowser|XiaoMi\/MiuiBrowser|MZBrowser/i.test(ua);
+    if (looksVendorBrowser) {
       return isZh
-        ? '华为、荣耀自带浏览器对「网页推送」基本不支持或支持不完整，所以按钮会灰色（不是网站坏了）。请从应用市场安装 Chrome 或 微软 Edge，用它们打开本站的 https 链接并登录，再到课表页「开启提醒」。'
-        : 'Huawei/Honor stock browsers often lack Web Push. Install Chrome or Edge, open this site (HTTPS), log in, then enable reminders.';
+        ? '华为、小米、荣耀等手机自带浏览器对「网页推送」常见为不支持或支持不完整，所以按钮可能灰色（不是网站坏了）。请从应用市场安装 Chrome 或 微软 Edge，用它们打开本站的 https 链接并登录，再到课表页「开启提醒」。'
+        : 'Some stock browsers (Huawei/Xiaomi/Honor, etc.) often lack full Web Push support. Install Chrome or Edge, open this site (HTTPS), log in, then enable reminders.';
     }
     if (!('serviceWorker' in navigator)) {
       return isZh
