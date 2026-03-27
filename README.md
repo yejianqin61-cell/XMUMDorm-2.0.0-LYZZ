@@ -44,11 +44,14 @@ Jack/
 │   ├── 007_product_favorites.sql
 │   ├── 008_email_verification_codes.sql
 │   ├── 009_timetable_import.sql
-│   └── 010_diaries.sql     # 日记本表
+│   ├── 010_diaries.sql     # 日记本表
+│   ├── 011_post_tags.sql   # 帖子标签/话题
+│   └── 012_web_push.sql    # Web Push 订阅与课前提醒去重
 ├── scripts/                # 辅助脚本
 │   ├── migrate_009_timetable_import.js
 │   ├── migrate_010_diaries.js
 │   ├── migrate_011_post_tags.js
+│   ├── migrate_012_web_push.js
 │   ├── migrate_init_and_009.js
 │   ├── bulk-import-products.js
 │   ├── add-categories.js
@@ -306,6 +309,7 @@ npm run dev
 - 单独执行课程表迁移：`node scripts/migrate_009_timetable_import.js`
 - 创建日记本表：`node scripts/migrate_010_diaries.js`
 - 帖子标签/话题表：`node scripts/migrate_011_post_tags.js`
+- Web Push / 课前提醒表：`node scripts/migrate_012_web_push.js`（需已执行课表迁移 `009`）
 - 食堂商品批量导入示例：`npm run import-products`
 
 前端（在 `frontend/`）：
@@ -321,6 +325,7 @@ npm run dev
    - `DATABASE_URL` 或 `DB_*`（指向生产库）
    - 强随机的 `JWT_SECRET`
    - （可选）`PUBLIC_ASSET_BASE_URL` + 对象存储相关变量
+   - （可选）Web Push：`VAPID_PUBLIC_KEY`、`VAPID_PRIVATE_KEY`、建议 `VAPID_SUBJECT`；课前提醒周次 `CLASS_REMINDER_WEEK`（与课表页一致，见 `.env.example`）
 2. **数据库迁移**：务必在生产库上执行所有 SQL 迁移脚本（或用脚本连接生产库执行）。
 3. **静态资源**：`uploads/` 和 `public/` 目录需持久化或挂载卷（若用 Docker / 云平台）。
 

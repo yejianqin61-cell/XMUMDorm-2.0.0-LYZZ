@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dorm-cache-v4';
+const CACHE_NAME = 'dorm-cache-v6';
 const URLS_TO_CACHE = [
   '/',
   '/index.html',
@@ -64,5 +64,47 @@ self.addEventListener('fetch', (event) => {
           return new Response('', { status: 503, statusText: 'Offline' });
         })
       )
+  );
+});
+
+self.addEventListener('push', (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch (_) {
+    data = { title: 'Dorm', body: event.data ? event.data.text() : '' };
+  }
+  const title = data.title || 'Dorm';
+  const tag = data.tag || 'dorm-push';
+  const options = {
+    body: data.body || '',
+    data: { url: data.url || '/about/schedule' },
+    tag,
+    icon: '/icons/icon-192.png',
+    badge: '/icons/icon-192.png',
+    // 测试推送：保持横幅直到用户操作，避免被系统立刻收起或只进通知中心不易发现
+    requireInteraction: tag === 'test',
+    renotify: tag === 'test',
+  };
+  event.waitUntil(
+    self.registration.showNotification(title, options).catch((err) => {
+      console.error('[sw push] showNotification failed:', err);
+    })
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = event.notification.data && event.notification.data.url
+    ? event.notification.data.url
+    : '/about/schedule';
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const c of clientList) {
+        if (c.url && 'focus' in c) return c.focus();
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(url);
+      return undefined;
+    })
   );
 });

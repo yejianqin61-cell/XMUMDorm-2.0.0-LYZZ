@@ -1,7 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import { Toast } from '../context/ToastContext';
 import { commitScheduleImport, getScheduleWeek, previewScheduleImport } from '../api/schedule';
+import {
+  getPushVapidPublicKey,
+  subscribePush,
+  unsubscribePushEndpoint,
+  testPushNotification,
+} from '../api/push';
 import './Schedule.css';
 
 const DAY_LABEL_ZH = { 1: '周一', 2: '周二', 3: '周三', 4: '周四', 5: '周五', 6: '周六', 7: '周日' };
@@ -13,8 +20,21 @@ function getTodayDayOfWeek() {
   return js === 0 ? 7 : js;
 }
 
+/** VAPID 公钥（URL Safe Base64）→ Uint8Array */
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; i += 1) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
 function Schedule() {
   const { lang } = useLanguage();
+  const { isLoggedIn } = useAuth();
   const isZh = lang !== 'en';
   const [tab, setTab] = useState('view'); // 'view' | 'import'
 
@@ -26,7 +46,42 @@ function Schedule() {
   const [previewing, setPreviewing] = useState(false);
   const [preview, setPreview] = useState(null);
 
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushOn, setPushOn] = useState(false);
+
   const dayLabel = useMemo(() => (isZh ? DAY_LABEL_ZH : DAY_LABEL_EN), [isZh]);
+
+  /** 非 HTTPS 且非 localhost 时，浏览器禁止使用 Web Push（手机用电脑 IP 的 http 会中招） */
+  const pushSecureContext =
+    typeof window !== 'undefined' &&
+    (window.isSecureContext ||
+      location.hostname === 'localhost' ||
+      location.hostname === '127.0.0.1' ||
+      location.hostname === '[::1]');
+
+  const pushSupported =
+    typeof window !== 'undefined' &&
+    'serviceWorker' in navigator &&
+    'PushManager' in window &&
+    pushSecureContext;
+
+  const refreshPushSubscription = useCallback(async () => {
+    if (!pushSupported) {
+      setPushOn(false);
+      return;
+    }
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      setPushOn(!!sub);
+    } catch (_) {
+      setPushOn(false);
+    }
+  }, [pushSupported]);
+
+  useEffect(() => {
+    if (isLoggedIn && tab === 'view') refreshPushSubscription();
+  }, [isLoggedIn, tab, refreshPushSubscription]);
 
   const loadWeek = async (w) => {
     setLoadingWeek(true);
@@ -81,6 +136,99 @@ function Schedule() {
     }
   };
 
+  const handleEnableClassPush = async () => {
+    if (!isLoggedIn) {
+      Toast.error(isZh ? '请先登录' : 'Please log in');
+      return;
+    }
+    if (!pushSupported) {
+      Toast.error(isZh ? '当前浏览器不支持 Web 推送' : 'Web Push is not supported');
+      return;
+    }
+    setPushBusy(true);
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') {
+        Toast.error(isZh ? '未授予通知权限' : 'Notification permission denied');
+        return;
+      }
+      let publicKey;
+      try {
+        publicKey = (await getPushVapidPublicKey())?.publicKey;
+      } catch (e) {
+        Toast.error(e?.message || (isZh ? '无法获取推送配置（检查后端 VAPID）' : 'Cannot load VAPID config'));
+        return;
+      }
+      if (!publicKey) {
+        Toast.error(isZh ? '后端未配置 VAPID' : 'VAPID not configured on server');
+        return;
+      }
+      try {
+        await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+      } catch (regErr) {
+        Toast.error(
+          isZh
+            ? `Service Worker 注册失败：${regErr?.message || regErr}（请确认能打开 /sw.js）`
+            : `SW register failed: ${regErr?.message || regErr}`
+        );
+        return;
+      }
+      await navigator.serviceWorker.ready;
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (!reg) {
+        Toast.error(isZh ? '未找到 Service Worker，请刷新页面重试' : 'No service worker; refresh and retry');
+        return;
+      }
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey),
+      });
+      await subscribePush(sub.toJSON());
+      setPushOn(true);
+      Toast.success(isZh ? '已开启课前提醒（约课前 30 分钟）' : 'Class reminders on (~30 min before)');
+    } catch (e) {
+      Toast.error(e?.message || (isZh ? '订阅失败' : 'Subscribe failed'));
+    } finally {
+      setPushBusy(false);
+    }
+  };
+
+  const handleDisableClassPush = async () => {
+    setPushBusy(true);
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) {
+        const ep = sub.endpoint;
+        await sub.unsubscribe();
+        try {
+          await unsubscribePushEndpoint(ep);
+        } catch (_) {
+          /* 仍取消本地订阅 */
+        }
+      }
+      setPushOn(false);
+      Toast.success(isZh ? '已关闭课前提醒' : 'Reminders off');
+    } catch (e) {
+      Toast.error(e?.message || (isZh ? '关闭失败' : 'Failed to disable'));
+    } finally {
+      setPushBusy(false);
+    }
+  };
+
+  const handleTestPush = async () => {
+    if (!isLoggedIn) return;
+    setPushBusy(true);
+    try {
+      await testPushNotification();
+      Toast.success(isZh ? '已发送测试推送，请留意系统通知' : 'Test sent; check system notifications');
+    } catch (e) {
+      Toast.error(e?.message || (isZh ? '发送失败' : 'Send failed'));
+    } finally {
+      setPushBusy(false);
+    }
+  };
+
   const renderWeek = () => {
     const days = weekData?.days || {};
     const todayDow = getTodayDayOfWeek();
@@ -95,6 +243,60 @@ function Schedule() {
     });
     return (
       <div className="schedule-week">
+        {isLoggedIn && (
+          <div className="schedule-push-card">
+            <div className="schedule-push-title">
+              {isZh ? '课前提醒 Web Push' : 'Class reminders (Web Push)'}
+            </div>
+            <p className="schedule-push-desc">
+              {isZh
+                ? '吉隆坡时间、约每节课开始前 30 分钟推送。后端需 VAPID 与 CLASS_REMINDER_WEEK（默认 1）。注意：手机用「http://电脑局域网IP」打开时浏览器会禁用推送，请改用电脑上的 http://localhost:端口、或给站点配 HTTPS（如 ngrok）后再在该设备上开启。iOS 需 Safari 且多为主屏幕 Web App。测试推送请用「已开启提醒」的同一浏览器。'
+                : '~30 min before class (KL time). VAPID server-side. HTTP to a LAN IP blocks Push—use localhost on PC or HTTPS (e.g. ngrok). iOS: Safari + often Home Screen PWA. Test on the same browser that subscribed.'}
+            </p>
+            {!pushSecureContext &&
+            typeof window !== 'undefined' &&
+            'serviceWorker' in navigator &&
+            'PushManager' in window ? (
+              <p className="schedule-push-warn" role="status">
+                {isZh
+                  ? '当前地址不是安全连接（常见于 http + 非 localhost）。本浏览器会禁止使用 Web Push，下方按钮将不可用。'
+                  : 'Insecure context (e.g. http://LAN-IP). This browser disables Web Push.'}
+              </p>
+            ) : null}
+            <div className="schedule-push-actions">
+              {!pushOn ? (
+                <button
+                  type="button"
+                  className="schedule-btn schedule-btn-primary"
+                  disabled={pushBusy || !pushSupported}
+                  onClick={handleEnableClassPush}
+                >
+                  {pushBusy
+                    ? (isZh ? '处理中…' : 'Working…')
+                    : (isZh ? '开启提醒 Enable' : 'Enable reminders')}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="schedule-btn schedule-btn-secondary"
+                  disabled={pushBusy}
+                  onClick={handleDisableClassPush}
+                >
+                  {isZh ? '关闭提醒 Disable' : 'Disable reminders'}
+                </button>
+              )}
+              <button
+                type="button"
+                className="schedule-btn schedule-btn-secondary"
+                disabled={pushBusy || !pushOn}
+                onClick={handleTestPush}
+              >
+                {isZh ? '测试推送 Test' : 'Test push'}
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="schedule-week-toolbar">
           <div className="schedule-week-fixed">
             {isZh ? '固定课表（仅在重新导入后更新）' : 'Fixed schedule (updates only after re-import)'}

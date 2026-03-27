@@ -37,6 +37,7 @@ const notificationRoutes = require('./routes/notifications');
 const userRoutes = require('./routes/users');
 const scheduleRoutes = require('./routes/schedule');
 const diaryRoutes = require('./routes/diary');
+const pushRoutes = require('./routes/push');
 
 // 8. 创建一个 Express 应用实例
 const app = express();
@@ -138,6 +139,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/schedule', scheduleRoutes);
 app.use('/api/diary', diaryRoutes);
+app.use('/api/push', pushRoutes);
 
 // ============================================
 // 错误处理中间件
@@ -185,7 +187,18 @@ app.listen(PORT, async () => {
   } catch (e) {
     console.warn('排行榜每周重置未启动:', e.message);
   }
-  
+
+  // Web Push：课前约 30 分钟提醒（吉隆坡时间，依赖 CLASS_REMINDER_WEEK 与课表）
+  try {
+    const { runClassReminderTick } = require('./services/classReminderPush');
+    setInterval(() => {
+      runClassReminderTick().catch((e) => console.warn('[class-reminder]', e.message || e));
+    }, 60 * 1000);
+    runClassReminderTick().catch(() => {});
+  } catch (e) {
+    console.warn('上课提醒任务未启动:', e.message);
+  }
+
   console.log(`========================================`);
 });
 
