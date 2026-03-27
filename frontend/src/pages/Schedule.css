@@ -90,6 +90,40 @@
   overflow: hidden;
 }
 
+/* 今日课程：绿色高亮边框 */
+.schedule-day.schedule-today {
+  border: 2px solid var(--wx-green, #07c160);
+  box-shadow:
+    0 0 0 1px rgba(7, 193, 96, 0.2),
+    0 6px 18px rgba(7, 193, 96, 0.12);
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.schedule-today-heading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  border-bottom: 1px solid rgba(7, 193, 96, 0.22);
+  background: linear-gradient(180deg, rgba(7, 193, 96, 0.08) 0%, rgba(255, 255, 255, 0) 100%);
+}
+
+.schedule-today-meta {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--wx-green, #07c160);
+}
+
+.schedule-today-date {
+  font-weight: 600;
+  opacity: 0.88;
+  color: var(--wx-text-secondary, #555);
+}
+
 .schedule-day-title {
   margin: 0;
   padding: 10px 12px;

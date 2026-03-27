@@ -7,6 +7,12 @@ import './Schedule.css';
 const DAY_LABEL_ZH = { 1: '周一', 2: '周二', 3: '周三', 4: '周四', 5: '周五', 6: '周六', 7: '周日' };
 const DAY_LABEL_EN = { 1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: 'Sat', 7: 'Sun' };
 
+/** 后端 day_of_week：1=周一 … 7=周日 */
+function getTodayDayOfWeek() {
+  const js = new Date().getDay(); // 0=周日 … 6=周六
+  return js === 0 ? 7 : js;
+}
+
 function Schedule() {
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
@@ -77,6 +83,16 @@ function Schedule() {
 
   const renderWeek = () => {
     const days = weekData?.days || {};
+    const todayDow = getTodayDayOfWeek();
+    const todayRaw = Array.isArray(days[todayDow]) ? days[todayDow] : [];
+    const todayList = [...todayRaw].sort((a, b) =>
+      String(a.start_time || '').localeCompare(String(b.start_time || ''))
+    );
+    const todayDateStr = new Date().toLocaleDateString(isZh ? 'zh-CN' : 'en-US', {
+      month: 'short',
+      day: 'numeric',
+      weekday: 'short',
+    });
     return (
       <div className="schedule-week">
         <div className="schedule-week-toolbar">
@@ -94,6 +110,38 @@ function Schedule() {
         </div>
 
         <div className="schedule-days">
+          <section className="schedule-day schedule-today" aria-label={isZh ? '今日课程' : "Today's classes"}>
+            <h2 className="schedule-day-title schedule-today-heading">
+              <span>{isZh ? '今日课程' : "Today's classes"}</span>
+              <span className="schedule-today-meta">
+                {dayLabel[todayDow]}
+                <span className="schedule-today-date">{todayDateStr}</span>
+              </span>
+            </h2>
+            {todayList.length === 0 ? (
+              <div className="schedule-empty">
+                {isZh ? '今天无课或请先导入课表' : 'No classes today, or import your schedule first'}
+              </div>
+            ) : (
+              <ul className="schedule-class-list">
+                {todayList.map((c, idx) => (
+                  <li key={`today-${c.course_code}-${c.start_time}-${idx}`} className="schedule-class">
+                    <div className="schedule-class-main">
+                      <div className="schedule-class-name">{c.course_name}</div>
+                      <div className="schedule-class-meta">
+                        <span className="schedule-class-time">
+                          {String(c.start_time).slice(0, 5)}-{String(c.end_time).slice(0, 5)}
+                        </span>
+                        {c.venue ? <span className="schedule-class-venue">{c.venue}</span> : null}
+                      </div>
+                    </div>
+                    <div className="schedule-class-code">{c.course_code}</div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
           {[1, 2, 3, 4, 5, 6, 7].map((d) => {
             const list = Array.isArray(days[d]) ? days[d] : [];
             return (
