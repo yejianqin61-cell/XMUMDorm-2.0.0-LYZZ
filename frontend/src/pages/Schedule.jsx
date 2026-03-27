@@ -65,6 +65,48 @@ function Schedule() {
     'PushManager' in window &&
     pushSecureContext;
 
+  /** 按钮灰色时说明原因（微信内置页、iOS 非主屏幕 Web App 等常见） */
+  const pushUnsupportedMessage = useMemo(() => {
+    if (typeof window === 'undefined' || pushSupported) return null;
+    const ua = navigator.userAgent || '';
+    if (!pushSecureContext) {
+      return isZh
+        ? '当前连接不是「安全上下文」（需要 HTTPS）。请确认地址栏是 https:// 后再试。'
+        : 'Not a secure context (HTTPS required). Check the URL uses https://.';
+    }
+    if (/MicroMessenger/i.test(ua)) {
+      return isZh
+        ? '微信内置浏览器不支持 Web 推送，所以「开启提醒」不可用。请点右上角 ··· →「在浏览器打开」/「用 Safari 打开」，用系统自带 Safari 或 Chrome 打开本站后再开启。'
+        : 'WeChat’s in-app browser cannot use Web Push. Use ⋯ → Open in Safari/Chrome, then enable reminders.';
+    }
+    const looksHuaweiFamily =
+      /HuaweiBrowser|HBPC\/|HonorBrowser|OpenHarmony|ArkWeb/i.test(ua);
+    if (looksHuaweiFamily) {
+      return isZh
+        ? '华为、荣耀自带浏览器对「网页推送」基本不支持或支持不完整，所以按钮会灰色（不是网站坏了）。请从应用市场安装 Chrome 或 微软 Edge，用它们打开本站的 https 链接并登录，再到课表页「开启提醒」。'
+        : 'Huawei/Honor stock browsers often lack Web Push. Install Chrome or Edge, open this site (HTTPS), log in, then enable reminders.';
+    }
+    if (!('serviceWorker' in navigator)) {
+      return isZh
+        ? '当前网页环境不提供 Service Worker（多见于应用内浏览器）。请复制链接，到手机上的 Safari、Chrome 或 Edge 中打开本站。'
+        : 'No Service Worker (often in in-app browsers). Open this site in Safari, Chrome, or Edge.';
+    }
+    if (!('PushManager' in window)) {
+      const isIOS =
+        /iPhone|iPad|iPod/i.test(ua) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      if (isIOS) {
+        return isZh
+          ? '在 iPhone / iPad 上，通常需要先把本站「添加到主屏幕」后，从桌面图标打开，才能使用推送（需 iOS 16.4+、Safari）。步骤：Safari 打开本站 → 分享 → 添加到主屏幕 → 点桌面图标进入 → 课表页再点开启提醒。'
+          : 'On iOS, Web Push usually needs Add to Home Screen, then open from that icon (iOS 16.4+, Safari).';
+      }
+      return isZh
+        ? '当前浏览器不支持推送接口。请尝试 Chrome / Edge，或升级系统与浏览器。'
+        : 'This browser does not support Push. Try Chrome or Edge, or update your browser.';
+    }
+    return null;
+  }, [pushSupported, pushSecureContext, isZh]);
+
   const refreshPushSubscription = useCallback(async () => {
     if (!pushSupported) {
       setPushOn(false);
@@ -253,14 +295,9 @@ function Schedule() {
                 ? '吉隆坡时间、约每节课开始前 30 分钟推送。后端需 VAPID 与 CLASS_REMINDER_WEEK（默认 1）。注意：手机用「http://电脑局域网IP」打开时浏览器会禁用推送，请改用电脑上的 http://localhost:端口、或给站点配 HTTPS（如 ngrok）后再在该设备上开启。iOS 需 Safari 且多为主屏幕 Web App。测试推送请用「已开启提醒」的同一浏览器。'
                 : '~30 min before class (KL time). VAPID server-side. HTTP to a LAN IP blocks Push—use localhost on PC or HTTPS (e.g. ngrok). iOS: Safari + often Home Screen PWA. Test on the same browser that subscribed.'}
             </p>
-            {!pushSecureContext &&
-            typeof window !== 'undefined' &&
-            'serviceWorker' in navigator &&
-            'PushManager' in window ? (
+            {pushUnsupportedMessage ? (
               <p className="schedule-push-warn" role="status">
-                {isZh
-                  ? '当前地址不是安全连接（常见于 http + 非 localhost）。本浏览器会禁止使用 Web Push，下方按钮将不可用。'
-                  : 'Insecure context (e.g. http://LAN-IP). This browser disables Web Push.'}
+                {pushUnsupportedMessage}
               </p>
             ) : null}
             <div className="schedule-push-actions">
