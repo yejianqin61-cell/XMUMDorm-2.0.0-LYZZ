@@ -366,6 +366,7 @@ router.get('/', async (req, res) => {
     const viewerUid = user && user.id != null ? parseInt(user.id, 10) : 0;
     const likeUserParam = Number.isFinite(viewerUid) && viewerUid > 0 ? viewerUid : 0;
 
+    // 占位符顺序必须与 SQL 中 ? 出现顺序一致：SELECT 里 user_liked 在前，WHERE 里 LIKE / tag 在后
     const rows = await query(
       `SELECT p.id, p.user_id, p.content, p.type, p.deleted_at, p.hidden_by_admin, p.created_at, p.updated_at,
         u.id AS author_id, u.username AS author_username, u.nickname AS author_nickname, u.avatar AS author_avatar,
@@ -379,7 +380,7 @@ router.get('/', async (req, res) => {
        WHERE ${where}
        ORDER BY p.created_at DESC
        LIMIT ${limitCount} OFFSET ${offset}`,
-      [...sqlParams, likeUserParam]
+      [likeUserParam, ...sqlParams]
     );
     let list = mergePostRows(rows.map((r) => ({ ...r, deleted_at: null })), { user: user || {} });
     list = await enrichPostsWithTags(list);
