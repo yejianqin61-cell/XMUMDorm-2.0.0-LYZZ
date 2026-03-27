@@ -14,6 +14,9 @@ const DAY_MAP = {
   sunday: 7
 };
 
+// 课程号兼容：G0173 / BSC130 / MPU4.1 / CST108 / AB12.3 等
+const COURSE_CODE_RE = /^[A-Z]{1,6}[A-Z0-9]*\d+(?:\.\d+)?$/i;
+
 function normalizeLines(text) {
   return String(text || '')
     .replace(/\r\n/g, '\n')
@@ -25,7 +28,12 @@ function normalizeLines(text) {
 
 function isCourseStartLine(line) {
   // 常见：`1\tG0173\tNew Media ...` 或 `1  G0173  ...`
-  return /^\d+\s+([A-Z]\d{3,6})\b/.test(line) || /^\d+\t+[A-Z]\d{3,6}\b/.test(line);
+  const cols = splitColumns(String(line || ''));
+  if (cols.length < 2) return false;
+  // 第一列通常是 No.，第二列是课程号
+  const no = String(cols[0] || '').trim();
+  const code = String(cols[1] || '').trim();
+  return /^\d+$/.test(no) && COURSE_CODE_RE.test(code);
 }
 
 function splitColumns(line) {
@@ -117,7 +125,7 @@ function parseCourseBlock(blockLines) {
   const credit = cols[3] != null ? Number(cols[3]) : null;
   const lecturer = cols[4] || null;
 
-  if (!code || !/[A-Z]\d{3,6}/.test(code)) errors.push(`课程号解析失败：${first}`);
+  if (!code || !COURSE_CODE_RE.test(code)) errors.push(`课程号解析失败：${first}`);
   if (!name) errors.push(`课程名解析失败：${first}`);
 
   const meetings = [];
