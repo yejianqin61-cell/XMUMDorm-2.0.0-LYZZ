@@ -292,8 +292,8 @@ function Schedule() {
             </div>
             <p className="schedule-push-desc">
               {isZh
-                ? '吉隆坡时间、约每节课开始前 30 分钟推送。后端需 VAPID 与 CLASS_REMINDER_WEEK（默认 1）。注意：手机用「http://电脑局域网IP」打开时浏览器会禁用推送，请改用电脑上的 http://localhost:端口、或给站点配 HTTPS（如 ngrok）后再在该设备上开启。iOS 需 Safari 且多为主屏幕 Web App。测试推送请用「已开启提醒」的同一浏览器。'
-                : '~30 min before class (KL time). VAPID server-side. HTTP to a LAN IP blocks Push—use localhost on PC or HTTPS (e.g. ngrok). iOS: Safari + often Home Screen PWA. Test on the same browser that subscribed.'}
+                ? '吉隆坡时间, 约每节课开始前30分钟推送'
+                : 'KL time, push about 30 minutes before each class starts'}
             </p>
             {pushUnsupportedMessage ? (
               <p className="schedule-push-warn" role="status">
