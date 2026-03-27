@@ -65,11 +65,11 @@ app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 // 10.2 全局 Rate Limit（防止接口被暴力刷）
-// 开发环境下放开限流，避免本机调试频繁触发 429；生产环境开启
+// 开发环境不限流；生产环境放宽额度（当前用户量小、并发低，避免校园 NAT 共 IP 误伤）
 const apiLimiter = IS_PROD
   ? rateLimit({
       windowMs: 15 * 60 * 1000, // 15 分钟
-      max: 100, // 同一 IP 15 分钟内最多 100 次 /api 请求
+      max: 2500, // 同一 IP 每窗口内 /api 请求上限（原 100，易在共用出口 IP 下误触）
       standardHeaders: true,
       legacyHeaders: false,
       message: {
@@ -79,11 +79,11 @@ const apiLimiter = IS_PROD
     })
   : (req, res, next) => next();
 
-// 登录 / 注册额外再加一层更严的限流（同样仅生产环境启用）
+// 登录 / 注册额外再加一层限流（仍严于全站，但放宽避免 NAT 下正常用户被挡）
 const authLimiter = IS_PROD
   ? rateLimit({
       windowMs: 15 * 60 * 1000,
-      max: 20,
+      max: 150,
       standardHeaders: true,
       legacyHeaders: false,
       message: {
