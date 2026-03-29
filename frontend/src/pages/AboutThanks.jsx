@@ -8,6 +8,7 @@ const THANKS_LIST = [
     zh: '厦门法拉电子股份有限公司 张隆扬先生',
     en: 'Xiamen Faratronic Co., Ltd. Mr. Zhang Longyang',
   },
+
   {
     zh: '厦门大学马来西亚分校 李靖教授',
     en: 'Xiamen University Malaysia Prof. Li Jing',
@@ -15,6 +16,10 @@ const THANKS_LIST = [
   {
     zh: '黑马程序员 pink 刘晓强老师',
     en: 'ITheima Institute Instructor Pink Liu Xiaoqiang',
+  },
+  {
+    zh: '四川大学 叶以翔同学',
+    en: 'Sichuan University Student Ye Yixiang',
   },
   {
     zh: '中国科学院大学 郑贤教授',
