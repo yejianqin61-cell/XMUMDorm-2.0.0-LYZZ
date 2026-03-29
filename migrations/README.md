@@ -14,20 +14,24 @@
 ### 执行 003：排行榜统计字段（建议与 004 一起做）
 
 ```bash
-node run-migration-003.js
+node scripts/run-migration-003.js
 ```
+
+（根目录的 `node run-migration-003.js` 仍会转发到 `scripts/`，与旧文档兼容。）
 
 ### 执行 004：商品价格
 
 ```bash
-node run-migration-004.js
+node scripts/run-migration-004.js
 ```
 
 ### 一键从空库/补全结构（含 init-db + 002～008）
 
 ```bash
-node run-migrations-all.js
+node scripts/run-migrations-all.js
 ```
+
+或 `npm run migrate:all`。
 
 ---
 
@@ -40,7 +44,7 @@ node run-migrations-all.js
 在项目**根目录**（和 `package.json` 同级）打开终端，执行：
 
 ```bash
-node run-migration-004.js
+node scripts/run-migration-004.js
 ```
 
 - 脚本会使用项目当前的数据库配置（和启动后端时一样）。

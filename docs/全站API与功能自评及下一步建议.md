@@ -24,8 +24,8 @@
 
 ### 2. 数据与迁移
 
-- **004_product_price**：商品价格字段，已支持；需执行 `node run-migration-004.js`（若未执行）。
-- **005_shops_logo_opening_hours**：店铺 logo、营业时间，已支持；需执行 `node run-migration-005.js`（若未执行）。
+- **004_product_price**：商品价格字段，已支持；需执行 `node scripts/run-migration-004.js`（若未执行）。
+- **005_shops_logo_opening_hours**：店铺 logo、营业时间，已支持；需执行 `node scripts/run-migration-005.js`（若未执行）。
 
 ### 3. 已知稳定点
 

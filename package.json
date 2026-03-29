@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "import-products": "node scripts/bulk-import-products.js"
+    "import-products": "node scripts/bulk-import-products.js",
+    "migrate:all": "node scripts/run-migrations-all.js"
   },
   "keywords": [
     "campus",

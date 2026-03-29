@@ -30,7 +30,9 @@ Jack/
 ├── services/               # 服务层
 │   ├── objectStorage.js    # 对象存储（如 R2）
 │   ├── rankingStats.js     # 食堂综合评分统计
-│   └── auditLog.js         # 审计日志
+│   ├── auditLog.js         # 审计日志
+│   ├── pushSend.js         # Web Push 发送（VAPID）
+│   └── classReminderPush.js # 课前提醒定时逻辑
 ├── utils/                  # 工具
 │   ├── assets.js           # 生成图片 URL（PUBLIC_ASSET_BASE_URL / 本地 /uploads）
 │   └── scheduleParser.js   # 课程表解析
@@ -47,15 +49,18 @@ Jack/
 │   ├── 010_diaries.sql     # 日记本表
 │   ├── 011_post_tags.sql   # 帖子标签/话题
 │   └── 012_web_push.sql    # Web Push 订阅与课前提醒去重
-├── scripts/                # 辅助脚本
+├── scripts/                # 辅助脚本与迁移执行器
 │   ├── migrate_009_timetable_import.js
 │   ├── migrate_010_diaries.js
 │   ├── migrate_011_post_tags.js
 │   ├── migrate_012_web_push.js
 │   ├── migrate_init_and_009.js
+│   ├── run-migration-003.js … run-migration-008.js  # 单条增量迁移（003～008）
+│   ├── run-migrations-all.js # init-db + 002～008 一键
 │   ├── bulk-import-products.js
 │   ├── add-categories.js
 │   └── createAdmin.js
+├── docs/                   # 说明文档与笔记（见 docs/README.md）
 ├── init-db.sql             # 初始建库 & 基础表（users/posts/...）
 ├── frontend/               # React 前端（Vite）
 │   ├── index.html
@@ -68,7 +73,7 @@ Jack/
 └── README.md
 ```
 
-早期的 `html/` 目录（纯 HTML 登录/注册）仍保留，但实际使用的是 `frontend/` React 前端。
+早期的 `html/` 目录（纯 HTML 登录/注册）仍保留，但实际使用的是 `frontend/` React 前端。根目录下的 `run-migration-*.js` / `run-migrations-all.js` 为**兼容入口**，内部转发到 `scripts/` 同名脚本。
 
 ---
 
@@ -310,6 +315,7 @@ npm run dev
 - 创建日记本表：`node scripts/migrate_010_diaries.js`
 - 帖子标签/话题表：`node scripts/migrate_011_post_tags.js`
 - Web Push / 课前提醒表：`node scripts/migrate_012_web_push.js`（需已执行课表迁移 `009`）
+- 一键 init + 002～008：`npm run migrate:all` 或 `node scripts/run-migrations-all.js`
 - 食堂商品批量导入示例：`npm run import-products`
 
 前端（在 `frontend/`）：
