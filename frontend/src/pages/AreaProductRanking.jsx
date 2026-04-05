@@ -97,16 +97,24 @@ function AreaProductRanking() {
             <EmptyState title={t.emptyListTitle} description={t.emptyListDesc} />
           ) : (
             list.map((item) => (
-              <Link key={item.id} to={`/eat/food/${item.id}`} className="rankings-row">
+              <Link key={item.id} to={`/eat/food/${item.id}`} className="rankings-row rankings-row--product">
                 <span className="rankings-rank">{item.rank}</span>
-                <span className="rankings-name">{item.name}</span>
-                <span className="rankings-meta">
-                  {item.shop_name}
-                  {item.comprehensive_score != null && <>{t.scoreMeta(item.comprehensive_score)}</>}
-                  {item.price != null && Number(item.price) > 0 && (
-                    <> · RM {Number(item.price).toFixed(2)}</>
+                <div className="rankings-row-main">
+                  <span className="rankings-name">{item.name}</span>
+                  {item.shop_name != null && item.shop_name !== '' && (
+                    <span className="rankings-shop">{item.shop_name}</span>
                   )}
-                </span>
+                  {(item.comprehensive_score != null || (item.price != null && Number(item.price) > 0)) && (
+                    <div className="rankings-score-row">
+                      {item.comprehensive_score != null && (
+                        <span className="rankings-score">{t.scoreLine(item.comprehensive_score)}</span>
+                      )}
+                      {item.price != null && Number(item.price) > 0 && (
+                        <span>RM {Number(item.price).toFixed(2)}</span>
+                      )}
+                    </div>
+                  )}
+                </div>
               </Link>
             ))
           )}

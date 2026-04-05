@@ -122,6 +122,44 @@
   white-space: normal;
 }
 
+.rankings-row--product {
+  align-items: flex-start;
+}
+
+.rankings-row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.rankings-row--product .rankings-name {
+  flex: none;
+}
+
+.rankings-shop {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--wx-text-secondary);
+}
+
+.rankings-score {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--wx-text-secondary);
+}
+
+.rankings-score-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--wx-text-secondary);
+}
+
 .rankings-meta {
   flex-shrink: 0;
   font-size: 12px;

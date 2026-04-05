@@ -100,10 +100,17 @@ function Rankings() {
                     <EmptyState title="暂无数据" description="No data yet." />
                   )}
                   {section.id === 'hot-products' && list.length > 0 && list.map((item) => (
-                    <Link key={item.product_id} to={`/eat/food/${item.product_id}`} className="rankings-row">
+                    <Link key={item.product_id} to={`/eat/food/${item.product_id}`} className="rankings-row rankings-row--product">
                       <span className="rankings-rank">{item.rank}</span>
-                      <span className="rankings-name">{item.product_name}</span>
-                      <span className="rankings-meta">{item.shop_name} · 评分 {item.comprehensive_score?.toFixed(1)}/10</span>
+                      <div className="rankings-row-main">
+                        <span className="rankings-name">{item.product_name}</span>
+                        {item.shop_name != null && item.shop_name !== '' && (
+                          <span className="rankings-shop">{item.shop_name}</span>
+                        )}
+                        {item.comprehensive_score != null && (
+                          <span className="rankings-score">评分 {item.comprehensive_score.toFixed(1)}/10</span>
+                        )}
+                      </div>
                     </Link>
                   ))}
                   {section.id === 'busy-shops' && list.length > 0 && list.map((item) => (
@@ -121,10 +128,17 @@ function Rankings() {
                     </Link>
                   ))}
                   {section.id === 'new-hit-products' && list.length > 0 && list.map((item) => (
-                    <Link key={item.product_id} to={`/eat/food/${item.product_id}`} className="rankings-row">
+                    <Link key={item.product_id} to={`/eat/food/${item.product_id}`} className="rankings-row rankings-row--product">
                       <span className="rankings-rank">{item.rank}</span>
-                      <span className="rankings-name">{item.product_name}</span>
-                      <span className="rankings-meta">{item.shop_name} · {item.comprehensive_score?.toFixed(1)}/10</span>
+                      <div className="rankings-row-main">
+                        <span className="rankings-name">{item.product_name}</span>
+                        {item.shop_name != null && item.shop_name !== '' && (
+                          <span className="rankings-shop">{item.shop_name}</span>
+                        )}
+                        {item.comprehensive_score != null && (
+                          <span className="rankings-score">评分 {item.comprehensive_score.toFixed(1)}/10</span>
+                        )}
+                      </div>
                     </Link>
                   ))}
                   {section.id === 'active-users' && list.length > 0 && list.map((item) => (

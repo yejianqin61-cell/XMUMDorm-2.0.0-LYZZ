@@ -159,7 +159,7 @@ function MerchantList() {
                   <div className="merchant-list-hot-body">
                     <span className="merchant-list-hot-name">{p.name}</span>
                     <span className="merchant-list-hot-shop">{p.shopName}</span>
-                    <div className="merchant-list-hot-meta">
+                    <div className="merchant-list-hot-tail">
                       {p.score != null && (
                         <span className="merchant-list-hot-score">{t.scoreLabel(p.score)}</span>
                       )}
