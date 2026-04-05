@@ -6,7 +6,7 @@ import EmptyState from '../components/EmptyState';
 import { Toast } from '../context/ToastContext';
 import { getProduct, getCategories, updateProduct, deleteProduct } from '../api/canteen';
 import { getApiErrorMessage } from '../utils/apiError';
-import { getUploadUrl } from '../api/config';
+import { productImageUrl } from '../api/config';
 import './MerchantFoodDetail.css';
 
 /** 商家端菜品详情：getProduct + getCategories，编辑 updateProduct，删除 deleteProduct */
@@ -36,7 +36,7 @@ function MerchantFoodDetail() {
         if (cancelled) return;
         const d = data;
         const imgs = d?.images ?? [];
-        const firstImg = imgs.length ? getUploadUrl(imgs[0].url) : null;
+        const firstImg = productImageUrl(imgs[0]?.url);
         setFood({
           id: d.id,
           shop_id: d.shop_id,
@@ -77,7 +77,7 @@ function MerchantFoodDetail() {
     updateProduct(food.id, payload)
       .then((updated) => {
         const imgs = updated?.images ?? [];
-        const firstImgUrl = imgs.length ? getUploadUrl(imgs[0].url) : null;
+        const firstImgUrl = productImageUrl(imgs[0]?.url);
         setFood((prev) => ({
           ...prev,
           name: updated?.name ?? prev.name,
@@ -85,7 +85,7 @@ function MerchantFoodDetail() {
           category_id: updated?.category_id ?? prev.category_id,
           categoryId: updated?.category_id ?? prev.categoryId,
           price: updated?.price !== undefined ? updated.price : prev.price,
-          image: firstImgUrl ?? prev.image,
+          image: firstImgUrl,
         }));
         Toast.success('已保存');
         setIsEditing(false);
@@ -165,9 +165,9 @@ function MerchantFoodDetail() {
         <>
           <FoodDetailView
             food={food}
-            onImageClick={food?.image ? () => setImagePreviewOpen(true) : undefined}
+            onImageClick={food ? () => setImagePreviewOpen(true) : undefined}
           />
-          {imagePreviewOpen && food?.image && (
+          {imagePreviewOpen && food && (
             <ImagePreview
               urls={[food.image]}
               initialIndex={0}

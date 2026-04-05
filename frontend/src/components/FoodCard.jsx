@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Card from './Card';
 import ImagePreview from './ImagePreview';
+import { productImageUrl } from '../api/config';
 import './Card.css';
 import './FoodCard.css';
 
@@ -19,8 +20,9 @@ function FoodCard({ food, mode = 'user', onDelete }) {
   /** 统一显示为 10 分制（与排行榜一致） */
   const ratingDisplay = comprehensiveScore != null ? Number(comprehensiveScore).toFixed(1) : null;
   const [imagePreviewOpen, setImagePreviewOpen] = useState(false);
+  const displayImage = productImageUrl(image);
 
-  const imageBlock = image ? (
+  const imageBlock = (
     <button
       type="button"
       className="food-card-image-wrap food-card-image-wrap-clickable"
@@ -30,14 +32,8 @@ function FoodCard({ food, mode = 'user', onDelete }) {
         setImagePreviewOpen(true);
       }}
     >
-      <img src={image} alt="" className="food-card-image" />
+      <img src={displayImage} alt="" className="food-card-image" />
     </button>
-  ) : (
-    <div className="food-card-image-wrap">
-      <div className="food-card-image food-card-image-default" aria-hidden>
-        Food
-      </div>
-    </div>
   );
 
   const content = (
@@ -83,8 +79,8 @@ function FoodCard({ food, mode = 'user', onDelete }) {
         <Card as="div" className="food-card">
           {content}
         </Card>
-        {imagePreviewOpen && image && (
-          <ImagePreview urls={[image]} initialIndex={0} onClose={() => setImagePreviewOpen(false)} />
+        {imagePreviewOpen && (
+          <ImagePreview urls={[displayImage]} initialIndex={0} onClose={() => setImagePreviewOpen(false)} />
         )}
       </div>
     );
@@ -101,8 +97,8 @@ function FoodCard({ food, mode = 'user', onDelete }) {
           {content}
         </Card>
       </Link>
-      {imagePreviewOpen && image && (
-        <ImagePreview urls={[image]} initialIndex={0} onClose={() => setImagePreviewOpen(false)} />
+      {imagePreviewOpen && (
+        <ImagePreview urls={[displayImage]} initialIndex={0} onClose={() => setImagePreviewOpen(false)} />
       )}
     </>
   );

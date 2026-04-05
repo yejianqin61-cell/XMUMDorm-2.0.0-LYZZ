@@ -18,7 +18,7 @@ import {
 } from '../api/canteen';
 import { getApiErrorMessage } from '../utils/apiError';
 import { formatRatingLabel } from '../constants/rating';
-import { getUploadUrl } from '../api/config';
+import { productImageUrl } from '../api/config';
 import './FoodDetail.css';
 
 /** 将 API 点评树转为页面使用的结构（userName、images 为 url 数组） */
@@ -69,7 +69,7 @@ function FoodDetail() {
         if (cancelled) return;
         const d = data;
         const imgs = d?.images ?? [];
-        const firstImg = imgs.length ? getUploadUrl(imgs[0].url) : null;
+        const firstImg = productImageUrl(imgs[0]?.url);
         setFood({
           id: d.id,
           name: d.name,
@@ -229,7 +229,7 @@ function FoodDetail() {
     <div className="food-detail-page">
       <FoodDetailView
         food={food}
-        onImageClick={food?.image ? () => setImagePreviewOpen(true) : undefined}
+        onImageClick={food ? () => setImagePreviewOpen(true) : undefined}
         canDelete={isAdmin}
         onDelete={async () => {
           if (!isAdmin) return;
@@ -243,7 +243,7 @@ function FoodDetail() {
           }
         }}
       />
-      {imagePreviewOpen && food?.image && (
+      {imagePreviewOpen && food && (
         <ImagePreview
           urls={[food.image]}
           initialIndex={0}

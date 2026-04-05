@@ -26,8 +26,8 @@ const { uploadBuffer, guessContentType } = require('../services/objectStorage');
 
 const RATING_ENUM = ['夯爆了', '顶级', '人上人', 'NPC', '拉完了'];
 
-/** 未上传图片的商品使用的默认图，从后端 public 目录提供，路径为 /products/default.jpg */
-const DEFAULT_PRODUCT_IMAGE_PATH = process.env.DEFAULT_PRODUCT_IMAGE_PATH || '/products/default.jpg';
+/** 未上传图片的商品使用的默认图（与前端 public/products 文件名一致，便于同源 /products/* 加载） */
+const DEFAULT_PRODUCT_IMAGE_PATH = process.env.DEFAULT_PRODUCT_IMAGE_PATH || '/products/default.png';
 function ensureProductDefaultImage(product) {
   if (product && product.images && product.images.length === 0) {
     product.images = [{ url: DEFAULT_PRODUCT_IMAGE_PATH, sort_order: 0 }];

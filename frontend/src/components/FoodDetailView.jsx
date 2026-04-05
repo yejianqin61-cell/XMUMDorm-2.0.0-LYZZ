@@ -1,3 +1,4 @@
+import { productImageUrl } from '../api/config';
 import './FoodDetailView.css';
 
 /**
@@ -18,23 +19,18 @@ function FoodDetailView({ food, onImageClick, canDelete, onDelete }) {
   const priceStr = typeof price === 'number' ? price.toFixed(2) : String(price ?? '—');
   /** 后端 0–10 分制转 5 星展示 */
   const ratingDisplay = comprehensiveScore != null ? (Number(comprehensiveScore) / 10 * 5).toFixed(1) : null;
+  const displayImage = productImageUrl(image);
 
   return (
     <article className="food-detail-view" aria-label={`菜品 ${name}`}>
       <div
-        className={`food-detail-view-image-wrap ${onImageClick && image ? 'food-detail-view-image-wrap-clickable' : ''}`}
-        role={onImageClick && image ? 'button' : undefined}
-        tabIndex={onImageClick && image ? 0 : undefined}
-        onClick={onImageClick && image ? onImageClick : undefined}
-        onKeyDown={onImageClick && image ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onImageClick(); } } : undefined}
+        className={`food-detail-view-image-wrap ${onImageClick ? 'food-detail-view-image-wrap-clickable' : ''}`}
+        role={onImageClick ? 'button' : undefined}
+        tabIndex={onImageClick ? 0 : undefined}
+        onClick={onImageClick || undefined}
+        onKeyDown={onImageClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onImageClick(); } } : undefined}
       >
-        {image ? (
-          <img src={image} alt="" className="food-detail-view-image" />
-        ) : (
-          <div className="food-detail-view-image food-detail-view-image-default" aria-hidden>
-            Food
-          </div>
-        )}
+        <img src={displayImage} alt="" className="food-detail-view-image" />
       </div>
       <div className="food-detail-view-body">
         <div className="food-detail-view-name-row">

@@ -4,7 +4,7 @@ import MerchantHeader from '../components/MerchantHeader';
 import SkeletonFood from '../components/SkeletonFood';
 import EmptyState from '../components/EmptyState';
 import { getShop, getShopHotProducts } from '../api/canteen';
-import { getUploadUrl } from '../api/config';
+import { getUploadUrl, productImageUrl } from '../api/config';
 import { getApiErrorMessage } from '../utils/apiError';
 import './FoodList.css';
 
@@ -48,7 +48,7 @@ function FoodShopHot() {
         const firstImage = (p) => {
           const imgs = p.images || [];
           const url = imgs.length ? imgs[0].url : null;
-          return getUploadUrl(url);
+          return productImageUrl(url);
         };
         setFoods(
           list.map((p, index) => ({
@@ -139,13 +139,7 @@ function FoodShopHot() {
                 >
                   <div className="food-shop-hot-rank">#{f.rank}</div>
                   <div className="food-shop-hot-thumb-wrap">
-                    {f.image ? (
-                      <img src={f.image} alt="" className="food-shop-hot-thumb" />
-                    ) : (
-                      <div className="food-shop-hot-thumb placeholder" aria-hidden>
-                        Food
-                      </div>
-                    )}
+                    <img src={f.image} alt="" className="food-shop-hot-thumb" />
                   </div>
                   <div className="food-shop-hot-body">
                     <div className="food-shop-hot-name-row">

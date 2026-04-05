@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getProfile } from '../api/users';
 import { getMyProductReviews, getMyFavorites } from '../api/canteen';
-import { API_BASE_URL } from '../api/config';
+import { API_BASE_URL, productImageUrl } from '../api/config';
 import { formatRatingLabel } from '../constants/rating';
 import { getApiErrorMessage } from '../utils/apiError';
 import EmptyState from '../components/EmptyState';
@@ -355,18 +355,13 @@ function ReviewGridItem({ review }) {
   const { product_id, product_name, shop_name, rating, product_image, images } = review;
   // 优先用商品卖家秀，其次用点评附图
   const raw = product_image ?? (images?.length ? (images[0]?.url ?? images[0]) : null);
-  const imgUrl = raw && typeof raw === 'string'
-    ? (raw.startsWith('http') ? raw : `${API_BASE_URL}${raw}`)
-    : raw?.url ? (raw.url.startsWith('http') ? raw.url : `${API_BASE_URL}${raw.url}`) : null;
+  const pathStr = typeof raw === 'string' ? raw : raw?.url ?? null;
+  const imgUrl = productImageUrl(pathStr);
 
   return (
     <Link to={`/eat/food/${product_id}`} className="myzone-grid-item myzone-grid-item-review">
       <div className="myzone-grid-item-media">
-        {imgUrl ? (
-          <img src={imgUrl} alt="" />
-        ) : (
-          <div className="myzone-grid-item-placeholder myzone-grid-item-placeholder-review">无图</div>
-        )}
+        <img src={imgUrl} alt="" />
         <span className="myzone-grid-item-title">{product_name}</span>
         <span className="myzone-grid-item-rating">{formatRatingLabel(rating)}</span>
       </div>
@@ -376,18 +371,12 @@ function ReviewGridItem({ review }) {
 
 function FavoriteGridItem({ item }) {
   const { product_id, product_name, shop_name, product_image } = item;
-  const imgUrl = product_image && typeof product_image === 'string'
-    ? (product_image.startsWith('http') ? product_image : `${API_BASE_URL}${product_image}`)
-    : null;
+  const imgUrl = productImageUrl(typeof product_image === 'string' ? product_image : null);
 
   return (
     <Link to={`/eat/food/${product_id}`} className="myzone-grid-item myzone-grid-item-review">
       <div className="myzone-grid-item-media">
-        {imgUrl ? (
-          <img src={imgUrl} alt="" />
-        ) : (
-          <div className="myzone-grid-item-placeholder myzone-grid-item-placeholder-review">❤️</div>
-        )}
+        <img src={imgUrl} alt="" />
         <span className="myzone-grid-item-title">{product_name}</span>
         {shop_name && <span className="myzone-grid-item-shop">{shop_name}</span>}
       </div>

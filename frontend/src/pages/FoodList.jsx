@@ -7,7 +7,7 @@ import SkeletonFood from '../components/SkeletonFood';
 import EmptyState from '../components/EmptyState';
 import { getShop, getCategories, getProducts } from '../api/canteen';
 import { getApiErrorMessage } from '../utils/apiError';
-import { getUploadUrl } from '../api/config';
+import { getUploadUrl, productImageUrl } from '../api/config';
 import './FoodList.css';
 
 /** 商家菜品列表页：MerchantHeader + 双栏（左侧分类导航 + 右侧按分类分组的 FoodCard），数据来自 API */
@@ -62,7 +62,7 @@ function FoodList() {
         const firstImage = (p) => {
           const imgs = p.images || [];
           const url = imgs.length ? imgs[0].url : null;
-          return getUploadUrl(url);
+          return productImageUrl(url);
         };
         const foodList = products.map((p) => ({
           id: p.id,

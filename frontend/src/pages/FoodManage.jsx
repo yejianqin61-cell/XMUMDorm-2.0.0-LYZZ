@@ -6,7 +6,7 @@ import EmptyState from '../components/EmptyState';
 import { Toast } from '../context/ToastContext';
 import { getApiErrorMessage } from '../utils/apiError';
 import { getShopMe, getProducts, deleteProduct, createCategory } from '../api/canteen';
-import { getUploadUrl } from '../api/config';
+import { productImageUrl } from '../api/config';
 import './FoodManage.css';
 
 /** 商家端菜品管理：getShopMe + getProducts，支持删除，入口发布新菜品 */
@@ -38,7 +38,7 @@ function FoodManage() {
         setFoods(
           arr.map((p) => {
             const imgs = p.images || [];
-            const firstImg = imgs.length ? getUploadUrl(imgs[0].url) : null;
+            const firstImg = productImageUrl(imgs[0]?.url);
             return {
               id: p.id,
               name: p.name,
