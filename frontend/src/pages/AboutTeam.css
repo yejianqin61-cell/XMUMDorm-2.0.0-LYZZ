@@ -25,6 +25,21 @@
   margin: 0;
 }
 
+.about-team-intro {
+  margin-top: 8px;
+  line-height: 1.5;
+}
+
+.about-team-member-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.about-team-member-list > li + li {
+  margin-top: 14px;
+}
+
 .about-team-role {
   margin: 0 0 4px;
   font-size: 12px;
