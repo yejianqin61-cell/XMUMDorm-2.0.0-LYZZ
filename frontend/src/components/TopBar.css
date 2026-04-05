@@ -69,30 +69,10 @@
 }
 
 .top-bar-title-text {
-  margin: 0 4px;
+  margin: 0;
   max-width: 60vw;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.top-bar-title-decor {
-  width: 36px;
-  height: 36px; /* 尽量贴近上下边，又不裁剪 */
-  flex-shrink: 0;
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: contain;
-}
-
-/* 具体的图片等你提供后再补背景图即可 */
-.top-bar-title-decor-left {
-  margin-right: 2px;
-  background-image: url('/topbar-left.png');
-}
-
-.top-bar-title-decor-right {
-  margin-left: 2px;
-  background-image: url('/topbar-right.png');
 }
 
 .top-bar-mailbox {
