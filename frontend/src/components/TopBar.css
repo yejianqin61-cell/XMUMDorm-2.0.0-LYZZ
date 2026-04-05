@@ -68,11 +68,18 @@
   white-space: nowrap;
 }
 
+.top-bar-title::before,
+.top-bar-title::after {
+  content: none;
+  display: none;
+}
+
 .top-bar-title-text {
   margin: 0;
   max-width: 60vw;
   overflow: hidden;
   text-overflow: ellipsis;
+  background-image: none;
 }
 
 .top-bar-mailbox {

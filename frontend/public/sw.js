@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dorm-cache-v6';
+const CACHE_NAME = 'dorm-cache-v7';
 const URLS_TO_CACHE = [
   '/',
   '/index.html',
