@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { getRegions } from '../api/canteen';
+import { QK } from '../query/queryKeys';
 import './StoreForm.css';
+
+const REGIONS_STALE_MS = 5 * 60 * 1000;
 
 /**
  * 店铺创建/编辑表单：名称、分区（API regions）、简介、logo
@@ -10,22 +14,24 @@ import './StoreForm.css';
  * @param {boolean} [props.loading] 提交中时为 true，按钮禁用并显示「提交中…」
  */
 function StoreForm({ initialValues, onSubmit, onCancel, loading = false }) {
-  const [regions, setRegions] = useState([]);
+  const { data: regions = [] } = useQuery({
+    queryKey: QK.canteenRegions(),
+    queryFn: getRegions,
+    select: (d) => (Array.isArray(d) ? d : []),
+    staleTime: REGIONS_STALE_MS,
+  });
+
   const [name, setName] = useState(initialValues?.name ?? '');
-  const [regionId, setRegionId] = useState(initialValues?.region_id ?? '');
+  const [regionId, setRegionId] = useState(initialValues?.region_id != null ? String(initialValues.region_id) : '');
   const [description, setDescription] = useState(initialValues?.description ?? '');
   const [logoUrl, setLogoUrl] = useState(initialValues?.logo ?? '');
   const [message, setMessage] = useState({ type: '', text: '' });
 
   useEffect(() => {
-    getRegions()
-      .then((data) => {
-        const list = Array.isArray(data) ? data : [];
-        setRegions(list);
-        if (!regionId && list.length > 0) setRegionId(String(list[0].id));
-      })
-      .catch(() => {});
-  }, []);
+    if (!regionId && regions.length > 0) {
+      setRegionId(String(regions[0].id));
+    }
+  }, [regions, regionId]);
 
   const showMsg = (text, type = 'success') => {
     setMessage({ text, type });

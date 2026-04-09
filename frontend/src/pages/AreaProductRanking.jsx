@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import Card from '../components/Card';
 import EmptyState from '../components/EmptyState';
 import { getRegions, getRegionTopProductsByCode } from '../api/canteen';
@@ -8,10 +9,13 @@ import { AREA_LABELS } from '../components/AreaCard';
 import { findRegionByCode, normalizeAreaCodeParam } from '../utils/regionCode';
 import { useLanguage } from '../context/LanguageContext';
 import { getCanteenAreaRankingStrings } from '../i18n/canteenAreaRanking';
+import { QK } from '../query/queryKeys';
 import './Rankings.css';
 import './AreaProductRanking.css';
 
 const FULL_LIMIT = 50;
+const REGIONS_STALE_MS = 5 * 60 * 1000;
+const LIST_STALE_MS = 3 * 60 * 1000;
 
 /**
  * 分区商品排行榜完整页：与全站排行榜「最夯单品」样式一致，数据仅限本区域
@@ -22,38 +26,45 @@ function AreaProductRanking() {
   const t = getCanteenAreaRankingStrings(lang, FULL_LIMIT);
   const { area } = useParams();
   const code = normalizeAreaCodeParam(area ?? '');
-  const [areaLabel, setAreaLabel] = useState(AREA_LABELS[code] ?? code ?? '');
-  const [list, setList] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (!code) {
-      setList([]);
-      setLoading(false);
-      return;
-    }
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    Promise.all([getRegions(), getRegionTopProductsByCode(code, { limit: FULL_LIMIT }).catch(() => [])])
-      .then(([regions, products]) => {
-        if (cancelled) return;
-        const arr = Array.isArray(regions) ? regions : [];
-        const r = findRegionByCode(arr, code);
-        setAreaLabel(r?.name ?? AREA_LABELS[code] ?? code);
-        setList(Array.isArray(products) ? products : []);
-      })
-      .catch((err) => {
-        if (!cancelled) setError(getApiErrorMessage(err));
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [code]);
+  const { data: regions = [], isPending: regionsPending, isError: regionsErr, error: regError } = useQuery({
+    queryKey: QK.canteenRegions(),
+    queryFn: getRegions,
+    select: (d) => (Array.isArray(d) ? d : []),
+    staleTime: REGIONS_STALE_MS,
+    enabled: !!code,
+  });
+
+  const regionMeta = useMemo(() => findRegionByCode(regions, code), [regions, code]);
+  const areaLabel = regionMeta?.name ?? AREA_LABELS[code] ?? code ?? '';
+
+  const {
+    data: list = [],
+    isPending: listPending,
+    isError: listIsError,
+    error: listError,
+  } = useQuery({
+    queryKey: QK.canteenRegionTopProductsByCode(code, FULL_LIMIT),
+    queryFn: () => getRegionTopProductsByCode(code, { limit: FULL_LIMIT }).catch(() => []),
+    select: (d) => (Array.isArray(d) ? d : []),
+    enabled: !!code,
+    staleTime: LIST_STALE_MS,
+  });
+
+  const loading = !code ? false : regionsPending || listPending;
+  const error = regionsErr
+    ? getApiErrorMessage(regError)
+    : listIsError
+      ? getApiErrorMessage(listError)
+      : null;
+
+  if (!code) {
+    return (
+      <div className="area-ranking-page">
+        <EmptyState title="无效分区" description="请从分区商家列表进入榜单。" />
+      </div>
+    );
+  }
 
   if (loading) {
     return (

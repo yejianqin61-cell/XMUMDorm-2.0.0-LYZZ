@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import PostCard from '../components/PostCard';
 import TreeHoleToolbar from '../components/TreeHoleToolbar';
@@ -9,6 +10,7 @@ import { getApiErrorMessage } from '../utils/apiError';
 import { API_BASE_URL } from '../api/config';
 import { saveScroll, takeScroll } from '../utils/scrollCache';
 import { getRegions } from '../api/canteen';
+import { QK } from '../query/queryKeys';
 import './TreeHole.css';
 
 const SCROLL_CACHE_KEY = 'treehole';
@@ -18,6 +20,7 @@ function prefixAvatar(url) {
 }
 
 function TreeHole() {
+  const queryClient = useQueryClient();
   const { token, isAdmin } = useAuth();
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -145,12 +148,18 @@ function TreeHole() {
     }
   }, [list, hasMore, page]);
 
-  // 后台预取食堂分区数据，加速用户切到 Eat 页时的加载
+  // 后台预取食堂分区列表，写入 TanStack Query 缓存，切到「食堂」时可直接命中缓存
   useEffect(() => {
     if (prefetchRef.current) return;
     prefetchRef.current = true;
-    getRegions().catch(() => {});
-  }, []);
+    queryClient
+      .prefetchQuery({
+        queryKey: QK.canteenRegions(),
+        queryFn: getRegions,
+        staleTime: 5 * 60 * 1000,
+      })
+      .catch(() => {});
+  }, [queryClient]);
 
   const leftColumn = list.filter((_, i) => i % 2 === 0);
   const rightColumn = list.filter((_, i) => i % 2 === 1);

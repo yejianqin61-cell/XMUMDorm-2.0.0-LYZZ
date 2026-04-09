@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import Card from '../components/Card';
 import MerchantCard from '../components/MerchantCard';
 import SkeletonCard from '../components/SkeletonCard';
@@ -11,88 +12,108 @@ import { getApiErrorMessage } from '../utils/apiError';
 import { findRegionByCode, normalizeAreaCodeParam } from '../utils/regionCode';
 import { useLanguage } from '../context/LanguageContext';
 import { getCanteenAreaRankingStrings } from '../i18n/canteenAreaRanking';
+import { QK } from '../query/queryKeys';
 import './MerchantList.css';
 
-/** 区域商家列表页：本区最夯商品 Top20 + 当前分区下的商家（API） */
+const REGIONS_STALE_MS = 5 * 60 * 1000;
+const SHOPS_STALE_MS = 3 * 60 * 1000;
+const TOP_LIMIT = 20;
+
+/** 区域商家列表页：本区最夯商品 Top20 + 当前分区下的商家（API）；shops 等接口带缓存，再次进入同分区更快 */
 function MerchantList() {
   const { lang } = useLanguage();
   const t = getCanteenAreaRankingStrings(lang, 50);
   const { area } = useParams();
-  const [merchants, setMerchants] = useState([]);
-  const [hotProducts, setHotProducts] = useState([]);
-  const [areaLabel, setAreaLabel] = useState(AREA_LABELS[area] ?? area ?? '');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const code = normalizeAreaCodeParam(area ?? '');
 
-  useEffect(() => {
-    const code = normalizeAreaCodeParam(area ?? '');
-    if (!code) {
-      setMerchants([]);
-      setHotProducts([]);
-      setLoading(false);
-      return;
-    }
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    getRegions()
-      .then((regions) => {
-        if (cancelled) return;
-        const list = Array.isArray(regions) ? regions : [];
-        const region = findRegionByCode(list, code);
-        setAreaLabel(region?.name ?? AREA_LABELS[code] ?? code);
-        if (!region) {
-          setMerchants([]);
-          setHotProducts([]);
-          return null;
-        }
-        return Promise.all([
-          getShopsByRegion(region.id),
-          getRegionTopProducts(region.id, { limit: 20 }).catch(() => []),
-        ]).then(([shops, hot]) => ({ shops, hot }));
-      })
-      .then((pack) => {
-        if (cancelled || pack == null) return;
-        const list = Array.isArray(pack.shops) ? pack.shops : [];
-        setMerchants(
-          list.map((s) => ({
-            id: s.id,
-            name: s.name,
-            logo: s.logo ? getUploadUrl(s.logo) : undefined,
-            description: s.region_name ? `${s.region_name}` : undefined,
-            status: 'open',
-            openingHours: s.opening_hours ?? undefined,
-          }))
-        );
-        const hotRaw = Array.isArray(pack.hot) ? pack.hot : [];
-        setHotProducts(
-          hotRaw.map((p) => {
-            const img0 = p.images?.[0]?.url;
-            return {
-              id: p.id,
-              rank: p.rank,
-              name: p.name,
-              shopName: p.shop_name,
-              score: p.comprehensive_score,
-              price: p.price,
-              image: img0 ? getUploadUrl(img0) : DEFAULT_PRODUCT_IMAGE_PATH,
-            };
-          })
-        );
-      })
-      .catch((err) => {
-        if (!cancelled) setError(getApiErrorMessage(err));
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, [area]);
+  const {
+    data: regions = [],
+    isPending: regionsPending,
+    isError: regionsIsError,
+    error: regionsError,
+  } = useQuery({
+    queryKey: QK.canteenRegions(),
+    queryFn: getRegions,
+    select: (d) => (Array.isArray(d) ? d : []),
+    staleTime: REGIONS_STALE_MS,
+    enabled: !!code,
+  });
+
+  const region = useMemo(() => findRegionByCode(regions, code), [regions, code]);
+  const regionId = region?.id;
+
+  const areaLabel = region?.name ?? AREA_LABELS[code] ?? code ?? '';
+
+  const shopsQuery = useQuery({
+    queryKey: QK.canteenRegionShops(regionId),
+    queryFn: () => getShopsByRegion(regionId),
+    enabled: !!regionId,
+    staleTime: SHOPS_STALE_MS,
+  });
+
+  const hotQuery = useQuery({
+    queryKey: QK.canteenRegionTopProducts(regionId, TOP_LIMIT),
+    queryFn: () => getRegionTopProducts(regionId, { limit: TOP_LIMIT }).catch(() => []),
+    enabled: !!regionId,
+    staleTime: SHOPS_STALE_MS,
+  });
+
+  const merchants = useMemo(() => {
+    const list = Array.isArray(shopsQuery.data) ? shopsQuery.data : [];
+    return list.map((s) => ({
+      id: s.id,
+      name: s.name,
+      logo: s.logo ? getUploadUrl(s.logo) : undefined,
+      description: s.region_name ? `${s.region_name}` : undefined,
+      status: 'open',
+      openingHours: s.opening_hours ?? undefined,
+    }));
+  }, [shopsQuery.data]);
+
+  const hotProducts = useMemo(() => {
+    const hotRaw = Array.isArray(hotQuery.data) ? hotQuery.data : [];
+    return hotRaw.map((p) => {
+      const img0 = p.images?.[0]?.url;
+      return {
+        id: p.id,
+        rank: p.rank,
+        name: p.name,
+        shopName: p.shop_name,
+        score: p.comprehensive_score,
+        price: p.price,
+        image: img0 ? getUploadUrl(img0) : DEFAULT_PRODUCT_IMAGE_PATH,
+      };
+    });
+  }, [hotQuery.data]);
+
+  const loading =
+    !code
+      ? false
+      : regionsPending ||
+        (!!regionId && (shopsQuery.isPending || hotQuery.isPending));
+
+  const error =
+    !code
+      ? null
+      : regionsIsError
+        ? getApiErrorMessage(regionsError)
+        : shopsQuery.isError
+          ? getApiErrorMessage(shopsQuery.error)
+          : hotQuery.isError
+            ? getApiErrorMessage(hotQuery.error)
+            : null;
+
+  if (!code) {
+    return (
+      <div className="merchant-list-page">
+        <EmptyState title="无效分区" description="请从食堂首页选择分区。" />
+      </div>
+    );
+  }
 
   if (loading) {
     return (
       <div className="merchant-list-page">
-        {/* 与正式页一致：顶栏下先占位「商品榜」再商家 */}
         <div className="merchant-list-hot-skeleton" aria-hidden>
           <div className="merchant-list-hot-skeleton-title skeleton skeleton-shimmer" />
           <div className="merchant-list-hot-skeleton-row">
@@ -121,11 +142,16 @@ function MerchantList() {
     );
   }
 
+  if (!regionId) {
+    return (
+      <div className="merchant-list-page">
+        <EmptyState title="分区不存在" description="未找到该分区，请返回食堂首页重试。" />
+      </div>
+    );
+  }
+
   return (
     <div className="merchant-list-page">
-      {/*
-        分区排行榜入口：始终在第一个商家之上；无数据时也展示说明，保证 UI 完备
-      */}
       <Card as="section" className="merchant-list-ranking-card" aria-label={t.cardAria(areaLabel)}>
         <div className="merchant-list-ranking-card-head">
           <span className="merchant-list-ranking-icon" aria-hidden>

@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { getRegions } from '../api/canteen';
 import { getApiErrorMessage } from '../utils/apiError';
+import { QK } from '../query/queryKeys';
 import './CanteenArea.css';
 
 /** 五个分区入口：顺序与错落布局固定，图标与 code 对应 */
@@ -13,33 +15,25 @@ const SECTIONS = [
   { code: 'other', icon: '📋', label: 'Other' },
 ];
 
+const REGIONS_STALE_MS = 5 * 60 * 1000;
+
 /** 食堂分区页（Eat region）：大标题、排行榜渐变卡片、错落分区卡片、虚化背景 */
 function CanteenArea() {
-  const [regions, setRegions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { data: regions = [], isPending, isError, error } = useQuery({
+    queryKey: QK.canteenRegions(),
+    queryFn: getRegions,
+    select: (d) => (Array.isArray(d) ? d : []),
+    staleTime: REGIONS_STALE_MS,
+  });
 
-  useEffect(() => {
-    let cancelled = false;
-    getRegions()
-      .then((data) => {
-        if (!cancelled) setRegions(Array.isArray(data) ? data : []);
-      })
-      .catch((err) => {
-        if (!cancelled) setError(getApiErrorMessage(err));
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, []);
+  const nameByCode = useMemo(() => {
+    return regions.reduce((acc, r) => {
+      acc[r.code] = r.name;
+      return acc;
+    }, {});
+  }, [regions]);
 
-  const nameByCode = regions.reduce((acc, r) => {
-    acc[r.code] = r.name;
-    return acc;
-  }, {});
-
-  if (loading) {
+  if (isPending) {
     return (
       <div className="canteen-area-page">
         <div className="canteen-area-bg" aria-hidden />
@@ -48,11 +42,11 @@ function CanteenArea() {
     );
   }
 
-  if (error) {
+  if (isError) {
     return (
       <div className="canteen-area-page">
         <div className="canteen-area-bg" aria-hidden />
-        <p className="canteen-area-error state-error">{error}</p>
+        <p className="canteen-area-error state-error">{getApiErrorMessage(error)}</p>
       </div>
     );
   }

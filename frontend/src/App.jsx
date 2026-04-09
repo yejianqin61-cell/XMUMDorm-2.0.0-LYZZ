@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './query/queryClient';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import { LanguageProvider } from './context/LanguageContext';
@@ -54,27 +56,29 @@ function SplashScreen({ fadeOut, onReady }) {
 function MainApp() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <ToastProvider>
-          <LanguageProvider>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route
-                path="/"
-                element={
-                  <AuthGuard>
-                    <Layout />
-                  </AuthGuard>
-                }
-              >
-                {layoutRoutes}
-              </Route>
-            </Routes>
-          </LanguageProvider>
-        </ToastProvider>
-      </AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <ToastProvider>
+            <LanguageProvider>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route
+                  path="/"
+                  element={
+                    <AuthGuard>
+                      <Layout />
+                    </AuthGuard>
+                  }
+                >
+                  {layoutRoutes}
+                </Route>
+              </Routes>
+            </LanguageProvider>
+          </ToastProvider>
+        </AuthProvider>
+      </QueryClientProvider>
     </BrowserRouter>
   );
 }
