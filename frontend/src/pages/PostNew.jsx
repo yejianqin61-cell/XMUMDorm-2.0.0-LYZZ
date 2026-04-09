@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { Toast } from '../context/ToastContext';
@@ -9,6 +10,7 @@ import './PostNew.css';
 
 /** 发布帖子 / 公告页：需登录；普通用户发帖子，管理员发公告 */
 function PostNew() {
+  const queryClient = useQueryClient();
   const { isLoggedIn, isAdmin } = useAuth();
   const { lang } = useLanguage();
   const isEn = lang === 'en';
@@ -80,6 +82,7 @@ function PostNew() {
       }
       const created = await createPost(payload);
       Toast.success(isAdmin ? '公告发布成功' : '发布成功');
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
       navigate(created?.id ? `/post/${created.id}` : '/', { replace: true });
     } catch (err) {
       Toast.error(getApiErrorMessage(err));

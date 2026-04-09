@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { Toast } from '../context/ToastContext';
 import { commitScheduleImport, getScheduleWeek, previewScheduleImport } from '../api/schedule';
+import { getApiErrorMessage } from '../utils/apiError';
+import { QK } from '../query/queryKeys';
 import {
   getPushVapidPublicKey,
   subscribePush,
@@ -35,12 +38,18 @@ function urlBase64ToUint8Array(base64String) {
 function Schedule() {
   const { lang } = useLanguage();
   const { isLoggedIn } = useAuth();
+  const queryClient = useQueryClient();
   const isZh = lang !== 'en';
   const [tab, setTab] = useState('view'); // 'view' | 'import'
 
   const FIXED_WEEK = 1;
-  const [loadingWeek, setLoadingWeek] = useState(false);
-  const [weekData, setWeekData] = useState(null);
+  const weekQuery = useQuery({
+    queryKey: QK.scheduleWeek(FIXED_WEEK),
+    queryFn: () => getScheduleWeek(FIXED_WEEK),
+    staleTime: 5 * 60 * 1000,
+  });
+  const weekData = weekQuery.data ?? null;
+  const loadingWeek = weekQuery.isFetching;
 
   const [text, setText] = useState('');
   const [previewing, setPreviewing] = useState(false);
@@ -125,23 +134,6 @@ function Schedule() {
     if (isLoggedIn && tab === 'view') refreshPushSubscription();
   }, [isLoggedIn, tab, refreshPushSubscription]);
 
-  const loadWeek = async (w) => {
-    setLoadingWeek(true);
-    try {
-      const data = await getScheduleWeek(w);
-      setWeekData(data);
-    } catch (e) {
-      Toast.error(e?.message || (isZh ? '获取课表失败' : 'Failed to load schedule'));
-    } finally {
-      setLoadingWeek(false);
-    }
-  };
-
-  useEffect(() => {
-    loadWeek(FIXED_WEEK);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const handlePreview = async () => {
     if (!text || text.trim().length < 10) {
       Toast.error(isZh ? '请先粘贴课程表文本' : 'Paste timetable text first');
@@ -170,7 +162,7 @@ function Schedule() {
       Toast.success(isZh ? '导入成功' : 'Imported');
       setTab('view');
       setPreview(null);
-      await loadWeek(FIXED_WEEK);
+      await queryClient.invalidateQueries({ queryKey: QK.scheduleWeek(FIXED_WEEK) });
     } catch (e) {
       Toast.error(e?.message || (isZh ? '导入失败' : 'Import failed'));
     } finally {
@@ -285,6 +277,11 @@ function Schedule() {
     });
     return (
       <div className="schedule-week">
+        {weekQuery.isError && (
+          <p className="state-error schedule-week-query-error" role="alert">
+            {getApiErrorMessage(weekQuery.error) || (isZh ? '获取课表失败' : 'Failed to load schedule')}
+          </p>
+        )}
         {isLoggedIn && (
           <div className="schedule-push-card">
             <div className="schedule-push-title">
@@ -341,7 +338,7 @@ function Schedule() {
           <button
             type="button"
             className="schedule-btn schedule-btn-primary"
-            onClick={() => loadWeek(FIXED_WEEK)}
+            onClick={() => weekQuery.refetch()}
             disabled={loadingWeek}
           >
             {loadingWeek ? (isZh ? '加载中…' : 'Loading…') : (isZh ? '刷新' : 'Refresh')}

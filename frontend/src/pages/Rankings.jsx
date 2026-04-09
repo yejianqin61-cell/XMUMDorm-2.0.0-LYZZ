@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import Card from '../components/Card';
 import EmptyState from '../components/EmptyState';
 import { getApiErrorMessage } from '../utils/apiError';
@@ -10,6 +10,7 @@ import {
   getRankingsNewHitProducts,
   getRankingsActiveUsers,
 } from '../api/rankings';
+import { QK } from '../query/queryKeys';
 import './Rankings.css';
 
 /** 五大榜单标识（与后端接口对应） */
@@ -21,49 +22,32 @@ export const RANKING_SECTIONS = [
   { id: 'active-users', title: 'Active Reviewers', titleEn: '点评达人', desc: '当周点评数 Top 5' },
 ];
 
-/** 排行榜主页：五大榜单，数据来自 API */
+async function fetchAllRankings() {
+  const [hotProducts, busyShops, topShops, newHitProducts, activeUsers] = await Promise.all([
+    getRankingsHotProducts(),
+    getRankingsBusyShops(),
+    getRankingsTopShops(),
+    getRankingsNewHitProducts(),
+    getRankingsActiveUsers(),
+  ]);
+  return {
+    'hot-products': Array.isArray(hotProducts) ? hotProducts : [],
+    'busy-shops': Array.isArray(busyShops) ? busyShops : [],
+    'top-shops': Array.isArray(topShops) ? topShops : [],
+    'new-hit-products': Array.isArray(newHitProducts) ? newHitProducts : [],
+    'active-users': Array.isArray(activeUsers) ? activeUsers : [],
+  };
+}
+
+/** 排行榜主页：五大榜单；结果缓存，重复进入更快 */
 function Rankings() {
-  const [data, setData] = useState({
-    'hot-products': [],
-    'busy-shops': [],
-    'top-shops': [],
-    'new-hit-products': [],
-    'active-users': [],
+  const { data, isPending, error } = useQuery({
+    queryKey: QK.rankingsAll(),
+    queryFn: fetchAllRankings,
+    staleTime: 5 * 60 * 1000,
   });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    Promise.all([
-      getRankingsHotProducts(),
-      getRankingsBusyShops(),
-      getRankingsTopShops(),
-      getRankingsNewHitProducts(),
-      getRankingsActiveUsers(),
-    ])
-      .then(([hotProducts, busyShops, topShops, newHitProducts, activeUsers]) => {
-        if (cancelled) return;
-        setData({
-          'hot-products': Array.isArray(hotProducts) ? hotProducts : [],
-          'busy-shops': Array.isArray(busyShops) ? busyShops : [],
-          'top-shops': Array.isArray(topShops) ? topShops : [],
-          'new-hit-products': Array.isArray(newHitProducts) ? newHitProducts : [],
-          'active-users': Array.isArray(activeUsers) ? activeUsers : [],
-        });
-      })
-      .catch((err) => {
-        if (!cancelled) setError(getApiErrorMessage(err));
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, []);
-
-  if (loading) {
+  if (isPending) {
     return (
       <div className="rankings-page">
         <p className="rankings-loading state-loading">加载中…</p>
@@ -74,7 +58,7 @@ function Rankings() {
   if (error) {
     return (
       <div className="rankings-page">
-        <p className="rankings-error state-error">{error}</p>
+        <p className="rankings-error state-error">{getApiErrorMessage(error)}</p>
       </div>
     );
   }
@@ -84,7 +68,7 @@ function Rankings() {
       <p className="rankings-intro">每周一 0 点（东八区）更新 Rankings update weekly</p>
       <ul className="rankings-list" aria-label="排行榜列表">
         {RANKING_SECTIONS.map((section) => {
-          const list = data[section.id] || [];
+          const list = data?.[section.id] || [];
           return (
             <li key={section.id}>
               <Card as="div" className="rankings-section-card">

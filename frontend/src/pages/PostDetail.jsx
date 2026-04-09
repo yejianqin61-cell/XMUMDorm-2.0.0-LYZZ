@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import {
@@ -17,6 +18,7 @@ import ImagePreview from '../components/ImagePreview';
 import LikeBurst from '../components/LikeBurst';
 import { formatPostTime } from '../utils/formatTime';
 import { getApiErrorMessage } from '../utils/apiError';
+import { QK } from '../query/queryKeys';
 import './PostDetail.css';
 
 function prefixAvatar(url) {
@@ -27,18 +29,27 @@ function prefixImageUrl(url) {
   return url && !url.startsWith('http') ? `${API_BASE_URL}${url}` : url;
 }
 
+function mapCommentTree(c) {
+  return {
+    ...c,
+    author: c.author ? { ...c.author, avatar: prefixAvatar(c.author.avatar) } : c.author,
+    replies: (c.replies || []).map((r) => ({
+      ...r,
+      author: r.author ? { ...r.author, avatar: prefixAvatar(r.author.avatar) } : r.author,
+    })),
+  };
+}
+
 function PostDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { lang } = useLanguage();
   const isEn = lang === 'en';
   const { isLoggedIn, token, user, isAdmin } = useAuth();
   const postId = Number(id);
+  const tokenKey = token ?? 'guest';
 
-  const [post, setPost] = useState(null);
-  const [comments, setComments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [newComment, setNewComment] = useState('');
@@ -48,6 +59,37 @@ function PostDetail() {
   const [imagePreview, setImagePreview] = useState({ open: false, index: 0 });
   const likeBurstRef = useRef(null);
 
+  const detailQuery = useQuery({
+    queryKey: QK.postDetail(postId, tokenKey),
+    queryFn: () => getPostDetail(postId, token),
+    enabled: Number.isFinite(postId) && postId > 0,
+    staleTime: 60 * 1000,
+    select: (postData) => ({
+      ...postData,
+      author: postData.author
+        ? { ...postData.author, avatar: prefixAvatar(postData.author.avatar) }
+        : postData.author,
+    }),
+  });
+
+  const commentsQuery = useQuery({
+    queryKey: QK.postComments(postId),
+    queryFn: () => getPostComments(postId),
+    enabled: Number.isFinite(postId) && postId > 0,
+    staleTime: 30 * 1000,
+    select: (list) =>
+      (Array.isArray(list) ? list : []).map(mapCommentTree),
+  });
+
+  const post = detailQuery.data ?? null;
+  const comments = commentsQuery.data ?? [];
+
+  useEffect(() => {
+    if (!post) return;
+    setLikeCount(post.like_count ?? 0);
+    setLiked(!!post.user_liked);
+  }, [post]);
+
   const requireLogin = useCallback(() => {
     if (!isLoggedIn) {
       navigate('/login', { replace: true, state: { from: { pathname: `/post/${id}` } } });
@@ -55,45 +97,6 @@ function PostDetail() {
     }
     return false;
   }, [isLoggedIn, navigate, id]);
-
-  useEffect(() => {
-    if (!postId) {
-      setLoading(false);
-      return;
-    }
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    Promise.all([
-      getPostDetail(postId, token),
-      getPostComments(postId),
-    ])
-      .then(([postData, commentsData]) => {
-        if (cancelled) return;
-        setPost({
-          ...postData,
-          author: postData.author ? { ...postData.author, avatar: prefixAvatar(postData.author.avatar) } : postData.author,
-        });
-        setLikeCount(postData.like_count ?? 0);
-        setLiked(!!postData.user_liked);
-        const list = Array.isArray(commentsData) ? commentsData : [];
-        setComments(list.map((c) => ({
-          ...c,
-          author: c.author ? { ...c.author, avatar: prefixAvatar(c.author.avatar) } : c.author,
-          replies: (c.replies || []).map((r) => ({
-            ...r,
-            author: r.author ? { ...r.author, avatar: prefixAvatar(r.author.avatar) } : r.author,
-          })),
-        })));
-      })
-      .catch((err) => {
-        if (!cancelled) setError(getApiErrorMessage(err));
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, [postId, token]);
 
   const handleLike = async (e) => {
     if (requireLogin()) return;
@@ -115,17 +118,8 @@ function PostDetail() {
         content: newComment.trim(),
         parent_id: replyingTo?.id ?? undefined,
       });
-      setError(null);
       Toast.success('评论成功');
-      const list = await getPostComments(postId);
-      setComments(Array.isArray(list) ? list.map((c) => ({
-        ...c,
-        author: c.author ? { ...c.author, avatar: prefixAvatar(c.author.avatar) } : c.author,
-        replies: (c.replies || []).map((r) => ({
-          ...r,
-          author: r.author ? { ...r.author, avatar: prefixAvatar(r.author.avatar) } : r.author,
-        })),
-      })) : []);
+      await queryClient.invalidateQueries({ queryKey: QK.postComments(postId) });
       setNewComment('');
       setReplyingTo(null);
     } catch (err) {
@@ -136,18 +130,9 @@ function PostDetail() {
   };
 
   const startReply = (c) => setReplyingTo({ id: c.id, content: c.content });
-  const cancelReply = () => { setReplyingTo(null); setNewComment(''); };
-
-  const reloadComments = async () => {
-    const list = await getPostComments(postId);
-    setComments(Array.isArray(list) ? list.map((c) => ({
-      ...c,
-      author: c.author ? { ...c.author, avatar: prefixAvatar(c.author.avatar) } : c.author,
-      replies: (c.replies || []).map((r) => ({
-        ...r,
-        author: r.author ? { ...r.author, avatar: prefixAvatar(r.author.avatar) } : r.author,
-      })),
-    })) : []);
+  const cancelReply = () => {
+    setReplyingTo(null);
+    setNewComment('');
   };
 
   const handleDeleteComment = async (commentId) => {
@@ -156,19 +141,21 @@ function PostDetail() {
     try {
       await deleteComment(postId, commentId);
       Toast.success('Deleted');
-      await reloadComments();
+      await queryClient.invalidateQueries({ queryKey: QK.postComments(postId) });
     } catch (err) {
       Toast.error(getApiErrorMessage(err));
     }
   };
 
-  const isAuthor = post && (post.user_id === user?.id || post.author?.id === user?.id || isAdmin);
+  const isAuthor =
+    post && (post.user_id === user?.id || post.author?.id === user?.id || isAdmin);
   const handleDeletePost = async () => {
     if (!window.confirm('Delete this post? This action cannot be undone.')) return;
     setDeleteLoading(true);
     try {
       await deletePost(postId);
       Toast.success('Deleted');
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
       navigate('/', { replace: true });
     } catch (err) {
       Toast.error(getApiErrorMessage(err));
@@ -177,7 +164,10 @@ function PostDetail() {
     }
   };
 
-  if (loading && !post) {
+  const loading = detailQuery.isPending && !post;
+  const error = detailQuery.error ? getApiErrorMessage(detailQuery.error) : null;
+
+  if (loading) {
     return (
       <div className="post-detail-page">
         <p className="post-detail-loading state-loading">Loading…</p>
@@ -225,7 +215,11 @@ function PostDetail() {
 
   return (
     <div className="post-detail-page">
-      {error && <p className="post-detail-error" role="alert">{error}</p>}
+      {commentsQuery.isError && (
+        <p className="post-detail-error" role="alert">
+          {getApiErrorMessage(commentsQuery.error)}
+        </p>
+      )}
       <article className="post-detail-card">
         <div className="post-detail-author">
           <button

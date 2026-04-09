@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import PostCard from '../components/PostCard';
 import TreeHoleToolbar from '../components/TreeHoleToolbar';
@@ -14,47 +14,86 @@ import { QK } from '../query/queryKeys';
 import './TreeHole.css';
 
 const SCROLL_CACHE_KEY = 'treehole';
+const PAGE_SIZE = 20;
 
 function prefixAvatar(url) {
   return url && !url.startsWith('http') ? `${API_BASE_URL}${url}` : url;
 }
 
+function mapPostItem(p) {
+  return {
+    ...p,
+    author: p.author ? { ...p.author, avatar: prefixAvatar(p.author.avatar) } : p.author,
+  };
+}
+
+/** 从 sessionStorage 恢复无限查询结构（与写入格式一致：整表 list + page 页数 + hasMore） */
+function readSessionInfinitePages(pageSize) {
+  try {
+    const raw = sessionStorage.getItem('treehole_data');
+    if (!raw) return undefined;
+    const d = JSON.parse(raw);
+    const flat = Array.isArray(d.list) ? d.list : [];
+    if (flat.length === 0) return undefined;
+    const n = Math.max(1, Number(d.page) || 1);
+    const hasMoreEnd = !!d.hasMore;
+    const pages = [];
+    const pageParams = [];
+    for (let i = 0; i < n; i += 1) {
+      const start = i * pageSize;
+      const slice = flat.slice(start, start + pageSize);
+      if (slice.length === 0) break;
+      const isLast = i === n - 1;
+      pages.push({
+        list: slice,
+        hasMore: isLast ? hasMoreEnd : true,
+        page: i + 1,
+      });
+      pageParams.push(i + 1);
+    }
+    if (pages.length === 0) return undefined;
+    return { pages, pageParams };
+  } catch {
+    return undefined;
+  }
+}
+
 function TreeHole() {
   const queryClient = useQueryClient();
   const { token, isAdmin } = useAuth();
-  const [list, setList] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [hasMore, setHasMore] = useState(false);
-  const [page, setPage] = useState(1);
-  const pageSize = 20;
-  const pageRef = useRef(1);
-  pageRef.current = page;
+  const tokenKey = token ?? 'guest';
   const prefetchRef = useRef(false);
+  const scrollRestoredRef = useRef(false);
+  const pageRef = useRef(1);
 
-  const loadPage = useCallback(
-    async (pageNum = 1, append = false) => {
-      try {
-        if (pageNum === 1) setLoading(true);
-        setError(null);
-        const data = await getPostList({ page: pageNum, pageSize, token });
-        const posts = (data?.list || []).map((p) => ({
-          ...p,
-          author: p.author ? { ...p.author, avatar: prefixAvatar(p.author.avatar) } : p.author,
-        }));
-        setList((prev) => (append ? [...prev, ...posts] : posts));
-        setHasMore(!!data?.hasMore);
-        setPage(pageNum);
-      } catch (err) {
-        setError(getApiErrorMessage(err));
-      } finally {
-        setLoading(false);
-      }
+  const initialSessionData = useMemo(() => readSessionInfinitePages(PAGE_SIZE), [tokenKey]);
+
+  const infinite = useInfiniteQuery({
+    queryKey: QK.postsInfinite(tokenKey, PAGE_SIZE),
+    queryFn: async ({ pageParam }) => {
+      const data = await getPostList({ page: pageParam, pageSize: PAGE_SIZE, token });
+      return {
+        list: (data?.list || []).map(mapPostItem),
+        hasMore: !!data?.hasMore,
+        page: pageParam,
+      };
     },
-    [token]
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, _all, lastPageParam) => {
+      if (!lastPage?.hasMore) return undefined;
+      return lastPageParam + 1;
+    },
+    initialData: initialSessionData,
+    staleTime: 60 * 1000,
+  });
+
+  const list = useMemo(
+    () => infinite.data?.pages.flatMap((p) => p.list) ?? [],
+    [infinite.data]
   );
 
-  // 离开列表时保存滚动位置与页码（scroll position cache）
+  pageRef.current = infinite.data?.pages.length ?? 1;
+
   useEffect(() => {
     return () => {
       const main = document.querySelector('.app-main');
@@ -64,91 +103,34 @@ function TreeHole() {
     };
   }, []);
 
-  // 首次进入：优先使用缓存的帖子列表 + 滚动位置，否则按之前逻辑加载
   useEffect(() => {
-    const cachedScroll = takeScroll(SCROLL_CACHE_KEY);
-    try {
-      const raw = sessionStorage.getItem('treehole_data');
-      if (raw) {
-        const data = JSON.parse(raw);
-        const cachedList = Array.isArray(data.list) ? data.list : [];
-        const cachedPage = Number(data.page) || 1;
-        const cachedHasMore = !!data.hasMore;
-        if (cachedList.length > 0) {
-          setList(cachedList);
-          setPage(cachedPage);
-          setHasMore(cachedHasMore);
-          setLoading(false);
-          const main = document.querySelector('.app-main');
-          if (main && cachedScroll && cachedScroll.scrollTop > 0) {
-            requestAnimationFrame(() => {
-              main.scrollTop = cachedScroll.scrollTop;
-            });
-          }
-          // 使用缓存秒开后，仍然主动刷新第一页，确保能看到最新动态
-          loadPage(1);
-          return;
-        }
-      }
-    } catch (_) {
-      // 忽略缓存解析错误，走正常加载逻辑
-    }
-
-    const cached = cachedScroll;
-    if (!cached || cached.page <= 0) {
-      loadPage(1);
-      return;
-    }
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    (async () => {
-      const allPosts = [];
-      let lastHasMore = false;
-      for (let p = 1; p <= cached.page && !cancelled; p++) {
-        try {
-          const data = await getPostList({ page: p, pageSize, token });
-          const posts = (data?.list || []).map((item) => ({
-            ...item,
-            author: item.author ? { ...item.author, avatar: prefixAvatar(item.author.avatar) } : item.author,
-          }));
-          allPosts.push(...posts);
-          lastHasMore = !!data?.hasMore;
-        } catch (err) {
-          if (!cancelled) setError(getApiErrorMessage(err));
-          break;
-        }
-      }
-      if (cancelled) return;
-      setList(allPosts);
-      setPage(cached.page);
-      setHasMore(lastHasMore);
-      setLoading(false);
+    if (scrollRestoredRef.current || list.length === 0 || infinite.isFetching) return;
+    const cached = takeScroll(SCROLL_CACHE_KEY);
+    if (cached?.scrollTop > 0) {
       const main = document.querySelector('.app-main');
-      if (main && cached.scrollTop > 0) {
+      if (main) {
         requestAnimationFrame(() => {
           main.scrollTop = cached.scrollTop;
         });
       }
-    })();
-    return () => { cancelled = true; };
-  }, [token, loadPage]);
+    }
+    scrollRestoredRef.current = true;
+  }, [list.length, infinite.isFetching]);
 
-  const loadMore = () => {
-    if (!loading && hasMore) loadPage(page + 1, true);
-  };
-
-  // 缓存当前帖子列表到 sessionStorage，便于返回时秒开
   useEffect(() => {
     try {
-      const data = { list, hasMore, page };
+      const last = infinite.data?.pages[infinite.data.pages.length - 1];
+      const data = {
+        list,
+        hasMore: last?.hasMore ?? false,
+        page: infinite.data?.pages.length ?? 1,
+      };
       sessionStorage.setItem('treehole_data', JSON.stringify(data));
-    } catch (_) {
-      // 忽略缓存失败
+    } catch {
+      // ignore
     }
-  }, [list, hasMore, page]);
+  }, [list, infinite.data]);
 
-  // 后台预取食堂分区列表，写入 TanStack Query 缓存，切到「食堂」时可直接命中缓存
   useEffect(() => {
     if (prefetchRef.current) return;
     prefetchRef.current = true;
@@ -161,18 +143,26 @@ function TreeHole() {
       .catch(() => {});
   }, [queryClient]);
 
+  const loadMore = () => {
+    if (!infinite.isFetching && infinite.hasNextPage) {
+      infinite.fetchNextPage();
+    }
+  };
+
   const leftColumn = list.filter((_, i) => i % 2 === 0);
   const rightColumn = list.filter((_, i) => i % 2 === 1);
+  const showInitialSkeleton = infinite.isPending && list.length === 0;
+  const errorMsg = infinite.error ? getApiErrorMessage(infinite.error) : null;
 
   return (
     <div className="treehole-page">
       <TreeHoleToolbar />
-      {error && (
+      {errorMsg && (
         <p className="treehole-error state-error" role="alert">
-          {error}
+          {errorMsg}
         </p>
       )}
-      {loading && list.length === 0 ? (
+      {showInitialSkeleton ? (
         <div className="treehole-content">
           <div className="treehole-grid">
             <div className="treehole-column">
@@ -201,9 +191,14 @@ function TreeHole() {
               ))}
             </div>
           </div>
-          {hasMore && (
-            <button type="button" className="treehole-load-more" onClick={loadMore} disabled={loading}>
-              {loading ? '加载中…' : '加载更多'}
+          {infinite.hasNextPage && (
+            <button
+              type="button"
+              className="treehole-load-more"
+              onClick={loadMore}
+              disabled={infinite.isFetchingNextPage}
+            >
+              {infinite.isFetchingNextPage ? '加载中…' : '加载更多'}
             </button>
           )}
         </div>
