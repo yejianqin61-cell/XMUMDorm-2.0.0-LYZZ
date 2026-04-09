@@ -1,40 +1,38 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { Toast } from '../context/ToastContext';
 import { getPostTagsList, createPostTag, deletePostTag } from '../api/posts';
 import { getApiErrorMessage } from '../utils/apiError';
+import { QK } from '../query/queryKeys';
 import './TreeHoleToolbar.css';
+
+const POST_TAGS_STALE_MS = 15 * 60 * 1000;
 
 /** 树洞页：搜索栏 + 前 5 个标签 + 下拉全部标签（管理员可创建/删除） */
 function TreeHoleToolbar() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { isAdmin } = useAuth();
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
   const [keyword, setKeyword] = useState('');
-  const [tags, setTags] = useState([]);
   const [open, setOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [nameZh, setNameZh] = useState('');
   const [nameEn, setNameEn] = useState('');
-  const [loadingTags, setLoadingTags] = useState(true);
   const wrapRef = useRef(null);
 
-  const loadTags = () => {
-    setLoadingTags(true);
-    getPostTagsList()
-      .then((data) => {
-        setTags(Array.isArray(data) ? data : []);
-      })
-      .catch(() => setTags([]))
-      .finally(() => setLoadingTags(false));
-  };
-
-  useEffect(() => {
-    loadTags();
-  }, []);
+  const tagsQuery = useQuery({
+    queryKey: QK.postTagsList(),
+    queryFn: getPostTagsList,
+    staleTime: POST_TAGS_STALE_MS,
+    select: (data) => (Array.isArray(data) ? data : []),
+  });
+  const tags = tagsQuery.data ?? [];
+  const loadingTags = tagsQuery.isPending;
 
   useEffect(() => {
     if (!open) return;
@@ -75,7 +73,7 @@ function TreeHoleToolbar() {
       setNameZh('');
       setNameEn('');
       setCreateOpen(false);
-      loadTags();
+      queryClient.invalidateQueries({ queryKey: QK.postTagsList() });
     } catch (err) {
       Toast.error(getApiErrorMessage(err));
     }
@@ -93,7 +91,7 @@ function TreeHoleToolbar() {
     try {
       await deletePostTag(t.id);
       Toast.success(isZh ? '已删除' : 'Deleted');
-      loadTags();
+      queryClient.invalidateQueries({ queryKey: QK.postTagsList() });
     } catch (err) {
       Toast.error(getApiErrorMessage(err));
     }

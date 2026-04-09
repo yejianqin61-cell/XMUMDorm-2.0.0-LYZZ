@@ -1,12 +1,15 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { Toast } from '../context/ToastContext';
 import { createPost, getPostTagsList } from '../api/posts';
 import { getApiErrorMessage } from '../utils/apiError';
+import { QK } from '../query/queryKeys';
 import './PostNew.css';
+
+const POST_TAGS_STALE_MS = 15 * 60 * 1000;
 
 /** 发布帖子 / 公告页：需登录；普通用户发帖子，管理员发公告 */
 function PostNew() {
@@ -19,15 +22,15 @@ function PostNew() {
   const [imageFiles, setImageFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [allTags, setAllTags] = useState([]);
   const [selectedTagIds, setSelectedTagIds] = useState([]);
   const fileInputRef = useRef(null);
 
-  useEffect(() => {
-    getPostTagsList()
-      .then((d) => setAllTags(Array.isArray(d) ? d : []))
-      .catch(() => setAllTags([]));
-  }, []);
+  const { data: allTags = [] } = useQuery({
+    queryKey: QK.postTagsList(),
+    queryFn: getPostTagsList,
+    staleTime: POST_TAGS_STALE_MS,
+    select: (d) => (Array.isArray(d) ? d : []),
+  });
 
   const tagLabel = (t) => (isEn ? (t.name_en || t.name_zh) : (t.name_zh || t.name_en));
 

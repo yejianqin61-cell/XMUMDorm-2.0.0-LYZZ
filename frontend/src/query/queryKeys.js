@@ -10,6 +10,10 @@ export const QK = {
   postsInfinite: (tokenKey, pageSize) => ['posts', 'infinite', tokenKey, pageSize],
   postDetail: (postId, tokenKey) => ['posts', 'detail', postId, tokenKey],
   postComments: (postId) => ['posts', 'comments', postId],
+  /** 帖子标签列表（全站共用，管理员增删后 invalidate） */
+  postTagsList: () => ['posts', 'tags'],
+  /** 未读全站公告（按 token 区分，避免串缓存） */
+  unreadAnnouncements: (tokenKey) => ['notifications', 'unreadAnnouncements', tokenKey],
 
   /** 食堂总榜五合一 */
   rankingsAll: () => ['rankings', 'all'],

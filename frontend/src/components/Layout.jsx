@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import TopBar from './TopBar';
 import TabBar from './TabBar';
 import { getTabIndex, getTabRootPath } from './TabBar';
@@ -11,12 +12,15 @@ import { useLanguage } from '../context/LanguageContext';
 import { enterFullscreen } from '../utils/fullscreen';
 import { useAuth } from '../context/AuthContext';
 import { getUnreadAnnouncements, markNotificationRead, markNotificationsReadBatch } from '../api/notifications';
-import { BACKGROUND_IMAGES, BACKGROUND_SWITCH_INTERVAL_MS } from '../config/backgrounds';
+import { QK } from '../query/queryKeys';
+import { BACKGROUND_IMAGES } from '../config/backgrounds';
 import './TopBar.css';
 import './TabBar.css';
 import './Layout.css';
 
 const SLIDE_DURATION_MS = 280;
+/** 未读公告列表在客户端缓存时间，减少重复请求与 CORS 预检 */
+const UNREAD_ANN_STALE_MS = 3 * 60 * 1000;
 
 const TAB_ROOT_COMPONENTS = {
   '/': TreeHole,
@@ -62,7 +66,9 @@ const SHOW_BACK_PATHS = ['/post/new', '/post/', '/posts/'];
 function Layout() {
   const location = useLocation();
   const pathname = location.pathname;
-  const { isLoggedIn } = useAuth();
+  const queryClient = useQueryClient();
+  const { isLoggedIn, token } = useAuth();
+  const tokenKey = token ?? '';
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
   const prevPathRef = useRef(pathname);
@@ -70,8 +76,19 @@ function Layout() {
   const hasTriedFullscreenRef = useRef(false);
   const [slide, setSlide] = useState(null);
   const [slidePhase, setSlidePhase] = useState('start');
-  const [announcements, setAnnouncements] = useState([]);
-  const [showAnnouncements, setShowAnnouncements] = useState(false);
+
+  const unreadAnnouncementsQuery = useQuery({
+    queryKey: QK.unreadAnnouncements(tokenKey),
+    queryFn: async () => {
+      const list = await getUnreadAnnouncements();
+      return Array.isArray(list) ? list : [];
+    },
+    enabled: isLoggedIn && !!token,
+    staleTime: UNREAD_ANN_STALE_MS,
+  });
+  const announcements = unreadAnnouncementsQuery.data ?? [];
+  const showAnnouncements =
+    isLoggedIn && unreadAnnouncementsQuery.isSuccess && announcements.length > 0;
   const [bgIndex] = useState(() => {
     if (!Array.isArray(BACKGROUND_IMAGES) || BACKGROUND_IMAGES.length === 0) return 0;
     return Math.floor(Math.random() * BACKGROUND_IMAGES.length);
@@ -99,41 +116,23 @@ function Layout() {
     prevPathRef.current = pathname;
   }, [pathname]);
 
-  // 加载未读公告，用于登录后弹窗
-  useEffect(() => {
-    if (!isLoggedIn) {
-      setAnnouncements([]);
-      setShowAnnouncements(false);
-      return;
-    }
-    let cancelled = false;
-    getUnreadAnnouncements()
-      .then((list) => {
-        if (cancelled) return;
-        const arr = Array.isArray(list) ? list : [];
-        setAnnouncements(arr);
-        setShowAnnouncements(arr.length > 0);
-      })
-      .catch(() => {
-        // 忽略公告加载错误，避免影响主流程
-      });
-    return () => { cancelled = true; };
-  }, [isLoggedIn]);
-
   const handleAnnouncementKnow = async (id) => {
-    setAnnouncements((prev) => prev.filter((n) => n.id !== id));
+    queryClient.setQueryData(QK.unreadAnnouncements(tokenKey), (old) => {
+      const arr = Array.isArray(old) ? old : [];
+      return arr.filter((n) => n.id !== id);
+    });
     try {
       await markNotificationRead(id);
     } catch (_) {
       // 忽略单条失败
     }
-    setShowAnnouncements((prev) => prev && announcements.filter((n) => n.id !== id).length > 0);
   };
 
   const handleAnnouncementKnowAll = async () => {
-    const ids = announcements.map((n) => n.id);
-    setAnnouncements([]);
-    setShowAnnouncements(false);
+    const key = QK.unreadAnnouncements(tokenKey);
+    const current = queryClient.getQueryData(key);
+    const ids = Array.isArray(current) ? current.map((n) => n.id) : [];
+    queryClient.setQueryData(key, []);
     if (ids.length === 0) return;
     try {
       await markNotificationsReadBatch(ids);

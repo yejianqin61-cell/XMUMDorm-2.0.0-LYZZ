@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import PostCard from '../components/PostCard';
@@ -7,8 +8,11 @@ import SkeletonPost from '../components/SkeletonPost';
 import { getPostList, getPostTagsList } from '../api/posts';
 import { getApiErrorMessage } from '../utils/apiError';
 import { API_BASE_URL } from '../api/config';
+import { QK } from '../query/queryKeys';
 import './TreeHole.css';
 import './PostTagFeed.css';
+
+const POST_TAGS_STALE_MS = 15 * 60 * 1000;
 
 function prefixAvatar(url) {
   return url && !url.startsWith('http') ? `${API_BASE_URL}${url}` : url;
@@ -26,28 +30,22 @@ function PostTagFeed() {
   const [error, setError] = useState(null);
   const [hasMore, setHasMore] = useState(false);
   const [page, setPage] = useState(1);
-  const [tagLabel, setTagLabel] = useState('');
   const pageSize = 20;
 
-  useEffect(() => {
-    let cancelled = false;
-    if (!slug) return;
-    getPostTagsList()
-      .then((rows) => {
-        if (cancelled) return;
-        const arr = Array.isArray(rows) ? rows : [];
-        const t = arr.find((x) => x.slug === slug);
-        if (t) {
-          setTagLabel(isZh ? (t.name_zh || t.name_en) : (t.name_en || t.name_zh));
-        } else {
-          setTagLabel(slug);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setTagLabel(slug);
-      });
-    return () => { cancelled = true; };
-  }, [slug, isZh]);
+  const tagsQuery = useQuery({
+    queryKey: QK.postTagsList(),
+    queryFn: getPostTagsList,
+    staleTime: POST_TAGS_STALE_MS,
+    select: (d) => (Array.isArray(d) ? d : []),
+  });
+
+  const tagLabel = useMemo(() => {
+    if (!slug) return '';
+    const arr = tagsQuery.data ?? [];
+    const t = arr.find((x) => x.slug === slug);
+    if (t) return isZh ? (t.name_zh || t.name_en) : (t.name_en || t.name_zh);
+    return slug;
+  }, [slug, isZh, tagsQuery.data]);
 
   const loadPage = useCallback(
     async (pageNum = 1, append = false) => {
