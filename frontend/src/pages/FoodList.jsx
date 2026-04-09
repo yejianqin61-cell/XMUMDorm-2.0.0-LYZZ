@@ -1,5 +1,6 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQueries } from '@tanstack/react-query';
 import MerchantHeader from '../components/MerchantHeader';
 import CategorySidebar from '../components/CategorySidebar';
 import CategorySection from '../components/CategorySection';
@@ -8,87 +9,123 @@ import EmptyState from '../components/EmptyState';
 import { getShop, getCategories, getProducts } from '../api/canteen';
 import { getApiErrorMessage } from '../utils/apiError';
 import { getUploadUrl, productImageUrl } from '../api/config';
+import { QK } from '../query/queryKeys';
 import './FoodList.css';
+
+const STALE_MS = 3 * 60 * 1000;
 
 /** 商家菜品列表页：MerchantHeader + 双栏（左侧分类导航 + 右侧按分类分组的 FoodCard），数据来自 API */
 function FoodList() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [merchant, setMerchant] = useState(null);
-  const [categories, setCategories] = useState([]);
-  const [groups, setGroups] = useState([]);
-  const [allFoods, setAllFoods] = useState([]);
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [activeId, setActiveId] = useState(null);
   const sectionRefs = useRef({});
   const mainScrollRef = useRef(null);
   const scrollTargetRef = useRef(null);
 
-  useEffect(() => {
-    const shopId = id ? parseInt(id, 10) : 0;
-    if (!shopId) {
-      setMerchant(null);
-      setCategories([]);
-      setGroups([]);
-      setActiveId(null);
-      setLoading(false);
-      return;
-    }
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    setActiveId(null);
-    Promise.all([getShop(shopId), getCategories(shopId), getProducts(shopId)])
-      .then(([shopData, catsData, productsData]) => {
-        if (cancelled) return;
-        const shop = shopData;
-        const cats = Array.isArray(catsData) ? catsData : (shop?.categories ?? []);
-        const products = Array.isArray(productsData) ? productsData : [];
-        setMerchant(
-          shop
-            ? {
-                id: shop.id,
-                name: shop.name,
-                logo: shop.logo ? getUploadUrl(shop.logo) : undefined,
-                description: shop.region_name ? `${shop.region_name}` : undefined,
-                status: 'open',
-                openingHours: shop.opening_hours ?? undefined,
-              }
-            : null
-        );
-        setCategories(cats);
-        const firstImage = (p) => {
-          const imgs = p.images || [];
-          const url = imgs.length ? imgs[0].url : null;
-          return productImageUrl(url);
-        };
-        const foodList = products.map((p) => ({
-          id: p.id,
-          name: p.name,
-          description: p.description ?? undefined,
-          price: p.price,
-          image: firstImage(p),
-          categoryId: p.category_id,
-          comprehensiveScore: p.comprehensive_score != null ? Number(p.comprehensive_score) : null,
-        }));
-        setAllFoods(foodList);
-        const groupsNext = cats.map((c) => ({
-          category: { id: c.id, name: c.name },
-          foods: foodList.filter((f) => f.categoryId === c.id),
-        }));
-        setGroups(groupsNext);
-        if (activeId === null && cats.length > 0) setActiveId(cats[0].id);
-      })
-      .catch((err) => {
-        if (!cancelled) setError(getApiErrorMessage(err));
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => { cancelled = true; };
+  const shopId = useMemo(() => {
+    const n = id ? parseInt(id, 10) : 0;
+    return Number.isFinite(n) && n > 0 ? n : 0;
   }, [id]);
+
+  const [shopQ, catsQ, prodsQ] = useQueries({
+    queries: [
+      {
+        queryKey: QK.canteenShop(shopId),
+        queryFn: () => getShop(shopId),
+        enabled: shopId > 0,
+        staleTime: STALE_MS,
+      },
+      {
+        queryKey: QK.canteenShopCategories(shopId),
+        queryFn: () => getCategories(shopId),
+        enabled: shopId > 0,
+        staleTime: STALE_MS,
+      },
+      {
+        queryKey: QK.canteenShopProducts(shopId),
+        queryFn: () => getProducts(shopId),
+        enabled: shopId > 0,
+        staleTime: STALE_MS,
+      },
+    ],
+  });
+
+  const loading = shopId > 0 && (shopQ.isPending || catsQ.isPending || prodsQ.isPending);
+  const error =
+    shopId > 0 && (shopQ.error || catsQ.error || prodsQ.error)
+      ? getApiErrorMessage(shopQ.error || catsQ.error || prodsQ.error)
+      : null;
+
+  const { merchant, categories, groups, allFoods } = useMemo(() => {
+    if (shopId === 0) {
+      return { merchant: null, categories: [], groups: [], allFoods: [] };
+    }
+    if (shopQ.isPending || catsQ.isPending || prodsQ.isPending) {
+      return { merchant: null, categories: [], groups: [], allFoods: [] };
+    }
+    const shop = shopQ.data;
+    const catsData = catsQ.data;
+    const productsData = prodsQ.data;
+    if (!shop) {
+      return { merchant: null, categories: [], groups: [], allFoods: [] };
+    }
+    const cats = Array.isArray(catsData) ? catsData : (shop?.categories ?? []);
+    const products = Array.isArray(productsData) ? productsData : [];
+    const merchantObj = {
+      id: shop.id,
+      name: shop.name,
+      logo: shop.logo ? getUploadUrl(shop.logo) : undefined,
+      description: shop.region_name ? `${shop.region_name}` : undefined,
+      status: 'open',
+      openingHours: shop.opening_hours ?? undefined,
+    };
+    const firstImage = (p) => {
+      const imgs = p.images || [];
+      const url = imgs.length ? imgs[0].url : null;
+      return productImageUrl(url);
+    };
+    const foodList = products.map((p) => ({
+      id: p.id,
+      name: p.name,
+      description: p.description ?? undefined,
+      price: p.price,
+      image: firstImage(p),
+      categoryId: p.category_id,
+      comprehensiveScore: p.comprehensive_score != null ? Number(p.comprehensive_score) : null,
+    }));
+    const groupsNext = cats.map((c) => ({
+      category: { id: c.id, name: c.name },
+      foods: foodList.filter((f) => f.categoryId === c.id),
+    }));
+    return {
+      merchant: merchantObj,
+      categories: cats,
+      groups: groupsNext,
+      allFoods: foodList,
+    };
+  }, [
+    shopId,
+    shopQ.data,
+    shopQ.isPending,
+    catsQ.data,
+    catsQ.isPending,
+    prodsQ.data,
+    prodsQ.isPending,
+  ]);
+
+  useEffect(() => {
+    setActiveId(null);
+  }, [shopId]);
+
+  useEffect(() => {
+    if (categories.length === 0) return;
+    setActiveId((prev) => {
+      if (prev != null && categories.some((c) => String(c.id) === String(prev))) return prev;
+      return categories[0].id;
+    });
+  }, [categories]);
 
   const handleCategorySelect = (catId) => {
     scrollTargetRef.current = catId;
@@ -103,9 +140,9 @@ function FoodList() {
     const root = mainScrollRef.current;
 
     const getCatIdFromEl = (el) => {
-      const id = el?.id;
-      if (!id || !id.startsWith('category-')) return null;
-      return id.replace('category-', '');
+      const sid = el?.id;
+      if (!sid || !sid.startsWith('category-')) return null;
+      return sid.replace('category-', '');
     };
 
     const observer = new IntersectionObserver(
@@ -149,7 +186,6 @@ function FoodList() {
   }, [groups]);
 
   const handleGoHot = () => {
-    const shopId = id ? parseInt(id, 10) : 0;
     if (!shopId) return;
     navigate(`/eat/merchant/${shopId}/hot`);
   };
@@ -175,6 +211,14 @@ function FoodList() {
           .filter((g) => g.foods.length > 0);
       })()
     : groups;
+
+  if (shopId === 0 && !loading) {
+    return (
+      <div className="food-list-page">
+        <EmptyState title="商家不存在" description="该商家可能已下架或不存在。" />
+      </div>
+    );
+  }
 
   if (loading) {
     return (

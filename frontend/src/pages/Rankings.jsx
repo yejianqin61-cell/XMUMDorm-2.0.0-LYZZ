@@ -44,7 +44,7 @@ function Rankings() {
   const { data, isPending, error } = useQuery({
     queryKey: QK.rankingsAll(),
     queryFn: fetchAllRankings,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
   });
 
   if (isPending) {

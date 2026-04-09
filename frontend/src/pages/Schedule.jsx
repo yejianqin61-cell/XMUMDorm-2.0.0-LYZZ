@@ -6,6 +6,7 @@ import { Toast } from '../context/ToastContext';
 import { commitScheduleImport, getScheduleWeek, previewScheduleImport } from '../api/schedule';
 import { getApiErrorMessage } from '../utils/apiError';
 import { QK } from '../query/queryKeys';
+import { readPersistedScheduleWeek, writePersistedScheduleWeek } from '../utils/schedulePersist';
 import {
   getPushVapidPublicKey,
   subscribePush,
@@ -43,10 +44,17 @@ function Schedule() {
   const [tab, setTab] = useState('view'); // 'view' | 'import'
 
   const FIXED_WEEK = 1;
+  const persistedWeek = useMemo(() => readPersistedScheduleWeek(FIXED_WEEK), []);
   const weekQuery = useQuery({
     queryKey: QK.scheduleWeek(FIXED_WEEK),
-    queryFn: () => getScheduleWeek(FIXED_WEEK),
-    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const data = await getScheduleWeek(FIXED_WEEK);
+      writePersistedScheduleWeek(FIXED_WEEK, data);
+      return data;
+    },
+    ...(persistedWeek !== undefined ? { initialData: persistedWeek } : {}),
+    staleTime: Infinity,
+    gcTime: Infinity,
   });
   const weekData = weekQuery.data ?? null;
   const loadingWeek = weekQuery.isFetching;

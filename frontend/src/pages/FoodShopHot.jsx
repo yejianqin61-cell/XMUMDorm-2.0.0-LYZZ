@@ -1,78 +1,90 @@
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQueries } from '@tanstack/react-query';
 import MerchantHeader from '../components/MerchantHeader';
 import SkeletonFood from '../components/SkeletonFood';
 import EmptyState from '../components/EmptyState';
 import { getShop, getShopHotProducts } from '../api/canteen';
 import { getUploadUrl, productImageUrl } from '../api/config';
 import { getApiErrorMessage } from '../utils/apiError';
+import { QK } from '../query/queryKeys';
 import './FoodList.css';
+
+const STALE_MS = 3 * 60 * 1000;
 
 /** 本店热门菜品页：展示当前店铺综合评分最高的前 10 个菜品 */
 function FoodShopHot() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [merchant, setMerchant] = useState(null);
-  const [foods, setFoods] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const shopId = id ? parseInt(id, 10) : 0;
-    if (!shopId) {
-      setMerchant(null);
-      setFoods([]);
-      setLoading(false);
-      return;
-    }
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    Promise.all([getShop(shopId), getShopHotProducts(shopId)])
-      .then(([shopData, hotList]) => {
-        if (cancelled) return;
-        const shop = shopData;
-        const list = Array.isArray(hotList) ? hotList : [];
-        setMerchant(
-          shop
-            ? {
-                id: shop.id,
-                name: shop.name,
-                logo: shop.logo ? getUploadUrl(shop.logo) : undefined,
-                description: shop.region_name ? `${shop.region_name}` : undefined,
-                status: 'open',
-                openingHours: shop.opening_hours ?? undefined,
-              }
-            : null
-        );
-        const firstImage = (p) => {
-          const imgs = p.images || [];
-          const url = imgs.length ? imgs[0].url : null;
-          return productImageUrl(url);
-        };
-        setFoods(
-          list.map((p, index) => ({
-            id: p.id,
-            rank: index + 1,
-            name: p.name,
-            description: p.description ?? undefined,
-            price: p.price,
-            image: firstImage(p),
-            comprehensiveScore: p.comprehensive_score != null ? Number(p.comprehensive_score) : null,
-            reviewCount: p.review_count != null ? Number(p.review_count) : null,
-          }))
-        );
-      })
-      .catch((err) => {
-        if (!cancelled) setError(getApiErrorMessage(err));
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
+  const shopId = useMemo(() => {
+    const n = id ? parseInt(id, 10) : 0;
+    return Number.isFinite(n) && n > 0 ? n : 0;
   }, [id]);
+
+  const [shopQ, hotQ] = useQueries({
+    queries: [
+      {
+        queryKey: QK.canteenShop(shopId),
+        queryFn: () => getShop(shopId),
+        enabled: shopId > 0,
+        staleTime: STALE_MS,
+      },
+      {
+        queryKey: QK.canteenShopHotProducts(shopId),
+        queryFn: () => getShopHotProducts(shopId),
+        enabled: shopId > 0,
+        staleTime: STALE_MS,
+      },
+    ],
+  });
+
+  const loading = shopId > 0 && (shopQ.isPending || hotQ.isPending);
+  const error =
+    shopId > 0 && (shopQ.error || hotQ.error)
+      ? getApiErrorMessage(shopQ.error || hotQ.error)
+      : null;
+
+  const { merchant, foods } = useMemo(() => {
+    if (shopId === 0 || shopQ.isPending || hotQ.isPending) {
+      return { merchant: null, foods: [] };
+    }
+    const shop = shopQ.data;
+    const hotList = Array.isArray(hotQ.data) ? hotQ.data : [];
+    if (!shop) return { merchant: null, foods: [] };
+    const merchantObj = {
+      id: shop.id,
+      name: shop.name,
+      logo: shop.logo ? getUploadUrl(shop.logo) : undefined,
+      description: shop.region_name ? `${shop.region_name}` : undefined,
+      status: 'open',
+      openingHours: shop.opening_hours ?? undefined,
+    };
+    const firstImage = (p) => {
+      const imgs = p.images || [];
+      const url = imgs.length ? imgs[0].url : null;
+      return productImageUrl(url);
+    };
+    const foodRows = hotList.map((p, index) => ({
+      id: p.id,
+      rank: index + 1,
+      name: p.name,
+      description: p.description ?? undefined,
+      price: p.price,
+      image: firstImage(p),
+      comprehensiveScore: p.comprehensive_score != null ? Number(p.comprehensive_score) : null,
+      reviewCount: p.review_count != null ? Number(p.review_count) : null,
+    }));
+    return { merchant: merchantObj, foods: foodRows };
+  }, [shopId, shopQ.data, shopQ.isPending, hotQ.data, hotQ.isPending]);
+
+  if (shopId === 0 && !loading) {
+    return (
+      <div className="food-list-page">
+        <EmptyState title="商家不存在" description="该商家可能已下架或不存在。" />
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -175,4 +187,3 @@ function FoodShopHot() {
 }
 
 export default FoodShopHot;
-

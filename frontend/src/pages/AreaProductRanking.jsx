@@ -15,7 +15,7 @@ import './AreaProductRanking.css';
 
 const FULL_LIMIT = 50;
 const REGIONS_STALE_MS = 5 * 60 * 1000;
-const LIST_STALE_MS = 3 * 60 * 1000;
+const LIST_STALE_MS = 10 * 60 * 1000;
 
 /**
  * 分区商品排行榜完整页：与全站排行榜「最夯单品」样式一致，数据仅限本区域

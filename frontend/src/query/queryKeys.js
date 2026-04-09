@@ -16,4 +16,16 @@ export const QK = {
 
   /** 课表周次 */
   scheduleWeek: (week) => ['schedule', 'week', week],
+
+  /** 商家页：店铺信息 / 分类 / 全部商品 */
+  canteenShop: (shopId) => ['canteen', 'shop', shopId],
+  canteenShopCategories: (shopId) => ['canteen', 'shop', shopId, 'categories'],
+  canteenShopProducts: (shopId) => ['canteen', 'shop', shopId, 'products'],
+  /** 本店热门 Top */
+  canteenShopHotProducts: (shopId) => ['canteen', 'shop', shopId, 'hotProducts'],
+
+  /** 用户端菜品详情 */
+  canteenProduct: (productId) => ['canteen', 'product', productId],
+  canteenProductComments: (productId) => ['canteen', 'product', productId, 'comments'],
+  canteenProductFavorite: (productId) => ['canteen', 'product', productId, 'favorite'],
 };

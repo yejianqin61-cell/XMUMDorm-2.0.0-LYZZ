@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import FoodDetailView from '../components/FoodDetailView';
 import EmptyState from '../components/EmptyState';
@@ -19,7 +20,11 @@ import {
 import { getApiErrorMessage } from '../utils/apiError';
 import { formatRatingLabel } from '../constants/rating';
 import { productImageUrl } from '../api/config';
+import { QK } from '../query/queryKeys';
 import './FoodDetail.css';
+
+const STALE_PRODUCT_MS = 3 * 60 * 1000;
+const STALE_COMMENTS_MS = 2 * 60 * 1000;
 
 /** 将 API 点评树转为页面使用的结构（userName、images 为 url 数组） */
 function mapCommentsToReviews(list) {
@@ -38,14 +43,8 @@ function mapCommentsToReviews(list) {
 function FoodDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { isLoggedIn, user, isAdmin } = useAuth();
-  const [food, setFood] = useState(null);
-  const [foodLoading, setFoodLoading] = useState(true);
-  const [foodError, setFoodError] = useState(null);
-  const [favorited, setFavorited] = useState(false);
-  const [reviews, setReviews] = useState([]);
-  const [reviewsLoading, setReviewsLoading] = useState(true);
-  const [reviewError, setReviewError] = useState(null);
   const [replyingTo, setReplyingTo] = useState(null); // { id, userName }
   const [newReply, setNewReply] = useState('');
   const [submitLoading, setSubmitLoading] = useState(false);
@@ -54,77 +53,59 @@ function FoodDetail() {
   const [imagePreviewOpen, setImagePreviewOpen] = useState(false);
   const likeBurstRef = useRef(null);
 
-  useEffect(() => {
-    const productId = id ? parseInt(id, 10) : 0;
-    if (!productId) {
-      setFood(null);
-      setFoodLoading(false);
-      return;
-    }
-    let cancelled = false;
-    setFoodLoading(true);
-    setFoodError(null);
-    getProduct(productId)
-      .then((data) => {
-        if (cancelled) return;
-        const d = data;
-        const imgs = d?.images ?? [];
-        const firstImg = productImageUrl(imgs[0]?.url);
-        setFood({
-          id: d.id,
-          name: d.name,
-          description: d.description ?? undefined,
-          price: d.price,
-          image: firstImg,
-          comprehensiveScore: d.comprehensive_score != null ? Number(d.comprehensive_score) : null,
-        });
-      })
-      .catch((err) => {
-        if (!cancelled) setFoodError(err.message || '加载失败');
-      })
-      .finally(() => {
-        if (!cancelled) setFoodLoading(false);
-      });
-    return () => { cancelled = true; };
+  const productId = useMemo(() => {
+    const n = id ? parseInt(id, 10) : 0;
+    return Number.isFinite(n) && n > 0 ? n : 0;
   }, [id]);
 
-  useEffect(() => {
-    const productId = id ? parseInt(id, 10) : 0;
-    if (!productId || !isLoggedIn) {
-      if (!isLoggedIn) setFavorited(false);
-      return;
-    }
-    let cancelled = false;
-    getProductFavoriteStatus(productId)
-      .then((data) => {
-        if (!cancelled && data && typeof data.favorited === 'boolean') setFavorited(data.favorited);
-      })
-      .catch(() => {
-        if (!cancelled) setFavorited(false);
-      });
-    return () => { cancelled = true; };
-  }, [id, isLoggedIn]);
+  const productQuery = useQuery({
+    queryKey: QK.canteenProduct(productId),
+    queryFn: () => getProduct(productId),
+    enabled: productId > 0,
+    staleTime: STALE_PRODUCT_MS,
+    select: (d) => {
+      if (!d) return null;
+      const imgs = d?.images ?? [];
+      const firstImg = productImageUrl(imgs[0]?.url);
+      return {
+        id: d.id,
+        shop_id: d.shop_id,
+        name: d.name,
+        description: d.description ?? undefined,
+        price: d.price,
+        image: firstImg,
+        comprehensiveScore: d.comprehensive_score != null ? Number(d.comprehensive_score) : null,
+      };
+    },
+  });
 
-  const loadReviews = useCallback(() => {
-    const productId = id ? parseInt(id, 10) : 0;
-    if (!productId) return Promise.resolve();
-    setReviewsLoading(true);
-    setReviewError(null);
-    return getProductComments(productId)
-      .then((list) => {
-        setReviews(mapCommentsToReviews(list));
-      })
-      .catch((err) => {
-        setReviewError(getApiErrorMessage(err));
-      })
-      .finally(() => {
-        setReviewsLoading(false);
-      });
-  }, [id]);
+  const commentsQuery = useQuery({
+    queryKey: QK.canteenProductComments(productId),
+    queryFn: () => getProductComments(productId),
+    enabled: productId > 0,
+    staleTime: STALE_COMMENTS_MS,
+    select: (list) => mapCommentsToReviews(list || []),
+  });
 
-  useEffect(() => {
-    loadReviews();
-  }, [loadReviews]);
+  const favoriteQuery = useQuery({
+    queryKey: QK.canteenProductFavorite(productId),
+    queryFn: async () => {
+      const data = await getProductFavoriteStatus(productId);
+      return !!data?.favorited;
+    },
+    enabled: productId > 0 && isLoggedIn,
+    staleTime: STALE_PRODUCT_MS,
+  });
+
+  const foodLoading = productId > 0 && productQuery.isPending;
+  const foodError = productQuery.error ? getApiErrorMessage(productQuery.error) : null;
+  const food = productQuery.data ?? null;
+
+  const reviews = commentsQuery.data ?? [];
+  const reviewsLoading = productId > 0 && commentsQuery.isPending;
+  const reviewError = commentsQuery.error ? getApiErrorMessage(commentsQuery.error) : null;
+
+  const favorited = !isLoggedIn ? false : (favoriteQuery.data ?? false);
 
   const requireLogin = () => {
     if (!isLoggedIn) {
@@ -133,6 +114,19 @@ function FoodDetail() {
     }
     return false;
   };
+
+  if (productId === 0 && !foodLoading) {
+    return (
+      <div className="food-detail-page">
+        <EmptyState
+          title="菜品不存在"
+          description="Food not found"
+          actionLabel="返回"
+          onActionClick={() => navigate(-1)}
+        />
+      </div>
+    );
+  }
 
   if (foodLoading) {
     return (
@@ -191,18 +185,16 @@ function FoodDetail() {
     e.preventDefault();
     if (requireLogin()) return;
     if (!replyingTo || !newReply.trim()) return;
-    const productId = id ? parseInt(id, 10) : 0;
     if (!productId) return;
     setSubmitLoading(true);
-    setReviewError(null);
     postProductComment(productId, { content: newReply.trim(), parent_id: replyingTo.id })
       .then(() => {
         setNewReply('');
         setReplyingTo(null);
-        return loadReviews();
+        queryClient.invalidateQueries({ queryKey: QK.canteenProductComments(productId) });
       })
       .catch((err) => {
-        setReviewError(getApiErrorMessage(err));
+        Toast.error(getApiErrorMessage(err));
       })
       .finally(() => {
         setSubmitLoading(false);
@@ -211,13 +203,12 @@ function FoodDetail() {
 
   const handleDeleteReview = async (commentId) => {
     if (requireLogin()) return;
-    const productId = id ? parseInt(id, 10) : 0;
     if (!productId) return;
     if (!window.confirm('确定要删除这条点评/回复吗？删除后不可恢复。')) return;
     try {
       await deleteProductComment(productId, commentId);
       Toast.success('已删除');
-      await loadReviews();
+      queryClient.invalidateQueries({ queryKey: QK.canteenProductComments(productId) });
     } catch (err) {
       Toast.error(getApiErrorMessage(err));
     }
@@ -236,6 +227,15 @@ function FoodDetail() {
           if (!food || !window.confirm(`确定删除 "${food.name}" 吗？删除后不可恢复。`)) return;
           try {
             await deleteProduct(food.id);
+            if (food.shop_id != null) {
+              queryClient.invalidateQueries({ queryKey: QK.canteenShop(food.shop_id) });
+              queryClient.invalidateQueries({ queryKey: QK.canteenShopCategories(food.shop_id) });
+              queryClient.invalidateQueries({ queryKey: QK.canteenShopProducts(food.shop_id) });
+              queryClient.invalidateQueries({ queryKey: QK.canteenShopHotProducts(food.shop_id) });
+            } else {
+              queryClient.invalidateQueries({ queryKey: ['canteen', 'shop'] });
+            }
+            queryClient.removeQueries({ queryKey: QK.canteenProduct(food.id) });
             Toast.success('商品已删除');
             navigate(-1);
           } catch (err) {
@@ -264,16 +264,16 @@ function FoodDetail() {
           className={`food-detail-btn food-detail-btn-fav ${favorited ? 'is-favorited' : ''}`}
           onClick={async () => {
             if (requireLogin()) return;
-            const productId = food?.id;
-            if (!productId) return;
+            const pid = food?.id;
+            if (!pid) return;
             try {
               if (favorited) {
-                await removeFavoriteProduct(productId);
-                setFavorited(false);
+                await removeFavoriteProduct(pid);
+                queryClient.setQueryData(QK.canteenProductFavorite(pid), false);
                 Toast.success('已取消收藏');
               } else {
-                await addFavoriteProduct(productId);
-                setFavorited(true);
+                await addFavoriteProduct(pid);
+                queryClient.setQueryData(QK.canteenProductFavorite(pid), true);
                 Toast.success('已收藏');
               }
             } catch (err) {
