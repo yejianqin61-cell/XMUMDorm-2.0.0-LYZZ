@@ -1,31 +1,427 @@
-/* 个人中心 - 小红书风格：沉浸式头部、功能入口、Tab、内容网格 */
-
-:root {
-  --myzone-primary: #1677FF;
-  --myzone-bg: #F5F5F5;
-  --myzone-card: #FFFFFF;
-  --myzone-text: #333333;
-  --myzone-text-secondary: #888888;
-}
+/* 我的：个人信息栏 + 工具/关于宫格 + 内容 Tab（中英适配） */
 
 .myzone-page {
   min-height: 100%;
-  background: var(--myzone-bg);
-  padding-bottom: 24px;
+  background: var(--post-ios-bg-grouped, #f2f2f7);
+  font-family: var(--post-ios-font, inherit);
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: 28px;
 }
 
 .myzone-error {
   margin: 0 16px 12px;
   padding: 10px 12px;
-  font-size: 13px;
-  color: var(--wx-red, #ee0a24);
-  background: rgba(238, 10, 36, 0.08);
-  border-radius: 8px;
+  font-size: 14px;
+  color: var(--post-ios-red, #ff3b30);
+  background: rgba(255, 59, 48, 0.08);
+  border-radius: 10px;
 }
 
-/* ---------- 1. 沉浸式头部 ---------- */
+/* ---------- 个人信息栏 ---------- */
+.myzone-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 16px 14px;
+  background: var(--post-ios-card, #fff);
+}
+
+.myzone-profile-avatar-wrap {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid rgba(0, 0, 0, 0.06);
+  padding: 0;
+  cursor: pointer;
+  background: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.myzone-profile-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.myzone-profile-avatar-loading {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--post-ios-fill, rgba(118, 118, 128, 0.12));
+  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
+  font-size: 12px;
+}
+
+.myzone-profile-avatar-default {
+  object-fit: contain;
+  padding: 8px;
+  background: var(--post-ios-fill, rgba(118, 118, 128, 0.12));
+}
+
+.myzone-profile-text {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.myzone-profile-name {
+  margin: 0 0 4px;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--post-ios-label, rgba(0, 0, 0, 0.88));
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.myzone-admin-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #8a5b00;
+  background: linear-gradient(135deg, #ffe58f 0%, #ffc53d 50%, #faad14 100%);
+  box-shadow: 0 0 0 1px rgba(250, 173, 20, 0.4);
+}
+
+.myzone-profile-email {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.myzone-profile-space {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px 8px 10px;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--post-ios-accent, #007aff);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.myzone-profile-space:active {
+  opacity: 0.6;
+}
+
+.myzone-profile-space-chevron {
+  font-size: 18px;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.myzone-profile-divider {
+  height: 4px;
+  background: rgba(60, 60, 67, 0.12);
+  border: none;
+  margin: 0;
+}
+
+/* ---------- 工具 / 关于 区块 ---------- */
+.myzone-block {
+  padding: 16px 16px 4px;
+}
+
+.myzone-block-title {
+  margin: 0 0 10px 2px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--post-ios-tertiary-label, rgba(60, 60, 67, 0.36));
+}
+
+.myzone-tile-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.myzone-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 100px;
+  padding: 14px 10px;
+  text-decoration: none;
+  color: var(--post-ios-label, rgba(0, 0, 0, 0.88));
+  background: var(--post-ios-card, #fff);
+  border-radius: 12px;
+  border: 0.5px solid var(--post-ios-separator, rgba(60, 60, 67, 0.12));
+  box-shadow: var(--post-ios-shadow-card, 0 1px 2px rgba(0, 0, 0, 0.04));
+  transition: transform 0.12s ease, opacity 0.12s ease;
+  -webkit-tap-highlight-color: transparent;
+  font: inherit;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.myzone-tile:active:not(.myzone-tile--disabled) {
+  transform: scale(0.98);
+}
+
+.myzone-tile--disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.myzone-tile-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--post-ios-accent, #007aff);
+}
+
+.myzone-tile--disabled .myzone-tile-icon {
+  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.45));
+}
+
+.myzone-tile-label {
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  text-align: center;
+  line-height: 1.25;
+}
+
+.myzone-merchant-link-wrap {
+  padding: 0 16px 8px;
+}
+
+.myzone-merchant-link {
+  display: inline-block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--post-ios-accent, #007aff);
+  text-decoration: none;
+}
+
+.myzone-merchant-link:active {
+  opacity: 0.65;
+}
+
+/* ---------- 内容 Tab ---------- */
+.myzone-tabs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  margin-top: 8px;
+  padding: 12px 16px 10px;
+  border-bottom: 0.5px solid var(--post-ios-separator, rgba(60, 60, 67, 0.12));
+  background: var(--post-ios-card, #fff);
+}
+
+.myzone-tab {
+  padding: 8px 4px;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  margin-bottom: -1px;
+  font-family: inherit;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.myzone-tab:hover {
+  color: var(--post-ios-label, rgba(0, 0, 0, 0.88));
+}
+
+.myzone-tab.active {
+  color: var(--post-ios-accent, #007aff);
+  border-bottom-color: var(--post-ios-accent, #007aff);
+}
+
+.myzone-content {
+  padding: 12px 16px 0;
+  background: var(--post-ios-bg-grouped, #f2f2f7);
+}
+
+.myzone-grid-wrap {
+  min-height: 120px;
+}
+
+.myzone-loading,
+.myzone-error-inline {
+  text-align: center;
+  padding: 24px 16px;
+  font-size: 15px;
+  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
+}
+
+.myzone-error-inline {
+  color: var(--post-ios-red, #ff3b30);
+}
+
+.myzone-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.myzone-grid-item {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: var(--post-ios-card, #fff);
+  border-radius: 10px;
+  overflow: hidden;
+  aspect-ratio: 1;
+  border: 0.5px solid var(--post-ios-separator, rgba(60, 60, 67, 0.08));
+}
+
+.myzone-grid-item-media {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--post-ios-fill, rgba(118, 118, 128, 0.12));
+}
+
+.myzone-grid-item-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.myzone-grid-item-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+}
+
+.myzone-grid-item-meta {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 4px 6px;
+  font-size: 11px;
+  color: #fff;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.55), transparent);
+}
+
+.myzone-grid-item-title {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #fff;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.65), transparent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.myzone-grid-item-rating {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  font-size: 11px;
+  padding: 2px 6px;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  border-radius: 4px;
+}
+
+.myzone-grid-reviews .myzone-grid-item-title {
+  font-size: 12px;
+}
+
+.myzone-grid-item-shop {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  font-size: 10px;
+  padding: 2px 6px;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  border-radius: 4px;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- 底部：编辑资料 + 退出 ---------- */
+.myzone-footer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 16px 0;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+.myzone-profile-edit {
+  width: 100%;
+  padding: 12px 20px;
+  border-radius: 10px;
+  border: none;
+  background: var(--post-ios-accent, #007aff);
+  color: #fff;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  cursor: pointer;
+}
+
+.myzone-profile-edit:active {
+  opacity: 0.88;
+}
+
+.myzone-logout {
+  width: 100%;
+  padding: 12px 20px;
+  border-radius: 10px;
+  border: 0.5px solid var(--post-ios-separator, rgba(60, 60, 67, 0.25));
+  background: var(--post-ios-card, #fff);
+  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.75));
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.myzone-logout:active {
+  opacity: 0.75;
+}
+
+/* ---------- UserZone（他人个人空间）沿用原沉浸式头部 ---------- */
 .myzone-header {
-  height: 280px;
+  height: 240px;
   background-color: #1a1a1a;
   background-size: cover;
   background-position: center;
@@ -39,7 +435,7 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  padding: 0 20px 24px;
+  padding: 0 20px 20px;
   box-sizing: border-box;
 }
 
@@ -60,13 +456,13 @@
 }
 
 .myzone-header-avatar-wrap {
-  width: 80px;
-  height: 80px;
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
   overflow: hidden;
   border: 3px solid rgba(255, 255, 255, 0.9);
   margin-bottom: 10px;
-  cursor: pointer;
+  cursor: default;
   flex-shrink: 0;
 }
 
@@ -76,328 +472,40 @@
   object-fit: cover;
 }
 
-.myzone-header-avatar-loading {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
-  font-size: 18px;
-}
-
 .myzone-header-avatar-default {
   object-fit: contain;
-  padding: 12px;
+  padding: 10px;
   background: rgba(255, 255, 255, 0.25);
 }
 
-/* 天蓝色曲边矩形卡片：包住昵称 + 帖子/点评/店铺 */
 .myzone-header-card {
   background: rgba(135, 206, 235, 0.85);
-  border-radius: 16px;
-  padding: 12px 20px 14px;
-  margin-bottom: 12px;
+  border-radius: 14px;
+  padding: 10px 18px 12px;
+  margin-bottom: 0;
   width: 100%;
-  max-width: 320px;
+  max-width: 300px;
   box-sizing: border-box;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
 }
 
 .myzone-header-name {
-  margin: 0 0 10px;
-  font-size: 18px;
+  margin: 0 0 8px;
+  font-size: 17px;
   font-weight: 600;
   color: #1a1a1a;
-}
-
-.myzone-admin-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 8px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #8a5b00;
-  background: linear-gradient(135deg, #ffe58f 0%, #ffc53d 50%, #faad14 100%);
-  box-shadow: 0 0 0 1px rgba(250, 173, 20, 0.5);
 }
 
 .myzone-header-stats {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 24px;
+  gap: 20px;
   margin: 0;
   color: #333;
   font-size: 14px;
 }
 
-.myzone-header-stat {
-  color: inherit;
-  text-decoration: none;
-}
-
 .myzone-header-stat strong {
   margin-right: 4px;
   font-weight: 600;
-}
-
-.myzone-header-stat-link {
-  color: var(--myzone-primary, #1677FF);
-}
-
-.myzone-header-stat-link:hover {
-  text-decoration: underline;
-}
-
-.myzone-header-edit {
-  padding: 8px 24px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  background: transparent;
-  color: #fff;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-}
-
-.myzone-header-edit:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-/* ---------- 2. 功能入口区 ---------- */
-.myzone-entries {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 2px;
-  margin: 12px 16px 0;
-  background: var(--myzone-card);
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-}
-
-.myzone-entry,
-.myzone-entry-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 16px 8px;
-  text-decoration: none;
-  color: var(--myzone-text);
-  font-size: 14px;
-  background: var(--myzone-card);
-  transition: background 0.2s;
-  border: none;
-  cursor: pointer;
-  font: inherit;
-}
-
-.myzone-entry:hover,
-.myzone-entry-btn:hover {
-  background: var(--myzone-bg);
-}
-
-.myzone-entry-disabled {
-  cursor: default;
-  opacity: 0.85;
-}
-
-.myzone-entry-disabled:hover {
-  background: var(--myzone-card);
-}
-
-.myzone-entry-icon {
-  font-size: 24px;
-  margin-bottom: 6px;
-}
-
-.myzone-entry-label {
-  font-weight: 500;
-}
-
-.myzone-entry-hint {
-  font-size: 11px;
-  color: var(--myzone-text-secondary);
-  margin-top: 2px;
-}
-
-/* ---------- 3. 内容 Tab 栏 ---------- */
-.myzone-tabs {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 32px;
-  margin-top: 16px;
-  padding: 0 16px 12px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  background: var(--myzone-card);
-}
-
-.myzone-tab {
-  padding: 10px 4px;
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--myzone-text-secondary);
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  cursor: pointer;
-  transition: color 0.2s, border-color 0.2s;
-  margin-bottom: -1px;
-}
-
-.myzone-tab:hover {
-  color: var(--myzone-text);
-}
-
-.myzone-tab.active {
-  color: var(--myzone-primary);
-  border-bottom-color: var(--myzone-primary);
-}
-
-/* ---------- 4. 内容展示区（网格 2px gap）---------- */
-.myzone-content {
-  padding: 12px 16px 0;
-  background: var(--myzone-bg);
-}
-
-.myzone-grid-wrap {
-  min-height: 120px;
-}
-
-.myzone-loading,
-.myzone-error-inline {
-  text-align: center;
-  padding: 24px 16px;
-  font-size: 14px;
-  color: var(--myzone-text-secondary);
-}
-
-.myzone-error-inline {
-  color: var(--wx-red, #ee0a24);
-}
-
-.myzone-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 2px;
-}
-
-.myzone-grid-item {
-  display: block;
-  text-decoration: none;
-  color: inherit;
-  background: var(--myzone-card);
-  border-radius: 4px;
-  overflow: hidden;
-  aspect-ratio: 1;
-}
-
-.myzone-grid-item-media {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  background: #eee;
-}
-
-.myzone-grid-item-media img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.myzone-grid-item-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 32px;
-  background: #e8e8e8;
-}
-
-.myzone-grid-item-meta {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 4px 6px;
-  font-size: 11px;
-  color: #fff;
-  background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
-}
-
-.myzone-grid-item-title {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 6px 8px;
-  font-size: 12px;
-  font-weight: 500;
-  color: #fff;
-  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.myzone-grid-item-rating {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  font-size: 11px;
-  padding: 2px 6px;
-  background: rgba(0,0,0,0.5);
-  color: #fff;
-  border-radius: 4px;
-}
-
-/* 点评网格：标题在底部，评分在角标 */
-.myzone-grid-reviews .myzone-grid-item-title {
-  font-size: 12px;
-}
-
-.myzone-grid-item-shop {
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  font-size: 10px;
-  padding: 2px 6px;
-  background: rgba(0,0,0,0.5);
-  color: #fff;
-  border-radius: 4px;
-  max-width: 60%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* ---------- 退出登录 ---------- */
-.myzone-logout {
-  display: block;
-  width: calc(100% - 32px);
-  max-width: 320px;
-  margin: 24px auto 0;
-  padding: 12px 20px;
-  border-radius: 999px;
-  border: 1px solid var(--myzone-text-secondary);
-  background: transparent;
-  color: var(--myzone-text-secondary);
-  font-size: 14px;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-}
-
-.myzone-logout:hover {
-  background: rgba(230, 67, 64, 0.08);
-  border-color: #e64340;
-  color: #e64340;
 }

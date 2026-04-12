@@ -69,7 +69,6 @@
   font-size: 17px;
   font-weight: 600;
   letter-spacing: -0.02em;
-  color: var(--post-ios-label, rgba(0, 0, 0, 0.88));
   white-space: nowrap;
 }
 
@@ -79,12 +78,22 @@
   display: none;
 }
 
+/* 标题：主题蓝衬底 + 外围白色隔离带 + 白字 */
 .top-bar-title-text {
+  display: inline-block;
   margin: 0;
   max-width: 60vw;
   overflow: hidden;
   text-overflow: ellipsis;
-  background-image: none;
+  padding: 5px 12px;
+  background: var(--post-ios-accent, #007aff);
+  color: #ffffff;
+  border: 2px solid #ffffff;
+  border-radius: 8px;
+  box-sizing: border-box;
+  line-height: 1.25;
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 .top-bar-mailbox {

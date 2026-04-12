@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
+import { Toast } from '../context/ToastContext';
 import { getProfile } from '../api/users';
 import { getMyProductReviews, getMyFavorites } from '../api/canteen';
 import { API_BASE_URL, productImageUrl } from '../api/config';
@@ -17,9 +19,40 @@ function prefixAvatar(url) {
   return url && !url.startsWith('http') ? `${API_BASE_URL}${url}` : url;
 }
 
-/** 个人中心：小红书风格 - 沉浸式头部(头像作背景)、功能卡片、Tab、内容网格 */
+function MyZoneStrings(isZh) {
+  return {
+    space: isZh ? '空间' : 'Space',
+    tools: isZh ? '工具' : 'Tools',
+    about: isZh ? '关于' : 'About',
+    toolCanteen: isZh ? '食堂' : 'Canteen',
+    toolSchedule: isZh ? '课程表' : 'Schedule',
+    toolDiary: isZh ? '多年日记本' : 'Diary',
+    toolTodo: isZh ? '待办事项' : 'To-do',
+    todoSoon: isZh ? '待开发' : 'Coming soon',
+    aboutProfile: isZh ? '关于我们' : 'About us',
+    aboutThanks: isZh ? '特别鸣谢' : 'Thanks',
+    aboutDisclaimer: isZh ? '免责声明' : 'Disclaimer',
+    aboutContact: isZh ? '联系我们' : 'Contact',
+    loginHint: isZh ? '登录后显示' : 'After login',
+    tapLogin: isZh ? '点击登录' : 'Tap to log in',
+    loading: isZh ? '加载中…' : 'Loading…',
+    admin: 'Admin',
+    tabPosts: isZh ? '帖子' : 'Posts',
+    tabReviews: isZh ? '点评' : 'Reviews',
+    tabFavorites: isZh ? '收藏' : 'Favorites',
+    logOut: isZh ? '退出登录' : 'Log out',
+    editProfile: isZh ? '编辑资料' : 'Edit profile',
+    logIn: isZh ? '登录' : 'Log in',
+  };
+}
+
+/** 个人中心：信息栏 + 工具/关于宫格 + 内容 Tab */
 function MyZone() {
   const navigate = useNavigate();
+  const { lang } = useLanguage();
+  const isZh = lang !== 'en';
+  const t = MyZoneStrings(isZh);
+
   const {
     isLoggedIn,
     isMerchant,
@@ -29,9 +62,9 @@ function MyZone() {
     user,
     userLoading,
     userError,
-    refreshUser,
     logout,
   } = useAuth();
+
   const [activeTab, setActiveTab] = useState(TAB_POSTS);
   const [posts, setPosts] = useState([]);
   const [reviews, setReviews] = useState([]);
@@ -43,7 +76,7 @@ function MyZone() {
   const [reviewsError, setReviewsError] = useState(null);
   const [favoritesError, setFavoritesError] = useState(null);
 
-  const avatarBg = displayAvatar ? prefixAvatar(displayAvatar) : '';
+  const campusEmail = user?.email?.trim() || '';
 
   useEffect(() => {
     if (!isLoggedIn || !user?.id) return;
@@ -114,67 +147,55 @@ function MyZone() {
     return () => { cancelled = true; };
   }, [isLoggedIn]);
 
-  const goLogin = () => navigate('/login', { state: { from: { pathname: '/myzone' } } });
+  const goLogin = () => navigate('/login', { state: { from: { pathname: '/myzone' } } } });
   const goProfile = () => {
     if (!isLoggedIn) return goLogin();
     navigate('/myzone/profile');
+  };
+  const goSpace = () => {
+    if (!isLoggedIn || !user?.id) {
+      goLogin();
+      return;
+    }
+    navigate(`/user/${user.id}`);
   };
   const handleLogout = () => {
     logout();
     navigate('/', { replace: true });
   };
 
-  const postCount = posts.length;
-  const reviewCount = reviews.length;
-  const favoriteCount = favorites.length;
+  const handleTodoClick = () => {
+    Toast.success(t.todoSoon);
+  };
 
   return (
     <div className="myzone-page">
-      {/* 1. 沉浸式头部：头像作背景 + 渐变，头像+昵称+数据+编辑按钮 */}
-      <header
-        className="myzone-header"
-        style={avatarBg ? { backgroundImage: `linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.75) 100%), url(${avatarBg})` } : undefined}
-      >
-        <div className="myzone-header-inner">
-          <div className="myzone-header-top" aria-hidden />
-          <div className="myzone-header-body">
-            <div className="myzone-header-avatar-wrap" onClick={isLoggedIn ? goProfile : goLogin}>
-              {userLoading && !displayAvatar ? (
-                <div className="myzone-header-avatar myzone-header-avatar-loading">…</div>
-              ) : displayAvatar ? (
-                <img src={prefixAvatar(displayAvatar)} alt="" className="myzone-header-avatar" />
-              ) : (
-                <img src="/default-avatar.svg" alt="" className="myzone-header-avatar myzone-header-avatar-default" />
-              )}
-            </div>
-            <div className="myzone-header-card">
-              <p className="myzone-header-name">
-                {isLoggedIn ? (userLoading && !displayName ? 'Loading…' : displayName) : 'Tap to log in'}
-                {isAdmin && <span className="myzone-admin-badge">Admin</span>}
-              </p>
-              <div className="myzone-header-stats">
-                <span className="myzone-header-stat">
-                  <strong>{postCount}</strong> Posts
-                </span>
-                <span className="myzone-header-stat">
-                  <strong>{reviewCount}</strong> Reviews
-                </span>
-                <span className="myzone-header-stat">
-                  <strong>{favoriteCount}</strong> Favorites
-                </span>
-                {isMerchant && (
-                  <Link to="/merchant/manage" className="myzone-header-stat myzone-header-stat-link">
-                    <strong>Store</strong>
-                  </Link>
-                )}
-              </div>
-            </div>
-            <button type="button" className="myzone-header-edit" onClick={goProfile}>
-              {isLoggedIn ? 'Edit profile' : 'Log in'}
-            </button>
-          </div>
+      {/* 个人信息栏 */}
+      <section className="myzone-profile" aria-label={isZh ? '个人信息' : 'Profile'}>
+        <button type="button" className="myzone-profile-avatar-wrap" onClick={isLoggedIn ? goProfile : goLogin}>
+          {userLoading && !displayAvatar ? (
+            <div className="myzone-profile-avatar myzone-profile-avatar-loading">{t.loading}</div>
+          ) : displayAvatar ? (
+            <img src={prefixAvatar(displayAvatar)} alt="" className="myzone-profile-avatar" />
+          ) : (
+            <img src="/default-avatar.svg" alt="" className="myzone-profile-avatar myzone-profile-avatar-default" />
+          )}
+        </button>
+        <div className="myzone-profile-text">
+          <p className="myzone-profile-name">
+            {isLoggedIn ? (userLoading && !displayName ? t.loading : displayName) : t.tapLogin}
+            {isLoggedIn && isAdmin && <span className="myzone-admin-badge">{t.admin}</span>}
+          </p>
+          <p className="myzone-profile-email">
+            {isLoggedIn ? (campusEmail || '—') : t.loginHint}
+          </p>
         </div>
-      </header>
+        <button type="button" className="myzone-profile-space" onClick={goSpace}>
+          <span>{t.space}</span>
+          <span className="myzone-profile-space-chevron" aria-hidden>›</span>
+        </button>
+      </section>
+      <div className="myzone-profile-divider" role="separator" />
 
       {userError && (
         <p className="myzone-error" role="alert">
@@ -182,24 +203,83 @@ function MyZone() {
         </p>
       )}
 
-      {/* 2. 功能入口：3 个卡片（前两个切换 Tab，收藏占位） */}
-      <section className="myzone-entries" aria-label="Entry shortcuts">
-        <button type="button" className="myzone-entry myzone-entry-btn" onClick={() => setActiveTab(TAB_POSTS)}>
-          <span className="myzone-entry-icon" aria-hidden>📝</span>
-          <span className="myzone-entry-label">My posts</span>
-        </button>
-        <button type="button" className="myzone-entry myzone-entry-btn" onClick={() => setActiveTab(TAB_REVIEWS)}>
-          <span className="myzone-entry-icon" aria-hidden>⭐</span>
-          <span className="myzone-entry-label">My reviews</span>
-        </button>
-        <button type="button" className="myzone-entry myzone-entry-btn" onClick={() => setActiveTab(TAB_FAVORITES)}>
-          <span className="myzone-entry-icon" aria-hidden>❤️</span>
-          <span className="myzone-entry-label">My favorites</span>
-        </button>
+      {/* 工具 */}
+      <section className="myzone-block" aria-labelledby="myzone-tools-heading">
+        <h2 id="myzone-tools-heading" className="myzone-block-title">
+          {t.tools}
+        </h2>
+        <div className="myzone-tile-grid">
+          <Link to="/eat" className="myzone-tile">
+            <span className="myzone-tile-icon" aria-hidden>
+              <IconCanteen />
+            </span>
+            <span className="myzone-tile-label">{t.toolCanteen}</span>
+          </Link>
+          <Link to="/about/schedule" className="myzone-tile">
+            <span className="myzone-tile-icon" aria-hidden>
+              <IconSchedule />
+            </span>
+            <span className="myzone-tile-label">{t.toolSchedule}</span>
+          </Link>
+          <Link to="/about/diary" className="myzone-tile">
+            <span className="myzone-tile-icon" aria-hidden>
+              <IconDiary />
+            </span>
+            <span className="myzone-tile-label">{t.toolDiary}</span>
+          </Link>
+          <button type="button" className="myzone-tile myzone-tile--disabled" onClick={handleTodoClick}>
+            <span className="myzone-tile-icon" aria-hidden>
+              <IconTodo />
+            </span>
+            <span className="myzone-tile-label">{t.toolTodo}</span>
+          </button>
+        </div>
       </section>
 
-      {/* 3. 内容 Tab 栏 */}
-      <div className="myzone-tabs" role="tablist" aria-label="Content tabs">
+      {/* 关于 */}
+      <section className="myzone-block" aria-labelledby="myzone-about-heading">
+        <h2 id="myzone-about-heading" className="myzone-block-title">
+          {t.about}
+        </h2>
+        <div className="myzone-tile-grid">
+          <Link to="/about/profile" className="myzone-tile">
+            <span className="myzone-tile-icon" aria-hidden>
+              <IconAbout />
+            </span>
+            <span className="myzone-tile-label">{t.aboutProfile}</span>
+          </Link>
+          <Link to="/about/thanks" className="myzone-tile">
+            <span className="myzone-tile-icon" aria-hidden>
+              <IconThanks />
+            </span>
+            <span className="myzone-tile-label">{t.aboutThanks}</span>
+          </Link>
+          <Link to="/about/disclaimer" className="myzone-tile">
+            <span className="myzone-tile-icon" aria-hidden>
+              <IconDisclaimer />
+            </span>
+            <span className="myzone-tile-label">{t.aboutDisclaimer}</span>
+          </Link>
+          <Link to="/about/contact" className="myzone-tile">
+            <span className="myzone-tile-icon" aria-hidden>
+              <IconContact />
+            </span>
+            <span className="myzone-tile-label">{t.aboutContact}</span>
+          </Link>
+        </div>
+      </section>
+
+      {/* 商家入口（保留） */}
+      {isLoggedIn && isMerchant && (
+        <div className="myzone-merchant-link-wrap">
+          <Link to="/merchant/manage" className="myzone-merchant-link">
+            {isZh ? '店铺管理' : 'Store'}
+          </Link>
+        </div>
+      )}
+
+      {/* 内容 Tab */}
+      <div className="myzone-tabs" role="tablist" aria-label={isZh ? '内容' : 'Content'}>
         <button
           type="button"
           role="tab"
@@ -207,7 +287,7 @@ function MyZone() {
           className={`myzone-tab ${activeTab === TAB_POSTS ? 'active' : ''}`}
           onClick={() => setActiveTab(TAB_POSTS)}
         >
-          Posts
+          {t.tabPosts}
         </button>
         <button
           type="button"
@@ -216,7 +296,7 @@ function MyZone() {
           className={`myzone-tab ${activeTab === TAB_REVIEWS ? 'active' : ''}`}
           onClick={() => setActiveTab(TAB_REVIEWS)}
         >
-          Reviews
+          {t.tabReviews}
         </button>
         <button
           type="button"
@@ -225,30 +305,29 @@ function MyZone() {
           className={`myzone-tab ${activeTab === TAB_FAVORITES ? 'active' : ''}`}
           onClick={() => setActiveTab(TAB_FAVORITES)}
         >
-          Favorites
+          {t.tabFavorites}
         </button>
       </div>
 
-      {/* 4. 内容展示区：网格 2px gap */}
       <section className="myzone-content" role="tabpanel">
         {activeTab === TAB_POSTS && (
           <div className="myzone-grid-wrap">
             {!isLoggedIn ? (
               <EmptyState
-                title="Please log in"
-                description="Log in to view your posts."
-                actionLabel="Log in"
+                title={isZh ? '请先登录' : 'Please log in'}
+                description={isZh ? '登录后查看帖子。' : 'Log in to view your posts.'}
+                actionLabel={t.logIn}
                 actionTo="/login"
               />
             ) : postsLoading ? (
-              <p className="myzone-loading">Loading…</p>
+              <p className="myzone-loading">{t.loading}</p>
             ) : postsError ? (
               <p className="myzone-error-inline">{postsError}</p>
             ) : posts.length === 0 ? (
               <EmptyState
-                title="No posts yet"
-                description="Post your first one."
-                actionLabel="Post now"
+                title={isZh ? '暂无帖子' : 'No posts yet'}
+                description={isZh ? '发第一条吧。' : 'Post your first one.'}
+                actionLabel={isZh ? '去发布' : 'Post now'}
                 actionTo="/post/new"
               />
             ) : (
@@ -264,20 +343,20 @@ function MyZone() {
           <div className="myzone-grid-wrap">
             {!isLoggedIn ? (
               <EmptyState
-                title="Please log in"
-                description="Log in to view your reviews."
-                actionLabel="Log in"
+                title={isZh ? '请先登录' : 'Please log in'}
+                description={isZh ? '登录后查看点评。' : 'Log in to view your reviews.'}
+                actionLabel={t.logIn}
                 actionTo="/login"
               />
             ) : reviewsLoading ? (
-              <p className="myzone-loading">Loading…</p>
+              <p className="myzone-loading">{t.loading}</p>
             ) : reviewsError ? (
               <p className="myzone-error-inline">{reviewsError}</p>
             ) : reviews.length === 0 ? (
               <EmptyState
-                title="No reviews yet"
-                description="Go review your favorite dishes."
-                actionLabel="Eat now"
+                title={isZh ? '暂无点评' : 'No reviews yet'}
+                description={isZh ? '去给喜欢的菜品写点评。' : 'Go review your favorite dishes.'}
+                actionLabel={isZh ? '去食堂' : 'Eat now'}
                 actionTo="/eat"
               />
             ) : (
@@ -293,20 +372,20 @@ function MyZone() {
           <div className="myzone-grid-wrap">
             {!isLoggedIn ? (
               <EmptyState
-                title="Please log in"
-                description="Log in to view your favorites."
-                actionLabel="Log in"
+                title={isZh ? '请先登录' : 'Please log in'}
+                description={isZh ? '登录后查看收藏。' : 'Log in to view your favorites.'}
+                actionLabel={t.logIn}
                 actionTo="/login"
               />
             ) : favoritesLoading ? (
-              <p className="myzone-loading">Loading…</p>
+              <p className="myzone-loading">{t.loading}</p>
             ) : favoritesError ? (
               <p className="myzone-error-inline">{favoritesError}</p>
             ) : favorites.length === 0 ? (
               <EmptyState
-                title="No favorites yet"
-                description="Go to the canteen and favorite dishes you like."
-                actionLabel="Eat now"
+                title={isZh ? '暂无收藏' : 'No favorites yet'}
+                description={isZh ? '在食堂收藏喜欢的菜品。' : 'Favorite dishes in the canteen.'}
+                actionLabel={isZh ? '去食堂' : 'Eat now'}
                 actionTo="/eat"
               />
             ) : (
@@ -321,11 +400,89 @@ function MyZone() {
       </section>
 
       {isLoggedIn && (
-        <button type="button" className="myzone-logout" onClick={handleLogout}>
-          Log out
-        </button>
+        <div className="myzone-footer-actions">
+          <button type="button" className="myzone-profile-edit" onClick={goProfile}>
+            {t.editProfile}
+          </button>
+          <button type="button" className="myzone-logout" onClick={handleLogout}>
+            {t.logOut}
+          </button>
+        </div>
       )}
     </div>
+  );
+}
+
+function IconCanteen() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+      <path d="M4 10h16v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8z" strokeLinejoin="round" />
+      <path d="M8 10V6M12 10V5M16 10V6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconSchedule() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+      <rect x="3" y="4" width="18" height="17" rx="2" />
+      <path d="M3 9h18M8 2v4M16 2v4" strokeLinecap="round" />
+      <path d="M8 13h2M12 13h2M16 13h2M8 17h2M12 17h2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconDiary() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+      <path d="M6 3h12a1 1 0 0 1 1 1v16l-3-2-3 2-3-2-3 2V4a1 1 0 0 1 1-1z" strokeLinejoin="round" />
+      <path d="M9 7h6M9 11h6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconTodo() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+      <path d="M9 11l2 2 4-4" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="4" y="3" width="16" height="18" rx="2" />
+      <path d="M8 7h8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconAbout() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+      <circle cx="12" cy="8" r="3" />
+      <path d="M6 20v-1a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v1" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconThanks() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+      <path d="M12 21s-7-4.5-7-10a5 5 0 0 1 9.5-2.5A5 5 0 0 1 19 11c0 5.5-7 10-7 10z" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconDisclaimer() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" strokeLinejoin="round" />
+      <path d="M14 2v6h6M8 13h8M8 17h6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconContact() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+      <path d="M4 6h16v12H4V6z" strokeLinejoin="round" />
+      <path d="M4 7l8 6 8-6" strokeLinejoin="round" />
+    </svg>
   );
 }
 
@@ -353,7 +510,6 @@ function PostGridItem({ post }) {
 
 function ReviewGridItem({ review }) {
   const { product_id, product_name, shop_name, rating, product_image, images } = review;
-  // 优先用商品卖家秀，其次用点评附图
   const raw = product_image ?? (images?.length ? (images[0]?.url ?? images[0]) : null);
   const pathStr = typeof raw === 'string' ? raw : raw?.url ?? null;
   const imgUrl = productImageUrl(pathStr);
