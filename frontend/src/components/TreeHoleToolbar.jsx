@@ -99,13 +99,18 @@ function TreeHoleToolbar() {
 
   return (
     <div className="treehole-toolbar" ref={wrapRef}>
-      <form className="treehole-toolbar-search" onSubmit={onSearchSubmit} role="search">
+      <form
+        className="treehole-toolbar-search glass-search"
+        onSubmit={onSearchSubmit}
+        role="search"
+      >
         <div className="treehole-toolbar-search-field">
           <input
             type="search"
             className="treehole-toolbar-search-input"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
+            placeholder={isZh ? '搜索帖子…' : 'Search posts…'}
             enterKeyHint="search"
             aria-label={isZh ? '输入关键词搜索帖子' : 'Enter keywords to search posts'}
           />
@@ -127,14 +132,14 @@ function TreeHoleToolbar() {
             <path
               d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
               stroke="currentColor"
-              strokeWidth="2"
+              strokeWidth="1.75"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
             <path
               d="M15.8 15.8 21 21"
               stroke="currentColor"
-              strokeWidth="2"
+              strokeWidth="1.75"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
