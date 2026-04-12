@@ -1,48 +1,64 @@
-/* 单张背景图：仅覆盖顶栏与底栏之间的内容区，不重复；内容可滚动 */
+/* 帖子列表：iOS 分组列表式浅灰底，覆盖主区壁纸以突出卡片层级 */
 .treehole-page {
   position: relative;
   min-height: 100%;
-  background: transparent;
+  background: var(--post-ios-bg-grouped, #f2f2f7);
+  font-family: var(--post-ios-font, inherit);
+  -webkit-font-smoothing: antialiased;
 }
 
 .treehole-error {
-  margin: 12px 16px;
+  margin: 10px 16px 0;
   padding: 10px 12px;
   font-size: 13px;
-  color: var(--wx-red, #ee0a24);
-  background: rgba(238, 10, 36, 0.08);
-  border-radius: 8px;
+  font-family: var(--post-ios-font, inherit);
+  line-height: 1.35;
+  color: var(--post-ios-red, #ff3b30);
+  background: rgba(255, 59, 48, 0.08);
+  border-radius: var(--post-ios-radius-sm, 10px);
 }
 
 .treehole-loading {
   padding: 24px 16px;
   text-align: center;
-  font-size: 14px;
-  color: var(--wx-text-secondary);
+  font-size: 15px;
+  font-family: var(--post-ios-font, inherit);
+  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
 }
 
 .treehole-load-more {
   display: block;
   width: 100%;
-  margin-top: 12px;
-  padding: 10px;
-  font-size: 14px;
-  color: var(--wx-text-secondary);
-  background: rgba(255, 255, 255, 0.6);
-  border: 1px solid var(--wx-border);
-  border-radius: 8px;
+  margin-top: 14px;
+  padding: 12px 16px;
+  font-size: 17px;
+  font-family: var(--post-ios-font, inherit);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--post-ios-accent, #007aff);
+  background: var(--post-ios-card, #fff);
+  border: none;
+  border-radius: var(--post-ios-radius-md, 12px);
+  box-shadow: var(--post-ios-shadow-card, 0 1px 3px rgba(0, 0, 0, 0.06));
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.15s ease, transform 0.12s ease;
+}
+
+.treehole-load-more:active:not(:disabled) {
+  opacity: 0.65;
+  transform: scale(0.99);
 }
 
 .treehole-load-more:disabled {
-  opacity: 0.7;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
 .treehole-content {
   position: relative;
   z-index: 1;
-  padding: 12px 12px 24px;
+  padding: 10px 12px 28px;
 }
 
 /* 两列错落，可滚动 */
@@ -64,21 +80,21 @@
   padding-top: 32px;
 }
 
-/* 右下角悬浮发布按钮 */
+/* 右下角：iOS 式主操作（系统蓝圆形 +） */
 .treehole-fab {
   position: fixed;
-  right: 20px;
-  bottom: calc(50px + 16px + var(--safe-bottom, 0px));
+  right: 18px;
+  bottom: calc(50px + 14px + var(--safe-bottom, 0px));
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: var(--wx-green);
+  background: var(--post-ios-accent, #007aff);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(7, 193, 96, 0.4);
-  --pressable-shadow-active: 0 3px 10px rgba(7, 193, 96, 0.28);
+  box-shadow: 0 4px 14px rgba(0, 122, 255, 0.38), 0 1px 3px rgba(0, 0, 0, 0.12);
+  --pressable-shadow-active: 0 2px 10px rgba(0, 122, 255, 0.32);
   z-index: 90;
 }
 
@@ -88,15 +104,16 @@
   left: -6px;
   padding: 0 6px;
   border-radius: 999px;
-  background: #faad14;
+  background: var(--post-ios-red, #ff3b30);
   color: #fff;
   font-size: 10px;
   font-weight: 600;
   line-height: 1.5;
+  font-family: var(--post-ios-font, inherit);
 }
 
 .treehole-fab:hover {
-  background: var(--wx-green-dark);
+  filter: brightness(1.05);
   color: #fff;
 }
 

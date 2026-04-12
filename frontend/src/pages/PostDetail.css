@@ -1,59 +1,87 @@
+/* 帖子详情：与树洞列表同一套 iOS 分组背景 + 白卡片 + 系统蓝/灰字阶 */
+
 .post-detail-page {
-  padding: 12px 12px 80px;
+  padding: 10px 12px calc(88px + var(--safe-bottom, 0px));
   min-height: 100%;
-  background: transparent;
+  background: var(--post-ios-bg-grouped, #f2f2f7);
+  font-family: var(--post-ios-font, inherit);
+  -webkit-font-smoothing: antialiased;
 }
 
 .post-detail-empty {
   text-align: center;
-  color: var(--wx-text-secondary);
+  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
   margin: 24px 0;
+  font-size: 17px;
 }
 
 .post-detail-loading,
 .post-detail-error {
   text-align: center;
-  padding: 24px 16px;
-  font-size: 14px;
-  color: var(--wx-text-secondary);
+  padding: 28px 16px;
+  font-size: 17px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
 }
 
 .post-detail-error {
-  color: var(--wx-red, #ee0a24);
+  color: var(--post-ios-red, #ff3b30);
+}
+
+.post-detail-page > .post-detail-error + button,
+.post-detail-page .post-detail-text-btn {
+  display: block;
+  margin: 12px auto 0;
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--post-ios-radius-sm, 10px);
+  font-family: var(--post-ios-font, inherit);
+  font-size: 17px;
+  font-weight: 400;
+  color: var(--post-ios-accent, #007aff);
+  background: var(--post-ios-card, #fff);
+  box-shadow: var(--post-ios-shadow-card, 0 1px 2px rgba(0, 0, 0, 0.04));
+  cursor: pointer;
 }
 
 .post-detail-card {
-  background: rgba(255, 255, 255, 0.92);
-  border-radius: 12px;
+  background: var(--post-ios-card, #fff);
+  border-radius: var(--post-ios-radius-md, 12px);
   padding: 16px;
-  margin-bottom: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  margin-bottom: 12px;
+  box-shadow: var(--post-ios-shadow-card, 0 1px 2px rgba(0, 0, 0, 0.04));
+  border: 0.5px solid var(--post-ios-separator, rgba(60, 60, 67, 0.12));
 }
 
 .post-detail-author {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
 }
 
 .post-detail-delete-btn {
   margin-left: auto;
-  padding: 6px 8px;
+  padding: 8px;
   border: none;
-  background: transparent;
+  background: var(--post-ios-fill, rgba(118, 118, 128, 0.12));
   cursor: pointer;
-  border-radius: 8px;
-  color: var(--wx-text-secondary);
+  border-radius: var(--post-ios-radius-sm, 10px);
+  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
+  -webkit-tap-highlight-color: transparent;
 }
+
 .post-detail-delete-btn:hover:not(:disabled) {
-  background: rgba(238, 10, 36, 0.08);
-  color: var(--wx-red, #ee0a24);
+  background: rgba(255, 59, 48, 0.12);
+  color: var(--post-ios-red, #ff3b30);
 }
+
 .post-detail-delete-btn:disabled {
-  opacity: 0.6;
+  opacity: 0.45;
   cursor: not-allowed;
 }
+
 .post-detail-delete-icon {
   font-size: 18px;
   line-height: 1;
@@ -62,7 +90,7 @@
 .post-detail-author-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   min-width: 0;
   flex: 1;
 }
@@ -85,14 +113,15 @@
 .post-detail-tag {
   display: inline-flex;
   align-items: center;
-  padding: 2px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 980px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
   text-decoration: none;
-  color: var(--wx-green, #07c160);
-  background: rgba(7, 193, 96, 0.12);
-  border: 1px solid rgba(7, 193, 96, 0.28);
+  color: var(--post-ios-accent, #007aff);
+  background: var(--post-ios-accent-subtle, rgba(0, 122, 255, 0.12));
+  border: none;
 }
 
 .post-detail-tag--static {
@@ -100,18 +129,22 @@
 }
 
 .post-detail-time {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 400;
-  color: var(--wx-text-secondary);
+  letter-spacing: -0.01em;
+  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
 }
 
 .post-detail-avatar-wrap {
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   overflow: hidden;
-  border: 2px solid var(--wx-border);
+  border: 0.5px solid var(--post-ios-separator, rgba(60, 60, 67, 0.12));
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .post-detail-avatar {
@@ -123,20 +156,23 @@
 .post-detail-avatar-default {
   object-fit: contain;
   padding: 6px;
-  background: var(--wx-bar-bg);
+  background: var(--post-ios-fill, rgba(118, 118, 128, 0.12));
 }
 
 .post-detail-username {
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 600;
-  color: var(--wx-text);
+  letter-spacing: -0.02em;
+  color: var(--post-ios-label, rgba(0, 0, 0, 0.88));
 }
 
 .post-detail-content {
-  margin: 0 0 12px;
-  font-size: 15px;
-  line-height: 1.52;
-  color: var(--wx-text);
+  margin: 0 0 14px;
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: -0.02em;
+  color: var(--post-ios-label, rgba(0, 0, 0, 0.88));
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -153,9 +189,10 @@
   background: none;
   cursor: pointer;
   display: block;
-  border-radius: 8px;
+  border-radius: var(--post-ios-radius-sm, 10px);
   overflow: hidden;
   margin: 0 0 12px;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .post-detail-image {
@@ -163,41 +200,53 @@
   width: auto;
   max-height: 280px;
   object-fit: contain;
-  border-radius: 8px;
-  background: var(--wx-bar-bg);
+  border-radius: var(--post-ios-radius-sm, 10px);
+  background: var(--post-ios-fill, rgba(118, 118, 128, 0.12));
 }
 
 .post-detail-actions {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: center;
+  padding-top: 4px;
 }
 
 .post-detail-like {
-  padding: 6px 12px;
+  padding: 8px 14px;
   border: none;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.06);
-  font-size: 14px;
-  color: var(--wx-text-secondary);
+  border-radius: var(--post-ios-radius-sm, 10px);
+  background: var(--post-ios-fill, rgba(118, 118, 128, 0.12));
+  font-family: var(--post-ios-font, inherit);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease, transform 0.1s ease;
 }
 
-.post-detail-like:hover {
-  background: rgba(0, 0, 0, 0.1);
+.post-detail-like:active {
+  transform: scale(0.97);
+  background: var(--post-ios-fill-pressed, rgba(118, 118, 128, 0.18));
 }
 
 .post-detail-like.is-liked {
-  background: rgba(7, 193, 96, 0.15);
-  color: var(--wx-green);
+  background: rgba(255, 59, 48, 0.12);
+  color: var(--post-ios-red, #ff3b30);
+}
+
+.post-detail-comments {
+  margin-top: 4px;
 }
 
 .post-detail-comments-title {
-  margin: 0 0 12px;
-  font-size: 15px;
+  margin: 0 0 10px;
+  padding: 0 4px;
+  font-size: 17px;
   font-weight: 600;
-  color: var(--wx-text);
+  letter-spacing: -0.02em;
+  color: var(--post-ios-label, rgba(0, 0, 0, 0.88));
 }
 
 .post-detail-comment-list {
@@ -207,7 +256,7 @@
 }
 
 .post-detail-comment-wrap {
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .post-detail-comment-wrap:last-child {
@@ -215,23 +264,23 @@
 }
 
 .post-detail-comment {
-  background: rgba(255, 255, 255, 0.92);
-  border-radius: 10px;
-  padding: 12px;
+  background: var(--post-ios-card, #fff);
+  border-radius: var(--post-ios-radius-md, 12px);
+  padding: 12px 14px;
   margin-bottom: 6px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--post-ios-shadow-card, 0 1px 2px rgba(0, 0, 0, 0.04));
+  border: 0.5px solid var(--post-ios-separator, rgba(60, 60, 67, 0.12));
 }
 
 .post-detail-reply-list {
   list-style: none;
-  margin: 0;
-  padding: 0 0 0 20px;
-  border-left: 2px solid var(--wx-border);
-  margin-left: 12px;
+  margin: 8px 0 0;
+  padding: 0 0 0 14px;
+  border-left: 3px solid var(--post-ios-accent-subtle, rgba(0, 122, 255, 0.25));
 }
 
 .post-detail-comment-reply {
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   max-width: 100%;
 }
 
@@ -241,65 +290,82 @@
 
 .post-detail-comment-content {
   margin: 0 0 8px;
-  font-size: 14px;
-  line-height: 1.45;
-  color: var(--wx-text);
+  font-size: 17px;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+  color: var(--post-ios-label, rgba(0, 0, 0, 0.88));
 }
 
 .post-detail-reply-label {
-  color: var(--wx-text-secondary);
+  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
   margin-right: 4px;
+  font-size: 15px;
 }
 
 .post-detail-comment-meta {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 12px;
-  color: var(--wx-text-secondary);
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
+}
+
+.post-detail-comment-stat {
+  font-weight: 500;
+  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
 }
 
 .post-detail-comment-delete {
   margin-left: auto;
-  padding: 0;
+  padding: 6px;
   border: none;
-  background: none;
+  background: transparent;
   cursor: pointer;
-  color: var(--wx-text-secondary);
-  font-size: 14px;
+  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
+  font-size: 16px;
+  border-radius: var(--post-ios-radius-sm, 10px);
 }
 
 .post-detail-comment-delete:hover {
-  color: var(--wx-red, #ee0a24);
+  color: var(--post-ios-red, #ff3b30);
+  background: rgba(255, 59, 48, 0.08);
 }
 
 .post-detail-reply-delete {
-  padding: 0;
+  padding: 4px 8px;
   border: none;
   background: none;
   cursor: pointer;
-  font-size: 12px;
-  color: var(--wx-text-secondary);
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--post-ios-accent, #007aff);
+  border-radius: var(--post-ios-radius-sm, 10px);
 }
 
 .post-detail-reply-delete:hover {
-  text-decoration: underline;
-  color: var(--wx-red, #ee0a24);
+  opacity: 0.65;
 }
 
 .post-detail-reply-btn {
-  padding: 0;
+  padding: 4px 8px;
   border: none;
   background: none;
-  color: var(--wx-green);
+  color: var(--post-ios-accent, #007aff);
   cursor: pointer;
-  font-size: 12px;
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  border-radius: var(--post-ios-radius-sm, 10px);
 }
 
 .post-detail-reply-btn:hover {
-  text-decoration: underline;
+  opacity: 0.65;
 }
 
+/* 底部输入：iOS 工具栏风格 */
 .post-detail-form {
   position: fixed;
   left: 0;
@@ -307,26 +373,35 @@
   bottom: calc(50px + var(--safe-bottom, 0px));
   padding: 8px 12px;
   padding-bottom: calc(8px + var(--safe-bottom, 0px));
-  background: var(--wx-bar-bg);
-  border-top: 1px solid var(--wx-border);
+  background: rgba(249, 249, 249, 0.94);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-top: 0.5px solid var(--post-ios-separator, rgba(60, 60, 67, 0.12));
   z-index: 50;
+  max-width: 430px;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .post-detail-replying {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 6px;
-  font-size: 12px;
-  color: var(--wx-text-secondary);
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
 }
 
 .post-detail-replying button {
-  padding: 2px 8px;
+  padding: 4px 8px;
   border: none;
   background: none;
-  color: var(--wx-green);
+  color: var(--post-ios-accent, #007aff);
   cursor: pointer;
+  font-family: var(--post-ios-font, inherit);
+  font-size: 17px;
+  font-weight: 400;
 }
 
 .post-detail-form-row {
@@ -337,31 +412,45 @@
 
 .post-detail-input {
   flex: 1;
+  min-width: 0;
   padding: 10px 12px;
-  border: 1px solid var(--wx-border);
-  border-radius: 8px;
-  font-size: 14px;
-  background: #fff;
-  color: var(--wx-text);
+  border: none;
+  border-radius: var(--post-ios-radius-sm, 10px);
+  font-family: var(--post-ios-font, inherit);
+  font-size: 17px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  background: var(--post-ios-fill, rgba(118, 118, 128, 0.12));
+  color: var(--post-ios-label, rgba(0, 0, 0, 0.88));
 }
 
 .post-detail-input::placeholder {
-  color: var(--wx-text-secondary);
+  color: var(--post-ios-tertiary-label, rgba(60, 60, 67, 0.36));
+}
+
+.post-detail-input:focus {
+  outline: none;
+  background: var(--post-ios-fill-pressed, rgba(118, 118, 128, 0.18));
 }
 
 .post-detail-send {
+  flex-shrink: 0;
   padding: 10px 16px;
   border: none;
-  border-radius: 8px;
-  background: var(--wx-green);
+  border-radius: var(--post-ios-radius-sm, 10px);
+  background: var(--post-ios-accent, #007aff);
   color: #fff;
-  font-size: 14px;
+  font-family: var(--post-ios-font, inherit);
+  font-size: 17px;
   font-weight: 500;
+  letter-spacing: -0.02em;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .post-detail-send:disabled {
-  background: var(--wx-text-secondary);
+  background: var(--post-ios-fill, rgba(118, 118, 128, 0.12));
+  color: var(--post-ios-tertiary-label, rgba(60, 60, 67, 0.36));
   cursor: not-allowed;
-  opacity: 0.7;
+  opacity: 1;
 }

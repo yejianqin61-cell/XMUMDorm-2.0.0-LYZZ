@@ -1,24 +1,40 @@
 .post-tag-feed-page .post-tag-feed-hint {
-  margin: 0 0 8px;
-  padding: 0 4px;
-  font-size: 13px;
-  color: var(--wx-text-secondary, #666);
+  margin: 0 0 10px;
+  padding: 4px 12px 0;
+  font-family: var(--post-ios-font, inherit);
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
 }
 
 .post-tag-feed-page .post-tag-feed-hint strong {
-  color: var(--wx-text, #111);
+  color: var(--post-ios-label, rgba(0, 0, 0, 0.88));
+  font-weight: 600;
 }
 
 .post-tag-feed-empty {
-  margin: 12px 4px;
-  font-size: 14px;
-  color: var(--wx-text-secondary, #666);
+  margin: 12px 12px 8px;
+  font-family: var(--post-ios-font, inherit);
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
 }
 
 .post-tag-feed-back {
   display: block;
-  margin: 16px auto 24px;
+  margin: 18px auto 28px;
+  padding: 8px 16px;
   text-align: center;
-  font-size: 14px;
-  color: var(--wx-green, #07c160);
+  font-family: var(--post-ios-font, inherit);
+  font-size: 17px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--post-ios-accent, #007aff);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.post-tag-feed-back:active {
+  opacity: 0.55;
 }

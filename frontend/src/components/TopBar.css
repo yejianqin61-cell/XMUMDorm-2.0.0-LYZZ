@@ -2,9 +2,13 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  background: var(--wx-header-bg);
-  border-bottom: 1px solid var(--wx-border);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 0.5px solid var(--post-ios-separator, rgba(60, 60, 67, 0.12));
   padding-top: var(--safe-top);
+  font-family: var(--post-ios-font, inherit);
+  -webkit-font-smoothing: antialiased;
 }
 
 .top-bar-inner {
@@ -43,11 +47,11 @@
   padding: 0;
   border: none;
   background: transparent;
-  color: var(--wx-text);
+  color: var(--post-ios-accent, #007aff);
 }
 
 .top-bar-back:hover {
-  color: var(--wx-green);
+  color: var(--post-ios-accent, #007aff);
 }
 
 .top-bar-back:active {
@@ -64,7 +68,8 @@
   justify-content: center;
   font-size: 17px;
   font-weight: 600;
-  color: var(--wx-text);
+  letter-spacing: -0.02em;
+  color: var(--post-ios-label, rgba(0, 0, 0, 0.88));
   white-space: nowrap;
 }
 
@@ -94,7 +99,7 @@
   padding: 0;
   border: none;
   background: transparent;
-  color: var(--wx-text);
+  color: var(--post-ios-accent, #007aff);
 }
 
 .top-bar-lang {
@@ -128,7 +133,7 @@
 }
 
 .top-bar-mailbox:hover {
-  color: var(--wx-green);
+  color: var(--post-ios-accent, #007aff);
 }
 
 .top-bar-mailbox:active {

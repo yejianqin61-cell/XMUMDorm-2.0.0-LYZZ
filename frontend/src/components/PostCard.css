@@ -1,17 +1,19 @@
+/* 帖子卡片：iOS 分组内白底 cell 风格（圆角、轻阴影、SF 字阶） */
 .post-card {
   display: flex;
   flex-direction: column;
-  background: rgba(255, 255, 255, 0.85);
-  border-radius: 12px;
-  margin-bottom: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  background: var(--post-ios-card, #fff);
+  border-radius: var(--post-ios-radius-md, 12px);
+  margin-bottom: 0;
+  box-shadow: var(--post-ios-shadow-card, 0 1px 2px rgba(0, 0, 0, 0.04));
   min-height: 120px;
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: 0.5px solid var(--post-ios-separator, rgba(60, 60, 67, 0.12));
   overflow: hidden;
   padding: 14px 14px 0;
+  font-family: var(--post-ios-font, inherit);
+  -webkit-font-smoothing: antialiased;
 }
 
-/* 主内容区；底栏单独一行且高度压缩，整体视觉约上 5/6、下 1/6 */
 .post-card-body {
   display: block;
   flex: 1 1 auto;
@@ -31,33 +33,35 @@
 .post-card-tag {
   display: inline-flex;
   align-items: center;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--wx-green, #07c160);
-  background: rgba(7, 193, 96, 0.12);
-  border: 1px solid rgba(7, 193, 96, 0.25);
+  padding: 4px 10px;
+  border-radius: 980px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--post-ios-accent, #007aff);
+  background: var(--post-ios-accent-subtle, rgba(0, 122, 255, 0.12));
+  border: none;
 }
 
 .post-card-tag--link {
   text-decoration: none;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.12s ease;
 }
 
 .post-card-tag--link:active {
-  opacity: 0.85;
+  opacity: 0.55;
 }
 
 .post-card-content {
   margin: 0 0 10px;
-  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", sans-serif;
-  font-size: 15px;
-  font-weight: 500;
-  line-height: 1.52;
-  letter-spacing: 0.02em;
-  color: var(--wx-text);
+  font-family: var(--post-ios-font, inherit);
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+  color: var(--post-ios-label, rgba(0, 0, 0, 0.88));
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
@@ -81,8 +85,8 @@
   width: 72px;
   height: 72px;
   object-fit: cover;
-  border-radius: 8px;
-  background: var(--wx-bar-bg);
+  border-radius: var(--post-ios-radius-sm, 10px);
+  background: var(--post-ios-fill, rgba(118, 118, 128, 0.12));
   display: block;
 }
 
@@ -91,11 +95,11 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
-  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--wx-text-secondary);
-  letter-spacing: 0.01em;
+  font-family: var(--post-ios-font, inherit);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
 }
 
 .post-card-time {
@@ -108,17 +112,16 @@
   gap: 2px;
 }
 
-/* 底栏：窄条（约卡片高度的 1/6 量级），与卡片同色透明 */
 .post-card-footer {
   flex: 0 0 auto;
   max-height: 40px;
-  min-height: 28px;
-  padding: 2px 0 6px;
+  min-height: 32px;
+  padding: 4px 0 8px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  border-top: 0.5px solid var(--post-ios-separator, rgba(60, 60, 67, 0.12));
   background: transparent;
   box-sizing: border-box;
 }
@@ -126,18 +129,18 @@
 .post-card-footer-author {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   min-width: 0;
   flex: 1;
 }
 
 .post-card-avatar-wrap {
   flex-shrink: 0;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   overflow: hidden;
-  border: 1px solid var(--wx-border);
+  border: 0.5px solid var(--post-ios-separator, rgba(60, 60, 67, 0.12));
 }
 
 .post-card-avatar {
@@ -148,14 +151,15 @@
 
 .post-card-avatar-default {
   object-fit: contain;
-  padding: 2px;
-  background: var(--wx-bar-bg);
+  padding: 3px;
+  background: var(--post-ios-fill, rgba(118, 118, 128, 0.12));
 }
 
 .post-card-username {
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 500;
-  color: var(--wx-text);
+  letter-spacing: -0.02em;
+  color: var(--post-ios-label, rgba(0, 0, 0, 0.88));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -166,36 +170,39 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 3px;
-  min-width: 48px;
-  min-height: 28px;
-  padding: 0 8px;
+  gap: 4px;
+  min-width: 52px;
+  min-height: 32px;
+  padding: 0 10px;
   border: none;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.04);
-  color: var(--wx-text-secondary);
-  font-size: 13px;
-  font-weight: 600;
+  border-radius: var(--post-ios-radius-sm, 10px);
+  background: var(--post-ios-fill, rgba(118, 118, 128, 0.12));
+  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
+  font-family: var(--post-ios-font, inherit);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  transition: background 0.15s ease, transform 0.1s ease;
 }
 
 .post-card-like-btn:active {
   transform: scale(0.96);
+  background: var(--post-ios-fill-pressed, rgba(118, 118, 128, 0.18));
 }
 
 .post-card-like-btn--active {
-  color: #e54d42;
-  background: rgba(229, 77, 66, 0.12);
+  color: var(--post-ios-red, #ff3b30);
+  background: rgba(255, 59, 48, 0.12);
 }
 
 .post-card-like-icon {
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1;
 }
 
 .post-card-like-count {
-  font-size: 12px;
+  font-size: 13px;
   font-variant-numeric: tabular-nums;
 }

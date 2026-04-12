@@ -99,19 +99,36 @@ function TreeHoleToolbar() {
 
   return (
     <div className="treehole-toolbar" ref={wrapRef}>
-      <form className="treehole-toolbar-search" onSubmit={onSearchSubmit}>
-        <input
-          type="search"
-          className="treehole-toolbar-search-input"
-          value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
-          placeholder={isZh ? '搜索帖子关键词… Search posts…' : 'Search posts…'}
-          enterKeyHint="search"
-          aria-label={isZh ? '搜索帖子' : 'Search posts'}
-        />
-        <button type="submit" className="treehole-toolbar-search-btn">
-          {isZh ? '搜索 Search' : 'Search'}
-        </button>
+      <form className="treehole-toolbar-search" onSubmit={onSearchSubmit} role="search">
+        <div className="treehole-toolbar-search-field">
+          <span className="treehole-toolbar-search-icon" aria-hidden>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M15.8 15.8 21 21"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </span>
+          <input
+            type="search"
+            className="treehole-toolbar-search-input"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            placeholder={isZh ? '搜索帖子…' : 'Search posts…'}
+            enterKeyHint="search"
+            aria-label={isZh ? '搜索帖子，回车提交' : 'Search posts, press Enter'}
+          />
+        </div>
       </form>
 
       <div className="treehole-toolbar-tag-row">

@@ -179,7 +179,9 @@ function PostDetail() {
     return (
       <div className="post-detail-page">
         <p className="post-detail-error state-error">{error}</p>
-        <button type="button" onClick={() => navigate('/')}>Back to Home</button>
+        <button type="button" className="post-detail-text-btn" onClick={() => navigate('/')}>
+          Back to Home
+        </button>
       </div>
     );
   }

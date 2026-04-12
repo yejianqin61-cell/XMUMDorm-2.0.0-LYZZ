@@ -1,40 +1,47 @@
+/* 发帖页：与树洞 / 详情同一 iOS 视觉体系 */
+
 .postnew-page {
-  padding: 16px;
+  padding: 12px 12px 24px;
   min-height: 100%;
-  background: transparent;
+  background: var(--post-ios-bg-grouped, #f2f2f7);
+  font-family: var(--post-ios-font, inherit);
+  -webkit-font-smoothing: antialiased;
 }
 
 .postnew-error {
   margin: 0 0 12px;
   padding: 10px 12px;
-  font-size: 13px;
-  color: var(--wx-red, #ee0a24);
-  background: rgba(238, 10, 36, 0.08);
-  border-radius: 8px;
+  font-size: 15px;
+  line-height: 1.35;
+  color: var(--post-ios-red, #ff3b30);
+  background: rgba(255, 59, 48, 0.08);
+  border-radius: var(--post-ios-radius-sm, 10px);
 }
 
 .postnew-anonymous-hint {
-  background: rgba(255, 255, 255, 0.92);
-}
-
-.postnew-anonymous-hint {
-  margin: 0 0 16px;
-  padding: 10px 12px;
-  font-size: 13px;
-  line-height: 1.45;
-  color: var(--wx-text-secondary);
-  border-radius: 8px;
-  border-left: 3px solid var(--wx-green);
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  font-size: 15px;
+  line-height: 1.4;
+  letter-spacing: -0.02em;
+  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
+  border-radius: var(--post-ios-radius-md, 12px);
+  border-left: 4px solid var(--post-ios-accent, #007aff);
+  background: var(--post-ios-card, #fff);
+  box-shadow: var(--post-ios-shadow-card, 0 1px 2px rgba(0, 0, 0, 0.04));
+  border: 0.5px solid var(--post-ios-separator, rgba(60, 60, 67, 0.12));
+  border-left-width: 4px;
 }
 
 .postnew-form {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  background: rgba(255, 255, 255, 0.92);
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  gap: 22px;
+  background: var(--post-ios-card, #fff);
+  border-radius: var(--post-ios-radius-md, 12px);
+  padding: 18px 16px 20px;
+  box-shadow: var(--post-ios-shadow-card, 0 1px 2px rgba(0, 0, 0, 0.04));
+  border: 0.5px solid var(--post-ios-separator, rgba(60, 60, 67, 0.12));
 }
 
 .postnew-section {
@@ -44,25 +51,36 @@
 }
 
 .postnew-label {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
-  color: var(--wx-text);
+  letter-spacing: -0.01em;
+  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
+  text-transform: none;
 }
 
 .postnew-textarea {
   width: 100%;
-  min-height: 120px;
-  padding: 12px;
-  border: 1px solid var(--wx-border);
-  border-radius: 8px;
-  font-size: 15px;
-  font-family: inherit;
+  min-height: 140px;
+  padding: 12px 14px;
+  border: none;
+  border-radius: var(--post-ios-radius-sm, 10px);
+  font-size: 17px;
+  font-family: var(--post-ios-font, inherit);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
   resize: vertical;
-  background: #fff;
+  background: var(--post-ios-fill, rgba(118, 118, 128, 0.12));
+  color: var(--post-ios-label, rgba(0, 0, 0, 0.88));
 }
 
 .postnew-textarea::placeholder {
-  color: var(--wx-text-secondary);
+  color: var(--post-ios-tertiary-label, rgba(60, 60, 67, 0.36));
+}
+
+.postnew-textarea:focus {
+  outline: none;
+  background: var(--post-ios-fill-pressed, rgba(118, 118, 128, 0.18));
 }
 
 .postnew-images {
@@ -75,9 +93,9 @@
   position: relative;
   width: 96px;
   height: 96px;
-  border-radius: 8px;
+  border-radius: var(--post-ios-radius-sm, 10px);
   overflow: hidden;
-  background: var(--wx-bar-bg);
+  background: var(--post-ios-fill, rgba(118, 118, 128, 0.12));
 }
 
 .postnew-image {
@@ -88,13 +106,13 @@
 
 .postnew-image-remove {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 24px;
-  height: 24px;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   border: none;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.45);
   color: #fff;
   font-size: 18px;
   line-height: 1;
@@ -108,18 +126,18 @@
 .postnew-image-add {
   width: 96px;
   height: 96px;
-  border: 1px dashed var(--wx-border);
-  border-radius: 8px;
+  border: none;
+  border-radius: var(--post-ios-radius-sm, 10px);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  background: var(--wx-bar-bg);
+  background: var(--post-ios-fill, rgba(118, 118, 128, 0.12));
+  transition: background 0.15s ease;
 }
 
 .postnew-image-add:hover {
-  border-color: var(--wx-green);
-  color: var(--wx-green);
+  background: var(--post-ios-fill-pressed, rgba(118, 118, 128, 0.18));
 }
 
 .postnew-file-input {
@@ -131,34 +149,43 @@
 
 .postnew-image-add-inner {
   font-size: 32px;
-  color: var(--wx-text-secondary);
+  font-weight: 300;
+  color: var(--post-ios-tertiary-label, rgba(60, 60, 67, 0.36));
 }
 
 .postnew-image-add:hover .postnew-image-add-inner {
-  color: var(--wx-green);
+  color: var(--post-ios-accent, #007aff);
 }
 
 .postnew-submit {
   width: 100%;
-  padding: 14px;
+  padding: 14px 16px;
   border: none;
-  border-radius: 8px;
-  background: var(--wx-green);
+  border-radius: var(--post-ios-radius-sm, 10px);
+  background: var(--post-ios-accent, #007aff);
   color: #fff;
-  font-size: 16px;
-  font-weight: 500;
+  font-family: var(--post-ios-font, inherit);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.postnew-submit:hover {
-  background: var(--wx-green-dark);
+.postnew-submit:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.postnew-submit:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .postnew-tag-hint {
-  margin: 0 0 10px;
-  font-size: 12px;
-  color: var(--wx-text-secondary);
+  margin: 0 0 8px;
+  font-size: 13px;
   line-height: 1.4;
+  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
 }
 
 .postnew-tag-pool {
@@ -169,16 +196,19 @@
 
 .postnew-tag-chip {
   padding: 8px 14px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 600;
-  border: 1px solid rgba(7, 193, 96, 0.35);
-  background: rgba(255, 255, 255, 0.9);
-  color: var(--wx-green, #07c160);
+  border-radius: 980px;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  border: none;
+  background: var(--post-ios-fill, rgba(118, 118, 128, 0.12));
+  color: var(--post-ios-accent, #007aff);
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .postnew-tag-chip--on {
-  background: rgba(7, 193, 96, 0.2);
-  border-color: var(--wx-green, #07c160);
+  background: var(--post-ios-accent-subtle, rgba(0, 122, 255, 0.22));
+  color: var(--post-ios-accent, #007aff);
+  box-shadow: inset 0 0 0 2px var(--post-ios-accent, #007aff);
 }

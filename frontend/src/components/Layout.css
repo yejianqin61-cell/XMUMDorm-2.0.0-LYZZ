@@ -110,19 +110,20 @@
 }
 
 .app-ann-know-btn {
-  background: var(--wx-green, #07c160);
+  background: var(--post-ios-accent, #007aff);
   color: #fff;
 }
 
 .app-ann-know-all-btn {
   margin-top: 6px;
   align-self: flex-end;
-  background: rgba(0, 0, 0, 0.04);
-  color: var(--wx-text-secondary, #666);
+  background: var(--post-ios-fill, rgba(118, 118, 128, 0.12));
+  color: var(--post-ios-accent, #007aff);
+  font-weight: 500;
 }
 
 .app-ann-know-btn:hover {
-  background: var(--wx-green-dark, #059048);
+  filter: brightness(1.06);
 }
 
 .app-ann-know-all-btn:hover {

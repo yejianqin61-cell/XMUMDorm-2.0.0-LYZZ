@@ -5,12 +5,16 @@
   right: 0;
   height: calc(50px + var(--safe-bottom));
   padding-bottom: var(--safe-bottom);
-  background: var(--wx-bar-bg);
-  border-top: 1px solid var(--wx-border);
+  background: rgba(249, 249, 249, 0.94);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-top: 0.5px solid var(--post-ios-separator, rgba(60, 60, 67, 0.12));
   display: flex;
   align-items: flex-start;
   justify-content: space-around;
   z-index: 100;
+  font-family: var(--post-ios-font, inherit);
+  -webkit-font-smoothing: antialiased;
 }
 
 .tab-item {
@@ -21,12 +25,12 @@
   justify-content: center;
   padding-top: 6px;
   padding-bottom: 4px;
-  color: var(--wx-text-secondary);
+  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
   transition: color 0.2s;
 }
 
 .tab-item.active {
-  color: var(--wx-green);
+  color: var(--post-ios-accent, #007aff);
 }
 
 .tab-icon {
