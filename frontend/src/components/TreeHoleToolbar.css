@@ -5,16 +5,12 @@
   font-family: var(--post-ios-font, inherit);
 }
 
-/* 搜索：液态玻璃一体条（输入 + 灰色轻量放大镜） */
-.treehole-toolbar-search.glass-search {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+/* 搜索 + 标签：同一块液态玻璃，标签为底部嵌入式横滑列表（非圆角胶囊） */
+.treehole-toolbar-glass-block.glass-search {
   margin-bottom: 12px;
   box-sizing: border-box;
-  height: 44px;
-  padding: 0 8px 0 14px;
   border-radius: 18px;
+  overflow: hidden;
   background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -25,12 +21,23 @@
   transition: background 0.22s ease, box-shadow 0.22s ease;
 }
 
-.treehole-toolbar-search.glass-search:focus-within {
+.treehole-toolbar-glass-block.glass-search:focus-within {
   background: rgba(255, 255, 255, 0.8);
   box-shadow:
     0 0 0 2px rgba(22, 196, 127, 0.2),
     0 4px 12px rgba(0, 0, 0, 0.05),
     inset 0 1px rgba(255, 255, 255, 0.6);
+}
+
+.treehole-toolbar-search-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  box-sizing: border-box;
+  height: 44px;
+  padding: 0 8px 0 14px;
+  border-bottom: 1px solid rgba(60, 60, 67, 0.1);
+  background: transparent;
 }
 
 .treehole-toolbar-search-field {
@@ -100,7 +107,7 @@
   color: rgba(60, 60, 67, 0.52);
 }
 
-.treehole-toolbar-search.glass-search:focus-within .treehole-toolbar-search-submit {
+.treehole-toolbar-glass-block.glass-search:focus-within .treehole-toolbar-search-submit {
   color: rgba(60, 60, 67, 0.52);
 }
 
@@ -114,10 +121,11 @@
   color: inherit;
 }
 
-.treehole-toolbar-tag-row {
+.treehole-toolbar-tags-embed {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  align-items: stretch;
+  min-height: 40px;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .treehole-toolbar-tags-scroll {
@@ -125,10 +133,11 @@
   min-width: 0;
   display: flex;
   flex-wrap: nowrap;
-  gap: 8px;
+  align-items: center;
+  gap: 0;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: 2px;
+  padding: 4px 0 4px 6px;
   scrollbar-width: none;
 }
 
@@ -136,24 +145,30 @@
   display: none;
 }
 
-.treehole-toolbar-tag-chip {
+/* 嵌入式文字链：竖线分隔，无圆角底 */
+.treehole-toolbar-tag-link {
   flex-shrink: 0;
-  padding: 6px 12px;
-  border-radius: var(--post-ios-radius-pill, 980px);
+  padding: 8px 12px;
+  margin: 0;
+  border-radius: 0;
   font-size: 15px;
   font-weight: 500;
   letter-spacing: -0.02em;
   text-decoration: none;
   color: var(--post-ios-accent, #007aff);
-  background: var(--post-ios-accent-subtle, rgba(0, 122, 255, 0.12));
+  background: transparent;
   border: none;
+  white-space: nowrap;
   -webkit-tap-highlight-color: transparent;
-  transition: opacity 0.12s ease, transform 0.12s ease;
+  transition: opacity 0.12s ease, color 0.15s ease;
 }
 
-.treehole-toolbar-tag-chip:active {
-  opacity: 0.65;
-  transform: scale(0.97);
+.treehole-toolbar-tag-link + .treehole-toolbar-tag-link {
+  border-left: 1px solid rgba(60, 60, 67, 0.12);
+}
+
+.treehole-toolbar-tag-link:active {
+  opacity: 0.55;
 }
 
 .treehole-toolbar-tags-loading {
@@ -164,11 +179,7 @@
 
 .treehole-toolbar-more {
   flex-shrink: 0;
-  width: 36px;
-  height: 36px;
   border: none;
-  border-radius: var(--post-ios-radius-sm, 10px);
-  background: var(--post-ios-fill, rgba(118, 118, 128, 0.12));
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -176,12 +187,22 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.treehole-toolbar-more:active {
-  background: var(--post-ios-fill-pressed, rgba(118, 118, 128, 0.18));
+.treehole-toolbar-more-embed {
+  width: 44px;
+  min-height: 40px;
+  align-self: stretch;
+  border-left: 1px solid rgba(60, 60, 67, 0.12);
+  border-radius: 0;
+  background: rgba(255, 255, 255, 0.08);
+  transition: background 0.15s ease;
 }
 
-.treehole-toolbar-more.is-open {
-  background: var(--post-ios-fill-pressed, rgba(118, 118, 128, 0.18));
+.treehole-toolbar-more-embed:active {
+  background: rgba(118, 118, 128, 0.12);
+}
+
+.treehole-toolbar-more-embed.is-open {
+  background: rgba(118, 118, 128, 0.14);
 }
 
 .treehole-toolbar-chevron {

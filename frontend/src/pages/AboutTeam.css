@@ -47,13 +47,14 @@
   font-weight: 500;
 }
 
-/* 分组标题（宣发团队、美术顾问等） */
+/* 分组标题（创始人、宣发团队、美术顾问、Dorm 3.0 等） */
 .about-team-section-role {
-  margin: 0 0 10px;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--wx-text-secondary, #888);
+  margin: 0 0 12px;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  color: var(--wx-text, #111);
 }
 
 .about-team-person-spaced {
