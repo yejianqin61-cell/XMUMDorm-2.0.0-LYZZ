@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -11,8 +11,12 @@ import './TreeHoleToolbar.css';
 
 const POST_TAGS_STALE_MS = 15 * 60 * 1000;
 
-/** 树洞页：搜索栏 + 前 5 个标签 + 下拉全部标签（管理员可创建/删除） */
-function TreeHoleToolbar() {
+/**
+ * 树洞页：搜索栏 + 前 5 个标签 + 下拉全部标签（管理员可创建/删除）
+ * @param {string | null} [selectedSlug] 当前筛选的标签 slug，null 为全部
+ * @param {(slug: string | null) => void} [onSelectTagSlug] 选择/取消标签（不跳转，由父级刷新列表）
+ */
+function TreeHoleToolbar({ selectedSlug = null, onSelectTagSlug }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { isAdmin } = useAuth();
@@ -48,6 +52,22 @@ function TreeHoleToolbar() {
   const firstFive = tags.slice(0, 5);
 
   const tagDisplay = (t) => (isZh ? (t.name_zh || t.name_en) : (t.name_en || t.name_zh));
+
+  const pickTagSlug = (slug) => {
+    if (typeof onSelectTagSlug !== 'function') return;
+    onSelectTagSlug(slug);
+  };
+
+  const onBarTagClick = (t) => {
+    if (typeof onSelectTagSlug !== 'function') return;
+    if (selectedSlug === t.slug) pickTagSlug(null);
+    else pickTagSlug(t.slug);
+  };
+
+  const onDropdownTagClick = (t) => {
+    pickTagSlug(t.slug);
+    setOpen(false);
+  };
 
   const onSearchSubmit = (e) => {
     e.preventDefault();
@@ -153,13 +173,15 @@ function TreeHoleToolbar() {
             <span className="treehole-toolbar-tags-loading">{isZh ? '标签加载中…' : 'Loading tags…'}</span>
           ) : (
             firstFive.map((t) => (
-              <Link
+              <button
                 key={t.id}
-                to={`/posts/tag/${encodeURIComponent(t.slug)}`}
-                className="treehole-toolbar-tag-link"
+                type="button"
+                className={`treehole-toolbar-tag-link ${selectedSlug === t.slug ? 'is-selected' : ''}`}
+                onClick={() => onBarTagClick(t)}
+                aria-pressed={selectedSlug === t.slug}
               >
                 {tagDisplay(t)}
-              </Link>
+              </button>
             ))
           )}
         </div>
@@ -208,11 +230,27 @@ function TreeHoleToolbar() {
             </form>
           )}
           <ul className="treehole-toolbar-dropdown-list">
+            <li className="treehole-toolbar-dropdown-item treehole-toolbar-dropdown-item-all">
+              <button
+                type="button"
+                className={`treehole-toolbar-dropdown-link treehole-toolbar-dropdown-tag-btn ${selectedSlug == null ? 'is-selected' : ''}`}
+                onClick={() => {
+                  pickTagSlug(null);
+                  setOpen(false);
+                }}
+              >
+                {isZh ? '全部帖子' : 'All posts'}
+              </button>
+            </li>
             {tags.map((t) => (
               <li key={t.id} className="treehole-toolbar-dropdown-item">
-                <Link to={`/posts/tag/${encodeURIComponent(t.slug)}`} className="treehole-toolbar-dropdown-link">
+                <button
+                  type="button"
+                  className={`treehole-toolbar-dropdown-link treehole-toolbar-dropdown-tag-btn ${selectedSlug === t.slug ? 'is-selected' : ''}`}
+                  onClick={() => onDropdownTagClick(t)}
+                >
                   {tagDisplay(t)}
-                </Link>
+                </button>
                 {isAdmin && (
                   <button
                     type="button"

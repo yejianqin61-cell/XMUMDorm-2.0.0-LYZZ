@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
@@ -65,13 +65,23 @@ function TreeHole() {
   const prefetchRef = useRef(false);
   const scrollRestoredRef = useRef(false);
   const pageRef = useRef(1);
+  /** 当前筛选的标签 slug，null 表示全部帖子 */
+  const [selectedTagSlug, setSelectedTagSlug] = useState(null);
 
-  const initialSessionData = useMemo(() => readSessionInfinitePages(PAGE_SIZE), [tokenKey]);
+  const initialSessionData = useMemo(
+    () => (selectedTagSlug ? undefined : readSessionInfinitePages(PAGE_SIZE)),
+    [selectedTagSlug]
+  );
 
   const infinite = useInfiniteQuery({
-    queryKey: QK.postsInfinite(tokenKey, PAGE_SIZE),
+    queryKey: QK.postsInfinite(tokenKey, PAGE_SIZE, selectedTagSlug),
     queryFn: async ({ pageParam }) => {
-      const data = await getPostList({ page: pageParam, pageSize: PAGE_SIZE, token });
+      const data = await getPostList({
+        page: pageParam,
+        pageSize: PAGE_SIZE,
+        token,
+        ...(selectedTagSlug ? { tagSlug: selectedTagSlug } : {}),
+      });
       return {
         list: (data?.list || []).map(mapPostItem),
         hasMore: !!data?.hasMore,
@@ -92,7 +102,9 @@ function TreeHole() {
     [infinite.data]
   );
 
-  pageRef.current = infinite.data?.pages.length ?? 1;
+  useEffect(() => {
+    pageRef.current = infinite.data?.pages.length ?? 1;
+  }, [infinite.data?.pages.length]);
 
   useEffect(() => {
     return () => {
@@ -105,6 +117,10 @@ function TreeHole() {
 
   useEffect(() => {
     if (scrollRestoredRef.current || list.length === 0 || infinite.isFetching) return;
+    if (selectedTagSlug) {
+      scrollRestoredRef.current = true;
+      return;
+    }
     const cached = takeScroll(SCROLL_CACHE_KEY);
     if (cached?.scrollTop > 0) {
       const main = document.querySelector('.app-main');
@@ -115,9 +131,10 @@ function TreeHole() {
       }
     }
     scrollRestoredRef.current = true;
-  }, [list.length, infinite.isFetching]);
+  }, [list.length, infinite.isFetching, selectedTagSlug]);
 
   useEffect(() => {
+    if (selectedTagSlug) return;
     try {
       const last = infinite.data?.pages[infinite.data.pages.length - 1];
       const data = {
@@ -129,7 +146,18 @@ function TreeHole() {
     } catch {
       // ignore
     }
-  }, [list, infinite.data]);
+  }, [list, infinite.data, selectedTagSlug]);
+
+  const handleSelectTag = useCallback((slug) => {
+    setSelectedTagSlug(slug);
+    const main = document.querySelector('.app-main');
+    if (main) main.scrollTop = 0;
+    if (slug == null) {
+      scrollRestoredRef.current = true;
+    } else {
+      scrollRestoredRef.current = false;
+    }
+  }, []);
 
   useEffect(() => {
     if (prefetchRef.current) return;
@@ -156,7 +184,7 @@ function TreeHole() {
 
   return (
     <div className="treehole-page">
-      <TreeHoleToolbar />
+      <TreeHoleToolbar selectedSlug={selectedTagSlug} onSelectTagSlug={handleSelectTag} />
       {errorMsg && (
         <p className="treehole-error state-error" role="alert">
           {errorMsg}

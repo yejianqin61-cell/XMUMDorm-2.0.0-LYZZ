@@ -6,8 +6,8 @@ export const QK = {
   canteenRegionTopProducts: (regionId, limit) => ['canteen', 'region', regionId, 'topProducts', limit],
   canteenRegionTopProductsByCode: (code, limit) => ['canteen', 'regionCode', String(code), 'topProducts', limit],
 
-  /** 树洞无限滚动：token 用占位字符串区分登录态 */
-  postsInfinite: (tokenKey, pageSize) => ['posts', 'infinite', tokenKey, pageSize],
+  /** 树洞无限滚动：token + 可选 tagSlug（无筛选为 '_all'） */
+  postsInfinite: (tokenKey, pageSize, tagSlug) => ['posts', 'infinite', tokenKey, pageSize, tagSlug ?? '_all'],
   postDetail: (postId, tokenKey) => ['posts', 'detail', postId, tokenKey],
   postComments: (postId) => ['posts', 'comments', postId],
   /** 帖子标签列表（全站共用，管理员增删后 invalidate） */

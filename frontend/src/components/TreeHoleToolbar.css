@@ -142,7 +142,12 @@
   display: none;
 }
 
-/* 嵌入式文字链：竖线分隔，无圆角底 */
+/* 嵌入式文字链：竖线分隔；选中为高亮填充（不跳转） */
+button.treehole-toolbar-tag-link {
+  font: inherit;
+  font-family: var(--post-ios-font, inherit);
+}
+
 .treehole-toolbar-tag-link {
   flex-shrink: 0;
   padding: 8px 12px;
@@ -156,15 +161,31 @@
   background: transparent;
   border: none;
   white-space: nowrap;
+  cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: opacity 0.12s ease, color 0.15s ease;
+  transition: opacity 0.12s ease, color 0.15s ease, background 0.15s ease;
 }
 
 .treehole-toolbar-tag-link + .treehole-toolbar-tag-link {
   border-left: 1px solid rgba(60, 60, 67, 0.12);
 }
 
-.treehole-toolbar-tag-link:active {
+.treehole-toolbar-tag-link.is-selected {
+  color: #fff;
+  background: var(--post-ios-accent, #007aff);
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0, 122, 255, 0.35);
+}
+
+.treehole-toolbar-tag-link.is-selected + .treehole-toolbar-tag-link {
+  border-left: none;
+}
+
+.treehole-toolbar-tag-link + .treehole-toolbar-tag-link.is-selected {
+  border-left: none;
+}
+
+.treehole-toolbar-tag-link:active:not(.is-selected) {
   opacity: 0.55;
 }
 
@@ -318,6 +339,33 @@
   font-size: 17px;
   font-weight: 400;
   letter-spacing: -0.02em;
+}
+
+button.treehole-toolbar-dropdown-tag-btn {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-family: var(--post-ios-font, inherit);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.treehole-toolbar-dropdown-item-all .treehole-toolbar-dropdown-tag-btn {
+  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.75));
+  font-weight: 500;
+}
+
+.treehole-toolbar-dropdown-tag-btn.is-selected {
+  color: var(--post-ios-accent, #007aff);
+  font-weight: 600;
+  background: rgba(0, 122, 255, 0.08);
+  border-radius: 8px;
+  margin-right: 4px;
 }
 
 .treehole-toolbar-tag-delete {
