@@ -147,7 +147,7 @@ function MyZone() {
     return () => { cancelled = true; };
   }, [isLoggedIn]);
 
-  const goLogin = () => navigate('/login', { state: { from: { pathname: '/myzone' } } } });
+  const goLogin = () => navigate('/login', { state: { from: { pathname: '/myzone' } } });
   const goProfile = () => {
     if (!isLoggedIn) return goLogin();
     navigate('/myzone/profile');
