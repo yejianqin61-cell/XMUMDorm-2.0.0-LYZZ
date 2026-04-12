@@ -35,7 +35,7 @@
   align-items: center;
   padding: 4px 10px;
   border-radius: 980px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: -0.01em;
   color: var(--post-ios-accent, #007aff);
@@ -57,7 +57,7 @@
 .post-card-content {
   margin: 0 0 10px;
   font-family: var(--post-ios-font, inherit);
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 400;
   line-height: 1.35;
   letter-spacing: -0.02em;
@@ -96,7 +96,7 @@
   align-items: center;
   gap: 12px;
   font-family: var(--post-ios-font, inherit);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 400;
   letter-spacing: -0.01em;
   color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
@@ -156,7 +156,7 @@
 }
 
 .post-card-username {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
   letter-spacing: -0.02em;
   color: var(--post-ios-label, rgba(0, 0, 0, 0.88));
@@ -179,7 +179,7 @@
   background: var(--post-ios-fill, rgba(118, 118, 128, 0.12));
   color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
   font-family: var(--post-ios-font, inherit);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
   letter-spacing: -0.02em;
   cursor: pointer;
@@ -198,11 +198,11 @@
 }
 
 .post-card-like-icon {
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1;
 }
 
 .post-card-like-count {
-  font-size: 13px;
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
 }

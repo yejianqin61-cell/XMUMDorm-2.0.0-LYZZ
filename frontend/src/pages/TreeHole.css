@@ -10,7 +10,7 @@
 .treehole-error {
   margin: 10px 16px 0;
   padding: 10px 12px;
-  font-size: 13px;
+  font-size: 12px;
   font-family: var(--post-ios-font, inherit);
   line-height: 1.35;
   color: var(--post-ios-red, #ff3b30);
@@ -21,7 +21,7 @@
 .treehole-loading {
   padding: 24px 16px;
   text-align: center;
-  font-size: 15px;
+  font-size: 14px;
   font-family: var(--post-ios-font, inherit);
   color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
 }
@@ -31,7 +31,7 @@
   width: 100%;
   margin-top: 14px;
   padding: 12px 16px;
-  font-size: 17px;
+  font-size: 15px;
   font-family: var(--post-ios-font, inherit);
   font-weight: 400;
   letter-spacing: -0.02em;
