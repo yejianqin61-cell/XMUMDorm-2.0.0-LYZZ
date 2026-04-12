@@ -5,6 +5,15 @@
   padding-bottom: calc(50px + var(--safe-bottom));
 }
 
+/* 无顶栏时：主区从刘海下开始，背景图贴顶（仍保留底部 Tab 与安全区） */
+.app-layout--no-topbar .app-main {
+  padding-top: var(--safe-top, 0px);
+}
+
+.app-layout--no-topbar .app-main-bg {
+  top: var(--safe-top, 0px);
+}
+
 .app-main {
   position: relative;
   flex: 1;

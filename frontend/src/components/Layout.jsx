@@ -218,9 +218,15 @@ function Layout() {
     pathname === '/myzone/profile' ||
     pathname.startsWith('/about/');
 
+  /** 顶栏仅在「树洞」Tab（/ 及 /post、/posts 等子路由）显示；食堂/广场/我的主 Tab 隐藏 */
+  const showTopBar = getTabRootPath(pathname) === '/';
+
   return (
-    <div className="app-layout" onClick={handleFirstInteraction}>
-      <TopBar title={title} showBack={showBack} />
+    <div
+      className={`app-layout${showTopBar ? '' : ' app-layout--no-topbar'}`}
+      onClick={handleFirstInteraction}
+    >
+      {showTopBar ? <TopBar title={title} showBack={showBack} /> : null}
       <main className="app-main">
         <div
           className="app-main-bg"
