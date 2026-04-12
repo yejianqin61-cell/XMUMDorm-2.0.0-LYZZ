@@ -99,81 +99,79 @@ function TreeHoleToolbar() {
 
   return (
     <div className="treehole-toolbar" ref={wrapRef}>
-      <div className="treehole-toolbar-glass-block glass-search" aria-label={isZh ? '搜索与标签' : 'Search and tags'}>
-        <form
-          className="treehole-toolbar-search-row"
-          onSubmit={onSearchSubmit}
-          role="search"
-        >
-          <div className="treehole-toolbar-search-field">
-            <input
-              type="search"
-              className="treehole-toolbar-search-input"
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              placeholder={isZh ? '搜索帖子…' : 'Search posts…'}
-              enterKeyHint="search"
-              aria-label={isZh ? '输入关键词搜索帖子' : 'Enter keywords to search posts'}
-            />
-          </div>
-          <button
-            type="submit"
-            className="treehole-toolbar-search-submit"
-            aria-label={isZh ? '搜索' : 'Search'}
-          >
-            <svg
-              className="treehole-toolbar-search-submit-icon"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden
-            >
-              <path
-                d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
-                stroke="currentColor"
-                strokeWidth="1.75"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M15.8 15.8 21 21"
-                stroke="currentColor"
-                strokeWidth="1.75"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-        </form>
-
-        <div className="treehole-toolbar-tags-embed" role="navigation" aria-label={isZh ? '热门标签' : 'Popular tags'}>
-          <div className="treehole-toolbar-tags-scroll">
-            {loadingTags && firstFive.length === 0 ? (
-              <span className="treehole-toolbar-tags-loading">{isZh ? '标签加载中…' : 'Loading tags…'}</span>
-            ) : (
-              firstFive.map((t) => (
-                <Link
-                  key={t.id}
-                  to={`/posts/tag/${encodeURIComponent(t.slug)}`}
-                  className="treehole-toolbar-tag-link"
-                >
-                  {tagDisplay(t)}
-                </Link>
-              ))
-            )}
-          </div>
-          <button
-            type="button"
-            className={`treehole-toolbar-more treehole-toolbar-more-embed ${open ? 'is-open' : ''}`}
-            onClick={() => setOpen((v) => !v)}
-            aria-expanded={open}
-            aria-label={isZh ? '全部标签' : 'All tags'}
-          >
-            <span className="treehole-toolbar-chevron" aria-hidden />
-          </button>
+      <form
+        className="treehole-toolbar-search glass-search"
+        onSubmit={onSearchSubmit}
+        role="search"
+      >
+        <div className="treehole-toolbar-search-field">
+          <input
+            type="search"
+            className="treehole-toolbar-search-input"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            placeholder={isZh ? '搜索帖子…' : 'Search posts…'}
+            enterKeyHint="search"
+            aria-label={isZh ? '输入关键词搜索帖子' : 'Enter keywords to search posts'}
+          />
         </div>
+        <button
+          type="submit"
+          className="treehole-toolbar-search-submit"
+          aria-label={isZh ? '搜索' : 'Search'}
+        >
+          <svg
+            className="treehole-toolbar-search-submit-icon"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden
+          >
+            <path
+              d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M15.8 15.8 21 21"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+      </form>
+
+      <div className="treehole-toolbar-tags-embed" role="navigation" aria-label={isZh ? '热门标签' : 'Popular tags'}>
+        <div className="treehole-toolbar-tags-scroll">
+          {loadingTags && firstFive.length === 0 ? (
+            <span className="treehole-toolbar-tags-loading">{isZh ? '标签加载中…' : 'Loading tags…'}</span>
+          ) : (
+            firstFive.map((t) => (
+              <Link
+                key={t.id}
+                to={`/posts/tag/${encodeURIComponent(t.slug)}`}
+                className="treehole-toolbar-tag-link"
+              >
+                {tagDisplay(t)}
+              </Link>
+            ))
+          )}
+        </div>
+        <button
+          type="button"
+          className={`treehole-toolbar-more treehole-toolbar-more-embed ${open ? 'is-open' : ''}`}
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          aria-label={isZh ? '全部标签' : 'All tags'}
+        >
+          <span className="treehole-toolbar-chevron" aria-hidden />
+        </button>
       </div>
 
       {open && (

@@ -5,12 +5,16 @@
   font-family: var(--post-ios-font, inherit);
 }
 
-/* 搜索 + 标签：同一块液态玻璃，标签为底部嵌入式横滑列表（非圆角胶囊） */
-.treehole-toolbar-glass-block.glass-search {
-  margin-bottom: 12px;
+/* 搜索：独立液态玻璃条（仅表单） */
+.treehole-toolbar-search.glass-search {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 10px;
   box-sizing: border-box;
+  height: 44px;
+  padding: 0 8px 0 14px;
   border-radius: 18px;
-  overflow: hidden;
   background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -21,23 +25,12 @@
   transition: background 0.22s ease, box-shadow 0.22s ease;
 }
 
-.treehole-toolbar-glass-block.glass-search:focus-within {
+.treehole-toolbar-search.glass-search:focus-within {
   background: rgba(255, 255, 255, 0.8);
   box-shadow:
     0 0 0 2px rgba(22, 196, 127, 0.2),
     0 4px 12px rgba(0, 0, 0, 0.05),
     inset 0 1px rgba(255, 255, 255, 0.6);
-}
-
-.treehole-toolbar-search-row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  box-sizing: border-box;
-  height: 44px;
-  padding: 0 8px 0 14px;
-  border-bottom: 1px solid rgba(60, 60, 67, 0.1);
-  background: transparent;
 }
 
 .treehole-toolbar-search-field {
@@ -107,7 +100,7 @@
   color: rgba(60, 60, 67, 0.52);
 }
 
-.treehole-toolbar-glass-block.glass-search:focus-within .treehole-toolbar-search-submit {
+.treehole-toolbar-search.glass-search:focus-within .treehole-toolbar-search-submit {
   color: rgba(60, 60, 67, 0.52);
 }
 
@@ -121,11 +114,15 @@
   color: inherit;
 }
 
+/* 标签：与搜索框分离的横向列表（非液态玻璃、非圆角胶囊） */
 .treehole-toolbar-tags-embed {
   display: flex;
   align-items: stretch;
   min-height: 40px;
-  background: rgba(255, 255, 255, 0.12);
+  margin-bottom: 4px;
+  border-radius: 12px;
+  background: var(--post-ios-fill, rgba(118, 118, 128, 0.1));
+  border: 0.5px solid rgba(60, 60, 67, 0.08);
 }
 
 .treehole-toolbar-tags-scroll {
@@ -191,9 +188,9 @@
   width: 44px;
   min-height: 40px;
   align-self: stretch;
-  border-left: 1px solid rgba(60, 60, 67, 0.12);
+  border-left: 1px solid rgba(60, 60, 67, 0.1);
   border-radius: 0;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.35);
   transition: background 0.15s ease;
 }
 
