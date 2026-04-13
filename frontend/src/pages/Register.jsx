@@ -99,20 +99,22 @@ function Register() {
   };
 
   const tabBase =
-    'flex-1 rounded-full py-2.5 text-sm font-semibold transition border-0 cursor-pointer';
+    'flex-1 rounded-full py-1 text-[11px] font-semibold leading-tight transition border-0 cursor-pointer sm:py-1.5 sm:text-xs';
   const tabIdle = 'bg-transparent text-zinc-600';
-  const tabActive = 'bg-white text-teal-700 shadow-md shadow-teal-900/10';
+  const tabActive = 'bg-white text-teal-700 shadow-sm shadow-teal-900/10';
 
   return (
-    <AuthPageShell>
-      <div className="flex w-full max-w-md flex-col items-center gap-1 sm:gap-2">
-        <MascotHero />
-        <LoginCard>
-          <AuthCardBrandHeader title="XMUMDorm" />
-          <p className="mb-3 mt-0 text-center text-sm font-semibold text-zinc-800">Register</p>
+    <AuthPageShell dense>
+      <div className="-mt-[max(0.25rem,env(safe-area-inset-top,0px))] flex min-h-0 w-full max-w-md flex-col items-center gap-0">
+        <MascotHero compact />
+        <LoginCard className="max-w-[min(100%,22rem)] rounded-[1.25rem] px-3.5 pb-3 pt-2.5 sm:max-w-md sm:px-4 sm:pb-3 sm:pt-3">
+          <AuthCardBrandHeader title="XMUMDorm" compact />
+          <p className="mb-1 mt-0 text-center text-[11px] font-semibold text-zinc-800 sm:text-xs">
+            Register
+          </p>
 
         <div
-          className="mb-5 flex gap-1 rounded-full border border-white/50 bg-white/25 p-1 backdrop-blur-sm"
+          className="mb-2 flex gap-0.5 rounded-full border border-white/50 bg-white/25 p-0.5 backdrop-blur-sm"
           role="tablist"
           aria-label="选择注册类型"
         >
@@ -136,7 +138,7 @@ function Register() {
           </button>
         </div>
 
-        <form className="space-y-4" onSubmit={handleSubmit}>
+        <form className="space-y-2" onSubmit={handleSubmit}>
           {role === ROLE_STUDENT ? (
             <>
               <InputField
@@ -148,6 +150,7 @@ function Register() {
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
                 disabled={loading}
+                compact
               />
               <InputField
                 id="reg-username"
@@ -158,6 +161,7 @@ function Register() {
                 onChange={(e) => setUsername(e.target.value)}
                 autoComplete="username"
                 disabled={loading}
+                compact
               />
               <InputField
                 id="reg-pwd"
@@ -168,12 +172,16 @@ function Register() {
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="new-password"
                 disabled={loading}
+                compact
               />
-              <div className="space-y-1.5">
-                <label htmlFor="reg-code" className="block pl-1 text-xs font-semibold text-zinc-800/80">
+              <div className="space-y-1">
+                <label
+                  htmlFor="reg-code"
+                  className="block pl-0.5 text-[10px] font-semibold leading-tight text-zinc-800/80"
+                >
                   验证码 Code
                 </label>
-                <div className="flex gap-2">
+                <div className="flex gap-1.5">
                   <input
                     id="reg-code"
                     type="text"
@@ -181,7 +189,7 @@ function Register() {
                     value={verificationCode}
                     onChange={(e) => setVerificationCode(e.target.value)}
                     disabled={loading}
-                    className="min-w-0 flex-1 rounded-full border-0 bg-white px-4 py-3 text-[15px] text-zinc-900 shadow-inner outline-none ring-2 ring-transparent focus:ring-sky-500/50 disabled:opacity-60"
+                    className="min-w-0 flex-1 rounded-full border-0 bg-white px-3 py-1.5 text-[13px] text-zinc-900 shadow-inner outline-none ring-2 ring-transparent focus:ring-sky-500/50 disabled:opacity-60"
                   />
                   <button
                     type="button"
@@ -220,7 +228,7 @@ function Register() {
                         setSendingCode(false);
                       }
                     }}
-                    className="shrink-0 rounded-full border border-white/50 bg-gradient-to-r from-sky-500 to-cyan-400 px-3 py-2 text-xs font-bold text-zinc-900 shadow-md disabled:opacity-45"
+                    className="shrink-0 rounded-full border border-white/50 bg-gradient-to-r from-sky-500 to-cyan-400 px-2 py-1.5 text-[10px] font-bold text-zinc-900 shadow-md disabled:opacity-45 sm:px-2.5 sm:text-xs"
                   >
                     {codeCountdown > 0 ? `${codeCountdown}s` : sendingCode ? '…' : '发送'}
                   </button>
@@ -229,7 +237,7 @@ function Register() {
             </>
           ) : (
             <>
-              <p className="rounded-xl border border-emerald-200/60 bg-emerald-50/80 px-3 py-2 text-xs leading-relaxed text-zinc-700">
+              <p className="rounded-lg border border-emerald-200/60 bg-emerald-50/80 px-2 py-1 text-[10px] leading-snug text-zinc-700 sm:text-[11px]">
                 商家账号需邀请码。Merchant sign-up requires an invite code.
               </p>
               <InputField
@@ -241,6 +249,7 @@ function Register() {
                 onChange={(e) => setUsername(e.target.value)}
                 autoComplete="username"
                 disabled={loading}
+                compact
               />
               <InputField
                 id="reg-merchant-pwd"
@@ -251,6 +260,7 @@ function Register() {
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="new-password"
                 disabled={loading}
+                compact
               />
               <InputField
                 id="reg-invite"
@@ -261,13 +271,14 @@ function Register() {
                 onChange={(e) => setInviteCode(e.target.value)}
                 autoComplete="off"
                 disabled={loading}
+                compact
               />
             </>
           )}
 
           {message.text ? (
             <p
-              className={`rounded-xl px-3 py-2 text-center text-xs font-medium ${
+              className={`rounded-lg px-2 py-1 text-center text-[10px] font-medium leading-snug sm:text-[11px] ${
                 message.type === 'success'
                   ? 'bg-emerald-100/90 text-emerald-900'
                   : 'bg-red-50/95 text-red-800'
@@ -278,8 +289,13 @@ function Register() {
             </p>
           ) : null}
 
-          <div className="pt-1">
-            <Button type="submit" variant="primary" disabled={loading}>
+          <div className="pt-0.5">
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={loading}
+              className="!py-2 !text-sm font-bold sm:!py-2.5"
+            >
               {loading ? '注册中…' : 'register'}
             </Button>
           </div>
@@ -287,8 +303,8 @@ function Register() {
         </LoginCard>
       </div>
 
-      <nav className="flex w-full max-w-md flex-col gap-2.5 px-1" aria-label="返回登录">
-        <Button as={Link} variant="ghost" to="/login">
+      <nav className="flex w-full max-w-[min(100%,22rem)] flex-col px-0.5 sm:max-w-md" aria-label="返回登录">
+        <Button as={Link} variant="ghost" to="/login" className="!py-2 !text-xs">
           已有账号 · Login
         </Button>
       </nav>

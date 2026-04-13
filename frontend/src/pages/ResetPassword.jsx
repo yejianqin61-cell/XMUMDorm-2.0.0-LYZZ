@@ -9,7 +9,7 @@ import LoginCard from '../components/auth/LoginCard';
 import InputField from '../components/auth/InputField';
 import Button from '../components/auth/Button';
 
-/** 重置密码：与登录/注册同一套视觉（渐变 + 卡通在卡片外 + 玻璃卡片） */
+/** 重置密码：与注册页相同的一屏紧凑布局（dense + compact，无整页滚动） */
 function ResetPassword() {
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
@@ -98,14 +98,16 @@ function ResetPassword() {
   };
 
   return (
-    <AuthPageShell>
-      <div className="flex w-full max-w-md flex-col items-center gap-1 sm:gap-2">
-        <MascotHero />
-        <LoginCard>
-          <AuthCardBrandHeader title="XMUMDorm" />
-          <p className="mb-3 mt-0 text-center text-sm font-semibold text-zinc-800">重置密码 Reset password</p>
+    <AuthPageShell dense>
+      <div className="-mt-[max(0.25rem,env(safe-area-inset-top,0px))] flex min-h-0 w-full max-w-md flex-col items-center gap-0">
+        <MascotHero compact />
+        <LoginCard className="max-w-[min(100%,22rem)] rounded-[1.25rem] px-3.5 pb-3 pt-2.5 sm:max-w-md sm:px-4 sm:pb-3 sm:pt-3">
+          <AuthCardBrandHeader title="XMUMDorm" compact />
+          <p className="mb-1 mt-0 text-center text-[11px] font-semibold text-zinc-800 sm:text-xs">
+            重置密码 Reset password
+          </p>
 
-          <form className="mt-0 space-y-4" onSubmit={handleSubmit}>
+          <form className="mt-0 space-y-2" onSubmit={handleSubmit}>
             <InputField
               id="reset-email"
               label="School email (@xmu.edu.my)"
@@ -115,13 +117,17 @@ function ResetPassword() {
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
               disabled={loading}
+              compact
             />
 
-            <div className="space-y-1.5">
-              <label htmlFor="reset-code" className="block pl-1 text-xs font-semibold tracking-wide text-zinc-800/80">
+            <div className="space-y-1">
+              <label
+                htmlFor="reset-code"
+                className="block pl-0.5 text-[10px] font-semibold leading-tight text-zinc-800/80"
+              >
                 验证码 Verification code
               </label>
-              <div className="flex gap-2">
+              <div className="flex gap-1.5">
                 <input
                   id="reset-code"
                   type="text"
@@ -129,7 +135,7 @@ function ResetPassword() {
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                   disabled={loading}
-                  className="min-w-0 flex-1 rounded-full border-0 bg-white px-4 py-3 text-[15px] text-zinc-900 shadow-inner outline-none ring-2 ring-transparent transition placeholder:text-zinc-400 focus:ring-sky-500/50 disabled:opacity-60"
+                  className="min-w-0 flex-1 rounded-full border-0 bg-white px-3 py-1.5 text-[13px] text-zinc-900 shadow-inner outline-none ring-2 ring-transparent transition placeholder:text-zinc-400 focus:ring-sky-500/50 disabled:opacity-60"
                 />
                 <button
                   type="button"
@@ -137,7 +143,7 @@ function ResetPassword() {
                     loading || sendingCode || codeCountdown > 0 || !email.trim().endsWith('@xmu.edu.my')
                   }
                   onClick={handleSendCode}
-                  className="shrink-0 rounded-full border border-white/50 bg-gradient-to-r from-sky-500 to-cyan-400 px-3 py-2 text-xs font-bold text-zinc-900 shadow-md disabled:opacity-45"
+                  className="shrink-0 rounded-full border border-white/50 bg-gradient-to-r from-sky-500 to-cyan-400 px-2 py-1.5 text-[10px] font-bold text-zinc-900 shadow-md disabled:opacity-45 sm:px-2.5 sm:text-xs"
                 >
                   {codeCountdown > 0 ? `${codeCountdown}s` : sendingCode ? '…' : '发送'}
                 </button>
@@ -153,11 +159,12 @@ function ResetPassword() {
               onChange={(e) => setNewPassword(e.target.value)}
               autoComplete="new-password"
               disabled={loading}
+              compact
             />
 
             {message.text ? (
               <p
-                className={`rounded-xl px-3 py-2 text-center text-xs font-medium ${
+                className={`rounded-lg px-2 py-1 text-center text-[10px] font-medium leading-snug sm:text-[11px] ${
                   message.type === 'success'
                     ? 'bg-emerald-100/90 text-emerald-900'
                     : 'bg-red-50/95 text-red-800'
@@ -168,8 +175,13 @@ function ResetPassword() {
               </p>
             ) : null}
 
-            <div className="pt-1">
-              <Button type="submit" variant="primary" disabled={loading}>
+            <div className="pt-0.5">
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={loading}
+                className="!py-2 !text-sm font-bold sm:!py-2.5"
+              >
                 {loading ? '提交中…' : '确认重置 Confirm'}
               </Button>
             </div>
@@ -177,8 +189,8 @@ function ResetPassword() {
         </LoginCard>
       </div>
 
-      <nav className="flex w-full max-w-md flex-col gap-2.5 px-1" aria-label="返回登录">
-        <Button as={Link} variant="ghost" to="/login">
+      <nav className="flex w-full max-w-[min(100%,22rem)] flex-col px-0.5 sm:max-w-md" aria-label="返回登录">
+        <Button as={Link} variant="ghost" to="/login" className="!py-2 !text-xs">
           返回登录 Back to login
         </Button>
       </nav>

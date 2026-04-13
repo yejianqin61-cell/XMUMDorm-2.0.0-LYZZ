@@ -80,8 +80,37 @@ function Login() {
             <Button type="submit" variant="primary" disabled={loading}>
               {loading ? '登录中…' : 'login'}
             </Button>
-            <div className="flex justify-end pr-0.5">
-              <Button type="button" variant="skip" disabled={loading} onClick={handleSkip}>
+            <div
+              className="flex gap-2 pr-0.5"
+              role="group"
+              aria-label="注册、重置密码与跳过"
+            >
+              <Button
+                as={Link}
+                variant="skip"
+                to="/register"
+                disabled={loading}
+                className="min-w-0 flex-1 px-2 py-1.5 text-[11px] leading-tight sm:px-3 sm:py-2 sm:text-xs"
+              >
+                Register
+              </Button>
+              <Button
+                as={Link}
+                variant="skip"
+                to="/reset-password"
+                disabled={loading}
+                aria-label="Reset password"
+                className="min-w-0 flex-1 px-2 py-1.5 text-[11px] leading-tight sm:px-3 sm:py-2 sm:text-xs"
+              >
+                Reset password
+              </Button>
+              <Button
+                type="button"
+                variant="skip"
+                disabled={loading}
+                onClick={handleSkip}
+                className="min-w-0 flex-1 px-2 py-1.5 text-[11px] leading-tight sm:px-3 sm:py-2 sm:text-xs"
+              >
                 skip
               </Button>
             </div>
@@ -89,15 +118,6 @@ function Login() {
         </form>
         </LoginCard>
       </div>
-
-      <nav className="flex w-full max-w-md flex-col gap-2.5 px-1" aria-label="其他入口">
-        <Button as={Link} variant="ghost" to="/register">
-          Register
-        </Button>
-        <Button as={Link} variant="ghost" to="/reset-password">
-          Reset password
-        </Button>
-      </nav>
     </AuthPageShell>
   );
 }
