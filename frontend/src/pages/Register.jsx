@@ -105,7 +105,7 @@ function Register() {
 
   return (
     <AuthPageShell dense>
-      <div className="-mt-[max(0.25rem,env(safe-area-inset-top,0px))] flex min-h-0 w-full max-w-md flex-col items-center gap-0">
+      <div className="flex min-h-0 w-full max-w-md flex-col items-center gap-1">
         <MascotHero compact />
         <LoginCard className="max-w-[min(100%,22rem)] rounded-[1.25rem] px-3.5 pb-3 pt-2.5 sm:max-w-md sm:px-4 sm:pb-3 sm:pt-3">
           <AuthCardBrandHeader title="XMUMDorm" compact />
@@ -303,7 +303,7 @@ function Register() {
         </LoginCard>
       </div>
 
-      <nav className="flex w-full max-w-[min(100%,22rem)] flex-col px-0.5 sm:max-w-md" aria-label="返回登录">
+      <nav className="mt-2 flex w-full max-w-[min(100%,22rem)] flex-col px-0.5 sm:max-w-md" aria-label="返回登录">
         <Button as={Link} variant="ghost" to="/login" className="!py-2 !text-xs">
           已有账号 · Login
         </Button>
