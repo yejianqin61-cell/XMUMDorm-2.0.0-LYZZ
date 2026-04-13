@@ -3,9 +3,14 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Toast } from '../context/ToastContext';
 import { getApiErrorMessage } from '../utils/apiError';
-import './Login.css';
+import AuthPageShell from '../components/auth/AuthPageShell';
+import AuthCardBrandHeader from '../components/auth/AuthCardBrandHeader';
+import MascotHero from '../components/auth/MascotHero';
+import LoginCard from '../components/auth/LoginCard';
+import InputField from '../components/auth/InputField';
+import Button from '../components/auth/Button';
 
-/** 登录页：微信风格，学号/邮箱 + 密码；暂不登录可回主页 */
+/** 登录页：手稿风格（渐变 + 玻璃卡片 + 组件化） */
 function Login() {
   const [studentIdOrEmail, setStudentIdOrEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -45,59 +50,55 @@ function Login() {
   };
 
   return (
-    <div className="login-page">
-      <div className="login-box">
-        <h1 className="login-title">XMUMDorm 厦马小筑</h1>
-        <p className="login-subtitle">登录 Login</p>
-
-        <form className="login-form" onSubmit={handleSubmit}>
-          <div className="login-field">
-            <label htmlFor="login-account">邮箱 / 商家用户名 Email / Merchant username</label>
-            <input
-              id="login-account"
-              type="text"
-              placeholder="学生填邮箱、商家填用户名 Email (student) or username (merchant)"
-              value={studentIdOrEmail}
-              onChange={(e) => setStudentIdOrEmail(e.target.value)}
-              autoComplete="username"
-              disabled={loading}
-            />
-          </div>
-          <div className="login-field">
-            <label htmlFor="login-pwd">密码 Password</label>
-            <input
-              id="login-pwd"
-              type="password"
-              placeholder="请输入密码 Enter password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-              disabled={loading}
-            />
-          </div>
-
-          <button type="submit" className="login-btn login-btn-primary" disabled={loading}>
-            {loading ? '登录中… Logging in…' : '登录 Login'}
-          </button>
-
-          <button
-            type="button"
-            className="login-btn login-btn-skip"
-            onClick={handleSkip}
+    <AuthPageShell>
+      <div className="flex w-full max-w-md flex-col items-center gap-1 sm:gap-2">
+        <MascotHero />
+        <LoginCard>
+          <AuthCardBrandHeader title="XMUMDorm" />
+          <form className="mt-0 space-y-4" onSubmit={handleSubmit}>
+          <InputField
+            id="login-account"
+            label="School email"
+            type="text"
+            placeholder="enter your email"
+            value={studentIdOrEmail}
+            onChange={(e) => setStudentIdOrEmail(e.target.value)}
+            autoComplete="username"
             disabled={loading}
-          >
-            暂不登录 Skip
-          </button>
+          />
+          <InputField
+            id="login-pwd"
+            label="Password"
+            type="password"
+            placeholder="enter password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
+            disabled={loading}
+          />
+          <div className="space-y-3 pt-1">
+            <Button type="submit" variant="primary" disabled={loading}>
+              {loading ? '登录中…' : 'login'}
+            </Button>
+            <div className="flex justify-end pr-0.5">
+              <Button type="button" variant="skip" disabled={loading} onClick={handleSkip}>
+                skip
+              </Button>
+            </div>
+          </div>
         </form>
-
-        <p className="login-footer">
-          还没有账号？No account? <Link to="/register">立即注册 Register</Link>
-        </p>
-        <p className="login-footer">
-          忘记密码？Forgot password? <Link to="/reset-password">重置密码 Reset</Link>
-        </p>
+        </LoginCard>
       </div>
-    </div>
+
+      <nav className="flex w-full max-w-md flex-col gap-2.5 px-1" aria-label="其他入口">
+        <Button as={Link} variant="ghost" to="/register">
+          Register
+        </Button>
+        <Button as={Link} variant="ghost" to="/reset-password">
+          Reset password
+        </Button>
+      </nav>
+    </AuthPageShell>
   );
 }
 

@@ -1,14 +1,18 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { API_BASE_URL } from '../api/config';
 import { getApiErrorMessage } from '../utils/apiError';
 import { sendVerificationCode, register as apiRegister } from '../api/auth';
-import './Register.css';
+import AuthPageShell from '../components/auth/AuthPageShell';
+import AuthCardBrandHeader from '../components/auth/AuthCardBrandHeader';
+import MascotHero from '../components/auth/MascotHero';
+import LoginCard from '../components/auth/LoginCard';
+import InputField from '../components/auth/InputField';
+import Button from '../components/auth/Button';
 
 const ROLE_STUDENT = 'student';
 const ROLE_MERCHANT = 'merchant';
 
-/** 注册页：学生 / 商家角色选择，学生用邮箱+用户名+密码，商家用用户名+密码+邀请码 */
+/** 注册页：与登录页同一套视觉（渐变 + 玻璃卡片 + 组件化） */
 function Register() {
   const [role, setRole] = useState(ROLE_STUDENT);
   const [email, setEmail] = useState('');
@@ -94,18 +98,29 @@ function Register() {
     }
   };
 
-  return (
-    <div className="register-page">
-      <div className="register-box">
-        <h1 className="register-title">XMUMDorm 厦马小筑</h1>
-        <p className="register-subtitle">注册 Register</p>
+  const tabBase =
+    'flex-1 rounded-full py-2.5 text-sm font-semibold transition border-0 cursor-pointer';
+  const tabIdle = 'bg-transparent text-zinc-600';
+  const tabActive = 'bg-white text-teal-700 shadow-md shadow-teal-900/10';
 
-        <div className="register-role-tabs" role="tablist" aria-label="选择注册类型">
+  return (
+    <AuthPageShell>
+      <div className="flex w-full max-w-md flex-col items-center gap-1 sm:gap-2">
+        <MascotHero />
+        <LoginCard>
+          <AuthCardBrandHeader title="XMUMDorm" />
+          <p className="mb-3 mt-0 text-center text-sm font-semibold text-zinc-800">Register</p>
+
+        <div
+          className="mb-5 flex gap-1 rounded-full border border-white/50 bg-white/25 p-1 backdrop-blur-sm"
+          role="tablist"
+          aria-label="选择注册类型"
+        >
           <button
             type="button"
             role="tab"
             aria-selected={role === ROLE_STUDENT}
-            className={`register-role-tab ${role === ROLE_STUDENT ? 'is-active' : ''}`}
+            className={`${tabBase} ${role === ROLE_STUDENT ? tabActive : tabIdle}`}
             onClick={() => setRole(ROLE_STUDENT)}
           >
             学生 Student
@@ -114,66 +129,62 @@ function Register() {
             type="button"
             role="tab"
             aria-selected={role === ROLE_MERCHANT}
-            className={`register-role-tab ${role === ROLE_MERCHANT ? 'is-active' : ''}`}
+            className={`${tabBase} ${role === ROLE_MERCHANT ? tabActive : tabIdle}`}
             onClick={() => setRole(ROLE_MERCHANT)}
           >
             商家 Merchant
           </button>
         </div>
 
-        <form className="register-form" onSubmit={handleSubmit}>
+        <form className="space-y-4" onSubmit={handleSubmit}>
           {role === ROLE_STUDENT ? (
             <>
-              <div className="register-field">
-                <label htmlFor="reg-email">邮箱 Email（@xmu.edu.my）</label>
-                <input
-                  id="reg-email"
-                  type="email"
-                  placeholder="请输入学校邮箱"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  autoComplete="email"
-                  disabled={loading}
-                />
-              </div>
-              <div className="register-field">
-                <label htmlFor="reg-username">用户名 Username</label>
-                <input
-                  id="reg-username"
-                  type="text"
-                  placeholder="请输入用户名 Enter username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  autoComplete="username"
-                  disabled={loading}
-                />
-              </div>
-              <div className="register-field">
-                <label htmlFor="reg-pwd">密码 Password（至少 6 位 at least 6）</label>
-                <input
-                  id="reg-pwd"
-                  type="password"
-                  placeholder="请输入密码 Enter password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="new-password"
-                  disabled={loading}
-                />
-              </div>
-              <div className="register-field">
-                <label htmlFor="reg-code">验证码 Verification code</label>
-                <div className="register-code-row">
+              <InputField
+                id="reg-email"
+                label="邮箱 Email (@xmu.edu.my)"
+                type="email"
+                placeholder="学校邮箱"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+                disabled={loading}
+              />
+              <InputField
+                id="reg-username"
+                label="用户名 Username"
+                type="text"
+                placeholder="用户名"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                autoComplete="username"
+                disabled={loading}
+              />
+              <InputField
+                id="reg-pwd"
+                label="密码 Password（≥6）"
+                type="password"
+                placeholder="至少 6 位"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
+                disabled={loading}
+              />
+              <div className="space-y-1.5">
+                <label htmlFor="reg-code" className="block pl-1 text-xs font-semibold text-zinc-800/80">
+                  验证码 Code
+                </label>
+                <div className="flex gap-2">
                   <input
                     id="reg-code"
                     type="text"
-                    placeholder="请输入邮箱验证码 Enter email code"
+                    placeholder="邮箱验证码"
                     value={verificationCode}
                     onChange={(e) => setVerificationCode(e.target.value)}
                     disabled={loading}
+                    className="min-w-0 flex-1 rounded-full border-0 bg-white px-4 py-3 text-[15px] text-zinc-900 shadow-inner outline-none ring-2 ring-transparent focus:ring-sky-500/50 disabled:opacity-60"
                   />
                   <button
                     type="button"
-                    className="register-btn-code"
                     disabled={loading || sendingCode || codeCountdown > 0 || !email.trim().endsWith('@xmu.edu.my')}
                     onClick={async () => {
                       const em = email.trim();
@@ -189,7 +200,7 @@ function Register() {
                         setSendingCode(true);
                         const res = await sendVerificationCode(em);
                         if (res.success) {
-                          showMsg(res.message || '验证码已发送，请查收邮箱 Code sent', 'success');
+                          showMsg(res.message || '验证码已发送 Code sent', 'success');
                           setCodeCountdown(60);
                           const timer = setInterval(() => {
                             setCodeCountdown((prev) => {
@@ -201,7 +212,7 @@ function Register() {
                             });
                           }, 1000);
                         } else {
-                          showMsg(res.message || '验证码发送失败 Code send failed', 'error');
+                          showMsg(res.message || '发送失败 Send failed', 'error');
                         }
                       } catch (err) {
                         showMsg(getApiErrorMessage(err), 'error');
@@ -209,68 +220,79 @@ function Register() {
                         setSendingCode(false);
                       }
                     }}
+                    className="shrink-0 rounded-full border border-white/50 bg-gradient-to-r from-sky-500 to-cyan-400 px-3 py-2 text-xs font-bold text-zinc-900 shadow-md disabled:opacity-45"
                   >
-                    {codeCountdown > 0 ? `${codeCountdown}s` : sendingCode ? '发送中…' : '发送验证码'}
+                    {codeCountdown > 0 ? `${codeCountdown}s` : sendingCode ? '…' : '发送'}
                   </button>
                 </div>
               </div>
             </>
           ) : (
             <>
-              <p className="register-role-hint">商家账号需使用邀请码注册。Merchant sign-up requires an invite code.</p>
-              <div className="register-field">
-                <label htmlFor="reg-merchant-username">用户名 Username</label>
-                <input
-                  id="reg-merchant-username"
-                  type="text"
-                  placeholder="请输入用户名 Enter username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  autoComplete="username"
-                  disabled={loading}
-                />
-              </div>
-              <div className="register-field">
-                <label htmlFor="reg-merchant-pwd">密码 Password（至少 6 位 at least 6）</label>
-                <input
-                  id="reg-merchant-pwd"
-                  type="password"
-                  placeholder="请输入密码 Enter password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="new-password"
-                  disabled={loading}
-                />
-              </div>
-              <div className="register-field">
-                <label htmlFor="reg-invite">邀请码 Invite code</label>
-                <input
-                  id="reg-invite"
-                  type="text"
-                  placeholder="请输入商家邀请码 Enter invite code"
-                  value={inviteCode}
-                  onChange={(e) => setInviteCode(e.target.value)}
-                  autoComplete="off"
-                  disabled={loading}
-                />
-              </div>
+              <p className="rounded-xl border border-emerald-200/60 bg-emerald-50/80 px-3 py-2 text-xs leading-relaxed text-zinc-700">
+                商家账号需邀请码。Merchant sign-up requires an invite code.
+              </p>
+              <InputField
+                id="reg-merchant-username"
+                label="用户名 Username"
+                type="text"
+                placeholder="用户名"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                autoComplete="username"
+                disabled={loading}
+              />
+              <InputField
+                id="reg-merchant-pwd"
+                label="密码 Password（≥6）"
+                type="password"
+                placeholder="至少 6 位"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
+                disabled={loading}
+              />
+              <InputField
+                id="reg-invite"
+                label="邀请码 Invite code"
+                type="text"
+                placeholder="商家邀请码"
+                value={inviteCode}
+                onChange={(e) => setInviteCode(e.target.value)}
+                autoComplete="off"
+                disabled={loading}
+              />
             </>
           )}
 
-          {message.text && (
-            <p className={`register-message register-message-${message.type}`}>{message.text}</p>
-          )}
+          {message.text ? (
+            <p
+              className={`rounded-xl px-3 py-2 text-center text-xs font-medium ${
+                message.type === 'success'
+                  ? 'bg-emerald-100/90 text-emerald-900'
+                  : 'bg-red-50/95 text-red-800'
+              }`}
+              role="status"
+            >
+              {message.text}
+            </p>
+          ) : null}
 
-          <button type="submit" className="register-btn register-btn-primary" disabled={loading}>
-            {loading ? '注册中… Registering…' : '注册 Register'}
-          </button>
+          <div className="pt-1">
+            <Button type="submit" variant="primary" disabled={loading}>
+              {loading ? '注册中…' : 'register'}
+            </Button>
+          </div>
         </form>
-
-        <p className="register-footer">
-          已有账号？Already have an account? <Link to="/login">立即登录 Login</Link>
-        </p>
+        </LoginCard>
       </div>
-    </div>
+
+      <nav className="flex w-full max-w-md flex-col gap-2.5 px-1" aria-label="返回登录">
+        <Button as={Link} variant="ghost" to="/login">
+          已有账号 · Login
+        </Button>
+      </nav>
+    </AuthPageShell>
   );
 }
 

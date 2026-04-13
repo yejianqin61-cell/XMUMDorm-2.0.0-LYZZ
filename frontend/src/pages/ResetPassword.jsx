@@ -2,8 +2,14 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { sendResetCode, resetPassword } from '../api/auth';
 import { getApiErrorMessage } from '../utils/apiError';
-import './ResetPassword.css';
+import AuthPageShell from '../components/auth/AuthPageShell';
+import AuthCardBrandHeader from '../components/auth/AuthCardBrandHeader';
+import MascotHero from '../components/auth/MascotHero';
+import LoginCard from '../components/auth/LoginCard';
+import InputField from '../components/auth/InputField';
+import Button from '../components/auth/Button';
 
+/** 重置密码：与登录/注册同一套视觉（渐变 + 卡通在卡片外 + 玻璃卡片） */
 function ResetPassword() {
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
@@ -92,74 +98,92 @@ function ResetPassword() {
   };
 
   return (
-    <div className="reset-page">
-      <div className="reset-box">
-        <h1 className="reset-title">XMUMDorm 厦马小筑</h1>
-        <p className="reset-subtitle">重置密码 Reset password</p>
+    <AuthPageShell>
+      <div className="flex w-full max-w-md flex-col items-center gap-1 sm:gap-2">
+        <MascotHero />
+        <LoginCard>
+          <AuthCardBrandHeader title="XMUMDorm" />
+          <p className="mb-3 mt-0 text-center text-sm font-semibold text-zinc-800">重置密码 Reset password</p>
 
-        <form className="reset-form" onSubmit={handleSubmit}>
-          <div className="reset-field">
-            <label htmlFor="reset-email">邮箱 Email（@xmu.edu.my）</label>
-            <input
+          <form className="mt-0 space-y-4" onSubmit={handleSubmit}>
+            <InputField
               id="reset-email"
+              label="School email (@xmu.edu.my)"
               type="email"
-              placeholder="请输入学校邮箱 Enter school email"
+              placeholder="enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
               disabled={loading}
             />
-          </div>
-          <div className="reset-field">
-            <label htmlFor="reset-code">验证码 Verification code</label>
-            <div className="reset-code-row">
-              <input
-                id="reset-code"
-                type="text"
-                placeholder="请输入验证码 Enter code"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                disabled={loading}
-              />
-              <button
-                type="button"
-                className="reset-btn-code"
-                disabled={loading || sendingCode || codeCountdown > 0 || !email.trim().endsWith('@xmu.edu.my')}
-                onClick={handleSendCode}
-              >
-                {codeCountdown > 0 ? `${codeCountdown}s` : sendingCode ? '发送中…' : '发送验证码'}
-              </button>
+
+            <div className="space-y-1.5">
+              <label htmlFor="reset-code" className="block pl-1 text-xs font-semibold tracking-wide text-zinc-800/80">
+                验证码 Verification code
+              </label>
+              <div className="flex gap-2">
+                <input
+                  id="reset-code"
+                  type="text"
+                  placeholder="enter code"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  disabled={loading}
+                  className="min-w-0 flex-1 rounded-full border-0 bg-white px-4 py-3 text-[15px] text-zinc-900 shadow-inner outline-none ring-2 ring-transparent transition placeholder:text-zinc-400 focus:ring-sky-500/50 disabled:opacity-60"
+                />
+                <button
+                  type="button"
+                  disabled={
+                    loading || sendingCode || codeCountdown > 0 || !email.trim().endsWith('@xmu.edu.my')
+                  }
+                  onClick={handleSendCode}
+                  className="shrink-0 rounded-full border border-white/50 bg-gradient-to-r from-sky-500 to-cyan-400 px-3 py-2 text-xs font-bold text-zinc-900 shadow-md disabled:opacity-45"
+                >
+                  {codeCountdown > 0 ? `${codeCountdown}s` : sendingCode ? '…' : '发送'}
+                </button>
+              </div>
             </div>
-          </div>
-          <div className="reset-field">
-            <label htmlFor="reset-pwd">新密码 New password（至少 6 位）</label>
-            <input
+
+            <InputField
               id="reset-pwd"
+              label="新密码 New password（≥6）"
               type="password"
-              placeholder="请输入新密码 Enter new password"
+              placeholder="enter new password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               autoComplete="new-password"
               disabled={loading}
             />
-          </div>
 
-          {message.text && (
-            <p className={`reset-message reset-message-${message.type}`}>{message.text}</p>
-          )}
+            {message.text ? (
+              <p
+                className={`rounded-xl px-3 py-2 text-center text-xs font-medium ${
+                  message.type === 'success'
+                    ? 'bg-emerald-100/90 text-emerald-900'
+                    : 'bg-red-50/95 text-red-800'
+                }`}
+                role="status"
+              >
+                {message.text}
+              </p>
+            ) : null}
 
-          <button type="submit" className="reset-btn reset-btn-primary" disabled={loading}>
-            {loading ? '提交中… Submitting…' : '确认重置 Confirm'}
-          </button>
-        </form>
-
-        <p className="reset-footer">
-          想起密码了？Remembered your password? <Link to="/login">返回登录 Back to login</Link>
-        </p>
+            <div className="pt-1">
+              <Button type="submit" variant="primary" disabled={loading}>
+                {loading ? '提交中…' : '确认重置 Confirm'}
+              </Button>
+            </div>
+          </form>
+        </LoginCard>
       </div>
-    </div>
+
+      <nav className="flex w-full max-w-md flex-col gap-2.5 px-1" aria-label="返回登录">
+        <Button as={Link} variant="ghost" to="/login">
+          返回登录 Back to login
+        </Button>
+      </nav>
+    </AuthPageShell>
   );
 }
 
 export default ResetPassword;
-
