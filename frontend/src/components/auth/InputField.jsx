@@ -13,6 +13,7 @@ export default function InputField({
   autoComplete,
   className = '',
   compact = false,
+  inputClassName = '',
 }) {
   const gap = compact ? 'space-y-1' : 'space-y-1.5';
   const labelCls = compact
@@ -37,7 +38,7 @@ export default function InputField({
         onChange={onChange}
         disabled={disabled}
         autoComplete={autoComplete}
-        className={inputCls}
+        className={`${inputCls} ${inputClassName}`.trim()}
       />
     </div>
   );

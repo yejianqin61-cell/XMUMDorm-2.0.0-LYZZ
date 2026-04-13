@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { sendResetCode, resetPassword } from '../api/auth';
 import { getApiErrorMessage } from '../utils/apiError';
 import AuthPageShell from '../components/auth/AuthPageShell';
-import AuthCardBrandHeader from '../components/auth/AuthCardBrandHeader';
 import MascotHero from '../components/auth/MascotHero';
 import LoginCard from '../components/auth/LoginCard';
 import InputField from '../components/auth/InputField';
@@ -29,18 +28,18 @@ function ResetPassword() {
   const handleSendCode = async () => {
     const em = email.trim();
     if (!em) {
-      showMsg('请先填写邮箱 Please fill in email first', 'error');
+      showMsg('Please fill in email first', 'error');
       return;
     }
     if (!em.endsWith('@xmu.edu.my')) {
-      showMsg('邮箱必须是 @xmu.edu.my 格式 Email must be @xmu.edu.my', 'error');
+      showMsg('Email must be @xmu.edu.my', 'error');
       return;
     }
     try {
       setSendingCode(true);
       const res = await sendResetCode(em);
       if (res.success) {
-        showMsg(res.message || '重置验证码已发送，请查收邮箱 Code sent', 'success');
+        showMsg(res.message || 'Code sent', 'success');
         setCodeCountdown(60);
         const timer = setInterval(() => {
           setCodeCountdown((prev) => {
@@ -52,7 +51,7 @@ function ResetPassword() {
           });
         }, 1000);
       } else {
-        showMsg(res.message || '发送失败 Failed to send code', 'error');
+        showMsg(res.message || 'Failed to send code', 'error');
       }
     } catch (err) {
       showMsg(getApiErrorMessage(err), 'error');
@@ -65,15 +64,15 @@ function ResetPassword() {
     e.preventDefault();
     const em = email.trim();
     if (!em || !code.trim() || !newPassword) {
-      showMsg('请填写邮箱、验证码和新密码 Please fill in email, code and new password', 'error');
+      showMsg('Please fill in email, code and new password', 'error');
       return;
     }
     if (!em.endsWith('@xmu.edu.my')) {
-      showMsg('邮箱必须是 @xmu.edu.my 格式 Email must be @xmu.edu.my', 'error');
+      showMsg('Email must be @xmu.edu.my', 'error');
       return;
     }
     if (newPassword.length < 6) {
-      showMsg('新密码长度至少 6 个字符 Password at least 6 characters', 'error');
+      showMsg('Password must be at least 6 characters', 'error');
       return;
     }
     setLoading(true);
@@ -85,10 +84,10 @@ function ResetPassword() {
         new_password: newPassword,
       });
       if (res.success) {
-        showMsg(res.message || '密码重置成功，请使用新密码登录 Password reset success', 'success');
+        showMsg(res.message || 'Password reset success', 'success');
         setTimeout(() => navigate('/login', { replace: true }), 800);
       } else {
-        showMsg(res.message || '密码重置失败 Password reset failed', 'error');
+        showMsg(res.message || 'Password reset failed', 'error');
       }
     } catch (err) {
       showMsg(getApiErrorMessage(err), 'error');
@@ -99,25 +98,21 @@ function ResetPassword() {
 
   return (
     <AuthPageShell dense>
-      <div className="flex min-h-0 w-full max-w-md flex-col items-center gap-1">
-        <MascotHero compact />
-        <LoginCard className="max-w-[min(100%,22rem)] rounded-[1.25rem] px-3.5 pb-3 pt-2.5 sm:max-w-md sm:px-4 sm:pb-3 sm:pt-3">
-          <AuthCardBrandHeader title="XMUMDorm" compact />
-          <p className="mb-1 mt-0 text-center text-[11px] font-semibold text-zinc-800 sm:text-xs">
-            重置密码 Reset password
-          </p>
-
-          <form className="mt-0 space-y-2" onSubmit={handleSubmit}>
+      <div className="flex min-h-0 w-full max-w-4xl flex-1 flex-col items-center">
+        <div className="flex w-full min-h-0 flex-1 flex-col items-center gap-1">
+          <MascotHero compact />
+          <LoginCard className="!border-0 flex w-full max-w-none flex-1 flex-col rounded-[1.25rem] px-6 pb-5 pt-5 sm:px-12 sm:pb-7 sm:pt-7 min-h-[28rem] sm:min-h-[30rem]">
+          <form className="flex flex-1 flex-col space-y-4" onSubmit={handleSubmit}>
             <InputField
               id="reset-email"
               label="School email (@xmu.edu.my)"
               type="email"
-              placeholder="enter your email"
+              placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
               disabled={loading}
-              compact
+              inputClassName="py-4 text-base"
             />
 
             <div className="space-y-1">
@@ -125,17 +120,17 @@ function ResetPassword() {
                 htmlFor="reset-code"
                 className="block pl-0.5 text-[10px] font-semibold leading-tight text-zinc-800/80"
               >
-                验证码 Verification code
+                Verification code
               </label>
               <div className="flex gap-1.5">
                 <input
                   id="reset-code"
                   type="text"
-                  placeholder="enter code"
+                  placeholder="Enter the code"
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                   disabled={loading}
-                  className="min-w-0 flex-1 rounded-full border-0 bg-white px-3 py-1.5 text-[13px] text-zinc-900 shadow-inner outline-none ring-2 ring-transparent transition placeholder:text-zinc-400 focus:ring-sky-500/50 disabled:opacity-60"
+                  className="min-w-0 flex-1 rounded-full border-0 bg-white px-4 py-4 text-base text-zinc-900 shadow-inner outline-none ring-2 ring-transparent transition placeholder:text-zinc-400 focus:ring-sky-500/50 disabled:opacity-60"
                 />
                 <button
                   type="button"
@@ -145,21 +140,21 @@ function ResetPassword() {
                   onClick={handleSendCode}
                   className="shrink-0 rounded-full border border-white/50 bg-gradient-to-r from-sky-500 to-cyan-400 px-2 py-1.5 text-[10px] font-bold text-zinc-900 shadow-md disabled:opacity-45 sm:px-2.5 sm:text-xs"
                 >
-                  {codeCountdown > 0 ? `${codeCountdown}s` : sendingCode ? '…' : '发送'}
+                  {codeCountdown > 0 ? `${codeCountdown}s` : sendingCode ? '…' : 'Send'}
                 </button>
               </div>
             </div>
 
             <InputField
               id="reset-pwd"
-              label="新密码 New password（≥6）"
+              label="New password (≥ 6)"
               type="password"
-              placeholder="enter new password"
+              placeholder="Enter new password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               autoComplete="new-password"
               disabled={loading}
-              compact
+              inputClassName="py-4 text-base"
             />
 
             {message.text ? (
@@ -175,23 +170,24 @@ function ResetPassword() {
               </p>
             ) : null}
 
-            <div className="pt-0.5">
+            <div className="mt-auto mb-10 pt-2 sm:mb-12">
               <Button
                 type="submit"
                 variant="primary"
                 disabled={loading}
-                className="!py-2 !text-sm font-bold sm:!py-2.5"
+                className="!py-3 !text-sm font-bold sm:!py-3.5"
               >
-                {loading ? '提交中…' : '确认重置 Confirm'}
+                {loading ? 'Submitting…' : 'Confirm'}
               </Button>
             </div>
           </form>
-        </LoginCard>
+          </LoginCard>
+        </div>
       </div>
 
-      <nav className="mt-2 flex w-full max-w-[min(100%,22rem)] flex-col px-0.5 sm:max-w-md" aria-label="返回登录">
+      <nav className="mt-1 flex w-full max-w-4xl flex-col px-0.5 pb-1" aria-label="Back to login">
         <Button as={Link} variant="ghost" to="/login" className="!py-2 !text-xs">
-          返回登录 Back to login
+          Back to Login
         </Button>
       </nav>
     </AuthPageShell>
