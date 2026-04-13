@@ -278,7 +278,7 @@ function Register() {
             </p>
           ) : null}
 
-          <div className="mt-auto mb-2 pt-2 sm:mb-3">
+          <div className="mt-auto mb-4 pt-2 sm:mb-5">
             <Button
               type="submit"
               variant="primary"
@@ -293,7 +293,7 @@ function Register() {
         </div>
       </div>
 
-      <nav className="mt-1 flex w-full max-w-4xl flex-col px-0.5 pb-1" aria-label="Back to login">
+      <nav className="mt-3 shrink-0 flex w-full max-w-4xl flex-col px-0.5 pb-1" aria-label="Back to login">
         <Button as={Link} variant="ghost" to="/login" className="!py-2 !text-xs">
           Back to Login
         </Button>
