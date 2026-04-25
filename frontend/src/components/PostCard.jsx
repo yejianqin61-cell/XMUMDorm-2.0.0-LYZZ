@@ -133,6 +133,8 @@ function PostCard({ post }) {
                     src={prefixImageUrl(img.url)}
                     alt=""
                     className="post-card-image"
+                    loading="lazy"
+                    decoding="async"
                   />
                 </span>
               ))}
