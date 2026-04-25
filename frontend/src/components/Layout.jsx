@@ -240,16 +240,16 @@ function Layout() {
                   transform: `translateX(-${activeTabIndex * 25}%)`,
                 }}
               >
-                <div className="tab-stack-pane" aria-label="TreeHole">
+                <div className="tab-stack-pane" data-active={activeTabIndex === 0} aria-label="TreeHole">
                   <TreeHole />
                 </div>
-                <div className="tab-stack-pane tab-stack-pane--no-scroll" aria-label="Eat" onTouchMove={preventTouchScroll}>
+                <div className="tab-stack-pane tab-stack-pane--no-scroll" data-active={activeTabIndex === 1} aria-label="Eat" onTouchMove={preventTouchScroll}>
                   <CanteenArea />
                 </div>
-                <div className="tab-stack-pane tab-stack-pane--no-scroll" aria-label="Square" onTouchMove={preventTouchScroll}>
+                <div className="tab-stack-pane tab-stack-pane--no-scroll" data-active={activeTabIndex === 2} aria-label="Square" onTouchMove={preventTouchScroll}>
                   <AboutUs />
                 </div>
-                <div className="tab-stack-pane tab-stack-pane--myzone" aria-label="MyZone">
+                <div className="tab-stack-pane tab-stack-pane--myzone" data-active={activeTabIndex === 3} aria-label="MyZone">
                   <MyZone />
                 </div>
               </div>

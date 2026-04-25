@@ -58,7 +58,7 @@
 .treehole-content {
   position: relative;
   z-index: 1;
-  padding: 10px 12px 28px;
+  padding: 10px 12px calc(var(--tabbar-height, 72px) + var(--safe-bottom, 0px) + 20px);
 }
 
 /* 两列错落，可滚动 */

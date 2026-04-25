@@ -32,6 +32,7 @@
   inset: 0;
   height: 100svh;
   width: 100%;
+  padding-bottom: 0;
 }
 
 .app-layout--tabstack .app-main {
@@ -65,6 +66,13 @@
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: none;
+  position: relative;
+}
+
+.tab-stack-pane[data-active="false"] {
+  /* 隐藏非激活 pane，避免内部 fixed 元素（如树洞 + 号）穿透到其它 Tab */
+  visibility: hidden;
+  pointer-events: none;
 }
 
 /* MyZone 自己管理内部滚动，避免双滚动与露白 */

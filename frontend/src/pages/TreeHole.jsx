@@ -16,6 +16,13 @@ import './TreeHole.css';
 const SCROLL_CACHE_KEY = 'treehole';
 const PAGE_SIZE = 20;
 
+function getTreeHoleScrollEl() {
+  // Tab 常驻模式下，滚动容器是当前激活的 tab pane；否则回退到 .app-main
+  const pane = document.querySelector('.tab-stack-pane[data-active="true"]');
+  if (pane) return pane;
+  return document.querySelector('.app-main');
+}
+
 function prefixAvatar(url) {
   return url && !url.startsWith('http') ? `${API_BASE_URL}${url}` : url;
 }
@@ -94,7 +101,8 @@ function TreeHole() {
       return lastPageParam + 1;
     },
     initialData: initialSessionData,
-    staleTime: 60 * 1000,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const list = useMemo(
@@ -108,7 +116,7 @@ function TreeHole() {
 
   useEffect(() => {
     return () => {
-      const main = document.querySelector('.app-main');
+      const main = getTreeHoleScrollEl();
       if (main && typeof main.scrollTop === 'number') {
         saveScroll(SCROLL_CACHE_KEY, main.scrollTop, pageRef.current);
       }
@@ -123,7 +131,7 @@ function TreeHole() {
     }
     const cached = takeScroll(SCROLL_CACHE_KEY);
     if (cached?.scrollTop > 0) {
-      const main = document.querySelector('.app-main');
+      const main = getTreeHoleScrollEl();
       if (main) {
         requestAnimationFrame(() => {
           main.scrollTop = cached.scrollTop;
@@ -150,7 +158,7 @@ function TreeHole() {
 
   const handleSelectTag = useCallback((slug) => {
     setSelectedTagSlug(slug);
-    const main = document.querySelector('.app-main');
+    const main = getTreeHoleScrollEl();
     if (main) main.scrollTop = 0;
     if (slug == null) {
       scrollRestoredRef.current = true;
@@ -212,11 +220,15 @@ function TreeHole() {
               {leftColumn.map((post) => (
                 <PostCard key={post.id} post={post} />
               ))}
+              {infinite.isFetchingNextPage &&
+                [1, 2].map((i) => <SkeletonPost key={`treehole-next-l-${i}`} />)}
             </div>
             <div className="treehole-column treehole-column-right">
               {rightColumn.map((post) => (
                 <PostCard key={post.id} post={post} />
               ))}
+              {infinite.isFetchingNextPage &&
+                [1, 2].map((i) => <SkeletonPost key={`treehole-next-r-${i}`} />)}
             </div>
           </div>
           {infinite.hasNextPage && (
