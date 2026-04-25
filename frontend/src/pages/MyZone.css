@@ -6,6 +6,25 @@
   font-family: var(--post-ios-font, inherit);
   -webkit-font-smoothing: antialiased;
   padding-bottom: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.myzone-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--post-ios-bg-grouped, #f2f2f7);
+}
+
+.myzone-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(var(--tabbar-height, 72px) + var(--safe-bottom, 0px) + 12px);
 }
 
 .myzone-error {

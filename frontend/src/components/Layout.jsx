@@ -101,6 +101,17 @@ function Layout() {
     e.preventDefault();
   };
 
+  // iOS Safari 对 overscroll-behavior 支持不稳定：对“不可滚动”的 Tab（Eat/Square）全局禁止下拉回弹
+  useEffect(() => {
+    const shouldLock = isRootTabPage && (activeTabIndex === 1 || activeTabIndex === 2);
+    if (!shouldLock) return;
+    const handler = (e) => {
+      e.preventDefault();
+    };
+    document.addEventListener('touchmove', handler, { passive: false });
+    return () => document.removeEventListener('touchmove', handler);
+  }, [activeTabIndex, isRootTabPage]);
+
   const handleAnnouncementKnow = async (id) => {
     queryClient.setQueryData(QK.unreadAnnouncements(tokenKey), (old) => {
       const arr = Array.isArray(old) ? old : [];
@@ -238,7 +249,7 @@ function Layout() {
                 <div className="tab-stack-pane tab-stack-pane--no-scroll" aria-label="Square" onTouchMove={preventTouchScroll}>
                   <AboutUs />
                 </div>
-                <div className="tab-stack-pane tab-stack-pane--no-scroll" aria-label="MyZone" onTouchMove={preventTouchScroll}>
+                <div className="tab-stack-pane tab-stack-pane--myzone" aria-label="MyZone">
                   <MyZone />
                 </div>
               </div>

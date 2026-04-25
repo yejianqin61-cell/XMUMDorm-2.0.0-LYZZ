@@ -60,10 +60,16 @@
   width: 25%;
   flex-shrink: 0;
   height: 100%;
+  background: var(--post-ios-bg-grouped, #f2f2f7);
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: none;
+}
+
+/* MyZone 自己管理内部滚动，避免双滚动与露白 */
+.tab-stack-pane--myzone {
+  overflow: hidden;
 }
 
 /* Eat / Square / MyZone：禁用纵向滚动（避免“还能往下拉”的橡皮筋感） */

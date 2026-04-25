@@ -77,6 +77,7 @@ function MyZone() {
 
   return (
     <div className="myzone-page">
+      <div className="myzone-sticky">
       {/* 个人信息栏 */}
       <section className="myzone-profile" aria-label={isZh ? '个人信息' : 'Profile'}>
         <button type="button" className="myzone-profile-avatar-wrap" onClick={isLoggedIn ? goProfile : goLogin}>
@@ -109,6 +110,9 @@ function MyZone() {
           {userError}
         </p>
       )}
+      </div>
+
+      <div className="myzone-scroll">
 
       {/* 工具 */}
       <section className="myzone-block" aria-labelledby="myzone-tools-heading">
@@ -195,6 +199,7 @@ function MyZone() {
           </button>
         </div>
       )}
+      </div>
     </div>
   );
 }
