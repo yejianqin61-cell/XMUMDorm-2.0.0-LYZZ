@@ -133,7 +133,8 @@ function PostCard({ post }) {
                     src={prefixImageUrl(img.url)}
                     alt=""
                     className="post-card-image"
-                    loading="lazy"
+                    // 列表回滚时避免“灰块/空窗”：更积极加载，减少离屏回收带来的二次渲染闪烁
+                    loading="eager"
                     decoding="async"
                   />
                 </span>
