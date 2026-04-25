@@ -96,6 +96,11 @@ function Layout() {
     return pathname === '/' || pathname === '/eat' || pathname === '/about' || pathname === '/myzone';
   }, [pathname]);
 
+  // iOS Safari 对 overscroll-behavior 支持不稳定：对“禁止滚动”的 Tab 兜底阻止 touchmove
+  const preventTouchScroll = (e) => {
+    e.preventDefault();
+  };
+
   const handleAnnouncementKnow = async (id) => {
     queryClient.setQueryData(QK.unreadAnnouncements(tokenKey), (old) => {
       const arr = Array.isArray(old) ? old : [];
@@ -221,19 +226,19 @@ function Layout() {
               <div
                 className="tab-stack-track"
                 style={{
-                  transform: `translateX(${-activeTabIndex * 100}%)`,
+                  transform: `translateX(-${activeTabIndex * 25}%)`,
                 }}
               >
                 <div className="tab-stack-pane" aria-label="TreeHole">
                   <TreeHole />
                 </div>
-                <div className="tab-stack-pane tab-stack-pane--no-scroll" aria-label="Eat">
+                <div className="tab-stack-pane tab-stack-pane--no-scroll" aria-label="Eat" onTouchMove={preventTouchScroll}>
                   <CanteenArea />
                 </div>
-                <div className="tab-stack-pane tab-stack-pane--no-scroll" aria-label="Square">
+                <div className="tab-stack-pane tab-stack-pane--no-scroll" aria-label="Square" onTouchMove={preventTouchScroll}>
                   <AboutUs />
                 </div>
-                <div className="tab-stack-pane tab-stack-pane--no-scroll" aria-label="MyZone">
+                <div className="tab-stack-pane tab-stack-pane--no-scroll" aria-label="MyZone" onTouchMove={preventTouchScroll}>
                   <MyZone />
                 </div>
               </div>

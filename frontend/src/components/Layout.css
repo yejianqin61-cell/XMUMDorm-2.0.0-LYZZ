@@ -26,6 +26,14 @@
 }
 
 /* 根 Tab 页：使用常驻 Tab stack，避免切换时重挂载闪屏 */
+.app-layout--tabstack {
+  /* 给子元素的 100% 高度一个明确参照，避免滚动容器高度算成 0 */
+  position: fixed;
+  inset: 0;
+  height: 100svh;
+  width: 100%;
+}
+
 .app-layout--tabstack .app-main {
   overflow: hidden;
 }
@@ -42,17 +50,18 @@
 
 .tab-stack-track {
   display: flex;
-  width: 100%;
+  width: 400%;
   height: 100%;
   will-change: transform;
   transition: transform 360ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .tab-stack-pane {
-  width: 100%;
+  width: 25%;
   flex-shrink: 0;
   height: 100%;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: none;
 }
@@ -61,6 +70,7 @@
 .tab-stack-pane--no-scroll {
   overflow: hidden;
   overscroll-behavior: none;
+  touch-action: none;
 }
 
 /* 全站统一背景图：与树洞页一致，仅覆盖顶栏与底栏之间 */
