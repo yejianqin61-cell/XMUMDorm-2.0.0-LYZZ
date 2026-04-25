@@ -27,6 +27,9 @@
   --accent-strong: #059669;
   --accent-soft: rgba(16, 185, 129, 0.16);
 
+  /* 底部 TabBar 可调高度（不含 safe-bottom） */
+  --tabbar-height: 72px;
+
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 

@@ -2,8 +2,9 @@
 
 .canteen-area-page {
   min-height: 100%;
+  height: 100%;
   position: relative;
-  padding: 12px 12px 18px;
+  padding: 0;
   box-sizing: border-box;
   overflow-x: hidden;
   background: var(--post-ios-bg-grouped, #f2f2f7);
@@ -13,15 +14,13 @@
 .canteen-map {
   position: relative;
   width: 100%;
-  max-width: 430px;
-  margin: 0 auto;
-  border-radius: 22px;
+  /* 背景图拉满整屏，TabBar 叠在上面（不再减去 tab 高度） */
+  height: calc(100svh - var(--safe-top, 0px) - var(--safe-bottom, 0px));
+  min-height: 0;
+  border-radius: 0;
   overflow: hidden;
-  box-shadow: 0 22px 70px rgba(2, 6, 23, 0.22);
-  /* 图片是纵向长图，按屏幕高度尽量铺满 */
-  height: calc(100svh - 44px - 66px - var(--safe-top, 0px) - var(--safe-bottom, 0px) - 12px);
-  min-height: 560px;
-  background: rgba(255, 255, 255, 0.6);
+  box-shadow: none;
+  background: transparent;
 }
 
 .canteen-map-bg {

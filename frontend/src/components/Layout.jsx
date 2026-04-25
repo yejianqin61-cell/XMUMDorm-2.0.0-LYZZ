@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useMemo } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import TopBar from './TopBar';
@@ -18,7 +18,6 @@ import './TopBar.css';
 import './TabBar.css';
 import './Layout.css';
 
-const SLIDE_DURATION_MS = 280;
 /** 未读公告列表在客户端缓存时间，减少重复请求与 CORS 预检 */
 const UNREAD_ANN_STALE_MS = 3 * 60 * 1000;
 
@@ -71,11 +70,8 @@ function Layout() {
   const tokenKey = token ?? '';
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
-  const prevPathRef = useRef(pathname);
   // 只在用户第一次交互时尝试进入全屏
   const hasTriedFullscreenRef = useRef(false);
-  const [slide, setSlide] = useState(null);
-  const [slidePhase, setSlidePhase] = useState('start');
 
   const unreadAnnouncementsQuery = useQuery({
     queryKey: QK.unreadAnnouncements(tokenKey),
@@ -94,26 +90,10 @@ function Layout() {
     return Math.floor(Math.random() * BACKGROUND_IMAGES.length);
   });
 
-  useEffect(() => {
-    const prevRoot = getTabRootPath(prevPathRef.current);
-    const nextRoot = getTabRootPath(pathname);
-    if (prevRoot !== nextRoot && TAB_ROOT_COMPONENTS[prevRoot] && TAB_ROOT_COMPONENTS[nextRoot]) {
-      const direction = getTabIndex(pathname) > getTabIndex(prevPathRef.current) ? 1 : -1;
-      setSlide({ fromPath: prevRoot, toPath: nextRoot, direction });
-      setSlidePhase('start');
-      const t1 = requestAnimationFrame(() => {
-        requestAnimationFrame(() => setSlidePhase('end'));
-      });
-      const t2 = setTimeout(() => {
-        setSlide(null);
-      }, SLIDE_DURATION_MS);
-      prevPathRef.current = pathname;
-      return () => {
-        cancelAnimationFrame(t1);
-        clearTimeout(t2);
-      };
-    }
-    prevPathRef.current = pathname;
+  const activeTabIndex = useMemo(() => getTabIndex(pathname), [pathname]);
+  const isRootTabPage = useMemo(() => {
+    // 只在四个根 Tab 页使用“常驻页面 + 滑块切换”，子路由仍交给 Outlet 渲染
+    return pathname === '/' || pathname === '/eat' || pathname === '/about' || pathname === '/myzone';
   }, [pathname]);
 
   const handleAnnouncementKnow = async (id) => {
@@ -223,7 +203,7 @@ function Layout() {
 
   return (
     <div
-      className={`app-layout${showTopBar ? '' : ' app-layout--no-topbar'}`}
+      className={`app-layout${showTopBar ? '' : ' app-layout--no-topbar'}${isRootTabPage ? ' app-layout--tabstack' : ''}`}
       onClick={handleFirstInteraction}
     >
       {showTopBar ? <TopBar title={title} showBack={showBack} /> : null}
@@ -236,20 +216,26 @@ function Layout() {
           }}
         />
         <div className="app-main-inner">
-          {slide ? (
-            <div className={`app-slide-wrap app-slide-${slide.direction === 1 ? 'forward' : 'back'} app-slide-${slidePhase}`}>
-              <div className="app-slide-track">
-                {slide.direction === 1 ? (
-                  <>
-                    <div className="app-slide-pane">{(() => { const C = TAB_ROOT_COMPONENTS[slide.fromPath]; return C ? <C /> : null; })()}</div>
-                    <div className="app-slide-pane">{(() => { const C = TAB_ROOT_COMPONENTS[slide.toPath]; return C ? <C /> : null; })()}</div>
-                  </>
-                ) : (
-                  <>
-                    <div className="app-slide-pane">{(() => { const C = TAB_ROOT_COMPONENTS[slide.toPath]; return C ? <C /> : null; })()}</div>
-                    <div className="app-slide-pane">{(() => { const C = TAB_ROOT_COMPONENTS[slide.fromPath]; return C ? <C /> : null; })()}</div>
-                  </>
-                )}
+          {isRootTabPage ? (
+            <div className="tab-stack-wrap" aria-label="Tab pages">
+              <div
+                className="tab-stack-track"
+                style={{
+                  transform: `translateX(${-activeTabIndex * 100}%)`,
+                }}
+              >
+                <div className="tab-stack-pane" aria-label="TreeHole">
+                  <TreeHole />
+                </div>
+                <div className="tab-stack-pane tab-stack-pane--no-scroll" aria-label="Eat">
+                  <CanteenArea />
+                </div>
+                <div className="tab-stack-pane tab-stack-pane--no-scroll" aria-label="Square">
+                  <AboutUs />
+                </div>
+                <div className="tab-stack-pane tab-stack-pane--no-scroll" aria-label="MyZone">
+                  <MyZone />
+                </div>
               </div>
             </div>
           ) : (

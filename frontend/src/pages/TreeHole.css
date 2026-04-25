@@ -84,7 +84,7 @@
 .treehole-fab {
   position: fixed;
   right: 18px;
-  bottom: calc(50px + 14px + var(--safe-bottom, 0px));
+  bottom: calc(var(--tabbar-height, 72px) + 14px + var(--safe-bottom, 0px));
   width: 56px;
   height: 56px;
   border-radius: 50%;

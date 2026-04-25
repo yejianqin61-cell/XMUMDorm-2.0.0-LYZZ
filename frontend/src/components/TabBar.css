@@ -3,7 +3,8 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: calc(66px + var(--safe-bottom));
+  box-sizing: border-box;
+  height: calc(var(--tabbar-height, 72px) + var(--safe-bottom));
   padding: 10px 12px calc(10px + var(--safe-bottom));
   background: transparent;
   z-index: 100;
@@ -13,7 +14,7 @@
 
 .tab-bar-shell {
   position: relative;
-  height: 56px;
+  height: calc(var(--tabbar-height, 72px) - 20px);
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   align-items: stretch;

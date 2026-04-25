@@ -11,12 +11,12 @@ function CanteenArea() {
 
   const defaultZones = useMemo(
     () => ([
-      { id: 'rank', to: '/eat/rankings', label: 'Rank', rect: { left: 33, top: 2.5, width: 34, height: 16, radius: 22 } },
-      { id: 'd6', to: '/eat/D6', label: 'D6', rect: { left: 10.455128978986236, top: 29.61223922221371, width: 28, height: 11, radius: 18 } },
-      { id: 'ly3', to: '/eat/LY3', label: 'LY3', rect: { left: 59.41860504728059, top: 29.759671009495243, width: 28, height: 11, radius: 18 } },
-      { id: 'b1', to: '/eat/B1', label: 'B1', rect: { left: 3.544828438349635, top: 50.250085768114985, width: 28, height: 11, radius: 18 } },
-      { id: 'others', to: '/eat/other', label: 'Others', rect: { left: 65.66447408529066, top: 50.69240672062965, width: 28, height: 11, radius: 18 } },
-      { id: 'bell', to: '/eat/BELL', label: 'Bell', rect: { left: 0, top: 63.21139779310786, width: 76, height: 18, radius: 22 } },
+      { id: 'rank', to: '/eat/rankings', label: 'Rank', rect: { left: 33.34761084417858, top: 0, width: 34, height: 16, radius: 22 } },
+      { id: 'd6', to: '/eat/D6', label: 'D6', rect: { left: 9.99162825686364, top: 26.59277049940195, width: 28, height: 11, radius: 18 } },
+      { id: 'ly3', to: '/eat/LY3', label: 'LY3', rect: { left: 58.72334622861598, top: 25.945608604578503, width: 28, height: 11, radius: 18 } },
+      { id: 'b1', to: '/eat/B1', label: 'B1', rect: { left: 3.3130811714806248, top: 51.680354395903954, width: 28, height: 11, radius: 18 } },
+      { id: 'others', to: '/eat/other', label: 'Others', rect: { left: 66.01210658881526, top: 51.248624419905276, width: 28, height: 11, radius: 18 } },
+      { id: 'bell', to: '/eat/BELL', label: 'Bell', rect: { left: 0, top: 66.70761848157834, width: 76, height: 18, radius: 22 } },
     ]),
     []
   );

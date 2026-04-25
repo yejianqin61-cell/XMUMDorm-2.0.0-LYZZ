@@ -2,7 +2,9 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  padding-bottom: calc(50px + var(--safe-bottom));
+  padding-bottom: calc(var(--tabbar-height, 72px) + var(--safe-bottom));
+  /* 兜底：填充底部预留区（避免加载态/骨架屏时底部露出 body 深色） */
+  background: var(--post-ios-bg-grouped, #f2f2f7);
 }
 
 /* 无顶栏时：主区从刘海下开始，背景图贴顶（仍保留底部 Tab 与安全区） */
@@ -23,11 +25,49 @@
   background: var(--post-ios-bg-grouped, #f2f2f7);
 }
 
+/* 根 Tab 页：使用常驻 Tab stack，避免切换时重挂载闪屏 */
+.app-layout--tabstack .app-main {
+  overflow: hidden;
+}
+
+.app-layout--tabstack .app-main-inner {
+  height: 100%;
+}
+
+.tab-stack-wrap {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+
+.tab-stack-track {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  will-change: transform;
+  transition: transform 360ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.tab-stack-pane {
+  width: 100%;
+  flex-shrink: 0;
+  height: 100%;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: none;
+}
+
+/* Eat / Square / MyZone：禁用纵向滚动（避免“还能往下拉”的橡皮筋感） */
+.tab-stack-pane--no-scroll {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
 /* 全站统一背景图：与树洞页一致，仅覆盖顶栏与底栏之间 */
 .app-main-bg {
   position: fixed;
   top: calc(44px + var(--safe-top, 0px));
-  bottom: calc(50px + var(--safe-bottom, 0px));
+  bottom: calc(var(--tabbar-height, 72px) + var(--safe-bottom, 0px));
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
