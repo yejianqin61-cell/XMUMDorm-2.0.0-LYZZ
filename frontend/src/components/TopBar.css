@@ -2,10 +2,14 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(255, 255, 255, 0.92);
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.84),
+    rgba(255, 255, 255, 0.70)
+  );
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-bottom: 0.5px solid var(--post-ios-separator, rgba(60, 60, 67, 0.12));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
   padding-top: var(--safe-top);
   font-family: var(--post-ios-font, inherit);
   -webkit-font-smoothing: antialiased;
@@ -47,7 +51,7 @@
   padding: 0;
   border: none;
   background: transparent;
-  color: var(--post-ios-accent, #007aff);
+  color: rgba(11, 17, 34, 0.72);
 }
 
 .top-bar-back:hover {
@@ -78,22 +82,23 @@
   display: none;
 }
 
-/* 标题：主题蓝衬底 + 外围白色隔离带 + 白字 */
+/* 标题：品牌渐变 + 玻璃描边 */
 .top-bar-title-text {
   display: inline-block;
   margin: 0;
   max-width: 60vw;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding: 5px 12px;
-  background: var(--post-ios-accent, #007aff);
-  color: #ffffff;
-  border: 2px solid #ffffff;
-  border-radius: 8px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.92), rgba(6, 182, 212, 0.92) 45%, rgba(99, 102, 241, 0.92));
+  color: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
   box-sizing: border-box;
   line-height: 1.25;
   font-weight: 600;
   letter-spacing: -0.02em;
+  box-shadow: 0 10px 22px rgba(2, 6, 23, 0.12);
 }
 
 .top-bar-mailbox {
@@ -108,7 +113,7 @@
   padding: 0;
   border: none;
   background: transparent;
-  color: var(--post-ios-accent, #007aff);
+  color: rgba(11, 17, 34, 0.72);
 }
 
 .top-bar-lang {
@@ -116,7 +121,7 @@
   align-items: center;
   gap: 2px;
   font-size: 12px;
-  color: var(--wx-text-secondary, #888);
+  color: rgba(11, 17, 34, 0.52);
 }
 
 .top-bar-lang-btn {
@@ -129,12 +134,12 @@
 }
 
 .top-bar-lang-btn:hover {
-  color: var(--wx-text, #111);
+  color: rgba(11, 17, 34, 0.86);
 }
 
 .top-bar-lang-btn.active {
   font-weight: 600;
-  color: var(--wx-text, #111);
+  color: rgba(11, 17, 34, 0.86);
 }
 
 .top-bar-lang-sep {

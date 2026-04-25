@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
@@ -28,6 +28,8 @@ function TreeHoleToolbar({ selectedSlug = null, onSelectTagSlug }) {
   const [nameZh, setNameZh] = useState('');
   const [nameEn, setNameEn] = useState('');
   const wrapRef = useRef(null);
+  const scrollRef = useRef(null);
+  const tagBtnRefs = useRef(new Map());
 
   const tagsQuery = useQuery({
     queryKey: QK.postTagsList(),
@@ -50,6 +52,11 @@ function TreeHoleToolbar({ selectedSlug = null, onSelectTagSlug }) {
   }, [open]);
 
   const firstFive = tags.slice(0, 5);
+  const firstFiveBySlug = useMemo(() => {
+    const m = new Map();
+    for (const t of firstFive) m.set(t.slug, t);
+    return m;
+  }, [firstFive]);
 
   const tagDisplay = (t) => (isZh ? (t.name_zh || t.name_en) : (t.name_en || t.name_zh));
 
@@ -68,6 +75,22 @@ function TreeHoleToolbar({ selectedSlug = null, onSelectTagSlug }) {
     pickTagSlug(t.slug);
     setOpen(false);
   };
+
+  // 选中标签后，自动把它平滑滚到最左侧（虎扑频道栏体验）
+  useEffect(() => {
+    const slug = selectedSlug;
+    const scroller = scrollRef.current;
+    if (!scroller || !slug) return;
+    // 只有前 5 个在横栏里，才需要滚动
+    if (!firstFiveBySlug.has(slug)) return;
+    const el = tagBtnRefs.current.get(slug);
+    if (!el) return;
+
+    // 目标：让该按钮左边贴住容器左边（留一点 padding）
+    const padLeft = 8;
+    const nextLeft = Math.max(0, el.offsetLeft - padLeft);
+    scroller.scrollTo({ left: nextLeft, behavior: 'smooth' });
+  }, [selectedSlug, firstFiveBySlug]);
 
   const onSearchSubmit = (e) => {
     e.preventDefault();
@@ -168,7 +191,7 @@ function TreeHoleToolbar({ selectedSlug = null, onSelectTagSlug }) {
       </form>
 
       <div className="treehole-toolbar-tags-embed" role="navigation" aria-label={isZh ? '热门标签' : 'Popular tags'}>
-        <div className="treehole-toolbar-tags-scroll">
+        <div className="treehole-toolbar-tags-scroll" ref={scrollRef}>
           {loadingTags && firstFive.length === 0 ? (
             <span className="treehole-toolbar-tags-loading">{isZh ? '标签加载中…' : 'Loading tags…'}</span>
           ) : (
@@ -179,6 +202,11 @@ function TreeHoleToolbar({ selectedSlug = null, onSelectTagSlug }) {
                 className={`treehole-toolbar-tag-link ${selectedSlug === t.slug ? 'is-selected' : ''}`}
                 onClick={() => onBarTagClick(t)}
                 aria-pressed={selectedSlug === t.slug}
+                ref={(node) => {
+                  if (!t.slug) return;
+                  if (node) tagBtnRefs.current.set(t.slug, node);
+                  else tagBtnRefs.current.delete(t.slug);
+                }}
               >
                 {tagDisplay(t)}
               </button>

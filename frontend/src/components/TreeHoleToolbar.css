@@ -114,15 +114,18 @@
   color: inherit;
 }
 
-/* 标签：与搜索框分离的横向列表（非液态玻璃、非圆角胶囊） */
+/* 标签：虎扑式「频道栏」——紧凑、横滑、选中下划线，主色天蓝 */
 .treehole-toolbar-tags-embed {
   display: flex;
   align-items: stretch;
-  min-height: 40px;
+  min-height: 36px;
   margin-bottom: 4px;
-  border-radius: 12px;
-  background: var(--post-ios-fill, rgba(118, 118, 128, 0.1));
-  border: 0.5px solid rgba(60, 60, 67, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.08);
 }
 
 .treehole-toolbar-tags-scroll {
@@ -131,10 +134,10 @@
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
-  gap: 0;
+  gap: 2px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 4px 0 4px 6px;
+  padding: 4px 4px 4px 8px;
   scrollbar-width: none;
 }
 
@@ -150,43 +153,47 @@ button.treehole-toolbar-tag-link {
 
 .treehole-toolbar-tag-link {
   flex-shrink: 0;
-  padding: 8px 12px;
+  padding: 8px 10px;
   margin: 0;
-  border-radius: 0;
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: -0.02em;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   text-decoration: none;
-  color: var(--post-ios-accent, #007aff);
+  /* 草绿色基调（更有活力） */
+  color: rgba(5, 150, 105, 0.92);
   background: transparent;
   border: none;
   white-space: nowrap;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: opacity 0.12s ease, color 0.15s ease, background 0.15s ease;
+  position: relative;
+  transition: opacity 0.12s ease, color 0.15s ease, background 0.15s ease, transform 0.12s ease;
 }
 
-.treehole-toolbar-tag-link + .treehole-toolbar-tag-link {
-  border-left: 1px solid rgba(60, 60, 67, 0.12);
-}
+/* 去掉竖线分隔：用留白更像频道栏 */
+.treehole-toolbar-tag-link + .treehole-toolbar-tag-link { border-left: none; }
 
 .treehole-toolbar-tag-link.is-selected {
-  color: #fff;
-  background: var(--post-ios-accent, #007aff);
-  border-radius: 10px;
-  box-shadow: 0 1px 3px rgba(0, 122, 255, 0.35);
+  color: rgba(4, 120, 87, 0.98);
+  background: rgba(16, 185, 129, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.22);
 }
 
-.treehole-toolbar-tag-link.is-selected + .treehole-toolbar-tag-link {
-  border-left: none;
-}
-
-.treehole-toolbar-tag-link + .treehole-toolbar-tag-link.is-selected {
-  border-left: none;
+.treehole-toolbar-tag-link.is-selected::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 4px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(16, 185, 129, 1), rgba(34, 197, 94, 0.95));
 }
 
 .treehole-toolbar-tag-link:active:not(.is-selected) {
   opacity: 0.55;
+  transform: translateY(0.5px);
 }
 
 .treehole-toolbar-tags-loading {
@@ -207,9 +214,9 @@ button.treehole-toolbar-tag-link {
 
 .treehole-toolbar-more-embed {
   width: 44px;
-  min-height: 40px;
+  min-height: 36px;
   align-self: stretch;
-  border-left: 1px solid rgba(60, 60, 67, 0.1);
+  border-left: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: 0;
   background: rgba(255, 255, 255, 0.35);
   transition: background 0.15s ease;
@@ -227,8 +234,8 @@ button.treehole-toolbar-tag-link {
   display: block;
   width: 7px;
   height: 7px;
-  border-right: 2px solid var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
-  border-bottom: 2px solid var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
+  border-right: 2px solid rgba(11, 17, 34, 0.45);
+  border-bottom: 2px solid rgba(11, 17, 34, 0.45);
   transform: rotate(45deg) translateY(-1px);
   transition: transform 0.2s ease;
 }

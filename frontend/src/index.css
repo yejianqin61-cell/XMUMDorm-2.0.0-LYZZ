@@ -1,16 +1,32 @@
 @import "tailwindcss";
 
-/* 移动端优先、微信风格基调 */
+/* 全局主题：年轻、有活力、国际化（Inter + Noto Sans SC） */
 :root {
-  --wx-green: #07C160;
-  --wx-green-dark: #06AD56;
-  /* 全局底栏与主区背景：与 iOS 分组灰对齐，弱化原微信灰绿感 */
-  --wx-bg: #f2f2f7;
-  --wx-bar-bg: #f9f9f9;
-  --wx-header-bg: #FFFFFF;
-  --wx-text: #191919;
-  --wx-text-secondary: #888888;
-  --wx-border: #ECECEC;
+  --brand-1: #22c55e; /* green */
+  --brand-2: #06b6d4; /* cyan */
+  --brand-3: #6366f1; /* indigo */
+
+  --app-bg: #0b1020; /* deep slate */
+  --app-surface: rgba(255, 255, 255, 0.78);
+  --app-surface-strong: rgba(255, 255, 255, 0.92);
+  --app-border: rgba(255, 255, 255, 0.24);
+
+  --text-1: rgba(11, 17, 34, 0.92);
+  --text-2: rgba(11, 17, 34, 0.64);
+  --text-3: rgba(11, 17, 34, 0.42);
+
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+
+  --shadow-1: 0 10px 30px rgba(2, 6, 23, 0.12);
+  --shadow-2: 0 18px 60px rgba(2, 6, 23, 0.22);
+
+  /* 主色：翠绿（你希望用绿色系） */
+  --accent: #10b981; /* emerald */
+  --accent-strong: #059669;
+  --accent-soft: rgba(16, 185, 129, 0.16);
+
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 
@@ -18,8 +34,8 @@
    * 帖子/树洞域：iOS Human Interface Guidelines 近似（分组背景、系统填充灰、强调蓝、SF/PingFang 栈）
    * 强调色可用 --post-ios-accent 统一改为品牌色。
    */
-  --post-ios-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "PingFang SC",
-    "Hiragino Sans GB", "Microsoft YaHei UI", "Segoe UI", sans-serif;
+  --post-ios-font: Inter, "Noto Sans SC", -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", "Segoe UI", sans-serif;
   --post-ios-bg-grouped: #f2f2f7;
   --post-ios-card: #ffffff;
   --post-ios-fill: rgba(118, 118, 128, 0.12);
@@ -28,15 +44,15 @@
   --post-ios-secondary-label: rgba(60, 60, 67, 0.6);
   --post-ios-tertiary-label: rgba(60, 60, 67, 0.36);
   --post-ios-separator: rgba(60, 60, 67, 0.12);
-  --post-ios-accent: #007aff;
-  --post-ios-accent-subtle: rgba(0, 122, 255, 0.12);
+  --post-ios-accent: var(--accent);
+  --post-ios-accent-subtle: var(--accent-soft);
   --post-ios-red: #ff3b30;
   --post-ios-radius-sm: 10px;
   --post-ios-radius-md: 12px;
   --post-ios-radius-lg: 14px;
   --post-ios-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 10px rgba(0, 0, 0, 0.06);
 
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  font-family: var(--post-ios-font);
   font-synthesis: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -50,20 +66,25 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background-color: var(--wx-bg);
-  color: var(--wx-text);
+  color: var(--text-1);
+  background: radial-gradient(1200px 700px at 20% -10%, rgba(34, 197, 94, 0.45), transparent 55%),
+    radial-gradient(900px 600px at 95% 0%, rgba(99, 102, 241, 0.45), transparent 55%),
+    radial-gradient(1000px 700px at 70% 110%, rgba(6, 182, 212, 0.40), transparent 60%),
+    var(--app-bg);
 }
 
 /* 桌面大屏：限制成「手机宽度」并居中，两侧灰底，像真机预览 */
 @media (min-width: 431px) {
   body {
-    background-color: #333;
+    background-color: #070a14;
   }
   #root {
     max-width: 430px;
     margin: 0 auto;
     min-height: 100vh;
-    box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 30px 80px rgba(0, 0, 0, 0.45);
+    border-radius: 24px;
+    overflow: hidden;
   }
 }
 

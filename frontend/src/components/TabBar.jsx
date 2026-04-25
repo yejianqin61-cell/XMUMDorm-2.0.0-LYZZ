@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 
 /** 底部 Tab：根据语言显示纯中文或纯英文 */
@@ -34,6 +34,9 @@ export function getTabRootPath(pathname) {
 function TabBar() {
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
+  const location = useLocation();
+  const activeIndex = getTabIndex(location.pathname);
+  const tabCount = TABS.length;
 
   return (
     <nav
@@ -41,21 +44,33 @@ function TabBar() {
       role="tablist"
       aria-label="主导航"
     >
-      {TABS.map((tab) => (
-        <NavLink
-          key={tab.path}
-          to={tab.path}
-          className={({ isActive }) => `tab-item ${isActive ? 'active' : ''}`}
-          end={tab.path === '/'}
+      <div className="tab-bar-shell" role="presentation">
+        <div
+          className="tab-indicator"
+          aria-hidden="true"
+          style={{
+            width: `${100 / tabCount}%`,
+            transform: `translateX(${activeIndex * 100}%)`,
+          }}
         >
-          {({ isActive }) => (
-            <>
-              <span className="tab-icon">{getIcon(tab.iconKey, isActive)}</span>
-              <span className="tab-label">{isZh ? tab.labelZh : tab.labelEn}</span>
-            </>
-          )}
-        </NavLink>
-      ))}
+          <div className="tab-indicator-pill" />
+        </div>
+        {TABS.map((tab) => (
+          <NavLink
+            key={tab.path}
+            to={tab.path}
+            className={({ isActive }) => `tab-item ${isActive ? 'active' : ''}`}
+            end={tab.path === '/'}
+          >
+            {({ isActive }) => (
+              <>
+                <span className="tab-icon">{getIcon(tab.iconKey, isActive)}</span>
+                <span className="tab-label">{isZh ? tab.labelZh : tab.labelEn}</span>
+              </>
+            )}
+          </NavLink>
+        ))}
+      </div>
     </nav>
   );
 }
