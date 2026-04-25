@@ -23,6 +23,7 @@ const sanitizeHtml = require('sanitize-html');
 const path = require('path');
 const { assetUrl } = require('../utils/assets');
 const { uploadBuffer, guessContentType } = require('../services/objectStorage');
+const { simpleCache } = require('../utils/simpleCache');
 
 const RATING_ENUM = ['夯爆了', '顶级', '人上人', 'NPC', '拉完了'];
 
@@ -94,7 +95,10 @@ async function isProductOwner(productId, userId) {
 // ============================================
 router.get('/regions', async (req, res) => {
   try {
-    const rows = await query('SELECT id, code, name, sort_order FROM regions ORDER BY sort_order ASC');
+    const ttlMs = Number(process.env.CACHE_REGIONS_TTL_MS || 10 * 60 * 1000); // 10min
+    const rows = await simpleCache.getOrSet('canteen:regions:v1', ttlMs, async () => {
+      return await query('SELECT id, code, name, sort_order FROM regions ORDER BY sort_order ASC');
+    });
     res.status(200).json({ status: 0, message: '获取成功', data: rows || [] });
   } catch (e) {
     console.error('获取区域列表错误:', e);
@@ -1613,14 +1617,17 @@ router.get('/my-favorites', authenticateToken, async (req, res) => {
 /** 最夯单品榜：上线至今累计综合评分 Top 5，同分按上架时间越早越前 */
 router.get('/rankings/hot-products', async (req, res) => {
   try {
-    const rows = await query(
-      `SELECT p.id, p.shop_id, p.name, p.comprehensive_score, p.review_count, p.created_at, s.name AS shop_name
-       FROM products p
-       JOIN shops s ON p.shop_id = s.id AND s.deleted_at IS NULL
-       WHERE p.deleted_at IS NULL AND p.review_count > 0 AND p.comprehensive_score IS NOT NULL
-       ORDER BY p.comprehensive_score DESC, p.created_at ASC
-       LIMIT 5`
-    );
+    const ttlMs = Number(process.env.CACHE_RANKINGS_TTL_MS || 30 * 1000); // 30s
+    const rows = await simpleCache.getOrSet('canteen:rankings:hot-products:v1', ttlMs, async () => {
+      return await query(
+        `SELECT p.id, p.shop_id, p.name, p.comprehensive_score, p.review_count, p.created_at, s.name AS shop_name
+         FROM products p
+         JOIN shops s ON p.shop_id = s.id AND s.deleted_at IS NULL
+         WHERE p.deleted_at IS NULL AND p.review_count > 0 AND p.comprehensive_score IS NOT NULL
+         ORDER BY p.comprehensive_score DESC, p.created_at ASC
+         LIMIT 5`
+      );
+    });
     const list = (rows || []).map((r) => ({
       rank: 0,
       product_id: r.id,
@@ -1642,14 +1649,17 @@ router.get('/rankings/hot-products', async (req, res) => {
 /** 门庭若市商家榜：当周点评数 Top 5 */
 router.get('/rankings/busy-shops', async (req, res) => {
   try {
-    const rows = await query(
-      `SELECT s.id, s.name, s.region_id, s.weekly_review_count, r.name AS region_name
-       FROM shops s
-       JOIN regions r ON s.region_id = r.id
-       WHERE s.deleted_at IS NULL
-       ORDER BY s.weekly_review_count DESC, s.created_at ASC
-       LIMIT 5`
-    );
+    const ttlMs = Number(process.env.CACHE_RANKINGS_TTL_MS || 30 * 1000); // 30s
+    const rows = await simpleCache.getOrSet('canteen:rankings:busy-shops:v1', ttlMs, async () => {
+      return await query(
+        `SELECT s.id, s.name, s.region_id, s.weekly_review_count, r.name AS region_name
+         FROM shops s
+         JOIN regions r ON s.region_id = r.id
+         WHERE s.deleted_at IS NULL
+         ORDER BY s.weekly_review_count DESC, s.created_at ASC
+         LIMIT 5`
+      );
+    });
     const list = (rows || []).map((r, i) => ({
       rank: i + 1,
       shop_id: r.id,
@@ -1668,14 +1678,17 @@ router.get('/rankings/busy-shops', async (req, res) => {
 /** 最夯商家榜：商家综合评分 Top 5，零点评不参与 */
 router.get('/rankings/top-shops', async (req, res) => {
   try {
-    const rows = await query(
-      `SELECT s.id, s.name, s.region_id, s.comprehensive_score, s.review_count, r.name AS region_name
-       FROM shops s
-       JOIN regions r ON s.region_id = r.id
-       WHERE s.deleted_at IS NULL AND s.review_count > 0 AND s.comprehensive_score IS NOT NULL
-       ORDER BY s.comprehensive_score DESC, s.created_at ASC
-       LIMIT 5`
-    );
+    const ttlMs = Number(process.env.CACHE_RANKINGS_TTL_MS || 30 * 1000); // 30s
+    const rows = await simpleCache.getOrSet('canteen:rankings:top-shops:v1', ttlMs, async () => {
+      return await query(
+        `SELECT s.id, s.name, s.region_id, s.comprehensive_score, s.review_count, r.name AS region_name
+         FROM shops s
+         JOIN regions r ON s.region_id = r.id
+         WHERE s.deleted_at IS NULL AND s.review_count > 0 AND s.comprehensive_score IS NOT NULL
+         ORDER BY s.comprehensive_score DESC, s.created_at ASC
+         LIMIT 5`
+      );
+    });
     const list = (rows || []).map((r, i) => ({
       rank: i + 1,
       shop_id: r.id,
@@ -1696,15 +1709,19 @@ router.get('/rankings/top-shops', async (req, res) => {
 router.get('/rankings/new-hit-products', async (req, res) => {
   try {
     const sevenDaysAgo = shanghaiDaysAgoStart(7);
-    const rows = await query(
-      `SELECT p.id, p.shop_id, p.name, p.comprehensive_score, p.review_count, p.created_at, s.name AS shop_name
-       FROM products p
-       JOIN shops s ON p.shop_id = s.id AND s.deleted_at IS NULL
-       WHERE p.deleted_at IS NULL AND p.review_count > 0 AND p.comprehensive_score IS NOT NULL AND p.created_at >= ?
-       ORDER BY p.comprehensive_score DESC, p.created_at ASC
-       LIMIT 3`,
-      [sevenDaysAgo]
-    );
+    const ttlMs = Number(process.env.CACHE_RANKINGS_TTL_MS || 30 * 1000); // 30s
+    const cacheKey = `canteen:rankings:new-hit-products:v1:${sevenDaysAgo.toISOString().slice(0, 10)}`;
+    const rows = await simpleCache.getOrSet(cacheKey, ttlMs, async () => {
+      return await query(
+        `SELECT p.id, p.shop_id, p.name, p.comprehensive_score, p.review_count, p.created_at, s.name AS shop_name
+         FROM products p
+         JOIN shops s ON p.shop_id = s.id AND s.deleted_at IS NULL
+         WHERE p.deleted_at IS NULL AND p.review_count > 0 AND p.comprehensive_score IS NOT NULL AND p.created_at >= ?
+         ORDER BY p.comprehensive_score DESC, p.created_at ASC
+         LIMIT 3`,
+        [sevenDaysAgo]
+      );
+    });
     const list = (rows || []).map((r, i) => ({
       rank: i + 1,
       product_id: r.id,
@@ -1725,13 +1742,16 @@ router.get('/rankings/new-hit-products', async (req, res) => {
 /** 点评达人榜：当周点评数 Top 5 */
 router.get('/rankings/active-users', async (req, res) => {
   try {
-    const rows = await query(
-      `SELECT u.id, u.username, u.nickname, u.avatar, u.weekly_comment_count
-       FROM users u
-       WHERE u.weekly_comment_count > 0
-       ORDER BY u.weekly_comment_count DESC, u.id ASC
-       LIMIT 5`
-    );
+    const ttlMs = Number(process.env.CACHE_RANKINGS_TTL_MS || 30 * 1000); // 30s
+    const rows = await simpleCache.getOrSet('canteen:rankings:active-users:v1', ttlMs, async () => {
+      return await query(
+        `SELECT u.id, u.username, u.nickname, u.avatar, u.weekly_comment_count
+         FROM users u
+         WHERE u.weekly_comment_count > 0
+         ORDER BY u.weekly_comment_count DESC, u.id ASC
+         LIMIT 5`
+      );
+    });
     const list = (rows || []).map((r, i) => ({
       rank: i + 1,
       user_id: r.id,

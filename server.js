@@ -113,6 +113,19 @@ app.use(express.static(publicDir));
 // 10.3 将 Rate Limit 应用于所有 /api 开头的接口
 app.use('/api', apiLimiter);
 
+// 10.4 /api 请求耗时日志（不需要断点就能定位“卡”在哪）
+app.use('/api', (req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const costMs = Date.now() - start;
+    const threshold = Number(process.env.LOG_SLOW_API_MS || 400);
+    if (costMs >= threshold) {
+      console.warn(`[slow-api] ${costMs}ms ${req.method} ${req.originalUrl} -> ${res.statusCode}`);
+    }
+  });
+  next();
+});
+
 // ============================================
 // 路由配置（Routes）
 // ============================================
@@ -170,33 +183,39 @@ app.listen(PORT, async () => {
   // 测试数据库连接
   await testConnection();
 
-  // 排行榜：每周一 0 点东八区重置店铺/用户当周点评数
-  try {
-    const { resetWeeklyCounts } = require('./services/rankingStats');
-    const { isMondayZeroInShanghai, nowInShanghai, shanghaiDateString } = require('./utils/timezone');
-    let lastResetWeek = '';
-    setInterval(async () => {
-      if (!isMondayZeroInShanghai()) return;
-      const sh = nowInShanghai();
-      const weekKey = `${sh.getFullYear()}-${String(sh.getMonth() + 1).padStart(2, '0')}-${String(sh.getDate()).padStart(2, '0')}`;
-      if (lastResetWeek === weekKey) return;
-      lastResetWeek = weekKey;
-      await resetWeeklyCounts();
-      console.log(`[排行榜] 东八区周一 0 点已重置当周点评数 ${shanghaiDateString()}`);
-    }, 60 * 1000);
-  } catch (e) {
-    console.warn('排行榜每周重置未启动:', e.message);
-  }
+  // 后台定时任务（本地开发默认关闭，避免“没开页面也在狂查库”导致你觉得很卡）
+  const ENABLE_JOBS = String(process.env.ENABLE_BACKGROUND_JOBS || '') === '1';
+  if (ENABLE_JOBS) {
+    // 排行榜：每周一 0 点东八区重置店铺/用户当周点评数
+    try {
+      const { resetWeeklyCounts } = require('./services/rankingStats');
+      const { isMondayZeroInShanghai, nowInShanghai, shanghaiDateString } = require('./utils/timezone');
+      let lastResetWeek = '';
+      setInterval(async () => {
+        if (!isMondayZeroInShanghai()) return;
+        const sh = nowInShanghai();
+        const weekKey = `${sh.getFullYear()}-${String(sh.getMonth() + 1).padStart(2, '0')}-${String(sh.getDate()).padStart(2, '0')}`;
+        if (lastResetWeek === weekKey) return;
+        lastResetWeek = weekKey;
+        await resetWeeklyCounts();
+        console.log(`[排行榜] 东八区周一 0 点已重置当周点评数 ${shanghaiDateString()}`);
+      }, 60 * 1000);
+    } catch (e) {
+      console.warn('排行榜每周重置未启动:', e.message);
+    }
 
-  // Web Push：课前约 30 分钟提醒（吉隆坡时间，依赖 CLASS_REMINDER_WEEK 与课表）
-  try {
-    const { runClassReminderTick } = require('./services/classReminderPush');
-    setInterval(() => {
-      runClassReminderTick().catch((e) => console.warn('[class-reminder]', e.message || e));
-    }, 60 * 1000);
-    runClassReminderTick().catch(() => {});
-  } catch (e) {
-    console.warn('上课提醒任务未启动:', e.message);
+    // Web Push：课前约 30 分钟提醒（吉隆坡时间，依赖 CLASS_REMINDER_WEEK 与课表）
+    try {
+      const { runClassReminderTick } = require('./services/classReminderPush');
+      setInterval(() => {
+        runClassReminderTick().catch((e) => console.warn('[class-reminder]', e.message || e));
+      }, 60 * 1000);
+      runClassReminderTick().catch(() => {});
+    } catch (e) {
+      console.warn('上课提醒任务未启动:', e.message);
+    }
+  } else {
+    console.log('[jobs] ENABLE_BACKGROUND_JOBS!=1，本地已跳过后台定时任务');
   }
 
   console.log(`========================================`);

@@ -40,10 +40,20 @@ const pool = connectionUrl ? mysql.createPool(connectionUrl, poolOptions) : mysq
  * @returns {Promise} 查询结果
  */
 async function query(sql, params = []) {
+  const start = Date.now();
   try {
     const [results] = await pool.execute(sql, params);
+    const costMs = Date.now() - start;
+    const threshold = Number(process.env.LOG_SLOW_SQL_MS || 250);
+    if (costMs >= threshold) {
+      const preview = String(sql).replace(/\s+/g, ' ').trim().slice(0, 220);
+      console.warn(`[slow-sql] ${costMs}ms ${preview}`);
+    }
     return results;
   } catch (error) {
+    const costMs = Date.now() - start;
+    const preview = String(sql).replace(/\s+/g, ' ').trim().slice(0, 220);
+    console.error(`[sql-error] after ${costMs}ms ${preview}`);
     console.error('数据库查询错误:', error);
     throw error;
   }

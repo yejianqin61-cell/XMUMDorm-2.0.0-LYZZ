@@ -13,6 +13,7 @@ const { postImagesUpload, savePostImages } = require('../middleware/upload');
 const sanitizeHtml = require('sanitize-html');
 const { logAudit } = require('../services/auditLog');
 const { assetUrl } = require('../utils/assets');
+const { simpleCache } = require('../utils/simpleCache');
 
 // 统一的文本清洗，防止 XSS 注入（去掉所有 HTML 标签，只保留纯文本）
 function cleanText(input) {
@@ -402,9 +403,10 @@ router.get('/', async (req, res) => {
 // ============================================
 router.get('/tags', async (req, res) => {
   try {
-    const rows = await query(
-      'SELECT id, slug, name_zh, name_en, created_at FROM tags ORDER BY created_at ASC, id ASC'
-    );
+    const ttlMs = Number(process.env.CACHE_TAGS_TTL_MS || 5 * 60 * 1000); // 5min
+    const rows = await simpleCache.getOrSet('posts:tags:v1', ttlMs, async () => {
+      return await query('SELECT id, slug, name_zh, name_en, created_at FROM tags ORDER BY created_at ASC, id ASC');
+    });
     res.status(200).json({ status: 0, message: 'ok', data: rows || [] });
   } catch (e) {
     if (e.code === 'ER_NO_SUCH_TABLE') {
