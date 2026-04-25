@@ -221,10 +221,15 @@ router.post('/', authenticateToken, (req, res, next) => {
     const files = req.files || [];
     if (files.length > 0) {
       const paths = await savePostImages(files, postId);
-      for (let i = 0; i < paths.length; i++) {
+      if (paths && paths.length > 0) {
+        const placeholders = paths.map(() => '(?, ?, ?)').join(',');
+        const params = [];
+        for (let i = 0; i < paths.length; i++) {
+          params.push(postId, paths[i], i);
+        }
         await query(
-          'INSERT INTO post_images (post_id, file_path, sort_order) VALUES (?, ?, ?)',
-          [postId, paths[i], i]
+          `INSERT INTO post_images (post_id, file_path, sort_order) VALUES ${placeholders}`,
+          params
         );
       }
     }
@@ -249,9 +254,10 @@ router.post('/', authenticateToken, (req, res, next) => {
         if (!found || found.length !== tagIds.length) {
           return res.status(400).json({ status: -1, message: '标签无效 Invalid tags' });
         }
-        for (const tid of tagIds) {
-          await query('INSERT INTO post_tag_map (post_id, tag_id) VALUES (?, ?)', [postId, tid]);
-        }
+        const placeholders = tagIds.map(() => '(?, ?)').join(',');
+        const params = [];
+        for (const tid of tagIds) params.push(postId, tid);
+        await query(`INSERT INTO post_tag_map (post_id, tag_id) VALUES ${placeholders}`, params);
       } catch (e) {
         if (e.code !== 'ER_NO_SUCH_TABLE') throw e;
       }
@@ -259,13 +265,12 @@ router.post('/', authenticateToken, (req, res, next) => {
 
     // 公告：给全站用户各插入一条未读通知
     if (type === 'announcement') {
-      const allUsers = await query('SELECT id FROM users');
-      for (const u of allUsers || []) {
-        await query(
-          'INSERT INTO notifications (user_id, type, post_id, from_user_id, extra) VALUES (?, ?, ?, ?, ?)',
-          [u.id, 'announcement', postId, req.user.id, JSON.stringify({ title: content.slice(0, 100) })]
-        );
-      }
+      const extra = JSON.stringify({ title: content.slice(0, 100) });
+      await query(
+        `INSERT INTO notifications (user_id, type, post_id, from_user_id, extra)
+         SELECT id, 'announcement', ?, ?, ? FROM users`,
+        [postId, req.user.id, extra]
+      );
     }
 
     // 审计日志：发帖 / 发布公告
