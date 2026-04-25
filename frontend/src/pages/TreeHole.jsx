@@ -14,7 +14,9 @@ import { QK } from '../query/queryKeys';
 import './TreeHole.css';
 
 const SCROLL_CACHE_KEY = 'treehole';
-const PAGE_SIZE = 20;
+// 首屏更快：先拉 10 条；首屏出来后后台再预取更多页
+const PAGE_SIZE = 10;
+const PREFETCH_PAGES_AFTER_FIRST = 3; // 额外预取 3 页 => 约 30 条
 
 function getTreeHoleScrollEl() {
   // Tab 常驻模式下，滚动容器是当前激活的 tab pane；否则回退到 .app-main
@@ -102,6 +104,7 @@ function TreeHole() {
     },
     initialData: initialSessionData,
     staleTime: 5 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
 
@@ -178,6 +181,41 @@ function TreeHole() {
       })
       .catch(() => {});
   }, [queryClient]);
+
+  // 首屏出来后，后台“偷偷”多拉几页，减少继续下滑时的灰色空段与等待
+  useEffect(() => {
+    if (selectedTagSlug) return;
+    if (!infinite.data || infinite.isFetching || infinite.isFetchingNextPage) return;
+    if (!infinite.hasNextPage) return;
+    if ((infinite.data?.pages?.length ?? 0) < 1) return;
+
+    const already = infinite.data.pages.length;
+    const target = 1 + PREFETCH_PAGES_AFTER_FIRST;
+    if (already >= target) return;
+
+    let cancelled = false;
+    const run = async () => {
+      for (let i = already; i < target; i += 1) {
+        if (cancelled) return;
+        // 如果中途没有更多页了就停
+        if (!infinite.hasNextPage) return;
+        // 这里用 await，确保顺序分页，不会并发炸后端/浪费流量
+        // eslint-disable-next-line no-await-in-loop
+        await infinite.fetchNextPage();
+      }
+    };
+    run().catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    selectedTagSlug,
+    infinite.data,
+    infinite.hasNextPage,
+    infinite.isFetching,
+    infinite.isFetchingNextPage,
+    infinite.fetchNextPage,
+  ]);
 
   const loadMore = () => {
     if (!infinite.isFetching && infinite.hasNextPage) {
