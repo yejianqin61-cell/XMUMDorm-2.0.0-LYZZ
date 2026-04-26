@@ -1,9 +1,10 @@
-const CACHE_NAME = 'dorm-cache-v7';
+const CACHE_NAME = 'dorm-cache-v8';
 const URLS_TO_CACHE = [
   '/',
   '/index.html',
   '/manifest.json',
   '/src/main.jsx',
+  '/break.png',
 ];
 
 self.addEventListener('install', (event) => {
@@ -29,6 +30,17 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
+
+  // 静态关键图：缓存优先，避免每次都走网络导致慢
+  try {
+    const u = new URL(request.url);
+    if (u.origin === self.location.origin && u.pathname === '/break.png') {
+      event.respondWith(
+        caches.match(request).then((cached) => cached || fetch(request))
+      );
+      return;
+    }
+  } catch (_) {}
 
   const url = request.url;
   const isApi = url.includes('/api/');

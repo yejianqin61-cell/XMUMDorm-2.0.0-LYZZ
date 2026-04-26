@@ -201,11 +201,11 @@ function MyZone() {
             className="rounded-3xl bg-white p-5 shadow-sm"
             style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}
           >
-            <div className="flex items-start gap-4">
+            <div className="flex items-start gap-5">
               <motion.button
                 type="button"
                 onClick={isLoggedIn ? goProfile : goLogin}
-                className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full bg-slate-100"
+                className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full bg-slate-100"
                 style={{ boxShadow: '0 8px 26px rgba(15, 23, 42, 0.10)' }}
                 aria-label={isLoggedIn ? t.editProfile : t.logIn}
                 {...tap}
@@ -222,7 +222,7 @@ function MyZone() {
                 ) : null}
               </motion.button>
 
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 pt-1">
                 <div className="flex items-center gap-2">
                   <p className="truncate text-[18px] font-semibold text-slate-900">
                     {isLoggedIn ? displayName : t.logIn}
