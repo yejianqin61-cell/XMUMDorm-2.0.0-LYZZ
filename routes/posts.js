@@ -452,7 +452,7 @@ router.get('/', async (req, res) => {
 // ============================================
 router.get('/tags', async (req, res) => {
   try {
-    const ttlMs = Number(process.env.CACHE_TAGS_TTL_MS || 5 * 60 * 1000); // 5min
+    const ttlMs = Number(process.env.CACHE_TAGS_TTL_MS || 60 * 60 * 1000); // 60min
     const rows = await simpleCache.getOrSet('posts:tags:v1', ttlMs, async () => {
       return await query('SELECT id, slug, name_zh, name_en, created_at FROM tags ORDER BY created_at ASC, id ASC');
     });

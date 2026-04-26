@@ -79,6 +79,10 @@
   align-items: flex-start;
 }
 
+.treehole-grid--perf {
+  will-change: transform;
+}
+
 .treehole-column {
   flex: 1;
   min-width: 0;
@@ -139,6 +143,93 @@
   filter: blur(0px) saturate(1.02);
   transform: scale(1);
   opacity: 1;
+}
+
+/* Skeleton (shimmer) */
+.treehole-skel-card {
+  border-radius: 24px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(226, 232, 240, 1);
+  box-shadow: 0 24px 80px rgba(2, 6, 23, 0.08);
+}
+
+.treehole-skel-media {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  background: rgba(15, 23, 42, 0.06);
+}
+
+.treehole-skel-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, rgba(226, 232, 240, 0.0) 0%, rgba(226, 232, 240, 0.55) 35%, rgba(226, 232, 240, 0.0) 70%);
+  transform: translateX(-60%);
+  animation: treeholeShimmer 1.25s ease-in-out infinite;
+  opacity: 0.9;
+}
+
+@keyframes treeholeShimmer {
+  0% { transform: translateX(-60%); }
+  100% { transform: translateX(60%); }
+}
+
+.treehole-skel-pill {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.treehole-skel-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.35);
+}
+
+.treehole-skel-name {
+  width: 64px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.35);
+}
+
+.treehole-skel-bottom {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+}
+
+.treehole-skel-line {
+  width: 78%;
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(248, 250, 252, 0.9);
+  box-shadow: 0 10px 20px rgba(2, 6, 23, 0.08);
+}
+
+.treehole-skel-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+}
+
+.treehole-skel-chip {
+  width: 44px;
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(248, 250, 252, 0.9);
 }
 
 .treehole-glass-blur {

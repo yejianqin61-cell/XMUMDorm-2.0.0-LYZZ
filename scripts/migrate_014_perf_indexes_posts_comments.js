@@ -34,6 +34,13 @@ async function addIndex(table, indexName, ddl) {
 }
 
 async function main() {
+  // posts profile: WHERE user_id=? AND deleted_at IS NULL AND hidden_by_admin=0 ORDER BY created_at DESC
+  await addIndex(
+    'posts',
+    'idx_posts_user_deleted_hidden_created',
+    'ALTER TABLE posts ADD INDEX idx_posts_user_deleted_hidden_created (user_id, deleted_at, hidden_by_admin, created_at)'
+  );
+
   // comments list: WHERE post_id=? AND deleted_at IS NULL ORDER BY created_at ASC
   await addIndex(
     'comments',
@@ -58,6 +65,13 @@ async function main() {
     'post_images',
     'idx_post_images_post_sort',
     'ALTER TABLE post_images ADD INDEX idx_post_images_post_sort (post_id, sort_order)'
+  );
+
+  // notifications: unread announcements & list
+  await addIndex(
+    'notifications',
+    'idx_notifications_user_type_read_created',
+    'ALTER TABLE notifications ADD INDEX idx_notifications_user_type_read_created (user_id, type, is_read, created_at)'
   );
 
   // tags mapping: WHERE post_id IN (...) and join tag_id

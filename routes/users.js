@@ -13,6 +13,7 @@ const authenticateToken = require('../middleware/auth');
 const { avatarUpload } = require('../middleware/upload');
 const { assetUrl } = require('../utils/assets');
 const { uploadBuffer, guessContentType } = require('../services/objectStorage');
+const { simpleCache } = require('../utils/simpleCache');
 
 const DEFAULT_AVATAR = '/uploads/default-avatar.png'; // 无头像时前端用此路径（可保留本地静态或后续迁移到 CDN）
 
@@ -74,14 +75,6 @@ router.get('/:id/profile', async (req, res) => {
   try {
     const userId = parseInt(req.params.id, 10);
     if (!userId) return res.status(400).json({ status: -1, message: '用户 ID 无效' });
-    const users = await query(
-      'SELECT id, username, email, avatar, nickname, role, weekly_comment_count FROM users WHERE id = ?',
-      [userId]
-    );
-    if (!users || users.length === 0) {
-      return res.status(404).json({ status: -1, message: '用户不存在' });
-    }
-    const u = users[0];
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const pageSize = Math.min(30, Math.max(1, parseInt(req.query.pageSize, 10) || 10));
     const offset = (page - 1) * pageSize;
@@ -91,10 +84,24 @@ router.get('/:id/profile', async (req, res) => {
       return res.status(400).json({ status: -1, message: '分页参数无效' });
     }
 
+    const cacheKey = `user_profile_v2:${userId}:p:${page}:s:${pageSize}`;
+    const cached = simpleCache.get(cacheKey);
+    if (cached) {
+      return res.status(200).json({ status: 0, message: '获取成功', data: cached });
+    }
+
+    const users = await query(
+      'SELECT id, username, email, avatar, nickname, role, weekly_comment_count FROM users WHERE id = ?',
+      [userId]
+    );
+    if (!users || users.length === 0) {
+      return res.status(404).json({ status: -1, message: '用户不存在' });
+    }
+    const u = users[0];
+
+    // 先分页取帖子主表（避免每条帖都跑子查询 COUNT）
     const posts = await query(
-      `SELECT p.id, p.content, p.type, p.created_at,
-        (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
-        (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count
+      `SELECT p.id, p.content, p.type, p.created_at
        FROM posts p
        WHERE p.user_id = ? AND p.deleted_at IS NULL AND p.hidden_by_admin = 0
        ORDER BY p.created_at DESC
@@ -103,10 +110,20 @@ router.get('/:id/profile', async (req, res) => {
     );
     const postIds = (posts || []).map((p) => p.id);
     let images = [];
+    let likeCounts = [];
+    let commentCounts = [];
     if (postIds.length > 0) {
       const placeholders = postIds.map(() => '?').join(',');
       images = await query(
         `SELECT post_id, file_path, sort_order FROM post_images WHERE post_id IN (${placeholders}) ORDER BY post_id, sort_order`,
+        postIds
+      );
+      likeCounts = await query(
+        `SELECT post_id, COUNT(*) AS cnt FROM post_likes WHERE post_id IN (${placeholders}) GROUP BY post_id`,
+        postIds
+      );
+      commentCounts = await query(
+        `SELECT post_id, COUNT(*) AS cnt FROM comments WHERE post_id IN (${placeholders}) AND deleted_at IS NULL GROUP BY post_id`,
         postIds
       );
     }
@@ -115,28 +132,29 @@ router.get('/:id/profile', async (req, res) => {
       if (!imagesByPost[img.post_id]) imagesByPost[img.post_id] = [];
       imagesByPost[img.post_id].push({ url: assetUrl(img.file_path), sort_order: img.sort_order });
     }
+    const likeByPost = {};
+    for (const r of likeCounts || []) likeByPost[r.post_id] = Number(r.cnt) || 0;
+    const commentByPost = {};
+    for (const r of commentCounts || []) commentByPost[r.post_id] = Number(r.cnt) || 0;
+
     const postList = (posts || []).map((p) => ({
       id: p.id,
       content: p.content,
       type: p.type,
       created_at: p.created_at,
-      like_count: Number(p.like_count),
-      comment_count: Number(p.comment_count),
-      user_liked: rowTruthyLike(p.user_liked),
+      like_count: likeByPost[p.id] || 0,
+      comment_count: commentByPost[p.id] || 0,
+      user_liked: false,
       images: (imagesByPost[p.id] || []).sort((a, b) => a.sort_order - b.sort_order)
     }));
 
-    const postCountRow = await query(
-      'SELECT COUNT(*) AS cnt FROM posts WHERE user_id = ? AND deleted_at IS NULL AND hidden_by_admin = 0',
-      [userId]
-    );
-    const likeReceivedRow = await query(
-      'SELECT COUNT(*) AS cnt FROM post_likes pl INNER JOIN posts p ON pl.post_id = p.id WHERE p.user_id = ? AND p.deleted_at IS NULL',
-      [userId]
-    );
-    const commentReceivedRow = await query(
-      'SELECT COUNT(*) AS cnt FROM comments c INNER JOIN posts p ON c.post_id = p.id WHERE p.user_id = ? AND p.deleted_at IS NULL AND c.deleted_at IS NULL',
-      [userId]
+    // 统计：合并到 1 次 DB roundtrip（3 个子查询）
+    const [statsRow] = await query(
+      `SELECT
+        (SELECT COUNT(*) FROM posts WHERE user_id = ? AND deleted_at IS NULL AND hidden_by_admin = 0) AS post_count,
+        (SELECT COUNT(*) FROM post_likes pl INNER JOIN posts p ON pl.post_id = p.id WHERE p.user_id = ? AND p.deleted_at IS NULL) AS like_received_count,
+        (SELECT COUNT(*) FROM comments c INNER JOIN posts p ON c.post_id = p.id WHERE p.user_id = ? AND p.deleted_at IS NULL AND c.deleted_at IS NULL) AS comment_received_count`,
+      [userId, userId, userId]
     );
 
     const data = {
@@ -151,14 +169,15 @@ router.get('/:id/profile', async (req, res) => {
       },
       posts: postList,
       stats: {
-        post_count: Number((postCountRow && postCountRow[0] && postCountRow[0].cnt) || 0),
-        comment_received_count: Number((commentReceivedRow && commentReceivedRow[0] && commentReceivedRow[0].cnt) || 0),
-        like_received_count: Number((likeReceivedRow && likeReceivedRow[0] && likeReceivedRow[0].cnt) || 0)
+        post_count: Number((statsRow && statsRow.post_count) || 0),
+        comment_received_count: Number((statsRow && statsRow.comment_received_count) || 0),
+        like_received_count: Number((statsRow && statsRow.like_received_count) || 0)
       },
       page,
       pageSize,
       hasMore: (posts || []).length === pageSize
     };
+    simpleCache.set(cacheKey, data, Number(process.env.CACHE_USER_PROFILE_TTL_MS || 10 * 1000));
     res.status(200).json({ status: 0, message: '获取成功', data });
   } catch (e) {
     console.error('个人空间错误:', e);

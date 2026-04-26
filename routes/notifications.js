@@ -10,6 +10,7 @@ const router = express.Router();
 const { query } = require('../database');
 const authenticateToken = require('../middleware/auth');
 const { assetUrl } = require('../utils/assets');
+const { simpleCache } = require('../utils/simpleCache');
 
 // 为通知附加帖子/发送者等摘要
 async function attachNotificationExtra(rows) {
@@ -102,16 +103,21 @@ router.get('/', authenticateToken, async (req, res) => {
 // ============================================
 router.get('/unread-announcements', authenticateToken, async (req, res) => {
   try {
-    const rows = await query(
-      `SELECT n.id, n.type, n.is_read, n.post_id, n.extra, n.created_at, n.from_user_id,
-        u.username AS from_username, u.nickname AS from_nickname, u.avatar AS from_avatar
-       FROM notifications n
-       LEFT JOIN users u ON n.from_user_id = u.id
-       WHERE n.user_id = ? AND n.type = 'announcement' AND n.is_read = 0
-       ORDER BY n.created_at DESC`,
-      [req.user.id]
-    );
-    const list = await attachNotificationExtra(rows || []);
+    const ttlMs = Number(process.env.CACHE_UNREAD_ANN_TTL_MS || 20 * 1000); // 20s
+    const cacheKey = `notifications:unreadAnn:v1:${req.user.id}`;
+    const list = await simpleCache.getOrSet(cacheKey, ttlMs, async () => {
+      const rows = await query(
+        `SELECT n.id, n.type, n.is_read, n.post_id, n.extra, n.created_at, n.from_user_id,
+          u.username AS from_username, u.nickname AS from_nickname, u.avatar AS from_avatar
+         FROM notifications n
+         LEFT JOIN users u ON n.from_user_id = u.id
+         WHERE n.user_id = ? AND n.type = 'announcement' AND n.is_read = 0
+         ORDER BY n.created_at DESC
+         LIMIT 20`,
+        [req.user.id]
+      );
+      return await attachNotificationExtra(rows || []);
+    });
     res.status(200).json({ status: 0, message: '获取成功', data: list });
   } catch (e) {
     console.error('未读公告错误:', e);

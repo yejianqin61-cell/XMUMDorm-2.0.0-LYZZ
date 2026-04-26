@@ -57,6 +57,20 @@ const cardIn = {
   show: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 520, damping: 38 } },
 };
 
+// Masonry virtual window + image cache
+const OVERSCAN_PX = 1500;
+const COL_GAP_PX = 12;
+const RIGHT_COL_OFFSET_PX = 32;
+const IMG_CACHE = new Map(); // url -> HTMLImageElement
+function warmImage(url) {
+  if (!url) return;
+  if (IMG_CACHE.has(url)) return;
+  const img = new Image();
+  img.decoding = 'async';
+  img.src = url;
+  IMG_CACHE.set(url, img);
+}
+
 /** 从 sessionStorage 恢复无限查询结构（与写入格式一致：整表 list + page 页数 + hasMore） */
 function readSessionInfinitePages(pageSize) {
   try {
@@ -251,6 +265,51 @@ function TreeHole() {
   const showInitialSkeleton = infinite.isPending && list.length === 0;
   const errorMsg = infinite.error ? getApiErrorMessage(infinite.error) : null;
 
+  const gridRef = useRef(null);
+  const [gridW, setGridW] = useState(0);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [vpH, setVpH] = useState(0);
+
+  // observe grid width for height estimation
+  useEffect(() => {
+    const el = gridRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      const w = entries?.[0]?.contentRect?.width;
+      if (w) setGridW(w);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // track scroll position of the real scroll container
+  useEffect(() => {
+    const sc = getTreeHoleScrollEl();
+    if (!sc) return undefined;
+    const onScroll = () => {
+      setScrollTop(sc.scrollTop || 0);
+      setVpH(sc.clientHeight || window.innerHeight || 0);
+    };
+    onScroll();
+    sc.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      sc.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
+  }, []);
+
+  // auto load next page when near bottom (avoid white gaps)
+  useEffect(() => {
+    if (!infinite.hasNextPage || infinite.isFetchingNextPage) return;
+    const sc = getTreeHoleScrollEl();
+    if (!sc) return;
+    const remain = sc.scrollHeight - (sc.scrollTop + sc.clientHeight);
+    if (remain < 1400) {
+      infinite.fetchNextPage().catch(() => {});
+    }
+  }, [scrollTop, vpH, infinite.hasNextPage, infinite.isFetchingNextPage, infinite.fetchNextPage]);
+
   return (
     <div className="treehole-page treehole-page--light">
       <TreeHoleToolbar selectedSlug={selectedTagSlug} onSelectTagSlug={handleSelectTag} />
@@ -276,21 +335,25 @@ function TreeHole() {
         </div>
       ) : (
         <div className="treehole-content">
-          <div className="treehole-grid">
-            <div className="treehole-column">
-              {leftColumn.map((post) => (
-                <TreeHoleGlassCard key={post.id} post={post} />
-              ))}
-              {infinite.isFetchingNextPage &&
-                [1, 2].map((i) => <SkeletonPost key={`treehole-next-l-${i}`} />)}
-            </div>
-            <div className="treehole-column treehole-column-right">
-              {rightColumn.map((post) => (
-                <TreeHoleGlassCard key={post.id} post={post} />
-              ))}
-              {infinite.isFetchingNextPage &&
-                [1, 2].map((i) => <SkeletonPost key={`treehole-next-r-${i}`} />)}
-            </div>
+          <div className="treehole-grid treehole-grid--perf" ref={gridRef}>
+            <VirtualColumn
+              items={leftColumn}
+              columnWidth={gridW > 0 ? (gridW - COL_GAP_PX) / 2 : 0}
+              scrollTop={scrollTop}
+              viewportH={vpH}
+              overscanPx={OVERSCAN_PX}
+              topPad={0}
+              fetchingTail={infinite.isFetchingNextPage}
+            />
+            <VirtualColumn
+              items={rightColumn}
+              columnWidth={gridW > 0 ? (gridW - COL_GAP_PX) / 2 : 0}
+              scrollTop={scrollTop}
+              viewportH={vpH}
+              overscanPx={OVERSCAN_PX}
+              topPad={RIGHT_COL_OFFSET_PX}
+              fetchingTail={infinite.isFetchingNextPage}
+            />
           </div>
           {infinite.hasNextPage && (
             <button
@@ -304,6 +367,109 @@ function TreeHole() {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+function estItemH(post, colW) {
+  const hasImg = !!post?.images?.[0]?.url;
+  if (hasImg) {
+    // exact placeholder ratio (matches CSS aspect-ratio 4/5)
+    return colW > 0 ? (colW * 5) / 4 : 420;
+  }
+  // compact no-image card
+  return 128;
+}
+
+function VirtualColumn({ items, columnWidth, scrollTop, viewportH, overscanPx, topPad, fetchingTail }) {
+  const arr = items || [];
+  const padTop = Number(topPad) || 0;
+  const gap = COL_GAP_PX;
+  const hList = useMemo(() => {
+    const hs = new Array(arr.length);
+    for (let i = 0; i < arr.length; i += 1) hs[i] = estItemH(arr[i], columnWidth) + (i === 0 ? 0 : gap);
+    return hs;
+  }, [arr, columnWidth]);
+
+  const prefix = useMemo(() => {
+    const p = new Array(hList.length + 1);
+    p[0] = padTop;
+    for (let i = 0; i < hList.length; i += 1) p[i + 1] = p[i] + hList[i];
+    return p;
+  }, [hList, padTop]);
+
+  const totalH = prefix[prefix.length - 1] + (fetchingTail ? 2 * (estItemH({ images: [{ url: 'x' }] }, columnWidth) + gap) : 0);
+  const from = Math.max(0, scrollTop - overscanPx);
+  const to = scrollTop + viewportH + overscanPx;
+
+  const start = useMemo(() => {
+    // lower_bound(prefix, from)
+    let lo = 0, hi = prefix.length - 1;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (prefix[mid] < from) lo = mid + 1;
+      else hi = mid;
+    }
+    return Math.max(0, lo - 1);
+  }, [prefix, from]);
+
+  const end = useMemo(() => {
+    let lo = 0, hi = prefix.length - 1;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (prefix[mid] < to) lo = mid + 1;
+      else hi = mid;
+    }
+    return Math.min(arr.length, lo);
+  }, [prefix, to, arr.length]);
+
+  const visible = arr.slice(start, end);
+
+  useEffect(() => {
+    // warm images for visible window (and keep in memory)
+    for (const p of visible) {
+      const url = p?.images?.[0]?.url ? prefixImageUrl(p.images[0].url) : null;
+      if (url) warmImage(url);
+    }
+  }, [visible]);
+
+  const topSpacer = prefix[start];
+  const bottomSpacer = Math.max(0, totalH - prefix[end]);
+
+  return (
+    <div className="treehole-column" style={{ paddingTop: padTop }}>
+      {topSpacer > padTop ? <div style={{ height: topSpacer - padTop }} /> : null}
+      {visible.map((post) => (
+        <TreeHoleGlassCard key={post.id} post={post} />
+      ))}
+      {fetchingTail && end >= arr.length ? (
+        <>
+          <TreeHoleGlassSkeleton />
+          <TreeHoleGlassSkeleton />
+        </>
+      ) : null}
+      {bottomSpacer > 0 ? <div style={{ height: bottomSpacer }} /> : null}
+    </div>
+  );
+}
+
+function TreeHoleGlassSkeleton() {
+  return (
+    <div className="treehole-skel-card" aria-hidden>
+      <div className="treehole-skel-media">
+        <div className="treehole-skel-shimmer" />
+        <div className="treehole-skel-pill">
+          <div className="treehole-skel-avatar" />
+          <div className="treehole-skel-name" />
+        </div>
+        <div className="treehole-skel-bottom">
+          <div className="treehole-skel-line" />
+          <div className="treehole-skel-actions">
+            <div className="treehole-skel-chip" />
+            <div className="treehole-skel-chip" />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
