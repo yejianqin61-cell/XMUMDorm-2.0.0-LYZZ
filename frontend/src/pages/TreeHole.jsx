@@ -58,7 +58,7 @@ const cardIn = {
 };
 
 // Masonry virtual window + image cache
-const OVERSCAN_PX = 1500;
+const OVERSCAN_PX = 2200;
 const COL_GAP_PX = 12;
 const RIGHT_COL_OFFSET_PX = 32;
 const IMG_CACHE = new Map(); // url -> HTMLImageElement
@@ -295,8 +295,19 @@ function TreeHole() {
       const st = sc.scrollTop || 0;
       setScrollTop(st);
       setVpH(sc.clientHeight || window.innerHeight || 0);
-      const gt = gridRef.current?.offsetTop ?? 0;
-      setGridTop(gt);
+      // robust: compute grid top relative to scroll container
+      try {
+        const scBox = sc.getBoundingClientRect?.();
+        const g = gridRef.current;
+        const gBox = g?.getBoundingClientRect?.();
+        if (scBox && gBox) {
+          setGridTop(Math.max(0, gBox.top - scBox.top + st));
+        } else {
+          setGridTop(g?.offsetTop ?? 0);
+        }
+      } catch {
+        setGridTop(gridRef.current?.offsetTop ?? 0);
+      }
     };
     onScroll();
     sc.addEventListener('scroll', onScroll, { passive: true });
@@ -449,9 +460,15 @@ function VirtualColumn({ items, columnWidth, scrollTop, viewportH, overscanPx, t
   return (
     <div className="treehole-column" style={{ paddingTop: padTop }}>
       {topSpacer > padTop ? <div style={{ height: topSpacer - padTop }} /> : null}
-      {visible.map((post) => (
-        <TreeHoleGlassCard key={post.id} post={post} />
-      ))}
+      {visible.length === 0 && arr.length > 0 ? (
+        <>
+          <TreeHoleGlassSkeleton />
+          <TreeHoleGlassSkeleton />
+          <TreeHoleGlassSkeleton />
+        </>
+      ) : (
+        visible.map((post) => <TreeHoleGlassCard key={post.id} post={post} />)
+      )}
       {fetchingTail && end >= arr.length ? (
         <>
           <TreeHoleGlassSkeleton />
