@@ -502,6 +502,8 @@
     gap: 12px;
   }
 
+  /* C-tier stability: remove heavy effects in scroll area */
+
   /* filter: blur() + transforms on big images is a common Safari blank-rect trigger */
   .treehole-glass-img {
     filter: none;
@@ -517,6 +519,24 @@
   .treehole-skel-pill {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
+  }
+
+  /* remove blur overlay layer entirely on mobile stable mode */
+  .treehole-glass-blur {
+    display: none;
+  }
+
+  /* shimmer animation can cause repaint storms on iOS */
+  .treehole-skel-shimmer {
+    animation: none;
+    opacity: 0.35;
+    transform: none;
+  }
+
+  /* reduce shadow cost a bit */
+  .treehole-glass-card,
+  .treehole-skel-card {
+    box-shadow: 0 14px 44px rgba(2, 6, 23, 0.08);
   }
 
   /* remove hover transform path on mobile */

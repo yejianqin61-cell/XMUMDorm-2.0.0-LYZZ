@@ -448,7 +448,7 @@ function TreeHole() {
                 <div className="treehole-grid treehole-grid--single">
                   <div className="treehole-column">
                     {list.map((post) => (
-                      <TreeHoleGlassCard key={post.id} post={post} eager />
+                      <TreeHoleGlassCard key={post.id} post={post} eager mobileStable />
                     ))}
                     {infinite.isFetchingNextPage ? (
                       <>
@@ -611,7 +611,7 @@ function TreeHoleGlassSkeleton() {
   );
 }
 
-function TreeHoleGlassCard({ post, eager = false }) {
+function TreeHoleGlassCard({ post, eager = false, mobileStable = false }) {
   const author = getAuthor(post);
   const likeNum = post.like_count ?? post.likeCount ?? 0;
   const commentNum = post.comment_count ?? post.commentCount ?? 0;
@@ -706,7 +706,9 @@ function TreeHoleGlassCard({ post, eager = false }) {
                   setLoaded(true);
                 }}
               />
-              <div className={`treehole-glass-blur ${loaded ? 'is-hidden' : ''}`} />
+              {!mobileStable ? (
+                <div className={`treehole-glass-blur ${loaded ? 'is-hidden' : ''}`} />
+              ) : null}
             </>
           ) : (
             <div className="treehole-glass-fallback" />
