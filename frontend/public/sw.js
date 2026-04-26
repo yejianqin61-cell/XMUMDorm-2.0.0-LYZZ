@@ -8,6 +8,11 @@ const URLS_TO_CACHE = [
 ];
 
 self.addEventListener('install', (event) => {
+  // 在 Vite 开发环境（通常 5173 端口）不做预缓存，避免缓存到源码导致 HMR/页面不更新
+  if (String(self.location && self.location.port) === '5173') {
+    event.waitUntil(self.skipWaiting());
+    return;
+  }
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(URLS_TO_CACHE)).then(() => self.skipWaiting())
   );
@@ -30,6 +35,9 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
+
+  // Vite dev：不要拦截任何请求（否则容易把 /src/* 缓存住导致“前端没更新”）
+  if (String(self.location && self.location.port) === '5173') return;
 
   // 静态关键图：缓存优先，避免每次都走网络导致慢
   try {

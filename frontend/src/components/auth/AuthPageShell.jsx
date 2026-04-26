@@ -1,5 +1,5 @@
 /**
- * 认证页外层：绿→蓝渐变 + 居中内容区（卡通在 LoginCard 外，由页面自行编排）
+ * 认证页外层：极简白/浅灰背景 + 居中内容区（卡通在 LoginCard 外，由页面自行编排）
  * @param {boolean} [dense] 为 true 时一屏紧凑布局（用于注册页等）
  */
 export default function AuthPageShell({ children, dense = false }) {
@@ -13,7 +13,7 @@ export default function AuthPageShell({ children, dense = false }) {
 
   return (
     <div
-      className={`flex w-full flex-col bg-gradient-to-b from-emerald-400 via-teal-500 to-sky-600 ${outer}`.trim()}
+      className={`flex w-full flex-col bg-[#F9FAFB] ${outer}`.trim()}
     >
       <div className={`flex flex-col items-center ${inner}`.trim()}>{children}</div>
     </div>

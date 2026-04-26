@@ -92,6 +92,16 @@ function Layout() {
   });
 
   const activeTabIndex = useMemo(() => getTabIndex(pathname), [pathname]);
+  // 性能：Tab 常驻模式下，未访问过的 Tab 不挂载，避免无关页面的 Query 同时触发
+  const [mountedTabs, setMountedTabs] = useState(() => new Set([getTabIndex(pathname)]));
+  useEffect(() => {
+    setMountedTabs((prev) => {
+      if (prev.has(activeTabIndex)) return prev;
+      const next = new Set(prev);
+      next.add(activeTabIndex);
+      return next;
+    });
+  }, [activeTabIndex]);
   const isRootTabPage = useMemo(() => {
     // 只在四个根 Tab 页使用“常驻页面 + 滑块切换”，子路由仍交给 Outlet 渲染
     return pathname === '/' || pathname === '/eat' || pathname === '/about' || pathname === '/myzone';
@@ -243,16 +253,16 @@ function Layout() {
                 }}
               >
                 <div className="tab-stack-pane" data-active={activeTabIndex === 0} aria-label="TreeHole">
-                  <TreeHole />
+                  {mountedTabs.has(0) ? <TreeHole /> : null}
                 </div>
                 <div className="tab-stack-pane tab-stack-pane--no-scroll" data-active={activeTabIndex === 1} aria-label="Eat" onTouchMove={preventTouchScroll}>
-                  <CanteenArea />
+                  {mountedTabs.has(1) ? <CanteenArea /> : null}
                 </div>
                 <div className="tab-stack-pane tab-stack-pane--no-scroll" data-active={activeTabIndex === 2} aria-label="Square" onTouchMove={preventTouchScroll}>
-                  <AboutUs />
+                  {mountedTabs.has(2) ? <AboutUs /> : null}
                 </div>
                 <div className="tab-stack-pane tab-stack-pane--myzone" data-active={activeTabIndex === 3} aria-label="MyZone">
-                  <MyZone />
+                  {mountedTabs.has(3) ? <MyZone /> : null}
                 </div>
               </div>
             </div>

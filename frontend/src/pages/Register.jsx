@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { getApiErrorMessage } from '../utils/apiError';
 import { sendVerificationCode, register as apiRegister } from '../api/auth';
 import AuthPageShell from '../components/auth/AuthPageShell';
@@ -98,26 +99,36 @@ function Register() {
   };
 
   const tabBase =
-    'flex-1 rounded-full py-1 text-[11px] font-semibold leading-tight transition border-0 cursor-pointer sm:py-1.5 sm:text-xs';
-  const tabIdle = 'bg-transparent text-zinc-600';
-  const tabActive = 'bg-white text-teal-700 shadow-sm shadow-teal-900/10';
+    'relative z-10 flex-1 rounded-full py-2 text-[12px] font-semibold leading-tight transition';
 
   return (
     <AuthPageShell dense>
-      <div className="flex min-h-0 w-full max-w-4xl flex-1 flex-col items-center">
-        <div className="flex w-full min-h-0 flex-1 flex-col items-center gap-1">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+        className="flex min-h-0 w-full max-w-4xl flex-1 flex-col items-center"
+      >
+        <div className="flex w-full min-h-0 flex-1 flex-col items-center gap-3">
           <MascotHero compact />
           <LoginCard className="!border-0 flex w-full max-w-none flex-1 flex-col rounded-[1.25rem] px-6 pb-5 pt-5 sm:px-12 sm:pb-7 sm:pt-7 min-h-[28rem] sm:min-h-[30rem]">
             <div
-              className="mb-3 flex w-full gap-0.5 rounded-full border border-white/50 bg-white/25 p-0.5 backdrop-blur-sm"
+              className="relative mb-4 flex w-full gap-0 rounded-full bg-slate-100 p-1"
               role="tablist"
               aria-label="Select account type"
             >
+              <motion.div
+                layoutId="register-role-pill"
+                className="absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-full bg-white shadow-sm ring-1 ring-slate-200"
+                animate={{ x: role === ROLE_STUDENT ? 0 : '100%' }}
+                transition={{ type: 'spring', stiffness: 500, damping: 40 }}
+                aria-hidden
+              />
               <button
                 type="button"
                 role="tab"
                 aria-selected={role === ROLE_STUDENT}
-                className={`${tabBase} ${role === ROLE_STUDENT ? tabActive : tabIdle}`}
+                className={`${tabBase} ${role === ROLE_STUDENT ? 'text-slate-900' : 'text-slate-500 hover:text-slate-800'}`}
                 onClick={() => setRole(ROLE_STUDENT)}
               >
                 Student
@@ -126,7 +137,7 @@ function Register() {
                 type="button"
                 role="tab"
                 aria-selected={role === ROLE_MERCHANT}
-                className={`${tabBase} ${role === ROLE_MERCHANT ? tabActive : tabIdle}`}
+                className={`${tabBase} ${role === ROLE_MERCHANT ? 'text-slate-900' : 'text-slate-500 hover:text-slate-800'}`}
                 onClick={() => setRole(ROLE_MERCHANT)}
               >
                 Merchant
@@ -136,16 +147,29 @@ function Register() {
           <form className="flex flex-1 flex-col space-y-3" onSubmit={handleSubmit}>
           {role === ROLE_STUDENT ? (
             <>
-              <InputField
-                id="reg-email"
-                label="School email (@xmu.edu.my)"
-                type="email"
-                placeholder="Enter your school email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                disabled={loading}
-              />
+              <div className="space-y-1.5">
+                <label htmlFor="reg-email" className="block pl-0.5 text-xs font-medium tracking-wide text-slate-700">
+                  School email
+                </label>
+                <div className="relative">
+                  <input
+                    id="reg-email"
+                    type="text"
+                    placeholder="yourname"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="email"
+                    disabled={loading}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pr-[7.5rem] text-[15px] text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 disabled:opacity-60"
+                  />
+                  {!email.includes('@') && (
+                    <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-[14px] font-medium text-slate-300">
+                      @xmu.edu.my
+                    </span>
+                  )}
+                </div>
+                <p className="pl-0.5 text-[11px] font-medium text-slate-400">Use your campus email ending with @xmu.edu.my</p>
+              </div>
               <InputField
                 id="reg-username"
                 label="Username"
@@ -169,11 +193,11 @@ function Register() {
               <div className="space-y-1">
                 <label
                   htmlFor="reg-code"
-                  className="block pl-0.5 text-[10px] font-semibold leading-tight text-zinc-800/80"
+                  className="block pl-0.5 text-xs font-medium tracking-wide text-slate-700"
                 >
                   Verification code
                 </label>
-                <div className="flex gap-1.5">
+                <div className="relative">
                   <input
                     id="reg-code"
                     type="text"
@@ -181,7 +205,7 @@ function Register() {
                     value={verificationCode}
                     onChange={(e) => setVerificationCode(e.target.value)}
                     disabled={loading}
-                    className="min-w-0 flex-1 rounded-full border-0 bg-white px-4 py-3 text-[15px] text-zinc-900 shadow-inner outline-none ring-2 ring-transparent focus:ring-sky-500/50 disabled:opacity-60"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pr-24 text-[15px] text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 disabled:opacity-60"
                   />
                   <button
                     type="button"
@@ -220,7 +244,7 @@ function Register() {
                         setSendingCode(false);
                       }
                     }}
-                    className="shrink-0 rounded-full border border-white/50 bg-gradient-to-r from-sky-500 to-cyan-400 px-2 py-1.5 text-[10px] font-bold text-zinc-900 shadow-md disabled:opacity-45 sm:px-2.5 sm:text-xs"
+                    className="absolute inset-y-0 right-2 my-2 rounded-lg px-2 text-[12px] font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-45"
                   >
                     {codeCountdown > 0 ? `${codeCountdown}s` : sendingCode ? '…' : 'Send'}
                   </button>
@@ -229,7 +253,7 @@ function Register() {
             </>
           ) : (
             <>
-              <p className="rounded-lg border border-emerald-200/60 bg-emerald-50/80 px-2 py-1 text-[10px] leading-snug text-zinc-700 sm:text-[11px]">
+              <p className="rounded-xl bg-slate-50 px-3 py-2 text-[12px] font-medium text-slate-600 ring-1 ring-slate-200">
                 Merchant sign-up requires an invite code.
               </p>
               <InputField
@@ -283,7 +307,7 @@ function Register() {
               type="submit"
               variant="primary"
               disabled={loading}
-              className="!py-2 !text-sm font-bold sm:!py-2.5"
+              className="!py-3 !text-[15px]"
             >
               {loading ? 'Registering…' : 'Register'}
             </Button>
@@ -291,10 +315,10 @@ function Register() {
         </form>
           </LoginCard>
         </div>
-      </div>
+      </motion.div>
 
       <nav className="mt-3 shrink-0 flex w-full max-w-4xl flex-col px-0.5 pb-1" aria-label="Back to login">
-        <Button as={Link} variant="ghost" to="/login" className="!py-2 !text-xs">
+        <Button as={Link} variant="skip" to="/login" className="!py-2 !text-[13px]">
           Back to Login
         </Button>
       </nav>

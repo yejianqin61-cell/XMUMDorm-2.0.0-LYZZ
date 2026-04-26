@@ -118,7 +118,11 @@ function MyZone() {
     queryKey: ['myzone', 'scheduleWeek', 1],
     enabled: isLoggedIn,
     queryFn: () => getScheduleWeek(1),
-    staleTime: 60 * 1000,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
   });
 
   const currentCourse = useMemo(() => {
@@ -150,6 +154,11 @@ function MyZone() {
       const cnt = data?.stats?.post_count;
       return Number.isFinite(Number(cnt)) ? Number(cnt) : Number(data?.post_count ?? 0);
     },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
   });
 
   const reviewsCountQuery = useQuery({
@@ -162,6 +171,11 @@ function MyZone() {
       const list = data?.list ?? [];
       return Array.isArray(list) ? list.length : 0;
     },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
   });
 
   const favoritesCountQuery = useQuery({
@@ -174,6 +188,11 @@ function MyZone() {
       const list = data?.list ?? [];
       return Array.isArray(list) ? list.length : 0;
     },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
   });
 
   const stats = useMemo(() => {

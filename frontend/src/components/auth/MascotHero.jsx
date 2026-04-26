@@ -100,8 +100,8 @@ export default function MascotHero({ compact = false }) {
         height={280}
         className={
           compact
-            ? 'block max-h-[min(40vh,18rem)] w-auto max-w-[min(100%,20rem)] object-contain object-top drop-shadow-[0_14px_28px_rgba(15,23,42,0.22)] sm:max-h-[min(36vh,19rem)] sm:max-w-sm'
-            : 'block max-h-[min(58vw,18.5rem)] w-auto max-w-full object-contain object-bottom drop-shadow-[0_14px_32px_rgba(15,23,42,0.25)] sm:max-h-[min(50vw,20.5rem)]'
+            ? 'block max-h-[min(28vh,10.5rem)] w-auto max-w-[min(100%,14rem)] object-contain object-top drop-shadow-[0_10px_22px_rgba(15,23,42,0.10)]'
+            : 'block max-h-[min(32vh,12rem)] w-auto max-w-[min(100%,16rem)] object-contain object-bottom drop-shadow-[0_12px_26px_rgba(15,23,42,0.12)]'
         }
         draggable={false}
       />

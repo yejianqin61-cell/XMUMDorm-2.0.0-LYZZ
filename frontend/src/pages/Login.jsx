@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { Toast } from '../context/ToastContext';
 import { getApiErrorMessage } from '../utils/apiError';
@@ -51,7 +52,12 @@ function Login() {
 
   return (
     <AuthPageShell>
-      <div className="flex w-full max-w-md flex-col items-center gap-1 sm:gap-2">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+        className="flex w-full max-w-md flex-col items-center gap-3"
+      >
         <MascotHero />
         <LoginCard>
           <AuthCardBrandHeader title="XMUMDorm" />
@@ -80,44 +86,21 @@ function Login() {
             <Button type="submit" variant="primary" disabled={loading}>
               {loading ? '登录中…' : 'login'}
             </Button>
-            <div
-              className="flex gap-2 pr-0.5"
-              role="group"
-              aria-label="注册、重置密码与跳过"
-            >
-              <Button
-                as={Link}
-                variant="skip"
-                to="/register"
-                disabled={loading}
-                className="min-w-0 flex-1 px-2 py-1.5 text-[11px] leading-tight sm:px-3 sm:py-2 sm:text-xs"
-              >
+            <div className="flex items-center justify-between pt-1 text-[13px] font-medium text-slate-500">
+              <Link to="/register" className="hover:text-slate-900">
                 Register
-              </Button>
-              <Button
-                as={Link}
-                variant="skip"
-                to="/reset-password"
-                disabled={loading}
-                aria-label="Reset password"
-                className="min-w-0 flex-1 px-2 py-1.5 text-[11px] leading-tight sm:px-3 sm:py-2 sm:text-xs"
-              >
+              </Link>
+              <Link to="/reset-password" className="hover:text-slate-900">
                 Reset password
-              </Button>
-              <Button
-                type="button"
-                variant="skip"
-                disabled={loading}
-                onClick={handleSkip}
-                className="min-w-0 flex-1 px-2 py-1.5 text-[11px] leading-tight sm:px-3 sm:py-2 sm:text-xs"
-              >
-                skip
-              </Button>
+              </Link>
+              <button type="button" onClick={handleSkip} className="hover:text-slate-900" disabled={loading}>
+                Skip
+              </button>
             </div>
           </div>
         </form>
         </LoginCard>
-      </div>
+      </motion.div>
     </AuthPageShell>
   );
 }

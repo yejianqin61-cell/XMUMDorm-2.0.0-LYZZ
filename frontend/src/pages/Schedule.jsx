@@ -183,6 +183,11 @@ function Schedule() {
       Toast.error(isZh ? '请先登录' : 'Please log in');
       return;
     }
+    // 开发环境禁用 SW：避免 Vite HMR/资源被 sw.js 缓存导致“前端不更新”
+    if (import.meta.env.DEV) {
+      Toast.error(isZh ? '开发环境已禁用推送（避免缓存导致前端不更新）' : 'Push is disabled in dev (avoid SW caching issues)');
+      return;
+    }
     if (!pushSupported) {
       Toast.error(isZh ? '当前浏览器不支持 Web 推送' : 'Web Push is not supported');
       return;
