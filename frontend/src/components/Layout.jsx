@@ -268,14 +268,33 @@ function Layout() {
         </div>
       </main>
       {showTreeHoleFab && (
-        <Link
-          to="/post/new"
-          className="treehole-fab pressable"
-          aria-label={isAdmin ? '发布公告 Announcement' : '发布帖子 Post'}
-        >
-          <PlusIcon />
-          {isAdmin && <span className="treehole-fab-tag">公告</span>}
-        </Link>
+        <>
+          <button
+            type="button"
+            className="treehole-top pressable"
+            aria-label="回到顶端 Back to top"
+            onClick={() => {
+              const pane = document.querySelector('.tab-stack-pane[data-active=\"true\"]');
+              const sc = pane || document.querySelector('.app-main');
+              try {
+                sc?.scrollTo?.({ top: 0, behavior: 'smooth' });
+              } catch {
+                if (sc) sc.scrollTop = 0;
+                else window.scrollTo(0, 0);
+              }
+            }}
+          >
+            <UpIcon />
+          </button>
+          <Link
+            to="/post/new"
+            className="treehole-fab pressable"
+            aria-label={isAdmin ? '发布公告 Announcement' : '发布帖子 Post'}
+          >
+            <PlusIcon />
+            {isAdmin && <span className="treehole-fab-tag">公告</span>}
+          </Link>
+        </>
       )}
       {showAnnouncements && announcements.length > 0 && (
         <div className="app-ann-modal-backdrop" role="dialog" aria-modal="true" aria-label="全站公告 Site-wide announcements">
@@ -320,6 +339,15 @@ function PlusIcon() {
   return (
     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
       <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
+
+function UpIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 19V6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M7 11l5-5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

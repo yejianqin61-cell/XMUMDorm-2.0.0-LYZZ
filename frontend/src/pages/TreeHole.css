@@ -79,10 +79,6 @@
   align-items: flex-start;
 }
 
-.treehole-grid--single {
-  display: flex;
-}
-
 .treehole-grid--perf {
   will-change: transform;
 }
@@ -442,6 +438,28 @@
   box-shadow: 0 4px 14px rgba(0, 122, 255, 0.38), 0 1px 3px rgba(0, 0, 0, 0.12);
   --pressable-shadow-active: 0 2px 10px rgba(0, 122, 255, 0.32);
   z-index: 90;
+}
+
+.treehole-top {
+  position: fixed;
+  right: 86px; /* 18 + 56 + 12 */
+  bottom: calc(var(--tabbar-height, 72px) + 18px + var(--safe-bottom, 0px));
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.86);
+  color: rgba(0, 91, 172, 0.98);
+  border: 1px solid rgba(226, 232, 240, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 18px 60px rgba(2, 6, 23, 0.10);
+  z-index: 90;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.treehole-top:active {
+  transform: scale(0.98);
 }
 
 .treehole-fab-tag {

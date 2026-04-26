@@ -444,46 +444,30 @@ function TreeHole() {
             </div>
           ) : (
             <>
-              {isCoarse ? (
-                <div className="treehole-grid treehole-grid--single">
-                  <div className="treehole-column">
-                    {list.map((post) => (
-                      <TreeHoleGlassCard key={post.id} post={post} eager mobileStable />
-                    ))}
-                    {infinite.isFetchingNextPage ? (
-                      <>
-                        <TreeHoleGlassSkeleton />
-                        <TreeHoleGlassSkeleton />
-                      </>
-                    ) : null}
-                  </div>
+              <div className="treehole-grid">
+                <div className="treehole-column">
+                  {leftColumn.map((post) => (
+                    <TreeHoleGlassCard key={post.id} post={post} eager={isCoarse} mobileStable={isCoarse} />
+                  ))}
+                  {infinite.isFetchingNextPage ? (
+                    <>
+                      <TreeHoleGlassSkeleton />
+                      <TreeHoleGlassSkeleton />
+                    </>
+                  ) : null}
                 </div>
-              ) : (
-                <div className="treehole-grid">
-                  <div className="treehole-column">
-                    {leftColumn.map((post) => (
-                      <TreeHoleGlassCard key={post.id} post={post} />
-                    ))}
-                    {infinite.isFetchingNextPage ? (
-                      <>
-                        <TreeHoleGlassSkeleton />
-                        <TreeHoleGlassSkeleton />
-                      </>
-                    ) : null}
-                  </div>
-                  <div className="treehole-column treehole-column-right">
-                    {rightColumn.map((post) => (
-                      <TreeHoleGlassCard key={post.id} post={post} />
-                    ))}
-                    {infinite.isFetchingNextPage ? (
-                      <>
-                        <TreeHoleGlassSkeleton />
-                        <TreeHoleGlassSkeleton />
-                      </>
-                    ) : null}
-                  </div>
+                <div className="treehole-column treehole-column-right">
+                  {rightColumn.map((post) => (
+                    <TreeHoleGlassCard key={post.id} post={post} eager={isCoarse} mobileStable={isCoarse} />
+                  ))}
+                  {infinite.isFetchingNextPage ? (
+                    <>
+                      <TreeHoleGlassSkeleton />
+                      <TreeHoleGlassSkeleton />
+                    </>
+                  ) : null}
                 </div>
-              )}
+              </div>
             </>
           )}
           {infinite.hasNextPage && (
