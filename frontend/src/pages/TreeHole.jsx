@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
@@ -109,6 +109,15 @@ function readSessionInfinitePages(pageSize) {
 }
 
 function TreeHole() {
+  const location = useLocation();
+  const debug = useMemo(() => {
+    try {
+      return new URLSearchParams(location.search).get('debug') === '1';
+    } catch {
+      return false;
+    }
+  }, [location.search]);
+
   const queryClient = useQueryClient();
   const { token, isAdmin } = useAuth();
   const tokenKey = token ?? 'guest';
@@ -339,6 +348,34 @@ function TreeHole() {
   return (
     <div className="treehole-page treehole-page--light">
       <TreeHoleToolbar selectedSlug={selectedTagSlug} onSelectTagSlug={handleSelectTag} />
+      {debug ? (
+        <div className="treehole-debug" role="status" aria-live="polite">
+          <div className="treehole-debug-row">
+            <span className="treehole-debug-k">posts</span>
+            <span className="treehole-debug-v">{list.length}</span>
+            <span className="treehole-debug-k">pages</span>
+            <span className="treehole-debug-v">{infinite.data?.pages?.length ?? 0}</span>
+          </div>
+          <div className="treehole-debug-row">
+            <span className="treehole-debug-k">fetch</span>
+            <span className="treehole-debug-v">{String(!!infinite.isFetching)}</span>
+            <span className="treehole-debug-k">next</span>
+            <span className="treehole-debug-v">{String(!!infinite.isFetchingNextPage)}</span>
+          </div>
+          <div className="treehole-debug-row">
+            <span className="treehole-debug-k">hasMore</span>
+            <span className="treehole-debug-v">{String(!!infinite.hasNextPage)}</span>
+            <span className="treehole-debug-k">imgLoaded</span>
+            <span className="treehole-debug-v">{IMG_LOADED.size}</span>
+          </div>
+          <div className="treehole-debug-row">
+            <span className="treehole-debug-k">st</span>
+            <span className="treehole-debug-v">{Math.round(scrollTop)}</span>
+            <span className="treehole-debug-k">vh</span>
+            <span className="treehole-debug-v">{Math.round(vpH)}</span>
+          </div>
+        </div>
+      ) : null}
       {errorMsg && (
         <p className="treehole-error state-error" role="alert">
           {errorMsg}

@@ -459,3 +459,62 @@
   color: #fff;
 }
 
+/* --------- Debug HUD (only when ?debug=1) --------- */
+.treehole-debug {
+  position: sticky;
+  top: 8px;
+  z-index: 9999;
+  margin: 10px 12px 0;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: rgba(2, 6, 23, 0.55);
+  color: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  font-size: 12px;
+  line-height: 1.25;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.treehole-debug-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.treehole-debug-k {
+  opacity: 0.72;
+}
+
+.treehole-debug-v {
+  font-weight: 700;
+}
+
+/* --------- Mobile stability: avoid iOS/WebView paint holes --------- */
+@media (pointer: coarse) {
+  /* filter: blur() + transforms on big images is a common Safari blank-rect trigger */
+  .treehole-glass-img {
+    filter: none;
+    transform: none;
+    opacity: 1;
+  }
+
+  /* backdrop-filter layers can flicker/blank under scroll pressure */
+  .treehole-glass-blur,
+  .treehole-glass-header-pill,
+  .treehole-error,
+  .treehole-load-more,
+  .treehole-skel-pill {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  /* remove hover transform path on mobile */
+  .treehole-glass-card:hover {
+    transform: none;
+    filter: none;
+  }
+}
+
