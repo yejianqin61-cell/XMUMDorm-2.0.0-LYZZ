@@ -116,23 +116,7 @@ function PostCard({ post, variant = 'list' }) {
         <Link to={`/post/${id}`} className="post-card-body" aria-label={`查看帖子 ${preview}`}>
           {showWaterfall && hasImages ? (
             <>
-              <div
-                className="post-card-cover"
-                role="button"
-                tabIndex={0}
-                aria-label="预览图片"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setImagePreview({ open: true, index: 0 });
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    setImagePreview({ open: true, index: 0 });
-                  }
-                }}
-              >
+              <div className="post-card-cover" aria-hidden>
                 {coverUrl && (
                   <img
                     src={coverUrl}
@@ -213,7 +197,7 @@ function PostCard({ post, variant = 'list' }) {
           </button>
         </div>
       </div>
-      {imagePreview.open && imageUrls.length > 0 && (
+      {!showWaterfall && imagePreview.open && imageUrls.length > 0 && (
         <ImagePreview
           urls={imageUrls}
           initialIndex={imagePreview.index}
