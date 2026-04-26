@@ -271,8 +271,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  /* 放大 200%：更显眼 */
-  padding: 6px 12px 6px 6px;
+  padding: 3px 6px 3px 3px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.70);
   border: 1px solid rgba(226, 232, 240, 1);
@@ -282,8 +281,8 @@
 }
 
 .treehole-glass-avatar {
-  width: 40px;
-  height: 40px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.08);
@@ -308,7 +307,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 14px;
+  font-size: 10px;
   font-weight: 600;
   color: rgba(15, 23, 42, 0.86);
 }
