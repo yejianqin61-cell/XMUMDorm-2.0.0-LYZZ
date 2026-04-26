@@ -49,17 +49,21 @@ function buildCardTags(post, lang) {
 /**
  * 帖子卡片：顶栏标签；正文+图；底栏头像+昵称+大点赞（列表可点赞）
  */
-function PostCard({ post }) {
+function PostCard({ post, variant = 'list' }) {
   const { lang } = useLanguage();
-  const { id, content, like_count, comment_count, likeCount, commentCount } = post;
+  const { id, title, content, like_count, comment_count, likeCount, commentCount } = post;
   const author = useAuthor(post);
   const initialLike = like_count ?? likeCount ?? 0;
   const commentNum = comment_count ?? commentCount ?? 0;
   const preview = (content || '').length > 50 ? (content || '').slice(0, 50) + '…' : (content || '');
+  const displayTitle = (title || '').trim() || preview || '无标题';
   const timeStr = formatPostTime(post.created_at);
   const [imagePreview, setImagePreview] = useState({ open: false, index: 0 });
   const imageUrls = post.images?.length ? post.images.map((img) => prefixImageUrl(img.url)) : [];
   const tags = buildCardTags(post, lang);
+  const hasImages = Array.isArray(post.images) && post.images.length > 0;
+  const showWaterfall = variant === 'waterfall';
+  const coverUrl = hasImages ? prefixImageUrl(post.images[0]?.url) : null;
 
   const { isLoggedIn } = useAuth();
   const navigate = useNavigate();
@@ -89,62 +93,100 @@ function PostCard({ post }) {
 
   return (
     <>
-      <div className="post-card">
-        <div className="post-card-tags" aria-label="标签 Tags">
-          {tags.map((t) =>
-            t.slug ? (
-              <Link
-                key={t.key}
-                to={`/posts/tag/${encodeURIComponent(t.slug)}`}
-                className="post-card-tag post-card-tag--link"
-              >
-                {t.label}
-              </Link>
-            ) : (
-              <span key={t.key} className="post-card-tag">
-                {t.label}
-              </span>
-            )
-          )}
-        </div>
-        <Link to={`/post/${id}`} className="post-card-body" aria-label={`查看帖子 ${preview}`}>
-          <p className="post-card-content">{preview}</p>
-          {post.images && post.images.length > 0 && (
-            <div className="post-card-images" aria-hidden>
-              {post.images.slice(0, 1).map((img, i) => (
-                <span
-                  key={img.url || i}
-                  role="button"
-                  tabIndex={0}
-                  className="post-card-image-wrap"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setImagePreview({ open: true, index: i });
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setImagePreview({ open: true, index: i });
-                    }
-                  }}
+      <div className={`post-card ${showWaterfall ? 'post-card--waterfall' : ''} ${showWaterfall && hasImages ? 'post-card--waterfall-image' : ''}`}>
+        {!showWaterfall && (
+          <div className="post-card-tags" aria-label="标签 Tags">
+            {tags.map((t) =>
+              t.slug ? (
+                <Link
+                  key={t.key}
+                  to={`/posts/tag/${encodeURIComponent(t.slug)}`}
+                  className="post-card-tag post-card-tag--link"
                 >
+                  {t.label}
+                </Link>
+              ) : (
+                <span key={t.key} className="post-card-tag">
+                  {t.label}
+                </span>
+              )
+            )}
+          </div>
+        )}
+        <Link to={`/post/${id}`} className="post-card-body" aria-label={`查看帖子 ${preview}`}>
+          {showWaterfall && hasImages ? (
+            <>
+              <div
+                className="post-card-cover"
+                role="button"
+                tabIndex={0}
+                aria-label="预览图片"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setImagePreview({ open: true, index: 0 });
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setImagePreview({ open: true, index: 0 });
+                  }
+                }}
+              >
+                {coverUrl && (
                   <img
-                    src={prefixImageUrl(img.url)}
+                    src={coverUrl}
                     alt=""
-                    className="post-card-image"
-                    // 列表回滚时避免“灰块/空窗”：更积极加载，减少离屏回收带来的二次渲染闪烁
+                    className="post-card-cover-img"
                     loading="eager"
                     decoding="async"
                   />
-                </span>
-              ))}
-            </div>
+                )}
+              </div>
+              <p className="post-card-title">{displayTitle}</p>
+            </>
+          ) : (
+            <>
+              {!showWaterfall && <p className="post-card-content">{preview}</p>}
+              {hasImages && !showWaterfall && (
+                <div className="post-card-images" aria-hidden>
+                  {post.images.slice(0, 1).map((img, i) => (
+                    <span
+                      key={img.url || i}
+                      role="button"
+                      tabIndex={0}
+                      className="post-card-image-wrap"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setImagePreview({ open: true, index: i });
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setImagePreview({ open: true, index: i });
+                        }
+                      }}
+                    >
+                      <img
+                        src={prefixImageUrl(img.url)}
+                        alt=""
+                        className="post-card-image"
+                        loading="eager"
+                        decoding="async"
+                      />
+                    </span>
+                  ))}
+                </div>
+              )}
+              {!showWaterfall && (
+                <div className="post-card-meta">
+                  {timeStr && <span className="post-card-time">{timeStr}</span>}
+                  <span className="post-card-stat">💬 {commentNum}</span>
+                </div>
+              )}
+            </>
           )}
-          <div className="post-card-meta">
-            {timeStr && <span className="post-card-time">{timeStr}</span>}
-            <span className="post-card-stat">💬 {commentNum}</span>
-          </div>
         </Link>
         <div className="post-card-footer" aria-label="作者与点赞">
           <div className="post-card-footer-author">

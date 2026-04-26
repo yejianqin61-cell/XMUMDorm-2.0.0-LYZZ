@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect, useMemo } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import TopBar from './TopBar';
 import TabBar from './TabBar';
@@ -66,7 +67,7 @@ function Layout() {
   const location = useLocation();
   const pathname = location.pathname;
   const queryClient = useQueryClient();
-  const { isLoggedIn, token } = useAuth();
+  const { isLoggedIn, token, isAdmin } = useAuth();
   const tokenKey = token ?? '';
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
@@ -216,6 +217,7 @@ function Layout() {
 
   /** 顶栏仅在「树洞」Tab（/ 及 /post、/posts 等子路由）显示；食堂/广场/我的主 Tab 隐藏 */
   const showTopBar = getTabRootPath(pathname) === '/';
+  const showTreeHoleFab = pathname === '/' && activeTabIndex === 0;
 
   return (
     <div
@@ -259,6 +261,16 @@ function Layout() {
           )}
         </div>
       </main>
+      {showTreeHoleFab && (
+        <Link
+          to="/post/new"
+          className="treehole-fab pressable"
+          aria-label={isAdmin ? '发布公告 Announcement' : '发布帖子 Post'}
+        >
+          <PlusIcon />
+          {isAdmin && <span className="treehole-fab-tag">公告</span>}
+        </Link>
+      )}
       {showAnnouncements && announcements.length > 0 && (
         <div className="app-ann-modal-backdrop" role="dialog" aria-modal="true" aria-label="全站公告 Site-wide announcements">
           <div className="app-ann-modal">
@@ -295,6 +307,14 @@ function Layout() {
       )}
       <TabBar />
     </div>
+  );
+}
+
+function PlusIcon() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+      <path d="M12 5v14M5 12h14" />
+    </svg>
   );
 }
 

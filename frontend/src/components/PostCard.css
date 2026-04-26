@@ -14,6 +14,52 @@
   -webkit-font-smoothing: antialiased;
 }
 
+.post-card--waterfall {
+  /* 瀑布流中更紧凑：由内容决定高度 */
+  min-height: 0;
+}
+
+.post-card--waterfall-image {
+  padding: 0;
+}
+
+.post-card--waterfall-image .post-card-body {
+  padding: 0;
+}
+
+.post-card-cover {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: var(--post-ios-fill, rgba(118, 118, 128, 0.12));
+  overflow: hidden;
+}
+
+.post-card-cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.post-card-title {
+  margin: 10px 14px 10px;
+  font-family: var(--post-ios-font, inherit);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  color: var(--post-ios-label, rgba(0, 0, 0, 0.88));
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.post-card--waterfall-image .post-card-footer {
+  padding: 6px 14px 10px;
+  border-top: 0.5px solid var(--post-ios-separator, rgba(60, 60, 67, 0.12));
+}
+
 .post-card-body {
   display: block;
   flex: 1 1 auto;

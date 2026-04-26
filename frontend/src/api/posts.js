@@ -40,9 +40,12 @@ export function getPostDetail(postId, token) {
  * 发布帖子（FormData：content, type, images）
  */
 export function createPost(body) {
-  const { content, type = 'normal', images, tagIds } = body || {};
+  const { title, content, type = 'normal', images, tagIds } = body || {};
   if (!content || !String(content).trim()) throw new Error('内容不能为空');
   const form = new FormData();
+  if (type !== 'announcement') {
+    form.append('title', String(title || '').trim());
+  }
   form.append('content', String(content).trim());
   form.append('type', type === 'announcement' ? 'announcement' : 'normal');
   if (images && Array.isArray(images)) {

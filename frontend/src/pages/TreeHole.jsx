@@ -258,14 +258,14 @@ function TreeHole() {
           <div className="treehole-grid">
             <div className="treehole-column">
               {leftColumn.map((post) => (
-                <PostCard key={post.id} post={post} />
+                <PostCard key={post.id} post={post} variant={post.images?.length ? 'waterfall' : undefined} />
               ))}
               {infinite.isFetchingNextPage &&
                 [1, 2].map((i) => <SkeletonPost key={`treehole-next-l-${i}`} />)}
             </div>
             <div className="treehole-column treehole-column-right">
               {rightColumn.map((post) => (
-                <PostCard key={post.id} post={post} />
+                <PostCard key={post.id} post={post} variant={post.images?.length ? 'waterfall' : undefined} />
               ))}
               {infinite.isFetchingNextPage &&
                 [1, 2].map((i) => <SkeletonPost key={`treehole-next-r-${i}`} />)}
@@ -283,23 +283,7 @@ function TreeHole() {
           )}
         </div>
       )}
-      <Link
-        to="/post/new"
-        className="treehole-fab pressable"
-        aria-label={isAdmin ? '发布公告 Announcement' : '发布帖子 Post'}
-      >
-        <PlusIcon />
-        {isAdmin && <span className="treehole-fab-tag">公告</span>}
-      </Link>
     </div>
-  );
-}
-
-function PlusIcon() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
-      <path d="M12 5v14M5 12h14" />
-    </svg>
   );
 }
 

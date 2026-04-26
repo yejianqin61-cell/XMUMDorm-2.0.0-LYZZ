@@ -113,12 +113,12 @@ function PostSearch() {
           <div className="treehole-grid">
             <div className="treehole-column">
               {leftColumn.map((post) => (
-                <PostCard key={post.id} post={post} />
+                <PostCard key={post.id} post={post} variant={post.images?.length ? 'waterfall' : undefined} />
               ))}
             </div>
             <div className="treehole-column treehole-column-right">
               {rightColumn.map((post) => (
-                <PostCard key={post.id} post={post} />
+                <PostCard key={post.id} post={post} variant={post.images?.length ? 'waterfall' : undefined} />
               ))}
             </div>
           </div>

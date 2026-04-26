@@ -111,6 +111,7 @@ function attachPostExtra(rows, req) {
     const base = {
       id: row.id,
       user_id: row.user_id,
+      title: row.title ?? null,
       content: row.content,
       type: row.type,
       created_at: row.created_at,
@@ -156,6 +157,7 @@ function mergePostRows(rows, req) {
       byId[id] = {
         id: row.id,
         user_id: row.user_id,
+        title: row.title ?? null,
         content: row.content,
         type: row.type,
         created_at: row.created_at,
@@ -199,6 +201,7 @@ router.post('/', authenticateToken, (req, res, next) => {
   });
 }, async (req, res) => {
   try {
+    const title = cleanText(req.body && req.body.title).slice(0, 120);
     const content = cleanText(req.body && req.body.content);
     if (!content) {
       return res.status(400).json({ status: -1, message: '内容不能为空' });
@@ -213,10 +216,27 @@ router.post('/', authenticateToken, (req, res, next) => {
     }
     const type = requestedType;
 
-    const result = await query(
-      'INSERT INTO posts (user_id, content, type) VALUES (?, ?, ?)',
-      [req.user.id, content, type]
-    );
+    // 普通帖：强制标题（公告不强制，保持旧行为）
+    if (type === 'normal' && !title) {
+      return res.status(400).json({ status: -1, message: '标题不能为空' });
+    }
+
+    let result;
+    try {
+      result = await query(
+        'INSERT INTO posts (user_id, title, content, type) VALUES (?, ?, ?, ?)',
+        [req.user.id, type === 'normal' ? title : null, content, type]
+      );
+    } catch (e) {
+      // 数据库尚未迁移 title 字段时，给出明确提示（避免 500 迷惑）
+      if (e && e.code === 'ER_BAD_FIELD_ERROR' && String(e.sqlMessage || '').includes('title')) {
+        return res.status(503).json({
+          status: -1,
+          message: '数据库缺少 posts.title，请先执行迁移 migrations/013_posts_title.sql',
+        });
+      }
+      throw e;
+    }
     const postId = result.insertId;
     const files = req.files || [];
     if (files.length > 0) {
@@ -296,7 +316,7 @@ router.post('/', authenticateToken, (req, res, next) => {
     const posterUid = req.user && req.user.id != null ? parseInt(req.user.id, 10) : 0;
     const likeUserParam = Number.isFinite(posterUid) && posterUid > 0 ? posterUid : 0;
     const rows = await query(
-      `SELECT p.id, p.user_id, p.content, p.type, p.created_at, p.updated_at, p.hidden_by_admin,
+      `SELECT p.id, p.user_id, p.title, p.content, p.type, p.created_at, p.updated_at, p.hidden_by_admin,
         u.id AS author_id, u.username AS author_username, u.nickname AS author_nickname, u.avatar AS author_avatar,
         pi.file_path AS image_path, pi.sort_order,
         (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
@@ -373,21 +393,45 @@ router.get('/', async (req, res) => {
     const likeUserParam = Number.isFinite(viewerUid) && viewerUid > 0 ? viewerUid : 0;
 
     // 占位符顺序必须与 SQL 中 ? 出现顺序一致：SELECT 里 user_liked 在前，WHERE 里 LIKE / tag 在后
-    const rows = await query(
-      `SELECT p.id, p.user_id, p.content, p.type, p.deleted_at, p.hidden_by_admin, p.created_at, p.updated_at,
-        u.id AS author_id, u.username AS author_username, u.nickname AS author_nickname, u.avatar AS author_avatar,
-        pi.file_path AS image_path, pi.sort_order,
-        (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
-        (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count,
-        (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id AND pl.user_id = ?) > 0 AS user_liked
-       FROM posts p
-       LEFT JOIN users u ON p.user_id = u.id
-       LEFT JOIN post_images pi ON pi.post_id = p.id
-       WHERE ${where}
-       ORDER BY p.created_at DESC
-       LIMIT ${limitCount} OFFSET ${offset}`,
-      [likeUserParam, ...sqlParams]
-    );
+    let rows;
+    try {
+      rows = await query(
+        `SELECT p.id, p.user_id, p.title, p.content, p.type, p.deleted_at, p.hidden_by_admin, p.created_at, p.updated_at,
+          u.id AS author_id, u.username AS author_username, u.nickname AS author_nickname, u.avatar AS author_avatar,
+          pi.file_path AS image_path, pi.sort_order,
+          (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
+          (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count,
+          (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id AND pl.user_id = ?) > 0 AS user_liked
+         FROM posts p
+         LEFT JOIN users u ON p.user_id = u.id
+         LEFT JOIN post_images pi ON pi.post_id = p.id
+         WHERE ${where}
+         ORDER BY p.created_at DESC
+         LIMIT ${limitCount} OFFSET ${offset}`,
+        [likeUserParam, ...sqlParams]
+      );
+    } catch (e) {
+      // 兼容未执行 013 迁移：降级不查询 title，避免列表直接 500
+      if (e && e.code === 'ER_BAD_FIELD_ERROR' && String(e.sqlMessage || '').includes("p.title")) {
+        rows = await query(
+          `SELECT p.id, p.user_id, p.content, p.type, p.deleted_at, p.hidden_by_admin, p.created_at, p.updated_at,
+            u.id AS author_id, u.username AS author_username, u.nickname AS author_nickname, u.avatar AS author_avatar,
+            pi.file_path AS image_path, pi.sort_order,
+            (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
+            (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count,
+            (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id AND pl.user_id = ?) > 0 AS user_liked
+           FROM posts p
+           LEFT JOIN users u ON p.user_id = u.id
+           LEFT JOIN post_images pi ON pi.post_id = p.id
+           WHERE ${where}
+           ORDER BY p.created_at DESC
+           LIMIT ${limitCount} OFFSET ${offset}`,
+          [likeUserParam, ...sqlParams]
+        );
+      } else {
+        throw e;
+      }
+    }
     let list = mergePostRows(rows.map((r) => ({ ...r, deleted_at: null })), { user: user || {} });
     list = await enrichPostsWithTags(list);
     const hasMore = rows.length > pageSize;
@@ -500,19 +544,40 @@ router.get('/:id', async (req, res) => {
     const viewerUid = user && user.id != null ? parseInt(user.id, 10) : 0;
     const likeUserParam = Number.isFinite(viewerUid) && viewerUid > 0 ? viewerUid : 0;
 
-    const rows = await query(
-      `SELECT p.id, p.user_id, p.content, p.type, p.deleted_at, p.hidden_by_admin, p.created_at, p.updated_at,
-        u.id AS author_id, u.username AS author_username, u.nickname AS author_nickname, u.avatar AS author_avatar,
-        pi.file_path AS image_path, pi.sort_order,
-        (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
-        (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count,
-        (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id AND pl.user_id = ?) > 0 AS user_liked
-       FROM posts p
-       LEFT JOIN users u ON p.user_id = u.id
-       LEFT JOIN post_images pi ON pi.post_id = p.id
-       WHERE p.id = ?`,
-      [likeUserParam, id]
-    );
+    let rows;
+    try {
+      rows = await query(
+        `SELECT p.id, p.user_id, p.title, p.content, p.type, p.deleted_at, p.hidden_by_admin, p.created_at, p.updated_at,
+          u.id AS author_id, u.username AS author_username, u.nickname AS author_nickname, u.avatar AS author_avatar,
+          pi.file_path AS image_path, pi.sort_order,
+          (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
+          (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count,
+          (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id AND pl.user_id = ?) > 0 AS user_liked
+         FROM posts p
+         LEFT JOIN users u ON p.user_id = u.id
+         LEFT JOIN post_images pi ON pi.post_id = p.id
+         WHERE p.id = ?`,
+        [likeUserParam, id]
+      );
+    } catch (e) {
+      if (e && e.code === 'ER_BAD_FIELD_ERROR' && String(e.sqlMessage || '').includes("p.title")) {
+        rows = await query(
+          `SELECT p.id, p.user_id, p.content, p.type, p.deleted_at, p.hidden_by_admin, p.created_at, p.updated_at,
+            u.id AS author_id, u.username AS author_username, u.nickname AS author_nickname, u.avatar AS author_avatar,
+            pi.file_path AS image_path, pi.sort_order,
+            (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
+            (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count,
+            (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id AND pl.user_id = ?) > 0 AS user_liked
+           FROM posts p
+           LEFT JOIN users u ON p.user_id = u.id
+           LEFT JOIN post_images pi ON pi.post_id = p.id
+           WHERE p.id = ?`,
+          [likeUserParam, id]
+        );
+      } else {
+        throw e;
+      }
+    }
     if (!rows || rows.length === 0) {
       return res.status(404).json({ status: -1, message: '帖子不存在' });
     }

@@ -18,6 +18,7 @@ function PostNew() {
   const { lang } = useLanguage();
   const isEn = lang === 'en';
   const navigate = useNavigate();
+  const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [imageFiles, setImageFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
@@ -66,7 +67,12 @@ function PostNew() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const trimmedTitle = title.trim();
     const trimmed = content.trim();
+    if (!isAdmin && !trimmedTitle) {
+      Toast.error(isEn ? 'Title is required' : '请输入标题');
+      return;
+    }
     if (!trimmed) {
       Toast.error('请输入内容');
       return;
@@ -74,6 +80,7 @@ function PostNew() {
     setLoading(true);
     try {
       const payload = {
+        title: isAdmin ? undefined : trimmedTitle,
         content: trimmed,
         images: imageFiles.length ? imageFiles : undefined,
       };
@@ -129,6 +136,18 @@ function PostNew() {
             </div>
           </div>
         )}
+        {!isAdmin && (
+          <div className="postnew-section">
+            <label className="postnew-label">{isEn ? 'Title 标题（required）' : '标题 Title（必填 / required）'}</label>
+            <input
+              className="postnew-input"
+              placeholder={isEn ? 'Give your post a title…' : '给帖子起个标题…'}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              maxLength={120}
+            />
+          </div>
+        )}
         <div className="postnew-section">
           <label className="postnew-label">{isAdmin ? '公告内容 Announcement' : '内容 Content'}</label>
           <textarea
@@ -170,7 +189,11 @@ function PostNew() {
             )}
           </div>
         </div>
-        <button type="submit" className="postnew-submit pressable" disabled={loading}>
+        <button
+          type="submit"
+          className="postnew-submit pressable"
+          disabled={loading || (!isAdmin && !title.trim()) || !content.trim()}
+        >
           {loading ? (isAdmin ? '发布公告中…' : '发布中…') : (isAdmin ? '发布公告 Announcement' : '发布 Post')}
         </button>
       </form>
