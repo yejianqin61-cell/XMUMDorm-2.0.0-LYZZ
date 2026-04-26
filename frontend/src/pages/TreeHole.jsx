@@ -118,6 +118,15 @@ function TreeHole() {
     }
   }, [location.search]);
 
+  // Mobile stability mode: coarse pointer devices (phones/tablets)
+  const isCoarse = useMemo(() => {
+    try {
+      return typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)')?.matches;
+    } catch {
+      return false;
+    }
+  }, []);
+
   const queryClient = useQueryClient();
   const { token, isAdmin } = useAuth();
   const tokenKey = token ?? 'guest';
@@ -164,6 +173,20 @@ function TreeHole() {
     () => infinite.data?.pages.flatMap((p) => p.list) ?? [],
     [infinite.data]
   );
+
+  // Mobile: pre-warm a window of images ahead to reduce blank blocks
+  useEffect(() => {
+    if (!isCoarse) return;
+    let n = 0;
+    for (const p of list) {
+      const url = p?.images?.[0]?.url ? prefixImageUrl(p.images[0].url) : null;
+      if (url) {
+        warmImage(url);
+        n += 1;
+      }
+      if (n >= 28) break;
+    }
+  }, [isCoarse, list]);
 
   useEffect(() => {
     pageRef.current = infinite.data?.pages.length ?? 1;
@@ -346,7 +369,7 @@ function TreeHole() {
   const gridScrollTop = Math.max(0, scrollTop - (gridTop || 0));
 
   return (
-    <div className="treehole-page treehole-page--light">
+    <div className={`treehole-page treehole-page--light ${isCoarse ? 'treehole-page--mobile' : ''}`}>
       <TreeHoleToolbar selectedSlug={selectedTagSlug} onSelectTagSlug={handleSelectTag} />
       {debug ? (
         <div className="treehole-debug" role="status" aria-live="polite">
@@ -420,30 +443,48 @@ function TreeHole() {
               />
             </div>
           ) : (
-            <div className="treehole-grid">
-              <div className="treehole-column">
-                {leftColumn.map((post) => (
-                  <TreeHoleGlassCard key={post.id} post={post} />
-                ))}
-                {infinite.isFetchingNextPage ? (
-                  <>
-                    <TreeHoleGlassSkeleton />
-                    <TreeHoleGlassSkeleton />
-                  </>
-                ) : null}
-              </div>
-              <div className="treehole-column treehole-column-right">
-                {rightColumn.map((post) => (
-                  <TreeHoleGlassCard key={post.id} post={post} />
-                ))}
-                {infinite.isFetchingNextPage ? (
-                  <>
-                    <TreeHoleGlassSkeleton />
-                    <TreeHoleGlassSkeleton />
-                  </>
-                ) : null}
-              </div>
-            </div>
+            <>
+              {isCoarse ? (
+                <div className="treehole-grid treehole-grid--single">
+                  <div className="treehole-column">
+                    {list.map((post) => (
+                      <TreeHoleGlassCard key={post.id} post={post} eager />
+                    ))}
+                    {infinite.isFetchingNextPage ? (
+                      <>
+                        <TreeHoleGlassSkeleton />
+                        <TreeHoleGlassSkeleton />
+                      </>
+                    ) : null}
+                  </div>
+                </div>
+              ) : (
+                <div className="treehole-grid">
+                  <div className="treehole-column">
+                    {leftColumn.map((post) => (
+                      <TreeHoleGlassCard key={post.id} post={post} />
+                    ))}
+                    {infinite.isFetchingNextPage ? (
+                      <>
+                        <TreeHoleGlassSkeleton />
+                        <TreeHoleGlassSkeleton />
+                      </>
+                    ) : null}
+                  </div>
+                  <div className="treehole-column treehole-column-right">
+                    {rightColumn.map((post) => (
+                      <TreeHoleGlassCard key={post.id} post={post} />
+                    ))}
+                    {infinite.isFetchingNextPage ? (
+                      <>
+                        <TreeHoleGlassSkeleton />
+                        <TreeHoleGlassSkeleton />
+                      </>
+                    ) : null}
+                  </div>
+                </div>
+              )}
+            </>
           )}
           {infinite.hasNextPage && (
             <button
@@ -570,7 +611,7 @@ function TreeHoleGlassSkeleton() {
   );
 }
 
-function TreeHoleGlassCard({ post }) {
+function TreeHoleGlassCard({ post, eager = false }) {
   const author = getAuthor(post);
   const likeNum = post.like_count ?? post.likeCount ?? 0;
   const commentNum = post.comment_count ?? post.commentCount ?? 0;
@@ -584,6 +625,7 @@ function TreeHoleGlassCard({ post }) {
     const img = IMG_CACHE.get(cover);
     return !!img && img.complete;
   });
+  const [errored, setErrored] = useState(false);
 
   useEffect(() => {
     if (!cover) return;
@@ -600,6 +642,7 @@ function TreeHoleGlassCard({ post }) {
     // ensure it's warmed even if card remounts
     warmImage(cover);
     setLoaded(false);
+    setErrored(false);
   }, [cover]);
 
   if (!cover) {
@@ -646,16 +689,20 @@ function TreeHoleGlassCard({ post }) {
     <motion.div variants={cardIn} initial="hidden" animate="show">
       <Link to={`/post/${post.id}`} className="treehole-glass-card" aria-label={display}>
         <div className="treehole-glass-media" aria-hidden>
-          {cover ? (
+          {cover && !errored ? (
             <>
               <img
                 src={cover}
                 alt=""
                 className={`treehole-glass-img ${loaded ? 'is-loaded' : ''}`}
-                loading="lazy"
+                loading={eager ? 'eager' : 'lazy'}
                 decoding="async"
                 onLoad={() => {
                   if (cover) IMG_LOADED.add(cover);
+                  setLoaded(true);
+                }}
+                onError={() => {
+                  setErrored(true);
                   setLoaded(true);
                 }}
               />

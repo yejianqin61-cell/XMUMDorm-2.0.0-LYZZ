@@ -79,6 +79,10 @@
   align-items: flex-start;
 }
 
+.treehole-grid--single {
+  display: flex;
+}
+
 .treehole-grid--perf {
   will-change: transform;
 }
@@ -494,6 +498,10 @@
 
 /* --------- Mobile stability: avoid iOS/WebView paint holes --------- */
 @media (pointer: coarse) {
+  .treehole-page--mobile .treehole-grid {
+    gap: 12px;
+  }
+
   /* filter: blur() + transforms on big images is a common Safari blank-rect trigger */
   .treehole-glass-img {
     filter: none;
