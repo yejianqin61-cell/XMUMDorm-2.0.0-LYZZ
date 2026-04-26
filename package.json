@@ -9,7 +9,8 @@
     "import-products": "node scripts/bulk-import-products.js",
     "migrate:all": "node scripts/run-migrations-all.js",
     "migrate:title": "node scripts/run-migration-013-title.js",
-    "migrate:title:railway": "node scripts/migrate-railway-013-posts-title-safe.js"
+    "migrate:title:railway": "node scripts/migrate-railway-013-posts-title-safe.js",
+    "migrate:perf:railway": "node scripts/migrate-railway-014-perf-indexes-safe.js"
   },
   "keywords": [
     "campus",
