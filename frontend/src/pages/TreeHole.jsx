@@ -273,6 +273,7 @@ function TreeHole() {
   const [gridW, setGridW] = useState(0);
   const [scrollTop, setScrollTop] = useState(0);
   const [vpH, setVpH] = useState(0);
+  const [gridTop, setGridTop] = useState(0); // grid offsetTop within scroll container
 
   // observe grid width for height estimation
   useEffect(() => {
@@ -291,8 +292,11 @@ function TreeHole() {
     const sc = getTreeHoleScrollEl();
     if (!sc) return undefined;
     const onScroll = () => {
-      setScrollTop(sc.scrollTop || 0);
+      const st = sc.scrollTop || 0;
+      setScrollTop(st);
       setVpH(sc.clientHeight || window.innerHeight || 0);
+      const gt = gridRef.current?.offsetTop ?? 0;
+      setGridTop(gt);
     };
     onScroll();
     sc.addEventListener('scroll', onScroll, { passive: true });
@@ -313,6 +317,8 @@ function TreeHole() {
       infinite.fetchNextPage().catch(() => {});
     }
   }, [scrollTop, vpH, infinite.hasNextPage, infinite.isFetchingNextPage, infinite.fetchNextPage]);
+
+  const gridScrollTop = Math.max(0, scrollTop - (gridTop || 0));
 
   return (
     <div className="treehole-page treehole-page--light">
@@ -343,7 +349,7 @@ function TreeHole() {
             <VirtualColumn
               items={leftColumn}
               columnWidth={gridW > 0 ? (gridW - COL_GAP_PX) / 2 : 0}
-              scrollTop={scrollTop}
+              scrollTop={gridScrollTop}
               viewportH={vpH}
               overscanPx={OVERSCAN_PX}
               topPad={0}
@@ -352,7 +358,7 @@ function TreeHole() {
             <VirtualColumn
               items={rightColumn}
               columnWidth={gridW > 0 ? (gridW - COL_GAP_PX) / 2 : 0}
-              scrollTop={scrollTop}
+              scrollTop={gridScrollTop}
               viewportH={vpH}
               overscanPx={OVERSCAN_PX}
               topPad={RIGHT_COL_OFFSET_PX}
