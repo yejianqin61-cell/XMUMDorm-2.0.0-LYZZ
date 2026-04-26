@@ -52,6 +52,17 @@ const cardAnim = {
   show: { opacity: 1, y: 0, transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] } },
 };
 
+// in-memory image warm cache to avoid "scroll -> one by one reload"
+const IMG_CACHE = new Map(); // url -> HTMLImageElement
+function warmImage(url) {
+  if (!url) return;
+  if (IMG_CACHE.has(url)) return;
+  const img = new Image();
+  img.decoding = 'async';
+  img.src = url;
+  IMG_CACHE.set(url, img);
+}
+
 function pastelFromString(str) {
   const s = String(str || '');
   let h = 0;
@@ -183,6 +194,39 @@ function UserZone() {
       });
     return () => { cancelled = true; };
   }, [isOwnProfile]);
+
+  // Pre-warm images to avoid "row-by-row refresh" while scrolling
+  useEffect(() => {
+    const urls = [];
+    for (const p of posts || []) {
+      const imgs = Array.isArray(p.images) ? p.images : [];
+      for (const it of imgs.slice(0, 9)) {
+        const u = postImageUrl(it?.url ?? it);
+        if (u) urls.push(u);
+      }
+    }
+    for (const u of urls) warmImage(u);
+  }, [posts]);
+
+  useEffect(() => {
+    const urls = [];
+    for (const r of reviews || []) {
+      const raw = r.product_image ?? (r.images?.length ? (r.images[0]?.url ?? r.images[0]) : null);
+      const pathStr = typeof raw === 'string' ? raw : raw?.url ?? null;
+      const u = productImageUrl(pathStr);
+      if (u) urls.push(u);
+    }
+    for (const u of urls) warmImage(u);
+  }, [reviews]);
+
+  useEffect(() => {
+    const urls = [];
+    for (const f of favorites || []) {
+      const u = productImageUrl(typeof f.product_image === 'string' ? f.product_image : null);
+      if (u) urls.push(u);
+    }
+    for (const u of urls) warmImage(u);
+  }, [favorites]);
 
   useEffect(() => {
     if (!isOwnProfile) return;
@@ -469,7 +513,7 @@ function TimelinePostItem({ post, locale }) {
           <div className="mt-3 grid grid-cols-3 gap-2">
             {urls.slice(0, 9).map((u, idx) => (
               <div key={idx} className="overflow-hidden rounded-xl bg-slate-100">
-                <img src={u} alt="" className="aspect-square w-full object-cover" />
+                <FadeImg src={u} alt="" className="aspect-square w-full object-cover" />
               </div>
             ))}
           </div>
@@ -511,7 +555,7 @@ function TimelineReviewItem({ review, locale }) {
           </div>
           {imgUrl ? (
             <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-slate-100">
-              <img src={imgUrl} alt="" className="h-full w-full object-cover" />
+              <FadeImg src={imgUrl} alt="" className="h-full w-full object-cover" />
             </div>
           ) : null}
         </div>
@@ -542,10 +586,27 @@ function FavoriteListItem({ item }) {
           </div>
         </div>
         <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-slate-100">
-          {imgUrl ? <img src={imgUrl} alt="" className="h-full w-full object-cover" /> : null}
+          {imgUrl ? <FadeImg src={imgUrl} alt="" className="h-full w-full object-cover" /> : null}
         </div>
       </Link>
     </motion.div>
+  );
+}
+
+function FadeImg({ src, alt, className }) {
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    setLoaded(false);
+  }, [src]);
+  return (
+    <img
+      src={src}
+      alt={alt}
+      loading="lazy"
+      decoding="async"
+      onLoad={() => setLoaded(true)}
+      className={`${className} transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+    />
   );
 }
 

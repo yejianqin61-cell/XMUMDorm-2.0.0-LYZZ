@@ -62,11 +62,15 @@ const OVERSCAN_PX = 1500;
 const COL_GAP_PX = 12;
 const RIGHT_COL_OFFSET_PX = 32;
 const IMG_CACHE = new Map(); // url -> HTMLImageElement
+const IMG_LOADED = new Set(); // url -> boolean loaded (sticky)
 function warmImage(url) {
   if (!url) return;
   if (IMG_CACHE.has(url)) return;
   const img = new Image();
   img.decoding = 'async';
+  img.onload = () => {
+    IMG_LOADED.add(url);
+  };
   img.src = url;
   IMG_CACHE.set(url, img);
 }
@@ -482,7 +486,29 @@ function TreeHoleGlassCard({ post }) {
   const title = (post.title || '').trim();
   const text = (post.content || '').trim();
   const display = title || (text.length > 64 ? `${text.slice(0, 64)}…` : text) || ' ';
-  const [loaded, setLoaded] = useState(false);
+  const [loaded, setLoaded] = useState(() => {
+    if (!cover) return false;
+    if (IMG_LOADED.has(cover)) return true;
+    const img = IMG_CACHE.get(cover);
+    return !!img && img.complete;
+  });
+
+  useEffect(() => {
+    if (!cover) return;
+    if (IMG_LOADED.has(cover)) {
+      setLoaded(true);
+      return;
+    }
+    const img = IMG_CACHE.get(cover);
+    if (img && img.complete) {
+      IMG_LOADED.add(cover);
+      setLoaded(true);
+      return;
+    }
+    // ensure it's warmed even if card remounts
+    warmImage(cover);
+    setLoaded(false);
+  }, [cover]);
 
   if (!cover) {
     return (
@@ -536,7 +562,10 @@ function TreeHoleGlassCard({ post }) {
                 className={`treehole-glass-img ${loaded ? 'is-loaded' : ''}`}
                 loading="lazy"
                 decoding="async"
-                onLoad={() => setLoaded(true)}
+                onLoad={() => {
+                  if (cover) IMG_LOADED.add(cover);
+                  setLoaded(true);
+                }}
               />
               <div className={`treehole-glass-blur ${loaded ? 'is-hidden' : ''}`} />
             </>
