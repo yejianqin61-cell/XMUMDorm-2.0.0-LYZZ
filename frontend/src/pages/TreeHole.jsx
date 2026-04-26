@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
-import PostCard from '../components/PostCard';
+import { motion } from 'framer-motion';
+import { Heart, MessageCircle } from 'lucide-react';
 import TreeHoleToolbar from '../components/TreeHoleToolbar';
 import SkeletonPost from '../components/SkeletonPost';
 import { getPostList } from '../api/posts';
@@ -35,6 +36,26 @@ function mapPostItem(p) {
     author: p.author ? { ...p.author, avatar: prefixAvatar(p.author.avatar) } : p.author,
   };
 }
+
+function getAuthor(post) {
+  const a = post?.author;
+  if (a && typeof a === 'object') {
+    return {
+      name: a.nickname ?? a.username ?? 'Anonymous',
+      avatar: a.avatar ? prefixAvatar(a.avatar) : null,
+    };
+  }
+  return { name: 'Anonymous', avatar: null };
+}
+
+function prefixImageUrl(url) {
+  return url && !url.startsWith('http') ? `${API_BASE_URL}${url}` : url;
+}
+
+const cardIn = {
+  hidden: { opacity: 0, y: 14, scale: 0.98 },
+  show: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 520, damping: 38 } },
+};
 
 /** 从 sessionStorage 恢复无限查询结构（与写入格式一致：整表 list + page 页数 + hasMore） */
 function readSessionInfinitePages(pageSize) {
@@ -231,7 +252,7 @@ function TreeHole() {
   const errorMsg = infinite.error ? getApiErrorMessage(infinite.error) : null;
 
   return (
-    <div className="treehole-page">
+    <div className="treehole-page treehole-page--light">
       <TreeHoleToolbar selectedSlug={selectedTagSlug} onSelectTagSlug={handleSelectTag} />
       {errorMsg && (
         <p className="treehole-error state-error" role="alert">
@@ -258,14 +279,14 @@ function TreeHole() {
           <div className="treehole-grid">
             <div className="treehole-column">
               {leftColumn.map((post) => (
-                <PostCard key={post.id} post={post} variant={post.images?.length ? 'waterfall' : undefined} />
+                <TreeHoleGlassCard key={post.id} post={post} />
               ))}
               {infinite.isFetchingNextPage &&
                 [1, 2].map((i) => <SkeletonPost key={`treehole-next-l-${i}`} />)}
             </div>
             <div className="treehole-column treehole-column-right">
               {rightColumn.map((post) => (
-                <PostCard key={post.id} post={post} variant={post.images?.length ? 'waterfall' : undefined} />
+                <TreeHoleGlassCard key={post.id} post={post} />
               ))}
               {infinite.isFetchingNextPage &&
                 [1, 2].map((i) => <SkeletonPost key={`treehole-next-r-${i}`} />)}
@@ -284,6 +305,115 @@ function TreeHole() {
         </div>
       )}
     </div>
+  );
+}
+
+function TreeHoleGlassCard({ post }) {
+  const author = getAuthor(post);
+  const likeNum = post.like_count ?? post.likeCount ?? 0;
+  const commentNum = post.comment_count ?? post.commentCount ?? 0;
+  const cover = post.images?.[0]?.url ? prefixImageUrl(post.images[0].url) : null;
+  const title = (post.title || '').trim();
+  const text = (post.content || '').trim();
+  const display = title || (text.length > 64 ? `${text.slice(0, 64)}…` : text) || ' ';
+  const [loaded, setLoaded] = useState(false);
+
+  if (!cover) {
+    return (
+      <motion.div variants={cardIn} initial="hidden" animate="show">
+        <Link to={`/post/${post.id}`} className="treehole-glass-card treehole-glass-card--noimg" aria-label={display}>
+          <div className="treehole-noimg-head">
+            <span className="treehole-noimg-avatar">
+              {author.avatar ? (
+                <img src={author.avatar} alt="" />
+              ) : (
+                <img src="/default-avatar.svg" alt="" className="is-default" />
+              )}
+            </span>
+            <span className="treehole-noimg-author">{author.name}</span>
+          </div>
+
+          <div className="treehole-noimg-text">{display}</div>
+
+          <div className="treehole-noimg-actions">
+            <motion.span
+              className="treehole-noimg-action"
+              whileTap={{ scale: 0.9 }}
+              transition={{ type: 'spring', stiffness: 700, damping: 28 }}
+            >
+              <Heart size={16} aria-hidden />
+              <span>{likeNum}</span>
+            </motion.span>
+            <motion.span
+              className="treehole-noimg-action"
+              whileTap={{ scale: 0.9 }}
+              transition={{ type: 'spring', stiffness: 700, damping: 28 }}
+            >
+              <MessageCircle size={16} aria-hidden />
+              <span>{commentNum}</span>
+            </motion.span>
+          </div>
+        </Link>
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div variants={cardIn} initial="hidden" animate="show">
+      <Link to={`/post/${post.id}`} className="treehole-glass-card" aria-label={display}>
+        <div className="treehole-glass-media" aria-hidden>
+          {cover ? (
+            <>
+              <img
+                src={cover}
+                alt=""
+                className={`treehole-glass-img ${loaded ? 'is-loaded' : ''}`}
+                loading="lazy"
+                decoding="async"
+                onLoad={() => setLoaded(true)}
+              />
+              <div className={`treehole-glass-blur ${loaded ? 'is-hidden' : ''}`} />
+            </>
+          ) : (
+            <div className="treehole-glass-fallback" />
+          )}
+          <div className="treehole-glass-bottom-gradient" />
+        </div>
+
+        <div className="treehole-glass-header-pill">
+          <span className="treehole-glass-avatar">
+            {author.avatar ? (
+              <img src={author.avatar} alt="" />
+            ) : (
+              <img src="/default-avatar.svg" alt="" className="is-default" />
+            )}
+          </span>
+          <span className="treehole-glass-author">{author.name}</span>
+        </div>
+
+        <div className="treehole-glass-content">
+          <div className="treehole-glass-text">{display}</div>
+          <div className="treehole-glass-actions">
+            <motion.span
+              className="treehole-glass-action"
+              whileTap={{ scale: 0.9 }}
+              transition={{ type: 'spring', stiffness: 700, damping: 28 }}
+            >
+              <Heart size={16} aria-hidden />
+              <span>{likeNum}</span>
+            </motion.span>
+            <motion.span
+              className="treehole-glass-action"
+              whileTap={{ scale: 0.9 }}
+              transition={{ type: 'spring', stiffness: 700, damping: 28 }}
+            >
+              <MessageCircle size={16} aria-hidden />
+              <span>{commentNum}</span>
+            </motion.span>
+          </div>
+        </div>
+      </Link>
+    </motion.div>
   );
 }
 

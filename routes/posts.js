@@ -544,20 +544,44 @@ router.get('/:id', async (req, res) => {
     const viewerUid = user && user.id != null ? parseInt(user.id, 10) : 0;
     const likeUserParam = Number.isFinite(viewerUid) && viewerUid > 0 ? viewerUid : 0;
 
+    const cacheKey = `post_detail_v2:${id}:u:${likeUserParam}`;
+    const cached = simpleCache.get(cacheKey);
+    if (cached) {
+      return res.status(200).json({ status: 0, message: '获取成功', data: cached });
+    }
+
     let rows;
     try {
       rows = await query(
         `SELECT p.id, p.user_id, p.title, p.content, p.type, p.deleted_at, p.hidden_by_admin, p.created_at, p.updated_at,
           u.id AS author_id, u.username AS author_username, u.nickname AS author_nickname, u.avatar AS author_avatar,
           pi.file_path AS image_path, pi.sort_order,
-          (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
-          (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count,
-          (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id AND pl.user_id = ?) > 0 AS user_liked
+          COALESCE(plc.like_count, 0) AS like_count,
+          COALESCE(cc.comment_count, 0) AS comment_count,
+          COALESCE(ul.user_liked, 0) AS user_liked
          FROM posts p
          LEFT JOIN users u ON p.user_id = u.id
          LEFT JOIN post_images pi ON pi.post_id = p.id
+         LEFT JOIN (
+           SELECT post_id, COUNT(*) AS like_count
+           FROM post_likes
+           WHERE post_id = ?
+           GROUP BY post_id
+         ) plc ON plc.post_id = p.id
+         LEFT JOIN (
+           SELECT post_id, COUNT(*) AS comment_count
+           FROM comments
+           WHERE post_id = ? AND deleted_at IS NULL
+           GROUP BY post_id
+         ) cc ON cc.post_id = p.id
+         LEFT JOIN (
+           SELECT post_id, 1 AS user_liked
+           FROM post_likes
+           WHERE post_id = ? AND user_id = ?
+           LIMIT 1
+         ) ul ON ul.post_id = p.id
          WHERE p.id = ?`,
-        [likeUserParam, id]
+        [id, id, id, likeUserParam, id]
       );
     } catch (e) {
       if (e && e.code === 'ER_BAD_FIELD_ERROR' && String(e.sqlMessage || '').includes("p.title")) {
@@ -565,14 +589,32 @@ router.get('/:id', async (req, res) => {
           `SELECT p.id, p.user_id, p.content, p.type, p.deleted_at, p.hidden_by_admin, p.created_at, p.updated_at,
             u.id AS author_id, u.username AS author_username, u.nickname AS author_nickname, u.avatar AS author_avatar,
             pi.file_path AS image_path, pi.sort_order,
-            (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
-            (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count,
-            (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id AND pl.user_id = ?) > 0 AS user_liked
+            COALESCE(plc.like_count, 0) AS like_count,
+            COALESCE(cc.comment_count, 0) AS comment_count,
+            COALESCE(ul.user_liked, 0) AS user_liked
            FROM posts p
            LEFT JOIN users u ON p.user_id = u.id
            LEFT JOIN post_images pi ON pi.post_id = p.id
+           LEFT JOIN (
+             SELECT post_id, COUNT(*) AS like_count
+             FROM post_likes
+             WHERE post_id = ?
+             GROUP BY post_id
+           ) plc ON plc.post_id = p.id
+           LEFT JOIN (
+             SELECT post_id, COUNT(*) AS comment_count
+             FROM comments
+             WHERE post_id = ? AND deleted_at IS NULL
+             GROUP BY post_id
+           ) cc ON cc.post_id = p.id
+           LEFT JOIN (
+             SELECT post_id, 1 AS user_liked
+             FROM post_likes
+             WHERE post_id = ? AND user_id = ?
+             LIMIT 1
+           ) ul ON ul.post_id = p.id
            WHERE p.id = ?`,
-          [likeUserParam, id]
+          [id, id, id, likeUserParam, id]
         );
       } else {
         throw e;
@@ -591,6 +633,7 @@ router.get('/:id', async (req, res) => {
     }
     const [enriched] = await enrichPostsWithTags([post]);
     post = enriched;
+    simpleCache.set(cacheKey, post, 10 * 1000);
     res.status(200).json({ status: 0, message: '获取成功', data: post });
   } catch (e) {
     console.error('帖子详情错误:', e);
@@ -717,6 +760,11 @@ router.get('/:id/comments', async (req, res) => {
   try {
     const postId = parseInt(req.params.id, 10);
     if (!postId) return res.status(400).json({ status: -1, message: '帖子 ID 无效' });
+    const cacheKey = `post_comments_v1:${postId}`;
+    const cached = simpleCache.get(cacheKey);
+    if (cached) {
+      return res.status(200).json({ status: 0, message: '获取成功', data: cached });
+    }
     const rows = await query(
       `SELECT c.id, c.post_id, c.user_id, c.parent_id, c.content, c.deleted_at, c.created_at,
         u.username, u.nickname, u.avatar
@@ -736,6 +784,7 @@ router.get('/:id/comments', async (req, res) => {
         author: { username: r.username, nickname: r.nickname, avatar: assetUrl(r.avatar) }
       }))
     }));
+    simpleCache.set(cacheKey, list, 10 * 1000);
     res.status(200).json({ status: 0, message: '获取成功', data: list });
   } catch (e) {
     console.error('评论列表错误:', e);
@@ -782,6 +831,8 @@ router.post('/:id/comments', authenticateToken, async (req, res) => {
         [postRow.user_id, 'comment', postId, result.insertId, req.user.id, JSON.stringify({ content: String(content).trim().slice(0, 80) })]
       );
     }
+    simpleCache.delete(`post_comments_v1:${postId}`);
+    // 详情缓存按 viewer 维度，评论写入后不强依赖立刻更新；短 TTL 下自然过期即可
     const rows = await query(
       'SELECT c.id, c.post_id, c.user_id, c.parent_id, c.content, c.created_at, u.username, u.nickname, u.avatar FROM comments c LEFT JOIN users u ON c.user_id = u.id WHERE c.id = ?',
       [result.insertId]

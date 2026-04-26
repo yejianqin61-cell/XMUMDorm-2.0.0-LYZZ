@@ -2,7 +2,6 @@ import { useRef, useState, useEffect, useMemo } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import TopBar from './TopBar';
 import TabBar from './TabBar';
 import { getTabIndex, getTabRootPath } from './TabBar';
 import TreeHole from '../pages/TreeHole';
@@ -225,16 +224,13 @@ function Layout() {
     pathname === '/myzone/profile' ||
     pathname.startsWith('/about/');
 
-  /** 顶栏仅在「树洞」Tab（/ 及 /post、/posts 等子路由）显示；食堂/广场/我的主 Tab 隐藏 */
-  const showTopBar = getTabRootPath(pathname) === '/';
   const showTreeHoleFab = pathname === '/' && activeTabIndex === 0;
 
   return (
     <div
-      className={`app-layout${showTopBar ? '' : ' app-layout--no-topbar'}${isRootTabPage ? ' app-layout--tabstack' : ''}`}
+      className={`app-layout app-layout--no-topbar${isRootTabPage ? ' app-layout--tabstack' : ''}`}
       onClick={handleFirstInteraction}
     >
-      {showTopBar ? <TopBar title={title} showBack={showBack} /> : null}
       <main className="app-main">
         <div
           className="app-main-bg"

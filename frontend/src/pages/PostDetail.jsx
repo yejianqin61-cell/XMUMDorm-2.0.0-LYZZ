@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import {
@@ -58,6 +59,9 @@ function PostDetail() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState({ open: false, index: 0 });
   const likeBurstRef = useRef(null);
+  const [composerOpen, setComposerOpen] = useState(false);
+  const composerWrapRef = useRef(null);
+  const composerInputRef = useRef(null);
 
   const detailQuery = useQuery({
     queryKey: QK.postDetail(postId, tokenKey),
@@ -134,6 +138,24 @@ function PostDetail() {
     setReplyingTo(null);
     setNewComment('');
   };
+
+  useEffect(() => {
+    if (!composerOpen) return;
+    const t = setTimeout(() => composerInputRef.current?.focus?.(), 60);
+    return () => clearTimeout(t);
+  }, [composerOpen]);
+
+  useEffect(() => {
+    if (!composerOpen) return;
+    const onDoc = (e) => {
+      const el = composerWrapRef.current;
+      if (el && !el.contains(e.target)) {
+        setComposerOpen(false);
+      }
+    };
+    document.addEventListener('pointerdown', onDoc, true);
+    return () => document.removeEventListener('pointerdown', onDoc, true);
+  }, [composerOpen]);
 
   const handleDeleteComment = async (commentId) => {
     if (requireLogin()) return;
@@ -322,9 +344,55 @@ function PostDetail() {
       <LikeBurst ref={likeBurstRef} />
 
       <section className="post-detail-comments">
-        <h2 className="post-detail-comments-title">
-          {isEn ? `Comments (${totalCommentCount})` : `评论 Comments (${totalCommentCount})`}
-        </h2>
+        <div className="post-detail-comments-head">
+          <h2 className="post-detail-comments-title">
+            {isEn ? `Comments (${totalCommentCount})` : `评论 Comments (${totalCommentCount})`}
+          </h2>
+
+          <div className="post-detail-composer-wrap" ref={composerWrapRef}>
+            <AnimatePresence initial={false} mode="wait">
+              {composerOpen ? (
+                <motion.form
+                  key="composer-open"
+                  className="post-detail-composer-form"
+                  onSubmit={handleSubmitComment}
+                  initial={{ width: 44, opacity: 0.98 }}
+                  animate={{ width: 220, opacity: 1 }}
+                  exit={{ width: 44, opacity: 0.98 }}
+                  transition={{ type: 'spring', stiffness: 520, damping: 38 }}
+                  style={{ maxWidth: 'min(240px, 56vw)' }}
+                >
+                  <input
+                    ref={composerInputRef}
+                    type="text"
+                    className="post-detail-composer-input"
+                    placeholder={replyingTo ? (isEn ? 'Reply…' : '回复…') : (isEn ? 'Write a comment…' : '写评论…')}
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') setComposerOpen(false);
+                    }}
+                    maxLength={500}
+                  />
+                  <button type="submit" className="post-detail-composer-send" disabled={!newComment.trim() || submitLoading}>
+                    {submitLoading ? (isEn ? '…' : '…') : (isEn ? 'Send' : '发送')}
+                  </button>
+                </motion.form>
+              ) : (
+                <motion.button
+                  key="composer-closed"
+                  type="button"
+                  className="post-detail-composer-pill"
+                  onClick={() => setComposerOpen(true)}
+                  whileTap={{ scale: 0.98 }}
+                  aria-label={isEn ? 'Write a comment' : '写评论'}
+                >
+                  {isEn ? 'Comment' : '评论'}
+                </motion.button>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
         <ul className="post-detail-comment-list">
           {comments.map((c) => (
             <li key={c.id} className="post-detail-comment-wrap">
@@ -385,27 +453,17 @@ function PostDetail() {
         </ul>
       </section>
 
-      <form className="post-detail-form" onSubmit={handleSubmitComment}>
-        {replyingTo && (
-          <div className="post-detail-replying">
-            <span>Reply: {replyingTo.content.slice(0, 20)}{replyingTo.content.length > 20 ? '…' : ''}</span>
-            <button type="button" onClick={cancelReply}>Cancel</button>
-          </div>
-        )}
-        <div className="post-detail-form-row">
-          <input
-            type="text"
-            className="post-detail-input"
-            placeholder={replyingTo ? 'Reply…' : 'Write a comment…'}
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            maxLength={500}
-          />
-          <button type="submit" className="post-detail-send" disabled={!newComment.trim() || submitLoading}>
-            {submitLoading ? 'Sending…' : 'Send'}
+      {replyingTo && (
+        <div className="post-detail-replying-inline">
+          <span>
+            {isEn ? 'Reply:' : '回复:'} {replyingTo.content.slice(0, 20)}
+            {replyingTo.content.length > 20 ? '…' : ''}
+          </span>
+          <button type="button" onClick={cancelReply}>
+            {isEn ? 'Cancel' : '取消'}
           </button>
         </div>
-      </form>
+      )}
     </div>
   );
 }

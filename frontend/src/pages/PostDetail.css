@@ -1,7 +1,7 @@
 /* 帖子详情：与树洞列表同一套 iOS 分组背景 + 白卡片 + 系统蓝/灰字阶 */
 
 .post-detail-page {
-  padding: 10px 12px calc(88px + var(--safe-bottom, 0px));
+  padding: 10px 12px calc(var(--tabbar-height, 76px) + var(--safe-bottom, 0px) + 16px);
   min-height: 100%;
   background: var(--post-ios-bg-grouped, #f2f2f7);
   font-family: var(--post-ios-font, inherit);
@@ -249,6 +249,113 @@
   color: var(--post-ios-label, rgba(0, 0, 0, 0.88));
 }
 
+.post-detail-comments-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.post-detail-comments-head .post-detail-comments-title {
+  margin: 0;
+}
+
+.post-detail-composer-wrap {
+  flex-shrink: 0;
+}
+
+.post-detail-composer-pill {
+  height: 36px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(0, 122, 255, 0.10);
+  color: var(--post-ios-accent, #007aff);
+  font-family: var(--post-ios-font, inherit);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.post-detail-composer-form {
+  height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px 0 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.86);
+  border: 0.5px solid var(--post-ios-separator, rgba(60, 60, 67, 0.12));
+  backdrop-filter: saturate(180%) blur(18px);
+  -webkit-backdrop-filter: saturate(180%) blur(18px);
+  box-shadow: 0 10px 30px rgba(2, 6, 23, 0.08);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.post-detail-composer-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--post-ios-font, inherit);
+  font-size: 13px;
+  letter-spacing: -0.01em;
+  color: var(--post-ios-label, rgba(0, 0, 0, 0.88));
+}
+
+.post-detail-composer-input::placeholder {
+  color: var(--post-ios-tertiary-label, rgba(60, 60, 67, 0.36));
+}
+
+.post-detail-composer-send {
+  flex-shrink: 0;
+  height: 28px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 999px;
+  background: var(--post-ios-accent, #007aff);
+  color: #fff;
+  font-family: var(--post-ios-font, inherit);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.post-detail-composer-send:disabled {
+  background: var(--post-ios-fill, rgba(118, 118, 128, 0.12));
+  color: var(--post-ios-tertiary-label, rgba(60, 60, 67, 0.36));
+  cursor: not-allowed;
+}
+
+.post-detail-replying-inline {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: var(--post-ios-radius-md, 12px);
+  background: rgba(255, 255, 255, 0.85);
+  border: 0.5px solid var(--post-ios-separator, rgba(60, 60, 67, 0.12));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
+}
+
+.post-detail-replying-inline button {
+  border: none;
+  background: none;
+  color: var(--post-ios-accent, #007aff);
+  cursor: pointer;
+  font: inherit;
+}
+
 .post-detail-comment-list {
   list-style: none;
   margin: 0;
@@ -365,92 +472,3 @@
   opacity: 0.65;
 }
 
-/* 底部输入：iOS 工具栏风格 */
-.post-detail-form {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: calc(50px + var(--safe-bottom, 0px));
-  padding: 8px 12px;
-  padding-bottom: calc(8px + var(--safe-bottom, 0px));
-  background: rgba(249, 249, 249, 0.94);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-top: 0.5px solid var(--post-ios-separator, rgba(60, 60, 67, 0.12));
-  z-index: 50;
-  max-width: 430px;
-  margin: 0 auto;
-  box-sizing: border-box;
-}
-
-.post-detail-replying {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  font-size: 12px;
-  font-weight: 400;
-  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
-}
-
-.post-detail-replying button {
-  padding: 4px 8px;
-  border: none;
-  background: none;
-  color: var(--post-ios-accent, #007aff);
-  cursor: pointer;
-  font-family: var(--post-ios-font, inherit);
-  font-size: 15px;
-  font-weight: 400;
-}
-
-.post-detail-form-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.post-detail-input {
-  flex: 1;
-  min-width: 0;
-  padding: 10px 12px;
-  border: none;
-  border-radius: var(--post-ios-radius-sm, 10px);
-  font-family: var(--post-ios-font, inherit);
-  font-size: 15px;
-  font-weight: 400;
-  letter-spacing: -0.02em;
-  background: var(--post-ios-fill, rgba(118, 118, 128, 0.12));
-  color: var(--post-ios-label, rgba(0, 0, 0, 0.88));
-}
-
-.post-detail-input::placeholder {
-  color: var(--post-ios-tertiary-label, rgba(60, 60, 67, 0.36));
-}
-
-.post-detail-input:focus {
-  outline: none;
-  background: var(--post-ios-fill-pressed, rgba(118, 118, 128, 0.18));
-}
-
-.post-detail-send {
-  flex-shrink: 0;
-  padding: 10px 16px;
-  border: none;
-  border-radius: var(--post-ios-radius-sm, 10px);
-  background: var(--post-ios-accent, #007aff);
-  color: #fff;
-  font-family: var(--post-ios-font, inherit);
-  font-size: 15px;
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.post-detail-send:disabled {
-  background: var(--post-ios-fill, rgba(118, 118, 128, 0.12));
-  color: var(--post-ios-tertiary-label, rgba(60, 60, 67, 0.36));
-  cursor: not-allowed;
-  opacity: 1;
-}
