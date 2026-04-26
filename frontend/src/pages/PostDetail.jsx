@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
+import { ChevronLeft, ChevronRight, Heart, MoreHorizontal, SendHorizonal, Smile } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import {
@@ -59,9 +60,9 @@ function PostDetail() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState({ open: false, index: 0 });
   const likeBurstRef = useRef(null);
-  const [composerOpen, setComposerOpen] = useState(false);
-  const composerWrapRef = useRef(null);
   const composerInputRef = useRef(null);
+  const [carouselIndex, setCarouselIndex] = useState(0);
+  const [carouselDir, setCarouselDir] = useState(1);
 
   const detailQuery = useQuery({
     queryKey: QK.postDetail(postId, tokenKey),
@@ -93,6 +94,12 @@ function PostDetail() {
     setLikeCount(post.like_count ?? 0);
     setLiked(!!post.user_liked);
   }, [post]);
+
+  useEffect(() => {
+    // reset on post change
+    setCarouselIndex(0);
+    setCarouselDir(1);
+  }, [postId]);
 
   const requireLogin = useCallback(() => {
     if (!isLoggedIn) {
@@ -139,23 +146,14 @@ function PostDetail() {
     setNewComment('');
   };
 
-  useEffect(() => {
-    if (!composerOpen) return;
-    const t = setTimeout(() => composerInputRef.current?.focus?.(), 60);
-    return () => clearTimeout(t);
-  }, [composerOpen]);
-
-  useEffect(() => {
-    if (!composerOpen) return;
-    const onDoc = (e) => {
-      const el = composerWrapRef.current;
-      if (el && !el.contains(e.target)) {
-        setComposerOpen(false);
-      }
-    };
-    document.addEventListener('pointerdown', onDoc, true);
-    return () => document.removeEventListener('pointerdown', onDoc, true);
-  }, [composerOpen]);
+  // bottom composer: focus helper for mobile
+  const focusComposer = () => {
+    try {
+      composerInputRef.current?.focus?.();
+    } catch {
+      // ignore
+    }
+  };
 
   const handleDeleteComment = async (commentId) => {
     if (requireLogin()) return;
@@ -224,6 +222,8 @@ function PostDetail() {
   const author = post.author || {};
   const displayName = author.nickname ?? author.username ?? 'Anonymous';
   const totalCommentCount = comments.reduce((sum, c) => sum + 1 + (c.replies?.length || 0), 0);
+  const heroUrl = post.images?.[0]?.url ? prefixImageUrl(post.images[0].url) : null;
+  const imageUrls = Array.isArray(post.images) ? post.images.map((img) => prefixImageUrl(img.url)).filter(Boolean) : [];
 
   const detailTags = (() => {
     if (post.type === 'announcement') {
@@ -239,6 +239,12 @@ function PostDetail() {
 
   return (
     <div className="post-detail-page">
+      {heroUrl ? (
+        <div className="post-detail-atmo" aria-hidden="true">
+          <div className="post-detail-atmo-img" style={{ backgroundImage: `url('${heroUrl}')` }} />
+          <div className="post-detail-atmo-fade" />
+        </div>
+      ) : null}
       {commentsQuery.isError && (
         <p className="post-detail-error" role="alert">
           {getApiErrorMessage(commentsQuery.error)}
@@ -294,33 +300,39 @@ function PostDetail() {
           {isAuthor && (
             <button
               type="button"
-              className="post-detail-delete-btn"
+              className="post-detail-more-btn"
               onClick={handleDeletePost}
               disabled={deleteLoading}
-              title="删除帖子"
-              aria-label="删除帖子"
+              title={isEn ? 'More' : '更多'}
+              aria-label={isEn ? 'More' : '更多'}
             >
-              <span className="post-detail-delete-icon" aria-hidden>🗑</span>
+              <MoreHorizontal size={18} aria-hidden />
             </button>
           )}
         </div>
         <p className="post-detail-content">{post.content}</p>
-        {post.images && post.images.length > 0 && (
-          <div className="post-detail-images" aria-label="帖子图片">
-            {post.images.map((img, i) => (
+        {imageUrls.length > 0 && (
+          <div className="post-detail-media" aria-label="Post images">
+            {imageUrls.length === 1 ? (
               <button
-                key={img.url || i}
                 type="button"
                 className="post-detail-image-wrap"
-                onClick={() => setImagePreview({ open: true, index: i })}
+                onClick={() => setImagePreview({ open: true, index: 0 })}
               >
-                <img
-                  src={prefixImageUrl(img.url)}
-                  alt=""
-                  className="post-detail-image"
-                />
+                <img src={imageUrls[0]} alt="" className="post-detail-image" />
               </button>
-            ))}
+            ) : (
+              <StackedCardCarousel
+                urls={imageUrls}
+                index={carouselIndex}
+                onChangeIndex={(next, dir) => {
+                  setCarouselDir(dir);
+                  setCarouselIndex(next);
+                }}
+                onOpenPreview={(i) => setImagePreview({ open: true, index: i })}
+                dir={carouselDir}
+              />
+            )}
           </div>
         )}
         {imagePreview.open && post.images?.length > 0 && (
@@ -331,118 +343,88 @@ function PostDetail() {
           />
         )}
         <div className="post-detail-actions">
-          <button
+          <motion.button
             type="button"
-            className={`post-detail-like ${liked ? 'is-liked' : ''}`}
+            className={`post-detail-like-btn ${liked ? 'is-liked' : ''}`}
             onClick={handleLike}
             aria-pressed={liked}
+            whileTap={{ scale: 0.92 }}
+            transition={{ type: 'spring', stiffness: 700, damping: 28 }}
           >
-            ♥ {likeCount}
-          </button>
+            <Heart size={18} aria-hidden />
+            <span className="post-detail-like-count">{likeCount}</span>
+          </motion.button>
         </div>
       </article>
       <LikeBurst ref={likeBurstRef} />
 
       <section className="post-detail-comments">
-        <div className="post-detail-comments-head">
-          <h2 className="post-detail-comments-title">
-            {isEn ? `Comments (${totalCommentCount})` : `评论 Comments (${totalCommentCount})`}
-          </h2>
-
-          <div className="post-detail-composer-wrap" ref={composerWrapRef}>
-            <AnimatePresence initial={false} mode="wait">
-              {composerOpen ? (
-                <motion.form
-                  key="composer-open"
-                  className="post-detail-composer-form"
-                  onSubmit={handleSubmitComment}
-                  initial={{ width: 44, opacity: 0.98 }}
-                  animate={{ width: 220, opacity: 1 }}
-                  exit={{ width: 44, opacity: 0.98 }}
-                  transition={{ type: 'spring', stiffness: 520, damping: 38 }}
-                  style={{ maxWidth: 'min(240px, 56vw)' }}
-                >
-                  <input
-                    ref={composerInputRef}
-                    type="text"
-                    className="post-detail-composer-input"
-                    placeholder={replyingTo ? (isEn ? 'Reply…' : '回复…') : (isEn ? 'Write a comment…' : '写评论…')}
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Escape') setComposerOpen(false);
-                    }}
-                    maxLength={500}
-                  />
-                  <button type="submit" className="post-detail-composer-send" disabled={!newComment.trim() || submitLoading}>
-                    {submitLoading ? (isEn ? '…' : '…') : (isEn ? 'Send' : '发送')}
-                  </button>
-                </motion.form>
-              ) : (
-                <motion.button
-                  key="composer-closed"
-                  type="button"
-                  className="post-detail-composer-pill"
-                  onClick={() => setComposerOpen(true)}
-                  whileTap={{ scale: 0.98 }}
-                  aria-label={isEn ? 'Write a comment' : '写评论'}
-                >
-                  {isEn ? 'Comment' : '评论'}
-                </motion.button>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
+        <h2 className="post-detail-comments-title">
+          {isEn ? `Comments (${totalCommentCount})` : `评论 Comments (${totalCommentCount})`}
+        </h2>
         <ul className="post-detail-comment-list">
           {comments.map((c) => (
             <li key={c.id} className="post-detail-comment-wrap">
-              <div className="post-detail-comment">
-                <p className="post-detail-comment-content">{c.content}</p>
-                <div className="post-detail-comment-meta">
-                  <span className="post-detail-comment-stat">
-                    {(c.author?.nickname ?? c.author?.username) || 'Anonymous'}
-                  </span>
-                  <button
-                    type="button"
-                    className="post-detail-reply-btn"
-                    onClick={() => startReply(c)}
-                  >
-                    {isEn ? 'Reply' : '回复 Reply'}
-                  </button>
-                  {(c.user_id === user?.id || isAdmin) && (
-                    <button
-                      type="button"
-                      className="post-detail-comment-delete"
-                      onClick={() => handleDeleteComment(c.id)}
-                      title="删除评论"
-                      aria-label="删除评论"
-                    >
-                      <span aria-hidden>🗑</span>
-                    </button>
+              <div className="post-detail-thread">
+                <div className="post-detail-thread-avatar">
+                  {c.author?.avatar ? (
+                    <img src={c.author.avatar} alt="" />
+                  ) : (
+                    <img src="/default-avatar.svg" alt="" className="is-default" />
                   )}
+                </div>
+                <div className="post-detail-thread-body">
+                  <div className="post-detail-thread-meta">
+                    <span className="post-detail-thread-name">
+                      {(c.author?.nickname ?? c.author?.username) || 'Anonymous'}
+                    </span>
+                    <button type="button" className="post-detail-reply-btn" onClick={() => { startReply(c); focusComposer(); }}>
+                      {isEn ? 'Reply' : '回复'}
+                    </button>
+                    {(c.user_id === user?.id || isAdmin) && (
+                      <button
+                        type="button"
+                        className="post-detail-comment-delete"
+                        onClick={() => handleDeleteComment(c.id)}
+                        title={isEn ? 'Delete' : '删除'}
+                        aria-label={isEn ? 'Delete' : '删除'}
+                      >
+                        ···
+                      </button>
+                    )}
+                  </div>
+                  <p className="post-detail-thread-text">{c.content}</p>
                 </div>
               </div>
               {c.replies && c.replies.length > 0 && (
                 <ul className="post-detail-reply-list">
                   {c.replies.map((r) => (
-                    <li key={r.id} className="post-detail-comment post-detail-comment-reply">
-                      <p className="post-detail-comment-content">
-                        <span className="post-detail-reply-label">{isEn ? 'Reply:' : '回复:'}</span>
-                        {r.content}
-                      </p>
-                      <div className="post-detail-comment-meta">
-                        <span className="post-detail-comment-stat">
-                          {(r.author?.nickname ?? r.author?.username) || 'Anonymous'}
-                        </span>
-                        {(r.user_id === user?.id || isAdmin) && (
-                          <button
-                            type="button"
-                            className="post-detail-reply-delete"
-                            onClick={() => handleDeleteComment(r.id)}
-                          >
-                            {isEn ? 'Delete' : '删除 Delete'}
-                          </button>
+                    <li key={r.id} className="post-detail-thread post-detail-thread--reply">
+                      <div className="post-detail-thread-avatar">
+                        {r.author?.avatar ? (
+                          <img src={r.author.avatar} alt="" />
+                        ) : (
+                          <img src="/default-avatar.svg" alt="" className="is-default" />
                         )}
+                      </div>
+                      <div className="post-detail-thread-body">
+                        <div className="post-detail-thread-meta">
+                          <span className="post-detail-thread-name">
+                            {(r.author?.nickname ?? r.author?.username) || 'Anonymous'}
+                          </span>
+                          {(r.user_id === user?.id || isAdmin) && (
+                            <button
+                              type="button"
+                              className="post-detail-comment-delete"
+                              onClick={() => handleDeleteComment(r.id)}
+                              title={isEn ? 'Delete' : '删除'}
+                              aria-label={isEn ? 'Delete' : '删除'}
+                            >
+                              ···
+                            </button>
+                          )}
+                        </div>
+                        <p className="post-detail-thread-text">{r.content}</p>
                       </div>
                     </li>
                   ))}
@@ -464,8 +446,144 @@ function PostDetail() {
           </button>
         </div>
       )}
+
+      {/* Floating bottom glass comment bar */}
+      <form className="post-detail-bottom-bar" onSubmit={handleSubmitComment}>
+        <button type="button" className="post-detail-bottom-emoji" aria-label="emoji">
+          <Smile size={18} aria-hidden />
+        </button>
+        <input
+          ref={composerInputRef}
+          type="text"
+          className="post-detail-bottom-input"
+          placeholder={replyingTo ? (isEn ? 'Reply…' : '回复…') : (isEn ? 'Add a comment…' : '添加评论…')}
+          value={newComment}
+          onChange={(e) => setNewComment(e.target.value)}
+          maxLength={500}
+        />
+        <motion.button
+          type="submit"
+          className="post-detail-bottom-send"
+          disabled={!newComment.trim() || submitLoading}
+          whileTap={{ scale: 0.92 }}
+          transition={{ type: 'spring', stiffness: 700, damping: 28 }}
+          aria-label={isEn ? 'Send' : '发送'}
+        >
+          <SendHorizonal size={18} aria-hidden />
+        </motion.button>
+      </form>
     </div>
   );
 }
 
 export default PostDetail;
+
+function mod(n, m) {
+  return ((n % m) + m) % m;
+}
+
+function StackedCardCarousel({ urls, index, onChangeIndex, onOpenPreview, dir }) {
+  const n = Array.isArray(urls) ? urls.length : 0;
+  if (!n) return null;
+
+  const stack = [
+    { scale: 1, x: 0, y: 0, opacity: 1, blur: 0, rotate: 0 },
+    { scale: 0.94, x: 15, y: -15, opacity: 0.6, blur: 4, rotate: -2 },
+    { scale: 0.88, x: 30, y: -30, opacity: 0.3, blur: 8, rotate: -4 },
+  ];
+
+  const count = Math.min(3, n);
+  const ids = Array.from({ length: count }, (_, i) => mod(index + i, n));
+
+  const go = (delta) => {
+    if (n <= 1) return;
+    const next = mod(index + delta, n);
+    onChangeIndex(next, delta > 0 ? 1 : -1);
+  };
+
+  const frontId = ids[0];
+
+  return (
+    <div className="post-detail-carousel" aria-label="Image carousel">
+      <div className="post-detail-carousel-stack">
+        {/* back -> middle */}
+        {ids.slice(1).reverse().map((id, revIdx) => {
+          const pos = ids.length - (revIdx + 1); // 2 or 1
+          const s = stack[pos];
+          return (
+            <motion.button
+              key={`stack-${id}`}
+              type="button"
+              className="post-detail-carousel-card"
+              onClick={() => onOpenPreview(id)}
+              style={{ zIndex: 10 + (3 - pos) }}
+              animate={{
+                scale: s.scale,
+                x: s.x,
+                y: s.y,
+                opacity: s.opacity,
+                rotate: s.rotate,
+                filter: `blur(${s.blur}px)`,
+              }}
+              transition={{ type: 'spring', stiffness: 520, damping: 38 }}
+            >
+              <img src={urls[id]} alt="" className="post-detail-carousel-img" draggable={false} />
+            </motion.button>
+          );
+        })}
+
+        {/* front card with fly-out */}
+        <AnimatePresence initial={false} custom={dir} mode="popLayout">
+          <motion.button
+            key={`front-${frontId}`}
+            type="button"
+            className="post-detail-carousel-card post-detail-carousel-card--front"
+            onClick={() => onOpenPreview(frontId)}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.12}
+            onDragEnd={(_, info) => {
+              const swipe = Math.abs(info.offset.x) > 60 || Math.abs(info.velocity.x) > 700;
+              if (!swipe) return;
+              if (info.offset.x < 0) go(1);
+              else go(-1);
+            }}
+            custom={dir}
+            initial={{ scale: 1, x: 0, y: 0, opacity: 1, rotate: 0, filter: 'blur(0px)' }}
+            animate={{ scale: 1, x: 0, y: 0, opacity: 1, rotate: 0, filter: 'blur(0px)' }}
+            exit={(d) => ({
+              x: d > 0 ? 140 : -140,
+              y: -40,
+              rotate: d > 0 ? 14 : -14,
+              opacity: 0,
+              transition: { type: 'spring', stiffness: 520, damping: 40 },
+            })}
+            transition={{ type: 'spring', stiffness: 520, damping: 38 }}
+            style={{ zIndex: 30 }}
+          >
+            <img src={urls[frontId]} alt="" className="post-detail-carousel-img" draggable={false} />
+          </motion.button>
+        </AnimatePresence>
+
+        <button type="button" className="post-detail-carousel-arrow post-detail-carousel-arrow--left" onClick={() => go(-1)} aria-label="Previous">
+          <ChevronLeft size={18} aria-hidden />
+        </button>
+        <button type="button" className="post-detail-carousel-arrow post-detail-carousel-arrow--right" onClick={() => go(1)} aria-label="Next">
+          <ChevronRight size={18} aria-hidden />
+        </button>
+      </div>
+
+      <div className="post-detail-carousel-dots" aria-label="Pagination">
+        {urls.map((_, i) => (
+          <button
+            key={`dot-${i}`}
+            type="button"
+            className={`post-detail-carousel-dot ${i === index ? 'is-active' : ''}`}
+            onClick={() => onChangeIndex(i, i > index ? 1 : -1)}
+            aria-label={`Go to ${i + 1}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}

@@ -21,6 +21,18 @@ const TEAM_SECTIONS = [
     ],
   },
   {
+    roleZh: '技术顾问',
+    roleEn: 'Technical advisor',
+    members: [
+      {
+        nameZh: '叶以翔',
+        nameEn: 'Ye Yixiang',
+        lineZh: '四川大学',
+        lineEn: 'Sichuan University',
+      },
+    ],
+  },
+  {
     roleZh: '宣发团队 Promotion team',
     roleEn: 'Promotion team',
     members: [

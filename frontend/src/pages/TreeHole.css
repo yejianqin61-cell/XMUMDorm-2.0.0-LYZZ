@@ -179,19 +179,20 @@
   z-index: 2;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 10px 6px 6px;
+  gap: 4px;
+  /* 缩小约 50%：更克制、更沉浸 */
+  padding: 3px 6px 3px 3px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.70);
   border: 1px solid rgba(226, 232, 240, 1);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.40);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.30);
 }
 
 .treehole-glass-avatar {
-  width: 26px;
-  height: 26px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.08);
@@ -207,7 +208,7 @@
 
 .treehole-glass-avatar img.is-default {
   object-fit: contain;
-  padding: 3px;
+  padding: 2px;
   opacity: 0.9;
 }
 
@@ -216,7 +217,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 600;
   color: rgba(15, 23, 42, 0.86);
 }
