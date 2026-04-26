@@ -58,6 +58,8 @@ const cardIn = {
 };
 
 // Masonry virtual window + image cache
+// NOTE: 线上体验优先：默认关闭虚拟瀑布流（避免白屏/空洞）
+const USE_VIRTUAL_MASONRY = false;
 const OVERSCAN_PX = 2200;
 const COL_GAP_PX = 12;
 const RIGHT_COL_OFFSET_PX = 32;
@@ -277,6 +279,7 @@ function TreeHole() {
 
   // observe grid width for height estimation
   useEffect(() => {
+    if (!USE_VIRTUAL_MASONRY) return undefined;
     const el = gridRef.current;
     if (!el) return;
     const ro = new ResizeObserver((entries) => {
@@ -295,18 +298,20 @@ function TreeHole() {
       const st = sc.scrollTop || 0;
       setScrollTop(st);
       setVpH(sc.clientHeight || window.innerHeight || 0);
-      // robust: compute grid top relative to scroll container
-      try {
-        const scBox = sc.getBoundingClientRect?.();
-        const g = gridRef.current;
-        const gBox = g?.getBoundingClientRect?.();
-        if (scBox && gBox) {
-          setGridTop(Math.max(0, gBox.top - scBox.top + st));
-        } else {
-          setGridTop(g?.offsetTop ?? 0);
+      if (USE_VIRTUAL_MASONRY) {
+        // robust: compute grid top relative to scroll container
+        try {
+          const scBox = sc.getBoundingClientRect?.();
+          const g = gridRef.current;
+          const gBox = g?.getBoundingClientRect?.();
+          if (scBox && gBox) {
+            setGridTop(Math.max(0, gBox.top - scBox.top + st));
+          } else {
+            setGridTop(g?.offsetTop ?? 0);
+          }
+        } catch {
+          setGridTop(gridRef.current?.offsetTop ?? 0);
         }
-      } catch {
-        setGridTop(gridRef.current?.offsetTop ?? 0);
       }
     };
     onScroll();
@@ -356,26 +361,53 @@ function TreeHole() {
         </div>
       ) : (
         <div className="treehole-content">
-          <div className="treehole-grid treehole-grid--perf" ref={gridRef}>
-            <VirtualColumn
-              items={leftColumn}
-              columnWidth={gridW > 0 ? (gridW - COL_GAP_PX) / 2 : 0}
-              scrollTop={gridScrollTop}
-              viewportH={vpH}
-              overscanPx={OVERSCAN_PX}
-              topPad={0}
-              fetchingTail={infinite.isFetchingNextPage}
-            />
-            <VirtualColumn
-              items={rightColumn}
-              columnWidth={gridW > 0 ? (gridW - COL_GAP_PX) / 2 : 0}
-              scrollTop={gridScrollTop}
-              viewportH={vpH}
-              overscanPx={OVERSCAN_PX}
-              topPad={RIGHT_COL_OFFSET_PX}
-              fetchingTail={infinite.isFetchingNextPage}
-            />
-          </div>
+          {USE_VIRTUAL_MASONRY ? (
+            <div className="treehole-grid treehole-grid--perf" ref={gridRef}>
+              <VirtualColumn
+                items={leftColumn}
+                columnWidth={gridW > 0 ? (gridW - COL_GAP_PX) / 2 : 0}
+                scrollTop={gridScrollTop}
+                viewportH={vpH}
+                overscanPx={OVERSCAN_PX}
+                topPad={0}
+                fetchingTail={infinite.isFetchingNextPage}
+              />
+              <VirtualColumn
+                items={rightColumn}
+                columnWidth={gridW > 0 ? (gridW - COL_GAP_PX) / 2 : 0}
+                scrollTop={gridScrollTop}
+                viewportH={vpH}
+                overscanPx={OVERSCAN_PX}
+                topPad={RIGHT_COL_OFFSET_PX}
+                fetchingTail={infinite.isFetchingNextPage}
+              />
+            </div>
+          ) : (
+            <div className="treehole-grid">
+              <div className="treehole-column">
+                {leftColumn.map((post) => (
+                  <TreeHoleGlassCard key={post.id} post={post} />
+                ))}
+                {infinite.isFetchingNextPage ? (
+                  <>
+                    <TreeHoleGlassSkeleton />
+                    <TreeHoleGlassSkeleton />
+                  </>
+                ) : null}
+              </div>
+              <div className="treehole-column treehole-column-right">
+                {rightColumn.map((post) => (
+                  <TreeHoleGlassCard key={post.id} post={post} />
+                ))}
+                {infinite.isFetchingNextPage ? (
+                  <>
+                    <TreeHoleGlassSkeleton />
+                    <TreeHoleGlassSkeleton />
+                  </>
+                ) : null}
+              </div>
+            </div>
+          )}
           {infinite.hasNextPage && (
             <button
               type="button"
