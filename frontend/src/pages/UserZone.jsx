@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, MessageCircle } from 'lucide-react';
+import { Heart, MessageCircle, Star } from 'lucide-react';
 import { getProfile } from '../api/users';
 import { getMyProductReviews, getMyFavorites } from '../api/canteen';
 import { API_BASE_URL, productImageUrl } from '../api/config';
@@ -47,11 +47,6 @@ const pageWrap = {
   show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] } },
 };
 
-const gridWrap = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.035 } },
-};
-
 const cardAnim = {
   hidden: { opacity: 0, y: 10 },
   show: { opacity: 1, y: 0, transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] } },
@@ -69,6 +64,24 @@ function snippet(text) {
   const s = String(text || '').trim().replace(/\s+/g, ' ');
   if (!s) return '';
   return s.length > 60 ? `${s.slice(0, 60)}…` : s;
+}
+
+function timeBadge(ts, locale) {
+  if (!ts) return '';
+  try {
+    const d = new Date(ts);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleString(locale || 'en-US', { month: 'short', day: '2-digit' });
+  } catch {
+    return '';
+  }
+}
+
+function postImageUrl(raw) {
+  if (!raw) return null;
+  const s = typeof raw === 'string' ? raw : raw?.url;
+  if (!s) return null;
+  return s.startsWith('http') ? s : `${API_BASE_URL}${s}`;
 }
 
 /** 个人空间 /user/:id：帖子（公开）；点评与收藏仅本人登录后可见（接口为 my-*） */
@@ -96,6 +109,13 @@ function UserZone() {
   const [favorites, setFavorites] = useState([]);
   const [favoritesLoading, setFavoritesLoading] = useState(false);
   const [favoritesError, setFavoritesError] = useState(null);
+
+  const showTabs = isOwnProfile;
+  const tabs = [
+    { key: TAB_POSTS, label: t.tabPosts, enabled: true },
+    { key: TAB_REVIEWS, label: t.tabReviews, enabled: showTabs },
+    { key: TAB_FAVORITES, label: t.tabFavorites, enabled: showTabs },
+  ];
 
   useEffect(() => {
     if (!isOwnProfile && (activeTab === TAB_REVIEWS || activeTab === TAB_FAVORITES)) {
@@ -213,22 +233,13 @@ function UserZone() {
 
   const avatarBg = profileUser?.avatar ? prefixAvatar(profileUser.avatar) : '';
   const displayName = profileUser?.nickname ?? profileUser?.username ?? (isZh ? '未设置' : 'Not set');
-  const showTabs = isOwnProfile;
   const reviewsCount = reviews.length;
   const favoritesCount = favorites.length;
-
-  const tabs = useMemo(() => {
-    const base = [
-      { key: TAB_POSTS, label: t.tabPosts, enabled: true },
-      { key: TAB_REVIEWS, label: t.tabReviews, enabled: showTabs },
-      { key: TAB_FAVORITES, label: t.tabFavorites, enabled: showTabs },
-    ];
-    return base;
-  }, [showTabs, t.tabFavorites, t.tabPosts, t.tabReviews]);
+  const locale = isZh ? 'zh-CN' : 'en-US';
 
   return (
-    <div className="h-full w-full bg-[#F9FAFB]">
-      <div className="h-full overflow-y-auto px-4 pb-[calc(var(--tabbar-height)+var(--safe-bottom)+24px)] pt-6">
+    <div className="min-h-[100svh] w-full bg-[#F9FAFB]">
+      <div className="px-4 pb-[calc(var(--tabbar-height)+var(--safe-bottom)+24px)] pt-6">
         <motion.div variants={pageWrap} initial="hidden" animate="show">
           {/* Header */}
           <div className="relative overflow-hidden rounded-3xl bg-slate-900">
@@ -276,7 +287,7 @@ function UserZone() {
 
           {/* Tabs */}
           {showTabs && (
-            <div className="mt-4">
+            <div className="sticky top-0 z-20 -mx-4 mt-4 bg-[#F9FAFB]/85 px-4 pb-2 pt-2 backdrop-blur">
               <div className="relative rounded-2xl bg-white p-1 ring-1 ring-slate-100">
                 <div className="grid grid-cols-3">
                   {tabs.map((tab) => {
@@ -297,7 +308,7 @@ function UserZone() {
                         {selected && (
                           <motion.div
                             layoutId="userzone-activebar"
-                            className="absolute left-1/2 top-full mt-0.5 h-[2px] w-12 -translate-x-1/2 rounded-full bg-slate-900"
+                            className="absolute left-1/2 top-full mt-0.5 h-[2px] w-10 -translate-x-1/2 rounded-full bg-emerald-500"
                             transition={{ type: 'spring', stiffness: 500, damping: 40 }}
                           />
                         )}
@@ -321,18 +332,20 @@ function UserZone() {
                   transition={{ duration: 0.22 }}
                 >
                   {posts.length === 0 ? (
-                    <EmptyState
+                    <EmptyIllustration
                       title={t.postsEmptyTitle}
                       description={isOwnProfile ? t.postsEmptyOwn : t.postsEmptyDesc}
-                      actionLabel={isOwnProfile ? t.postNow : undefined}
-                      actionTo={isOwnProfile ? '/post/new' : undefined}
+                      actionLabel={isOwnProfile ? t.postNow : (isZh ? '去逛逛' : 'Start exploring')}
+                      actionTo={isOwnProfile ? '/post/new' : '/'}
                     />
                   ) : (
-                    <motion.div variants={gridWrap} initial="hidden" animate="show" className="columns-2 gap-3">
-                      {posts.map((post) => (
-                        <PostMasonryCard key={post.id} post={post} />
-                      ))}
-                    </motion.div>
+                    <Timeline
+                      items={posts}
+                      locale={locale}
+                      renderItem={(post) => (
+                        <TimelinePostItem key={post.id} post={post} locale={locale} />
+                      )}
+                    />
                   )}
                 </motion.section>
               )}
@@ -354,13 +367,15 @@ function UserZone() {
                       {reviewsError}
                     </p>
                   ) : reviews.length === 0 ? (
-                    <EmptyState title={t.reviewsEmptyTitle} description={t.reviewsEmptyDesc} actionLabel={t.eatNow} actionTo="/eat" />
+                    <EmptyIllustration title={t.reviewsEmptyTitle} description={t.reviewsEmptyDesc} actionLabel={t.eatNow} actionTo="/eat" />
                   ) : (
-                    <div className="grid grid-cols-2 gap-3">
-                      {reviews.map((r) => (
-                        <ReviewGridItem key={r.id} review={r} />
-                      ))}
-                    </div>
+                    <Timeline
+                      items={reviews}
+                      locale={locale}
+                      renderItem={(review) => (
+                        <TimelineReviewItem key={review.id} review={review} locale={locale} />
+                      )}
+                    />
                   )}
                 </motion.section>
               )}
@@ -382,11 +397,11 @@ function UserZone() {
                       {favoritesError}
                     </p>
                   ) : favorites.length === 0 ? (
-                    <EmptyState title={t.favEmptyTitle} description={t.favEmptyDesc} actionLabel={t.eatNow} actionTo="/eat" />
+                    <EmptyIllustration title={t.favEmptyTitle} description={t.favEmptyDesc} actionLabel={t.eatNow} actionTo="/eat" />
                   ) : (
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-3">
                       {favorites.map((item) => (
-                        <FavoriteGridItem key={item.product_id} item={item} />
+                        <FavoriteListItem key={item.product_id} item={item} />
                       ))}
                     </div>
                   )}
@@ -409,91 +424,149 @@ function StatMini({ value, label, dim = false }) {
   );
 }
 
-function PostMasonryCard({ post }) {
-  const firstImg = post.images?.[0]?.url;
-  const imgUrl = firstImg && !firstImg.startsWith('http') ? `${API_BASE_URL}${firstImg}` : firstImg;
-  const likeNum = post.like_count ?? post.likeCount ?? 0;
-  const commentNum = post.comment_count ?? post.commentCount ?? 0;
-  const text = snippet(post.content);
-  const pastel = useMemo(() => pastelFromString(`${post.id}-${post.content || ''}`), [post.content, post.id]);
-
+function Timeline({ items, locale, renderItem }) {
   return (
-    <motion.div
-      variants={cardAnim}
-      className="mb-3 break-inside-avoid"
-      whileHover={{ scale: 1.02 }}
-      transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-    >
-      <Link to={`/post/${post.id}`} className="group block overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
-        <div className="relative">
-          {imgUrl ? (
-            <img src={imgUrl} alt="" className="w-full object-cover" />
-          ) : (
-            <div
-              className="flex min-h-[160px] w-full items-center justify-center px-4 py-10 text-center"
-              style={{ backgroundColor: pastel }}
-            >
-              <div className="text-[14px] font-semibold leading-relaxed text-slate-800/90">
-                {text || ' '}
-              </div>
-            </div>
-          )}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/45 to-transparent" />
-          <div className="absolute bottom-2 left-2 flex items-center gap-3 text-[12px] font-semibold text-white">
-            <span className="inline-flex items-center gap-1">
-              <Heart className="h-4 w-4" />
-              {likeNum}
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <MessageCircle className="h-4 w-4" />
-              {commentNum}
-            </span>
+    <div className="relative">
+      <div className="absolute left-[14px] top-0 h-full w-px bg-slate-200" aria-hidden />
+      <div className="space-y-4">
+        {items.map((it) => renderItem(it, locale))}
+      </div>
+    </div>
+  );
+}
+
+function TimelineShell({ badge, children }) {
+  return (
+    <motion.div variants={cardAnim} whileTap={{ scale: 0.98 }}>
+      <div className="relative pl-10">
+        <div className="absolute left-[9px] top-4 h-3 w-3 rounded-full bg-emerald-500 ring-4 ring-emerald-100" aria-hidden />
+        <div className="rounded-2xl bg-white p-4 ring-1 ring-slate-200/60" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+          <div className="mb-3 inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold text-slate-600">
+            {badge}
           </div>
+          {children}
         </div>
-      </Link>
+      </div>
     </motion.div>
   );
 }
 
-function ReviewGridItem({ review }) {
-  const { product_id, product_name, rating, product_image, images } = review;
+function TimelinePostItem({ post, locale }) {
+  const created = post.created_at ?? post.createdAt ?? post.created;
+  const badge = timeBadge(created, locale);
+  const likeNum = post.like_count ?? post.likeCount ?? 0;
+  const commentNum = post.comment_count ?? post.commentCount ?? 0;
+  const imgs = Array.isArray(post.images) ? post.images : [];
+  const urls = imgs.map((x) => postImageUrl(x?.url ?? x)).filter(Boolean);
+
+  return (
+    <TimelineShell badge={badge || (locale === 'zh-CN' ? '记录' : 'Entry')}>
+      <Link to={`/post/${post.id}`} className="block">
+        <div className="text-[14px] font-semibold leading-relaxed text-slate-900">
+          {snippet(post.content) || ' '}
+        </div>
+        {urls.length > 0 && (
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            {urls.slice(0, 9).map((u, idx) => (
+              <div key={idx} className="overflow-hidden rounded-xl bg-slate-100">
+                <img src={u} alt="" className="aspect-square w-full object-cover" />
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="mt-3 flex items-center gap-4 text-[12px] font-semibold text-slate-500">
+          <span className="inline-flex items-center gap-1">
+            <Heart className="h-4 w-4" />
+            {likeNum}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <MessageCircle className="h-4 w-4" />
+            {commentNum}
+          </span>
+        </div>
+      </Link>
+    </TimelineShell>
+  );
+}
+
+function TimelineReviewItem({ review, locale }) {
+  const created = review.created_at ?? review.createdAt ?? review.created;
+  const badge = timeBadge(created, locale);
+  const { product_id, product_name, rating, content, product_image, images } = review;
   const raw = product_image ?? (images?.length ? (images[0]?.url ?? images[0]) : null);
   const pathStr = typeof raw === 'string' ? raw : raw?.url ?? null;
   const imgUrl = productImageUrl(pathStr);
+  const rateLabel = formatRatingLabel(rating);
 
   return (
-    <motion.div variants={cardAnim} whileHover={{ scale: 1.02 }} transition={{ type: 'spring', stiffness: 380, damping: 28 }}>
-      <Link to={`/eat/food/${product_id}`} className="block overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
-        <div className="relative">
-          <img src={imgUrl} alt="" className="aspect-[4/5] w-full object-cover" />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/45 to-transparent" />
-          <div className="absolute bottom-2 left-2 right-2">
-            <div className="truncate text-[12px] font-semibold text-white">{product_name}</div>
-            <div className="mt-0.5 text-[11px] font-medium text-white/85">{formatRatingLabel(rating)}</div>
+    <TimelineShell badge={badge || (locale === 'zh-CN' ? '点评' : 'Review')}>
+      <Link to={`/eat/food/${product_id}`} className="block">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="truncate text-[13px] font-semibold text-slate-900">{product_name}</div>
+            <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 ring-1 ring-amber-100">
+              <Star className="h-3.5 w-3.5" />
+              {rateLabel}
+            </div>
           </div>
+          {imgUrl ? (
+            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-slate-100">
+              <img src={imgUrl} alt="" className="h-full w-full object-cover" />
+            </div>
+          ) : null}
+        </div>
+        <div className="mt-3 text-[13px] font-medium leading-relaxed text-slate-700">
+          {snippet(content) || ' '}
+        </div>
+      </Link>
+    </TimelineShell>
+  );
+}
+
+function FavoriteListItem({ item }) {
+  const { product_id, product_name, shop_name, product_image } = item;
+  const imgUrl = productImageUrl(typeof product_image === 'string' ? product_image : null);
+  return (
+    <motion.div variants={cardAnim} whileTap={{ scale: 0.98 }}>
+      <Link
+        to={`/eat/food/${product_id}`}
+        className="flex items-center justify-between gap-4 overflow-hidden rounded-2xl bg-white p-4 ring-1 ring-slate-200/60"
+        style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}
+      >
+        <div className="min-w-0">
+          <div className="line-clamp-2 text-[14px] font-semibold leading-snug text-slate-900">
+            {product_name}
+          </div>
+          <div className="mt-1 truncate text-[12px] font-medium text-slate-400">
+            {shop_name || ' '}
+          </div>
+        </div>
+        <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-slate-100">
+          {imgUrl ? <img src={imgUrl} alt="" className="h-full w-full object-cover" /> : null}
         </div>
       </Link>
     </motion.div>
   );
 }
 
-function FavoriteGridItem({ item }) {
-  const { product_id, product_name, shop_name, product_image } = item;
-  const imgUrl = productImageUrl(typeof product_image === 'string' ? product_image : null);
-
+function EmptyIllustration({ title, description, actionLabel, actionTo }) {
   return (
-    <motion.div variants={cardAnim} whileHover={{ scale: 1.02 }} transition={{ type: 'spring', stiffness: 380, damping: 28 }}>
-      <Link to={`/eat/food/${product_id}`} className="block overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
-        <div className="relative">
-          <img src={imgUrl} alt="" className="aspect-[4/5] w-full object-cover" />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/45 to-transparent" />
-          <div className="absolute bottom-2 left-2 right-2">
-            <div className="truncate text-[12px] font-semibold text-white">{product_name}</div>
-            {shop_name && <div className="mt-0.5 truncate text-[11px] font-medium text-white/85">{shop_name}</div>}
-          </div>
+    <div className="rounded-3xl bg-white px-6 py-10 text-center ring-1 ring-slate-100" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+      <div className="mx-auto mb-4 h-16 w-16 rounded-2xl bg-slate-50 ring-1 ring-slate-100 grid place-items-center">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="text-slate-300" aria-hidden="true">
+          <path d="M4 6h16M4 12h10M4 18h6" strokeLinecap="round" />
+        </svg>
+      </div>
+      <div className="text-[15px] font-semibold text-slate-900">{title}</div>
+      {description ? <div className="mt-1 text-[13px] font-medium text-slate-400">{description}</div> : null}
+      {actionLabel && actionTo ? (
+        <div className="mt-5">
+          <Link to={actionTo} className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2.5 text-[13px] font-semibold text-white active:scale-[0.98]">
+            {actionLabel}
+          </Link>
         </div>
-      </Link>
-    </motion.div>
+      ) : null}
+    </div>
   );
 }
 
