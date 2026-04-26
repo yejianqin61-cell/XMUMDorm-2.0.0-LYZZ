@@ -1,10 +1,15 @@
+:root {
+  /* 更“扁”的 Tab 栏，但仍能完整容纳图标+文字 */
+  --tabbar-height: 84px;
+}
+
 .tab-bar {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
   box-sizing: border-box;
-  height: calc(var(--tabbar-height, 72px) + var(--safe-bottom));
+  height: calc(var(--tabbar-height, 84px) + var(--safe-bottom));
   padding: 10px 12px calc(10px + var(--safe-bottom));
   background: transparent;
   z-index: 100;
@@ -14,7 +19,7 @@
 
 .tab-bar-shell {
   position: relative;
-  height: calc(var(--tabbar-height, 72px) - 20px);
+  height: calc(var(--tabbar-height, 84px) - 20px);
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   align-items: stretch;
@@ -58,7 +63,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 7px 0 6px;
+  height: 100%;
+  padding: 8px 0 7px;
   /* 未选中也带一点“翠绿”氛围，避免灰 */
   color: rgba(5, 150, 105, 0.62);
   transition: color 0.2s;
@@ -76,14 +82,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   margin-bottom: 2px;
 }
 
 .tab-icon svg {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
 }
 
 .tab-item.active .tab-icon {
@@ -91,8 +97,8 @@
 }
 
 .tab-label {
-  font-size: 10.5px;
-  line-height: 1.2;
+  font-size: 11px;
+  line-height: 1.15;
   text-align: center;
   white-space: normal;
   max-width: 100%;

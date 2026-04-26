@@ -10,6 +10,11 @@ import AboutThanks from '../pages/AboutThanks';
 import AboutEditorNote from '../pages/AboutEditorNote';
 import AboutAlgorithm from '../pages/AboutAlgorithm';
 import AboutProfile from '../pages/AboutProfile';
+import SquareClub from '../pages/SquareClub';
+import SquareSecondHand from '../pages/SquareSecondHand';
+import SquareTrending from '../pages/SquareTrending';
+import SquareFreshmanGuide from '../pages/SquareFreshmanGuide';
+import SquareErrands from '../pages/SquareErrands';
 import Schedule from '../pages/Schedule';
 import Diary from '../pages/Diary';
 import Disclaimer from '../pages/Disclaimer';
@@ -52,6 +57,11 @@ export const layoutRoutes = (
     <Route path="about/diary" element={<Diary />} />
     <Route path="about/disclaimer" element={<Disclaimer />} />
     <Route path="about/contact" element={<ContactUs />} />
+    <Route path="about/club" element={<SquareClub />} />
+    <Route path="about/second-hand" element={<SquareSecondHand />} />
+    <Route path="about/trending" element={<SquareTrending />} />
+    <Route path="about/freshman-guide" element={<SquareFreshmanGuide />} />
+    <Route path="about/errands" element={<SquareErrands />} />
     <Route path="myzone" element={<MyZone />} />
     <Route path="user/:id" element={<UserZone />} />
     <Route path="myzone/posts" element={<MyPosts />} />
