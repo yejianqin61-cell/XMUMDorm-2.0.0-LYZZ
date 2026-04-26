@@ -5,6 +5,29 @@ const URLS_TO_CACHE = [
   '/index.html',
   '/manifest.json',
   '/break.png',
+  // Eat page: background + stickers (public root)
+  '/eatbackground.png',
+  '/B1.png',
+  '/D6.png',
+  '/LY3.png',
+  '/OTHERS.png',
+  '/Rank.png',
+  '/bell.png',
+
+  // Square page: background + stickers
+  '/square/background.png',
+  '/square/%E4%BA%8C%E6%89%8B.png',
+  '/square/%E6%96%B0%E7%94%9F%E6%89%8B%E5%86%8C.png',
+  '/square/%E7%83%AD%E6%90%9C.png',
+  '/square/%E7%A4%BE%E5%9B%A2.png',
+  '/square/%E8%B7%91%E8%85%BF.png',
+
+  // GIF assets
+  '/gif/b4.gif',
+  '/gif/vsgif_com_dogecoin-meme_.3422573.gif',
+  '/gif/%E6%96%91%E9%A9%AC%E7%BA%BF%E4%BA%BA%E8%A1%8C%E9%81%93%E8%BF%87%E9%A9%AC%E8%B7%AF%E8%B5%B0%E8%B7%AF%E8%B5%B0gif%E5%9B%BE%E7%B4%A0%E6%9D%90_%E7%88%B1%E7%BB%99%E7%BD%91_aigei_com.gif',
+  '/gif/%E8%80%84%E8%80%8B%E7%8C%AB%E5%8A%A8%E6%80%81gif%E8%A1%A8%E6%83%85%E5%8C%85%20(6)_%E7%88%B1%E7%BB%99%E7%BD%91_aigei_com.gif',
+  '/gif/%E8%BF%AA%E8%8E%AB%E8%B5%B0%E7%8C%AB%E6%AD%A5_%E7%88%B1%E7%BB%99%E7%BD%91_aigei_com.gif',
 ];
 
 self.addEventListener('install', (event) => {
