@@ -51,6 +51,7 @@
   touch-action: none;
   text-decoration: none;
   transform: translateZ(0);
+  outline: none;
 }
 
 .canteen-sticker--editable {
@@ -76,8 +77,37 @@
 }
 
 .canteen-sticker--link:active {
-  transform: scale(0.985);
-  filter: brightness(0.98) drop-shadow(0 10px 20px rgba(2, 6, 23, 0.22));
+  transform: scale(0.955);
+  filter: brightness(1.06) drop-shadow(0 22px 40px rgba(2, 6, 23, 0.40));
+}
+
+.canteen-sticker--link::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 14px;
+  background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 55%),
+    radial-gradient(circle at 70% 80%, rgba(56, 189, 248, 0.22), rgba(56, 189, 248, 0) 55%);
+  opacity: 0;
+  transform: scale(0.98);
+  transition: opacity 120ms ease, transform 120ms ease;
+  pointer-events: none;
+}
+
+.canteen-sticker--link:active::after {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.canteen-sticker--link:focus-visible::after {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.canteen-sticker--link:focus-visible .canteen-sticker-img {
+  outline: 2px solid rgba(56, 189, 248, 0.85);
+  outline-offset: 3px;
+  border-radius: 10px;
 }
 
 .canteen-sticker--decor {
@@ -102,6 +132,21 @@
   user-select: none;
   pointer-events: none;
   filter: drop-shadow(0 12px 24px rgba(2, 6, 23, 0.22));
+}
+
+.canteen-sticker--link:active .canteen-sticker-img {
+  filter: drop-shadow(0 26px 48px rgba(2, 6, 23, 0.42));
+}
+
+/* 手机端（无 hover）加强点击反馈 */
+@media (hover: none) and (pointer: coarse) {
+  .canteen-sticker--link:active {
+    transform: scale(0.94);
+  }
+
+  .canteen-sticker--link:active::after {
+    opacity: 1;
+  }
 }
 
 .canteen-sticker-label {
