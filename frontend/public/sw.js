@@ -1,9 +1,9 @@
-const CACHE_NAME = 'dorm-cache-v8';
+// IMPORTANT: bump this to force clients update cache
+const CACHE_NAME = 'dorm-cache-v9';
 const URLS_TO_CACHE = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/src/main.jsx',
   '/break.png',
 ];
 
