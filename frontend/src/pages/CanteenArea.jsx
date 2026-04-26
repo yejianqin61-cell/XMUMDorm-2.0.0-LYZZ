@@ -1,28 +1,38 @@
-import { Link, useLocation } from 'react-router-dom';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import './CanteenArea.css';
 
-/** 食堂地图页：背景图 + 可点击热区 */
+/** 食堂地图页：背景图 + 建筑贴图；编辑模式支持拖拽并复制配置 */
 function CanteenArea() {
   const location = useLocation();
   const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const editMode = params.get('edit') === '1';
   const mapRef = useRef(null);
 
-  const defaultZones = useMemo(
-    () => ([
-      { id: 'rank', to: '/eat/rankings', label: 'Rank', rect: { left: 33.34761084417858, top: 0, width: 34, height: 16, radius: 22 } },
-      { id: 'd6', to: '/eat/D6', label: 'D6', rect: { left: 9.99162825686364, top: 26.59277049940195, width: 28, height: 11, radius: 18 } },
-      { id: 'ly3', to: '/eat/LY3', label: 'LY3', rect: { left: 58.72334622861598, top: 25.945608604578503, width: 28, height: 11, radius: 18 } },
-      { id: 'b1', to: '/eat/B1', label: 'B1', rect: { left: 3.3130811714806248, top: 51.680354395903954, width: 28, height: 11, radius: 18 } },
-      { id: 'others', to: '/eat/other', label: 'Others', rect: { left: 66.01210658881526, top: 51.248624419905276, width: 28, height: 11, radius: 18 } },
-      { id: 'bell', to: '/eat/BELL', label: 'Bell', rect: { left: 0, top: 66.70761848157834, width: 76, height: 18, radius: 22 } },
-    ]),
+  // 单位：百分比（相对于背景容器宽高），以适配不同屏幕
+  const defaultStickers = useMemo(
+    () => [
+      { id: 'rank', label: 'Rank', to: '/eat/rankings', src: '/Rank.png', rect: { left: 31.109843916265945, top: 19.927739715405195, width: 18 } },
+      { id: 'd6', label: 'D6', to: '/eat/D6', src: '/D6.png', rect: { left: 2.751440643511616, top: 26.773009071916402, width: 34 } },
+      { id: 'ly3', label: 'LY3', to: '/eat/LY3', src: '/LY3.png', rect: { left: 53.06359205902664, top: 23.97817870564246, width: 40 } },
+      { id: 'b1', label: 'B1', to: '/eat/B1', src: '/B1.png', rect: { left: 0, top: 38.820729501544804, width: 32 } },
+      { id: 'others', label: 'OTHERS', to: '/eat/other', src: '/OTHERS.png', rect: { left: 77.51443113142108, top: 40.45671133819904, width: 22 } },
+      { id: 'bell', label: 'BELL', to: '/eat/BELL', src: '/bell.png', rect: { left: 0.7312122088652958, top: 74.1131206044003, width: 16.7 } },
+
+      // 装饰 GIF（无跳转）：你可在 /eat?edit=1 拖动与缩放
+      { id: 'gif-b4', label: 'GIF', src: '/gif/b4.gif', rect: { left: 63.549145492415, top: 33.098858172508095, width: 6 } },
+      { id: 'gif-cat', label: 'GIF', src: '/gif/耄耋猫动态gif表情包 (6)_爱给网_aigei_com.gif', rect: { left: 21.722549053807384, top: 40.824834646015574, width: 22 } },
+      { id: 'gif-doge', label: 'GIF', src: '/gif/vsgif_com_dogecoin-meme_.3422573.gif', rect: { left: 58.924847291942115, top: 13.094751207800172, width: 10 } },
+      { id: 'gif-catwalk-1', label: 'GIF', src: '/gif/迪莫走猫步_爱给网_aigei_com.gif', rect: { left: 77.28322895542964, top: 54.77437927364383, width: 12 } },
+      { id: 'gif-crosswalk', label: 'GIF', src: '/gif/斑马线人行道过马路走路走gif图素材_爱给网_aigei_com.gif', rect: { left: 45.0057718351608, top: 41.231050566625264, width: 16 } },
+    ],
     []
   );
 
-  const storageKey = 'eat_map_hotzones_v1';
-  const [zones, setZones] = useState(defaultZones);
+  const storageKey = 'eat_map_stickers_v8';
+  const [stickers, setStickers] = useState(defaultStickers);
+  const [selectedId, setSelectedId] = useState(null);
 
   useEffect(() => {
     if (!editMode) return;
@@ -31,34 +41,35 @@ function CanteenArea() {
       if (!raw) return;
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        setZones(parsed);
+        // 兼容：用户本地可能还保留已删除素材的旧配置（过滤掉无 src 的项）
+        setStickers(parsed.filter((x) => x && x.src));
       }
     } catch {}
-  }, [editMode, defaultZones]);
+  }, [editMode, defaultStickers]);
 
   useEffect(() => {
     if (!editMode) return;
     try {
-      localStorage.setItem(storageKey, JSON.stringify(zones));
+      localStorage.setItem(storageKey, JSON.stringify(stickers));
     } catch {}
-  }, [editMode, zones]);
+  }, [editMode, stickers]);
 
-  const [pressedId, setPressedId] = useState(null);
   const dragRef = useRef(null); // { id, startX, startY, startRect, box }
 
   const startDrag = (id, ev) => {
     if (!editMode) return;
+    setSelectedId(id);
     ev.preventDefault();
     ev.stopPropagation();
     const box = mapRef.current?.getBoundingClientRect();
     if (!box) return;
-    const z = zones.find((x) => x.id === id);
-    if (!z) return;
+    const s = stickers.find((x) => x.id === id);
+    if (!s) return;
     dragRef.current = {
       id,
       startX: ev.clientX,
       startY: ev.clientY,
-      startRect: { ...z.rect },
+      startRect: { ...s.rect },
       box,
     };
     try {
@@ -74,13 +85,14 @@ function CanteenArea() {
     const dy = ev.clientY - d.startY;
     const leftDelta = (dx / d.box.width) * 100;
     const topDelta = (dy / d.box.height) * 100;
-    setZones((prev) =>
-      prev.map((z) => {
-        if (z.id !== d.id) return z;
-        const next = { ...z.rect };
+    setStickers((prev) =>
+      prev.map((s) => {
+        if (s.id !== d.id) return s;
+        const next = { ...s.rect };
         next.left = Math.min(100 - next.width, Math.max(0, d.startRect.left + leftDelta));
-        next.top = Math.min(100 - next.height, Math.max(0, d.startRect.top + topDelta));
-        return { ...z, rect: next };
+        // height 随图片比例自适应，这里只约束 top 的范围（最多到 95%，避免完全拖出）
+        next.top = Math.min(95, Math.max(0, d.startRect.top + topDelta));
+        return { ...s, rect: next };
       })
     );
   };
@@ -89,14 +101,29 @@ function CanteenArea() {
     dragRef.current = null;
   };
 
-  const copyZones = async () => {
+  const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+
+  const adjustSelectedWidth = (delta) => {
+    if (!editMode || !selectedId) return;
+    setStickers((prev) =>
+      prev.map((s) => {
+        if (s.id !== selectedId) return s;
+        const next = { ...s.rect };
+        next.width = clamp((next.width ?? 20) + delta, 6, 90);
+        next.left = clamp(next.left ?? 0, 0, 100 - next.width);
+        return { ...s, rect: next };
+      })
+    );
+  };
+
+  const copyConfig = async () => {
     try {
-      await navigator.clipboard.writeText(JSON.stringify(zones, null, 2));
+      await navigator.clipboard.writeText(JSON.stringify(stickers, null, 2));
     } catch {}
   };
 
-  const resetZones = () => {
-    setZones(defaultZones);
+  const reset = () => {
+    setStickers(defaultStickers);
     try {
       localStorage.removeItem(storageKey);
     } catch {}
@@ -114,49 +141,79 @@ function CanteenArea() {
       >
         <div className="canteen-map-bg" aria-hidden />
 
-        {zones.map((z) => {
-          const style = {
-            left: `${z.rect.left}%`,
-            top: `${z.rect.top}%`,
-            width: `${z.rect.width}%`,
-            height: `${z.rect.height}%`,
-            borderRadius: `${z.rect.radius ?? 18}px`,
-          };
-          const cls = `canteen-map-hotzone ${pressedId === z.id ? 'is-pressed' : ''} ${editMode ? 'is-editable' : ''}`;
+        {stickers.map((s) => {
+          const style = { left: `${s.rect.left}%`, top: `${s.rect.top}%`, width: `${s.rect.width}%` };
+          const cls = `canteen-sticker ${editMode ? 'canteen-sticker--editable' : 'canteen-sticker--link'} ${
+            editMode && selectedId === s.id ? 'canteen-sticker--selected' : ''
+          }`;
+          const showLabel = !!s.label && !String(s.id || '').startsWith('gif-');
           return editMode ? (
             <button
-              key={z.id}
+              key={s.id}
               type="button"
               className={cls}
+              data-id={s.id}
               style={style}
-              aria-label={`Edit hotzone ${z.label}`}
-              onPointerDown={(ev) => startDrag(z.id, ev)}
+              aria-label={s.label}
+              onPointerDown={(ev) => startDrag(s.id, ev)}
+              onClick={() => setSelectedId(s.id)}
             >
-              <span className="canteen-map-hotzone-label">{z.label}</span>
+              <img src={s.src} alt={s.label} className="canteen-sticker-img" draggable={false} />
+              {showLabel && <span className="canteen-sticker-label">{s.label}</span>}
             </button>
-          ) : (
+          ) : s.to ? (
             <Link
-              key={z.id}
-              to={z.to}
+              key={s.id}
+              to={s.to}
               className={cls}
+              data-id={s.id}
               style={style}
-              aria-label={z.label}
-              onPointerDown={() => setPressedId(z.id)}
-              onPointerUp={() => setPressedId(null)}
-              onPointerCancel={() => setPressedId(null)}
-            />
+              aria-label={s.label}
+            >
+              <img src={s.src} alt={s.label} className="canteen-sticker-img" draggable={false} />
+              {showLabel && <span className="canteen-sticker-label">{s.label}</span>}
+            </Link>
+          ) : (
+            <div
+              key={s.id}
+              className="canteen-sticker canteen-sticker--decor"
+              data-id={s.id}
+              style={style}
+              aria-label={s.label || 'decor'}
+            >
+              <img src={s.src} alt={s.label || ''} className="canteen-sticker-img" draggable={false} />
+              {showLabel && <span className="canteen-sticker-label">{s.label}</span>}
+            </div>
           );
         })}
 
         {editMode && (
           <div className="canteen-map-editor">
-            <div className="canteen-map-editor-title">热区编辑模式</div>
-            <div className="canteen-map-editor-sub">拖动框到对应建筑位置。完成后点“复制配置”。</div>
+            <div className="canteen-map-editor-title">贴图拖拽布局模式</div>
+            <div className="canteen-map-editor-sub">拖动贴图到合适位置后，点“复制配置”发给我。</div>
             <div className="canteen-map-editor-actions">
-              <button type="button" className="canteen-map-editor-btn" onClick={copyZones}>
+              <button
+                type="button"
+                className="canteen-map-editor-btn canteen-map-editor-btn-ghost"
+                onClick={() => adjustSelectedWidth(-2)}
+                disabled={!selectedId}
+                title="缩小选中贴图"
+              >
+                选中缩小
+              </button>
+              <button
+                type="button"
+                className="canteen-map-editor-btn canteen-map-editor-btn-ghost"
+                onClick={() => adjustSelectedWidth(2)}
+                disabled={!selectedId}
+                title="放大选中贴图"
+              >
+                选中放大
+              </button>
+              <button type="button" className="canteen-map-editor-btn" onClick={copyConfig}>
                 复制配置
               </button>
-              <button type="button" className="canteen-map-editor-btn canteen-map-editor-btn-ghost" onClick={resetZones}>
+              <button type="button" className="canteen-map-editor-btn canteen-map-editor-btn-ghost" onClick={reset}>
                 重置
               </button>
             </div>
