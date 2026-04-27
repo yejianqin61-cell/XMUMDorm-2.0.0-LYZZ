@@ -1,5 +1,5 @@
 // IMPORTANT: bump this to force clients update cache
-const CACHE_NAME = 'dorm-cache-v9';
+const CACHE_NAME = 'dorm-cache-v10';
 const URLS_TO_CACHE = [
   '/',
   '/index.html',
@@ -53,7 +53,8 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// 网络优先：先请求网络，失败或离线时才用缓存，这样网站更新后手机无需清缓存
+// 默认网络优先：先请求网络，失败或离线时才用缓存，这样网站更新后手机无需清缓存
+// 但 Eat / Square 的贴图、背景、GIF 属于“稳定静态资源”，这里做 cache-first，避免每次刷新重新加载。
 // API 请求不写入缓存，且网络失败时必须返回合法 Response（否则 Uncaught: Failed to convert value to 'Response'）
 self.addEventListener('fetch', (event) => {
   const { request } = event;
@@ -62,12 +63,41 @@ self.addEventListener('fetch', (event) => {
   // Vite dev：不要拦截任何请求（否则容易把 /src/* 缓存住导致“前端没更新”）
   if (String(self.location && self.location.port) === '5173') return;
 
-  // 静态关键图：缓存优先，避免每次都走网络导致慢
+  // 静态关键图 / 贴图 / GIF：缓存优先（丝滑刷新）
   try {
     const u = new URL(request.url);
-    if (u.origin === self.location.origin && u.pathname === '/break.png') {
+    const sameOrigin = u.origin === self.location.origin;
+    const p = u.pathname || '';
+    const isKeyStatic =
+      sameOrigin &&
+      (
+        p === '/break.png' ||
+        p === '/eatbackground.png' ||
+        p.startsWith('/square/') ||
+        p.startsWith('/gif/') ||
+        p.startsWith('/backgrounds/') ||
+        // Eat stickers at public root
+        /^\/(B1|D6|LY3|OTHERS|Rank|bell)\.png$/i.test(p)
+      );
+
+    if (isKeyStatic) {
       event.respondWith(
-        caches.match(request).then((cached) => cached || fetch(request))
+        caches.open(CACHE_NAME).then(async (cache) => {
+          const cached = await cache.match(request);
+          if (cached) return cached;
+          const resp = await fetch(request);
+          // 只缓存 200 且非 partial 的响应，避免污染
+          if (
+            resp &&
+            resp.ok &&
+            resp.status === 200 &&
+            !resp.headers.get('Content-Range') &&
+            (resp.type === 'basic' || resp.type === 'cors')
+          ) {
+            cache.put(request, resp.clone()).catch(() => {});
+          }
+          return resp;
+        })
       );
       return;
     }

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { BookOpen, Coffee, MapPin, RefreshCw, Upload, X } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { Toast } from '../context/ToastContext';
@@ -36,12 +37,52 @@ function urlBase64ToUint8Array(base64String) {
   return outputArray;
 }
 
+function hmToMin(hm) {
+  const s = String(hm || '').trim();
+  const m = s.match(/^(\d{1,2}):(\d{2})/);
+  if (!m) return NaN;
+  const h = Number(m[1]);
+  const mm = Number(m[2]);
+  if (!Number.isFinite(h) || !Number.isFinite(mm)) return NaN;
+  return h * 60 + mm;
+}
+
+function fmtHM(hm) {
+  return String(hm || '').slice(0, 5);
+}
+
+function addFreeSlots(raw) {
+  const list = Array.isArray(raw) ? [...raw] : [];
+  list.sort((a, b) => String(a.start_time || '').localeCompare(String(b.start_time || '')));
+  const out = [];
+  for (let i = 0; i < list.length; i += 1) {
+    const cur = list[i];
+    out.push({ kind: 'class', c: cur, key: `c-${cur.course_code}-${cur.start_time}-${i}` });
+    const next = list[i + 1];
+    if (!next) break;
+    const endM = hmToMin(cur.end_time);
+    const nextM = hmToMin(next.start_time);
+    if (Number.isFinite(endM) && Number.isFinite(nextM) && nextM - endM >= 25) {
+      // 交替用 coffee / book，让提示更轻盈
+      out.push({
+        kind: 'free',
+        start: cur.end_time,
+        end: next.start_time,
+        icon: i % 2 === 0 ? 'coffee' : 'book',
+        key: `free-${cur.end_time}-${next.start_time}-${i}`,
+      });
+    }
+  }
+  return out;
+}
+
 function Schedule() {
   const { lang } = useLanguage();
   const { isLoggedIn } = useAuth();
   const queryClient = useQueryClient();
   const isZh = lang !== 'en';
-  const [tab, setTab] = useState('view'); // 'view' | 'import'
+  const [importOpen, setImportOpen] = useState(false);
+  const [pushOpen, setPushOpen] = useState(false);
 
   const FIXED_WEEK = 1;
   const persistedWeek = useMemo(() => readPersistedScheduleWeek(FIXED_WEEK), []);
@@ -139,8 +180,8 @@ function Schedule() {
   }, [pushSupported]);
 
   useEffect(() => {
-    if (isLoggedIn && tab === 'view') refreshPushSubscription();
-  }, [isLoggedIn, tab, refreshPushSubscription]);
+    if (isLoggedIn) refreshPushSubscription();
+  }, [isLoggedIn, refreshPushSubscription]);
 
   const handlePreview = async () => {
     if (!text || text.trim().length < 10) {
@@ -168,7 +209,7 @@ function Schedule() {
     try {
       await commitScheduleImport(text);
       Toast.success(isZh ? '导入成功' : 'Imported');
-      setTab('view');
+      setImportOpen(false);
       setPreview(null);
       await queryClient.invalidateQueries({ queryKey: QK.scheduleWeek(FIXED_WEEK) });
     } catch (e) {
@@ -280,9 +321,7 @@ function Schedule() {
     const days = weekData?.days || {};
     const todayDow = getTodayDayOfWeek();
     const todayRaw = Array.isArray(days[todayDow]) ? days[todayDow] : [];
-    const todayList = [...todayRaw].sort((a, b) =>
-      String(a.start_time || '').localeCompare(String(b.start_time || ''))
-    );
+    const todayList = addFreeSlots(todayRaw);
     const todayDateStr = new Date().toLocaleDateString(isZh ? 'zh-CN' : 'en-US', {
       month: 'short',
       day: 'numeric',
@@ -295,68 +334,23 @@ function Schedule() {
             {getApiErrorMessage(weekQuery.error) || (isZh ? '获取课表失败' : 'Failed to load schedule')}
           </p>
         )}
-        {isLoggedIn && (
-          <div className="schedule-push-card">
-            <div className="schedule-push-title">
-              {isZh ? '课前提醒 Web Push' : 'Class reminders (Web Push)'}
-            </div>
-            <p className="schedule-push-desc">
-              {isZh
-                ? '吉隆坡时间, 约每节课开始前30分钟推送'
-                : 'KL time, push about 30 minutes before each class starts'}
-            </p>
-            {pushUnsupportedMessage ? (
-              <p className="schedule-push-warn" role="status">
-                {pushUnsupportedMessage}
-              </p>
-            ) : null}
-            <div className="schedule-push-actions">
-              {!pushOn ? (
-                <button
-                  type="button"
-                  className="schedule-btn schedule-btn-primary"
-                  disabled={pushBusy || !pushSupported}
-                  onClick={handleEnableClassPush}
-                >
-                  {pushBusy
-                    ? (isZh ? '处理中…' : 'Working…')
-                    : (isZh ? '开启提醒 Enable' : 'Enable reminders')}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="schedule-btn schedule-btn-secondary"
-                  disabled={pushBusy}
-                  onClick={handleDisableClassPush}
-                >
-                  {isZh ? '关闭提醒 Disable' : 'Disable reminders'}
-                </button>
-              )}
-              <button
-                type="button"
-                className="schedule-btn schedule-btn-secondary"
-                disabled={pushBusy || !pushOn}
-                onClick={handleTestPush}
-              >
-                {isZh ? '测试推送 Test' : 'Test push'}
-              </button>
-            </div>
-          </div>
-        )}
-
-        <div className="schedule-week-toolbar">
-          <div className="schedule-week-fixed">
-            {isZh ? '固定课表（仅在重新导入后更新）' : 'Fixed schedule (updates only after re-import)'}
-          </div>
-          <button
-            type="button"
-            className="schedule-btn schedule-btn-primary"
-            onClick={() => weekQuery.refetch()}
-            disabled={loadingWeek}
-          >
-            {loadingWeek ? (isZh ? '加载中…' : 'Loading…') : (isZh ? '刷新' : 'Refresh')}
-          </button>
-        </div>
+        <button
+          type="button"
+          className="schedule-smart-banner"
+          onClick={() => setPushOpen(true)}
+          aria-label={isZh ? '打开课前提醒设置' : 'Open reminders settings'}
+        >
+          <span className="schedule-smart-banner-track" aria-hidden>
+            {pushOn
+              ? (isZh ? '🔔 已开启课前提醒 · 点击管理 · ' : '🔔 Reminders ON · Tap to manage · ')
+              : (isZh ? '🔔 不许翘课，点我打开提醒 · ' : "🔔 Don't let your tutor miss you. Tap to enable reminders. · ")}
+          </span>
+          <span className="schedule-smart-banner-track schedule-smart-banner-track--dup" aria-hidden>
+            {pushOn
+              ? (isZh ? '🔔 已开启课前提醒 · 点击管理 · ' : '🔔 Reminders ON · Tap to manage · ')
+              : (isZh ? '🔔 不许翘课，点我打开提醒 · ' : "🔔 Don't let your tutor miss you. Tap to enable reminders. · ")}
+          </span>
+        </button>
 
         <div className="schedule-days">
           <section className="schedule-day schedule-today" aria-label={isZh ? '今日课程' : "Today's classes"}>
@@ -367,53 +361,112 @@ function Schedule() {
                 <span className="schedule-today-date">{todayDateStr}</span>
               </span>
             </h2>
-            {todayList.length === 0 ? (
-              <div className="schedule-empty">
-                {isZh ? '今天无课或请先导入课表' : 'No classes today, or import your schedule first'}
+            {todayList.filter((x) => x.kind === 'class').length === 0 ? (
+              <div className="schedule-empty schedule-empty--gif">
+                <img
+                  src="/gif/vsgif_com_dogecoin-meme_.3422573.gif"
+                  alt={isZh ? '今天无课' : 'No classes today'}
+                  className="schedule-empty-gif"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <div className="schedule-empty-text">
+                  {isZh ? '今天没课，放心躺平' : 'No classes today. Enjoy your free time.'}
+                </div>
               </div>
             ) : (
               <ul className="schedule-class-list">
-                {todayList.map((c, idx) => (
-                  <li key={`today-${c.course_code}-${c.start_time}-${idx}`} className="schedule-class">
-                    <div className="schedule-class-main">
-                      <div className="schedule-class-name">{c.course_name}</div>
-                      <div className="schedule-class-meta">
-                        <span className="schedule-class-time">
-                          {String(c.start_time).slice(0, 5)}-{String(c.end_time).slice(0, 5)}
-                        </span>
-                        {c.venue ? <span className="schedule-class-venue">{c.venue}</span> : null}
+                {todayList.map((it, idx) =>
+                  it.kind === 'free' ? (
+                    <li key={`today-${it.key}-${idx}`} className="schedule-free">
+                      <div className="schedule-free-left">
+                        {it.icon === 'coffee' ? <Coffee size={14} aria-hidden /> : <BookOpen size={14} aria-hidden />}
+                        <span className="schedule-free-text">{isZh ? '空档 Free time' : 'Free time'}</span>
                       </div>
-                    </div>
-                    <div className="schedule-class-code">{c.course_code}</div>
-                  </li>
-                ))}
+                      <span className="schedule-free-time">
+                        {fmtHM(it.start)}-{fmtHM(it.end)}
+                      </span>
+                    </li>
+                  ) : (
+                    <li key={`today-${it.key}-${idx}`} className="schedule-class pressable">
+                      <div className="schedule-class-accent" aria-hidden />
+                      <div className="schedule-class-timecol">
+                        <div className="schedule-class-time">{fmtHM(it.c.start_time)}</div>
+                        <div className="schedule-class-time schedule-class-time--end">{fmtHM(it.c.end_time)}</div>
+                      </div>
+                      <div className="schedule-class-main">
+                        <div className="schedule-class-name">{it.c.course_name}</div>
+                        <div className="schedule-class-meta">
+                          {it.c.venue ? (
+                            <span className="schedule-class-venue">
+                              <MapPin size={14} aria-hidden />
+                              <span>{it.c.venue}</span>
+                            </span>
+                          ) : null}
+                          <span className="schedule-class-code">{it.c.course_code}</span>
+                        </div>
+                      </div>
+                    </li>
+                  )
+                )}
               </ul>
             )}
           </section>
 
           {[1, 2, 3, 4, 5, 6, 7].map((d) => {
-            const list = Array.isArray(days[d]) ? days[d] : [];
+            const listRaw = Array.isArray(days[d]) ? days[d] : [];
+            const list = addFreeSlots(listRaw);
             return (
               <section key={d} className="schedule-day">
                 <h2 className="schedule-day-title">{dayLabel[d]}</h2>
-                {list.length === 0 ? (
-                  <div className="schedule-empty">{isZh ? '无课程' : 'No classes'}</div>
+                {list.filter((x) => x.kind === 'class').length === 0 ? (
+                  <div className="schedule-empty schedule-empty--gif">
+                    <img
+                      src="/gif/vsgif_com_dogecoin-meme_.3422573.gif"
+                      alt={isZh ? '无课程' : 'No classes'}
+                      className="schedule-empty-gif"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                    <div className="schedule-empty-text">
+                      {isZh ? '无课程' : 'No classes'}
+                    </div>
+                  </div>
                 ) : (
                   <ul className="schedule-class-list">
-                    {list.map((c, idx) => (
-                      <li key={`${c.course_code}-${c.start_time}-${idx}`} className="schedule-class">
-                        <div className="schedule-class-main">
-                          <div className="schedule-class-name">{c.course_name}</div>
-                          <div className="schedule-class-meta">
-                            <span className="schedule-class-time">
-                              {String(c.start_time).slice(0, 5)}-{String(c.end_time).slice(0, 5)}
-                            </span>
-                            {c.venue ? <span className="schedule-class-venue">{c.venue}</span> : null}
+                    {list.map((it, idx) =>
+                      it.kind === 'free' ? (
+                        <li key={`${it.key}-${idx}`} className="schedule-free">
+                          <div className="schedule-free-left">
+                            {it.icon === 'coffee' ? <Coffee size={14} aria-hidden /> : <BookOpen size={14} aria-hidden />}
+                            <span className="schedule-free-text">{isZh ? '空档 Free time' : 'Free time'}</span>
                           </div>
-                        </div>
-                        <div className="schedule-class-code">{c.course_code}</div>
-                      </li>
-                    ))}
+                          <span className="schedule-free-time">
+                            {fmtHM(it.start)}-{fmtHM(it.end)}
+                          </span>
+                        </li>
+                      ) : (
+                        <li key={`${it.key}-${idx}`} className="schedule-class pressable">
+                          <div className="schedule-class-accent" aria-hidden />
+                          <div className="schedule-class-timecol">
+                            <div className="schedule-class-time">{fmtHM(it.c.start_time)}</div>
+                            <div className="schedule-class-time schedule-class-time--end">{fmtHM(it.c.end_time)}</div>
+                          </div>
+                          <div className="schedule-class-main">
+                            <div className="schedule-class-name">{it.c.course_name}</div>
+                            <div className="schedule-class-meta">
+                              {it.c.venue ? (
+                                <span className="schedule-class-venue">
+                                  <MapPin size={14} aria-hidden />
+                                  <span>{it.c.venue}</span>
+                                </span>
+                              ) : null}
+                              <span className="schedule-class-code">{it.c.course_code}</span>
+                            </div>
+                          </div>
+                        </li>
+                      )
+                    )}
                   </ul>
                 )}
               </section>
@@ -502,24 +555,98 @@ function Schedule() {
 
   return (
     <div className="schedule-page">
-      <div className="schedule-tabs" role="tablist" aria-label={isZh ? '课程表' : 'Schedule'}>
+      <div className="schedule-topbar">
+        <div className="schedule-title">Timetable</div>
         <button
           type="button"
-          className={`schedule-tab ${tab === 'view' ? 'active' : ''}`}
-          onClick={() => setTab('view')}
+          className="schedule-icon-btn"
+          onClick={() => setImportOpen(true)}
+          aria-label={isZh ? '导入课表' : 'Import timetable'}
+          title={isZh ? '导入' : 'Import'}
         >
-          {isZh ? '课表' : 'Schedule'}
-        </button>
-        <button
-          type="button"
-          className={`schedule-tab ${tab === 'import' ? 'active' : ''}`}
-          onClick={() => setTab('import')}
-        >
-          {isZh ? '导入' : 'Import'}
+          <Upload size={18} aria-hidden />
         </button>
       </div>
 
-      {tab === 'view' ? renderWeek() : renderImport()}
+      {renderWeek()}
+
+      <button
+        type="button"
+        className="schedule-fab"
+        onClick={() => weekQuery.refetch()}
+        disabled={loadingWeek}
+        aria-label={isZh ? '刷新课表' : 'Refresh schedule'}
+        title={isZh ? '刷新' : 'Refresh'}
+      >
+        <RefreshCw size={20} aria-hidden className={loadingWeek ? 'is-spinning' : ''} />
+      </button>
+
+      {importOpen && (
+        <div className="schedule-modal-overlay" role="dialog" aria-modal="true" aria-label={isZh ? '导入课表' : 'Import timetable'}>
+          <div className="schedule-modal">
+            <div className="schedule-modal-head">
+              <div className="schedule-modal-title">{isZh ? '导入课表' : 'Import timetable'}</div>
+              <button type="button" className="schedule-modal-close" onClick={() => setImportOpen(false)} aria-label="Close">
+                <X size={18} aria-hidden />
+              </button>
+            </div>
+            {renderImport()}
+          </div>
+        </div>
+      )}
+
+      {pushOpen && (
+        <div className="schedule-modal-overlay" role="dialog" aria-modal="true" aria-label={isZh ? '课前提醒' : 'Reminders'}>
+          <div className="schedule-modal">
+            <div className="schedule-modal-head">
+              <div className="schedule-modal-title">{isZh ? '课前提醒' : 'Class reminders'}</div>
+              <button type="button" className="schedule-modal-close" onClick={() => setPushOpen(false)} aria-label="Close">
+                <X size={18} aria-hidden />
+              </button>
+            </div>
+
+            <div className="schedule-push-modal">
+              <div className="schedule-push-desc">
+                {isZh ? '吉隆坡时间，约每节课开始前 30 分钟推送' : 'KL time, push about 30 minutes before each class starts'}
+              </div>
+              {pushUnsupportedMessage ? (
+                <p className="schedule-push-warn" role="status">
+                  {pushUnsupportedMessage}
+                </p>
+              ) : null}
+              <div className="schedule-push-actions">
+                {!pushOn ? (
+                  <button
+                    type="button"
+                    className="schedule-btn schedule-btn-primary"
+                    disabled={pushBusy || !pushSupported}
+                    onClick={handleEnableClassPush}
+                  >
+                    {pushBusy ? (isZh ? '处理中…' : 'Working…') : (isZh ? '开启提醒' : 'Enable')}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="schedule-btn schedule-btn-secondary"
+                    disabled={pushBusy}
+                    onClick={handleDisableClassPush}
+                  >
+                    {isZh ? '关闭提醒' : 'Disable'}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="schedule-btn schedule-btn-secondary"
+                  disabled={pushBusy || !pushOn}
+                  onClick={handleTestPush}
+                >
+                  {isZh ? '测试推送' : 'Test'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

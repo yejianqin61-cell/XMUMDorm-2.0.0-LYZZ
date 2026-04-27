@@ -27,3 +27,11 @@ export function getDiaryOverview(date, options = {}) {
   return get(`/api/diary/overview${qs ? `?${qs}` : ''}`);
 }
 
+// 月视图热力数据：用于日历高亮
+export function getDiaryMonth(year, month) {
+  const params = new URLSearchParams();
+  params.set('year', String(year));
+  params.set('month', String(month));
+  return get(`/api/diary/month?${params.toString()}`);
+}
+

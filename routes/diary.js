@@ -206,5 +206,52 @@ router.get('/overview', authenticateToken, async (req, res) => {
   }
 });
 
+// ============================================
+// 月视图热力数据（用于日历高亮）
+// GET /api/diary/month?year=2026&month=4
+// 返回：[{ date: 'YYYY-MM-DD', len: 123 }]
+// ============================================
+router.get('/month', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const year = parseInt(req.query.year, 10);
+    const month = parseInt(req.query.month, 10);
+    if (!Number.isFinite(year) || year < 1970 || year > 2100) {
+      return res.status(400).json({ status: -1, message: 'year 无效' });
+    }
+    if (!Number.isFinite(month) || month < 1 || month > 12) {
+      return res.status(400).json({ status: -1, message: 'month 无效' });
+    }
+    const start = `${year}-${String(month).padStart(2, '0')}-01`;
+    // 下个月 1 号 - 1 天
+    const nextMonth = month === 12 ? 1 : month + 1;
+    const nextYear = month === 12 ? year + 1 : year;
+    const nextStart = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
+
+    const rows = await query(
+      `SELECT date, CHAR_LENGTH(content) AS len
+       FROM diaries
+       WHERE user_id = ?
+         AND date >= ? AND date < ?
+         AND content IS NOT NULL
+         AND CHAR_LENGTH(TRIM(content)) > 0
+       ORDER BY date ASC`,
+      [userId, start, nextStart]
+    );
+
+    res.status(200).json({
+      status: 0,
+      message: '获取成功',
+      data: (rows || []).map((r) => ({
+        date: r.date instanceof Date ? r.date.toISOString().slice(0, 10) : String(r.date).slice(0, 10),
+        len: Number(r.len) || 0,
+      })),
+    });
+  } catch (e) {
+    console.error('获取月热力错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
 module.exports = router;
 
