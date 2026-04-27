@@ -12,8 +12,12 @@ const fs = require('fs');
 const { uploadBuffer, guessContentType, isObjectStorageConfigured } = require('../services/objectStorage');
 const sharp = require('sharp');
 
+// 默认只允许静态图（头像/商品图/评论图）
 const ALLOWED_IMAGE_MIMES = ['image/jpeg', 'image/png', 'image/webp'];
 const ALLOWED_IMAGE_EXT = ['.jpg', '.jpeg', '.png', '.webp'];
+// 帖子图片额外支持 gif（保留动图原始内容；缩略图尽量生成，失败则回退原图）
+const ALLOWED_POST_IMAGE_MIMES = [...ALLOWED_IMAGE_MIMES, 'image/gif'];
+const ALLOWED_POST_IMAGE_EXT = [...ALLOWED_IMAGE_EXT, '.gif'];
 const MAX_FILE_SIZE = 8 * 1024 * 1024; // 8MB
 
 // 云存储模式下不再确保本地 uploads 目录存在；旧 /uploads 静态服务可用于过渡期兼容历史数据。
@@ -28,8 +32,8 @@ const postImagesUpload = multer({
   limits: { fileSize: MAX_FILE_SIZE },
   fileFilter: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
-    if (!ALLOWED_IMAGE_MIMES.includes(file.mimetype) || !ALLOWED_IMAGE_EXT.includes(ext)) {
-      return cb(new Error('仅支持 jpg / png / webp 格式'));
+    if (!ALLOWED_POST_IMAGE_MIMES.includes(file.mimetype) || !ALLOWED_POST_IMAGE_EXT.includes(ext)) {
+      return cb(new Error('仅支持 jpg / png / webp / gif 格式'));
     }
     cb(null, true);
   }
@@ -69,7 +73,7 @@ const shopLogoUpload = multer({
  */
 async function savePostImages(files, postId) {
   const keys = [];
-  const extMap = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp' };
+  const extMap = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp', 'image/gif': '.gif' };
   const useObjectStorage = isObjectStorageConfigured();
 
   if (!useObjectStorage) {
@@ -98,7 +102,7 @@ async function savePostImages(files, postId) {
     // - width: 720 能覆盖大多数双列瀑布流与高 DPI 场景
     // - quality: 60 在体积/观感间折中
     try {
-      const thumbBuf = await sharp(file.buffer, { failOn: 'none' })
+      const thumbBuf = await sharp(file.buffer, { failOn: 'none', animated: file.mimetype === 'image/gif' })
         .rotate()
         .resize({ width: 720, withoutEnlargement: true })
         .webp({ quality: 60 })

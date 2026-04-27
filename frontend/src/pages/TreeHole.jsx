@@ -60,7 +60,7 @@ function toPostThumbUrl(fullUrl) {
     // 约定：原图 key 为 /uploads/posts/post_<id>_<i>.<ext> 或 <ASSET_BASE>/posts/post_<id>_<i>.<ext>
     // 缩略图 key 为 posts/thumbs/post_<id>_<i>.webp（同目录结构）
     const replaced = p.replace(
-      /(\/uploads)?\/posts\/post_(\d+)_([0-9]+)\.(jpg|jpeg|png|webp)$/i,
+      /(\/uploads)?\/posts\/post_(\d+)_([0-9]+)\.(jpg|jpeg|png|webp|gif)$/i,
       (_m, uploadsPrefix, id, idx) => `${uploadsPrefix || ''}/posts/thumbs/post_${id}_${idx}.webp`
     );
     if (replaced === p) return fullUrl;
