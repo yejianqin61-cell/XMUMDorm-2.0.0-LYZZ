@@ -4,10 +4,12 @@
   gap: 16px;
   padding: 16px;
   margin-bottom: 16px;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.55);
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 10px 30px rgba(2, 6, 23, 0.06);
 }
 
 .merchant-header-logo-wrap {
@@ -107,14 +109,14 @@
 .merchant-header-status {
   flex-shrink: 0;
   font-size: 12px;
-  padding: 2px 8px;
-  border-radius: 4px;
+  padding: 0;
+  border-radius: 999px;
   font-weight: 500;
 }
 
 .merchant-header-status-open {
-  background: rgba(7, 193, 96, 0.12);
-  color: var(--wx-green);
+  background: transparent;
+  color: rgba(30, 41, 59, 0.72);
 }
 
 .merchant-header-status-closed {

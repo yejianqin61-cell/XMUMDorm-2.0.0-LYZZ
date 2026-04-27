@@ -55,6 +55,7 @@ function imgPctRectToStyle(rect, cover, imgW, imgH) {
 function CanteenArea() {
   const location = useLocation();
   const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  // 默认关闭编辑模式；仅在 ?edit=1 时开启
   const editMode = params.get('edit') === '1';
   const mapRef = useRef(null);
   const bgImgRef = useRef(null);
@@ -327,6 +328,7 @@ function CanteenArea() {
             s?.rect?.space === 'img'
               ? imgPctRectToStyle(s.rect, cover, imgSize.w, imgSize.h)
               : { left: `${s.rect.left}%`, top: `${s.rect.top}%`, width: `${s.rect.width}%` };
+          const styleWithShift = { ...style, '--sticker-tx': String(s.id || '') === 'rank' ? '-50px' : '0px' };
           const cls = `canteen-sticker ${editMode ? 'canteen-sticker--editable' : 'canteen-sticker--link'} ${
             editMode && selectedId === s.id ? 'canteen-sticker--selected' : ''
           }`;
@@ -338,7 +340,7 @@ function CanteenArea() {
               type="button"
               className={cls}
               data-id={s.id}
-              style={style}
+              style={styleWithShift}
               aria-label={s.label}
               onPointerDown={(ev) => startDrag(s.id, ev)}
               onClick={() => setSelectedId(s.id)}
@@ -356,7 +358,7 @@ function CanteenArea() {
               to={s.to}
               className={cls}
               data-id={s.id}
-              style={style}
+              style={styleWithShift}
               aria-label={s.label}
             >
               <img src={s.src} alt={s.label} className="canteen-sticker-img" draggable={false} />
@@ -371,7 +373,7 @@ function CanteenArea() {
               key={s.id}
               className="canteen-sticker canteen-sticker--decor"
               data-id={s.id}
-              style={style}
+              style={styleWithShift}
               aria-label={s.label || 'decor'}
             >
               <img src={s.src} alt={s.label || ''} className="canteen-sticker-img" draggable={false} />

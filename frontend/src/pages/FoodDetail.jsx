@@ -19,7 +19,7 @@ import {
 } from '../api/canteen';
 import { getApiErrorMessage } from '../utils/apiError';
 import { formatRatingLabel } from '../constants/rating';
-import { productImageUrl } from '../api/config';
+import { DEFAULT_PRODUCT_IMAGE_PATH, productImageUrl } from '../api/config';
 import { QK } from '../query/queryKeys';
 import './FoodDetail.css';
 
@@ -106,6 +106,18 @@ function FoodDetail() {
   const reviewError = commentsQuery.error ? getApiErrorMessage(commentsQuery.error) : null;
 
   const favorited = !isLoggedIn ? false : (favoriteQuery.data ?? false);
+
+  const heroImage = useMemo(() => {
+    const productImg = food?.image ? productImageUrl(food.image) : DEFAULT_PRODUCT_IMAGE_PATH;
+    if (productImg && productImg !== DEFAULT_PRODUCT_IMAGE_PATH) return productImg;
+    // 商品没图：兜底为“最早的带图点评”的第一张图
+    for (const r of reviews || []) {
+      const imgs = Array.isArray(r?.images) ? r.images : [];
+      const first = imgs.find((x) => typeof x === 'string' && x.trim() !== '');
+      if (first) return first;
+    }
+    return DEFAULT_PRODUCT_IMAGE_PATH;
+  }, [food?.image, reviews]);
 
   const requireLogin = () => {
     if (!isLoggedIn) {
@@ -219,7 +231,7 @@ function FoodDetail() {
   return (
     <div className="food-detail-page">
       <FoodDetailView
-        food={food}
+        food={food ? { ...food, image: heroImage } : food}
         onImageClick={food ? () => setImagePreviewOpen(true) : undefined}
         canDelete={isAdmin}
         onDelete={async () => {
@@ -245,23 +257,23 @@ function FoodDetail() {
       />
       {imagePreviewOpen && food && (
         <ImagePreview
-          urls={[food.image]}
+          urls={[heroImage]}
           initialIndex={0}
           onClose={() => setImagePreviewOpen(false)}
         />
       )}
-      <div className="food-detail-actions">
+      <div className="food-detail-floatbar" role="group" aria-label="操作栏 Actions">
         <button
           type="button"
-          className="food-detail-btn food-detail-btn-review"
+          className="food-detail-floatbtn"
           onClick={handleReview}
-          aria-label="去点评"
+          aria-label="去点评 Review"
         >
-          去点评 Review
+          去点评 <span className="food-detail-floatbtn-sub">Review</span>
         </button>
         <button
           type="button"
-          className={`food-detail-btn food-detail-btn-fav ${favorited ? 'is-favorited' : ''}`}
+          className={`food-detail-floatbtn food-detail-floatbtn--fav ${favorited ? 'is-favorited' : ''}`}
           onClick={async () => {
             if (requireLogin()) return;
             const pid = food?.id;
@@ -280,26 +292,35 @@ function FoodDetail() {
               Toast.error(getApiErrorMessage(err));
             }
           }}
-          aria-label={favorited ? '取消收藏' : '收藏'}
+          aria-label={favorited ? '取消收藏 Favorite' : '收藏 Favorite'}
           aria-pressed={favorited}
         >
-          <span className="food-detail-btn-fav-icon" aria-hidden>{favorited ? '♥' : '♡'}</span>
-          收藏 Favorite
+          <span className="food-detail-fav-heart" aria-hidden>
+            {favorited ? '♥' : '♡'}
+          </span>
+          收藏 <span className="food-detail-floatbtn-sub">Favorite</span>
         </button>
       </div>
 
       <section className="food-detail-reviews" aria-label="点评列表">
-        <h2 className="food-detail-reviews-title">点评 Reviews ({totalReviews})</h2>
+        <h2 className="food-detail-reviews-title">Reviews ({totalReviews})</h2>
+        <div className="food-detail-wave" aria-hidden />
         {reviewError && <p className="food-detail-reviews-error state-error">{reviewError}</p>}
         {reviewsLoading ? (
           <p className="food-detail-reviews-loading state-loading">加载点评中…</p>
         ) : totalReviews === 0 ? (
-          <EmptyState
-            title="暂无点评"
-            description="快来第一条吧 No reviews yet."
-            actionLabel="去点评"
-            onActionClick={handleReview}
-          />
+          <div className="food-detail-empty-reviews" aria-label="暂无点评">
+            <svg className="food-detail-empty-illus" width="64" height="64" viewBox="0 0 64 64" aria-hidden="true">
+              <path d="M16 34c0 10 8 18 16 18s16-8 16-18" fill="none" stroke="rgba(100,116,139,0.45)" strokeWidth="2.2" strokeLinecap="round"/>
+              <path d="M14 34h36" fill="none" stroke="rgba(100,116,139,0.25)" strokeWidth="2.2" strokeLinecap="round"/>
+              <path d="M26 20c-2 3-2 6 0 9M34 18c-2 3-2 6 0 9M42 20c-2 3-2 6 0 9" fill="none" stroke="rgba(100,116,139,0.35)" strokeWidth="2.2" strokeLinecap="round"/>
+            </svg>
+            <div className="food-detail-empty-title">暂无点评</div>
+            <div className="food-detail-empty-sub">No reviews yet</div>
+            <button type="button" className="food-detail-empty-cta pressable" onClick={handleReview}>
+              写下第一条点评 Write the first review
+            </button>
+          </div>
         ) : (
           <ul className="food-detail-review-list">
             {reviews.map((r) => (

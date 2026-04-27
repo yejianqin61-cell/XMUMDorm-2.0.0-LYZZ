@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import Card from '../components/Card';
 import EmptyState from '../components/EmptyState';
 import { getRegions, getRegionTopProductsByCode } from '../api/canteen';
+import { getUploadUrl, DEFAULT_PRODUCT_IMAGE_PATH } from '../api/config';
 import { getApiErrorMessage } from '../utils/apiError';
 import { AREA_LABELS } from '../components/AreaCard';
 import { findRegionByCode, normalizeAreaCodeParam } from '../utils/regionCode';
@@ -58,6 +59,37 @@ function AreaProductRanking() {
       ? getApiErrorMessage(listError)
       : null;
 
+  const ioRef = useRef(null);
+  useEffect(() => {
+    if (ioRef.current) return;
+    ioRef.current = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          e.target.classList.add('rankings-inview');
+          ioRef.current?.unobserve(e.target);
+        }
+      },
+      { threshold: 0.12 }
+    );
+    return () => ioRef.current?.disconnect();
+  }, []);
+
+  const rows = useMemo(() => {
+    return (Array.isArray(list) ? list : []).map((item) => {
+      const img0 = item.images?.[0]?.url;
+      return {
+        id: item.id,
+        rank: item.rank,
+        name: item.name,
+        shopName: item.shop_name,
+        score: item.comprehensive_score,
+        price: item.price,
+        image: img0 ? getUploadUrl(img0) : DEFAULT_PRODUCT_IMAGE_PATH,
+      };
+    });
+  }, [list]);
+
   if (!code) {
     return (
       <div className="area-ranking-page">
@@ -86,14 +118,14 @@ function AreaProductRanking() {
   }
 
   return (
-    <div className="area-ranking-page">
+    <div className="area-ranking-page rankings-animate">
       <p className="area-ranking-back">
         <Link to={`/eat/${encodeURIComponent(code)}`} className="area-ranking-back-link">
           {t.backToZone(areaLabel)}
         </Link>
       </p>
 
-      <Card as="div" className="rankings-section-card area-ranking-main-card">
+      <Card as="div" className="rankings-section-card rankings-glass area-ranking-main-card">
         <div className="rankings-section-header">
           <h1 className="rankings-section-title area-ranking-h1">
             {t.pageTitle}
@@ -104,25 +136,38 @@ function AreaProductRanking() {
           <p className="rankings-section-desc">{t.pageDesc}</p>
         </div>
         <div className="rankings-section-content">
-          {list.length === 0 ? (
+          {rows.length === 0 ? (
             <EmptyState title={t.emptyListTitle} description={t.emptyListDesc} />
           ) : (
-            list.map((item) => (
-              <Link key={item.id} to={`/eat/food/${item.id}`} className="rankings-row rankings-row--product">
-                <span className="rankings-rank">{item.rank}</span>
+            rows.map((item, idx) => (
+              <Link
+                key={item.id}
+                to={`/eat/food/${item.id}`}
+                className={`rankings-row rankings-row--product ${item.rank === 1 ? 'rankings-row--top1' : ''}`}
+                style={{ '--i': idx }}
+                ref={(el) => el && ioRef.current?.observe(el)}
+              >
+                <span className={`rankings-badge rankings-badge--${item.rank <= 3 ? item.rank : 'n'}`}>{item.rank}</span>
+                <span className="rankings-thumb" aria-hidden>
+                  <img src={item.image || '/products/default.png'} alt="" loading="lazy" decoding="async" />
+                </span>
                 <div className="rankings-row-main">
-                  <span className="rankings-name">{item.name}</span>
-                  {item.shop_name != null && item.shop_name !== '' && (
-                    <span className="rankings-shop">{item.shop_name}</span>
-                  )}
-                  {(item.comprehensive_score != null || (item.price != null && Number(item.price) > 0)) && (
+                  <span className="rankings-name rankings-name--serif">{item.name}</span>
+                  {item.shopName != null && item.shopName !== '' && <span className="rankings-shop">{item.shopName}</span>}
+                  {(item.score != null || (item.price != null && Number(item.price) > 0)) && (
                     <div className="rankings-score-row">
-                      {item.comprehensive_score != null && (
-                        <span className="rankings-score">{t.scoreLine(item.comprehensive_score)}</span>
+                      {item.score != null && (
+                        <span className="rankings-score">
+                          <span className="rankings-score-chip rankings-score-chip--mini">
+                            <span className="rankings-score-star" aria-hidden>
+                              ★
+                            </span>
+                            <span className="rankings-score-num rankings-mono">{Number(item.score).toFixed(1)}</span>
+                            <span className="rankings-score-den">/10</span>
+                          </span>
+                        </span>
                       )}
-                      {item.price != null && Number(item.price) > 0 && (
-                        <span>RM {Number(item.price).toFixed(2)}</span>
-                      )}
+                      {item.price != null && Number(item.price) > 0 && <span className="rankings-meta">RM {Number(item.price).toFixed(2)}</span>}
                     </div>
                   )}
                 </div>

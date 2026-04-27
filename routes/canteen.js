@@ -1620,7 +1620,8 @@ router.get('/rankings/hot-products', async (req, res) => {
     const ttlMs = Number(process.env.CACHE_RANKINGS_TTL_MS || 30 * 1000); // 30s
     const rows = await simpleCache.getOrSet('canteen:rankings:hot-products:v1', ttlMs, async () => {
       return await query(
-        `SELECT p.id, p.shop_id, p.name, p.comprehensive_score, p.review_count, p.created_at, s.name AS shop_name
+        `SELECT p.id, p.shop_id, p.name, p.comprehensive_score, p.review_count, p.created_at, s.name AS shop_name,
+          (SELECT pi.file_path FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.sort_order ASC LIMIT 1) AS product_image_path
          FROM products p
          JOIN shops s ON p.shop_id = s.id AND s.deleted_at IS NULL
          WHERE p.deleted_at IS NULL AND p.review_count > 0 AND p.comprehensive_score IS NOT NULL
@@ -1636,7 +1637,8 @@ router.get('/rankings/hot-products', async (req, res) => {
       shop_name: r.shop_name,
       comprehensive_score: Number(r.comprehensive_score),
       review_count: r.review_count,
-      created_at: r.created_at
+      created_at: r.created_at,
+      product_image: assetUrl(r.product_image_path) || DEFAULT_PRODUCT_IMAGE_PATH,
     }));
     list.forEach((item, i) => { item.rank = i + 1; });
     res.status(200).json({ status: 0, message: '获取成功', data: list });
@@ -1713,7 +1715,8 @@ router.get('/rankings/new-hit-products', async (req, res) => {
     const cacheKey = `canteen:rankings:new-hit-products:v1:${sevenDaysAgo.toISOString().slice(0, 10)}`;
     const rows = await simpleCache.getOrSet(cacheKey, ttlMs, async () => {
       return await query(
-        `SELECT p.id, p.shop_id, p.name, p.comprehensive_score, p.review_count, p.created_at, s.name AS shop_name
+        `SELECT p.id, p.shop_id, p.name, p.comprehensive_score, p.review_count, p.created_at, s.name AS shop_name,
+          (SELECT pi.file_path FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.sort_order ASC LIMIT 1) AS product_image_path
          FROM products p
          JOIN shops s ON p.shop_id = s.id AND s.deleted_at IS NULL
          WHERE p.deleted_at IS NULL AND p.review_count > 0 AND p.comprehensive_score IS NOT NULL AND p.created_at >= ?
@@ -1730,7 +1733,8 @@ router.get('/rankings/new-hit-products', async (req, res) => {
       shop_name: r.shop_name,
       comprehensive_score: Number(r.comprehensive_score),
       review_count: r.review_count,
-      created_at: r.created_at
+      created_at: r.created_at,
+      product_image: assetUrl(r.product_image_path) || DEFAULT_PRODUCT_IMAGE_PATH,
     }));
     res.status(200).json({ status: 0, message: '获取成功', data: list });
   } catch (e) {

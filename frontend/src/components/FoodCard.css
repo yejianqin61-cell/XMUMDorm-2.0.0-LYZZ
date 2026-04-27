@@ -9,22 +9,24 @@
   align-items: center;
   gap: 14px;
   min-height: 88px;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
 }
 
 .food-card-image-wrap {
   flex-shrink: 0;
   width: 80px;
   height: 80px;
-  border-radius: 10px;
+  border-radius: 20px;
   overflow: hidden;
-  border: 1px solid var(--wx-border);
-  background: var(--wx-bar-bg);
+  border: none;
+  background: rgba(255, 255, 255, 0.7);
 }
 
 .food-card-image-wrap-clickable {
   padding: 0;
-  border: 1px solid var(--wx-border);
-  background: var(--wx-bar-bg);
+  border: none;
+  background: rgba(255, 255, 255, 0.7);
   cursor: pointer;
   display: block;
 }
@@ -52,12 +54,13 @@
 
 .food-card-name {
   font-size: 16px;
-  font-weight: 600;
-  color: var(--wx-text);
+  font-weight: 800;
+  color: #1e293b;
   display: block;
   margin-bottom: 4px;
   /* 允许菜品名称自动换行，显示完整内容 */
   white-space: normal;
+  line-height: 1.35;
 }
 
 .food-card-price-row {
@@ -71,7 +74,7 @@
 .food-card-price {
   font-size: 15px;
   font-weight: 600;
-  color: var(--wx-green);
+  color: #0b3d91; /* Deep Sea Blue */
 }
 
 .food-card-rating {

@@ -127,7 +127,7 @@
   -webkit-tap-highlight-color: transparent;
   touch-action: none;
   text-decoration: none;
-  transform: translateZ(0);
+  transform: translate3d(var(--sticker-tx, 0px), 0, 0);
   outline: none;
 }
 
@@ -154,7 +154,7 @@
 }
 
 .canteen-sticker--link:active {
-  transform: scale(0.955);
+  transform: translate3d(var(--sticker-tx, 0px), 0, 0) scale(0.955);
   filter: brightness(1.06) drop-shadow(0 22px 40px rgba(2, 6, 23, 0.40));
 }
 
@@ -192,7 +192,7 @@
 }
 
 .canteen-sticker--editable:active {
-  transform: scale(0.985);
+  transform: translate3d(var(--sticker-tx, 0px), 0, 0) scale(0.985);
   filter: brightness(1.02) drop-shadow(0 14px 26px rgba(2, 6, 23, 0.28));
 }
 
@@ -218,7 +218,7 @@
 /* 手机端（无 hover）加强点击反馈 */
 @media (hover: none) and (pointer: coarse) {
   .canteen-sticker--link:active {
-    transform: scale(0.94);
+    transform: translate3d(var(--sticker-tx, 0px), 0, 0) scale(0.94);
   }
 
   .canteen-sticker--link:active::after {

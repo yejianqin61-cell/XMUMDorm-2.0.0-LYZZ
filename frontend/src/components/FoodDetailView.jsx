@@ -23,18 +23,35 @@ function FoodDetailView({ food, onImageClick, canDelete, onDelete }) {
 
   return (
     <article className="food-detail-view" aria-label={`菜品 ${name}`}>
-      <div
-        className={`food-detail-view-image-wrap ${onImageClick ? 'food-detail-view-image-wrap-clickable' : ''}`}
-        role={onImageClick ? 'button' : undefined}
-        tabIndex={onImageClick ? 0 : undefined}
-        onClick={onImageClick || undefined}
-        onKeyDown={onImageClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onImageClick(); } } : undefined}
-      >
-        <img src={displayImage} alt="" className="food-detail-view-image" />
+      <div className="food-detail-hero">
+        <div
+          className={`food-detail-hero-image-wrap ${onImageClick ? 'food-detail-hero-image-wrap-clickable' : ''}`}
+          role={onImageClick ? 'button' : undefined}
+          tabIndex={onImageClick ? 0 : undefined}
+          onClick={onImageClick || undefined}
+          onKeyDown={
+            onImageClick
+              ? (e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onImageClick();
+                  }
+                }
+              : undefined
+          }
+        >
+          <img src={displayImage} alt="" className="food-detail-hero-image" />
+        </div>
+
+        <div className="food-detail-price-badge" aria-label={`价格 RM ${priceStr}`}>
+          <span className="food-detail-price-badge-currency">RM</span>
+          <span className="food-detail-price-badge-num">{priceStr}</span>
+        </div>
       </div>
-      <div className="food-detail-view-body">
+
+      <div className="food-detail-view-body food-detail-view-body--overlay">
         <div className="food-detail-view-name-row">
-          <h1 className="food-detail-view-name">{name}</h1>
+          <h1 className="food-detail-view-name food-detail-view-name--zen">{name}</h1>
           {canDelete && onDelete && (
             <button
               type="button"
@@ -47,15 +64,14 @@ function FoodDetailView({ food, onImageClick, canDelete, onDelete }) {
             </button>
           )}
         </div>
-        <p className="food-detail-view-price-row">
-          <span className="food-detail-view-price">RM {priceStr}</span>
-          {ratingDisplay != null && (
-            <span className="food-detail-view-rating" aria-label={`评分 ${ratingDisplay}`}>⭐ {ratingDisplay}</span>
-          )}
-        </p>
-        {description && (
-          <p className="food-detail-view-desc">{description}</p>
+        {ratingDisplay != null && (
+          <p className="food-detail-view-rating-row">
+            <span className="food-detail-view-rating" aria-label={`评分 ${ratingDisplay}`}>
+              ⭐ {ratingDisplay}
+            </span>
+          </p>
         )}
+        {description && <p className="food-detail-view-desc">{description}</p>}
       </div>
     </article>
   );

@@ -1,7 +1,9 @@
 .food-detail-page {
   min-height: 100%;
-  padding: 12px 16px 24px;
-  background: transparent;
+  padding: 0 16px 110px; /* bottom float bar space */
+  background: radial-gradient(1200px 820px at 10% 0%, rgba(56, 189, 248, 0.10), rgba(255, 255, 255, 0) 60%),
+    radial-gradient(1000px 700px at 90% 10%, rgba(255, 223, 137, 0.10), rgba(255, 255, 255, 0) 55%),
+    #f8fafc;
 }
 
 .food-detail-loading,
@@ -38,74 +40,133 @@
   background: rgba(7, 193, 96, 0.08);
 }
 
-/* 去点评、收藏 */
-.food-detail-actions {
+/* Bottom floating action bar */
+.food-detail-floatbar {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(var(--tabbar-height, 72px) + var(--safe-bottom, 0px) + 12px);
+  width: min(420px, calc(100vw - 24px));
   display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 16px;
+  gap: 10px;
+  padding: 10px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.70);
+  border: 1px solid rgba(255, 255, 255, 0.30);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 18px 60px rgba(2, 6, 23, 0.16);
+  z-index: 120;
 }
 
-.food-detail-btn {
-  display: flex;
+.food-detail-floatbtn {
+  flex: 1;
+  height: 44px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(2, 6, 23, 0.06);
+  color: rgba(30, 41, 59, 0.92);
+  font-weight: 900;
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  width: 100%;
-  padding: 14px 20px;
+}
+
+.food-detail-floatbtn--fav {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(226, 232, 240, 1);
+}
+
+.food-detail-floatbtn:active {
+  transform: scale(0.985);
+}
+
+.food-detail-floatbtn-sub {
+  font-weight: 800;
+  font-size: 12px;
+  opacity: 0.68;
+}
+
+.food-detail-fav-heart {
   font-size: 16px;
-  font-weight: 500;
-  border-radius: 10px;
-  border: none;
-  cursor: pointer;
-  font-family: inherit;
-}
-
-.food-detail-btn-review {
-  background: var(--wx-green);
-  color: #fff;
-}
-
-.food-detail-btn-review:hover {
-  background: var(--wx-green-dark);
-}
-
-.food-detail-btn-fav {
-  background: rgba(255, 255, 255, 0.92);
-  color: var(--wx-text);
-  border: 1px solid var(--wx-border);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-}
-
-.food-detail-btn-fav:hover {
-  background: var(--wx-bar-bg);
-}
-
-.food-detail-btn-fav.is-favorited {
-  border-color: #e64340;
-  color: #e64340;
-}
-
-.food-detail-btn-fav.is-favorited:hover {
-  background: rgba(230, 67, 64, 0.06);
-}
-
-.food-detail-btn-fav-icon {
-  font-size: 18px;
   line-height: 1;
+  color: rgba(239, 68, 68, 0.86);
+}
+
+.food-detail-floatbtn--fav.is-favorited {
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.18), 0 18px 40px rgba(239, 68, 68, 0.10);
 }
 
 /* 点评区：含评级、图片、点赞、回复；一级可点赞，二级仅展示无点赞 */
 .food-detail-reviews {
   margin-top: 24px;
-  padding-bottom: 80px;
+  padding-bottom: 20px;
 }
 
 .food-detail-reviews-title {
-  margin: 0 0 12px;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--wx-text);
+  margin: 20px 0 10px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.10em;
+  color: rgba(30, 41, 59, 0.92);
+}
+
+.food-detail-wave {
+  height: 10px;
+  margin: 0 auto 18px;
+  width: min(260px, 70vw);
+  background: radial-gradient(circle at 20% 50%, rgba(56, 189, 248, 0.55), rgba(56, 189, 248, 0) 60%),
+    radial-gradient(circle at 50% 50%, rgba(255, 223, 137, 0.45), rgba(255, 223, 137, 0) 60%),
+    radial-gradient(circle at 80% 50%, rgba(99, 102, 241, 0.45), rgba(99, 102, 241, 0) 60%);
+  filter: blur(0.4px);
+  opacity: 0.65;
+  border-radius: 999px;
+}
+
+.food-detail-empty-reviews {
+  margin: 18px auto 0;
+  padding: 28px 18px 22px;
+  width: min(420px, 100%);
+  text-align: center;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.30);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 18px 60px rgba(2, 6, 23, 0.10);
+}
+
+.food-detail-empty-illus {
+  display: block;
+  margin: 0 auto 10px;
+}
+
+.food-detail-empty-title {
+  font-weight: 900;
+  color: rgba(30, 41, 59, 0.90);
+  letter-spacing: 0.02em;
+}
+
+.food-detail-empty-sub {
+  margin-top: 4px;
+  font-size: 12px;
+  color: rgba(100, 116, 139, 0.72);
+}
+
+.food-detail-empty-cta {
+  margin-top: 14px;
+  width: 100%;
+  height: 42px;
+  border-radius: 999px;
+  border: 1px solid rgba(226, 232, 240, 1);
+  background: rgba(255, 255, 255, 0.72);
+  color: rgba(30, 41, 59, 0.92);
+  font-weight: 900;
 }
 
 .food-detail-reviews-error {

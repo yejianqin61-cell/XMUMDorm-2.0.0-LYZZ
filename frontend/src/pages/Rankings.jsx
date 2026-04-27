@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useEffect, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Card from '../components/Card';
 import EmptyState from '../components/EmptyState';
@@ -39,6 +40,13 @@ async function fetchAllRankings() {
   };
 }
 
+function RankBadge({ rank }) {
+  if (rank === 1) return <span className="rankings-badge rankings-badge--1">1</span>;
+  if (rank === 2) return <span className="rankings-badge rankings-badge--2">2</span>;
+  if (rank === 3) return <span className="rankings-badge rankings-badge--3">3</span>;
+  return <span className="rankings-badge rankings-badge--n">{rank}</span>;
+}
+
 /** 排行榜主页：五大榜单；结果缓存，重复进入更快 */
 function Rankings() {
   const { data, isPending, error } = useQuery({
@@ -46,6 +54,28 @@ function Rankings() {
     queryFn: fetchAllRankings,
     staleTime: 10 * 60 * 1000,
   });
+
+  const ioRef = useRef(null);
+  const itemRefs = useRef(new Map());
+  useEffect(() => {
+    if (ioRef.current) return;
+    ioRef.current = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          e.target.classList.add('rankings-inview');
+          ioRef.current?.unobserve(e.target);
+        }
+      },
+      { threshold: 0.12 }
+    );
+    return () => ioRef.current?.disconnect();
+  }, []);
+
+  const busyMax = useMemo(() => {
+    const list = data?.['busy-shops'] || [];
+    return Math.max(1, ...list.map((x) => Number(x.weekly_review_count || 0)));
+  }, [data]);
 
   if (isPending) {
     return (
@@ -64,14 +94,17 @@ function Rankings() {
   }
 
   return (
-    <div className="rankings-page">
-      <p className="rankings-intro">每周一 0 点（东八区）更新 Rankings update weekly</p>
+    <div className="rankings-page rankings-animate">
+      <p className="rankings-intro">
+        <span className="rankings-intro-dot" aria-hidden />
+        每周一 0 点（东八区）更新 <span className="rankings-intro-en">Rankings update weekly</span>
+      </p>
       <ul className="rankings-list" aria-label="排行榜列表">
         {RANKING_SECTIONS.map((section) => {
           const list = data?.[section.id] || [];
           return (
             <li key={section.id}>
-              <Card as="div" className="rankings-section-card">
+              <Card as="div" className="rankings-section-card rankings-glass">
                 <div className="rankings-section-header">
                   <h2 className="rankings-section-title">
                     {section.title}
@@ -83,53 +116,157 @@ function Rankings() {
                   {list.length === 0 && (
                     <EmptyState title="暂无数据" description="No data yet." />
                   )}
-                  {section.id === 'hot-products' && list.length > 0 && list.map((item) => (
-                    <Link key={item.product_id} to={`/eat/food/${item.product_id}`} className="rankings-row rankings-row--product">
-                      <span className="rankings-rank">{item.rank}</span>
+                  {section.id === 'hot-products' &&
+                    list.length > 0 &&
+                    list.map((item, idx) => (
+                      <Link
+                        key={item.product_id}
+                        to={`/eat/food/${item.product_id}`}
+                        className={`rankings-row rankings-row--product ${item.rank === 1 ? 'rankings-row--top1' : ''}`}
+                        style={{ '--i': idx }}
+                        ref={(el) => {
+                          if (!el) return;
+                          itemRefs.current.set(`hot-${item.product_id}`, el);
+                          ioRef.current?.observe(el);
+                        }}
+                      >
+                        <RankBadge rank={item.rank} />
+                        <span className="rankings-thumb" aria-hidden>
+                          <img
+                            src={item.product_image || '/products/default.png'}
+                            alt=""
+                            loading="lazy"
+                            decoding="async"
+                          />
+                        </span>
+                        <div className="rankings-row-main">
+                          <span className="rankings-name rankings-name--serif">{item.product_name}</span>
+                          {item.shop_name != null && item.shop_name !== '' && (
+                            <span className="rankings-shop">{item.shop_name}</span>
+                          )}
+                          {item.comprehensive_score != null && (
+                            <span className="rankings-score">
+                              <span className="rankings-score-chip">
+                                <span className="rankings-score-star" aria-hidden>
+                                  ★
+                                </span>
+                                <span className="rankings-score-num">{item.comprehensive_score.toFixed(1)}</span>
+                                <span className="rankings-score-den">/10</span>
+                              </span>
+                            </span>
+                          )}
+                        </div>
+                      </Link>
+                    ))}
+                  {section.id === 'busy-shops' && list.length > 0 && list.map((item) => (
+                    <Link
+                      key={item.shop_id}
+                      to={`/eat/merchant/${item.shop_id}`}
+                      className="rankings-row rankings-row--shop"
+                      style={{ '--i': item.rank - 1 }}
+                      ref={(el) => {
+                        if (!el) return;
+                        itemRefs.current.set(`busy-${item.shop_id}`, el);
+                        ioRef.current?.observe(el);
+                      }}
+                    >
+                      <RankBadge rank={item.rank} />
                       <div className="rankings-row-main">
-                        <span className="rankings-name">{item.product_name}</span>
-                        {item.shop_name != null && item.shop_name !== '' && (
-                          <span className="rankings-shop">{item.shop_name}</span>
-                        )}
-                        {item.comprehensive_score != null && (
-                          <span className="rankings-score">评分 {item.comprehensive_score.toFixed(1)}/10</span>
-                        )}
+                        <span className="rankings-name">{item.shop_name}</span>
+                        <span className="rankings-heat">
+                          <span className="rankings-heat-bar" aria-hidden>
+                            <span
+                              className="rankings-heat-barfill"
+                              style={{ width: `${Math.round((Number(item.weekly_review_count || 0) / busyMax) * 100)}%` }}
+                            />
+                          </span>
+                          <span className="rankings-heat-num">
+                            <span className="rankings-mono">{item.weekly_review_count}</span> 条点评
+                          </span>
+                        </span>
                       </div>
                     </Link>
                   ))}
-                  {section.id === 'busy-shops' && list.length > 0 && list.map((item) => (
-                    <Link key={item.shop_id} to={`/eat/merchant/${item.shop_id}`} className="rankings-row">
-                      <span className="rankings-rank">{item.rank}</span>
-                      <span className="rankings-name">{item.shop_name}</span>
-                      <span className="rankings-meta">当周 {item.weekly_review_count} 条点评</span>
-                    </Link>
-                  ))}
                   {section.id === 'top-shops' && list.length > 0 && list.map((item) => (
-                    <Link key={item.shop_id} to={`/eat/merchant/${item.shop_id}`} className="rankings-row">
-                      <span className="rankings-rank">{item.rank}</span>
-                      <span className="rankings-name">{item.shop_name}</span>
-                      <span className="rankings-meta">评分 {item.comprehensive_score?.toFixed(1)}/10</span>
+                    <Link
+                      key={item.shop_id}
+                      to={`/eat/merchant/${item.shop_id}`}
+                      className="rankings-row rankings-row--shop"
+                      style={{ '--i': item.rank - 1 }}
+                      ref={(el) => {
+                        if (!el) return;
+                        itemRefs.current.set(`top-${item.shop_id}`, el);
+                        ioRef.current?.observe(el);
+                      }}
+                    >
+                      <RankBadge rank={item.rank} />
+                      <div className="rankings-row-main">
+                        <span className="rankings-name">{item.shop_name}</span>
+                        <span className="rankings-meta">
+                          <span className="rankings-score-chip rankings-score-chip--mini">
+                            <span className="rankings-score-star" aria-hidden>
+                              ★
+                            </span>
+                            <span className="rankings-score-num rankings-mono">{item.comprehensive_score?.toFixed(1)}</span>
+                            <span className="rankings-score-den">/10</span>
+                          </span>
+                        </span>
+                      </div>
                     </Link>
                   ))}
                   {section.id === 'new-hit-products' && list.length > 0 && list.map((item) => (
-                    <Link key={item.product_id} to={`/eat/food/${item.product_id}`} className="rankings-row rankings-row--product">
-                      <span className="rankings-rank">{item.rank}</span>
+                    <Link
+                      key={item.product_id}
+                      to={`/eat/food/${item.product_id}`}
+                      className={`rankings-row rankings-row--product ${item.rank === 1 ? 'rankings-row--top1' : ''}`}
+                      style={{ '--i': item.rank - 1 }}
+                      ref={(el) => {
+                        if (!el) return;
+                        itemRefs.current.set(`new-${item.product_id}`, el);
+                        ioRef.current?.observe(el);
+                      }}
+                    >
+                      <RankBadge rank={item.rank} />
+                      <span className="rankings-thumb" aria-hidden>
+                        <img src={item.product_image || '/products/default.png'} alt="" loading="lazy" decoding="async" />
+                      </span>
                       <div className="rankings-row-main">
-                        <span className="rankings-name">{item.product_name}</span>
+                        <span className="rankings-name rankings-name--serif">{item.product_name}</span>
                         {item.shop_name != null && item.shop_name !== '' && (
                           <span className="rankings-shop">{item.shop_name}</span>
                         )}
                         {item.comprehensive_score != null && (
-                          <span className="rankings-score">评分 {item.comprehensive_score.toFixed(1)}/10</span>
+                          <span className="rankings-score">
+                            <span className="rankings-score-chip">
+                              <span className="rankings-score-star" aria-hidden>
+                                ★
+                              </span>
+                              <span className="rankings-score-num">{item.comprehensive_score.toFixed(1)}</span>
+                              <span className="rankings-score-den">/10</span>
+                            </span>
+                          </span>
                         )}
                       </div>
                     </Link>
                   ))}
                   {section.id === 'active-users' && list.length > 0 && list.map((item) => (
-                    <div key={item.user_id} className="rankings-row rankings-row-static">
-                      <span className="rankings-rank">{item.rank}</span>
-                      <span className="rankings-name">{item.nickname || item.username}</span>
-                      <span className="rankings-meta">当周 {item.weekly_comment_count} 条点评</span>
+                    <div
+                      key={item.user_id}
+                      className="rankings-row rankings-row-static"
+                      style={{ '--i': item.rank - 1 }}
+                      ref={(el) => {
+                        if (!el) return;
+                        itemRefs.current.set(`u-${item.user_id}`, el);
+                        ioRef.current?.observe(el);
+                      }}
+                    >
+                      <RankBadge rank={item.rank} />
+                      <div className="rankings-row-main">
+                        <span className="rankings-name">{item.nickname || item.username}</span>
+                        <span className="rankings-meta">
+                          当周 <span className="rankings-mono">{item.weekly_comment_count}</span> 条点评
+                        </span>
+                      </div>
                     </div>
                   ))}
                 </div>

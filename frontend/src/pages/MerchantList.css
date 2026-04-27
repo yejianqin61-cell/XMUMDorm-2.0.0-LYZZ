@@ -1,7 +1,52 @@
 .merchant-list-page {
-  min-height: 100%;
+  min-height: 100svh;
   padding: 8px 16px 24px;
-  background: transparent;
+  /* 方案 A：晨曦广场 (Sunrise XMUM) */
+  background: #f8fafc;
+  position: relative;
+}
+
+/* Premium Foodie Magazine：全局文字体系（Deep Graphite） */
+.merchant-list-page {
+  --sunrise-bg: #f8fafc;
+  --sunrise-text: #1e293b;
+  --sunrise-sub: #a0a0a0;
+  --sunrise-accent-1: #00d2ff;
+  --sunrise-accent-2: #3a7bd5;
+  --sunrise-aurora: #e0e7ff;
+
+  --graphite: var(--sunrise-text);
+  --graphite-2: #2d3436;
+}
+
+/* 氛围光源：左上 + 右下（blur 150px） */
+.merchant-list-page::before,
+.merchant-list-page::after {
+  content: '';
+  position: absolute;
+  width: 420px;
+  height: 420px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(224, 231, 255, 0.75), rgba(224, 231, 255, 0) 60%);
+  filter: blur(150px);
+  opacity: 0.9;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.merchant-list-page::before {
+  left: -140px;
+  top: -160px;
+}
+
+.merchant-list-page::after {
+  right: -160px;
+  bottom: -170px;
+}
+
+.merchant-list-page > * {
+  position: relative;
+  z-index: 1;
 }
 
 /* 排行榜卡片下方：商家区块标题 */
@@ -18,7 +63,7 @@
   margin: 0 0 16px;
   font-size: 18px;
   font-weight: 600;
-  color: var(--wx-text);
+  color: var(--sunrise-text);
 }
 
 .merchant-list-list {
@@ -29,6 +74,18 @@
 
 .merchant-list-list li {
   margin: 0;
+  position: relative;
+}
+
+.merchant-list-list li::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.05), transparent);
+  pointer-events: none;
 }
 
 .merchant-list-loading,
@@ -54,10 +111,27 @@
 .merchant-list-ranking-card {
   margin-top: 0;
   margin-bottom: 0;
-  padding: 14px 14px 12px;
-  background: linear-gradient(165deg, rgba(255, 248, 235, 0.95) 0%, #fff 38%);
-  border: 1px solid rgba(255, 180, 100, 0.25);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  padding: 10px 0 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.merchant-list-ranking-card::after {
+  content: none;
+}
+
+@keyframes merchantListGlow {
+  0%,
+  100% {
+    opacity: 0.42;
+    transform: translate3d(-1%, -1%, 0) scale(1);
+  }
+  50% {
+    opacity: 0.70;
+    transform: translate3d(1%, 1%, 0) scale(1.03);
+  }
 }
 
 .merchant-list-ranking-card-head {
@@ -75,9 +149,18 @@
   align-items: center;
   justify-content: center;
   font-size: 22px;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.55);
   border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 12px 30px rgba(2, 6, 23, 0.10);
+}
+
+.merchant-list-trophy {
+  transform: scale(2);
+  filter:
+    drop-shadow(0 0 10px rgba(255, 223, 137, 0.30))
+    drop-shadow(0 10px 18px rgba(2, 6, 23, 0.14));
 }
 
 .merchant-list-ranking-card-titles {
@@ -89,7 +172,7 @@
   margin: 0;
   font-size: 17px;
   font-weight: 700;
-  color: var(--wx-text);
+  color: var(--graphite);
   letter-spacing: 0.02em;
 }
 
@@ -98,7 +181,7 @@
   margin-top: 2px;
   font-size: 12px;
   font-weight: 400;
-  color: var(--wx-text-secondary);
+  color: rgba(45, 52, 54, 0.72);
   letter-spacing: 0;
 }
 
@@ -106,18 +189,316 @@
   margin: 4px 0 0;
   font-size: 14px;
   font-weight: 600;
-  color: var(--wx-orange, #ff976a);
+  color: rgba(249, 115, 22, 0.92);
 }
 
 .merchant-list-ranking-card-rule {
   margin: 6px 0 0;
   font-size: 11px;
   line-height: 1.4;
-  color: var(--wx-text-secondary);
+  color: rgba(45, 52, 54, 0.72);
 }
 
-.merchant-list-hot-scroll--in-card {
+/* ===== Top3 Hero overlap ===== */
+.merchant-hero {
+  position: relative;
+  margin-top: 10px;
   margin-bottom: 10px;
+  min-height: 210px;
+}
+
+.merchant-hero-top1 {
+  position: relative;
+  display: block;
+  width: 78%;
+  max-width: 420px;
+  border-radius: 22px;
+  overflow: hidden;
+  text-decoration: none;
+  transform: rotate(-2deg);
+  border: 1px solid rgba(255, 223, 137, 0.55);
+  box-shadow: 0 0 0 1px rgba(255, 223, 137, 0.18), 0 20px 70px rgba(2, 6, 23, 0.16),
+    0 18px 55px rgba(56, 189, 248, 0.10);
+}
+
+.merchant-hero-top1-img {
+  width: 100%;
+  height: 240px;
+  object-fit: cover;
+  display: block;
+  transform: scale(1.02);
+}
+
+.merchant-hero-label {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 12px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.32);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+}
+
+.merchant-hero-label-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.merchant-hero-name {
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  color: var(--graphite);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.merchant-hero-meta {
+  font-size: 12px;
+  color: rgba(45, 52, 54, 0.72);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.merchant-hero-side {
+  position: absolute;
+  right: 0;
+  top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.merchant-hero-orb {
+  position: relative;
+  width: 92px;
+  height: 92px;
+  border-radius: 999px;
+  overflow: hidden;
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  background: rgba(255, 255, 255, 0.36);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 18px 55px rgba(2, 6, 23, 0.14);
+}
+
+.merchant-hero-orb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.merchant-hero-orb-cap {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 6px;
+  padding: 6px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.32);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.merchant-hero-orb-name {
+  display: block;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  color: var(--graphite);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.merchant-hero-badge {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  color: rgba(26, 26, 26, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.12);
+}
+
+.merchant-hero-badge--1 {
+  background: linear-gradient(135deg, rgba(255, 223, 137, 0.95), rgba(249, 115, 22, 0.85));
+}
+.merchant-hero-badge--2 {
+  background: linear-gradient(135deg, rgba(229, 231, 235, 0.96), rgba(148, 163, 184, 0.82));
+}
+.merchant-hero-badge--3 {
+  background: linear-gradient(135deg, rgba(253, 186, 116, 0.92), rgba(180, 83, 9, 0.70));
+}
+
+.merchant-hero-orb .merchant-hero-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+}
+
+.merchant-hero-morelink {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: rgba(26, 26, 26, 0.72);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  padding: 8px 2px;
+}
+
+.merchant-hero-strip {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 4px 2px 10px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.merchant-hero-strip::-webkit-scrollbar {
+  height: 4px;
+}
+
+.merchant-hero-mini {
+  flex: 0 0 118px;
+  scroll-snap-align: start;
+  position: relative;
+  border-radius: 18px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.30);
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  box-shadow: 0 14px 40px rgba(2, 6, 23, 0.10);
+}
+
+.merchant-hero-mini-img {
+  width: 100%;
+  height: 132px;
+  object-fit: cover;
+  display: block;
+}
+
+.merchant-hero-mini-rank {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 900;
+  color: rgba(26, 26, 26, 0.90);
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.30);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.merchant-hero-mini-cap {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  padding: 7px 8px 6px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.30);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+}
+
+.merchant-hero-mini-name {
+  display: block;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  line-height: 1.25;
+  color: var(--graphite);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.merchant-hero-morelink--ghost {
+  margin-top: 8px;
+}
+
+.merchant-hero-arrow {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  position: relative;
+  background: rgba(255, 255, 255, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  overflow: hidden;
+}
+
+.merchant-hero-arrow::before {
+  content: '→';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+  color: rgba(26, 26, 26, 0.78);
+}
+
+.merchant-hero-arrow::after {
+  content: '';
+  position: absolute;
+  inset: -40% -60%;
+  background: linear-gradient(110deg, transparent 40%, rgba(255, 255, 255, 0.38) 50%, transparent 60%);
+  opacity: 0;
+  transform: translate3d(-25%, 0, 0);
+  animation: merchantHeroArrow 1.8s ease-in-out infinite;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+@keyframes merchantHeroArrow {
+  0%,
+  60% {
+    opacity: 0;
+    transform: translate3d(-25%, 0, 0);
+  }
+  72% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(25%, 0, 0);
+  }
 }
 
 .merchant-list-ranking-full-link {
@@ -126,14 +507,50 @@
   padding: 10px 12px;
   font-size: 14px;
   font-weight: 600;
-  color: var(--wx-link, #576b95);
+  color: rgba(26, 26, 26, 0.86);
   text-decoration: none;
   border-radius: 10px;
-  background: rgba(87, 107, 149, 0.08);
+  background: rgba(255, 255, 255, 0.26);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  position: relative;
+  overflow: hidden;
 }
 
 .merchant-list-ranking-full-link:hover {
-  background: rgba(87, 107, 149, 0.12);
+  background: rgba(255, 255, 255, 0.34);
+}
+
+.merchant-list-ranking-full-link--pill {
+  border-radius: 999px;
+}
+
+.merchant-list-ranking-full-link--pill::after {
+  content: '';
+  position: absolute;
+  inset: -40% -60%;
+  background: linear-gradient(110deg, transparent 40%, rgba(255, 255, 255, 0.32) 50%, transparent 60%);
+  opacity: 0;
+  transform: translate3d(-25%, 0, 0);
+  animation: merchantListPillShimmer 5s ease-in-out infinite;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+@keyframes merchantListPillShimmer {
+  0%,
+  70% {
+    opacity: 0;
+    transform: translate3d(-25%, 0, 0);
+  }
+  82% {
+    opacity: 0.75;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(25%, 0, 0);
+  }
 }
 
 .merchant-list-ranking-full-link--ghost {
@@ -213,42 +630,105 @@
 }
 
 .merchant-list-hot-card {
-  flex: 0 0 132px;
+  flex: 0 0 150px;
   scroll-snap-align: start;
   display: flex;
   flex-direction: column;
   text-decoration: none;
   color: inherit;
-  background: var(--wx-bg-elevated, #fff);
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.34);
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-  border: 1px solid var(--wx-border, rgba(0, 0, 0, 0.06));
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.30);
   position: relative;
+  transform: translate3d(0, 10px, 0);
+  opacity: 0;
+  transition: transform 220ms ease, filter 220ms ease, opacity 220ms ease;
 }
 
-.merchant-list-hot-rank {
+.merchant-list-page--ready .merchant-list-hot-card {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  transition-delay: calc(var(--i, 0) * 60ms);
+}
+
+.merchant-list-hot-card:hover {
+  filter: brightness(1.03);
+}
+
+.merchant-list-hot-card--top1 {
+  flex-basis: 198px; /* Top1 更大 */
+  border-color: rgba(255, 223, 137, 0.65);
+  box-shadow: 0 0 0 1px rgba(255, 223, 137, 0.18), 0 18px 55px rgba(249, 115, 22, 0.12);
+}
+
+.merchant-list-hot-card--top1::after {
+  content: '';
   position: absolute;
-  top: 6px;
-  left: 6px;
-  z-index: 1;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
+  inset: -40% -60%;
+  background: linear-gradient(110deg, transparent 40%, rgba(255, 255, 255, 0.30) 50%, transparent 60%);
+  opacity: 0;
+  transform: translate3d(-25%, 0, 0);
+  animation: merchantListTop1Glint 5s ease-in-out infinite;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+@keyframes merchantListTop1Glint {
+  0%,
+  70% {
+    opacity: 0;
+    transform: translate3d(-25%, 0, 0);
+  }
+  82% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(25%, 0, 0);
+  }
+}
+
+.merchant-list-hot-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
-  font-weight: 700;
-  color: #fff;
-  background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 900;
+  color: rgba(26, 26, 26, 0.92);
+  border-radius: 999px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.12);
+}
+
+/* 金银铜金属质感 */
+.merchant-list-hot-badge--1 {
+  background: linear-gradient(135deg, rgba(255, 223, 137, 0.95), rgba(249, 115, 22, 0.85));
+}
+.merchant-list-hot-badge--2 {
+  background: linear-gradient(135deg, rgba(229, 231, 235, 0.96), rgba(148, 163, 184, 0.82));
+}
+.merchant-list-hot-badge--3 {
+  background: linear-gradient(135deg, rgba(253, 186, 116, 0.92), rgba(180, 83, 9, 0.70));
+}
+.merchant-list-hot-badge--n {
+  background: rgba(255, 255, 255, 0.36);
 }
 
 .merchant-list-hot-img-wrap {
   width: 100%;
   aspect-ratio: 1;
-  background: var(--wx-bg, #f5f5f5);
+  background: rgba(0, 0, 0, 0.04);
+  position: relative;
 }
 
 .merchant-list-hot-img {
@@ -258,18 +738,24 @@
   display: block;
 }
 
-.merchant-list-hot-body {
-  padding: 8px 8px 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-height: 72px;
+.merchant-list-hot-overlay {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  padding: 10px 10px 9px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.32);
+  border: 1px solid rgba(255, 255, 255, 0.30);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.10);
 }
 
 .merchant-list-hot-name {
   font-size: 13px;
   font-weight: 600;
-  color: var(--wx-text);
+  color: var(--graphite);
   line-height: 1.25;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -279,7 +765,7 @@
 
 .merchant-list-hot-shop {
   font-size: 11px;
-  color: var(--wx-text-secondary);
+  color: rgba(45, 52, 54, 0.72);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -295,12 +781,107 @@
 .merchant-list-hot-score {
   font-size: 11px;
   font-weight: 600;
-  color: var(--wx-orange, #ff976a);
+  color: rgba(249, 115, 22, 0.92);
   line-height: 1.25;
 }
 
 .merchant-list-hot-price {
   font-size: 11px;
-  color: var(--wx-text-secondary);
+  color: rgba(45, 52, 54, 0.72);
   line-height: 1.25;
 }
+
+/* 本区商家：Minimalist Brand Style */
+.merchant-list-page--ready .merchant-list-list li {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  transition-delay: calc(var(--i, 0) * 55ms);
+}
+
+.merchant-list-list li {
+  opacity: 0;
+  transform: translate3d(0, 20px, 0);
+  transition: opacity 260ms ease, transform 260ms ease;
+}
+
+.merchant-min {
+  display: block;
+  padding: 24px 2px;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 14px;
+  background: transparent;
+  border: none;
+  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.merchant-min-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.merchant-min-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 1.2rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  line-height: 1.6;
+  color: var(--sunrise-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.merchant-min-open {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.merchant-min-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.98);
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.6), 0 0 18px rgba(34, 197, 94, 0.22);
+  animation: merchantMinPulse 1.9s ease-in-out infinite;
+}
+
+@keyframes merchantMinPulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.merchant-min-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  line-height: 1.6;
+  color: var(--sunrise-sub);
+}
+
+/* Neo‑brutalism shadow：仅 hover 时出现（非常轻但很“锐”） */
+@media (hover: hover) {
+  .merchant-min:hover {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.05), rgba(255, 255, 255, 0));
+    box-shadow: 6px 6px 0 rgba(26, 26, 26, 0.06);
+    transform: translate3d(-1px, -1px, 0) scale(1.02);
+  }
+}
+
+.merchant-min:active {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.06), rgba(255, 255, 255, 0));
+  transform: scale(1.01);
+}
+
