@@ -311,6 +311,7 @@ function TreeHole() {
   const [scrollTop, setScrollTop] = useState(0);
   const [vpH, setVpH] = useState(0);
   const [gridTop, setGridTop] = useState(0); // grid offsetTop within scroll container
+  const scrollRafRef = useRef(0);
 
   // observe grid width for height estimation
   useEffect(() => {
@@ -330,24 +331,38 @@ function TreeHole() {
     const sc = getTreeHoleScrollEl();
     if (!sc) return undefined;
     const onScroll = () => {
-      const st = sc.scrollTop || 0;
-      setScrollTop(st);
-      setVpH(sc.clientHeight || window.innerHeight || 0);
-      if (USE_VIRTUAL_MASONRY) {
-        // robust: compute grid top relative to scroll container
-        try {
-          const scBox = sc.getBoundingClientRect?.();
-          const g = gridRef.current;
-          const gBox = g?.getBoundingClientRect?.();
-          if (scBox && gBox) {
-            setGridTop(Math.max(0, gBox.top - scBox.top + st));
-          } else {
-            setGridTop(g?.offsetTop ?? 0);
-          }
-        } catch {
-          setGridTop(gridRef.current?.offsetTop ?? 0);
+      // 1) 直接在滚动回调里判断是否该拉取下一页，避免“滚动->setState->effect”多一拍
+      if (infinite.hasNextPage && !infinite.isFetchingNextPage) {
+        const remain = sc.scrollHeight - (sc.scrollTop + sc.clientHeight);
+        // 手机上快速滑动时，提前一点触发，骨架尾巴更跟手
+        if (remain < 2400) {
+          infinite.fetchNextPage().catch(() => {});
         }
       }
+
+      // 2) 用 rAF 节流状态更新，降低滚动期间的重渲染抖动/卡顿
+      if (scrollRafRef.current) return;
+      scrollRafRef.current = requestAnimationFrame(() => {
+        scrollRafRef.current = 0;
+        const st = sc.scrollTop || 0;
+        setScrollTop(st);
+        setVpH(sc.clientHeight || window.innerHeight || 0);
+        if (USE_VIRTUAL_MASONRY) {
+          // robust: compute grid top relative to scroll container
+          try {
+            const scBox = sc.getBoundingClientRect?.();
+            const g = gridRef.current;
+            const gBox = g?.getBoundingClientRect?.();
+            if (scBox && gBox) {
+              setGridTop(Math.max(0, gBox.top - scBox.top + st));
+            } else {
+              setGridTop(g?.offsetTop ?? 0);
+            }
+          } catch {
+            setGridTop(gridRef.current?.offsetTop ?? 0);
+          }
+        }
+      });
     };
     onScroll();
     sc.addEventListener('scroll', onScroll, { passive: true });
@@ -355,8 +370,12 @@ function TreeHole() {
     return () => {
       sc.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onScroll);
+      if (scrollRafRef.current) {
+        cancelAnimationFrame(scrollRafRef.current);
+        scrollRafRef.current = 0;
+      }
     };
-  }, []);
+  }, [infinite.hasNextPage, infinite.isFetchingNextPage, infinite.fetchNextPage]);
 
   // auto load next page when near bottom (avoid white gaps)
   useEffect(() => {
@@ -364,7 +383,7 @@ function TreeHole() {
     const sc = getTreeHoleScrollEl();
     if (!sc) return;
     const remain = sc.scrollHeight - (sc.scrollTop + sc.clientHeight);
-    if (remain < 1400) {
+    if (remain < 2400) {
       infinite.fetchNextPage().catch(() => {});
     }
   }, [scrollTop, vpH, infinite.hasNextPage, infinite.isFetchingNextPage, infinite.fetchNextPage]);
