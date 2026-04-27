@@ -89,10 +89,11 @@ export function getMySavedHandbookArticles(params = {}) {
 }
 
 export function getMyCourseReviews(params = {}) {
-  const { page = 1, pageSize = 10 } = params;
+  const { tags, page = 1, pageSize = 10 } = params;
   const sp = new URLSearchParams();
   sp.set('page', String(page));
   sp.set('pageSize', String(pageSize));
+  if (tags && Array.isArray(tags) && tags.length > 0) sp.set('tags', tags.join(','));
   return get(`/api/handbook/me/course-reviews?${sp.toString()}`);
 }
 
@@ -125,16 +126,21 @@ export function deleteMyHandbookChecklistItem(checklistId, itemId) {
 }
 
 export function listCourseReviews(params = {}) {
-  const { q, page = 1, pageSize = 10 } = params;
+  const { q, tags, page = 1, pageSize = 10 } = params;
   const sp = new URLSearchParams();
   sp.set('page', String(page));
   sp.set('pageSize', String(pageSize));
   if (q) sp.set('q', String(q));
+  if (tags && Array.isArray(tags) && tags.length > 0) sp.set('tags', tags.join(','));
   return get(`/api/handbook/course-reviews?${sp.toString()}`);
 }
 
 export function getCourseReviewDetail(id) {
   return get(`/api/handbook/course-reviews/${id}`);
+}
+
+export function rateCourseReview(id, rating) {
+  return post(`/api/handbook/course-reviews/${id}/rate`, { rating });
 }
 
 export function createCourseReview(body) {

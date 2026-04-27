@@ -940,9 +940,23 @@ router.get('/course-reviews', async (req, res) => {
     const offset = (page - 1) * pageSize;
     const limitCount = pageSize + 1;
     const qRaw = cleanText(req.query.q, 120);
+    const tagsRaw = cleanText(req.query.tags ?? req.query.tag, 200);
+    const allowedTags = new Set(['MPU', 'GE', 'ME', 'required', 'final', 'no final']);
 
     let where = 'cr.deleted_at IS NULL';
     const params = [];
+    if (tagsRaw) {
+      const list = String(tagsRaw)
+        .split(',')
+        .map((x) => x.trim())
+        .filter(Boolean)
+        .filter((t) => allowedTags.has(t));
+      const uniq = [...new Set(list)].slice(0, 8);
+      if (uniq.length > 0) {
+        where += ` AND ( ${uniq.map(() => 'JSON_CONTAINS(COALESCE(cr.tags_json, JSON_ARRAY(cr.tag)), JSON_QUOTE(?))').join(' OR ')} )`;
+        uniq.forEach((t) => params.push(t));
+      }
+    }
     if (qRaw) {
       const safe = qRaw.replace(/[%_\\]/g, '');
       if (safe) {
@@ -952,9 +966,11 @@ router.get('/course-reviews', async (req, res) => {
     }
 
     const rows = await query(
-      `SELECT cr.id, cr.course_name, cr.teacher, cr.rating, cr.difficulty, cr.comment, cr.created_by, cr.created_at, cr.updated_at,
+      `SELECT cr.id, cr.course_name, cr.teacher, cr.tag, cr.tags_json, cr.rating, cr.difficulty, cr.comment, cr.created_by, cr.created_at, cr.updated_at,
         u.username, u.nickname, u.avatar,
-        (SELECT COUNT(*) FROM course_review_comments c WHERE c.review_id = cr.id AND c.deleted_at IS NULL) AS comment_count
+        (SELECT COUNT(*) FROM course_review_comments c WHERE c.review_id = cr.id AND c.deleted_at IS NULL) AS comment_count,
+        (SELECT AVG(r.rating) FROM course_review_ratings r WHERE r.review_id = cr.id) AS avg_rating,
+        (SELECT COUNT(*) FROM course_review_ratings r WHERE r.review_id = cr.id) AS rating_count
        FROM course_reviews cr
        LEFT JOIN users u ON u.id = cr.created_by
        WHERE ${where}
@@ -968,6 +984,7 @@ router.get('/course-reviews', async (req, res) => {
       id: r.id,
       courseName: r.course_name,
       teacher: r.teacher,
+      tags: Array.isArray(r.tags_json) ? r.tags_json : (r.tags_json ? (() => { try { return JSON.parse(r.tags_json); } catch { return null; } })() : null) || [r.tag || 'required'],
       rating: Number(r.rating || 0),
       difficulty: Number(r.difficulty || 0),
       comment: r.comment || null,
@@ -975,7 +992,11 @@ router.get('/course-reviews', async (req, res) => {
       author: r.created_by
         ? { id: r.created_by, username: r.username, nickname: r.nickname, avatar: assetUrl(r.avatar) }
         : null,
-      stats: { comments: Number(r.comment_count || 0) },
+      stats: {
+        comments: Number(r.comment_count || 0),
+        avgRating: r.avg_rating == null ? null : Number(r.avg_rating),
+        ratingCount: Number(r.rating_count || 0),
+      },
     }));
 
     res.status(200).json({ status: 0, message: 'ok', data: { list, hasMore, page, pageSize } });
@@ -993,8 +1014,10 @@ router.get('/course-reviews/:id', async (req, res) => {
     const id = toInt(req.params.id, 0);
     if (!id) return res.status(400).json({ status: -1, message: 'ID 无效' });
     const rows = await query(
-      `SELECT cr.id, cr.course_name, cr.teacher, cr.rating, cr.difficulty, cr.comment, cr.created_by, cr.created_at, cr.updated_at,
-        u.username, u.nickname, u.avatar
+      `SELECT cr.id, cr.course_name, cr.teacher, cr.tag, cr.tags_json, cr.rating, cr.difficulty, cr.comment, cr.created_by, cr.created_at, cr.updated_at,
+        u.username, u.nickname, u.avatar,
+        (SELECT AVG(r.rating) FROM course_review_ratings r WHERE r.review_id = cr.id) AS avg_rating,
+        (SELECT COUNT(*) FROM course_review_ratings r WHERE r.review_id = cr.id) AS rating_count
        FROM course_reviews cr
        LEFT JOIN users u ON u.id = cr.created_by
        WHERE cr.id = ? AND cr.deleted_at IS NULL
@@ -1010,12 +1033,17 @@ router.get('/course-reviews/:id', async (req, res) => {
         id: r.id,
         courseName: r.course_name,
         teacher: r.teacher,
+        tags: (() => { try { return r.tags_json ? JSON.parse(r.tags_json) : null; } catch { return null; } })() || [r.tag || 'required'],
         rating: Number(r.rating || 0),
         difficulty: Number(r.difficulty || 0),
         comment: r.comment || null,
         created_at: r.created_at,
         updated_at: r.updated_at,
         author: r.created_by ? { id: r.created_by, username: r.username, nickname: r.nickname, avatar: assetUrl(r.avatar) } : null,
+        stats: {
+          avgRating: r.avg_rating == null ? null : Number(r.avg_rating),
+          ratingCount: Number(r.rating_count || 0),
+        },
       },
     });
   } catch (e) {
@@ -1028,16 +1056,26 @@ router.post('/course-reviews', authenticateToken, async (req, res) => {
   try {
     const courseName = cleanText(req.body && (req.body.courseName ?? req.body.course_name), 180);
     const teacher = cleanText(req.body && req.body.teacher, 120);
+    const tagsBody = req.body && (req.body.tags ?? req.body.tag);
     const rating = clamp(toInt(req.body && req.body.rating, 0), 1, 5);
     const difficulty = clamp(toInt(req.body && req.body.difficulty, 3), 1, 5);
     const comment = cleanText(req.body && (req.body.comment ?? req.body.content), 3000);
+    const allowedTags = new Set(['MPU', 'GE', 'ME', 'required', 'final', 'no final']);
     if (!courseName) return res.status(400).json({ status: -1, message: 'courseName 不能为空' });
     if (!teacher) return res.status(400).json({ status: -1, message: 'teacher 不能为空' });
+    const tagListRaw = Array.isArray(tagsBody)
+      ? tagsBody
+      : String(tagsBody || '')
+          .split(',')
+          .map((x) => x.trim())
+          .filter(Boolean);
+    const tags = [...new Set(tagListRaw.filter((t) => allowedTags.has(t)))].slice(0, 8);
+    if (tags.length === 0) return res.status(400).json({ status: -1, message: 'tags 不能为空' });
     if (!rating) return res.status(400).json({ status: -1, message: 'rating 必须为 1-5' });
     if (!comment) return res.status(400).json({ status: -1, message: '评价不能为空' });
     const result = await query(
-      'INSERT INTO course_reviews (course_name, teacher, rating, difficulty, comment, created_by) VALUES (?, ?, ?, ?, ?, ?)',
-      [courseName, teacher, rating, difficulty, comment, req.user.id]
+      'INSERT INTO course_reviews (course_name, teacher, tag, tags_json, rating, difficulty, comment, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [courseName, teacher, tags[0], JSON.stringify(tags), rating, difficulty, comment, req.user.id]
     );
     res.status(200).json({ status: 0, message: 'ok', data: { id: result.insertId } });
   } catch (e) {
@@ -1052,17 +1090,35 @@ router.get('/me/course-reviews', authenticateToken, async (req, res) => {
     const pageSize = clamp(toInt(req.query.pageSize, 10), 1, 30);
     const offset = (page - 1) * pageSize;
     const limitCount = pageSize + 1;
+    const tagsRaw = cleanText(req.query.tags ?? req.query.tag, 200);
+    const allowedTags = new Set(['MPU', 'GE', 'ME', 'required', 'final', 'no final']);
+    let where = 'cr.deleted_at IS NULL AND cr.created_by = ?';
+    const params = [req.user.id];
+    if (tagsRaw) {
+      const list = String(tagsRaw)
+        .split(',')
+        .map((x) => x.trim())
+        .filter(Boolean)
+        .filter((t) => allowedTags.has(t));
+      const uniq = [...new Set(list)].slice(0, 8);
+      if (uniq.length > 0) {
+        where += ` AND ( ${uniq.map(() => 'JSON_CONTAINS(COALESCE(cr.tags_json, JSON_ARRAY(cr.tag)), JSON_QUOTE(?))').join(' OR ')} )`;
+        uniq.forEach((t) => params.push(t));
+      }
+    }
 
     const rows = await query(
-      `SELECT cr.id, cr.course_name, cr.teacher, cr.rating, cr.difficulty, cr.comment, cr.created_by, cr.created_at, cr.updated_at,
+      `SELECT cr.id, cr.course_name, cr.teacher, cr.tag, cr.tags_json, cr.rating, cr.difficulty, cr.comment, cr.created_by, cr.created_at, cr.updated_at,
         u.username, u.nickname, u.avatar,
-        (SELECT COUNT(*) FROM course_review_comments c WHERE c.review_id = cr.id AND c.deleted_at IS NULL) AS comment_count
+        (SELECT COUNT(*) FROM course_review_comments c WHERE c.review_id = cr.id AND c.deleted_at IS NULL) AS comment_count,
+        (SELECT AVG(r.rating) FROM course_review_ratings r WHERE r.review_id = cr.id) AS avg_rating,
+        (SELECT COUNT(*) FROM course_review_ratings r WHERE r.review_id = cr.id) AS rating_count
        FROM course_reviews cr
        LEFT JOIN users u ON u.id = cr.created_by
-       WHERE cr.deleted_at IS NULL AND cr.created_by = ?
+       WHERE ${where}
        ORDER BY cr.created_at DESC, cr.id DESC
        LIMIT ${limitCount} OFFSET ${offset}`,
-      [req.user.id]
+      params
     );
 
     const hasMore = (rows || []).length > pageSize;
@@ -1070,6 +1126,7 @@ router.get('/me/course-reviews', authenticateToken, async (req, res) => {
       id: r.id,
       courseName: r.course_name,
       teacher: r.teacher,
+      tags: (() => { try { return r.tags_json ? JSON.parse(r.tags_json) : null; } catch { return null; } })() || [r.tag || 'required'],
       rating: Number(r.rating || 0),
       difficulty: Number(r.difficulty || 0),
       comment: r.comment || null,
@@ -1077,12 +1134,58 @@ router.get('/me/course-reviews', authenticateToken, async (req, res) => {
       author: r.created_by
         ? { id: r.created_by, username: r.username, nickname: r.nickname, avatar: assetUrl(r.avatar) }
         : null,
-      stats: { comments: Number(r.comment_count || 0) },
+      stats: {
+        comments: Number(r.comment_count || 0),
+        avgRating: r.avg_rating == null ? null : Number(r.avg_rating),
+        ratingCount: Number(r.rating_count || 0),
+      },
     }));
 
     res.status(200).json({ status: 0, message: 'ok', data: { list, hasMore, page, pageSize } });
   } catch (e) {
     console.error('my course reviews list error:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
+router.post('/course-reviews/:id/rate', authenticateToken, async (req, res) => {
+  try {
+    const id = toInt(req.params.id, 0);
+    const rating = clamp(toInt(req.body && req.body.rating, 0), 1, 5);
+    if (!id) return res.status(400).json({ status: -1, message: 'ID 无效' });
+    if (!rating) return res.status(400).json({ status: -1, message: 'rating 必须为 1-5' });
+
+    const rows = await query('SELECT id, created_by FROM course_reviews WHERE id = ? AND deleted_at IS NULL LIMIT 1', [id]);
+    const r = rows && rows[0];
+    if (!r) return res.status(404).json({ status: -1, message: '不存在' });
+    if (Number(r.created_by) === Number(req.user.id)) return res.status(403).json({ status: -1, message: '不能给自己的课程评价评分' });
+
+    const existing = await query('SELECT id FROM course_review_ratings WHERE review_id = ? AND user_id = ? LIMIT 1', [id, req.user.id]);
+    if (existing && existing.length > 0) {
+      return res.status(409).json({ status: -1, message: '你已经评分过了' });
+    }
+
+    await query('INSERT INTO course_review_ratings (review_id, user_id, rating) VALUES (?, ?, ?)', [id, req.user.id, rating]);
+
+    const agg = await query(
+      'SELECT AVG(rating) AS avg_rating, COUNT(*) AS rating_count FROM course_review_ratings WHERE review_id = ?',
+      [id]
+    );
+    const a = agg && agg[0];
+    res.status(200).json({
+      status: 0,
+      message: 'ok',
+      data: {
+        review_id: id,
+        avgRating: a && a.avg_rating != null ? Number(a.avg_rating) : null,
+        ratingCount: a ? Number(a.rating_count || 0) : 0,
+      },
+    });
+  } catch (e) {
+    if (e && e.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ status: -1, message: '你已经评分过了' });
+    }
+    console.error('course review rate error:', e);
     res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
   }
 });

@@ -210,10 +210,6 @@ function MyZone() {
     <div className="h-full w-full bg-[#F9FAFB]">
       <div className="h-full overflow-y-auto px-4 pb-[calc(var(--tabbar-height)+var(--safe-bottom)+24px)] pt-6">
         <motion.div variants={listContainer} initial="hidden" animate="show">
-          <motion.div variants={listItem} className="mb-5 flex items-center justify-between">
-            <h1 className="text-[22px] font-semibold tracking-tight text-slate-900">{t.title}</h1>
-          </motion.div>
-
           <motion.section
             variants={listItem}
             aria-label={isZh ? '个人信息' : 'Profile header'}

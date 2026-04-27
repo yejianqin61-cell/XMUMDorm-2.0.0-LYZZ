@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Bookmark, Eye, Heart, Search } from 'lucide-react';
@@ -22,6 +22,7 @@ function HandbookHome() {
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
   const qs = useQueryString();
+  const navigate = useNavigate();
 
   const tab = (qs.get('tab') || 'all').trim();
 
@@ -44,6 +45,12 @@ function HandbookHome() {
     }, 60);
     return () => clearTimeout(t);
   }, [searchOpen]);
+
+  // course-review 是独立实体（course_reviews），不走文章列表
+  useEffect(() => {
+    if (tab !== 'course-review') return;
+    navigate('/about/freshman-guide/course-review', { replace: true });
+  }, [navigate, tab]);
 
   useEffect(() => {
     if (!searchOpen) return;
@@ -155,7 +162,11 @@ function HandbookHome() {
         {(tabsQuery.data || []).map((t) => (
           <Link
             key={t.slug}
-            to={`/about/freshman-guide?tab=${encodeURIComponent(t.slug)}&q=${encodeURIComponent(keyword || '')}`}
+            to={
+              t.slug === 'course-review'
+                ? '/about/freshman-guide/course-review'
+                : `/about/freshman-guide?tab=${encodeURIComponent(t.slug)}&q=${encodeURIComponent(keyword || '')}`
+            }
             className={`handbook-tab ${t.slug === tab ? 'is-active' : ''}`}
           >
             {tabLabel(t, isZh)}

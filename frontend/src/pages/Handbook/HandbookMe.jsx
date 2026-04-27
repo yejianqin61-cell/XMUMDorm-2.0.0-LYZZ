@@ -88,12 +88,15 @@ function HandbookMe() {
               <div className="handbook-mini-list" style={{ marginTop: 10 }}>
                 {myReviewsList.map((r) => (
                   <Link key={r.id} to={`/about/freshman-guide/course-review/${r.id}`} className="handbook-mini-card">
-                    <div className="handbook-mini-title">
-                      {r.courseName} {r.teacher ? <span className="handbook-mini-sub-inline">· {r.teacher}</span> : null}
+                    <div className="handbook-mini-score">
+                      {(r?.stats?.avgRating == null ? (isZh ? '暂无' : 'N/A') : Number(r.stats.avgRating).toFixed(2))}⭐
                     </div>
+                    <div className="handbook-mini-title">{r.courseName}</div>
+                    {r.teacher ? <div className="handbook-mini-sub">{r.teacher}</div> : null}
                     <div className="handbook-mini-sub">
                       {isZh ? '评分' : 'Rating'}: {r.rating}
                       {Number.isFinite(Number(r.difficulty)) && Number(r.difficulty) > 0 ? ` · ${isZh ? '难度' : 'Difficulty'}: ${r.difficulty}` : ''}
+                      {` · ${isZh ? '评分人数' : 'Votes'}: ${r?.stats?.ratingCount ?? 0}`}
                     </div>
                     {r.comment ? <div className="handbook-mini-sub" style={{ marginTop: 6 }}>{r.comment}</div> : null}
                   </Link>

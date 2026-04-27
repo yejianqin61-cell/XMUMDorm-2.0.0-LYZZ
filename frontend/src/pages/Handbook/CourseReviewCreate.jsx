@@ -16,6 +16,7 @@ function CourseReviewCreate() {
 
   const [courseName, setCourseName] = useState('');
   const [teacher, setTeacher] = useState('');
+  const [tags, setTags] = useState(['required']);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
@@ -24,10 +25,11 @@ function CourseReviewCreate() {
     if (!isLoggedIn) return false;
     if (!courseName.trim()) return false;
     if (!teacher.trim()) return false;
+    if (!Array.isArray(tags) || tags.length === 0) return false;
     if (!comment.trim()) return false;
     if (!Number.isFinite(Number(rating)) || Number(rating) < 1 || Number(rating) > 5) return false;
     return true;
-  }, [comment, courseName, isLoggedIn, rating, teacher]);
+  }, [comment, courseName, isLoggedIn, rating, tags, teacher]);
 
   return (
     <div className="handbook-page">
@@ -70,6 +72,31 @@ function CourseReviewCreate() {
             </div>
 
             <div className="handbook-editor-row">
+              <label className="handbook-editor-label">{isZh ? '标签' : 'Tag'}</label>
+              <div className="handbook-filter-row" style={{ marginTop: 0 }}>
+                {['MPU', 'GE', 'ME', 'required', 'final', 'no final'].map((t) => {
+                  const on = tags.includes(t);
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      className={`handbook-filter-chip ${on ? 'is-on' : ''}`}
+                      onClick={() => {
+                        setTags((prev) => {
+                          const cur = Array.isArray(prev) ? prev : [];
+                          if (cur.includes(t)) return cur.filter((x) => x !== t);
+                          return [...cur, t];
+                        });
+                      }}
+                    >
+                      {t}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="handbook-editor-row">
               <label className="handbook-editor-label">{isZh ? '评分（1-5）' : 'Rating (1-5)'}</label>
               <select className="handbook-editor-select" value={rating} onChange={(e) => setRating(Number(e.target.value))}>
                 {[5, 4, 3, 2, 1].map((n) => (
@@ -104,6 +131,7 @@ function CourseReviewCreate() {
                     const out = await createCourseReview({
                       courseName: courseName.trim(),
                       teacher: teacher.trim(),
+                      tags,
                       rating,
                       comment: comment.trim(),
                     });

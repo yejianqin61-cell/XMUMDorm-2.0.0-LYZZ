@@ -259,6 +259,40 @@
   color: rgba(15, 23, 42, 0.88);
 }
 
+.handbook-filter-row {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.handbook-filter-chip {
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  background: rgba(255, 255, 255, 0.60);
+  font-weight: 900;
+  font-size: 12px;
+  color: rgba(15, 23, 42, 0.76);
+}
+.handbook-filter-chip.is-on {
+  border-color: rgba(11, 61, 145, 0.22);
+  color: rgba(11, 61, 145, 0.95);
+  background: rgba(255, 255, 255, 0.78);
+}
+.handbook-filter-refresh {
+  margin-left: auto;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  background: rgba(255, 255, 255, 0.72);
+  font-weight: 950;
+  color: rgba(15, 23, 42, 0.86);
+}
+
 .handbook-sort {
   display: flex;
   gap: 8px;
@@ -546,6 +580,51 @@
   font-weight: 950;
   margin-bottom: 10px;
 }
+
+.handbook-rating {
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 18px;
+  background: rgba(248, 250, 252, 0.82);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+.handbook-rating-title {
+  font-weight: 950;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+.handbook-rating-sub {
+  margin-top: 8px;
+  font-size: 12px;
+  color: rgba(15, 23, 42, 0.58);
+}
+.handbook-stars {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+.handbook-stars.is-disabled {
+  opacity: 0.55;
+}
+.handbook-star-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  background: rgba(255, 255, 255, 0.70);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.handbook-star-btn:disabled {
+  opacity: 0.6;
+}
+.handbook-star-btn:active {
+  transform: scale(0.98);
+}
+.handbook-star-icon {
+  color: rgba(245, 158, 11, 0.95);
+}
 .handbook-comments-empty {
   color: rgba(15, 23, 42, 0.55);
   font-size: 13px;
@@ -707,11 +786,29 @@
   gap: 10px;
 }
 .handbook-mini-card {
+  position: relative;
   text-decoration: none;
   border-radius: 18px;
   border: 1px solid rgba(15, 23, 42, 0.08);
   background: rgba(255, 255, 255, 0.70);
   padding: 12px;
+}
+
+.handbook-mini-score {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(11, 61, 145, 0.22);
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.10);
+  font-weight: 1000;
+  font-size: 13px;
+  letter-spacing: 0.2px;
+  color: rgba(11, 61, 145, 0.96);
 }
 .handbook-mini-title {
   font-weight: 950;
