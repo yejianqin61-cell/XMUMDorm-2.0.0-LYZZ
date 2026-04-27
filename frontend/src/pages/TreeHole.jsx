@@ -52,6 +52,23 @@ function prefixImageUrl(url) {
   return url && !url.startsWith('http') ? `${API_BASE_URL}${url}` : url;
 }
 
+function toPostThumbUrl(fullUrl) {
+  if (!fullUrl) return fullUrl;
+  try {
+    const u = new URL(fullUrl, window.location.origin);
+    const p = u.pathname || '';
+    // 约定：原图 key 为 /uploads/posts/post_<id>_<i>.<ext> 或 <ASSET_BASE>/posts/post_<id>_<i>.<ext>
+    // 缩略图 key 为 posts/thumbs/post_<id>_<i>.webp（同目录结构）
+    const replaced = p.replace(/\/posts\/post_(\d+)_([0-9]+)\.(jpg|jpeg|png|webp)$/i, '/posts/thumbs/post_$1_$2.webp');
+    if (replaced === p) return fullUrl;
+    u.pathname = replaced;
+    // 缩略图不需要沿用原图的 t= 版本参数；保留其它 query
+    return u.toString();
+  } catch {
+    return fullUrl;
+  }
+}
+
 const cardIn = {
   hidden: { opacity: 0, y: 14, scale: 0.98 },
   show: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 520, damping: 38 } },
@@ -623,34 +640,37 @@ function TreeHoleGlassCard({ post, eager = false, mobileStable = false }) {
   const likeNum = post.like_count ?? post.likeCount ?? 0;
   const commentNum = post.comment_count ?? post.commentCount ?? 0;
   const cover = post.images?.[0]?.url ? prefixImageUrl(post.images[0].url) : null;
+  const coverThumb = cover ? toPostThumbUrl(cover) : null;
   const title = (post.title || '').trim();
   const text = (post.content || '').trim();
   const display = title || (text.length > 64 ? `${text.slice(0, 64)}…` : text) || ' ';
   const [loaded, setLoaded] = useState(() => {
-    if (!cover) return false;
-    if (IMG_LOADED.has(cover)) return true;
-    const img = IMG_CACHE.get(cover);
+    const u = coverThumb || cover;
+    if (!u) return false;
+    if (IMG_LOADED.has(u)) return true;
+    const img = IMG_CACHE.get(u);
     return !!img && img.complete;
   });
   const [errored, setErrored] = useState(false);
 
   useEffect(() => {
-    if (!cover) return;
-    if (IMG_LOADED.has(cover)) {
+    const u = coverThumb || cover;
+    if (!u) return;
+    if (IMG_LOADED.has(u)) {
       setLoaded(true);
       return;
     }
-    const img = IMG_CACHE.get(cover);
+    const img = IMG_CACHE.get(u);
     if (img && img.complete) {
-      IMG_LOADED.add(cover);
+      IMG_LOADED.add(u);
       setLoaded(true);
       return;
     }
     // ensure it's warmed even if card remounts
-    warmImage(cover);
+    warmImage(u);
     setLoaded(false);
     setErrored(false);
-  }, [cover]);
+  }, [cover, coverThumb]);
 
   if (!cover) {
     return (
@@ -699,13 +719,14 @@ function TreeHoleGlassCard({ post, eager = false, mobileStable = false }) {
           {cover && !errored ? (
             <>
               <img
-                src={cover}
+                src={coverThumb || cover}
                 alt=""
                 className={`treehole-glass-img ${loaded ? 'is-loaded' : ''}`}
                 loading={eager ? 'eager' : 'lazy'}
                 decoding="async"
                 onLoad={() => {
-                  if (cover) IMG_LOADED.add(cover);
+                  const u = coverThumb || cover;
+                  if (u) IMG_LOADED.add(u);
                   setLoaded(true);
                 }}
                 onError={() => {

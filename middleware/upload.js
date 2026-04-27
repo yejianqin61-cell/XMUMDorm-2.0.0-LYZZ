@@ -10,6 +10,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { uploadBuffer, guessContentType, isObjectStorageConfigured } = require('../services/objectStorage');
+const sharp = require('sharp');
 
 const ALLOWED_IMAGE_MIMES = ['image/jpeg', 'image/png', 'image/webp'];
 const ALLOWED_IMAGE_EXT = ['.jpg', '.jpeg', '.png', '.webp'];
@@ -74,6 +75,8 @@ async function savePostImages(files, postId) {
   if (!useObjectStorage) {
     const dir = path.join(process.cwd(), 'uploads', 'posts');
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    const thumbsDir = path.join(process.cwd(), 'uploads', 'posts', 'thumbs');
+    if (!fs.existsSync(thumbsDir)) fs.mkdirSync(thumbsDir, { recursive: true });
   }
 
   for (let i = 0; i < (files || []).length; i++) {
@@ -81,6 +84,7 @@ async function savePostImages(files, postId) {
     const ext = extMap[file.mimetype] || '.jpg';
     const filename = `post_${postId}_${i + 1}${ext}`;
     const key = `posts/${filename}`;
+    const thumbKey = `posts/thumbs/post_${postId}_${i + 1}.webp`;
     if (useObjectStorage) {
       await uploadBuffer({ key, body: file.buffer, contentType: guessContentType(file.mimetype, ext) });
     } else {
@@ -88,6 +92,29 @@ async function savePostImages(files, postId) {
       fs.writeFileSync(filePath, file.buffer);
     }
     keys.push(key);
+
+    // 生成缩略图：瀑布流优先加载，减少带宽与解码压力
+    // - webp: 兼容性好
+    // - width: 720 能覆盖大多数双列瀑布流与高 DPI 场景
+    // - quality: 60 在体积/观感间折中
+    try {
+      const thumbBuf = await sharp(file.buffer, { failOn: 'none' })
+        .rotate()
+        .resize({ width: 720, withoutEnlargement: true })
+        .webp({ quality: 60 })
+        .toBuffer();
+
+      if (useObjectStorage) {
+        await uploadBuffer({ key: thumbKey, body: thumbBuf, contentType: 'image/webp' });
+      } else {
+        const thumbPath = path.join(process.cwd(), 'uploads', thumbKey);
+        fs.writeFileSync(thumbPath, thumbBuf);
+      }
+    } catch (e) {
+      // 缩略图失败不影响主流程（仍保留原图可用）
+      // eslint-disable-next-line no-console
+      console.warn('[upload] generate post thumb failed:', e && e.message ? e.message : e);
+    }
   }
   return keys;
 }
