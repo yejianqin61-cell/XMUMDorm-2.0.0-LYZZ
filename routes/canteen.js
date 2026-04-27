@@ -1625,7 +1625,7 @@ router.get('/rankings/hot-products', async (req, res) => {
          FROM products p
          JOIN shops s ON p.shop_id = s.id AND s.deleted_at IS NULL
          WHERE p.deleted_at IS NULL AND p.review_count > 0 AND p.comprehensive_score IS NOT NULL
-         ORDER BY p.comprehensive_score DESC, p.created_at ASC
+         ORDER BY p.comprehensive_score DESC, p.created_at DESC
          LIMIT 5`
       );
     });
@@ -1720,7 +1720,7 @@ router.get('/rankings/new-hit-products', async (req, res) => {
          FROM products p
          JOIN shops s ON p.shop_id = s.id AND s.deleted_at IS NULL
          WHERE p.deleted_at IS NULL AND p.review_count > 0 AND p.comprehensive_score IS NOT NULL AND p.created_at >= ?
-         ORDER BY p.comprehensive_score DESC, p.created_at ASC
+         ORDER BY p.comprehensive_score DESC, p.created_at DESC
          LIMIT 3`,
         [sevenDaysAgo]
       );
