@@ -5,18 +5,68 @@
 }
 
 .handbook-hero {
-  border-radius: 22px;
-  padding: 16px 16px 14px;
-  background: rgba(255, 255, 255, 0.74);
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  box-shadow: 0 16px 48px rgba(15, 23, 42, 0.06);
-  backdrop-filter: blur(10px);
+  position: relative;
+  padding: 10px 2px 10px;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  backdrop-filter: none;
 }
 
 .handbook-hero-title {
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: 0.2px;
+  position: relative;
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 0.3px;
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+}
+
+.handbook-hero-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.handbook-hero-me {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.10);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: rgba(15, 23, 42, 0.86);
+  text-decoration: none;
+}
+
+.handbook-hero-me:active {
+  transform: scale(0.98);
+}
+
+.handbook-hero-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.handbook-hero::before {
+  content: "";
+  position: absolute;
+  left: -22px;
+  top: -14px;
+  width: 220px;
+  height: 120px;
+  pointer-events: none;
+  background:
+    radial-gradient(closest-side at 35% 40%, rgba(0, 210, 255, 0.18), rgba(0, 210, 255, 0.00) 70%),
+    radial-gradient(closest-side at 55% 55%, rgba(58, 123, 213, 0.14), rgba(58, 123, 213, 0.00) 72%);
+  filter: blur(1px);
 }
 
 .handbook-hero-sub {
@@ -62,25 +112,59 @@
 .handbook-tabs {
   margin-top: 12px;
   display: flex;
-  gap: 8px;
+  gap: 24px;
   overflow-x: auto;
   padding-bottom: 4px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  -webkit-mask-image: linear-gradient(to right, #000 0%, #000 86%, transparent 100%);
+  mask-image: linear-gradient(to right, #000 0%, #000 86%, transparent 100%);
+}
+.handbook-tabs::-webkit-scrollbar {
+  display: none;
 }
 .handbook-tab {
   white-space: nowrap;
   text-decoration: none;
-  padding: 8px 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(15, 23, 42, 0.10);
-  background: rgba(255, 255, 255, 0.55);
-  color: rgba(15, 23, 42, 0.78);
-  font-size: 13px;
-  font-weight: 700;
+  padding: 8px 0;
+  border-radius: 0;
+  border: 0;
+  background: transparent;
+  color: rgba(15, 23, 42, 0.48);
+  font-size: 14px;
+  font-weight: 650;
+  position: relative;
 }
 .handbook-tab.is-active {
-  color: rgba(11, 61, 145, 0.95);
-  border-color: rgba(11, 61, 145, 0.20);
-  background: rgba(255, 255, 255, 0.78);
+  color: rgba(15, 23, 42, 0.92);
+  font-weight: 900;
+}
+.handbook-tab.is-active::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  transform: translateX(-50%);
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.95), rgba(0, 210, 255, 0.78) 45%, rgba(58, 123, 213, 0.65));
+  box-shadow:
+    0 0 0 1px rgba(11, 61, 145, 0.12),
+    0 10px 20px rgba(0, 210, 255, 0.16),
+    0 0 18px rgba(58, 123, 213, 0.16);
+}
+.handbook-tab.is-active::before {
+  content: "";
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 6px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(0, 210, 255, 0), rgba(0, 210, 255, 0.55), rgba(58, 123, 213, 0.55), rgba(58, 123, 213, 0));
+  filter: blur(0.2px);
 }
 
 .handbook-toolbar {
@@ -95,6 +179,11 @@
   justify-content: flex-end;
   gap: 10px;
 }
+
+.handbook-orbs--top {
+  margin-top: 0;
+  flex: 0 0 auto;
+}
 .handbook-orb-wrap {
   position: relative;
 }
@@ -105,14 +194,16 @@
   height: 44px;
   width: 44px;
   border-radius: 999px;
-  border: 1px solid rgba(11, 61, 145, 0.22);
-  background: rgba(255, 255, 255, 0.70);
-  color: rgba(11, 61, 145, 0.92);
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  background: rgba(255, 255, 255, 0.42);
+  color: rgba(15, 23, 42, 0.74);
+  box-shadow: none;
   backdrop-filter: blur(10px);
 }
 .handbook-orb-btn.is-on {
-  background: linear-gradient(135deg, rgba(0, 210, 255, 0.22), rgba(58, 123, 213, 0.22));
+  border-color: rgba(11, 61, 145, 0.20);
+  color: rgba(11, 61, 145, 0.90);
+  background: rgba(255, 255, 255, 0.55);
 }
 .handbook-orb-form {
   height: 44px;
@@ -123,14 +214,13 @@
   align-items: center;
   gap: 8px;
   border-radius: 999px;
-  border: 1px solid rgba(11, 61, 145, 0.22);
-  background: rgba(255, 255, 255, 0.80);
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  background: rgba(255, 255, 255, 0.55);
   padding: 0 12px;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
   backdrop-filter: blur(12px);
 }
 .handbook-orb-icon {
-  color: rgba(11, 61, 145, 0.92);
+  color: rgba(15, 23, 42, 0.72);
 }
 .handbook-orb-input {
   min-width: 0;
@@ -232,9 +322,17 @@
   color: rgba(15, 23, 42, 0.72);
 }
 .handbook-meta-num {
-  font-size: 11px;
-  color: rgba(15, 23, 42, 0.62);
-  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: rgba(15, 23, 42, 0.58);
+  font-weight: 800;
+}
+
+.handbook-meta-num svg {
+  flex: 0 0 auto;
+  opacity: 0.92;
 }
 .handbook-card-cover {
   width: 96px;
@@ -263,8 +361,9 @@
 .handbook-empty {
   padding: 18px 14px;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.62);
-  border: 1px dashed rgba(15, 23, 42, 0.14);
+  background: rgba(255, 255, 255, 0.52);
+  border: 0;
+  box-shadow: 0 16px 46px rgba(15, 23, 42, 0.05);
 }
 .handbook-empty-title {
   font-weight: 900;
@@ -273,6 +372,21 @@
   margin-top: 6px;
   font-size: 13px;
   color: rgba(15, 23, 42, 0.62);
+}
+
+.handbook-empty-illu {
+  margin-top: 12px;
+  height: 92px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.32;
+  filter: grayscale(1) contrast(0.9) brightness(1.2);
+}
+.handbook-empty-illu img {
+  height: 92px;
+  width: auto;
+  object-fit: contain;
 }
 
 .handbook-detail-top {
@@ -330,6 +444,9 @@
   flex-wrap: wrap;
 }
 .handbook-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   height: 36px;
   padding: 0 12px;
   border-radius: 999px;

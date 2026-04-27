@@ -12,8 +12,8 @@ import {
   getHandbookArticleDetail,
   listHandbookComments,
   toggleHandbookLike,
-  toggleHandbookSave,
 } from '../../api/handbook';
+import { Eye, FilePlus2, Heart, Share2 } from 'lucide-react';
 import { QK } from '../../query/queryKeys';
 import './Handbook.css';
 
@@ -109,9 +109,18 @@ function HandbookArticleDetail() {
 
           <div className="handbook-detail-meta">
             <span className="handbook-meta-chip">{a.tab}</span>
-            <span className="handbook-meta-num">👁 {a?.stats?.views ?? 0}</span>
-            <span className="handbook-meta-num">❤ {a?.stats?.likes ?? 0}</span>
-            <span className="handbook-meta-num">🔖 {a?.stats?.saves ?? 0}</span>
+            <span className="handbook-meta-num" aria-label={isZh ? '浏览量' : 'Views'}>
+              <Eye size={17} aria-hidden />
+              {a?.stats?.views ?? 0}
+            </span>
+            <span className="handbook-meta-num" aria-label={isZh ? '点赞' : 'Likes'}>
+              <Heart size={17} aria-hidden />
+              {a?.stats?.likes ?? 0}
+            </span>
+            <span className="handbook-meta-num" aria-label={isZh ? '收藏' : 'Saves'}>
+              <Bookmark size={17} aria-hidden />
+              {a?.stats?.saves ?? 0}
+            </span>
           </div>
 
           <div className="handbook-actions">
@@ -162,56 +171,18 @@ function HandbookArticleDetail() {
                 }
               }}
             >
-              ❤ {isZh ? '点赞' : 'Like'}
+              <Heart size={18} aria-hidden />
+              {isZh ? '点赞' : 'Like'}
             </button>
             <button
               type="button"
-              className={`handbook-action-btn ${a?.viewer?.saved ? 'is-on' : ''}`}
-              onClick={async () => {
-                if (!isLoggedIn) {
-                  Toast.error(isZh ? '请先登录' : 'Please login');
-                  return;
-                }
-                const prevSaved = !!a?.viewer?.saved;
-                const prevSaves = Number(a?.stats?.saves ?? 0);
-                const optimisticSaved = !prevSaved;
-                const optimisticSaves = optimisticSaved ? prevSaves + 1 : Math.max(0, prevSaves - 1);
-                queryClient.setQueryData(QK.handbookArticleDetail(articleId, tokenKey), (old) => {
-                  if (!old) return old;
-                  return {
-                    ...old,
-                    viewer: { ...(old.viewer || {}), saved: optimisticSaved },
-                    stats: { ...(old.stats || {}), saves: optimisticSaves },
-                  };
-                });
-                try {
-                  const out = await toggleHandbookSave(articleId);
-                  const finalSaved = out?.saved ?? optimisticSaved;
-                  if (finalSaved !== optimisticSaved) {
-                    const finalSaves = finalSaved ? prevSaves + 1 : Math.max(0, prevSaves - 1);
-                    queryClient.setQueryData(QK.handbookArticleDetail(articleId, tokenKey), (old) => {
-                      if (!old) return old;
-                      return {
-                        ...old,
-                        viewer: { ...(old.viewer || {}), saved: finalSaved },
-                        stats: { ...(old.stats || {}), saves: finalSaves },
-                      };
-                    });
-                  }
-                } catch (e) {
-                  queryClient.setQueryData(QK.handbookArticleDetail(articleId, tokenKey), (old) => {
-                    if (!old) return old;
-                    return {
-                      ...old,
-                      viewer: { ...(old.viewer || {}), saved: prevSaved },
-                      stats: { ...(old.stats || {}), saves: prevSaves },
-                    };
-                  });
-                  Toast.error(e?.message || (isZh ? '操作失败' : 'Failed'));
-                }
+              className="handbook-action-btn"
+              onClick={() => {
+                window.location.assign('/about/freshman-guide/course-review/new');
               }}
             >
-              🔖 {isZh ? '收藏' : 'Save'}
+              <FilePlus2 size={18} aria-hidden />
+              {isZh ? '新建课程评价' : 'New review'}
             </button>
             <button
               type="button"
@@ -231,7 +202,8 @@ function HandbookArticleDetail() {
                 }
               }}
             >
-              ↗ {isZh ? '分享' : 'Share'}
+              <Share2 size={18} aria-hidden />
+              {isZh ? '分享' : 'Share'}
             </button>
           </div>
 

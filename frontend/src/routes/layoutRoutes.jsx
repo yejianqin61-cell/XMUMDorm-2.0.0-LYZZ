@@ -17,9 +17,10 @@ import SquareFreshmanGuide from '../pages/SquareFreshmanGuide';
 import SquareErrands from '../pages/SquareErrands';
 import HandbookArticleDetail from '../pages/Handbook/HandbookArticleDetail';
 import HandbookEditor from '../pages/Handbook/HandbookEditor';
-import HandbookCollections from '../pages/Handbook/HandbookCollections';
+import HandbookMe from '../pages/Handbook/HandbookMe';
 import CourseReviewPage from '../pages/Handbook/CourseReviewPage';
 import CourseReviewDetail from '../pages/Handbook/CourseReviewDetail';
+import CourseReviewCreate from '../pages/Handbook/CourseReviewCreate';
 import Schedule from '../pages/Schedule';
 import Diary from '../pages/Diary';
 import Disclaimer from '../pages/Disclaimer';
@@ -67,10 +68,11 @@ export const layoutRoutes = (
     <Route path="about/second-hand" element={<SquareSecondHand />} />
     <Route path="about/trending" element={<SquareTrending />} />
     <Route path="about/freshman-guide" element={<SquareFreshmanGuide />} />
+    <Route path="about/freshman-guide/me" element={<HandbookMe />} />
     <Route path="about/freshman-guide/new" element={<HandbookEditor />} />
-    <Route path="about/freshman-guide/collections" element={<HandbookCollections />} />
     <Route path="about/freshman-guide/a/:id" element={<HandbookArticleDetail />} />
     <Route path="about/freshman-guide/course-review" element={<CourseReviewPage />} />
+    <Route path="about/freshman-guide/course-review/new" element={<CourseReviewCreate />} />
     <Route path="about/freshman-guide/course-review/:id" element={<CourseReviewDetail />} />
     <Route path="about/errands" element={<SquareErrands />} />
     <Route path="myzone" element={<MyZone />} />

@@ -23,7 +23,7 @@ function CourseReviewPage() {
   return (
     <div className="handbook-page">
       <div className="handbook-detail-top">
-        <Link to="/about/freshman-guide/collections" className="handbook-back">
+        <Link to="/about/freshman-guide" className="handbook-back">
           {isZh ? '← 返回' : '← Back'}
         </Link>
       </div>
@@ -50,9 +50,11 @@ function CourseReviewPage() {
                 {r.courseName} {r.teacher ? <span className="handbook-mini-sub-inline">· {r.teacher}</span> : null}
               </div>
               <div className="handbook-mini-sub">
-                {isZh ? '评分' : 'Rating'}: {r.rating} · {isZh ? '难度' : 'Difficulty'}: {r.difficulty} · {isZh ? '评论' : 'Comments'}:{' '}
-                {r?.stats?.comments ?? 0}
+                {isZh ? '评分' : 'Rating'}: {r.rating}
+                {Number.isFinite(Number(r.difficulty)) && Number(r.difficulty) > 0 ? ` · ${isZh ? '难度' : 'Difficulty'}: ${r.difficulty}` : ''}
+                {` · ${isZh ? '评论' : 'Comments'}: ${r?.stats?.comments ?? 0}`}
               </div>
+              {r.comment ? <div className="handbook-mini-sub" style={{ marginTop: 6 }}>{r.comment}</div> : null}
             </Link>
           ))}
         </div>

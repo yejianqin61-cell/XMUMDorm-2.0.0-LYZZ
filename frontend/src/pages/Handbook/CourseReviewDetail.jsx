@@ -46,8 +46,19 @@ function CourseReviewDetail() {
             {r.teacher ? <p className="handbook-detail-summary">{r.teacher}</p> : null}
             <div className="handbook-detail-meta">
               <span className="handbook-meta-chip">{isZh ? '评分' : 'Rating'}: {r.rating}</span>
-              <span className="handbook-meta-chip">{isZh ? '难度' : 'Difficulty'}: {r.difficulty}</span>
+              {Number.isFinite(Number(r.difficulty)) && Number(r.difficulty) > 0 ? (
+                <span className="handbook-meta-chip">{isZh ? '难度' : 'Difficulty'}: {r.difficulty}</span>
+              ) : null}
             </div>
+
+            {r.comment ? (
+              <section className="handbook-comments" style={{ marginTop: 16 }}>
+                <div className="handbook-comments-title">{isZh ? '评价正文' : 'Review'}</div>
+                <div className="handbook-comment">
+                  <div className="handbook-comment-text">{r.comment}</div>
+                </div>
+              </section>
+            ) : null}
 
             <section className="handbook-comments">
               <div className="handbook-comments-title">{isZh ? '评论' : 'Comments'}</div>

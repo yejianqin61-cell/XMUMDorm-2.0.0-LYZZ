@@ -2,10 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Search, User } from 'lucide-react';
+import { Bookmark, Eye, Heart, Search } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
-import { useAuth } from '../../context/AuthContext';
-import { Toast } from '../../context/ToastContext';
 import { getHandbookTabs, listHandbookArticles } from '../../api/handbook';
 import { QK } from '../../query/queryKeys';
 import './Handbook.css';
@@ -23,11 +21,9 @@ function tabLabel(t, isZh) {
 function HandbookHome() {
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
-  const { token, isLoggedIn } = useAuth();
   const qs = useQueryString();
 
   const tab = (qs.get('tab') || 'all').trim();
-  const mine = qs.get('mine') === '1';
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [keyword, setKeyword] = useState(() => (qs.get('q') || '').trim());
@@ -60,14 +56,13 @@ function HandbookHome() {
   }, [searchOpen]);
 
   const infinite = useInfiniteQuery({
-    queryKey: QK.handbookArticles({ tab, q: keyword, mine }),
+    queryKey: QK.handbookArticles({ tab, q: keyword }),
     queryFn: async ({ pageParam }) => {
       const data = await listHandbookArticles({
         tab,
         q: keyword,
         page: pageParam,
         pageSize: 10,
-        includeMine: mine && !!token,
       });
       return { list: data?.list || [], hasMore: !!data?.hasMore, page: pageParam };
     },
@@ -84,7 +79,65 @@ function HandbookHome() {
   return (
     <div className="handbook-page">
       <div className="handbook-hero">
-        <div className="handbook-hero-title">{isZh ? '新生手册' : 'Handbook'}</div>
+        <div className="handbook-hero-top">
+          <div className="handbook-hero-title-wrap">
+            <Link to="/about/freshman-guide/me" className="handbook-hero-me" aria-label={isZh ? '我的收藏' : 'My'}>
+              <Bookmark size={18} aria-hidden />
+            </Link>
+            <div className="handbook-hero-title">{isZh ? '新生手册' : 'Handbook'}</div>
+          </div>
+          <div className="handbook-orbs handbook-orbs--top">
+            <div className="handbook-orb-wrap" ref={searchWrapRef}>
+              <AnimatePresence initial={false} mode="wait">
+                {searchOpen ? (
+                  <motion.form
+                    key="hb-search-open"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const q = keyword.trim();
+                      setSearchOpen(false);
+                      window.location.assign(
+                        `/about/freshman-guide?tab=${encodeURIComponent(tab)}${q ? `&q=${encodeURIComponent(q)}` : ''}`
+                      );
+                    }}
+                    initial={{ width: 44, opacity: 0.98 }}
+                    animate={{ width: 176, opacity: 1 }}
+                    exit={{ width: 44, opacity: 0.98 }}
+                    transition={{ type: 'spring', stiffness: 520, damping: 38 }}
+                    style={{ maxWidth: 'min(190px, 58vw)' }}
+                    className="handbook-orb-form"
+                  >
+                    <div className="handbook-orb-form-inner">
+                      <Search size={18} className="handbook-orb-icon" aria-hidden />
+                      <input
+                        ref={searchInputRef}
+                        value={keyword}
+                        onChange={(e) => setKeyword(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Escape') setSearchOpen(false);
+                        }}
+                        placeholder={isZh ? '搜索…' : 'Search…'}
+                        className="handbook-orb-input"
+                        type="search"
+                      />
+                    </div>
+                  </motion.form>
+                ) : (
+                  <motion.button
+                    key="hb-search-closed"
+                    type="button"
+                    onClick={() => setSearchOpen(true)}
+                    whileTap={{ scale: 0.98 }}
+                    className="handbook-orb-btn"
+                    aria-label={isZh ? '搜索' : 'Search'}
+                  >
+                    <Search size={18} aria-hidden />
+                  </motion.button>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        </div>
         <div className="handbook-hero-sub">
           {isZh ? '指南 · 课程测评 · 生活技巧 · 避坑 · FAQ' : 'Guide · Reviews · Tips · FAQ'}
         </div>
@@ -92,8 +145,8 @@ function HandbookHome() {
           <Link to="/about/freshman-guide/new" className="handbook-btn handbook-btn--primary">
             {isZh ? '投稿/发布' : 'Write'}
           </Link>
-          <Link to="/about/freshman-guide/collections" className="handbook-btn handbook-btn--ghost">
-            {isZh ? '收藏与清单' : 'Collections'}
+          <Link to="/about/freshman-guide/course-review/new" className="handbook-btn handbook-btn--ghost">
+            {isZh ? '新建课程评价' : 'New course review'}
           </Link>
         </div>
       </div>
@@ -102,86 +155,12 @@ function HandbookHome() {
         {(tabsQuery.data || []).map((t) => (
           <Link
             key={t.slug}
-            to={`/about/freshman-guide?tab=${encodeURIComponent(t.slug)}&q=${encodeURIComponent(keyword || '')}${mine ? '&mine=1' : ''}`}
+            to={`/about/freshman-guide?tab=${encodeURIComponent(t.slug)}&q=${encodeURIComponent(keyword || '')}`}
             className={`handbook-tab ${t.slug === tab ? 'is-active' : ''}`}
           >
             {tabLabel(t, isZh)}
           </Link>
         ))}
-      </div>
-
-      <div className="handbook-toolbar">
-        <div className="handbook-orbs">
-          <div className="handbook-orb-wrap" ref={searchWrapRef}>
-            <AnimatePresence initial={false} mode="wait">
-              {searchOpen ? (
-                <motion.form
-                  key="hb-search-open"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const q = keyword.trim();
-                    setSearchOpen(false);
-                    window.location.assign(
-                      `/about/freshman-guide?tab=${encodeURIComponent(tab)}${q ? `&q=${encodeURIComponent(q)}` : ''}${mine ? '&mine=1' : ''}`
-                    );
-                  }}
-                  initial={{ width: 44, opacity: 0.98 }}
-                  animate={{ width: 176, opacity: 1 }}
-                  exit={{ width: 44, opacity: 0.98 }}
-                  transition={{ type: 'spring', stiffness: 520, damping: 38 }}
-                  style={{ maxWidth: 'min(190px, 58vw)' }}
-                  className="handbook-orb-form"
-                >
-                  <div className="handbook-orb-form-inner">
-                    <Search size={18} className="handbook-orb-icon" aria-hidden />
-                    <input
-                      ref={searchInputRef}
-                      value={keyword}
-                      onChange={(e) => setKeyword(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Escape') setSearchOpen(false);
-                      }}
-                      placeholder={isZh ? '搜索…' : 'Search…'}
-                      className="handbook-orb-input"
-                      type="search"
-                    />
-                  </div>
-                </motion.form>
-              ) : (
-                <motion.button
-                  key="hb-search-closed"
-                  type="button"
-                  onClick={() => setSearchOpen(true)}
-                  whileTap={{ scale: 0.98 }}
-                  className="handbook-orb-btn"
-                  aria-label={isZh ? '搜索' : 'Search'}
-                >
-                  <Search size={18} aria-hidden />
-                </motion.button>
-              )}
-            </AnimatePresence>
-          </div>
-
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.98 }}
-            className={`handbook-orb-btn ${mine ? 'is-on' : ''}`}
-            aria-label={isZh ? '我的投稿' : 'Mine'}
-            title={!isLoggedIn ? (isZh ? '请先登录' : 'Please login') : ''}
-            onClick={() => {
-              if (!isLoggedIn) {
-                Toast.error(isZh ? '请先登录' : 'Please login');
-                return;
-              }
-              const q = keyword.trim();
-              window.location.assign(
-                `/about/freshman-guide?tab=${encodeURIComponent(tab)}${q ? `&q=${encodeURIComponent(q)}` : ''}${mine ? '' : '&mine=1'}`
-              );
-            }}
-          >
-            <User size={18} aria-hidden />
-          </motion.button>
-        </div>
       </div>
 
       <div className="handbook-list">
@@ -192,9 +171,18 @@ function HandbookHome() {
               {a.summary ? <div className="handbook-card-summary">{a.summary}</div> : null}
               <div className="handbook-card-meta">
                 <span className="handbook-meta-chip">{a.tab || 'all'}</span>
-                <span className="handbook-meta-num">👁 {a?.stats?.views ?? 0}</span>
-                <span className="handbook-meta-num">❤ {a?.stats?.likes ?? 0}</span>
-                <span className="handbook-meta-num">🔖 {a?.stats?.saves ?? 0}</span>
+                <span className="handbook-meta-num" aria-label={isZh ? '浏览量' : 'Views'}>
+                  <Eye size={16} aria-hidden />
+                  {a?.stats?.views ?? 0}
+                </span>
+                <span className="handbook-meta-num" aria-label={isZh ? '点赞' : 'Likes'}>
+                  <Heart size={16} aria-hidden />
+                  {a?.stats?.likes ?? 0}
+                </span>
+                <span className="handbook-meta-num" aria-label={isZh ? '收藏' : 'Saves'}>
+                  <Bookmark size={16} aria-hidden />
+                  {a?.stats?.saves ?? 0}
+                </span>
               </div>
             </div>
             {a.cover ? (
@@ -220,6 +208,9 @@ function HandbookHome() {
           <div className="handbook-empty">
             <div className="handbook-empty-title">{isZh ? '暂无内容' : 'No articles yet'}</div>
             <div className="handbook-empty-sub">{isZh ? '试试切换标签或搜索关键词。' : 'Try switching tabs or searching.'}</div>
+            <div className="handbook-empty-illu" aria-hidden>
+              <img src="/gif/迪莫走猫步_爱给网_aigei_com.gif" alt="" />
+            </div>
           </div>
         ) : null}
       </div>

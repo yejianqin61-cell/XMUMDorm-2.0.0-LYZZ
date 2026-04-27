@@ -88,6 +88,14 @@ export function getMySavedHandbookArticles(params = {}) {
   return get(`/api/handbook/me/saved?${sp.toString()}`);
 }
 
+export function getMyCourseReviews(params = {}) {
+  const { page = 1, pageSize = 10 } = params;
+  const sp = new URLSearchParams();
+  sp.set('page', String(page));
+  sp.set('pageSize', String(pageSize));
+  return get(`/api/handbook/me/course-reviews?${sp.toString()}`);
+}
+
 export function listMyHandbookChecklists() {
   return get('/api/handbook/me/checklists');
 }

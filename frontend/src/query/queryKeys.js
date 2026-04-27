@@ -23,6 +23,7 @@ export const QK = {
   handbookArticleComments: (id) => ['handbook', 'article', id, 'comments'],
   handbookMeSaved: (tokenKey, pageSize) => ['handbook', 'me', 'saved', tokenKey, pageSize],
   handbookMeChecklists: (tokenKey) => ['handbook', 'me', 'checklists', tokenKey],
+  handbookMeCourseReviews: (tokenKey, pageSize) => ['handbook', 'me', 'courseReviews', tokenKey, pageSize],
   courseReviews: (params) => ['handbook', 'courseReviews', params || {}],
   courseReviewDetail: (id) => ['handbook', 'courseReview', id],
   courseReviewComments: (id) => ['handbook', 'courseReview', id, 'comments'],
