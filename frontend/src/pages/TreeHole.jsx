@@ -162,6 +162,8 @@ function TreeHole() {
       return lastPageParam + 1;
     },
     initialData: initialSessionData,
+    // 避免“切换筛选/重新拉取时清空列表导致白块闪烁”
+    placeholderData: (prev) => prev,
     staleTime: 5 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -301,6 +303,7 @@ function TreeHole() {
   const leftColumn = list.filter((_, i) => i % 2 === 0);
   const rightColumn = list.filter((_, i) => i % 2 === 1);
   const showInitialSkeleton = infinite.isPending && list.length === 0;
+  const showRefreshing = !showInitialSkeleton && infinite.isFetching && list.length > 0;
   const errorMsg = infinite.error ? getApiErrorMessage(infinite.error) : null;
 
   const gridRef = useRef(null);
@@ -421,6 +424,7 @@ function TreeHole() {
         </div>
       ) : (
         <div className="treehole-content">
+          {showRefreshing ? <div className="treehole-refreshing" aria-hidden /> : null}
           {USE_VIRTUAL_MASONRY ? (
             <div className="treehole-grid treehole-grid--perf" ref={gridRef}>
               <VirtualColumn

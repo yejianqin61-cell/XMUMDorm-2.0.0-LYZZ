@@ -72,6 +72,31 @@
   padding: 10px 12px calc(var(--tabbar-height, 72px) + var(--safe-bottom, 0px) + 20px);
 }
 
+.treehole-refreshing {
+  position: sticky;
+  top: 6px;
+  z-index: 3;
+  height: 3px;
+  border-radius: 999px;
+  margin: 6px 2px 8px;
+  background: linear-gradient(
+    90deg,
+    rgba(59, 130, 246, 0.0) 0%,
+    rgba(59, 130, 246, 0.55) 25%,
+    rgba(16, 185, 129, 0.55) 55%,
+    rgba(59, 130, 246, 0.0) 100%
+  );
+  background-size: 200% 100%;
+  animation: treeholeRefreshing 0.9s linear infinite;
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+@keyframes treeholeRefreshing {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 /* 两列错落，可滚动 */
 .treehole-grid {
   display: flex;
