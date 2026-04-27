@@ -247,6 +247,26 @@ function PostDetail() {
     try {
       await deletePost(postId);
       Toast.success('Deleted');
+      // 立刻从瀑布流缓存里移除该帖（避免回到首页还看到已删除的卡片）
+      queryClient.setQueriesData(
+        {
+          predicate: (q) => {
+            const key = q.queryKey || [];
+            return key[0] === 'posts' && key[1] === 'infinite' && key[2] === tokenKey;
+          },
+        },
+        (old) => {
+          if (!old || !old.pages || !Array.isArray(old.pages)) return old;
+          const nextPages = old.pages.map((pg) => {
+            const list = Array.isArray(pg.list) ? pg.list : [];
+            const nextList = list.filter((it) => !it || it.id !== postId);
+            if (nextList.length === list.length) return pg;
+            return { ...pg, list: nextList };
+          });
+          return { ...old, pages: nextPages };
+        }
+      );
+      queryClient.removeQueries({ queryKey: QK.postDetail(postId, tokenKey) });
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       navigate('/', { replace: true });
     } catch (err) {
