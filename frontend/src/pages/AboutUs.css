@@ -20,26 +20,204 @@
   background: transparent;
 }
 
+/* 竖向圆形圣光：Circular Sunbeam sweep */
+.circular-flare {
+  position: absolute;
+  inset: 0;
+  z-index: 49; /* 在扫光层之下，避免抢戏 */
+  pointer-events: none;
+  opacity: 0;
+  /* 光束本体：圆形晕 + 暖色边缘 */
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.40) 0%,
+    rgba(255, 240, 200, 0.10) 40%,
+    transparent 70%
+  );
+  background-repeat: no-repeat;
+  background-size: 70vmin 70vmin;
+  background-position: 50% 0%;
+  mix-blend-mode: screen;
+  backdrop-filter: brightness(1.08);
+  -webkit-backdrop-filter: brightness(1.08);
+  transform: translate3d(0, -50%, 0) scale(1);
+  animation: squareSunSweep 15s linear infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes squareSunSweep {
+  /* 前 10s：扫过（15s 总周期 = 10s sweep + 5s delay） */
+  0% {
+    transform: translate3d(0, -50%, 0) scale(1);
+    opacity: 0;
+  }
+  13.333% {
+    /* 2s 左右达到可见峰值（对齐“20% opacity 0.6”的意图） */
+    opacity: 0.6;
+  }
+  66.666% {
+    /* 10s 结束：落地扩散并淡出 */
+    transform: translate3d(0, 150%, 0) scale(1.5);
+    opacity: 0;
+  }
+  /* 后 5s：停顿（delay） */
+  100% {
+    transform: translate3d(0, 150%, 0) scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* 移动端性能：避免在低端机上高频 backdrop-filter 造成卡顿 */
+@media (hover: none) and (pointer: coarse) {
+  .circular-flare {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    opacity: 0; /* 交给混合模式+渐变本体，避免发灰 */
+    animation-name: squareSunSweepMobile;
+  }
+  @keyframes squareSunSweepMobile {
+    0% {
+      transform: translate3d(0, -50%, 0) scale(1);
+      opacity: 0;
+    }
+    13.333% {
+      opacity: 0.5;
+    }
+    66.666% {
+      transform: translate3d(0, 150%, 0) scale(1.5);
+      opacity: 0;
+    }
+    100% {
+      transform: translate3d(0, 150%, 0) scale(1.5);
+      opacity: 0;
+    }
+  }
+}
+
+/* 全屏扫光：Sunlight Glint / Scanning Shine */
+.sun-glint {
+  position: absolute;
+  inset: 0;
+  z-index: 50; /* 覆盖在一切之上，但不挡点击 */
+  pointer-events: none;
+  opacity: 0.55;
+  background-image:
+    /* Prism edge：极细彩色棱镜边缘（很克制） */
+    linear-gradient(
+      110deg,
+      transparent 39%,
+      rgba(255, 80, 80, 0.05) 41%,
+      rgba(255, 186, 60, 0.06) 43%,
+      rgba(255, 255, 255, 0.30) 50%,
+      rgba(60, 214, 255, 0.06) 57%,
+      rgba(129, 87, 255, 0.05) 59%,
+      transparent 61%
+    );
+  background-size: 260% 100%;
+  background-position: -120% 0%;
+  mix-blend-mode: overlay;
+  animation: squareShineSweep var(--glint-speed, 8s) ease-in-out infinite;
+  will-change: background-position, opacity;
+}
+
+@keyframes squareShineSweep {
+  /* 停 3s 左右：0%~38% 维持在左侧外 */
+  0% {
+    background-position: -120% 0%;
+    opacity: 0.46;
+  }
+  38% {
+    background-position: -120% 0%;
+    opacity: 0.46;
+  }
+  /* 扫过：38%~70% 走完整个画面 */
+  70% {
+    background-position: 220% 0%;
+    opacity: 0.62;
+  }
+  /* 扫完后淡回去，进入下一次等待 */
+  100% {
+    background-position: 220% 0%;
+    opacity: 0.46;
+  }
+}
+
 .square-map-bg {
   position: absolute;
   inset: 0;
-  background-image: url('/square/background.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  z-index: 0;
 }
 
-.square-map-bg::after {
-  content: '';
+.square-map-bgimg {
   position: absolute;
   inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  user-select: none;
+  pointer-events: none;
+  transform: translateZ(0);
+}
+
+.square-map-bg-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
   background: linear-gradient(to bottom, rgba(2, 6, 23, 0.10), rgba(2, 6, 23, 0.04) 30%, rgba(2, 6, 23, 0.08));
   pointer-events: none;
 }
 
+.square-svg-filters {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.square-map-sunshine {
+  position: absolute;
+  inset: -20% -40%;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.72;
+  background:
+    linear-gradient(
+      115deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.12) 22%,
+      rgba(255, 255, 255, 0.26) 34%,
+      rgba(255, 255, 255, 0.10) 46%,
+      rgba(255, 255, 255, 0) 60%
+    );
+  /* soft-light 在部分移动端几乎不可见，改为更“稳”的提亮叠加 */
+  mix-blend-mode: screen;
+  filter: blur(0.6px);
+  transform: translate3d(-18%, 0, 0) rotate(-2deg);
+  animation: squareSunlightSweep 14s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes squareSunlightSweep {
+  0% {
+    transform: translate3d(-18%, 0, 0) rotate(-2deg);
+    opacity: 0.38;
+  }
+  50% {
+    transform: translate3d(18%, 0, 0) rotate(-2deg);
+    opacity: 0.62;
+  }
+  100% {
+    transform: translate3d(-18%, 0, 0) rotate(-2deg);
+    opacity: 0.38;
+  }
+}
+
 .square-sticker {
   position: absolute;
-  z-index: 2;
+  z-index: 4;
   padding: 0;
   border: none;
   background: transparent;
@@ -49,6 +227,107 @@
   text-decoration: none;
   transform: translateZ(0);
   outline: none;
+}
+
+/* ===== Square clouds (复刻 Eat 云层漂移) ===== */
+.square-sky-container {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 38%;
+  z-index: 3; /* 背景之上、贴图之下 */
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.square-cloud {
+  position: absolute;
+  left: -12%;
+  width: 180px;
+  height: auto;
+  opacity: 0.6;
+  transform: translateX(-10%);
+  animation-name: squareCloudDrift;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-fill-mode: both;
+  pointer-events: none;
+  filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.4));
+  will-change: transform;
+}
+
+@keyframes squareCloudDrift {
+  0% {
+    transform: translateX(-10%);
+  }
+  100% {
+    transform: translateX(110vw);
+  }
+}
+
+.square-cloud-fast {
+  opacity: 0.8;
+  width: 220px;
+  animation-duration: 25s;
+  transform: scale(1.2);
+}
+
+.square-cloud-slow {
+  opacity: 0.5;
+  width: 170px;
+  animation-duration: 45s;
+  transform: scale(0.8);
+}
+
+.square-cloud-distant {
+  opacity: 0.3;
+  width: 140px;
+  animation-duration: 80s;
+  transform: scale(0.5);
+  filter: blur(2px) drop-shadow(0 0 15px rgba(255, 255, 255, 0.35));
+}
+
+/* 多行：每朵云不同 top + delay，避免同步 */
+.square-cloud-r1-a {
+  top: 8%;
+  animation-delay: -41s;
+}
+.square-cloud-r1-b {
+  top: 14%;
+  animation-delay: -18s;
+}
+.square-cloud-r1-c {
+  top: 10%;
+  animation-delay: -6s;
+}
+
+.square-cloud-r2-a {
+  top: 22%;
+  animation-delay: -63s;
+  opacity: 0.26;
+}
+.square-cloud-r2-b {
+  top: 26%;
+  animation-delay: -27s;
+  opacity: 0.45;
+}
+.square-cloud-r2-c {
+  top: 20%;
+  animation-delay: -11s;
+  opacity: 0.72;
+}
+
+.square-cloud-r3-a {
+  top: 34%;
+  animation-delay: -77s;
+  opacity: 0.22;
+  filter: blur(2.4px) drop-shadow(0 0 15px rgba(255, 255, 255, 0.32));
+}
+.square-cloud-r3-b {
+  top: 30%;
+  animation-delay: -35s;
+  opacity: 0.4;
 }
 
 .square-sticker--editable {
@@ -126,6 +405,709 @@
   filter: drop-shadow(0 26px 48px rgba(2, 6, 23, 0.42));
 }
 
+/* ===== Second-hand：Treasure Pop-up（宝贝冒泡） ===== */
+.square-secondhand-treasures {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 12;
+}
+
+.square-treasure {
+  position: absolute;
+  bottom: 10%;
+  font-size: var(--size, 16px);
+  line-height: 1;
+  opacity: var(--alpha, 0.55);
+  z-index: var(--z, 8);
+  transform: translate3d(0, 0, 0) scale(0);
+  animation: squareTreasureBubble var(--dur, 2s) ease-out forwards;
+  will-change: transform, opacity;
+  /* 更清晰、更显眼：锐利轮廓 + 亮金/银白辉光 */
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.55)) drop-shadow(0 0 14px rgba(255, 223, 137, 0.32));
+  text-shadow:
+    0 1px 0 rgba(2, 6, 23, 0.22),
+    0 0 10px rgba(255, 255, 255, 0.25);
+}
+
+@keyframes squareTreasureBubble {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0);
+    opacity: 0;
+  }
+  12% {
+    transform: translate3d(0, -8px, 0) scale(1);
+    opacity: var(--alpha, 0.55);
+  }
+  70% {
+    transform: translate3d(calc(var(--drift, 0px) * 0.65), calc(var(--rise, 80px) * -0.75), 0) scale(1.02);
+    opacity: var(--alpha, 0.55);
+  }
+  88% {
+    transform: translate3d(var(--drift, 0px), calc(var(--rise, 80px) * -1), 0) scale(1.12);
+    opacity: 0.12;
+  }
+  100% {
+    transform: translate3d(var(--drift, 0px), calc(var(--rise, 80px) * -1), 0) scale(1.2);
+    opacity: 0;
+  }
+}
+
+/* ===== Trending：低语 + 弹幕 + hover 扫光 ===== */
+.square-sticker[data-id='trending'] {
+  overflow: hidden; /* 关键：弹幕在边缘“消失” */
+  border-radius: 14px;
+  --danmaku-speed: 7s;
+}
+
+.square-sticker--link[data-id='trending']:hover {
+  transform: scale(1.03);
+}
+
+.square-sticker--link[data-id='trending']:hover {
+  --danmaku-speed: 5.5s; /* 高参与度：hover 加速 */
+}
+
+/* hover 扫光：只在 hover 时出现 */
+.square-sticker--link[data-id='trending']::after {
+  content: '';
+  position: absolute;
+  inset: -20% -40%;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.26) 50%,
+    transparent 60%
+  );
+  mix-blend-mode: overlay;
+  transform: translate3d(-18%, 0, 0) rotate(-2deg);
+  will-change: transform, opacity;
+}
+
+.square-sticker--link[data-id='trending']:hover::after {
+  opacity: 0.7;
+  animation: squareTrendingGlint 1.1s ease-in-out infinite;
+}
+
+@keyframes squareTrendingGlint {
+  0% {
+    transform: translate3d(-22%, 0, 0) rotate(-2deg);
+    opacity: 0.35;
+  }
+  55% {
+    transform: translate3d(22%, 0, 0) rotate(-2deg);
+    opacity: 0.75;
+  }
+  100% {
+    transform: translate3d(22%, 0, 0) rotate(-2deg);
+    opacity: 0;
+  }
+}
+
+/* Whisper：嘴边 2-3 个小发光点，上飘 5px 后淡出 */
+.square-trending-whisper {
+  position: absolute;
+  left: 58%;
+  top: 38%;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  pointer-events: none;
+  z-index: 6;
+}
+
+.square-trending-whisper::before,
+.square-trending-whisper::after {
+  content: '';
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.22), 0 0 18px rgba(255, 223, 137, 0.18);
+  opacity: 0;
+  transform: translate3d(0, 0, 0) scale(0.9);
+  animation: squareTrendingWhisper 1.8s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.square-trending-whisper::after {
+  width: 5px;
+  height: 5px;
+  left: -10px;
+  top: 8px;
+  animation-delay: 0.6s;
+  background: rgba(255, 223, 137, 0.45);
+}
+
+.square-trending-whisper {
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+}
+
+.square-trending-whisper {
+  /* 第三颗：用 box-shadow 伪装 */
+  animation: squareTrendingWhisper3 1.8s ease-in-out infinite;
+}
+
+@keyframes squareTrendingWhisper {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 2px, 0) scale(0.9);
+  }
+  25% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, -5px, 0) scale(1);
+  }
+}
+
+@keyframes squareTrendingWhisper3 {
+  0% {
+    box-shadow: 6px 10px 0 rgba(255, 255, 255, 0.0);
+  }
+  25% {
+    box-shadow: 6px 10px 0 rgba(255, 255, 255, 0.40);
+  }
+  100% {
+    box-shadow: 6px 5px 0 rgba(255, 255, 255, 0.0);
+  }
+}
+
+/* Danmaku：从左进右出，右侧液态淡出（mask） */
+.square-trending-danmaku {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 10%;
+  height: 54%;
+  pointer-events: none;
+  z-index: 6;
+  /* 右侧淡出遮罩：液态消失感 */
+  -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 1) 80%, rgba(0, 0, 0, 0) 100%);
+  mask-image: linear-gradient(to right, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 1) 80%, rgba(0, 0, 0, 0) 100%);
+}
+
+.square-trending-danmaku-line {
+  position: absolute;
+  left: 0;
+  transform: translateX(-110%);
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.88);
+  background: rgba(2, 6, 23, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  filter: drop-shadow(0 10px 18px rgba(2, 6, 23, 0.18));
+  animation: squareDanmakuMove var(--danmaku-speed) linear infinite;
+  will-change: transform, opacity;
+}
+
+.square-trending-danmaku-line--a {
+  top: 6%;
+  animation-delay: -0.3s;
+}
+.square-trending-danmaku-line--b {
+  top: 32%;
+  animation-delay: -2.2s;
+}
+.square-trending-danmaku-line--c {
+  top: 18%;
+  animation-delay: -4.1s;
+}
+
+@keyframes squareDanmakuMove {
+  0% {
+    transform: translateX(-110%);
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  92% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(110%);
+    opacity: 0;
+  }
+}
+
+/* ===== Club：社团招新日动效 ===== */
+.square-sticker[data-id='club'] {
+  /* 喇叭口大概位置（可微调） */
+  --club-mega-x: 78%;
+  --club-mega-y: 36%;
+  --club-wave: 1.5s;
+}
+
+/* Collective excitement：整体轻微弹跳 */
+.square-sticker[data-id='club'] .square-sticker-img {
+  animation: squareClubBounce 1.1s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes squareClubBounce {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(2px);
+  }
+}
+
+/* Soundwave：3 圈声波（从喇叭口扩散） */
+.square-club-soundwaves {
+  position: absolute;
+  left: var(--club-mega-x);
+  top: var(--club-mega-y);
+  width: 10px;
+  height: 10px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.square-club-soundwaves::before,
+.square-club-soundwaves::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  opacity: 0;
+  transform: scale(0.5);
+  animation: squareClubWave var(--club-wave) ease-out infinite;
+  filter: drop-shadow(0 0 18px rgba(255, 223, 137, 0.18));
+}
+
+.square-club-soundwaves::after {
+  animation-delay: 0.5s;
+  border-color: rgba(255, 223, 137, 0.40);
+}
+
+/* 第三圈：用 box-shadow 模拟一圈额外环 */
+.square-club-soundwaves {
+  box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+}
+
+.square-sticker[data-id='club'] .square-club-soundwaves {
+  animation: squareClubWave3 var(--club-wave) ease-out infinite;
+}
+
+@keyframes squareClubWave {
+  0% {
+    opacity: 0.6;
+    transform: scale(0.5);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2);
+  }
+}
+
+@keyframes squareClubWave3 {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 223, 137, 0.45);
+  }
+  100% {
+    box-shadow: 0 0 0 22px rgba(255, 223, 137, 0);
+  }
+}
+
+/* Confetti：轻量彩纸碎屑（方块） */
+.square-club-confetti {
+  position: absolute;
+  inset: -6%;
+  pointer-events: none;
+  z-index: 2;
+  overflow: hidden;
+}
+
+.square-club-confetti::before,
+.square-club-confetti::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 10%;
+  width: 6px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.0);
+  transform: translateX(-50%);
+  opacity: 0.9;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.12));
+  animation: squareClubConfettiA 2.8s linear infinite;
+  will-change: transform, opacity;
+  box-shadow:
+    -42px 0 0 rgba(56, 189, 248, 0.55),
+    -12px -18px 0 rgba(250, 204, 21, 0.65),
+    16px -8px 0 rgba(99, 102, 241, 0.55),
+    44px -22px 0 rgba(34, 197, 94, 0.50),
+    62px 6px 0 rgba(244, 63, 94, 0.45),
+    -64px -10px 0 rgba(255, 223, 137, 0.55);
+}
+
+.square-club-confetti::after {
+  top: 0%;
+  width: 5px;
+  height: 5px;
+  animation: squareClubConfettiB 3.4s linear infinite;
+  animation-delay: -1.3s;
+  box-shadow:
+    -54px 0 0 rgba(244, 63, 94, 0.40),
+    -22px -12px 0 rgba(56, 189, 248, 0.42),
+    10px -6px 0 rgba(255, 223, 137, 0.62),
+    32px -18px 0 rgba(34, 197, 94, 0.45),
+    58px -10px 0 rgba(99, 102, 241, 0.48);
+}
+
+@keyframes squareClubConfettiA {
+  0% {
+    opacity: 0;
+    transform: translate3d(-50%, -10px, 0) rotate(0deg);
+  }
+  15% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(-50%, 72px, 0) rotate(180deg);
+  }
+}
+
+@keyframes squareClubConfettiB {
+  0% {
+    opacity: 0;
+    transform: translate3d(-50%, -18px, 0) rotate(20deg);
+  }
+  20% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(-50%, 80px, 0) rotate(-200deg);
+  }
+}
+
+/* Speech bubble：hover 时弹出随机标语 */
+.square-club-bubble {
+  position: absolute;
+  left: 56%;
+  top: 8%;
+  transform: translate(-50%, -110%) scale(0.96);
+  transform-origin: 50% 100%;
+  padding: 7px 10px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  color: rgba(11, 17, 34, 0.86);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  box-shadow: 0 14px 30px rgba(2, 6, 23, 0.18);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10;
+  animation: squareClubBubblePop 220ms cubic-bezier(0.2, 0.9, 0.2, 1.1) both;
+}
+
+.square-club-bubble::after {
+  content: '';
+  position: absolute;
+  left: 18px;
+  bottom: -6px;
+  width: 12px;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.86);
+  border-left: 1px solid rgba(255, 255, 255, 0.34);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.34);
+  transform: rotate(45deg);
+  filter: blur(0.1px);
+}
+
+@keyframes squareClubBubblePop {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -110%) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -110%) scale(1);
+  }
+}
+
+/* ===== Freshman：Liquid Aura（高端液态光晕） ===== */
+.square-sticker[data-id='freshman'] {
+  --fresh-aura: rgba(255, 223, 137, 0.4);
+  --fresh-breathe: 4s;
+}
+
+/* Divine glow：用 ::after 克隆一层同图 + SVG filter，再做呼吸 */
+.square-sticker[data-id='freshman']::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background-image: var(--sprite-url);
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+  filter: url(#freshmanAura);
+  opacity: 0.55;
+  animation: squareFreshmanBreathe var(--fresh-breathe) ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes squareFreshmanBreathe {
+  0% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.01);
+  }
+  100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+}
+
+/* Orbital light ring：放在角色背后，轻微 3D 倾斜旋转 */
+.square-sticker[data-id='freshman']::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 118%;
+  height: 118%;
+  transform: translate(-50%, -50%) rotateX(75deg) rotateZ(0deg);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  /* 金色为主，白色做冷光点缀 */
+  border-top-color: rgba(255, 223, 137, 0.58);
+  border-right-color: rgba(255, 223, 137, 0.34);
+  border-left-color: rgba(255, 255, 255, 0.18);
+  opacity: 0.65;
+  filter: drop-shadow(0 0 16px rgba(255, 223, 137, 0.34)) drop-shadow(0 0 28px rgba(255, 223, 137, 0.24))
+    drop-shadow(0 0 14px rgba(255, 255, 255, 0.10));
+  animation: squareFreshmanRing 10s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes squareFreshmanRing {
+  0% {
+    transform: translate(-50%, -50%) rotateX(75deg) rotateZ(0deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotateX(75deg) rotateZ(360deg);
+  }
+}
+
+/* 让本体图片在光晕之上 */
+.square-sticker[data-id='freshman'] .square-sticker-img {
+  position: relative;
+  z-index: 1;
+}
+
+/* Floating knowledge particles：基座轻量粒子上升（不走 JS，性能友好） */
+.square-freshman-particles {
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  transform: translate(-50%, -10px);
+  background: rgba(255, 255, 255, 0.0);
+  opacity: 1;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.square-freshman-particles::before,
+.square-freshman-particles::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 223, 137, 0.98);
+  box-shadow:
+    10px 0 0 rgba(255, 223, 137, 0.92),
+    -12px 2px 0 rgba(255, 223, 137, 0.72),
+    18px 6px 0 rgba(255, 223, 137, 0.55);
+  filter: drop-shadow(0 0 12px rgba(255, 223, 137, 0.40));
+  opacity: 0;
+  transform: translate3d(0, 0, 0) scale(0.9);
+  animation: squareFreshmanSparks 2.2s ease-out infinite;
+  will-change: transform, opacity;
+}
+
+.square-freshman-particles::after {
+  animation-delay: 1.05s;
+  box-shadow:
+    -10px 0 0 rgba(255, 223, 137, 0.88),
+    12px 3px 0 rgba(255, 223, 137, 0.78),
+    -18px 8px 0 rgba(255, 223, 137, 0.52);
+}
+
+@keyframes squareFreshmanSparks {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.9);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, -56px, 0) scale(1.02);
+  }
+}
+
+/* Focused attention：hover/按下时让角色更“跳”出来 */
+.square-sticker--link[data-id='freshman']:hover .square-sticker-img,
+.square-sticker--link[data-id='freshman']:active .square-sticker-img {
+  filter: saturate(1.22) contrast(1.18) drop-shadow(0 16px 28px rgba(2, 6, 23, 0.28));
+}
+
+.square-sticker--link[data-id='freshman']:hover::after,
+.square-sticker--link[data-id='freshman']:active::after {
+  opacity: 0.9;
+}
+
+/* Errands：高速奔跑体（仅对这一个贴图生效） */
+.square-sticker[data-id='errands'] {
+  --errands-bob: 0.2s;
+  --errands-trail: rgba(56, 189, 248, 0.42);
+}
+
+.square-sticker[data-id='errands'] .square-sticker-img {
+  animation: squareErrandsBob var(--errands-bob) ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Speed trail：用伪元素“克隆”贴图，做模糊残影回拉 */
+.square-sticker[data-id='errands']::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--sprite-url);
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+  opacity: 0.3;
+  filter: blur(8px) drop-shadow(0 0 16px var(--errands-trail));
+  transform-origin: 50% 50%;
+  animation: squareErrandsTrail 0.5s linear infinite;
+  pointer-events: none;
+  will-change: transform, opacity, filter;
+}
+
+/* Impact particles：脚底 3-4 颗小粒子，落点瞬间爆一下 */
+.square-sticker[data-id='errands']::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  transform: translate(-50%, -10px);
+  background: rgba(250, 204, 21, 0.0);
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  opacity: 0;
+  pointer-events: none;
+  animation: squareErrandsParticles var(--errands-bob) ease-in-out infinite;
+  will-change: transform, opacity, box-shadow;
+}
+
+@keyframes squareErrandsBob {
+  0% {
+    transform: translateY(-3px);
+  }
+  50% {
+    transform: translateY(1px);
+  }
+  100% {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes squareErrandsTrail {
+  0% {
+    transform: translateX(0px) scale(1);
+    opacity: 0.32;
+  }
+  35% {
+    transform: translateX(-30px) scale(0.96);
+    opacity: 0.14;
+  }
+  100% {
+    transform: translateX(-30px) scale(0.95);
+    opacity: 0;
+  }
+}
+
+@keyframes squareErrandsParticles {
+  0%,
+  40% {
+    opacity: 0;
+    transform: translate(-50%, -10px) scale(0.9);
+    box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  }
+  /* 贴图落到最低点附近：爆一下 */
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -8px) scale(1);
+    box-shadow:
+      -10px 10px 0 rgba(56, 189, 248, 0.55),
+      -5px 14px 0 rgba(250, 204, 21, 0.60),
+      6px 12px 0 rgba(99, 102, 241, 0.55),
+      -14px 16px 0 rgba(56, 189, 248, 0.35);
+  }
+  70% {
+    opacity: 0;
+    transform: translate(-50%, -6px) scale(0.95);
+    box-shadow:
+      -18px 22px 0 rgba(56, 189, 248, 0.0),
+      -10px 26px 0 rgba(250, 204, 21, 0.0),
+      14px 22px 0 rgba(99, 102, 241, 0.0),
+      -24px 30px 0 rgba(56, 189, 248, 0.0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -10px) scale(0.9);
+    box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  }
+}
+
+/* Hover：Turbo Boost（频率×2 + 拖影更热、更亮） */
+.square-sticker--link[data-id='errands']:hover {
+  --errands-bob: 0.1s;
+  --errands-trail: rgba(249, 115, 22, 0.55);
+}
+
+.square-sticker--link[data-id='errands']:hover::after {
+  opacity: 0.38;
+  filter: blur(9px) drop-shadow(0 0 18px var(--errands-trail));
+}
+
 /* 手机端（无 hover）加强点击反馈 */
 @media (hover: none) and (pointer: coarse) {
   .square-sticker--link:active {
@@ -140,23 +1122,53 @@
 .square-sticker-label {
   position: absolute;
   left: 50%;
-  top: 100%;
-  transform: translate(-50%, 2px);
-  padding: 4px 9px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.86);
-  border: 1px solid rgba(255, 255, 255, 0.34);
-  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.18);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  color: rgba(11, 17, 34, 0.86);
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  color: rgba(255, 255, 255, 0.96);
+  font-family: ui-serif, "Playfair Display", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.78)) drop-shadow(0 14px 26px rgba(2, 6, 23, 0.28));
   pointer-events: none;
   user-select: none;
   white-space: nowrap;
+  z-index: 20; /* 永远在贴图最前：避免被光晕/光环压住 */
+}
+
+/* Trending：标签下移 100px */
+.square-sticker[data-id='trending'] .square-sticker-label {
+  top: calc(50% + 50px);
+}
+
+.square-sticker-label-text {
+  position: relative;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(2, 6, 23, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.square-sticker--link:hover .square-sticker-label {
+  transform: translate(-50%, calc(-50% - 2px));
+  filter: brightness(1.12) drop-shadow(0 0 8px rgba(255, 255, 255, 0.86)) drop-shadow(0 18px 30px rgba(2, 6, 23, 0.30));
+}
+
+.square-sticker--link:active .square-sticker-label {
+  transform: translate(-50%, calc(-50% - 1px));
+  filter: brightness(1.18) drop-shadow(0 0 9px rgba(255, 255, 255, 0.92)) drop-shadow(0 22px 38px rgba(2, 6, 23, 0.36));
 }
 
 .square-map--edit .square-map-bg::after {
+  /* legacy selector left intentionally blank */
+}
+
+.square-map--edit .square-map-bg-overlay {
   background: linear-gradient(to bottom, rgba(2, 6, 23, 0.22), rgba(2, 6, 23, 0.10) 30%, rgba(2, 6, 23, 0.16));
 }
 

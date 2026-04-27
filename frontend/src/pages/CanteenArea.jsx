@@ -4,39 +4,137 @@ import { Link } from 'react-router-dom';
 import './CanteenArea.css';
 
 /** 食堂地图页：背景图 + 建筑贴图；编辑模式支持拖拽并复制配置 */
+function clamp(v, min, max) {
+  return Math.min(max, Math.max(min, v));
+}
+
+function getCoverTransform(containerW, containerH, imgW, imgH) {
+  if (!containerW || !containerH || !imgW || !imgH) {
+    return { scale: 1, offsetX: 0, offsetY: 0, drawW: 0, drawH: 0 };
+  }
+  const scale = Math.max(containerW / imgW, containerH / imgH);
+  const drawW = imgW * scale;
+  const drawH = imgH * scale;
+  const offsetX = (containerW - drawW) / 2;
+  const offsetY = (containerH - drawH) / 2;
+  return { scale, offsetX, offsetY, drawW, drawH };
+}
+
+function containerPctRectToImgPctRect(rect, cover, containerW, containerH, imgW, imgH) {
+  const leftPct = Number(rect?.left ?? 0);
+  const topPct = Number(rect?.top ?? 0);
+  const widthPct = Number(rect?.width ?? 20);
+  const xPx = (leftPct / 100) * containerW;
+  const yPx = (topPct / 100) * containerH;
+  const wPx = (widthPct / 100) * containerW;
+
+  const denomW = imgW * cover.scale;
+  const denomH = imgH * cover.scale;
+  const x = ((xPx - cover.offsetX) / denomW) * 100;
+  const y = ((yPx - cover.offsetY) / denomH) * 100;
+  const w = (wPx / denomW) * 100;
+
+  return {
+    x: clamp(x, 0, 100),
+    y: clamp(y, 0, 100),
+    w: clamp(w, 2, 100),
+    space: 'img',
+  };
+}
+
+function imgPctRectToStyle(rect, cover, imgW, imgH) {
+  const x = Number(rect?.x ?? 0);
+  const y = Number(rect?.y ?? 0);
+  const w = Number(rect?.w ?? 20);
+  const leftPx = cover.offsetX + (x / 100) * imgW * cover.scale;
+  const topPx = cover.offsetY + (y / 100) * imgH * cover.scale;
+  const widthPx = (w / 100) * imgW * cover.scale;
+  return { left: `${leftPx}px`, top: `${topPx}px`, width: `${widthPx}px` };
+}
+
 function CanteenArea() {
   const location = useLocation();
   const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const editMode = params.get('edit') === '1';
   const mapRef = useRef(null);
+  const bgImgRef = useRef(null);
+  const [cover, setCover] = useState({ scale: 1, offsetX: 0, offsetY: 0, drawW: 0, drawH: 0 });
+  const [imgSize, setImgSize] = useState({ w: 0, h: 0 });
 
-  // 单位：百分比（相对于背景容器宽高），以适配不同屏幕
+  // 注意：为了解决不同手机宽高比导致的 cover 裁切偏移，本页的贴图坐标最终统一存为“背景原图坐标系百分比”
+  // - rect.space === 'img'：x/y/w 是相对背景原图的百分比（推荐，跨设备一致）
+  // - rect.space 为空：历史数据（相对容器百分比），会在首次加载时自动迁移为 img 坐标
   const defaultStickers = useMemo(
     () => [
-      { id: 'rank', label: 'Rank', to: '/eat/rankings', src: '/Rank.png', rect: { left: 8.140001628680384, top: 30.123268191489785, width: 18 } },
-      { id: 'd6', label: 'D6', to: '/eat/D6', src: '/D6.png', rect: { left: 3.331484819120908, top: 38.29536109731487, width: 34 } },
-      { id: 'ly3', label: 'LY3', to: '/eat/LY3', src: '/LY3.png', rect: { left: 60, top: 35.71002153100399, width: 40 } },
-      { id: 'b1', label: 'B1', to: '/eat/B1', src: '/B1.png', rect: { left: 0, top: 49.85425101310081, width: 32 } },
-      { id: 'others', label: 'OTHERS', to: '/eat/other', src: '/OTHERS.png', rect: { left: 75.1942358422924, top: 53.79469505003947, width: 22 } },
-      { id: 'bell', label: 'BELL', to: '/eat/BELL', src: '/bell.png', rect: { left: 21.844895322255077, top: 70.20250632927979, width: 12.7 } },
+      {
+        id: 'rank',
+        label: 'Rank',
+        to: '/eat/rankings',
+        src: '/Rank.png',
+        rect: { x: 60.617478591432274, y: 31.51669023851116, w: 18.000000000000004, space: 'img' },
+      },
+      {
+        id: 'd6',
+        label: 'D6',
+        to: '/eat/D6',
+        src: '/D6.png',
+        rect: { x: 10.088236618257513, y: 37.475782829492736, w: 36.00000000000001, space: 'img' },
+      },
+      {
+        id: 'ly3',
+        label: 'LY3',
+        to: '/eat/LY3',
+        src: '/LY3.png',
+        rect: { x: 60.563063902878504, y: 37.03073602815839, w: 42, space: 'img' },
+      },
+      {
+        id: 'b1',
+        label: 'B1',
+        to: '/eat/B1',
+        src: '/B1.png',
+        rect: { x: 0.0000030070810745908005, y: 48.917046114655484, w: 34.00000000000001, space: 'img' },
+      },
+      {
+        id: 'others',
+        label: 'OTHERS',
+        to: '/eat/other',
+        src: '/OTHERS.png',
+        rect: { x: 75.86990290308718, y: 54.965063605016745, w: 22.000000000000004, space: 'img' },
+      },
+      {
+        id: 'bell',
+        label: 'BELL',
+        to: '/eat/BELL',
+        src: '/bell.png',
+        rect: { x: 23.19624748633104, y: 67.63816731399169, w: 12.7, space: 'img' },
+      },
 
       // 装饰 GIF（无跳转）：你可在 /eat?edit=1 拖动与缩放
-      { id: 'gif-b4', label: 'GIF', src: '/gif/b4.gif', rect: { left: 70.50969418641802, top: 47.06534411985688, width: 6 } },
-      { id: 'gif-cat', label: 'GIF', src: '/gif/耄耋猫动态gif表情包 (6)_爱给网_aigei_com.gif', rect: { left: 24.73878496253954, top: 53.394674236300915, width: 22 } },
-      { id: 'gif-doge', label: 'GIF', src: '/gif/vsgif_com_dogecoin-meme_.3422573.gif', rect: { left: 87.69515611787595, top: 30.064024398691302, width: 10 } },
-      { id: 'gif-catwalk-1', label: 'GIF', src: '/gif/迪莫走猫步_爱给网_aigei_com.gif', rect: { left: 33.89576353519476, top: 80.96152737183942, width: 12 } },
-      { id: 'gif-crosswalk', label: 'GIF', src: '/gif/斑马线人行道过马路走路走gif图素材_爱给网_aigei_com.gif', rect: { left: 45.0057718351608, top: 41.231050566625264, width: 16 } },
+      { id: 'gif-b4', label: 'GIF', src: '/gif/b4.gif', rect: { x: 72.7619377696077, y: 47.399947174645945, w: 6.000000000000001, space: 'img' } },
+      { id: 'gif-cat', label: 'GIF', src: '/gif/耄耋猫动态gif表情包 (6)_爱给网_aigei_com.gif', rect: { x: 39.60365876737517, y: 60.49618398932494, w: 22.000000000000004, space: 'img' } },
+      { id: 'gif-doge', label: 'GIF', src: '/gif/vsgif_com_dogecoin-meme_.3422573.gif', rect: { x: 88.48344437907343, y: 31.46292194294762, w: 10, space: 'img' } },
+      {
+        id: 'gif-catwalk-1',
+        label: 'GIF',
+        src: '/gif/迪莫走猫步_爱给网_aigei_com.gif',
+        rect: { x: 33.67053917687579, y: 76.57888644661566, w: 12.000000000000002, space: 'img' },
+      },
+      {
+        id: 'gif-crosswalk',
+        label: 'GIF',
+        src: '/gif/斑马线人行道过马路走路走gif图素材_爱给网_aigei_com.gif',
+        rect: { x: 45.0057718351608, y: 42.04150438984765, w: 16.000000000000004, space: 'img' },
+      },
     ],
     []
   );
 
   // bump 版本：移除“静态云贴图”，避免继续读到旧配置
-  const storageKey = 'eat_map_stickers_v10';
+  const storageKey = 'eat_map_stickers_v11_imgspace';
   const [stickers, setStickers] = useState(defaultStickers);
   const [selectedId, setSelectedId] = useState(null);
 
   useEffect(() => {
-    if (!editMode) return;
     try {
       const raw = localStorage.getItem(storageKey);
       if (!raw) return;
@@ -48,7 +146,7 @@ function CanteenArea() {
         setStickers(base);
       }
     } catch {}
-  }, [editMode, defaultStickers, storageKey]);
+  }, [defaultStickers, storageKey]);
 
   useEffect(() => {
     if (!editMode) return;
@@ -59,6 +157,51 @@ function CanteenArea() {
 
   const dragRef = useRef(null); // { id, startX, startY, startRect, box }
 
+  // 计算 cover 变换（container resize / img load）
+  useEffect(() => {
+    const el = mapRef.current;
+    if (!el) return undefined;
+    const update = () => {
+      const box = el.getBoundingClientRect();
+      const img = bgImgRef.current;
+      const iw = img?.naturalWidth || 0;
+      const ih = img?.naturalHeight || 0;
+      if (!iw || !ih) return;
+      setImgSize({ w: iw, h: ih });
+      setCover(getCoverTransform(box.width, box.height, iw, ih));
+    };
+    update();
+    const ro = new ResizeObserver(() => update());
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // 自动迁移：把历史“容器百分比”坐标转换成“原图坐标系百分比”
+  useEffect(() => {
+    const el = mapRef.current;
+    const iw = imgSize.w;
+    const ih = imgSize.h;
+    if (!el || !iw || !ih) return;
+    const box = el.getBoundingClientRect();
+    if (!box.width || !box.height) return;
+    let changed = false;
+    setStickers((prev) =>
+      prev.map((s) => {
+        if (!s || !s.rect) return s;
+        if (s.rect.space === 'img') return s;
+        changed = true;
+        const imgRect = containerPctRectToImgPctRect(s.rect, cover, box.width, box.height, iw, ih);
+        return { ...s, rect: imgRect };
+      })
+    );
+    if (changed) {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(stickers));
+      } catch {}
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [imgSize.w, imgSize.h, cover.scale, cover.offsetX, cover.offsetY]);
+
   const startDrag = (id, ev) => {
     if (!editMode) return;
     setSelectedId(id);
@@ -68,6 +211,7 @@ function CanteenArea() {
     if (!box) return;
     const s = stickers.find((x) => x.id === id);
     if (!s) return;
+    if (s.rect && s.rect.space !== 'img') return; // 等迁移完成再拖
     dragRef.current = {
       id,
       startX: ev.clientX,
@@ -86,15 +230,19 @@ function CanteenArea() {
     if (!d) return;
     const dx = ev.clientX - d.startX;
     const dy = ev.clientY - d.startY;
-    const leftDelta = (dx / d.box.width) * 100;
-    const topDelta = (dy / d.box.height) * 100;
+    const iw = imgSize.w;
+    const ih = imgSize.h;
+    if (!iw || !ih) return;
+    const denomW = iw * cover.scale;
+    const denomH = ih * cover.scale;
+    const xDelta = (dx / denomW) * 100;
+    const yDelta = (dy / denomH) * 100;
     setStickers((prev) =>
       prev.map((s) => {
         if (s.id !== d.id) return s;
         const next = { ...s.rect };
-        next.left = Math.min(100 - next.width, Math.max(0, d.startRect.left + leftDelta));
-        // height 随图片比例自适应，这里只约束 top 的范围（最多到 95%，避免完全拖出）
-        next.top = Math.min(95, Math.max(0, d.startRect.top + topDelta));
+        next.x = clamp(d.startRect.x + xDelta, 0, 100);
+        next.y = clamp(d.startRect.y + yDelta, 0, 100);
         return { ...s, rect: next };
       })
     );
@@ -104,16 +252,13 @@ function CanteenArea() {
     dragRef.current = null;
   };
 
-  const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
-
   const adjustSelectedWidth = (delta) => {
     if (!editMode || !selectedId) return;
     setStickers((prev) =>
       prev.map((s) => {
         if (s.id !== selectedId) return s;
         const next = { ...s.rect };
-        next.width = clamp((next.width ?? 20) + delta, 6, 90);
-        next.left = clamp(next.left ?? 0, 0, 100 - next.width);
+        next.w = clamp((next.w ?? 20) + delta, 2, 100);
         return { ...s, rect: next };
       })
     );
@@ -142,7 +287,27 @@ function CanteenArea() {
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
       >
-        <div className="canteen-map-bg" aria-hidden />
+        <div className="canteen-map-bg" aria-hidden>
+          <img
+            ref={bgImgRef}
+            src="/eatbackground.png"
+            alt=""
+            className="canteen-map-bgimg"
+            draggable={false}
+            onLoad={() => {
+              const el = mapRef.current;
+              const img = bgImgRef.current;
+              if (!el || !img) return;
+              const box = el.getBoundingClientRect();
+              const iw = img.naturalWidth || 0;
+              const ih = img.naturalHeight || 0;
+              if (!iw || !ih) return;
+              setImgSize({ w: iw, h: ih });
+              setCover(getCoverTransform(box.width, box.height, iw, ih));
+            }}
+          />
+          <div className="canteen-map-bg-overlay" aria-hidden />
+        </div>
         <div className="sky-container" aria-hidden>
           {/* Row 1 */}
           <img src="/cloud.png" alt="" className="cloud cloud-distant cloud-r1-a" />
@@ -158,17 +323,15 @@ function CanteenArea() {
         </div>
 
         {stickers.map((s) => {
-          const style = { left: `${s.rect.left}%`, top: `${s.rect.top}%`, width: `${s.rect.width}%` };
+          const style =
+            s?.rect?.space === 'img'
+              ? imgPctRectToStyle(s.rect, cover, imgSize.w, imgSize.h)
+              : { left: `${s.rect.left}%`, top: `${s.rect.top}%`, width: `${s.rect.width}%` };
           const cls = `canteen-sticker ${editMode ? 'canteen-sticker--editable' : 'canteen-sticker--link'} ${
             editMode && selectedId === s.id ? 'canteen-sticker--selected' : ''
           }`;
-          const showLabel = !!s.label && !String(s.id || '').startsWith('gif-');
-          const labelText = (() => {
-            const id = String(s.id || '');
-            if (!showLabel) return '';
-            if (['b1', 'd6', 'ly3', 'others'].includes(id)) return `Canteen ${s.label}`;
-            return s.label;
-          })();
+          const showLabel = !!s.label && !String(s.id || '').startsWith('gif-') && String(s.id || '') !== 'rank';
+          const labelText = showLabel ? s.label : '';
           return editMode ? (
             <button
               key={s.id}
@@ -183,7 +346,6 @@ function CanteenArea() {
               <img src={s.src} alt={s.label} className="canteen-sticker-img" draggable={false} />
               {showLabel && (
                 <span className="canteen-sticker-label" aria-hidden>
-                  <span className="canteen-sticker-label-dot" />
                   <span className="canteen-sticker-label-text">{labelText}</span>
                 </span>
               )}
@@ -200,7 +362,6 @@ function CanteenArea() {
               <img src={s.src} alt={s.label} className="canteen-sticker-img" draggable={false} />
               {showLabel && (
                 <span className="canteen-sticker-label" aria-hidden>
-                  <span className="canteen-sticker-label-dot" />
                   <span className="canteen-sticker-label-text">{labelText}</span>
                 </span>
               )}
@@ -216,7 +377,6 @@ function CanteenArea() {
               <img src={s.src} alt={s.label || ''} className="canteen-sticker-img" draggable={false} />
               {showLabel && (
                 <span className="canteen-sticker-label" aria-hidden>
-                  <span className="canteen-sticker-label-dot" />
                   <span className="canteen-sticker-label-text">{labelText}</span>
                 </span>
               )}
