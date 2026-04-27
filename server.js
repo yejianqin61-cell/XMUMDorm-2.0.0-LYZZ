@@ -33,6 +33,7 @@ const { testConnection } = require('./database');
 const authRoutes = require('./routes/auth');
 const postRoutes = require('./routes/posts');
 const canteenRoutes = require('./routes/canteen');
+const handbookRoutes = require('./routes/handbook');
 const notificationRoutes = require('./routes/notifications');
 const userRoutes = require('./routes/users');
 const scheduleRoutes = require('./routes/schedule');
@@ -148,6 +149,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/canteen', canteenRoutes);
+app.use('/api/handbook', handbookRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/schedule', scheduleRoutes);

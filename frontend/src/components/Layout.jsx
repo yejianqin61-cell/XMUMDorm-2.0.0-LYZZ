@@ -40,7 +40,8 @@ const TITLE_BY_PATH_ZH = {
   '/myzone/profile': '修改资料',
   '/about/algorithm': '评分算法说明',
   '/about/profile': '关于我们',
-  '/about/schedule': '课程表',
+  '/myzone/schedule': '课程表',
+  '/myzone/diary': '多年日记本',
 };
 
 const TITLE_BY_PATH_EN = {
@@ -55,7 +56,8 @@ const TITLE_BY_PATH_EN = {
   '/myzone/profile': 'Profile',
   '/about/algorithm': 'Scoring Algorithm',
   '/about/profile': 'About us',
-  '/about/schedule': 'Schedule',
+  '/myzone/schedule': 'Schedule',
+  '/myzone/diary': 'Diary',
 };
 
 /** 需要显示返回键的路径（含 /post/:id 详情页、帖子搜索/话题） */

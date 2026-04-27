@@ -292,7 +292,7 @@ function MyZone() {
               isLoggedIn={isLoggedIn}
               course={currentCourse}
               loading={scheduleTodayQuery.isFetching}
-              to="/about/schedule"
+              to="/myzone/schedule"
             />
           </motion.section>
 
@@ -304,8 +304,8 @@ function MyZone() {
             <h2 className="px-1 pb-2 text-[15px] font-semibold text-slate-900">{t.utilities}</h2>
             <div className="grid grid-cols-2 gap-2">
               <UtilityTile to="/eat" title={t.canteen} icon={<UtensilsCrossed className="h-5 w-5" />} iconStyle={softIcon('rgba(59,130,246,0.12)', 'rgb(37,99,235)')} />
-              <UtilityTile to="/about/schedule" title={t.schedule} icon={<CalendarDays className="h-5 w-5" />} iconStyle={softIcon('rgba(34,197,94,0.12)', 'rgb(22,163,74)')} />
-              <UtilityTile to="/about/diary" title={t.diary} icon={<NotebookText className="h-5 w-5" />} iconStyle={softIcon('rgba(168,85,247,0.12)', 'rgb(147,51,234)')} />
+              <UtilityTile to="/myzone/schedule" title={t.schedule} icon={<CalendarDays className="h-5 w-5" />} iconStyle={softIcon('rgba(34,197,94,0.12)', 'rgb(22,163,74)')} />
+              <UtilityTile to="/myzone/diary" title={t.diary} icon={<NotebookText className="h-5 w-5" />} iconStyle={softIcon('rgba(168,85,247,0.12)', 'rgb(147,51,234)')} />
               <UtilityTile asButton onClick={handleTodoClick} title={t.todo} icon={<Star className="h-5 w-5" />} iconStyle={softIcon('rgba(234,179,8,0.14)', 'rgb(202,138,4)')} />
               {isLoggedIn && isMerchant && (
                 <UtilityTile to="/merchant/manage" title={t.storeManage} icon={<Store className="h-5 w-5" />} iconStyle={softIcon('rgba(99,102,241,0.12)', 'rgb(79,70,229)')} />

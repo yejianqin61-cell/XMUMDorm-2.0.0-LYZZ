@@ -15,6 +15,11 @@ import SquareSecondHand from '../pages/SquareSecondHand';
 import SquareTrending from '../pages/SquareTrending';
 import SquareFreshmanGuide from '../pages/SquareFreshmanGuide';
 import SquareErrands from '../pages/SquareErrands';
+import HandbookArticleDetail from '../pages/Handbook/HandbookArticleDetail';
+import HandbookEditor from '../pages/Handbook/HandbookEditor';
+import HandbookCollections from '../pages/Handbook/HandbookCollections';
+import CourseReviewPage from '../pages/Handbook/CourseReviewPage';
+import CourseReviewDetail from '../pages/Handbook/CourseReviewDetail';
 import Schedule from '../pages/Schedule';
 import Diary from '../pages/Diary';
 import Disclaimer from '../pages/Disclaimer';
@@ -50,23 +55,31 @@ export const layoutRoutes = (
     <Route path="about" element={<AboutUs />} />
     <Route path="about/thanks" element={<AboutThanks />} />
     <Route path="about/profile" element={<AboutProfile />} />
-    <Route path="about/schedule" element={<Schedule />} />
+    {/* 兼容旧路径：原本挂在 /about 下会导致 Tab 误高亮到“广场” */}
+    <Route path="about/schedule" element={<Navigate to="/myzone/schedule" replace />} />
     <Route path="about/team" element={<AboutTeam />} />
     <Route path="about/editor-note" element={<AboutEditorNote />} />
     <Route path="about/algorithm" element={<AboutAlgorithm />} />
-    <Route path="about/diary" element={<Diary />} />
+    <Route path="about/diary" element={<Navigate to="/myzone/diary" replace />} />
     <Route path="about/disclaimer" element={<Disclaimer />} />
     <Route path="about/contact" element={<ContactUs />} />
     <Route path="about/club" element={<SquareClub />} />
     <Route path="about/second-hand" element={<SquareSecondHand />} />
     <Route path="about/trending" element={<SquareTrending />} />
     <Route path="about/freshman-guide" element={<SquareFreshmanGuide />} />
+    <Route path="about/freshman-guide/new" element={<HandbookEditor />} />
+    <Route path="about/freshman-guide/collections" element={<HandbookCollections />} />
+    <Route path="about/freshman-guide/a/:id" element={<HandbookArticleDetail />} />
+    <Route path="about/freshman-guide/course-review" element={<CourseReviewPage />} />
+    <Route path="about/freshman-guide/course-review/:id" element={<CourseReviewDetail />} />
     <Route path="about/errands" element={<SquareErrands />} />
     <Route path="myzone" element={<MyZone />} />
     <Route path="user/:id" element={<UserZone />} />
     <Route path="myzone/posts" element={<MyPosts />} />
     <Route path="myzone/reviews" element={<MyReviews />} />
     <Route path="myzone/profile" element={<ProfileEdit />} />
+    <Route path="myzone/schedule" element={<Schedule />} />
+    <Route path="myzone/diary" element={<Diary />} />
     <Route path="mailbox" element={<Mailbox />} />
     <Route path="eat" element={<CanteenArea />} />
     <Route path="eat/rankings" element={<Rankings />} />

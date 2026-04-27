@@ -1,10 +1,7 @@
+import HandbookHome from './Handbook/HandbookHome';
+
 function SquareFreshmanGuide() {
-  return (
-    <div className="page-placeholder">
-      <p>Freshman Starter Guide</p>
-      <p className="page-hint">Coming soon</p>
-    </div>
-  );
+  return <HandbookHome />;
 }
 
 export default SquareFreshmanGuide;

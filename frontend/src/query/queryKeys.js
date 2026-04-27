@@ -15,6 +15,18 @@ export const QK = {
   /** 未读全站公告（按 token 区分，避免串缓存） */
   unreadAnnouncements: (tokenKey) => ['notifications', 'unreadAnnouncements', tokenKey],
 
+  /** Handbook */
+  handbookTabs: () => ['handbook', 'tabs'],
+  handbookTags: () => ['handbook', 'tags'],
+  handbookArticles: (params) => ['handbook', 'articles', params || {}],
+  handbookArticleDetail: (id, tokenKey) => ['handbook', 'article', id, tokenKey],
+  handbookArticleComments: (id) => ['handbook', 'article', id, 'comments'],
+  handbookMeSaved: (tokenKey, pageSize) => ['handbook', 'me', 'saved', tokenKey, pageSize],
+  handbookMeChecklists: (tokenKey) => ['handbook', 'me', 'checklists', tokenKey],
+  courseReviews: (params) => ['handbook', 'courseReviews', params || {}],
+  courseReviewDetail: (id) => ['handbook', 'courseReview', id],
+  courseReviewComments: (id) => ['handbook', 'courseReview', id, 'comments'],
+
   /** 食堂总榜五合一 */
   rankingsAll: () => ['rankings', 'all'],
 
