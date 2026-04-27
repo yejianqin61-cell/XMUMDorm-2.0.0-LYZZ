@@ -13,7 +13,7 @@ import {
   listHandbookComments,
   toggleHandbookLike,
 } from '../../api/handbook';
-import { Bookmark, Eye, FilePlus2, Heart, Share2 } from 'lucide-react';
+import { Bookmark, Eye, Heart, Share2 } from 'lucide-react';
 import { QK } from '../../query/queryKeys';
 import './Handbook.css';
 
@@ -174,16 +174,6 @@ function HandbookArticleDetail() {
             >
               <Heart size={18} aria-hidden />
               {isZh ? '点赞' : 'Like'}
-            </button>
-            <button
-              type="button"
-              className="handbook-action-btn"
-              onClick={() => {
-                window.location.assign('/about/freshman-guide/course-review/new');
-              }}
-            >
-              <FilePlus2 size={18} aria-hidden />
-              {isZh ? '新建课程评价' : 'New review'}
             </button>
             <button
               type="button"
