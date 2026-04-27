@@ -13,24 +13,25 @@ function CanteenArea() {
   // 单位：百分比（相对于背景容器宽高），以适配不同屏幕
   const defaultStickers = useMemo(
     () => [
-      { id: 'rank', label: 'Rank', to: '/eat/rankings', src: '/Rank.png', rect: { left: 31.109843916265945, top: 19.927739715405195, width: 18 } },
-      { id: 'd6', label: 'D6', to: '/eat/D6', src: '/D6.png', rect: { left: 2.751440643511616, top: 26.773009071916402, width: 34 } },
-      { id: 'ly3', label: 'LY3', to: '/eat/LY3', src: '/LY3.png', rect: { left: 53.06359205902664, top: 23.97817870564246, width: 40 } },
-      { id: 'b1', label: 'B1', to: '/eat/B1', src: '/B1.png', rect: { left: 0, top: 38.820729501544804, width: 32 } },
-      { id: 'others', label: 'OTHERS', to: '/eat/other', src: '/OTHERS.png', rect: { left: 77.51443113142108, top: 40.45671133819904, width: 22 } },
-      { id: 'bell', label: 'BELL', to: '/eat/BELL', src: '/bell.png', rect: { left: 0.7312122088652958, top: 74.1131206044003, width: 16.7 } },
+      { id: 'rank', label: 'Rank', to: '/eat/rankings', src: '/Rank.png', rect: { left: 8.140001628680384, top: 30.123268191489785, width: 18 } },
+      { id: 'd6', label: 'D6', to: '/eat/D6', src: '/D6.png', rect: { left: 3.331484819120908, top: 38.29536109731487, width: 34 } },
+      { id: 'ly3', label: 'LY3', to: '/eat/LY3', src: '/LY3.png', rect: { left: 60, top: 35.71002153100399, width: 40 } },
+      { id: 'b1', label: 'B1', to: '/eat/B1', src: '/B1.png', rect: { left: 0, top: 49.85425101310081, width: 32 } },
+      { id: 'others', label: 'OTHERS', to: '/eat/other', src: '/OTHERS.png', rect: { left: 75.1942358422924, top: 53.79469505003947, width: 22 } },
+      { id: 'bell', label: 'BELL', to: '/eat/BELL', src: '/bell.png', rect: { left: 21.844895322255077, top: 70.20250632927979, width: 12.7 } },
 
       // 装饰 GIF（无跳转）：你可在 /eat?edit=1 拖动与缩放
-      { id: 'gif-b4', label: 'GIF', src: '/gif/b4.gif', rect: { left: 63.549145492415, top: 33.098858172508095, width: 6 } },
-      { id: 'gif-cat', label: 'GIF', src: '/gif/耄耋猫动态gif表情包 (6)_爱给网_aigei_com.gif', rect: { left: 21.722549053807384, top: 40.824834646015574, width: 22 } },
-      { id: 'gif-doge', label: 'GIF', src: '/gif/vsgif_com_dogecoin-meme_.3422573.gif', rect: { left: 58.924847291942115, top: 13.094751207800172, width: 10 } },
-      { id: 'gif-catwalk-1', label: 'GIF', src: '/gif/迪莫走猫步_爱给网_aigei_com.gif', rect: { left: 77.28322895542964, top: 54.77437927364383, width: 12 } },
+      { id: 'gif-b4', label: 'GIF', src: '/gif/b4.gif', rect: { left: 70.50969418641802, top: 47.06534411985688, width: 6 } },
+      { id: 'gif-cat', label: 'GIF', src: '/gif/耄耋猫动态gif表情包 (6)_爱给网_aigei_com.gif', rect: { left: 24.73878496253954, top: 53.394674236300915, width: 22 } },
+      { id: 'gif-doge', label: 'GIF', src: '/gif/vsgif_com_dogecoin-meme_.3422573.gif', rect: { left: 87.69515611787595, top: 30.064024398691302, width: 10 } },
+      { id: 'gif-catwalk-1', label: 'GIF', src: '/gif/迪莫走猫步_爱给网_aigei_com.gif', rect: { left: 33.89576353519476, top: 80.96152737183942, width: 12 } },
       { id: 'gif-crosswalk', label: 'GIF', src: '/gif/斑马线人行道过马路走路走gif图素材_爱给网_aigei_com.gif', rect: { left: 45.0057718351608, top: 41.231050566625264, width: 16 } },
     ],
     []
   );
 
-  const storageKey = 'eat_map_stickers_v8';
+  // bump 版本：移除“静态云贴图”，避免继续读到旧配置
+  const storageKey = 'eat_map_stickers_v10';
   const [stickers, setStickers] = useState(defaultStickers);
   const [selectedId, setSelectedId] = useState(null);
 
@@ -42,10 +43,12 @@ function CanteenArea() {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
         // 兼容：用户本地可能还保留已删除素材的旧配置（过滤掉无 src 的项）
-        setStickers(parsed.filter((x) => x && x.src));
+        // 同时过滤掉已废弃的静态云贴图（云改为天空层动画，不再作为 sticker）
+        const base = parsed.filter((x) => x && x.src && x.id !== 'cloud');
+        setStickers(base);
       }
     } catch {}
-  }, [editMode, defaultStickers]);
+  }, [editMode, defaultStickers, storageKey]);
 
   useEffect(() => {
     if (!editMode) return;
@@ -140,6 +143,19 @@ function CanteenArea() {
         onPointerCancel={endDrag}
       >
         <div className="canteen-map-bg" aria-hidden />
+        <div className="sky-container" aria-hidden>
+          {/* Row 1 */}
+          <img src="/cloud.png" alt="" className="cloud cloud-distant cloud-r1-a" />
+          <img src="/cloud.png" alt="" className="cloud cloud-slow cloud-r1-b" />
+          <img src="/cloud.png" alt="" className="cloud cloud-fast cloud-r1-c" />
+          {/* Row 2 */}
+          <img src="/cloud.png" alt="" className="cloud cloud-distant cloud-r2-a" />
+          <img src="/cloud.png" alt="" className="cloud cloud-slow cloud-r2-b" />
+          <img src="/cloud.png" alt="" className="cloud cloud-fast cloud-r2-c" />
+          {/* Row 3 */}
+          <img src="/cloud.png" alt="" className="cloud cloud-distant cloud-r3-a" />
+          <img src="/cloud.png" alt="" className="cloud cloud-slow cloud-r3-b" />
+        </div>
 
         {stickers.map((s) => {
           const style = { left: `${s.rect.left}%`, top: `${s.rect.top}%`, width: `${s.rect.width}%` };
@@ -147,6 +163,12 @@ function CanteenArea() {
             editMode && selectedId === s.id ? 'canteen-sticker--selected' : ''
           }`;
           const showLabel = !!s.label && !String(s.id || '').startsWith('gif-');
+          const labelText = (() => {
+            const id = String(s.id || '');
+            if (!showLabel) return '';
+            if (['b1', 'd6', 'ly3', 'others'].includes(id)) return `Canteen ${s.label}`;
+            return s.label;
+          })();
           return editMode ? (
             <button
               key={s.id}
@@ -159,7 +181,12 @@ function CanteenArea() {
               onClick={() => setSelectedId(s.id)}
             >
               <img src={s.src} alt={s.label} className="canteen-sticker-img" draggable={false} />
-              {showLabel && <span className="canteen-sticker-label">{s.label}</span>}
+              {showLabel && (
+                <span className="canteen-sticker-label" aria-hidden>
+                  <span className="canteen-sticker-label-dot" />
+                  <span className="canteen-sticker-label-text">{labelText}</span>
+                </span>
+              )}
             </button>
           ) : s.to ? (
             <Link
@@ -171,7 +198,12 @@ function CanteenArea() {
               aria-label={s.label}
             >
               <img src={s.src} alt={s.label} className="canteen-sticker-img" draggable={false} />
-              {showLabel && <span className="canteen-sticker-label">{s.label}</span>}
+              {showLabel && (
+                <span className="canteen-sticker-label" aria-hidden>
+                  <span className="canteen-sticker-label-dot" />
+                  <span className="canteen-sticker-label-text">{labelText}</span>
+                </span>
+              )}
             </Link>
           ) : (
             <div
@@ -182,7 +214,12 @@ function CanteenArea() {
               aria-label={s.label || 'decor'}
             >
               <img src={s.src} alt={s.label || ''} className="canteen-sticker-img" draggable={false} />
-              {showLabel && <span className="canteen-sticker-label">{s.label}</span>}
+              {showLabel && (
+                <span className="canteen-sticker-label" aria-hidden>
+                  <span className="canteen-sticker-label-dot" />
+                  <span className="canteen-sticker-label-text">{labelText}</span>
+                </span>
+              )}
             </div>
           );
         })}
