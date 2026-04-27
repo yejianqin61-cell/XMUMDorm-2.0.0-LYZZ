@@ -13,7 +13,7 @@ import {
   listHandbookComments,
   toggleHandbookLike,
 } from '../../api/handbook';
-import { Eye, FilePlus2, Heart, Share2 } from 'lucide-react';
+import { Bookmark, Eye, FilePlus2, Heart, Share2 } from 'lucide-react';
 import { QK } from '../../query/queryKeys';
 import './Handbook.css';
 
@@ -36,7 +36,8 @@ function slugify(s) {
   return String(s || '')
     .trim()
     .toLowerCase()
-    .replace(/[^\p{L}\p{N}\s-]/gu, '')
+    // 兼容旧版 WebView：避免使用 Unicode property escapes（\p{L}）
+    .replace(/[^a-z0-9\u4e00-\u9fa5\s-]/gi, '')
     .replace(/\s+/g, '-')
     .slice(0, 80);
 }
