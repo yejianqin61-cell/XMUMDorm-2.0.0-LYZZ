@@ -423,7 +423,7 @@ function PostDetail() {
             whileTap={{ scale: 0.92 }}
             transition={{ type: 'spring', stiffness: 700, damping: 28 }}
           >
-            <Heart size={18} aria-hidden />
+            <Heart size={18} aria-hidden fill={liked ? 'currentColor' : 'none'} />
             <span className="post-detail-like-count">{likeCount}</span>
           </motion.button>
         </div>

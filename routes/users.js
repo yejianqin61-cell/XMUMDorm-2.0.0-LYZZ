@@ -42,10 +42,14 @@ function rowTruthyLike(v) {
 // ============================================
 router.get('/me', authenticateToken, async (req, res) => {
   try {
-    const rows = await query(
-      'SELECT id, student_id, username, email, role, avatar, nickname, weekly_comment_count, created_at FROM users WHERE id = ?',
-      [req.user.id]
-    );
+    const ttlMs = Number(process.env.CACHE_USER_ME_TTL_MS || 15 * 1000); // 15s
+    const cacheKey = `users:me:v1:${req.user.id}`;
+    const rows = await simpleCache.getOrSet(cacheKey, ttlMs, async () => {
+      return await query(
+        'SELECT id, student_id, username, email, role, avatar, nickname, weekly_comment_count, created_at FROM users WHERE id = ?',
+        [req.user.id]
+      );
+    });
     if (!rows || rows.length === 0) {
       return res.status(404).json({ status: -1, message: '用户不存在' });
     }
@@ -200,6 +204,7 @@ router.patch('/me', authenticateToken, async (req, res) => {
       return res.status(400).json({ status: -1, message: '该昵称为官方保留名称，无法使用' });
     }
     await query('UPDATE users SET nickname = ? WHERE id = ?', [nickname, req.user.id]);
+    simpleCache.delete(`users:me:v1:${req.user.id}`);
     res.status(200).json({ status: 0, message: '资料已更新', data: { nickname } });
   } catch (e) {
     console.error('更新资料错误:', e);
@@ -233,6 +238,7 @@ router.patch('/me/avatar', authenticateToken, (req, res, next) => {
     await uploadBuffer({ key, body: req.file.buffer, contentType: guessContentType(req.file.mimetype, safeExt) });
     const relativePath = key;
     await query('UPDATE users SET avatar = ? WHERE id = ?', [relativePath, req.user.id]);
+    simpleCache.delete(`users:me:v1:${req.user.id}`);
     res.status(200).json({
       status: 0,
       message: '头像更新成功',

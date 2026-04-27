@@ -343,6 +343,10 @@
   background: rgba(239, 68, 68, 0.08);
 }
 
+.post-detail-like-btn.is-liked svg {
+  filter: drop-shadow(0 6px 14px rgba(239, 68, 68, 0.28));
+}
+
 .post-detail-like-count {
   font-size: 14px;
   font-weight: 700;

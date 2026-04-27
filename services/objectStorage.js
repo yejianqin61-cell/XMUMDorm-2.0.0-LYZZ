@@ -1,4 +1,4 @@
-const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+const { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand } = require('@aws-sdk/client-s3');
 
 function normalizeBaseUrl(u) {
   if (!u) return '';
@@ -76,6 +76,54 @@ async function uploadBuffer({ key, body, contentType }) {
   return Key;
 }
 
+async function streamToBuffer(body) {
+  if (!body) return Buffer.from([]);
+  if (Buffer.isBuffer(body)) return body;
+  // AWS SDK v3: Body is a stream in Node.js
+  const chunks = [];
+  for await (const chunk of body) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+  return Buffer.concat(chunks);
+}
+
+async function objectExists(key) {
+  const Bucket = requireEnv('OBJECT_STORAGE_BUCKET');
+  const Key = sanitizeKey(key);
+  try {
+    await client().send(new HeadObjectCommand({ Bucket, Key }));
+    return true;
+  } catch (e) {
+    const code = e && (e.name || e.Code || e.code);
+    const status = e && (e.$metadata && e.$metadata.httpStatusCode);
+    if (code === 'NotFound' || status === 404) return false;
+    return false;
+  }
+}
+
+async function headObject(key) {
+  const Bucket = requireEnv('OBJECT_STORAGE_BUCKET');
+  const Key = sanitizeKey(key);
+  try {
+    const out = await client().send(new HeadObjectCommand({ Bucket, Key }));
+    return {
+      contentType: out && out.ContentType ? String(out.ContentType) : null,
+      contentLength: out && typeof out.ContentLength === 'number' ? out.ContentLength : null,
+      etag: out && out.ETag ? String(out.ETag) : null,
+      lastModified: out && out.LastModified ? out.LastModified : null,
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
+async function downloadBuffer({ key }) {
+  const Bucket = requireEnv('OBJECT_STORAGE_BUCKET');
+  const Key = sanitizeKey(key);
+  const out = await client().send(new GetObjectCommand({ Bucket, Key }));
+  return await streamToBuffer(out.Body);
+}
+
 function publicUrlForKey(key) {
   const base = normalizeBaseUrl(getEnv('PUBLIC_ASSET_BASE_URL'));
   if (!base) return null;
@@ -85,6 +133,9 @@ function publicUrlForKey(key) {
 
 module.exports = {
   uploadBuffer,
+  downloadBuffer,
+  objectExists,
+  headObject,
   publicUrlForKey,
   sanitizeKey,
   guessContentType,

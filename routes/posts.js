@@ -69,14 +69,19 @@ async function enrichPostsWithTags(posts) {
   const placeholders = ids.map(() => '?').join(',');
   let rows = [];
   try {
-    rows = await query(
-      `SELECT ptm.post_id, t.id, t.slug, t.name_zh, t.name_en
-       FROM post_tag_map ptm
-       INNER JOIN tags t ON t.id = ptm.tag_id
-       WHERE ptm.post_id IN (${placeholders})
-       ORDER BY t.created_at ASC, t.id ASC`,
-      ids
-    );
+    // 这段查询在瀑布流分页中会被频繁触发；用进程内 cache 降低远程 DB 往返放大效应
+    const ttlMs = Number(process.env.CACHE_POST_TAGS_MAP_TTL_MS || 30 * 1000); // 30s
+    const cacheKey = `posts:tagsMap:v1:${ids.join(',')}`;
+    rows = await simpleCache.getOrSet(cacheKey, ttlMs, async () => {
+      return await query(
+        `SELECT ptm.post_id, t.id, t.slug, t.name_zh, t.name_en
+         FROM post_tag_map ptm
+         INNER JOIN tags t ON t.id = ptm.tag_id
+         WHERE ptm.post_id IN (${placeholders})
+         ORDER BY t.created_at ASC, t.id ASC`,
+        ids
+      );
+    });
   } catch (e) {
     if (e.code === 'ER_NO_SUCH_TABLE') {
       return posts.map((p) => ({ ...p, tags: [] }));
