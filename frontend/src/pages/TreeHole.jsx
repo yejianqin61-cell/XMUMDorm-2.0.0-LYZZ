@@ -59,7 +59,10 @@ function toPostThumbUrl(fullUrl) {
     const p = u.pathname || '';
     // 约定：原图 key 为 /uploads/posts/post_<id>_<i>.<ext> 或 <ASSET_BASE>/posts/post_<id>_<i>.<ext>
     // 缩略图 key 为 posts/thumbs/post_<id>_<i>.webp（同目录结构）
-    const replaced = p.replace(/\/posts\/post_(\d+)_([0-9]+)\.(jpg|jpeg|png|webp)$/i, '/posts/thumbs/post_$1_$2.webp');
+    const replaced = p.replace(
+      /(\/uploads)?\/posts\/post_(\d+)_([0-9]+)\.(jpg|jpeg|png|webp)$/i,
+      (_m, uploadsPrefix, id, idx) => `${uploadsPrefix || ''}/posts/thumbs/post_${id}_${idx}.webp`
+    );
     if (replaced === p) return fullUrl;
     u.pathname = replaced;
     // 缩略图不需要沿用原图的 t= 版本参数；保留其它 query
@@ -641,6 +644,7 @@ function TreeHoleGlassCard({ post, eager = false, mobileStable = false }) {
   const commentNum = post.comment_count ?? post.commentCount ?? 0;
   const cover = post.images?.[0]?.url ? prefixImageUrl(post.images[0].url) : null;
   const coverThumb = cover ? toPostThumbUrl(cover) : null;
+  const [imgSrc, setImgSrc] = useState(() => coverThumb || cover);
   const title = (post.title || '').trim();
   const text = (post.content || '').trim();
   const display = title || (text.length > 64 ? `${text.slice(0, 64)}…` : text) || ' ';
@@ -656,6 +660,7 @@ function TreeHoleGlassCard({ post, eager = false, mobileStable = false }) {
   useEffect(() => {
     const u = coverThumb || cover;
     if (!u) return;
+    setImgSrc(u);
     if (IMG_LOADED.has(u)) {
       setLoaded(true);
       return;
@@ -719,17 +724,24 @@ function TreeHoleGlassCard({ post, eager = false, mobileStable = false }) {
           {cover && !errored ? (
             <>
               <img
-                src={coverThumb || cover}
+                src={imgSrc || cover}
                 alt=""
                 className={`treehole-glass-img ${loaded ? 'is-loaded' : ''}`}
                 loading={eager ? 'eager' : 'lazy'}
                 decoding="async"
                 onLoad={() => {
-                  const u = coverThumb || cover;
+                  const u = imgSrc || coverThumb || cover;
                   if (u) IMG_LOADED.add(u);
                   setLoaded(true);
                 }}
                 onError={() => {
+                  // 缩略图不存在/404 时自动回退到原图，避免黑底
+                  if (coverThumb && imgSrc === coverThumb && coverThumb !== cover) {
+                    setImgSrc(cover);
+                    setLoaded(false);
+                    setErrored(false);
+                    return;
+                  }
                   setErrored(true);
                   setLoaded(true);
                 }}

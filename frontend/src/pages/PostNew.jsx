@@ -14,10 +14,11 @@ const POST_TAGS_STALE_MS = 15 * 60 * 1000;
 /** 发布帖子 / 公告页：需登录；普通用户发帖子，管理员发公告 */
 function PostNew() {
   const queryClient = useQueryClient();
-  const { isLoggedIn, isAdmin } = useAuth();
+  const { isLoggedIn, isAdmin, token } = useAuth();
   const { lang } = useLanguage();
   const isEn = lang === 'en';
   const navigate = useNavigate();
+  const tokenKey = token ?? 'guest';
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [imageFiles, setImageFiles] = useState([]);
@@ -92,6 +93,31 @@ function PostNew() {
       }
       const created = await createPost(payload);
       Toast.success(isAdmin ? '公告发布成功' : '发布成功');
+      // 立刻插入到树洞瀑布流缓存，确保发完马上能看到（无需等重新拉取）
+      if (!isAdmin && created && created.id) {
+        const createdTagSlugs = new Set((created.tags || []).map((t) => t?.slug).filter(Boolean));
+        // 精确更新 “全部帖子” 的无限列表缓存（tagSlug === '_all'）
+        queryClient.setQueryData(QK.postsInfinite(tokenKey, 10, null), (old) => {
+          if (!old || !old.pages || !Array.isArray(old.pages) || old.pages.length === 0) return old;
+          const first = old.pages[0];
+          const list = Array.isArray(first.list) ? first.list : [];
+          if (list.some((p) => p && p.id === created.id)) return old;
+          const nextFirst = { ...first, list: [created, ...list] };
+          return { ...old, pages: [nextFirst, ...old.pages.slice(1)] };
+        });
+
+        // 若当前用户选择了标签页（tagSlug 过滤），也尝试把新帖插入对应缓存（如果帖子包含该标签）
+        for (const slug of createdTagSlugs) {
+          queryClient.setQueryData(QK.postsInfinite(tokenKey, 10, slug), (old) => {
+            if (!old || !old.pages || !Array.isArray(old.pages) || old.pages.length === 0) return old;
+            const first = old.pages[0];
+            const list = Array.isArray(first.list) ? first.list : [];
+            if (list.some((p) => p && p.id === created.id)) return old;
+            const nextFirst = { ...first, list: [created, ...list] };
+            return { ...old, pages: [nextFirst, ...old.pages.slice(1)] };
+          });
+        }
+      }
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       navigate(created?.id ? `/post/${created.id}` : '/', { replace: true });
     } catch (err) {

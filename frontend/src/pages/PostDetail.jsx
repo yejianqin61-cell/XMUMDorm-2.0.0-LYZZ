@@ -112,11 +112,83 @@ function PostDetail() {
   const handleLike = async (e) => {
     if (requireLogin()) return;
     likeBurstRef.current?.trigger(e);
+    // 乐观更新：先给用户即时反馈，再发请求；失败则回滚
+    const prevLiked = liked;
+    const prevCount = likeCount;
+    const optimisticLiked = !prevLiked;
+    setLiked(optimisticLiked);
+    setLikeCount((c) => (optimisticLiked ? c + 1 : Math.max(0, c - 1)));
+
+    // 同步写入详情缓存与列表缓存，避免返回上一页时状态跳回去
+    const patchPost = (p) => {
+      if (!p || p.id !== postId) return p;
+      return {
+        ...p,
+        user_liked: optimisticLiked,
+        like_count: optimisticLiked ? (Number(p.like_count || 0) + 1) : Math.max(0, Number(p.like_count || 0) - 1),
+      };
+    };
+    queryClient.setQueryData(QK.postDetail(postId, tokenKey), (old) => patchPost(old));
+    queryClient.setQueriesData(
+      {
+        predicate: (q) => {
+          const key = q.queryKey || [];
+          return key[0] === 'posts' && key[1] === 'infinite' && key[2] === tokenKey;
+        },
+      },
+      (old) => {
+        if (!old || !old.pages || !Array.isArray(old.pages)) return old;
+        const nextPages = old.pages.map((pg) => {
+          const list = Array.isArray(pg.list) ? pg.list : [];
+          const nextList = list.map((it) => patchPost(it));
+          if (nextList === list) return pg;
+          return { ...pg, list: nextList };
+        });
+        return { ...old, pages: nextPages };
+      }
+    );
     try {
       const data = await toggleLike(postId);
-      setLiked(data?.liked ?? !liked);
-      setLikeCount((c) => (data?.liked ? c + 1 : c - 1));
-    } catch (_) {}
+      // 以服务端返回为准（如果和乐观状态不一致，纠正一次）
+      const finalLiked = data?.liked ?? optimisticLiked;
+      if (finalLiked !== optimisticLiked) {
+        const finalCount = finalLiked ? prevCount + 1 : Math.max(0, prevCount - 1);
+        setLiked(finalLiked);
+        setLikeCount(finalCount);
+        queryClient.setQueryData(QK.postDetail(postId, tokenKey), (old) => {
+          if (!old || old.id !== postId) return old;
+          return { ...old, user_liked: finalLiked, like_count: finalCount };
+        });
+      }
+    } catch (_) {
+      // 回滚
+      setLiked(prevLiked);
+      setLikeCount(prevCount);
+      queryClient.setQueryData(QK.postDetail(postId, tokenKey), (old) => {
+        if (!old || old.id !== postId) return old;
+        return { ...old, user_liked: prevLiked, like_count: prevCount };
+      });
+      queryClient.setQueriesData(
+        {
+          predicate: (q) => {
+            const key = q.queryKey || [];
+            return key[0] === 'posts' && key[1] === 'infinite' && key[2] === tokenKey;
+          },
+        },
+        (old) => {
+          if (!old || !old.pages || !Array.isArray(old.pages)) return old;
+          const nextPages = old.pages.map((pg) => {
+            const list = Array.isArray(pg.list) ? pg.list : [];
+            const nextList = list.map((it) => {
+              if (!it || it.id !== postId) return it;
+              return { ...it, user_liked: prevLiked, like_count: prevCount };
+            });
+            return { ...pg, list: nextList };
+          });
+          return { ...old, pages: nextPages };
+        }
+      );
+    }
   };
 
   const handleSubmitComment = async (e) => {
