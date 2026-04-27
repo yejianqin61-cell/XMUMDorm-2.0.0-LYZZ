@@ -59,6 +59,7 @@ function Diary() {
   const [monthHeat, setMonthHeat] = useState(new Map()); // date -> len
   const calBtnRef = useRef(null);
   const [calOrigin, setCalOrigin] = useState({ x: 0, y: 0, r: 24 });
+  const dayCacheRef = useRef(new Map()); // date -> { content, hasDiary, ts }
 
   const todayLabel = useMemo(() => overview?.today?.label ?? '', [overview]);
   const todayDate = realToday?.date ?? overview?.today?.date ?? null;
@@ -95,6 +96,50 @@ function Diary() {
     }
   };
 
+  const DAY_CACHE_TTL_MS = 10 * 60 * 1000; // 10min
+  const readDayCache = (date) => {
+    if (!date) return null;
+    const key = String(date).slice(0, 10);
+    const now = Date.now();
+    const mem = dayCacheRef.current.get(key);
+    if (mem && now - mem.ts < DAY_CACHE_TTL_MS) return mem;
+    try {
+      const raw = sessionStorage.getItem(`diary_day_cache_v1:${key}`);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed.ts !== 'number' || now - parsed.ts >= DAY_CACHE_TTL_MS) return null;
+      if (typeof parsed.content !== 'string') return null;
+      const hit = { content: parsed.content, hasDiary: !!parsed.hasDiary, ts: parsed.ts };
+      dayCacheRef.current.set(key, hit);
+      return hit;
+    } catch {
+      return null;
+    }
+  };
+
+  const writeDayCache = (date, content) => {
+    if (!date) return;
+    const key = String(date).slice(0, 10);
+    const c = String(content ?? '');
+    const hit = { content: c, hasDiary: !!c.trim(), ts: Date.now() };
+    dayCacheRef.current.set(key, hit);
+    try {
+      sessionStorage.setItem(`diary_day_cache_v1:${key}`, JSON.stringify(hit));
+    } catch {
+      // ignore quota
+    }
+  };
+
+  const fetchDiaryDayCached = async (date) => {
+    const key = String(date || '').slice(0, 10);
+    const cached = readDayCache(key);
+    if (cached) return cached;
+    const day = await getDiaryDay(key);
+    const content = day?.content || '';
+    writeDayCache(key, content);
+    return readDayCache(key) || { content: String(content || ''), hasDiary: !!String(content || '').trim(), ts: Date.now() };
+  };
+
   useEffect(() => {
     loadOverview();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -113,6 +158,8 @@ function Diary() {
     try {
       await saveDiaryDay({ date: currentDate, content: diaryContent });
       Toast.success(isZh ? '已保存' : 'Saved');
+      // 写入缓存，避免保存后又立刻重拉导致闪一下
+      writeDayCache(currentDate, diaryContent);
       await loadOverview(currentDate);
       await loadDay(currentDate);
     } catch (e) {
@@ -144,10 +191,8 @@ function Diary() {
         targetYears.map(async (yy) => {
           const ds = ymdString(yy, p.m, p.d);
           try {
-            const day = await getDiaryDay(ds);
-            const content = day?.content || '';
-            const hasDiary = !!(content && String(content).trim());
-            return { year: yy, date: ds, content: String(content || ''), hasDiary };
+            const cached = await fetchDiaryDayCached(ds);
+            return { year: yy, date: ds, content: String(cached.content || ''), hasDiary: !!cached.hasDiary };
           } catch {
             return { year: yy, date: ds, content: '', hasDiary: false };
           }
@@ -469,7 +514,6 @@ function Diary() {
                         aria-label={c.ds}
                       >
                         <span className="diary-cal-daynum">{c.day}</span>
-                        {c.lv > 0 ? <span className="diary-cal-dot" aria-hidden /> : null}
                       </button>
                     );
                   });

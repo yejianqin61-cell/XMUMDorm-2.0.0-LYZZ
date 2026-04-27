@@ -404,12 +404,13 @@
 .diary-cal-burst {
   position: absolute;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.62);
-  backdrop-filter: blur(25px) saturate(180%);
-  -webkit-backdrop-filter: blur(25px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  box-shadow: 0 30px 90px rgba(59, 130, 246, 0.22);
+  /* 移动端避免 backdrop-filter 动画导致频闪/掉帧：只做 transform 扩散 */
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.60);
+  box-shadow: 0 30px 90px rgba(2, 6, 23, 0.22);
+  filter: blur(0.5px);
   transform-origin: center;
+  will-change: transform, opacity;
 }
 
 .diary-cal-sheet {
@@ -500,23 +501,21 @@
   color: rgba(15, 23, 42, 0.82);
 }
 
-.diary-cal-dot {
-  position: absolute;
-  bottom: 9px;
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
-  background: rgba(59, 130, 246, 0.75);
-  box-shadow: 0 0 18px rgba(59, 130, 246, 0.55);
-}
-
 .diary-cal-cell.active {
   outline: 2px solid rgba(59, 130, 246, 0.55);
 }
 
 /* Contribution-graph-ish levels */
-.diary-cal-cell--lv1 { background: rgba(74, 222, 128, 0.18); }
-.diary-cal-cell--lv2 { background: rgba(74, 222, 128, 0.28); }
-.diary-cal-cell--lv3 { background: rgba(59, 130, 246, 0.24); }
-.diary-cal-cell--lv4 { background: rgba(59, 130, 246, 0.32); }
+.diary-cal-cell--lv1 { background: rgba(250, 204, 21, 0.18); } /* lemon */
+.diary-cal-cell--lv2 { background: rgba(250, 204, 21, 0.28); }
+.diary-cal-cell--lv3 { background: rgba(250, 204, 21, 0.40); }
+.diary-cal-cell--lv4 { background: rgba(250, 204, 21, 0.52); }
+
+@media (pointer: coarse) {
+  /* 移动端进一步稳：减轻大面积 blur/滤镜层重绘 */
+  .diary-cal-sheet {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
 
