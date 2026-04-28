@@ -965,14 +965,13 @@ router.get('/course-reviews', async (req, res) => {
       }
     }
 
+    // 课程评价保持匿名：公开接口不返回作者信息
     const rows = await query(
       `SELECT cr.id, cr.course_name, cr.teacher, cr.tag, cr.tags_json, cr.rating, cr.difficulty, cr.comment, cr.created_by, cr.created_at, cr.updated_at,
-        u.username, u.nickname, u.avatar,
         (SELECT COUNT(*) FROM course_review_comments c WHERE c.review_id = cr.id AND c.deleted_at IS NULL) AS comment_count,
         (SELECT AVG(r.rating) FROM course_review_ratings r WHERE r.review_id = cr.id) AS avg_rating,
         (SELECT COUNT(*) FROM course_review_ratings r WHERE r.review_id = cr.id) AS rating_count
        FROM course_reviews cr
-       LEFT JOIN users u ON u.id = cr.created_by
        WHERE ${where}
        ORDER BY cr.created_at DESC, cr.id DESC
        LIMIT ${limitCount} OFFSET ${offset}`,
@@ -989,9 +988,7 @@ router.get('/course-reviews', async (req, res) => {
       difficulty: Number(r.difficulty || 0),
       comment: r.comment || null,
       created_at: r.created_at,
-      author: r.created_by
-        ? { id: r.created_by, username: r.username, nickname: r.nickname, avatar: assetUrl(r.avatar) }
-        : null,
+      author: null,
       stats: {
         comments: Number(r.comment_count || 0),
         avgRating: r.avg_rating == null ? null : Number(r.avg_rating),
@@ -1013,13 +1010,12 @@ router.get('/course-reviews/:id', async (req, res) => {
   try {
     const id = toInt(req.params.id, 0);
     if (!id) return res.status(400).json({ status: -1, message: 'ID 无效' });
+    // 课程评价保持匿名：公开接口不返回作者信息
     const rows = await query(
       `SELECT cr.id, cr.course_name, cr.teacher, cr.tag, cr.tags_json, cr.rating, cr.difficulty, cr.comment, cr.created_by, cr.created_at, cr.updated_at,
-        u.username, u.nickname, u.avatar,
         (SELECT AVG(r.rating) FROM course_review_ratings r WHERE r.review_id = cr.id) AS avg_rating,
         (SELECT COUNT(*) FROM course_review_ratings r WHERE r.review_id = cr.id) AS rating_count
        FROM course_reviews cr
-       LEFT JOIN users u ON u.id = cr.created_by
        WHERE cr.id = ? AND cr.deleted_at IS NULL
        LIMIT 1`,
       [id]
@@ -1039,7 +1035,7 @@ router.get('/course-reviews/:id', async (req, res) => {
         comment: r.comment || null,
         created_at: r.created_at,
         updated_at: r.updated_at,
-        author: r.created_by ? { id: r.created_by, username: r.username, nickname: r.nickname, avatar: assetUrl(r.avatar) } : null,
+        author: null,
         stats: {
           avgRating: r.avg_rating == null ? null : Number(r.avg_rating),
           ratingCount: Number(r.rating_count || 0),
@@ -1107,14 +1103,13 @@ router.get('/me/course-reviews', authenticateToken, async (req, res) => {
       }
     }
 
+    // 保持课程评价匿名（即使是“我的”列表，也不依赖 author 字段）
     const rows = await query(
       `SELECT cr.id, cr.course_name, cr.teacher, cr.tag, cr.tags_json, cr.rating, cr.difficulty, cr.comment, cr.created_by, cr.created_at, cr.updated_at,
-        u.username, u.nickname, u.avatar,
         (SELECT COUNT(*) FROM course_review_comments c WHERE c.review_id = cr.id AND c.deleted_at IS NULL) AS comment_count,
         (SELECT AVG(r.rating) FROM course_review_ratings r WHERE r.review_id = cr.id) AS avg_rating,
         (SELECT COUNT(*) FROM course_review_ratings r WHERE r.review_id = cr.id) AS rating_count
        FROM course_reviews cr
-       LEFT JOIN users u ON u.id = cr.created_by
        WHERE ${where}
        ORDER BY cr.created_at DESC, cr.id DESC
        LIMIT ${limitCount} OFFSET ${offset}`,
@@ -1131,9 +1126,7 @@ router.get('/me/course-reviews', authenticateToken, async (req, res) => {
       difficulty: Number(r.difficulty || 0),
       comment: r.comment || null,
       created_at: r.created_at,
-      author: r.created_by
-        ? { id: r.created_by, username: r.username, nickname: r.nickname, avatar: assetUrl(r.avatar) }
-        : null,
+      author: null,
       stats: {
         comments: Number(r.comment_count || 0),
         avgRating: r.avg_rating == null ? null : Number(r.avg_rating),
@@ -1212,11 +1205,10 @@ router.get('/course-reviews/:id/comments', async (req, res) => {
     if (!id) return res.status(400).json({ status: -1, message: 'ID 无效' });
     const rows = await query('SELECT id FROM course_reviews WHERE id = ? AND deleted_at IS NULL LIMIT 1', [id]);
     if (!rows || rows.length === 0) return res.status(404).json({ status: -1, message: '不存在' });
+    // 课程评价评论保持匿名：不返回 user_id/作者信息
     const list = await query(
-      `SELECT c.id, c.review_id, c.user_id, c.content, c.created_at,
-        u.username, u.nickname, u.avatar
+      `SELECT c.id, c.review_id, c.content, c.created_at
        FROM course_review_comments c
-       LEFT JOIN users u ON u.id = c.user_id
        WHERE c.review_id = ? AND c.deleted_at IS NULL
        ORDER BY c.created_at ASC`,
       [id]
@@ -1224,10 +1216,9 @@ router.get('/course-reviews/:id/comments', async (req, res) => {
     const out = (list || []).map((c) => ({
       id: c.id,
       review_id: c.review_id,
-      user_id: c.user_id,
       content: c.content,
       created_at: c.created_at,
-      author: { username: c.username, nickname: c.nickname, avatar: assetUrl(c.avatar) },
+      author: null,
     }));
     res.status(200).json({ status: 0, message: 'ok', data: out });
   } catch (e) {

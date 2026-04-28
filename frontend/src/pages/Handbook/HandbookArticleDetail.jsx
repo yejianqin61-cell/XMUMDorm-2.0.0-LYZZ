@@ -108,6 +108,30 @@ function HandbookArticleDetail() {
           <h1 className="handbook-detail-title">{a.title}</h1>
           {a.summary ? <p className="handbook-detail-summary">{a.summary}</p> : null}
 
+          {a.authorInfo ? (
+            <div className="handbook-author" style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
+              {a.authorInfo.avatar ? (
+                <img
+                  src={a.authorInfo.avatar}
+                  alt=""
+                  style={{ width: 34, height: 34, borderRadius: 999, objectFit: 'cover' }}
+                  loading="lazy"
+                  decoding="async"
+                />
+              ) : (
+                <div style={{ width: 34, height: 34, borderRadius: 999, background: 'rgba(255,255,255,0.08)' }} />
+              )}
+              <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+                <div style={{ fontWeight: 600 }}>
+                  {a.authorInfo.nickname || a.authorInfo.username || (isZh ? '作者' : 'Author')}
+                </div>
+                <div style={{ opacity: 0.78, fontSize: 12 }}>
+                  {isZh ? '文章作者' : 'Article author'}
+                </div>
+              </div>
+            </div>
+          ) : null}
+
           <div className="handbook-detail-meta">
             <span className="handbook-meta-chip">{a.tab}</span>
             <span className="handbook-meta-num" aria-label={isZh ? '浏览量' : 'Views'}>

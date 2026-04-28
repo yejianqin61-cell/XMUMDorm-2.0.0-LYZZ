@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Star } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
-import { getCourseReviewDetail, listCourseReviewComments, rateCourseReview } from '../../api/handbook';
+import { createCourseReviewComment, getCourseReviewDetail, listCourseReviewComments, rateCourseReview } from '../../api/handbook';
 import { useAuth } from '../../context/AuthContext';
 import { Toast } from '../../context/ToastContext';
 import { QK } from '../../query/queryKeys';
@@ -12,11 +12,13 @@ import './Handbook.css';
 function CourseReviewDetail() {
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
-  const { isLoggedIn, user } = useAuth();
+  const { isLoggedIn } = useAuth();
   const queryClient = useQueryClient();
   const { id } = useParams();
   const reviewId = Number(id);
   const [ratingSubmitting, setRatingSubmitting] = useState(false);
+  const [commentText, setCommentText] = useState('');
+  const [commentSubmitting, setCommentSubmitting] = useState(false);
 
   const detailQuery = useQuery({
     queryKey: QK.courseReviewDetail(reviewId),
@@ -35,9 +37,8 @@ function CourseReviewDetail() {
 
   const r = detailQuery.data ?? null;
   const comments = useMemo(() => commentsQuery.data || [], [commentsQuery.data]);
-  const authorId = r?.author?.id ? Number(r.author.id) : 0;
-  const meId = user?.id ? Number(user.id) : 0;
-  const canRate = isLoggedIn && !!meId && !!authorId && meId !== authorId;
+  // 课程评价匿名：前端无法判断“是否是作者”，直接允许登录用户尝试评分；后端会拦截给自己评分
+  const canRate = isLoggedIn;
   const avgRating = r?.stats?.avgRating == null ? null : Number(r.stats.avgRating);
   const ratingCount = Number(r?.stats?.ratingCount ?? 0);
 
@@ -119,6 +120,43 @@ function CourseReviewDetail() {
 
             <section className="handbook-comments">
               <div className="handbook-comments-title">{isZh ? '评论' : 'Comments'}</div>
+              <div className="handbook-commentbox">
+                <input
+                  className="handbook-commentbox-input"
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  placeholder={isZh ? '匿名评论…' : 'Comment anonymously…'}
+                  maxLength={800}
+                  disabled={commentSubmitting}
+                />
+                <button
+                  type="button"
+                  className="handbook-commentbox-send"
+                  disabled={commentSubmitting || !commentText.trim()}
+                  onClick={async () => {
+                    if (!isLoggedIn) {
+                      Toast.error(isZh ? '请先登录' : 'Please login');
+                      return;
+                    }
+                    const text = commentText.trim();
+                    if (!text) return;
+                    setCommentSubmitting(true);
+                    try {
+                      await createCourseReviewComment(reviewId, { content: text });
+                      setCommentText('');
+                      Toast.success(isZh ? '评论成功' : 'Commented');
+                      await queryClient.invalidateQueries({ queryKey: QK.courseReviewComments(reviewId) });
+                      await queryClient.invalidateQueries({ queryKey: QK.courseReviews({ q: '', tags: [] }) });
+                    } catch (e) {
+                      Toast.error(e?.message || (isZh ? '评论失败' : 'Failed'));
+                    } finally {
+                      setCommentSubmitting(false);
+                    }
+                  }}
+                >
+                  {commentSubmitting ? (isZh ? '发送中…' : 'Sending…') : (isZh ? '发送' : 'Send')}
+                </button>
+              </div>
               {comments.length === 0 ? (
                 <div className="handbook-comments-empty">{isZh ? '暂无评论' : 'No comments yet'}</div>
               ) : (
@@ -126,7 +164,7 @@ function CourseReviewDetail() {
                   {comments.map((c) => (
                     <div key={c.id} className="handbook-comment">
                       <div className="handbook-comment-meta">
-                        <span className="handbook-comment-author">{c.author?.nickname ?? c.author?.username ?? 'Anonymous'}</span>
+                        <span className="handbook-comment-author">{isZh ? '匿名' : 'Anonymous'}</span>
                         <span className="handbook-comment-time">{c.created_at ? new Date(c.created_at).toLocaleString() : ''}</span>
                       </div>
                       <div className="handbook-comment-text">{c.content}</div>
