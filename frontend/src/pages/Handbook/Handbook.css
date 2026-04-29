@@ -451,10 +451,34 @@
 .handbook-detail-top {
   margin-bottom: 10px;
 }
+.handbook-detail-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
 .handbook-back {
   text-decoration: none;
   color: rgba(15, 23, 42, 0.78);
   font-weight: 800;
+}
+
+.handbook-more-btn {
+  padding: 10px;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  background: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  border-radius: 999px;
+  color: rgba(15, 23, 42, 0.72);
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.handbook-more-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .handbook-detail {

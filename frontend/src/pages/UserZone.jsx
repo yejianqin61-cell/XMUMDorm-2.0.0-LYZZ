@@ -595,18 +595,31 @@ function FavoriteListItem({ item }) {
 
 function FadeImg({ src, alt, className }) {
   const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
   useEffect(() => {
     setLoaded(false);
+    setFailed(false);
   }, [src]);
   return (
-    <img
-      src={src}
-      alt={alt}
-      loading="lazy"
-      decoding="async"
-      onLoad={() => setLoaded(true)}
-      className={`${className} transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
-    />
+    <div className="relative">
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+        onLoad={() => setLoaded(true)}
+        onError={() => {
+          setFailed(true);
+          setLoaded(true); // 避免一直 opacity-0 导致“空白”
+        }}
+        className={`${className} transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+      />
+      {failed ? (
+        <div className="absolute inset-0 grid place-items-center bg-slate-100 text-[11px] font-semibold text-slate-400">
+          image error
+        </div>
+      ) : null}
+    </div>
   );
 }
 

@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Star } from 'lucide-react';
+import { MoreVertical, Star } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
-import { createCourseReviewComment, deleteCourseReviewComment, getCourseReviewDetail, listCourseReviewComments, rateCourseReview } from '../../api/handbook';
+import { createCourseReviewComment, deleteCourseReview, deleteCourseReviewComment, getCourseReviewDetail, listCourseReviewComments, rateCourseReview } from '../../api/handbook';
 import { useAuth } from '../../context/AuthContext';
 import { Toast } from '../../context/ToastContext';
 import { QK } from '../../query/queryKeys';
@@ -20,6 +20,7 @@ function CourseReviewDetail() {
   const [ratingSubmitting, setRatingSubmitting] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [commentSubmitting, setCommentSubmitting] = useState(false);
+  const [deleteSubmitting, setDeleteSubmitting] = useState(false);
 
   const detailQuery = useQuery({
     queryKey: QK.courseReviewDetail(reviewId),
@@ -45,10 +46,36 @@ function CourseReviewDetail() {
 
   return (
     <div className="handbook-page">
-      <div className="handbook-detail-top">
+      <div className="handbook-detail-top handbook-detail-top-row">
         <Link to="/about/freshman-guide/course-review" className="handbook-back">
           {isZh ? '← 返回' : '← Back'}
         </Link>
+        {r?.viewer?.canEdit ? (
+          <button
+            type="button"
+            className="handbook-more-btn"
+            disabled={deleteSubmitting}
+            title={isZh ? '更多' : 'More'}
+            aria-label={isZh ? '更多' : 'More'}
+            onClick={async () => {
+              if (!window.confirm(isZh ? '确定删除这条课程评价吗？此操作不可撤销。' : 'Delete this review? This cannot be undone.')) return;
+              setDeleteSubmitting(true);
+              try {
+                await deleteCourseReview(reviewId);
+                Toast.success(isZh ? '已删除' : 'Deleted');
+                queryClient.removeQueries({ queryKey: QK.courseReviewDetail(reviewId) });
+                queryClient.invalidateQueries({ queryKey: ['handbook', 'courseReviews'] });
+                navigate('/about/freshman-guide/course-review', { replace: true });
+              } catch (e) {
+                Toast.error(e?.message || (isZh ? '删除失败' : 'Failed'));
+              } finally {
+                setDeleteSubmitting(false);
+              }
+            }}
+          >
+            <MoreVertical size={18} aria-hidden />
+          </button>
+        ) : null}
       </div>
 
       <div className="handbook-detail">
