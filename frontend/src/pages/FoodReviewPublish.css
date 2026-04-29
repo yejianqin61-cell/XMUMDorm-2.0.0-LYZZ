@@ -2,6 +2,8 @@
   padding: 16px;
   min-height: 100%;
   background: transparent;
+  /* 给底部 fixed 提交栏预留空间，避免表单最后一项被遮住 */
+  padding-bottom: calc(var(--tabbar-height, 56px) + var(--safe-bottom, 0px) + 110px);
 }
 
 .food-review-publish-loading,
@@ -184,18 +186,85 @@
 
 .food-review-publish-submit {
   width: 100%;
-  padding: 14px;
-  border: none;
-  border-radius: 8px;
-  background: var(--wx-green);
-  color: #fff;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 16px;
+  /* 厦大蓝 · 液态玻璃（有变量用变量，无变量用兜底） */
+  background:
+    radial-gradient(120% 140% at 20% 10%, rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0.00) 55%),
+    radial-gradient(140% 180% at 70% 0%, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.00) 60%),
+    linear-gradient(135deg, rgba(19, 98, 210, 0.92), rgba(58, 123, 213, 0.90) 55%, rgba(12, 74, 162, 0.92));
+  color: rgba(255, 255, 255, 0.98);
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 800;
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  letter-spacing: 0.2px;
+  box-shadow:
+    0 18px 44px rgba(12, 74, 162, 0.26),
+    0 8px 20px rgba(58, 123, 213, 0.22);
+  backdrop-filter: blur(10px) saturate(1.25);
+  -webkit-backdrop-filter: blur(10px) saturate(1.25);
+  position: relative;
+  overflow: hidden;
 }
 
 .food-review-publish-submit:hover {
-  background: var(--wx-green-dark);
+  filter: brightness(1.02);
+}
+
+.food-review-publish-submit:active {
+  transform: translateY(1px) scale(0.995);
+  filter: brightness(0.98);
+}
+
+.food-review-publish-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.food-review-publish-submit::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* 柔和高光与玻璃边缘 */
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.00) 40%),
+    radial-gradient(120% 100% at 50% 0%, rgba(255, 255, 255, 0.20), rgba(255, 255, 255, 0.00) 55%);
+  opacity: 0.95;
+}
+
+.food-review-publish-submit-title {
+  font-size: 16px;
+  line-height: 1.15;
+}
+
+.food-review-publish-submit-sub {
+  font-size: 12px;
+  line-height: 1.1;
+  opacity: 0.92;
+  font-weight: 700;
+}
+
+.food-review-publish-submitbar-fixed {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: calc(var(--tabbar-height, 56px) + var(--safe-bottom, 0px) + 12px);
+  z-index: 30;
+  padding: 10px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.12);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .food-review-publish-empty {

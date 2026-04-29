@@ -4,6 +4,7 @@ import { Toast } from '../context/ToastContext';
 import EmptyState from '../components/EmptyState';
 import { getProduct, postProductComment } from '../api/canteen';
 import { getApiErrorMessage } from '../utils/apiError';
+import { useAuth } from '../context/AuthContext';
 import './FoodReviewPublish.css';
 
 /** 评级选项：与后端 RATING_ENUM 一致 */
@@ -19,6 +20,7 @@ const RATING_OPTIONS = [
 function FoodReviewPublish() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { isLoggedIn, isMerchant, isAdmin } = useAuth();
   const [food, setFood] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -28,6 +30,21 @@ function FoodReviewPublish() {
   const [imageFiles, setImageFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
   const [submitLoading, setSubmitLoading] = useState(false);
+
+  useEffect(() => {
+    // 发布点评必须登录
+    if (!isLoggedIn) {
+      Toast.error('请先登录后再点评');
+      navigate('/login', { replace: true, state: { from: { pathname: `/eat/food/${id}/review` } } });
+      return;
+    }
+    // 商家账号不允许发一级点评（后端也会拦截），这里提前提示
+    if (isMerchant && !isAdmin) {
+      Toast.error('商家账号不能对商品发表一级点评');
+      navigate(`/eat/food/${id}`, { replace: true });
+    }
+  }, [id, isAdmin, isLoggedIn, isMerchant, navigate]);
+
   useEffect(() => {
     const productId = id ? parseInt(id, 10) : 0;
     if (!productId) {
@@ -68,6 +85,15 @@ function FoodReviewPublish() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!isLoggedIn) {
+      Toast.error('请先登录后再点评');
+      navigate('/login', { replace: true, state: { from: { pathname: `/eat/food/${id}/review` } } });
+      return;
+    }
+    if (isMerchant && !isAdmin) {
+      Toast.error('商家账号不能对商品发表一级点评');
+      return;
+    }
     if (rating == null || rating === '') {
       Toast.error('Please select a rating');
       return;
@@ -196,10 +222,19 @@ function FoodReviewPublish() {
         </div>
 
 
-        <button type="submit" className="food-review-publish-submit" disabled={submitLoading}>
-          {submitLoading ? '发布中…' : '发布点评 Publish Review'}
-        </button>
       </form>
+
+      <div className="food-review-publish-submitbar-fixed" role="group" aria-label="发布点评">
+        <button
+          type="button"
+          className="food-review-publish-submit"
+          disabled={submitLoading}
+          onClick={handleSubmit}
+        >
+          <span className="food-review-publish-submit-title">{submitLoading ? '发布中…' : '发布点评'}</span>
+          <span className="food-review-publish-submit-sub">Publish review</span>
+        </button>
+      </div>
     </div>
   );
 }

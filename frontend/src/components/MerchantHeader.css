@@ -85,6 +85,26 @@
   z-index: 50;
 }
 
+/* Portal 版本：浮在最上层，避免被 overflow/transform 截断 */
+.merchant-header-help-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.merchant-header-help-card--portal {
+  position: fixed;
+  top: 72px;
+  right: 12px;
+  z-index: 10001;
+  width: min(360px, 76vw);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.42);
+}
+
 .merchant-header-help-card p {
   margin: 0 0 8px;
   font-size: 12px;

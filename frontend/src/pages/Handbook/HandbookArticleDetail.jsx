@@ -9,9 +9,12 @@ import { Toast } from '../../context/ToastContext';
 import {
   bumpHandbookShare,
   createHandbookComment,
+  deleteHandbookComment,
   getHandbookArticleDetail,
   listHandbookComments,
+  toggleHandbookCommentLike,
   toggleHandbookLike,
+  toggleHandbookSave,
 } from '../../api/handbook';
 import { Bookmark, Eye, Heart, Share2 } from 'lucide-react';
 import { QK } from '../../query/queryKeys';
@@ -45,13 +48,17 @@ function slugify(s) {
 function HandbookArticleDetail() {
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
-  const { token, isLoggedIn } = useAuth();
+  const { token, isLoggedIn, user, isAdmin } = useAuth();
   const tokenKey = token ?? 'guest';
   const queryClient = useQueryClient();
   const { id } = useParams();
   const articleId = Number(id);
   const [commentText, setCommentText] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const meId = user?.id ? Number(user.id) : 0;
+  const [replyingTo, setReplyingTo] = useState(null); // { id, name }
+  const [replyText, setReplyText] = useState('');
+  const [replySubmitting, setReplySubmitting] = useState(false);
 
   const detailQuery = useQuery({
     queryKey: QK.handbookArticleDetail(articleId, tokenKey),
@@ -80,6 +87,67 @@ function HandbookArticleDetail() {
       return { ...h, id };
     });
   }, [headings]);
+
+  const canDeleteComment = (c) => {
+    const uid = c?.user_id != null ? Number(c.user_id) : 0;
+    return !!(isLoggedIn && (isAdmin || (meId > 0 && uid === meId)));
+  };
+
+  const optimisticInsertComment = ({ parentId, content }) => {
+    const nowIso = new Date().toISOString();
+    const tempId = `tmp_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+    const author = {
+      username: user?.username ?? null,
+      nickname: user?.nickname ?? null,
+      avatar: user?.avatar ?? null,
+    };
+    const base = {
+      id: tempId,
+      article_id: articleId,
+      user_id: meId || null,
+      parent_id: parentId ?? null,
+      content,
+      created_at: nowIso,
+      likes_count: 0,
+      viewer_liked: false,
+      author,
+    };
+
+    queryClient.setQueryData(QK.handbookArticleComments(articleId), (old) => {
+      const arr = Array.isArray(old) ? old : [];
+      if (!parentId) {
+        return [
+          ...arr,
+          {
+            ...base,
+            parent_id: null,
+            replies: [],
+          },
+        ];
+      }
+      // reply: append to parent's replies
+      return arr.map((x) => {
+        if (!x || x.id !== parentId) return x;
+        const curReplies = Array.isArray(x.replies) ? x.replies : [];
+        return {
+          ...x,
+          replies: [
+            ...curReplies,
+            {
+              ...base,
+              parent_id: parentId,
+            },
+          ],
+        };
+      });
+    });
+
+    return tempId;
+  };
+
+  const optimisticRollbackTo = (snapshot) => {
+    queryClient.setQueryData(QK.handbookArticleComments(articleId), snapshot);
+  };
 
   return (
     <div className="handbook-page">
@@ -201,6 +269,56 @@ function HandbookArticleDetail() {
             </button>
             <button
               type="button"
+              className={`handbook-action-btn ${a?.viewer?.saved ? 'is-on' : ''}`}
+              onClick={async () => {
+                if (!isLoggedIn) {
+                  Toast.error(isZh ? '请先登录' : 'Please login');
+                  return;
+                }
+                const prevSaved = !!a?.viewer?.saved;
+                const prevSaves = Number(a?.stats?.saves ?? 0);
+                const optimisticSaved = !prevSaved;
+                const optimisticSaves = optimisticSaved ? prevSaves + 1 : Math.max(0, prevSaves - 1);
+                queryClient.setQueryData(QK.handbookArticleDetail(articleId, tokenKey), (old) => {
+                  if (!old) return old;
+                  return {
+                    ...old,
+                    viewer: { ...(old.viewer || {}), saved: optimisticSaved },
+                    stats: { ...(old.stats || {}), saves: optimisticSaves },
+                  };
+                });
+                try {
+                  const out = await toggleHandbookSave(articleId);
+                  const finalSaved = out?.saved ?? optimisticSaved;
+                  if (finalSaved !== optimisticSaved) {
+                    const finalSaves = finalSaved ? prevSaves + 1 : Math.max(0, prevSaves - 1);
+                    queryClient.setQueryData(QK.handbookArticleDetail(articleId, tokenKey), (old) => {
+                      if (!old) return old;
+                      return {
+                        ...old,
+                        viewer: { ...(old.viewer || {}), saved: finalSaved },
+                        stats: { ...(old.stats || {}), saves: finalSaves },
+                      };
+                    });
+                  }
+                } catch (e) {
+                  queryClient.setQueryData(QK.handbookArticleDetail(articleId, tokenKey), (old) => {
+                    if (!old) return old;
+                    return {
+                      ...old,
+                      viewer: { ...(old.viewer || {}), saved: prevSaved },
+                      stats: { ...(old.stats || {}), saves: prevSaves },
+                    };
+                  });
+                  Toast.error(e?.message || (isZh ? '操作失败' : 'Failed'));
+                }
+              }}
+            >
+              <Bookmark size={18} aria-hidden />
+              {isZh ? '收藏' : 'Save'}
+            </button>
+            <button
+              type="button"
               className="handbook-action-btn"
               onClick={async () => {
                 try {
@@ -310,12 +428,15 @@ function HandbookArticleDetail() {
                   const text = commentText.trim();
                   if (!text) return;
                   setSubmitting(true);
+                  const prev = queryClient.getQueryData(QK.handbookArticleComments(articleId));
+                  optimisticInsertComment({ parentId: null, content: text });
+                  setCommentText('');
                   try {
                     await createHandbookComment(articleId, { content: text });
-                    setCommentText('');
                     Toast.success(isZh ? '评论成功' : 'Commented');
                     await queryClient.invalidateQueries({ queryKey: QK.handbookArticleComments(articleId) });
                   } catch (e) {
+                    optimisticRollbackTo(prev);
                     Toast.error(e?.message || (isZh ? '评论失败' : 'Failed'));
                   } finally {
                     setSubmitting(false);
@@ -332,16 +453,158 @@ function HandbookArticleDetail() {
                 {(commentsQuery.data || []).map((c) => (
                   <div key={c.id} className="handbook-comment">
                     <div className="handbook-comment-meta">
-                      <span className="handbook-comment-author">{c.author?.nickname ?? c.author?.username ?? 'Anonymous'}</span>
+                      <span className="handbook-comment-meta-left">
+                        <span className="handbook-comment-author">{c.author?.nickname ?? c.author?.username ?? 'Anonymous'}</span>
+                        <button
+                          type="button"
+                          className={`handbook-action-btn ${c?.viewer_liked ? 'is-on' : ''}`}
+                          style={{ height: 28, padding: '0 10px', fontSize: 12 }}
+                          onClick={async () => {
+                            if (!isLoggedIn) {
+                              Toast.error(isZh ? '请先登录' : 'Please login');
+                              return;
+                            }
+                            const prevLiked = !!c?.viewer_liked;
+                            const prevCount = Number(c?.likes_count ?? 0);
+                            const optimisticLiked = !prevLiked;
+                            const optimisticCount = optimisticLiked ? prevCount + 1 : Math.max(0, prevCount - 1);
+                            queryClient.setQueryData(QK.handbookArticleComments(articleId), (old) => {
+                              const arr = Array.isArray(old) ? old : [];
+                              return arr.map((x) => (x?.id === c.id ? { ...x, viewer_liked: optimisticLiked, likes_count: optimisticCount } : x));
+                            });
+                            try {
+                              const out = await toggleHandbookCommentLike(articleId, c.id);
+                              const finalLiked = out?.liked ?? optimisticLiked;
+                              if (finalLiked !== optimisticLiked) {
+                                const finalCount = finalLiked ? prevCount + 1 : Math.max(0, prevCount - 1);
+                                queryClient.setQueryData(QK.handbookArticleComments(articleId), (old) => {
+                                  const arr = Array.isArray(old) ? old : [];
+                                  return arr.map((x) => (x?.id === c.id ? { ...x, viewer_liked: finalLiked, likes_count: finalCount } : x));
+                                });
+                              }
+                            } catch (e) {
+                              queryClient.setQueryData(QK.handbookArticleComments(articleId), (old) => {
+                                const arr = Array.isArray(old) ? old : [];
+                                return arr.map((x) => (x?.id === c.id ? { ...x, viewer_liked: prevLiked, likes_count: prevCount } : x));
+                              });
+                              Toast.error(e?.message || (isZh ? '操作失败' : 'Failed'));
+                            }
+                          }}
+                        >
+                          <Heart size={16} aria-hidden />
+                          {c?.likes_count ?? 0}
+                        </button>
+                        <button
+                          type="button"
+                          className="handbook-action-btn"
+                          style={{ height: 28, padding: '0 10px', fontSize: 12 }}
+                          onClick={() => {
+                            if (!isLoggedIn) {
+                              Toast.error(isZh ? '请先登录' : 'Please login');
+                              return;
+                            }
+                            setReplyingTo({ id: c.id, name: c.author?.nickname ?? c.author?.username ?? (isZh ? '对方' : 'Someone') });
+                            setReplyText('');
+                          }}
+                        >
+                          {isZh ? '回复' : 'Reply'}
+                        </button>
+                        {canDeleteComment(c) ? (
+                          <button
+                            type="button"
+                            className="handbook-comment-delete"
+                            onClick={async () => {
+                              if (!window.confirm(isZh ? '确定删除这条评论吗？' : 'Delete this comment?')) return;
+                              try {
+                                await deleteHandbookComment(articleId, c.id);
+                                Toast.success(isZh ? '已删除' : 'Deleted');
+                                await queryClient.invalidateQueries({ queryKey: QK.handbookArticleComments(articleId) });
+                              } catch (e) {
+                                Toast.error(e?.message || (isZh ? '删除失败' : 'Failed'));
+                              }
+                            }}
+                          >
+                            {isZh ? '删除' : 'Delete'}
+                          </button>
+                        ) : null}
+                      </span>
                       <span className="handbook-comment-time">{c.created_at ? new Date(c.created_at).toLocaleString() : ''}</span>
                     </div>
                     <div className="handbook-comment-text">{c.content}</div>
+
+                    {replyingTo && replyingTo.id === c.id ? (
+                      <div className="handbook-commentbox" style={{ marginTop: 10 }}>
+                        <input
+                          className="handbook-commentbox-input"
+                          value={replyText}
+                          onChange={(e) => setReplyText(e.target.value)}
+                          placeholder={isZh ? `回复 @${replyingTo.name}…` : `Reply @${replyingTo.name}…`}
+                          maxLength={800}
+                          disabled={replySubmitting}
+                        />
+                        <button
+                          type="button"
+                          className="handbook-commentbox-send"
+                          disabled={replySubmitting || !replyText.trim()}
+                          onClick={async () => {
+                            const text = replyText.trim();
+                            if (!text) return;
+                            setReplySubmitting(true);
+                            const prev = queryClient.getQueryData(QK.handbookArticleComments(articleId));
+                            optimisticInsertComment({ parentId: c.id, content: text });
+                            setReplyText('');
+                            setReplyingTo(null);
+                            try {
+                              await createHandbookComment(articleId, { content: text, parent_id: c.id });
+                              Toast.success(isZh ? '回复成功' : 'Replied');
+                              await queryClient.invalidateQueries({ queryKey: QK.handbookArticleComments(articleId) });
+                            } catch (e) {
+                              optimisticRollbackTo(prev);
+                              Toast.error(e?.message || (isZh ? '回复失败' : 'Failed'));
+                            } finally {
+                              setReplySubmitting(false);
+                            }
+                          }}
+                        >
+                          {replySubmitting ? (isZh ? '发送中…' : 'Sending…') : (isZh ? '发送' : 'Send')}
+                        </button>
+                        <button
+                          type="button"
+                          className="handbook-commentbox-send"
+                          onClick={() => { setReplyingTo(null); setReplyText(''); }}
+                          disabled={replySubmitting}
+                        >
+                          {isZh ? '取消' : 'Cancel'}
+                        </button>
+                      </div>
+                    ) : null}
+
                     {Array.isArray(c.replies) && c.replies.length > 0 ? (
                       <div className="handbook-replies">
                         {c.replies.map((r) => (
                           <div key={r.id} className="handbook-reply">
                             <div className="handbook-comment-meta">
-                              <span className="handbook-comment-author">{r.author?.nickname ?? r.author?.username ?? 'Anonymous'}</span>
+                              <span className="handbook-comment-meta-left">
+                                <span className="handbook-comment-author">{r.author?.nickname ?? r.author?.username ?? 'Anonymous'}</span>
+                                {canDeleteComment(r) ? (
+                                  <button
+                                    type="button"
+                                    className="handbook-comment-delete"
+                                    onClick={async () => {
+                                      if (!window.confirm(isZh ? '确定删除这条评论吗？' : 'Delete this comment?')) return;
+                                      try {
+                                        await deleteHandbookComment(articleId, r.id);
+                                        Toast.success(isZh ? '已删除' : 'Deleted');
+                                        await queryClient.invalidateQueries({ queryKey: QK.handbookArticleComments(articleId) });
+                                      } catch (e) {
+                                        Toast.error(e?.message || (isZh ? '删除失败' : 'Failed'));
+                                      }
+                                    }}
+                                  >
+                                    {isZh ? '删除' : 'Delete'}
+                                  </button>
+                                ) : null}
+                              </span>
                               <span className="handbook-comment-time">{r.created_at ? new Date(r.created_at).toLocaleString() : ''}</span>
                             </div>
                             <div className="handbook-comment-text">{r.content}</div>

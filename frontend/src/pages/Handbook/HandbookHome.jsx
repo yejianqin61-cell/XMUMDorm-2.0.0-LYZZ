@@ -91,7 +91,7 @@ function HandbookHome() {
             <Link to="/about/freshman-guide/me" className="handbook-hero-me" aria-label={isZh ? '我的收藏' : 'My'}>
               <Bookmark size={18} aria-hidden />
             </Link>
-            <div className="handbook-hero-title">{isZh ? '新生手册' : 'Handbook'}</div>
+            <div className="handbook-hero-title">{isZh ? '马校一站通' : 'Campus Handbook'}</div>
           </div>
           <div className="handbook-orbs handbook-orbs--top">
             <div className="handbook-orb-wrap" ref={searchWrapRef}>
@@ -146,7 +146,7 @@ function HandbookHome() {
           </div>
         </div>
         <div className="handbook-hero-sub">
-          {isZh ? '指南 · 课程测评 · 生活技巧 · 避坑 · FAQ' : 'Guide · Reviews · Tips · FAQ'}
+          {isZh ? '美食 · 游玩 · 榴莲 · 校内周边咨询 · 学法分享 · 课程测评' : 'Food · Explore · Durian · Campus Guide · Study Tips · Reviews'}
         </div>
         <div className="handbook-hero-actions">
           <Link to="/about/freshman-guide/new" className="handbook-btn handbook-btn--primary">
@@ -181,6 +181,14 @@ function HandbookHome() {
               <div className="handbook-card-title">{a.title}</div>
               {a.summary ? <div className="handbook-card-summary">{a.summary}</div> : null}
               <div className="handbook-card-meta">
+                {a.author ? (
+                  <span className="handbook-card-author" title={a.author.nickname || a.author.username || ''}>
+                    {a.author.avatar ? <img src={a.author.avatar} alt="" className="handbook-card-author-avatar" loading="lazy" decoding="async" /> : null}
+                    <span className="handbook-card-author-name">
+                      {a.author.nickname || a.author.username || (isZh ? '作者' : 'Author')}
+                    </span>
+                  </span>
+                ) : null}
                 <span className="handbook-meta-chip">{a.tab || 'all'}</span>
                 <span className="handbook-meta-num" aria-label={isZh ? '浏览量' : 'Views'}>
                   <Eye size={16} aria-hidden />

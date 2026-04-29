@@ -51,6 +51,26 @@ function clamp(n, min, max) {
   return Math.min(max, Math.max(min, n));
 }
 
+function termLabel(year, month) {
+  const y = Number(year);
+  const m = month == null ? '' : String(month);
+  if (!Number.isFinite(y) || y < 2000) return null;
+  if (!/^\d{2}$/.test(m)) return null;
+  return `${String(y).slice(-2)}/${m}`;
+}
+
+function parseTermYearMonth(body) {
+  const nowY = new Date().getFullYear();
+  const yRaw = body && (body.term_year ?? body.termYear ?? body.year);
+  const mRaw = body && (body.term_month ?? body.termMonth ?? body.month);
+  const y = toInt(yRaw, 0);
+  const m = mRaw == null ? '' : String(mRaw).trim();
+  const allowedMonths = new Set(['02', '04', '09']);
+  if (!y || y < 2016 || y > nowY) return { ok: false, message: `年份必须在 2016-${nowY} 之间` };
+  if (!allowedMonths.has(m)) return { ok: false, message: '月份仅支持 02 / 04 / 09' };
+  return { ok: true, year: y, month: m };
+}
+
 function ensureUploadsDir(relDir) {
   const dir = path.join(process.cwd(), 'uploads', relDir);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
@@ -619,7 +639,7 @@ router.get('/articles/:id/comments', async (req, res) => {
     if (!canView) return res.status(404).json({ status: -1, message: '文章不存在或未发布' });
 
     const list = await query(
-      `SELECT c.id, c.article_id, c.user_id, c.parent_id, c.content, c.created_at,
+      `SELECT c.id, c.article_id, c.user_id, c.parent_id, c.content, c.created_at, c.likes_count,
         u.username, u.nickname, u.avatar
        FROM handbook_comments c
        LEFT JOIN users u ON u.id = c.user_id
@@ -637,6 +657,8 @@ router.get('/articles/:id/comments', async (req, res) => {
       parent_id: null,
       content: t.content,
       created_at: t.created_at,
+      likes_count: Number(t.likes_count || 0),
+      viewer_liked: false,
       author: { username: t.username, nickname: t.nickname, avatar: assetUrl(t.avatar) },
       replies: replies
         .filter((r) => r.parent_id === t.id)
@@ -647,9 +669,25 @@ router.get('/articles/:id/comments', async (req, res) => {
           parent_id: r.parent_id,
           content: r.content,
           created_at: r.created_at,
+          likes_count: Number(r.likes_count || 0),
+          viewer_liked: false,
           author: { username: r.username, nickname: r.nickname, avatar: assetUrl(r.avatar) },
         })),
     }));
+
+    // 仅对一级评论暴露 viewer_liked（二级评论暂不提供点赞交互）
+    if (viewerId > 0 && out.length > 0) {
+      const ids = out.map((x) => x.id).filter((n) => Number.isFinite(Number(n)) && Number(n) > 0);
+      if (ids.length > 0) {
+        const ph = ids.map(() => '?').join(',');
+        const likedRows = await query(
+          `SELECT comment_id FROM handbook_comment_likes WHERE user_id = ? AND comment_id IN (${ph})`,
+          [viewerId, ...ids]
+        );
+        const likedSet = new Set((likedRows || []).map((r) => Number(r.comment_id)));
+        out.forEach((c) => { c.viewer_liked = likedSet.has(Number(c.id)); });
+      }
+    }
 
     res.status(200).json({ status: 0, message: 'ok', data: out });
   } catch (e) {
@@ -722,6 +760,45 @@ router.delete('/articles/:id/comments/:commentId', authenticateToken, async (req
     res.status(200).json({ status: 0, message: '已删除', data: { id: commentId } });
   } catch (e) {
     console.error('handbook comment delete error:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
+// ============================================
+// Comment Like（仅一级评论，登录）
+// ============================================
+router.post('/articles/:id/comments/:commentId/like', authenticateToken, async (req, res) => {
+  try {
+    const articleId = toInt(req.params.id, 0);
+    const commentId = toInt(req.params.commentId, 0);
+    if (!articleId || !commentId) return res.status(400).json({ status: -1, message: '参数无效' });
+
+    const rows = await query(
+      'SELECT id, parent_id FROM handbook_comments WHERE id = ? AND article_id = ? AND deleted_at IS NULL LIMIT 1',
+      [commentId, articleId]
+    );
+    const c = rows && rows[0];
+    if (!c) return res.status(404).json({ status: -1, message: '评论不存在' });
+    if (c.parent_id != null) return res.status(400).json({ status: -1, message: '仅支持给一级评论点赞' });
+
+    const existing = await query(
+      'SELECT 1 FROM handbook_comment_likes WHERE user_id = ? AND comment_id = ? LIMIT 1',
+      [req.user.id, commentId]
+    );
+    if (existing && existing.length > 0) {
+      await query('DELETE FROM handbook_comment_likes WHERE user_id = ? AND comment_id = ?', [req.user.id, commentId]);
+      await query('UPDATE handbook_comments SET likes_count = GREATEST(0, likes_count - 1) WHERE id = ?', [commentId]);
+      return res.status(200).json({ status: 0, message: 'ok', data: { comment_id: commentId, liked: false } });
+    }
+
+    await query('INSERT INTO handbook_comment_likes (user_id, comment_id) VALUES (?, ?)', [req.user.id, commentId]);
+    await query('UPDATE handbook_comments SET likes_count = likes_count + 1 WHERE id = ?', [commentId]);
+    res.status(200).json({ status: 0, message: 'ok', data: { comment_id: commentId, liked: true } });
+  } catch (e) {
+    if (e && e.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ status: -1, message: '你已经点赞过了' });
+    }
+    console.error('handbook comment like error:', e);
     res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
   }
 });
@@ -968,6 +1045,7 @@ router.get('/course-reviews', async (req, res) => {
     // 课程评价保持匿名：公开接口不返回作者信息
     const rows = await query(
       `SELECT cr.id, cr.course_name, cr.teacher, cr.tag, cr.tags_json, cr.rating, cr.difficulty, cr.comment, cr.created_by, cr.created_at, cr.updated_at,
+        cr.term_year, cr.term_month,
         (SELECT COUNT(*) FROM course_review_comments c WHERE c.review_id = cr.id AND c.deleted_at IS NULL) AS comment_count,
         (SELECT AVG(r.rating) FROM course_review_ratings r WHERE r.review_id = cr.id) AS avg_rating,
         (SELECT COUNT(*) FROM course_review_ratings r WHERE r.review_id = cr.id) AS rating_count
@@ -988,6 +1066,9 @@ router.get('/course-reviews', async (req, res) => {
       difficulty: Number(r.difficulty || 0),
       comment: r.comment || null,
       created_at: r.created_at,
+      term: termLabel(r.term_year, r.term_month),
+      term_year: r.term_year == null ? null : Number(r.term_year),
+      term_month: r.term_month == null ? null : String(r.term_month),
       author: null,
       stats: {
         comments: Number(r.comment_count || 0),
@@ -1010,9 +1091,15 @@ router.get('/course-reviews/:id', async (req, res) => {
   try {
     const id = toInt(req.params.id, 0);
     if (!id) return res.status(400).json({ status: -1, message: 'ID 无效' });
-    // 课程评价保持匿名：公开接口不返回作者信息
+    const user = parseOptionalUser(req);
+    const viewerUid = user && user.id != null ? Number(user.id) : 0;
+    const viewerId = Number.isFinite(viewerUid) && viewerUid > 0 ? viewerUid : 0;
+    const viewerIsAdmin = !!(user && user.role === 'admin');
+
+    // 课程评价保持匿名：公开接口不返回作者信息（但允许返回 viewer 是否为作者，用于编辑按钮）
     const rows = await query(
       `SELECT cr.id, cr.course_name, cr.teacher, cr.tag, cr.tags_json, cr.rating, cr.difficulty, cr.comment, cr.created_by, cr.created_at, cr.updated_at,
+        cr.term_year, cr.term_month,
         (SELECT AVG(r.rating) FROM course_review_ratings r WHERE r.review_id = cr.id) AS avg_rating,
         (SELECT COUNT(*) FROM course_review_ratings r WHERE r.review_id = cr.id) AS rating_count
        FROM course_reviews cr
@@ -1022,6 +1109,7 @@ router.get('/course-reviews/:id', async (req, res) => {
     );
     const r = rows && rows[0];
     if (!r) return res.status(404).json({ status: -1, message: '不存在' });
+    const isOwner = viewerId > 0 && Number(r.created_by) === viewerId;
     res.status(200).json({
       status: 0,
       message: 'ok',
@@ -1035,11 +1123,15 @@ router.get('/course-reviews/:id', async (req, res) => {
         comment: r.comment || null,
         created_at: r.created_at,
         updated_at: r.updated_at,
+        term: termLabel(r.term_year, r.term_month),
+        term_year: r.term_year == null ? null : Number(r.term_year),
+        term_month: r.term_month == null ? null : String(r.term_month),
         author: null,
         stats: {
           avgRating: r.avg_rating == null ? null : Number(r.avg_rating),
           ratingCount: Number(r.rating_count || 0),
         },
+        viewer: { isOwner, canEdit: isOwner || viewerIsAdmin },
       },
     });
   } catch (e) {
@@ -1053,12 +1145,15 @@ router.post('/course-reviews', authenticateToken, async (req, res) => {
     const courseName = cleanText(req.body && (req.body.courseName ?? req.body.course_name), 180);
     const teacher = cleanText(req.body && req.body.teacher, 120);
     const tagsBody = req.body && (req.body.tags ?? req.body.tag);
-    const rating = clamp(toInt(req.body && req.body.rating, 0), 1, 5);
+    const termParsed = parseTermYearMonth(req.body || {});
+    // 创建时不强制填写 rating：默认给 5（仍保持字段 1-5）
+    const rating = req.body && req.body.rating != null ? clamp(toInt(req.body.rating, 0), 1, 5) : 5;
     const difficulty = clamp(toInt(req.body && req.body.difficulty, 3), 1, 5);
     const comment = cleanText(req.body && (req.body.comment ?? req.body.content), 3000);
     const allowedTags = new Set(['MPU', 'GE', 'ME', 'required', 'final', 'no final']);
     if (!courseName) return res.status(400).json({ status: -1, message: 'courseName 不能为空' });
     if (!teacher) return res.status(400).json({ status: -1, message: 'teacher 不能为空' });
+    if (!termParsed.ok) return res.status(400).json({ status: -1, message: termParsed.message });
     const tagListRaw = Array.isArray(tagsBody)
       ? tagsBody
       : String(tagsBody || '')
@@ -1070,12 +1165,90 @@ router.post('/course-reviews', authenticateToken, async (req, res) => {
     if (!rating) return res.status(400).json({ status: -1, message: 'rating 必须为 1-5' });
     if (!comment) return res.status(400).json({ status: -1, message: '评价不能为空' });
     const result = await query(
-      'INSERT INTO course_reviews (course_name, teacher, tag, tags_json, rating, difficulty, comment, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [courseName, teacher, tags[0], JSON.stringify(tags), rating, difficulty, comment, req.user.id]
+      'INSERT INTO course_reviews (course_name, teacher, tag, tags_json, rating, difficulty, comment, created_by, term_year, term_month) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [courseName, teacher, tags[0], JSON.stringify(tags), rating, difficulty, comment, req.user.id, termParsed.year, termParsed.month]
     );
     res.status(200).json({ status: 0, message: 'ok', data: { id: result.insertId } });
   } catch (e) {
     console.error('course review create error:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
+router.patch('/course-reviews/:id', authenticateToken, async (req, res) => {
+  try {
+    const id = toInt(req.params.id, 0);
+    if (!id) return res.status(400).json({ status: -1, message: 'ID 无效' });
+
+    const rows = await query('SELECT id, created_by FROM course_reviews WHERE id = ? AND deleted_at IS NULL LIMIT 1', [id]);
+    const cur = rows && rows[0];
+    if (!cur) return res.status(404).json({ status: -1, message: '不存在' });
+    if (!isAdmin(req) && Number(cur.created_by) !== Number(req.user.id)) return res.status(403).json({ status: -1, message: '无权限' });
+
+    const courseName =
+      req.body && (req.body.courseName ?? req.body.course_name) != null ? cleanText(req.body.courseName ?? req.body.course_name, 180) : undefined;
+    const teacher = req.body && req.body.teacher != null ? cleanText(req.body.teacher, 120) : undefined;
+    const tagsBody = req.body && (req.body.tags ?? req.body.tag);
+    const rating = req.body && req.body.rating != null ? clamp(toInt(req.body.rating, 0), 1, 5) : undefined;
+    const difficulty = req.body && req.body.difficulty != null ? clamp(toInt(req.body.difficulty, 3), 1, 5) : undefined;
+    const comment = req.body && (req.body.comment ?? req.body.content) != null ? cleanText(req.body.comment ?? req.body.content, 3000) : undefined;
+
+    const hasTermInput =
+      req.body &&
+      (req.body.term_year ?? req.body.termYear ?? req.body.year ?? req.body.term_month ?? req.body.termMonth ?? req.body.month) != null;
+    const termParsed = hasTermInput ? parseTermYearMonth(req.body || {}) : null;
+    if (termParsed && !termParsed.ok) return res.status(400).json({ status: -1, message: termParsed.message });
+
+    let tags = undefined;
+    let tag0 = undefined;
+    if (tagsBody !== undefined) {
+      const allowedTags = new Set(['MPU', 'GE', 'ME', 'required', 'final', 'no final']);
+      const tagListRaw = Array.isArray(tagsBody)
+        ? tagsBody
+        : String(tagsBody || '')
+            .split(',')
+            .map((x) => x.trim())
+            .filter(Boolean);
+      const nextTags = [...new Set(tagListRaw.filter((t) => allowedTags.has(t)))].slice(0, 8);
+      if (nextTags.length === 0) return res.status(400).json({ status: -1, message: 'tags 不能为空' });
+      tags = nextTags;
+      tag0 = nextTags[0];
+    }
+
+    const fields = [];
+    const params = [];
+    if (courseName !== undefined) {
+      if (!courseName) return res.status(400).json({ status: -1, message: 'courseName 不能为空' });
+      fields.push('course_name = ?'); params.push(courseName);
+    }
+    if (teacher !== undefined) {
+      if (!teacher) return res.status(400).json({ status: -1, message: 'teacher 不能为空' });
+      fields.push('teacher = ?'); params.push(teacher);
+    }
+    if (tags !== undefined) {
+      fields.push('tag = ?'); params.push(tag0);
+      fields.push('tags_json = ?'); params.push(JSON.stringify(tags));
+    }
+    if (rating !== undefined) {
+      if (!rating) return res.status(400).json({ status: -1, message: 'rating 必须为 1-5' });
+      fields.push('rating = ?'); params.push(rating);
+    }
+    if (difficulty !== undefined) { fields.push('difficulty = ?'); params.push(difficulty); }
+    if (comment !== undefined) {
+      if (!comment) return res.status(400).json({ status: -1, message: '评价不能为空' });
+      fields.push('comment = ?'); params.push(comment);
+    }
+    if (termParsed) {
+      fields.push('term_year = ?'); params.push(termParsed.year);
+      fields.push('term_month = ?'); params.push(termParsed.month);
+    }
+
+    if (fields.length === 0) return res.status(400).json({ status: -1, message: '没有可更新字段' });
+    params.push(id);
+    await query(`UPDATE course_reviews SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, params);
+    res.status(200).json({ status: 0, message: 'ok', data: { id } });
+  } catch (e) {
+    console.error('course review update error:', e);
     res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
   }
 });
@@ -1106,6 +1279,7 @@ router.get('/me/course-reviews', authenticateToken, async (req, res) => {
     // 保持课程评价匿名（即使是“我的”列表，也不依赖 author 字段）
     const rows = await query(
       `SELECT cr.id, cr.course_name, cr.teacher, cr.tag, cr.tags_json, cr.rating, cr.difficulty, cr.comment, cr.created_by, cr.created_at, cr.updated_at,
+        cr.term_year, cr.term_month,
         (SELECT COUNT(*) FROM course_review_comments c WHERE c.review_id = cr.id AND c.deleted_at IS NULL) AS comment_count,
         (SELECT AVG(r.rating) FROM course_review_ratings r WHERE r.review_id = cr.id) AS avg_rating,
         (SELECT COUNT(*) FROM course_review_ratings r WHERE r.review_id = cr.id) AS rating_count
@@ -1126,6 +1300,9 @@ router.get('/me/course-reviews', authenticateToken, async (req, res) => {
       difficulty: Number(r.difficulty || 0),
       comment: r.comment || null,
       created_at: r.created_at,
+      term: termLabel(r.term_year, r.term_month),
+      term_year: r.term_year == null ? null : Number(r.term_year),
+      term_month: r.term_month == null ? null : String(r.term_month),
       author: null,
       stats: {
         comments: Number(r.comment_count || 0),
@@ -1151,7 +1328,7 @@ router.post('/course-reviews/:id/rate', authenticateToken, async (req, res) => {
     const rows = await query('SELECT id, created_by FROM course_reviews WHERE id = ? AND deleted_at IS NULL LIMIT 1', [id]);
     const r = rows && rows[0];
     if (!r) return res.status(404).json({ status: -1, message: '不存在' });
-    if (Number(r.created_by) === Number(req.user.id)) return res.status(403).json({ status: -1, message: '不能给自己的课程评价评分' });
+    // 允许发布者也能评分（匿名展示不变）；仍保持“一人一次”的限制
 
     const existing = await query('SELECT id FROM course_review_ratings WHERE review_id = ? AND user_id = ? LIMIT 1', [id, req.user.id]);
     if (existing && existing.length > 0) {
@@ -1205,21 +1382,30 @@ router.get('/course-reviews/:id/comments', async (req, res) => {
     if (!id) return res.status(400).json({ status: -1, message: 'ID 无效' });
     const rows = await query('SELECT id FROM course_reviews WHERE id = ? AND deleted_at IS NULL LIMIT 1', [id]);
     if (!rows || rows.length === 0) return res.status(404).json({ status: -1, message: '不存在' });
-    // 课程评价评论保持匿名：不返回 user_id/作者信息
+    // 课程评价评论保持匿名：不返回 user_id/作者信息，但需要让“本人/管理员”可见删除入口
+    const user = parseOptionalUser(req);
+    const viewerUid = user && user.id != null ? Number(user.id) : 0;
+    const viewerId = Number.isFinite(viewerUid) && viewerUid > 0 ? viewerUid : 0;
+    const viewerIsAdmin = !!(user && user.role === 'admin');
+
     const list = await query(
-      `SELECT c.id, c.review_id, c.content, c.created_at
+      `SELECT c.id, c.review_id, c.user_id, c.content, c.created_at
        FROM course_review_comments c
        WHERE c.review_id = ? AND c.deleted_at IS NULL
        ORDER BY c.created_at ASC`,
       [id]
     );
-    const out = (list || []).map((c) => ({
-      id: c.id,
-      review_id: c.review_id,
-      content: c.content,
-      created_at: c.created_at,
-      author: null,
-    }));
+    const out = (list || []).map((c) => {
+      const canDelete = viewerIsAdmin || (viewerId > 0 && Number(c.user_id) === viewerId);
+      return {
+        id: c.id,
+        review_id: c.review_id,
+        content: c.content,
+        created_at: c.created_at,
+        author: null,
+        can_delete: canDelete,
+      };
+    });
     res.status(200).json({ status: 0, message: 'ok', data: out });
   } catch (e) {
     console.error('course review comments list error:', e);

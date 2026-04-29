@@ -173,6 +173,7 @@ function FoodDetail() {
   }
 
   const handleReview = () => {
+    if (requireLogin()) return;
     navigate(`/eat/food/${id}/review`);
   };
 

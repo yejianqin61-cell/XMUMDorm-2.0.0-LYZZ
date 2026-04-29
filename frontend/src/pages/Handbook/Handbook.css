@@ -346,6 +346,31 @@
   gap: 8px;
   align-items: center;
 }
+.handbook-card-author {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  background: rgba(255, 255, 255, 0.75);
+  color: rgba(15, 23, 42, 0.72);
+  max-width: 60%;
+}
+.handbook-card-author-avatar {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  object-fit: cover;
+  flex: 0 0 auto;
+}
+.handbook-card-author-name {
+  font-size: 11px;
+  font-weight: 900;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .handbook-meta-chip {
   font-size: 11px;
   font-weight: 800;
@@ -646,6 +671,29 @@
   gap: 10px;
   margin-bottom: 6px;
 }
+.handbook-comment-meta-left {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+.handbook-comment-actions {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+.handbook-comment-delete {
+  border: 0;
+  background: transparent;
+  color: rgba(239, 68, 68, 0.92);
+  font-size: 12px;
+  font-weight: 900;
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+.handbook-comment-delete:active {
+  transform: scale(0.98);
+}
 .handbook-comment-author {
   font-weight: 900;
 }
@@ -809,6 +857,22 @@
   font-size: 13px;
   letter-spacing: 0.2px;
   color: rgba(11, 61, 145, 0.96);
+}
+.handbook-mini-score-sub {
+  position: absolute;
+  right: 10px;
+  top: 46px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(11, 61, 145, 0.18);
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+  font-weight: 950;
+  font-size: 12px;
+  letter-spacing: 0.2px;
+  color: rgba(11, 61, 145, 0.92);
 }
 .handbook-mini-title {
   font-weight: 950;

@@ -73,6 +73,7 @@ export const layoutRoutes = (
     <Route path="about/freshman-guide/a/:id" element={<HandbookArticleDetail />} />
     <Route path="about/freshman-guide/course-review" element={<CourseReviewPage />} />
     <Route path="about/freshman-guide/course-review/new" element={<CourseReviewCreate />} />
+    <Route path="about/freshman-guide/course-review/:id/edit" element={<CourseReviewCreate />} />
     <Route path="about/freshman-guide/course-review/:id" element={<CourseReviewDetail />} />
     <Route path="about/errands" element={<SquareErrands />} />
     <Route path="myzone" element={<MyZone />} />

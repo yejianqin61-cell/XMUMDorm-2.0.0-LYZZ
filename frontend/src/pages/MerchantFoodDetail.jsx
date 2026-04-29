@@ -177,6 +177,14 @@ function MerchantFoodDetail() {
           <div className="merchant-food-detail-actions">
             <button
               type="button"
+              className="merchant-food-detail-btn"
+              onClick={() => navigate(`/eat/food/${food.id}/review`)}
+              disabled={submitLoading}
+            >
+              去点评 Review
+            </button>
+            <button
+              type="button"
               className="merchant-food-detail-btn merchant-food-detail-btn-edit"
               onClick={() => setIsEditing(true)}
               disabled={submitLoading}

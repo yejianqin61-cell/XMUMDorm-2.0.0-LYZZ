@@ -67,6 +67,18 @@ function AboutUs() {
   const [glintBoost, setGlintBoost] = useState(false);
   const [secondhandTreasures, setSecondhandTreasures] = useState([]);
 
+  const stickerLabel = useMemo(() => {
+    const dict = {
+      club: { zh: '社团广场', en: 'Club' },
+      secondhand: { zh: '出物!!!', en: 'Second-hand Market' },
+      trending: { zh: '热搜', en: 'Trending Searches' },
+      freshman: { zh: '马校一站通', en: 'Campus Handbook' },
+      errands: { zh: '帮我帮我', en: 'Errands Service' },
+    };
+    const key = isZh ? 'zh' : 'en';
+    return (id) => dict[id]?.[key] || '';
+  }, [isZh]);
+
   const stickersSeed = useMemo(
     () => [
       {
@@ -92,7 +104,7 @@ function AboutUs() {
       },
       {
         id: 'freshman',
-        label: 'Freshman Starter Guide',
+        label: 'Campus Handbook',
         to: '/about/freshman-guide',
         fileName: '新生手册.png',
         rect: { x: 32.76322398754528, y: 59.31130597464311, w: 38, space: 'img' },
@@ -129,11 +141,27 @@ function AboutUs() {
       if (!raw) return;
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        setStickers(parsed.filter((x) => x && x.src));
+        const normalized = parsed
+          .filter((x) => x && x.src)
+          .map((s) => {
+            if (s && s.id === 'freshman') {
+              const label = String(s.label || '');
+              if (/freshman\s*guide/i.test(label) || /freshman/i.test(label)) {
+                return { ...s, label: 'Campus Handbook' };
+              }
+            }
+            return s;
+          });
+        setStickers(normalized);
         // 如果用户只有旧 key 数据，则自动提升到新 key
         if (!localStorage.getItem(storageKey)) {
           try {
-            localStorage.setItem(storageKey, JSON.stringify(parsed));
+            localStorage.setItem(storageKey, JSON.stringify(normalized));
+          } catch {}
+        } else {
+          // 若已存在新 key，但 label 仍为旧文案，则同步修正一次
+          try {
+            localStorage.setItem(storageKey, JSON.stringify(normalized));
           } catch {}
         }
       }
@@ -411,6 +439,7 @@ function AboutUs() {
           }`;
           const isClub = s.id === 'club';
           const isSecondhand = s.id === 'secondhand';
+          const computedLabel = stickerLabel(s.id) || s.label;
           const onClubEnter = () => {
             if (!isClub) return;
             const slogans = [
@@ -434,7 +463,7 @@ function AboutUs() {
               className={cls}
               data-id={s.id}
               style={styleWithSprite}
-              aria-label={s.label}
+              aria-label={computedLabel || s.label}
               onPointerDown={(ev) => startDrag(s.id, ev)}
               onClick={() => setSelectedId(s.id)}
               onMouseEnter={onClubEnter}
@@ -442,7 +471,7 @@ function AboutUs() {
               onFocus={onClubEnter}
               onBlur={onClubLeave}
             >
-              <img src={s.src} alt={s.label} className="square-sticker-img" draggable={false} />
+              <img src={s.src} alt={computedLabel || s.label} className="square-sticker-img" draggable={false} />
               {isClub && <span className="square-club-soundwaves" aria-hidden />}
               {isClub && <span className="square-club-confetti" aria-hidden />}
               {isClub && clubBubble && <span className="square-club-bubble">{clubBubble}</span>}
@@ -460,15 +489,17 @@ function AboutUs() {
                   <span className="square-trending-whisper" aria-hidden />
                   <span className="square-trending-danmaku" aria-hidden>
                     <span className="square-trending-danmaku-line square-trending-danmaku-line--a">New Club! 🎨</span>
-                    <span className="square-trending-danmaku-line square-trending-danmaku-line--b">Freshman Guide 📚</span>
+                    <span className="square-trending-danmaku-line square-trending-danmaku-line--b">
+                      {isZh ? '马校一站通 📚' : 'Campus Handbook 📚'}
+                    </span>
                     <span className="square-trending-danmaku-line square-trending-danmaku-line--c">Campus Rank 🏆</span>
                   </span>
                 </>
               )}
               {s.id === 'freshman' && <span className="square-freshman-particles" aria-hidden />}
-              {s.label && (
+              {(computedLabel || s.label) && (
                 <span className="square-sticker-label" aria-hidden>
-                  <span className="square-sticker-label-text">{s.label}</span>
+                  <span className="square-sticker-label-text">{computedLabel || s.label}</span>
                 </span>
               )}
             </button>
@@ -479,13 +510,13 @@ function AboutUs() {
               className={cls}
               data-id={s.id}
               style={styleWithSprite}
-              aria-label={s.label}
+              aria-label={computedLabel || s.label}
               onMouseEnter={onClubEnter}
               onMouseLeave={onClubLeave}
               onFocus={onClubEnter}
               onBlur={onClubLeave}
             >
-              <img src={s.src} alt={s.label} className="square-sticker-img" draggable={false} />
+              <img src={s.src} alt={computedLabel || s.label} className="square-sticker-img" draggable={false} />
               {isClub && <span className="square-club-soundwaves" aria-hidden />}
               {isClub && <span className="square-club-confetti" aria-hidden />}
               {isClub && clubBubble && <span className="square-club-bubble">{clubBubble}</span>}
@@ -503,15 +534,17 @@ function AboutUs() {
                   <span className="square-trending-whisper" aria-hidden />
                   <span className="square-trending-danmaku" aria-hidden>
                     <span className="square-trending-danmaku-line square-trending-danmaku-line--a">New Club! 🎨</span>
-                    <span className="square-trending-danmaku-line square-trending-danmaku-line--b">Freshman Guide 📚</span>
+                    <span className="square-trending-danmaku-line square-trending-danmaku-line--b">
+                      {isZh ? '马校一站通 📚' : 'Campus Handbook 📚'}
+                    </span>
                     <span className="square-trending-danmaku-line square-trending-danmaku-line--c">Campus Rank 🏆</span>
                   </span>
                 </>
               )}
               {s.id === 'freshman' && <span className="square-freshman-particles" aria-hidden />}
-              {s.label && (
+              {(computedLabel || s.label) && (
                 <span className="square-sticker-label" aria-hidden>
-                  <span className="square-sticker-label-text">{s.label}</span>
+                  <span className="square-sticker-label-text">{computedLabel || s.label}</span>
                 </span>
               )}
             </Link>

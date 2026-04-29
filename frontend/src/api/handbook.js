@@ -74,6 +74,10 @@ export function deleteHandbookComment(articleId, commentId) {
   return del(`/api/handbook/articles/${articleId}/comments/${commentId}`);
 }
 
+export function toggleHandbookCommentLike(articleId, commentId) {
+  return post(`/api/handbook/articles/${articleId}/comments/${commentId}/like`, {});
+}
+
 export async function uploadHandbookImage(file) {
   const form = new FormData();
   form.append('image', file);
@@ -145,6 +149,10 @@ export function rateCourseReview(id, rating) {
 
 export function createCourseReview(body) {
   return post('/api/handbook/course-reviews', body || {});
+}
+
+export function updateCourseReview(id, body) {
+  return patch(`/api/handbook/course-reviews/${id}`, body || {});
 }
 
 export function deleteCourseReview(id) {

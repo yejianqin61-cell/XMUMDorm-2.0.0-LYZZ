@@ -82,6 +82,11 @@ function CourseReviewPage() {
               <div className="handbook-mini-score">
                 {(r?.stats?.avgRating == null ? (isZh ? '暂无' : 'N/A') : Number(r.stats.avgRating).toFixed(2))}⭐
               </div>
+              {r?.term ? (
+                <div className="handbook-mini-score-sub" aria-label={isZh ? '学期' : 'Term'}>
+                  {String(r.term)}
+                </div>
+              ) : null}
               <div className="handbook-mini-title">{r.courseName}</div>
               {r.teacher ? <div className="handbook-mini-sub">{r.teacher}</div> : null}
               <div className="handbook-mini-sub">

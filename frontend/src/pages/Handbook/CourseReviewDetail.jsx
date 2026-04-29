@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Star } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
-import { createCourseReviewComment, getCourseReviewDetail, listCourseReviewComments, rateCourseReview } from '../../api/handbook';
+import { createCourseReviewComment, deleteCourseReviewComment, getCourseReviewDetail, listCourseReviewComments, rateCourseReview } from '../../api/handbook';
 import { useAuth } from '../../context/AuthContext';
 import { Toast } from '../../context/ToastContext';
 import { QK } from '../../query/queryKeys';
@@ -13,6 +13,7 @@ function CourseReviewDetail() {
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
   const { isLoggedIn } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { id } = useParams();
   const reviewId = Number(id);
@@ -65,7 +66,20 @@ function CourseReviewDetail() {
                 {isZh ? '平均分' : 'Avg'}: {avgRating == null ? (isZh ? '暂无' : 'N/A') : avgRating.toFixed(2)} · {ratingCount}{' '}
                 {isZh ? '人' : 'votes'}
               </span>
+              {r?.term ? <span className="handbook-meta-chip">{isZh ? '学期' : 'Term'}: {r.term}</span> : null}
             </div>
+
+            {r?.viewer?.canEdit ? (
+              <div className="handbook-editor-actions" style={{ marginTop: 10, justifyContent: 'flex-start' }}>
+                <button
+                  type="button"
+                  className="handbook-btn handbook-btn--ghost"
+                  onClick={() => navigate(`/about/freshman-guide/course-review/${reviewId}/edit`)}
+                >
+                  {isZh ? '编辑' : 'Edit'}
+                </button>
+              </div>
+            ) : null}
 
             <section className="handbook-rating">
               <div className="handbook-rating-title">{isZh ? '给这条课程评价评分' : 'Rate this review'}</div>
@@ -113,7 +127,7 @@ function CourseReviewDetail() {
               <section className="handbook-comments" style={{ marginTop: 16 }}>
                 <div className="handbook-comments-title">{isZh ? '评价正文' : 'Review'}</div>
                 <div className="handbook-comment">
-                  <div className="handbook-comment-text">{r.comment}</div>
+                  <div className="handbook-comment-text" style={{ whiteSpace: 'pre-wrap' }}>{r.comment}</div>
                 </div>
               </section>
             ) : null}
@@ -164,7 +178,27 @@ function CourseReviewDetail() {
                   {comments.map((c) => (
                     <div key={c.id} className="handbook-comment">
                       <div className="handbook-comment-meta">
-                        <span className="handbook-comment-author">{isZh ? '匿名' : 'Anonymous'}</span>
+                        <span className="handbook-comment-meta-left">
+                          <span className="handbook-comment-author">{isZh ? '匿名' : 'Anonymous'}</span>
+                          {c?.can_delete ? (
+                            <button
+                              type="button"
+                              className="handbook-comment-delete"
+                              onClick={async () => {
+                                if (!window.confirm(isZh ? '确定删除这条评论吗？' : 'Delete this comment?')) return;
+                                try {
+                                  await deleteCourseReviewComment(reviewId, c.id);
+                                  Toast.success(isZh ? '已删除' : 'Deleted');
+                                  await queryClient.invalidateQueries({ queryKey: QK.courseReviewComments(reviewId) });
+                                } catch (e) {
+                                  Toast.error(e?.message || (isZh ? '删除失败' : 'Failed'));
+                                }
+                              }}
+                            >
+                              {isZh ? '删除' : 'Delete'}
+                            </button>
+                          ) : null}
+                        </span>
                         <span className="handbook-comment-time">{c.created_at ? new Date(c.created_at).toLocaleString() : ''}</span>
                       </div>
                       <div className="handbook-comment-text">{c.content}</div>
