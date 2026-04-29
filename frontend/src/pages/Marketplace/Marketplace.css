@@ -1,0 +1,263 @@
+.mp-page {
+  padding: 14px 14px 24px;
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.mp-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.mp-title {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+
+.mp-top-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.mp-btn {
+  appearance: none;
+  border: 0;
+  border-radius: 14px;
+  padding: 10px 12px;
+  font-weight: 700;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.mp-btn-primary {
+  color: #fff;
+  background: linear-gradient(135deg, rgba(0, 92, 172, 0.95), rgba(0, 124, 214, 0.9));
+  box-shadow:
+    0 10px 24px rgba(0, 92, 172, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.mp-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.mp-chip {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(10px);
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mp-chip.is-on {
+  border-color: rgba(0, 92, 172, 0.35);
+  background: rgba(0, 92, 172, 0.10);
+  color: rgba(0, 92, 172, 1);
+}
+
+.mp-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.mp-input {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.9);
+  min-width: 120px;
+}
+
+.mp-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (min-width: 900px) {
+  .mp-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.mp-card {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.08);
+}
+
+.mp-card-cover {
+  width: 100%;
+  aspect-ratio: 4/3;
+  background: linear-gradient(135deg, rgba(0, 92, 172, 0.12), rgba(0, 124, 214, 0.10));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(0, 0, 0, 0.35);
+  font-weight: 800;
+}
+
+.mp-card-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.mp-card-body {
+  padding: 10px 10px 12px;
+}
+
+.mp-card-title {
+  font-weight: 900;
+  line-height: 1.15;
+  margin-bottom: 6px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mp-card-sub {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+  opacity: 0.82;
+}
+
+.mp-price {
+  font-weight: 900;
+  color: rgba(0, 92, 172, 1);
+}
+
+.mp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.mp-badge.sold {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.mp-badge.reserved {
+  background: rgba(255, 173, 0, 0.12);
+  border-color: rgba(255, 173, 0, 0.18);
+}
+
+.mp-empty {
+  margin-top: 18px;
+  padding: 18px;
+  text-align: center;
+  opacity: 0.72;
+}
+
+.mp-detail {
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.mp-detail-images {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.mp-detail-images img {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 4/3;
+  object-fit: cover;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.mp-detail-title {
+  font-size: 22px;
+  font-weight: 900;
+  margin: 10px 0 8px;
+}
+
+.mp-detail-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.mp-detail-desc {
+  white-space: pre-wrap;
+  line-height: 1.55;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
+  padding: 12px;
+  margin: 10px 0 12px;
+}
+
+.mp-contact {
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
+  padding: 12px;
+  margin-top: 10px;
+}
+
+.mp-contact-title {
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+
+.mp-form {
+  display: grid;
+  gap: 10px;
+}
+
+.mp-help {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.mp-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.mp-preview-grid img {
+  width: 100%;
+  aspect-ratio: 1/1;
+  object-fit: cover;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+

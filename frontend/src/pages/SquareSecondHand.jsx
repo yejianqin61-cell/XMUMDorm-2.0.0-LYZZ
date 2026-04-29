@@ -1,10 +1,7 @@
+import MarketplaceHome from './Marketplace/MarketplaceHome';
+
 function SquareSecondHand() {
-  return (
-    <div className="page-placeholder">
-      <p>Second-hand Market</p>
-      <p className="page-hint">Coming soon</p>
-    </div>
-  );
+  return <MarketplaceHome />;
 }
 
 export default SquareSecondHand;

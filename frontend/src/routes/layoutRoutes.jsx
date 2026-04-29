@@ -12,6 +12,8 @@ import AboutAlgorithm from '../pages/AboutAlgorithm';
 import AboutProfile from '../pages/AboutProfile';
 import SquareClub from '../pages/SquareClub';
 import SquareSecondHand from '../pages/SquareSecondHand';
+import MarketplaceDetail from '../pages/Marketplace/MarketplaceDetail';
+import MarketplacePublish from '../pages/Marketplace/MarketplacePublish';
 import SquareTrending from '../pages/SquareTrending';
 import SquareFreshmanGuide from '../pages/SquareFreshmanGuide';
 import SquareErrands from '../pages/SquareErrands';
@@ -66,6 +68,9 @@ export const layoutRoutes = (
     <Route path="about/contact" element={<ContactUs />} />
     <Route path="about/club" element={<SquareClub />} />
     <Route path="about/second-hand" element={<SquareSecondHand />} />
+    <Route path="about/second-hand/new" element={<MarketplacePublish />} />
+    <Route path="about/second-hand/item/:id" element={<MarketplaceDetail />} />
+    <Route path="about/second-hand/item/:id/edit" element={<MarketplacePublish />} />
     <Route path="about/trending" element={<SquareTrending />} />
     <Route path="about/freshman-guide" element={<SquareFreshmanGuide />} />
     <Route path="about/freshman-guide/me" element={<HandbookMe />} />

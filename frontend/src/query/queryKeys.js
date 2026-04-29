@@ -45,4 +45,9 @@ export const QK = {
   canteenProduct: (productId) => ['canteen', 'product', productId],
   canteenProductComments: (productId) => ['canteen', 'product', productId, 'comments'],
   canteenProductFavorite: (productId) => ['canteen', 'product', productId, 'favorite'],
+
+  /** Marketplace（二手市场） */
+  marketplaceCategories: () => ['marketplace', 'categories'],
+  marketplaceItems: (params) => ['marketplace', 'items', params || {}],
+  marketplaceItemDetail: (id, tokenKey) => ['marketplace', 'item', id, tokenKey || '_guest'],
 };
