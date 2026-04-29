@@ -1,4 +1,4 @@
-import { get, post, patch } from './request';
+import { del, get, post, patch } from './request';
 
 export function getMarketplaceCategories() {
   return get('/api/marketplace/categories');
@@ -34,5 +34,9 @@ export function toggleMarketplaceWant(id) {
 
 export function updateMarketplaceItemStatus(id, status) {
   return post(`/api/marketplace/items/${id}/status`, { status });
+}
+
+export function deleteMarketplaceItem(id) {
+  return del(`/api/marketplace/items/${id}`);
 }
 

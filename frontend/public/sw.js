@@ -1,5 +1,5 @@
 // IMPORTANT: bump this to force clients update cache
-const CACHE_NAME = 'dorm-cache-v10';
+const CACHE_NAME = 'dorm-cache-v11';
 const URLS_TO_CACHE = [
   '/',
   '/index.html',

@@ -1,17 +1,17 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { MoreVertical } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { QK } from '../../query/queryKeys';
-import { getMarketplaceItemDetail, toggleMarketplaceWant, updateMarketplaceItemStatus } from '../../api/marketplace';
+import { deleteMarketplaceItem, getMarketplaceItemDetail, toggleMarketplaceWant, updateMarketplaceItemStatus } from '../../api/marketplace';
 import { queryClient } from '../../query/queryClient';
 import { Toast } from '../../context/ToastContext';
 import './Marketplace.css';
 
 function statusLabel(s, isZh) {
   if (s === 'sold') return isZh ? '已售出' : 'Sold';
-  if (s === 'reserved') return isZh ? '已预订' : 'Reserved';
   return isZh ? '在售' : 'On sale';
 }
 
@@ -21,6 +21,7 @@ function MarketplaceDetail() {
   const { isLoggedIn, token } = useAuth();
   const nav = useNavigate();
   const { id } = useParams();
+  const [ownerMenuOpen, setOwnerMenuOpen] = useState(false);
 
   const tokenKey = token ? token.slice(0, 16) : '_guest';
 
@@ -53,6 +54,17 @@ function MarketplaceDetail() {
     onError: (e) => Toast.error(e?.message || (isZh ? '操作失败' : 'Failed')),
   });
 
+  const deleteMut = useMutation({
+    mutationFn: () => deleteMarketplaceItem(id),
+    onSuccess: () => {
+      Toast.success(isZh ? '已删除' : 'Deleted');
+      queryClient.invalidateQueries({ queryKey: ['marketplace', 'items'] });
+      queryClient.removeQueries({ queryKey: QK.marketplaceItemDetail(id, tokenKey) });
+      nav('/about/second-hand', { replace: true });
+    },
+    onError: (e) => Toast.error(e?.message || (isZh ? '删除失败' : 'Failed')),
+  });
+
   if (q.isLoading) {
     return (
       <div className="mp-page">
@@ -83,12 +95,62 @@ function MarketplaceDetail() {
           </Link>
           <div className="mp-top-actions">
             {item?.viewer?.canEdit ? (
-              <button type="button" className="mp-btn" onClick={() => nav(`/about/second-hand/item/${id}/edit`)}>
-                {isZh ? '编辑' : 'Edit'}
-              </button>
+              <>
+                <button type="button" className="mp-btn" onClick={() => nav(`/about/second-hand/item/${id}/edit`)}>
+                  {isZh ? '编辑' : 'Edit'}
+                </button>
+                <button
+                  type="button"
+                  className="mp-btn"
+                  aria-label={isZh ? '更多' : 'More'}
+                  title={isZh ? '更多' : 'More'}
+                  onClick={() => setOwnerMenuOpen((v) => !v)}
+                >
+                  <MoreVertical size={18} aria-hidden />
+                </button>
+              </>
             ) : null}
           </div>
         </div>
+
+        {ownerMenuOpen && item?.viewer?.canEdit ? (
+          <div className="mp-owner-menu" role="dialog" aria-label={isZh ? '商品操作' : 'Item actions'}>
+            <button
+              type="button"
+              className="mp-btn"
+              disabled={statusMut.isPending}
+              onClick={() => {
+                setOwnerMenuOpen(false);
+                statusMut.mutate('on_sale');
+              }}
+            >
+              {isZh ? '标记待售' : 'On sale'}
+            </button>
+            <button
+              type="button"
+              className="mp-btn"
+              disabled={statusMut.isPending}
+              onClick={() => {
+                setOwnerMenuOpen(false);
+                statusMut.mutate('sold');
+              }}
+            >
+              {isZh ? '标记已售出' : 'Sold'}
+            </button>
+            <button
+              type="button"
+              className="mp-btn"
+              disabled={deleteMut.isPending}
+              onClick={() => {
+                if (!window.confirm(isZh ? '确定删除这个商品吗？此操作不可撤销。' : 'Delete this item? This cannot be undone.')) return;
+                setOwnerMenuOpen(false);
+                deleteMut.mutate();
+              }}
+            >
+              {isZh ? '删除' : 'Delete'}
+            </button>
+          </div>
+        ) : null}
 
         {images.length ? (
           <div className="mp-detail-images">
@@ -101,7 +163,7 @@ function MarketplaceDetail() {
         <div className="mp-detail-title">{item.title}</div>
         <div className="mp-detail-row">
           <div className="mp-price">{isZh ? `RM ${item.price}` : `RM ${item.price}`}</div>
-          <div className={`mp-badge ${item.status === 'sold' ? 'sold' : item.status === 'reserved' ? 'reserved' : ''}`}>
+          <div className={`mp-badge ${item.status === 'sold' ? 'sold' : ''}`}>
             {statusLabel(item.status, isZh)}
           </div>
           <div className="mp-badge">{isZh ? `想要 ${item.wants_count || 0}` : `Wants ${item.wants_count || 0}`}</div>
@@ -122,20 +184,6 @@ function MarketplaceDetail() {
           >
             {item?.viewer?.want ? (isZh ? '已收藏' : 'Saved') : (isZh ? '收藏' : 'Save')}
           </button>
-
-          {item?.viewer?.canEdit ? (
-            <>
-              <button type="button" className="mp-btn" disabled={statusMut.isPending} onClick={() => statusMut.mutate('on_sale')}>
-                {isZh ? '标记在售' : 'On sale'}
-              </button>
-              <button type="button" className="mp-btn" disabled={statusMut.isPending} onClick={() => statusMut.mutate('reserved')}>
-                {isZh ? '标记预订' : 'Reserved'}
-              </button>
-              <button type="button" className="mp-btn" disabled={statusMut.isPending} onClick={() => statusMut.mutate('sold')}>
-                {isZh ? '标记售出' : 'Sold'}
-              </button>
-            </>
-          ) : null}
         </div>
 
         <div className="mp-contact">

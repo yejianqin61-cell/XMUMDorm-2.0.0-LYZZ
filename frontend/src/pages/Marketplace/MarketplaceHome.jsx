@@ -1,20 +1,22 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
 import { getMarketplaceCategories, listMarketplaceItems } from '../../api/marketplace';
 import { QK } from '../../query/queryKeys';
 import './Marketplace.css';
 
 function statusLabel(s, isZh) {
   if (s === 'sold') return isZh ? '已售出' : 'Sold';
-  if (s === 'reserved') return isZh ? '已预订' : 'Reserved';
   return isZh ? '在售' : 'On sale';
 }
 
 function MarketplaceHome() {
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
+  const nav = useNavigate();
+  const { isLoggedIn } = useAuth();
 
   const [category, setCategory] = useState('all');
   const [status, setStatus] = useState('all');
@@ -43,9 +45,19 @@ function MarketplaceHome() {
       <div className="mp-topbar">
         <div className="mp-title">{isZh ? '二手市场' : 'Second-hand'}</div>
         <div className="mp-top-actions">
-          <Link to="/about/second-hand/new" className="mp-btn mp-btn-primary">
+          <button
+            type="button"
+            className="mp-btn mp-btn-primary"
+            onClick={() => {
+              if (!isLoggedIn) {
+                nav('/login', { state: { from: { pathname: '/about/second-hand/new' } } });
+                return;
+              }
+              nav('/about/second-hand/new');
+            }}
+          >
             {isZh ? '发布' : 'Publish'}
-          </Link>
+          </button>
         </div>
       </div>
 
@@ -73,7 +85,7 @@ function MarketplaceHome() {
         >
           {isZh ? '全部状态' : 'All status'}
         </button>
-        {['on_sale', 'reserved', 'sold'].map((s) => {
+        {['on_sale', 'sold'].map((s) => {
           const on = status === s;
           return (
             <button key={s} type="button" className={`mp-chip ${on ? 'is-on' : ''}`} onClick={() => setStatus(s)}>
@@ -82,20 +94,22 @@ function MarketplaceHome() {
           );
         })}
 
-        <input
-          className="mp-input"
-          inputMode="decimal"
-          placeholder={isZh ? '最低价' : 'Min price'}
-          value={priceMin}
-          onChange={(e) => setPriceMin(e.target.value)}
-        />
-        <input
-          className="mp-input"
-          inputMode="decimal"
-          placeholder={isZh ? '最高价' : 'Max price'}
-          value={priceMax}
-          onChange={(e) => setPriceMax(e.target.value)}
-        />
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <input
+            className="mp-input mp-input-sm"
+            inputMode="decimal"
+            placeholder={isZh ? '最低价' : 'Min'}
+            value={priceMin}
+            onChange={(e) => setPriceMin(e.target.value)}
+          />
+          <input
+            className="mp-input mp-input-sm"
+            inputMode="decimal"
+            placeholder={isZh ? '最高价' : 'Max'}
+            value={priceMax}
+            onChange={(e) => setPriceMax(e.target.value)}
+          />
+        </div>
         <button type="button" className="mp-btn" onClick={() => itemsQuery.refetch()}>
           {isZh ? '筛选' : 'Filter'}
         </button>
@@ -111,7 +125,7 @@ function MarketplaceHome() {
               <div className="mp-card-title">{it.title}</div>
               <div className="mp-card-sub">
                 <div className="mp-price">{isZh ? `RM ${it.price}` : `RM ${it.price}`}</div>
-                <div className={`mp-badge ${it.status === 'sold' ? 'sold' : it.status === 'reserved' ? 'reserved' : ''}`}>
+                <div className={`mp-badge ${it.status === 'sold' ? 'sold' : ''}`}>
                   {statusLabel(it.status, isZh)}
                 </div>
               </div>

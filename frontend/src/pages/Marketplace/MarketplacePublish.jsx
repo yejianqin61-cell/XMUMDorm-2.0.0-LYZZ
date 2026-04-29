@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useLanguage } from '../../context/LanguageContext';
@@ -48,6 +48,7 @@ function MarketplacePublish() {
   const [phone, setPhone] = useState('');
   const [remark, setRemark] = useState('');
   const [images, setImages] = useState([]);
+  const fileInputRef = useRef(null);
   const previews = useMemo(() => images.map((f) => ({ file: f, url: URL.createObjectURL(f) })), [images]);
 
   useEffect(() => {
@@ -73,7 +74,7 @@ function MarketplacePublish() {
     setPhone(d?.contactInfo?.phone || '');
     setRemark(d?.contactInfo?.remark || '');
     setTags(Array.isArray(d.tags) ? d.tags.join(',') : '');
-  }, [isEdit, detailQuery.data, id, isZh, nav, toast]);
+  }, [isEdit, detailQuery.data, id, isZh, nav]);
 
   const createMut = useMutation({
     mutationFn: async () => {
@@ -174,14 +175,41 @@ function MarketplacePublish() {
             <div className="mp-contact">
               <div className="mp-contact-title">{isZh ? '图片（最多 4 张）' : 'Images (max 4)'}</div>
               <div className="mp-help">{isZh ? '建议上传清晰实拍图。' : 'Upload clear photos.'}</div>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className="mp-btn"
+                  onClick={() => {
+                    try {
+                      fileInputRef.current?.click?.();
+                    } catch {
+                      // ignore
+                    }
+                  }}
+                >
+                  {isZh ? '选择图片' : 'Choose images'}
+                </button>
+                <div className="mp-help" aria-label={isZh ? '已选择图片数量' : 'Selected images'}>
+                  {isZh ? `已选 ${images.length}/${MAX_IMAGES} 张` : `${images.length}/${MAX_IMAGES} selected`}
+                </div>
+              </div>
               <input
+                ref={fileInputRef}
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 multiple
+                style={{ display: 'none' }}
                 onChange={(e) => {
                   const files = Array.from(e.target.files || []);
                   const next = files.slice(0, MAX_IMAGES);
                   setImages(next);
+                  // allow re-selecting same file(s)
+                  try {
+                    // eslint-disable-next-line no-param-reassign
+                    e.target.value = '';
+                  } catch {
+                    // ignore
+                  }
                 }}
               />
               {previews.length ? (

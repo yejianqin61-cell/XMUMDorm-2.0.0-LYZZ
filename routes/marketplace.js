@@ -157,7 +157,7 @@ router.get('/items', async (req, res) => {
       params.push(category);
     }
     if (status && status !== 'all') {
-      if (!['on_sale', 'reserved', 'sold'].includes(status)) {
+      if (!['on_sale', 'sold'].includes(status)) {
         return res.status(400).json({ status: -1, message: 'status 不合法' });
       }
       where.push('i.status = ?');
@@ -327,7 +327,6 @@ router.get('/items/:id', async (req, res) => {
         },
         actions: {
           want: !!viewer,
-          markReserved: canEdit,
           markSold: canEdit,
         },
         created_at: item.created_at,
@@ -476,7 +475,7 @@ router.post('/items/:id/status', authenticateToken, async (req, res) => {
     const id = toInt(req.params.id, 0);
     if (!id) return res.status(400).json({ status: -1, message: 'id 不合法' });
     const nextStatus = cleanText(req.body.status, 20);
-    if (!['on_sale', 'reserved', 'sold'].includes(nextStatus)) return res.status(400).json({ status: -1, message: 'status 不合法' });
+    if (!['on_sale', 'sold'].includes(nextStatus)) return res.status(400).json({ status: -1, message: 'status 不合法' });
 
     const rows = await query('SELECT id, seller_user_id, status FROM marketplace_items WHERE id = ? AND deleted_at IS NULL LIMIT 1', [id]);
     const item = rows && rows[0];
@@ -490,13 +489,9 @@ router.post('/items/:id/status', authenticateToken, async (req, res) => {
 
     const allowed = new Set();
     if (cur === 'on_sale') {
-      allowed.add('reserved');
-      allowed.add('sold');
-    } else if (cur === 'reserved') {
-      allowed.add('on_sale');
       allowed.add('sold');
     } else if (cur === 'sold') {
-      // sold -> on_sale 不允许（除非 admin）
+      // sold -> on_sale：仅 admin 允许
       if (isAdmin(req)) allowed.add('on_sale');
     }
     if (!allowed.has(nextStatus)) return res.status(400).json({ status: -1, message: `不允许从 ${cur} 变更为 ${nextStatus}` });
@@ -538,6 +533,32 @@ router.post('/items/:id/want', authenticateToken, async (req, res) => {
       return res.status(200).json({ status: 0, message: 'ok', data: { want: true } });
     }
     console.error('marketplace want error:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
+// ============================================
+// 删除（登录，卖家本人或 admin，逻辑删除）
+// ============================================
+router.delete('/items/:id', authenticateToken, async (req, res) => {
+  try {
+    const id = toInt(req.params.id, 0);
+    if (!id) return res.status(400).json({ status: -1, message: 'id 不合法' });
+
+    const rows = await query(
+      'SELECT id, seller_user_id FROM marketplace_items WHERE id = ? AND deleted_at IS NULL LIMIT 1',
+      [id]
+    );
+    const item = rows && rows[0];
+    if (!item) return res.status(404).json({ status: -1, message: '商品不存在或已删除' });
+
+    const canEdit = Number(item.seller_user_id) === Number(req.user.id) || isAdmin(req);
+    if (!canEdit) return res.status(403).json({ status: -1, message: '无权限' });
+
+    await query('UPDATE marketplace_items SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?', [id]);
+    res.status(200).json({ status: 0, message: 'ok', data: { id } });
+  } catch (e) {
+    console.error('marketplace delete error:', e);
     res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
   }
 });

@@ -46,9 +46,18 @@
 
 .mp-tabs {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
   margin-bottom: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mp-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .mp-chip {
@@ -56,8 +65,9 @@
   background: rgba(255, 255, 255, 0.75);
   backdrop-filter: blur(10px);
   border-radius: 999px;
-  padding: 8px 12px;
+  padding: 6px 10px;
   font-weight: 700;
+  font-size: 12px;
   cursor: pointer;
 }
 
@@ -81,6 +91,12 @@
   padding: 10px 12px;
   background: rgba(255, 255, 255, 0.9);
   min-width: 120px;
+}
+
+.mp-input-sm {
+  min-width: 0;
+  width: 92px;
+  padding: 10px 10px;
 }
 
 .mp-grid {
@@ -167,9 +183,18 @@
   background: rgba(0, 0, 0, 0.06);
 }
 
-.mp-badge.reserved {
-  background: rgba(255, 173, 0, 0.12);
-  border-color: rgba(255, 173, 0, 0.18);
+.mp-owner-menu {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin: 0 0 12px;
+  padding: 12px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(12px);
 }
 
 .mp-empty {
