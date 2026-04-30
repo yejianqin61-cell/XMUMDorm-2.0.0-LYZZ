@@ -6,12 +6,12 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getPostTagsList } from '../api/posts';
-import { getUnreadAnnouncements } from '../api/notifications';
+import { getUnreadSummary } from '../api/notifications';
 import { QK } from '../query/queryKeys';
 import './TreeHoleToolbar.css';
 
 const POST_TAGS_STALE_MS = 15 * 60 * 1000;
-const UNREAD_ANN_STALE_MS = 3 * 60 * 1000;
+const UNREAD_SUMMARY_STALE_MS = 10 * 1000;
 
 /**
  * 树洞页：搜索栏 + 前 5 个标签 + 下拉全部标签（管理员可创建/删除）
@@ -28,6 +28,7 @@ function TreeHoleToolbar({ selectedSlug = null, onSelectTagSlug }) {
   const [langOpen, setLangOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [keyword, setKeyword] = useState('');
+  const [auraDismissed, setAuraDismissed] = useState(false);
   const searchInputRef = useRef(null);
   const searchWrapRef = useRef(null);
 
@@ -39,16 +40,22 @@ function TreeHoleToolbar({ selectedSlug = null, onSelectTagSlug }) {
   });
   const tags = tagsQuery.data ?? [];
 
-  const unreadQuery = useQuery({
-    queryKey: QK.unreadAnnouncements(tokenKey),
-    queryFn: async () => {
-      const list = await getUnreadAnnouncements();
-      return Array.isArray(list) ? list : [];
-    },
+  const unreadSummaryQuery = useQuery({
+    queryKey: ['notifications', 'unreadSummary', tokenKey],
+    queryFn: getUnreadSummary,
     enabled: isLoggedIn && !!token,
-    staleTime: UNREAD_ANN_STALE_MS,
+    staleTime: UNREAD_SUMMARY_STALE_MS,
+    refetchInterval: UNREAD_SUMMARY_STALE_MS,
+    select: (d) => d || { social: 0, chat: 0, total: 0 },
   });
-  const hasUnread = (unreadQuery.data?.length ?? 0) > 0;
+  const socialUnread = unreadSummaryQuery.data?.social || 0;
+  const chatUnread = unreadSummaryQuery.data?.chat || 0;
+  const totalUnread = unreadSummaryQuery.data?.total || 0;
+
+  // 当未读发生变化时，允许 aura 再次出现（但点击后会平滑消退）
+  useEffect(() => {
+    setAuraDismissed(false);
+  }, [socialUnread, chatUnread, totalUnread]);
 
   useEffect(() => {
     if (!searchOpen) return;
@@ -199,11 +206,26 @@ function TreeHoleToolbar({ selectedSlug = null, onSelectTagSlug }) {
           <button
             type="button"
             onClick={() => navigate('/mailbox')}
-            className="relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white/70 text-slate-700 shadow-sm backdrop-blur-md active:scale-[0.98]"
+            className={[
+              'aura-bell',
+              socialUnread > 0 ? 'is-social' : '',
+              chatUnread > 0 ? 'is-chat' : '',
+              auraDismissed ? 'is-dismissed' : '',
+            ].filter(Boolean).join(' ')}
             aria-label={isZh ? '通知' : 'Notifications'}
+            onMouseEnter={(e) => {
+              try { e.currentTarget.classList.add('is-hover'); } catch {}
+            }}
+            onMouseLeave={(e) => {
+              try { e.currentTarget.classList.remove('is-hover'); } catch {}
+            }}
+            onClickCapture={() => {
+              // 点击进入通知页后：光效以淡出方式消退，而不是瞬间断掉
+              setAuraDismissed(true);
+            }}
           >
             <Bell size={18} aria-hidden />
-            {hasUnread && <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />}
+            {totalUnread > 0 ? <span className="aura-badge">{totalUnread > 99 ? '99+' : String(totalUnread)}</span> : null}
           </button>
         </div>
       </div>

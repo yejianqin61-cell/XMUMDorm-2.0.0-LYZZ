@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { Search, UserCircle } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { getMarketplaceCategories, listMarketplaceItems } from '../../api/marketplace';
@@ -10,6 +11,11 @@ import './Marketplace.css';
 function statusLabel(s, isZh) {
   if (s === 'sold') return isZh ? '已售出' : 'Sold';
   return isZh ? '在售' : 'On sale';
+}
+
+function deliveryLabel(v, isZh) {
+  if (v === 'delivery') return isZh ? '配送' : 'Delivery';
+  return isZh ? '自提' : 'Pickup';
 }
 
 function MarketplaceHome() {
@@ -22,6 +28,27 @@ function MarketplaceHome() {
   const [status, setStatus] = useState('all');
   const [priceMin, setPriceMin] = useState('');
   const [priceMax, setPriceMax] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [keyword, setKeyword] = useState('');
+  const [q, setQ] = useState('');
+  const searchWrapRef = useRef(null);
+  const searchInputRef = useRef(null);
+
+  useEffect(() => {
+    if (!searchOpen) return;
+    const t = setTimeout(() => searchInputRef.current?.focus?.(), 50);
+    return () => clearTimeout(t);
+  }, [searchOpen]);
+
+  useEffect(() => {
+    if (!searchOpen) return;
+    const onDoc = (e) => {
+      const el = searchWrapRef.current;
+      if (el && !el.contains(e.target)) setSearchOpen(false);
+    };
+    document.addEventListener('pointerdown', onDoc, true);
+    return () => document.removeEventListener('pointerdown', onDoc, true);
+  }, [searchOpen]);
 
   const catQuery = useQuery({
     queryKey: QK.marketplaceCategories(),
@@ -31,8 +58,8 @@ function MarketplaceHome() {
   });
 
   const itemsQuery = useQuery({
-    queryKey: QK.marketplaceItems({ category, status, priceMin, priceMax, page: 1, pageSize: 30 }),
-    queryFn: () => listMarketplaceItems({ category, status, priceMin, priceMax, page: 1, pageSize: 30 }),
+    queryKey: QK.marketplaceItems({ category, status, q, priceMin, priceMax, page: 1, pageSize: 30 }),
+    queryFn: () => listMarketplaceItems({ category, status, q, priceMin, priceMax, page: 1, pageSize: 30 }),
     staleTime: 10 * 1000,
     select: (d) => d || { list: [], hasMore: false },
   });
@@ -45,6 +72,60 @@ function MarketplaceHome() {
       <div className="mp-topbar">
         <div className="mp-title">{isZh ? '二手市场' : 'Second-hand'}</div>
         <div className="mp-top-actions">
+          <div className="mp-search-wrap" ref={searchWrapRef}>
+            {searchOpen ? (
+              <form
+                className="mp-search-form"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const next = keyword.trim();
+                  setQ(next);
+                  setSearchOpen(false);
+                }}
+              >
+                <div className="mp-search-pill">
+                  <Search size={18} aria-hidden />
+                  <input
+                    ref={searchInputRef}
+                    type="search"
+                    value={keyword}
+                    onChange={(e) => setKeyword(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') setSearchOpen(false);
+                    }}
+                    placeholder={isZh ? '搜索商品…' : 'Search…'}
+                    className="mp-search-input"
+                  />
+                </div>
+              </form>
+            ) : (
+              <button
+                type="button"
+                className="mp-icon-btn"
+                aria-label={isZh ? '搜索' : 'Search'}
+                onClick={() => setSearchOpen(true)}
+              >
+                <Search size={18} aria-hidden />
+              </button>
+            )}
+          </div>
+
+          <button
+            type="button"
+            className="mp-icon-btn"
+            aria-label={isZh ? '我的收藏' : 'My saved'}
+            title={isZh ? '我的收藏' : 'My saved'}
+            onClick={() => {
+              if (!isLoggedIn) {
+                nav('/login', { state: { from: { pathname: '/about/second-hand/me/wants' } } });
+                return;
+              }
+              nav('/about/second-hand/me/wants');
+            }}
+          >
+            <UserCircle size={18} aria-hidden />
+          </button>
+
           <button
             type="button"
             className="mp-btn mp-btn-primary"
@@ -128,6 +209,10 @@ function MarketplaceHome() {
                 <div className={`mp-badge ${it.status === 'sold' ? 'sold' : ''}`}>
                   {statusLabel(it.status, isZh)}
                 </div>
+              </div>
+              <div className="mp-card-sub" style={{ marginTop: 8 }}>
+                <div>{it.dorm_area ? (isZh ? `宿舍 ${it.dorm_area}` : `Dorm ${it.dorm_area}`) : (isZh ? '宿舍未知' : 'Dorm N/A')}</div>
+                <div>{deliveryLabel(it.delivery_method, isZh)}</div>
               </div>
               <div className="mp-card-sub" style={{ marginTop: 8 }}>
                 <div>{it.sellerName || (isZh ? '匿名卖家' : 'Seller')}</div>

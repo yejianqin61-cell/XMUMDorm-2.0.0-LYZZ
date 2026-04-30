@@ -1,7 +1,7 @@
 /**
  * 通知 API，与后端 /api/notifications 对应
  */
-import { get, patch } from './request';
+import { del, get, patch } from './request';
 
 export function getNotifications(options = {}) {
   const { page = 1, pageSize = 20, type, is_read } = options;
@@ -13,6 +13,15 @@ export function getNotifications(options = {}) {
 
 export function getUnreadAnnouncements() {
   return get('/api/notifications/unread-announcements');
+}
+
+export function getUnreadSummary() {
+  return get('/api/notifications/unread-summary');
+}
+
+export function clearNotifications(scope) {
+  const qs = scope ? `?scope=${encodeURIComponent(scope)}` : '';
+  return del(`/api/notifications/clear${qs}`);
 }
 
 export function markNotificationRead(id) {

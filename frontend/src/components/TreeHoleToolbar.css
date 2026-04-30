@@ -14,3 +14,131 @@
   -webkit-mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
   mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
 }
+
+/* ============================================
+ * Multi-State Aura Bell Icon
+ * ============================================ */
+
+@keyframes bell-swing {
+  0% { transform: rotate(0deg); }
+  10% { transform: rotate(10deg); }
+  20% { transform: rotate(-12deg); }
+  30% { transform: rotate(8deg); }
+  40% { transform: rotate(-6deg); }
+  50% { transform: rotate(4deg); }
+  60% { transform: rotate(-3deg); }
+  70% { transform: rotate(2deg); }
+  80% { transform: rotate(-1deg); }
+  100% { transform: rotate(0deg); }
+}
+
+@keyframes heartbeat {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+@keyframes badge-bounce {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes bell-jiggle {
+  0% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(-6deg) scale(1.02); }
+  50% { transform: rotate(6deg) scale(1.02); }
+  75% { transform: rotate(-3deg) scale(1.01); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+
+.aura-bell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  width: 44px;
+  border-radius: 999px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  background: rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #94A3B8;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.10);
+  transition:
+    backdrop-filter 220ms ease,
+    background 220ms ease,
+    filter 260ms ease,
+    color 260ms ease,
+    opacity 320ms ease;
+  transform-origin: 50% 10%;
+}
+
+.aura-bell svg {
+  stroke-width: 2.1;
+}
+
+.aura-bell.is-hover {
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  background: rgba(255, 255, 255, 0.72);
+  animation: bell-jiggle 260ms cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+
+.aura-bell.is-dismissed {
+  filter: none !important;
+  opacity: 0.92;
+  color: #94A3B8;
+}
+
+/* social: likes/comments */
+.aura-bell.is-social {
+  color: #00d2ff;
+  background-image: linear-gradient(135deg, rgba(0, 210, 255, 0.16), rgba(58, 123, 213, 0.10));
+  border-color: rgba(147, 197, 253, 0.55);
+  filter: drop-shadow(0 0 10px rgba(0, 210, 255, 0.4));
+}
+
+.aura-bell.is-social svg {
+  /* 让线条吃到 currentColor */
+  stroke: currentColor;
+}
+
+.aura-bell.is-social:not(.is-dismissed) svg {
+  animation: bell-swing 860ms cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+/* chat: second-hand market */
+.aura-bell.is-chat {
+  color: #FF7675;
+  border-color: rgba(255, 118, 117, 0.55);
+  filter: drop-shadow(0 0 10px rgba(255, 118, 117, 0.4));
+}
+
+.aura-bell.is-chat:not(.is-dismissed) svg {
+  animation: heartbeat 980ms cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite;
+}
+
+.aura-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  /* 避坑：不用纯红 #FF0000，改荧光珊瑚/莓红 */
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 55%),
+    linear-gradient(135deg, #FF7675, #E84A5F);
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.16);
+  animation: badge-bounce 1.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite;
+}

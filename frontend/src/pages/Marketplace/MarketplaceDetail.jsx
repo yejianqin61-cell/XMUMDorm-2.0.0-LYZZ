@@ -1,11 +1,21 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { MoreVertical } from 'lucide-react';
+import { Heart, MoreVertical } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { QK } from '../../query/queryKeys';
-import { deleteMarketplaceItem, getMarketplaceItemDetail, toggleMarketplaceWant, updateMarketplaceItemStatus } from '../../api/marketplace';
+import {
+  buyerSendMarketplaceMessage,
+  deleteMarketplaceItem,
+  getMarketplaceItemDetail,
+  getMarketplaceMyThreadByItem,
+  getMarketplaceThreadMessages,
+  markMarketplaceThreadRead,
+  sellerListItemChatThreads,
+  toggleMarketplaceWant,
+  updateMarketplaceItemStatus,
+} from '../../api/marketplace';
 import { queryClient } from '../../query/queryClient';
 import { Toast } from '../../context/ToastContext';
 import './Marketplace.css';
@@ -15,13 +25,20 @@ function statusLabel(s, isZh) {
   return isZh ? '在售' : 'On sale';
 }
 
+function deliveryLabel(v, isZh) {
+  if (v === 'delivery') return isZh ? '配送' : 'Delivery';
+  return isZh ? '自提' : 'Pickup';
+}
+
 function MarketplaceDetail() {
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
-  const { isLoggedIn, token } = useAuth();
+  const { isLoggedIn, token, user } = useAuth();
   const nav = useNavigate();
   const { id } = useParams();
   const [ownerMenuOpen, setOwnerMenuOpen] = useState(false);
+  const [chatText, setChatText] = useState('');
+  const chatEndRef = useRef(null);
 
   const tokenKey = token ? token.slice(0, 16) : '_guest';
 
@@ -33,6 +50,54 @@ function MarketplaceDetail() {
 
   const item = q.data;
   const images = useMemo(() => item?.images || [], [item]);
+  const isSeller = !!item?.viewer?.canEdit;
+
+  const threadsQuery = useQuery({
+    enabled: !!isLoggedIn && !!isSeller && !!id,
+    queryKey: ['marketplace', 'chat', 'threadsByItem', id],
+    queryFn: () => sellerListItemChatThreads(id),
+    staleTime: 3 * 1000,
+    refetchInterval: 6 * 1000,
+    select: (d) => d || { list: [] },
+  });
+
+  const [activeThreadId, setActiveThreadId] = useState(null);
+  const effectiveThreadId = activeThreadId;
+
+  const buyerThreadQuery = useQuery({
+    enabled: !!isLoggedIn && !isSeller && !!id,
+    queryKey: ['marketplace', 'chat', 'myThreadByItem', id],
+    queryFn: () => getMarketplaceMyThreadByItem(id),
+    staleTime: 2 * 1000,
+    refetchInterval: 5 * 1000,
+  });
+
+  useEffect(() => {
+    if (isSeller) return;
+    const tid = buyerThreadQuery.data?.id || buyerThreadQuery.data?.thread_id || null;
+    if (tid && !activeThreadId) setActiveThreadId(tid);
+  }, [isSeller, buyerThreadQuery.data, activeThreadId]);
+
+  const msgsQuery = useQuery({
+    enabled: !!isLoggedIn && !!effectiveThreadId,
+    queryKey: ['marketplace', 'chat', 'messages', effectiveThreadId],
+    queryFn: () => getMarketplaceThreadMessages(effectiveThreadId),
+    staleTime: 2 * 1000,
+    refetchInterval: 4 * 1000,
+  });
+
+  const msgList = useMemo(() => msgsQuery.data?.list || [], [msgsQuery.data]);
+
+  useEffect(() => {
+    if (!isLoggedIn || !effectiveThreadId) return;
+    markMarketplaceThreadRead(effectiveThreadId).catch(() => {});
+  }, [isLoggedIn, effectiveThreadId, msgList.length]);
+
+  useEffect(() => {
+    try {
+      chatEndRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'end' });
+    } catch {}
+  }, [msgList.length]);
 
   const wantMut = useMutation({
     mutationFn: () => toggleMarketplaceWant(id),
@@ -65,6 +130,20 @@ function MarketplaceDetail() {
     onError: (e) => Toast.error(e?.message || (isZh ? '删除失败' : 'Failed')),
   });
 
+  const buyerSendMut = useMutation({
+    mutationFn: async () => {
+      const content = chatText.trim();
+      if (!content) return null;
+      const res = await buyerSendMarketplaceMessage(id, content);
+      const threadId = res?.thread_id || res?.threadId || res?.thread || null;
+      if (threadId) setActiveThreadId(threadId);
+      setChatText('');
+      if (threadId) await markMarketplaceThreadRead(threadId);
+      return true;
+    },
+    onError: (e) => Toast.error(e?.message || (isZh ? '发送失败' : 'Failed')),
+  });
+
   if (q.isLoading) {
     return (
       <div className="mp-page">
@@ -94,6 +173,23 @@ function MarketplaceDetail() {
             {isZh ? '← 返回' : '← Back'}
           </Link>
           <div className="mp-top-actions">
+            <button
+              type="button"
+              className="mp-icon-btn"
+              aria-label={item?.viewer?.want ? (isZh ? '已收藏' : 'Saved') : (isZh ? '收藏' : 'Save')}
+              title={item?.viewer?.want ? (isZh ? '已收藏' : 'Saved') : (isZh ? '收藏' : 'Save')}
+              disabled={wantMut.isPending}
+              onClick={() => {
+                if (!isLoggedIn) return nav('/login');
+                wantMut.mutate();
+              }}
+              style={{
+                color: item?.viewer?.want ? 'rgba(220, 38, 38, 0.95)' : undefined,
+              }}
+            >
+              <Heart size={18} aria-hidden />
+            </button>
+
             {item?.viewer?.canEdit ? (
               <>
                 <button type="button" className="mp-btn" onClick={() => nav(`/about/second-hand/item/${id}/edit`)}>
@@ -166,36 +262,107 @@ function MarketplaceDetail() {
           <div className={`mp-badge ${item.status === 'sold' ? 'sold' : ''}`}>
             {statusLabel(item.status, isZh)}
           </div>
+          <div className="mp-badge">{item?.dorm_area ? (isZh ? `宿舍 ${item.dorm_area}` : `Dorm ${item.dorm_area}`) : (isZh ? '宿舍未知' : 'Dorm N/A')}</div>
+          <div className="mp-badge">{deliveryLabel(item?.delivery_method, isZh)}</div>
           <div className="mp-badge">{isZh ? `想要 ${item.wants_count || 0}` : `Wants ${item.wants_count || 0}`}</div>
           {item?.sellerInfo?.name ? <div className="mp-badge">{item.sellerInfo.name}</div> : null}
         </div>
 
         <div className="mp-detail-desc">{item.description}</div>
 
-        <div className="mp-detail-row">
-          <button
-            type="button"
-            className="mp-btn mp-btn-primary"
-            disabled={!isLoggedIn || wantMut.isPending}
-            onClick={() => {
-              if (!isLoggedIn) return nav('/login');
-              wantMut.mutate();
-            }}
-          >
-            {item?.viewer?.want ? (isZh ? '已收藏' : 'Saved') : (isZh ? '收藏' : 'Save')}
-          </button>
-        </div>
-
-        <div className="mp-contact">
-          <div className="mp-contact-title">{isZh ? '联系方式' : 'Contact'}</div>
-          <div className="mp-help">{isZh ? '仅在详情页展示，请文明沟通。' : 'Shown on detail only. Be respectful.'}</div>
-          <div style={{ marginTop: 10, display: 'grid', gap: 8 }}>
-            <div>{isZh ? `微信：${item?.contactInfo?.wechat || '无'}` : `WeChat: ${item?.contactInfo?.wechat || 'N/A'}`}</div>
-            <div>{isZh ? `电话：${item?.contactInfo?.phone || '无'}` : `Phone: ${item?.contactInfo?.phone || 'N/A'}`}</div>
-            {item?.contactInfo?.remark ? (
-              <div>{isZh ? `备注：${item.contactInfo.remark}` : `Note: ${item.contactInfo.remark}`}</div>
-            ) : null}
+        {/* Private chat area */}
+        <div className="mp-chat-card" aria-label={isZh ? '私密对话' : 'Private chat'}>
+          <div className="mp-chat-head">
+            <div className="mp-contact-title">{isZh ? '私密对话' : 'Private chat'}</div>
+            <div className="mp-help">
+              {isZh ? '仅买家与卖家可见。' : 'Visible to buyer & seller only.'}
+            </div>
           </div>
+
+          {!isLoggedIn ? (
+            <div style={{ padding: 12 }}>
+              <button type="button" className="mp-btn mp-btn-primary" onClick={() => nav('/login')}>
+                {isZh ? '登录后发消息' : 'Login to chat'}
+              </button>
+            </div>
+          ) : isSeller ? (
+            <div style={{ padding: 12 }}>
+              <div className="mp-help" style={{ marginBottom: 10 }}>
+                {isZh ? '所有询问的买家' : 'Buyers who asked'}
+              </div>
+              <div className="mp-chat-threads">
+                {(threadsQuery.data?.list || []).map((t) => {
+                  const unreadCount = Number(t.unread_count || 0);
+                  const unread = unreadCount > 0;
+                  return (
+                    <Link
+                      key={t.thread_id}
+                      to={`/about/second-hand/chat/${t.thread_id}`}
+                      className={`mp-chat-thread ${unread ? 'is-unread' : ''}`}
+                      onClick={() => setActiveThreadId(t.thread_id)}
+                    >
+                      <div className="mp-chat-thread-left">
+                        <span className="mp-chat-avatar" aria-hidden>
+                          <img src={t.buyer?.avatar || '/default-avatar.svg'} alt="" />
+                        </span>
+                        <div style={{ minWidth: 0 }}>
+                          <div className="mp-chat-thread-title">
+                            {t.buyer?.name || (isZh ? '买家' : 'Buyer')}
+                          </div>
+                          <div className="mp-chat-thread-preview">{t.last_content || (isZh ? '点击进入对话' : 'Open chat')}</div>
+                        </div>
+                      </div>
+                      <div style={{ display: 'grid', gap: 8, justifyItems: 'end' }}>
+                        {unread ? <span className="mp-chat-unread-badge">{unreadCount > 99 ? '99+' : String(unreadCount)}</span> : null}
+                        <div className="mp-help">{t.last_message_at ? new Date(t.last_message_at).toLocaleString() : ''}</div>
+                      </div>
+                    </Link>
+                  );
+                })}
+                {!threadsQuery.isFetching && (threadsQuery.data?.list || []).length === 0 ? (
+                  <div className="mp-empty" style={{ marginTop: 0 }}>
+                    {isZh ? '暂无买家询问。' : 'No inquiries yet.'}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="mp-chat-list" role="log" aria-label="messages">
+                {msgList.map((m) => {
+                  const mine = user?.id != null && Number(m.sender_user_id) === Number(user.id);
+                  return (
+                    <div key={m.id} className={`mp-chat-row ${mine ? 'is-mine' : ''}`}>
+                      <div className="mp-chat-bubble">
+                        <div className="mp-chat-text">{m.content}</div>
+                        <div className="mp-chat-time">
+                          {m.created_at ? new Date(m.created_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : ''}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                <div ref={chatEndRef} />
+              </div>
+              <form
+                className="mp-chat-inputbar"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  buyerSendMut.mutate();
+                }}
+              >
+                <input
+                  className="mp-input"
+                  value={chatText}
+                  onChange={(e) => setChatText(e.target.value)}
+                  placeholder={isZh ? '给卖家发消息询问…' : 'Message the seller…'}
+                />
+                <button type="submit" className="mp-btn mp-btn-primary" disabled={buyerSendMut.isPending || !chatText.trim()}>
+                  {isZh ? '发送' : 'Send'}
+                </button>
+              </form>
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -290,7 +290,8 @@ router.post('/', authenticateToken, (req, res, next) => {
 
     // 公告：给全站用户各插入一条未读通知
     if (type === 'announcement') {
-      const extra = JSON.stringify({ title: content.slice(0, 100) });
+      // 通知页仅展示公告内容：这里存一段更完整的内容片段（避免只有“标题”）
+      const extra = JSON.stringify({ content: content.slice(0, 600) });
       await query(
         `INSERT INTO notifications (user_id, type, post_id, from_user_id, extra)
          SELECT id, 'announcement', ?, ?, ? FROM users`,

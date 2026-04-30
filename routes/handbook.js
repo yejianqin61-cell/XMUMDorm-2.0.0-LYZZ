@@ -731,6 +731,28 @@ router.post('/articles/:id/comments', authenticateToken, async (req, res) => {
       [id, req.user.id, parentId, content]
     );
 
+    // 通知文章作者（排除自己评论）
+    try {
+      const authorId = a && a.author_user_id != null ? Number(a.author_user_id) : 0;
+      if (authorId && authorId !== Number(req.user.id)) {
+        const tRows = await query('SELECT title FROM handbook_articles WHERE id = ? AND deleted_at IS NULL LIMIT 1', [id]);
+        const title = tRows && tRows[0] ? tRows[0].title : null;
+        const extra = JSON.stringify({
+          targetType: 'handbook_article',
+          targetId: id,
+          targetTitle: title || null,
+          targetPath: `/about/freshman-guide/a/${id}`,
+          content: content.slice(0, 120),
+        });
+        await query(
+          'INSERT INTO notifications (user_id, type, from_user_id, extra) VALUES (?, ?, ?, ?)',
+          [authorId, 'handbook_comment', req.user.id, extra]
+        );
+      }
+    } catch (e) {
+      console.warn('[handbook_comment notify] skipped:', e && (e.code || e.message || e));
+    }
+
     res.status(200).json({
       status: 0,
       message: 'ok',
@@ -1419,9 +1441,33 @@ router.post('/course-reviews/:id/comments', authenticateToken, async (req, res) 
     if (!id) return res.status(400).json({ status: -1, message: 'ID 无效' });
     const content = cleanText(req.body && req.body.content, 800);
     if (!content) return res.status(400).json({ status: -1, message: '内容不能为空' });
-    const rows = await query('SELECT id FROM course_reviews WHERE id = ? AND deleted_at IS NULL LIMIT 1', [id]);
+    const rows = await query('SELECT id, course_name, teacher, created_by FROM course_reviews WHERE id = ? AND deleted_at IS NULL LIMIT 1', [id]);
     if (!rows || rows.length === 0) return res.status(404).json({ status: -1, message: '不存在' });
+
+    const review = rows[0];
     const result = await query('INSERT INTO course_review_comments (review_id, user_id, content) VALUES (?, ?, ?)', [id, req.user.id, content]);
+
+    // 通知课程评价发布者（排除自己评论）
+    try {
+      const ownerId = review && review.created_by != null ? Number(review.created_by) : 0;
+      if (ownerId && ownerId !== Number(req.user.id)) {
+        const title = `${review.course_name || ''}${review.teacher ? ` · ${review.teacher}` : ''}`.trim() || null;
+        const extra = JSON.stringify({
+          targetType: 'course_review',
+          targetId: id,
+          targetTitle: title,
+          targetPath: `/about/freshman-guide/course-review/${id}`,
+          content: content.slice(0, 120),
+        });
+        await query(
+          'INSERT INTO notifications (user_id, type, from_user_id, extra) VALUES (?, ?, ?, ?)',
+          [ownerId, 'course_review_comment', req.user.id, extra]
+        );
+      }
+    } catch (e) {
+      console.warn('[course_review_comment notify] skipped:', e && (e.code || e.message || e));
+    }
+
     res.status(200).json({ status: 0, message: 'ok', data: { id: result.insertId } });
   } catch (e) {
     console.error('course review comment create error:', e);

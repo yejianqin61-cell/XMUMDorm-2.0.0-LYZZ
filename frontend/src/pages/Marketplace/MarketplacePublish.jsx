@@ -9,6 +9,12 @@ import { getMarketplaceCategories, createMarketplaceItem, getMarketplaceItemDeta
 import './Marketplace.css';
 
 const MAX_IMAGES = 4;
+const DORM_AREAS = ['LY1', 'LY2', 'LY4', 'LY5', 'LY6', 'LY7', 'LY8', 'LY9', 'D1', 'D2', 'D3', 'D4', 'D5'];
+
+function deliveryLabel(v, isZh) {
+  if (v === 'delivery') return isZh ? '配送' : 'Delivery';
+  return isZh ? '自提' : 'Pickup';
+}
 
 function MarketplacePublish() {
   const { lang } = useLanguage();
@@ -44,9 +50,8 @@ function MarketplacePublish() {
   const [price, setPrice] = useState('');
   const [category, setCategory] = useState('electronics');
   const [tags, setTags] = useState('');
-  const [wechat, setWechat] = useState('');
-  const [phone, setPhone] = useState('');
-  const [remark, setRemark] = useState('');
+  const [deliveryMethod, setDeliveryMethod] = useState('pickup');
+  const [dormArea, setDormArea] = useState('LY1');
   const [images, setImages] = useState([]);
   const fileInputRef = useRef(null);
   const previews = useMemo(() => images.map((f) => ({ file: f, url: URL.createObjectURL(f) })), [images]);
@@ -70,10 +75,9 @@ function MarketplacePublish() {
     setDescription(d.description || '');
     setPrice(d.price != null ? String(d.price) : '');
     setCategory(d.category || 'electronics');
-    setWechat(d?.contactInfo?.wechat || '');
-    setPhone(d?.contactInfo?.phone || '');
-    setRemark(d?.contactInfo?.remark || '');
     setTags(Array.isArray(d.tags) ? d.tags.join(',') : '');
+    setDeliveryMethod(d.delivery_method || 'pickup');
+    setDormArea(d.dorm_area || 'LY1');
   }, [isEdit, detailQuery.data, id, isZh, nav]);
 
   const createMut = useMutation({
@@ -83,10 +87,9 @@ function MarketplacePublish() {
       fd.append('description', description);
       fd.append('price', price);
       fd.append('category', category);
+      fd.append('delivery_method', deliveryMethod);
+      fd.append('dorm_area', dormArea);
       if (tags) fd.append('tags', tags);
-      if (wechat) fd.append('wechat', wechat);
-      if (phone) fd.append('phone', phone);
-      if (remark) fd.append('remark', remark);
       images.forEach((f) => fd.append('images', f));
       return await createMarketplaceItem(fd);
     },
@@ -105,9 +108,8 @@ function MarketplacePublish() {
         price,
         category,
         tags,
-        wechat,
-        phone,
-        remark,
+        delivery_method: deliveryMethod,
+        dorm_area: dormArea,
       });
     },
     onSuccess: () => {
@@ -117,7 +119,7 @@ function MarketplacePublish() {
     onError: (e) => Toast.error(e?.message || (isZh ? '保存失败' : 'Failed')),
   });
 
-  const canSubmit = title.trim() && description.trim() && category && price !== '' && (isEdit ? true : true);
+  const canSubmit = title.trim() && description.trim() && category && price !== '' && deliveryMethod && dormArea;
 
   return (
     <div className="mp-page">
@@ -164,10 +166,23 @@ function MarketplacePublish() {
         />
 
         <div className="mp-contact">
-          <div className="mp-contact-title">{isZh ? '联系方式（详情页展示）' : 'Contact (shown on detail)'}</div>
-          <input className="mp-input" value={wechat} onChange={(e) => setWechat(e.target.value)} placeholder={isZh ? '微信（可选）' : 'WeChat (optional)'} />
-          <input className="mp-input" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={isZh ? '电话（可选）' : 'Phone (optional)'} />
-          <input className="mp-input" value={remark} onChange={(e) => setRemark(e.target.value)} placeholder={isZh ? '备注（可选）' : 'Remark (optional)'} />
+          <div className="mp-contact-title">{isZh ? '交易方式' : 'Delivery / Pickup'}</div>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <select className="mp-input" value={deliveryMethod} onChange={(e) => setDeliveryMethod(e.target.value)}>
+              <option value="pickup">{deliveryLabel('pickup', isZh)}</option>
+              <option value="delivery">{deliveryLabel('delivery', isZh)}</option>
+            </select>
+            <select className="mp-input" value={dormArea} onChange={(e) => setDormArea(e.target.value)}>
+              {DORM_AREAS.map((d) => (
+                <option key={d} value={d}>
+                  {isZh ? `宿舍 ${d}` : `Dorm ${d}`}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="mp-help" style={{ marginTop: 8 }}>
+            {isZh ? '发布后将在列表与详情页展示。' : 'Shown on list & detail.'}
+          </div>
         </div>
 
         {!isEdit ? (
@@ -224,8 +239,8 @@ function MarketplacePublish() {
         ) : (
           <div className="mp-help">
             {isZh
-              ? '编辑模式暂不支持替换图片（一期先保证可编辑文字/价格/分类/联系方式）。'
-              : 'Editing images is not supported yet (v1 only edits text/price/category/contact).'}
+              ? '编辑模式暂不支持替换图片（一期先保证可编辑文字/价格/分类/宿舍/交易方式）。'
+              : 'Editing images is not supported yet (v1 only edits text/price/category/dorm/delivery).'}
           </div>
         )}
 

@@ -14,6 +14,8 @@ import SquareClub from '../pages/SquareClub';
 import SquareSecondHand from '../pages/SquareSecondHand';
 import MarketplaceDetail from '../pages/Marketplace/MarketplaceDetail';
 import MarketplacePublish from '../pages/Marketplace/MarketplacePublish';
+import MarketplaceMyWants from '../pages/Marketplace/MarketplaceMyWants';
+import MarketplaceChat from '../pages/Marketplace/MarketplaceChat';
 import SquareTrending from '../pages/SquareTrending';
 import SquareFreshmanGuide from '../pages/SquareFreshmanGuide';
 import SquareErrands from '../pages/SquareErrands';
@@ -69,6 +71,8 @@ export const layoutRoutes = (
     <Route path="about/club" element={<SquareClub />} />
     <Route path="about/second-hand" element={<SquareSecondHand />} />
     <Route path="about/second-hand/new" element={<MarketplacePublish />} />
+    <Route path="about/second-hand/me/wants" element={<MarketplaceMyWants />} />
+    <Route path="about/second-hand/chat/:threadId" element={<MarketplaceChat />} />
     <Route path="about/second-hand/item/:id" element={<MarketplaceDetail />} />
     <Route path="about/second-hand/item/:id/edit" element={<MarketplacePublish />} />
     <Route path="about/trending" element={<SquareTrending />} />

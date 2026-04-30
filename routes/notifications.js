@@ -30,6 +30,7 @@ async function attachNotificationExtra(rows) {
       type: r.type,
       is_read: !!r.is_read,
       post_id: r.post_id,
+      post_title: r.post_title || null,
       comment_id: r.comment_id,
       from_user_id: r.from_user_id,
       extra,
@@ -42,6 +43,37 @@ async function attachNotificationExtra(rows) {
         nickname: r.from_nickname,
         avatar: assetUrl(r.from_avatar)
       };
+    }
+
+    // 统一 target（用于前端聚合卡片：key/title/path）
+    // - post/announcement：来自 post_id + post_title/extra.title
+    // - handbook/courseReview：由 extra.target* 提供
+    try {
+      if (item.post_id) {
+        const isAnn = item.type === 'announcement';
+        const title = item.post_title || (isAnn ? (item.extra && (item.extra.content || item.extra.title)) : null) || null;
+        item.target = {
+          type: isAnn ? 'announcement' : 'post',
+          id: item.post_id,
+          key: `${isAnn ? 'announcement' : 'post'}:${item.post_id}`,
+          title,
+          path: `/post/${item.post_id}`,
+        };
+      } else if (item.extra && item.extra.targetType && item.extra.targetId) {
+        const tType = String(item.extra.targetType);
+        const tId = Number(item.extra.targetId);
+        item.target = {
+          type: tType,
+          id: tId,
+          key: `${tType}:${tId}`,
+          title: item.extra.targetTitle || null,
+          path: item.extra.targetPath || '#',
+        };
+      } else {
+        item.target = { type: 'unknown', id: item.id, key: `unknown:${item.id}`, title: null, path: '#' };
+      }
+    } catch {
+      item.target = { type: 'unknown', id: item.id, key: `unknown:${item.id}`, title: null, path: '#' };
     }
     list.push(item);
   }
@@ -75,16 +107,37 @@ router.get('/', authenticateToken, async (req, res) => {
       params.push(isRead === '1' ? 1 : 0);
     }
 
-    const rows = await query(
-      `SELECT n.id, n.type, n.is_read, n.post_id, n.comment_id, n.from_user_id, n.extra, n.created_at,
-        u.username AS from_username, u.nickname AS from_nickname, u.avatar AS from_avatar
-       FROM notifications n
-       LEFT JOIN users u ON n.from_user_id = u.id
-       WHERE ${where}
-       ORDER BY n.created_at DESC
-       LIMIT ${limitNum} OFFSET ${offsetNum}`,
-      params
-    );
+    let rows;
+    try {
+      rows = await query(
+        `SELECT n.id, n.type, n.is_read, n.post_id, n.comment_id, n.from_user_id, n.extra, n.created_at,
+          p.title AS post_title,
+          u.username AS from_username, u.nickname AS from_nickname, u.avatar AS from_avatar
+         FROM notifications n
+         LEFT JOIN posts p ON n.post_id = p.id
+         LEFT JOIN users u ON n.from_user_id = u.id
+         WHERE ${where}
+         ORDER BY n.created_at DESC
+         LIMIT ${limitNum} OFFSET ${offsetNum}`,
+        params
+      );
+    } catch (e) {
+      // 兼容未执行 posts.title 迁移：降级不查 post_title
+      if (e && e.code === 'ER_BAD_FIELD_ERROR' && String(e.sqlMessage || '').includes('title')) {
+        rows = await query(
+          `SELECT n.id, n.type, n.is_read, n.post_id, n.comment_id, n.from_user_id, n.extra, n.created_at,
+            u.username AS from_username, u.nickname AS from_nickname, u.avatar AS from_avatar
+           FROM notifications n
+           LEFT JOIN users u ON n.from_user_id = u.id
+           WHERE ${where}
+           ORDER BY n.created_at DESC
+           LIMIT ${limitNum} OFFSET ${offsetNum}`,
+          params
+        );
+      } else {
+        throw e;
+      }
+    }
     const list = await attachNotificationExtra(rows);
     const hasMore = rows.length > pageSize;
     res.status(200).json({
@@ -94,6 +147,59 @@ router.get('/', authenticateToken, async (req, res) => {
     });
   } catch (e) {
     console.error('通知列表错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
+// ============================================
+// 未读汇总（给顶栏铃铛用：social/chat/total）
+// ============================================
+router.get('/unread-summary', authenticateToken, async (req, res) => {
+  try {
+    const rows = await query(
+      `SELECT type, COUNT(*) AS cnt
+       FROM notifications
+       WHERE user_id = ? AND is_read = 0
+       GROUP BY type`,
+      [req.user.id]
+    );
+    const byType = {};
+    for (const r of rows || []) {
+      byType[r.type] = Number(r.cnt) || 0;
+    }
+    const social =
+      (byType.like || 0) +
+      (byType.comment || 0) +
+      (byType.handbook_comment || 0) +
+      (byType.course_review_comment || 0);
+    // 预留：二手市场/聊天类通知（未来如果写入 notifications.type='marketplace' 等即可自动点亮）
+    const chat = (byType.marketplace || 0) + (byType.chat || 0);
+    const total = Object.values(byType).reduce((a, b) => a + (Number(b) || 0), 0);
+    res.status(200).json({ status: 0, message: 'ok', data: { social, chat, total, byType } });
+  } catch (e) {
+    console.error('未读汇总错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
+// ============================================
+// 清空通知（仅清非公告；公告无法清除）
+// ============================================
+router.delete('/clear', authenticateToken, async (req, res) => {
+  try {
+    const scope = String(req.query.scope || '').trim();
+    if (scope === 'marketplace') {
+      await query("DELETE FROM notifications WHERE user_id = ? AND type = 'marketplace'", [req.user.id]);
+    } else if (scope === 'social') {
+      // 社交：排除公告与 marketplace
+      await query("DELETE FROM notifications WHERE user_id = ? AND type <> 'announcement' AND type <> 'marketplace'", [req.user.id]);
+    } else {
+      // 默认：清空除公告外全部
+      await query("DELETE FROM notifications WHERE user_id = ? AND type <> 'announcement'", [req.user.id]);
+    }
+    res.status(200).json({ status: 0, message: 'ok', data: { cleared: true } });
+  } catch (e) {
+    console.error('清空通知错误:', e);
     res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
   }
 });
