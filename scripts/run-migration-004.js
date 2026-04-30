@@ -1,7 +1,6 @@
 /**
  * 执行 004 迁移：为 products 表增加 price 列
  *   node scripts/run-migration-004.js
- *   或 node run-migration-004.js（根目录 shim）
  */
 const path = require('path');
 

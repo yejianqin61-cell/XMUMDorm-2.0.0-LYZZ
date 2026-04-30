@@ -73,7 +73,7 @@ Jack/
 └── README.md
 ```
 
-早期的 `html/` 目录（纯 HTML 登录/注册）仍保留，但实际使用的是 `frontend/` React 前端。根目录下的 `run-migration-*.js` / `run-migrations-all.js` 为**兼容入口**，内部转发到 `scripts/` 同名脚本。
+早期的 `html/` 目录（纯 HTML 登录/注册）仍保留，但实际使用的是 `frontend/` React 前端。数据库迁移脚本统一放在 `scripts/` 目录下（推荐直接执行 `node scripts/run-migration-xxx.js`）。
 
 ---
 

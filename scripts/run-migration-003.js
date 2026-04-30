@@ -3,7 +3,6 @@
  *
  * 执行（任选其一）：
  *   node scripts/run-migration-003.js
- *   node run-migration-003.js   （根目录 shim，转发到 scripts）
  *
  * 数据库配置与后端相同：项目根目录 .env 中的 DATABASE_URL / MYSQL_URL 或 DB_*。
  */

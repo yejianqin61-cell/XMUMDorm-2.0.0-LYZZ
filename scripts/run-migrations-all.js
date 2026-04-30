@@ -2,11 +2,9 @@
  * 一键执行数据库迁移（init-db + 002～008）
  *
  *   node scripts/run-migrations-all.js
- *   或 node run-migrations-all.js（根目录 shim）
  *
  * Railway Start Command 示例：
  *   node scripts/run-migrations-all.js && npm start
- *   （若仍用根 shim：node run-migrations-all.js && npm start）
  */
 const fs = require('fs');
 const path = require('path');

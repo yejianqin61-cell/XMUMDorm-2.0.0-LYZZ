@@ -17,8 +17,6 @@
 node scripts/run-migration-003.js
 ```
 
-（根目录的 `node run-migration-003.js` 仍会转发到 `scripts/`，与旧文档兼容。）
-
 ### 执行 004：商品价格
 
 ```bash
