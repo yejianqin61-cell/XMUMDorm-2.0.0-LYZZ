@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS comments (
 CREATE TABLE IF NOT EXISTS notifications (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL COMMENT '接收者ID',
-  type ENUM('comment', 'like', 'announcement') NOT NULL,
+  type VARCHAR(50) NOT NULL COMMENT '通知类型：comment/like/announcement/marketplace/handbook_comment/... ',
   is_read TINYINT(1) DEFAULT 0,
   post_id INT NULL,
   comment_id INT NULL,

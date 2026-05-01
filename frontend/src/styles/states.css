@@ -12,6 +12,22 @@
   color: var(--wx-text-secondary);
 }
 
+.state-loading {
+  position: relative;
+  padding-top: 160px;
+}
+
+.state-loading::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 26px;
+  transform: translateX(-50%);
+  width: 110px;
+  height: 110px;
+  background: url("/gif/vsgif_com_dogecoin-meme_.3422573.gif") center / contain no-repeat;
+}
+
 .state-error {
   color: var(--wx-red, #ee0a24);
 }

@@ -15,6 +15,9 @@ const sharp = require('sharp');
 // 默认只允许静态图（头像/商品图/评论图）
 const ALLOWED_IMAGE_MIMES = ['image/jpeg', 'image/png', 'image/webp'];
 const ALLOWED_IMAGE_EXT = ['.jpg', '.jpeg', '.png', '.webp'];
+// 头像额外支持 gif（允许动图头像）
+const ALLOWED_AVATAR_MIMES = [...ALLOWED_IMAGE_MIMES, 'image/gif'];
+const ALLOWED_AVATAR_EXT = [...ALLOWED_IMAGE_EXT, '.gif'];
 // 帖子图片额外支持 gif（保留动图原始内容；缩略图尽量生成，失败则回退原图）
 const ALLOWED_POST_IMAGE_MIMES = [...ALLOWED_IMAGE_MIMES, 'image/gif'];
 const ALLOWED_POST_IMAGE_EXT = [...ALLOWED_IMAGE_EXT, '.gif'];
@@ -47,8 +50,8 @@ const avatarUpload = multer({
   limits: { fileSize: MAX_FILE_SIZE },
   fileFilter: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
-    if (!ALLOWED_IMAGE_MIMES.includes(file.mimetype) || !ALLOWED_IMAGE_EXT.includes(ext)) {
-      return cb(new Error('仅支持 jpg / png / webp 格式'));
+    if (!ALLOWED_AVATAR_MIMES.includes(file.mimetype) || !ALLOWED_AVATAR_EXT.includes(ext)) {
+      return cb(new Error('仅支持 jpg / png / webp / gif 格式'));
     }
     cb(null, true);
   }

@@ -57,6 +57,7 @@ function guessContentType(mime, ext) {
   const e = String(ext || '').toLowerCase();
   if (e === '.png') return 'image/png';
   if (e === '.webp') return 'image/webp';
+  if (e === '.gif') return 'image/gif';
   return 'image/jpeg';
 }
 

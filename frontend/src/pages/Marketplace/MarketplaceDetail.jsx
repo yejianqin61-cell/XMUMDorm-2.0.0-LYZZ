@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 import { Heart, MoreVertical } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
@@ -250,9 +251,20 @@ function MarketplaceDetail() {
 
         {images.length ? (
           <div className="mp-detail-images">
-            {images.map((img) => (
-              <img key={img.url} src={img.url} alt={item.title} />
-            ))}
+            {images.map((img, idx) => {
+              const isFirst = idx === 0;
+              if (isFirst) {
+                return (
+                  <motion.img
+                    key={img.url}
+                    layoutId={`mp-cover-${item.id}`}
+                    src={img.url}
+                    alt={item.title}
+                  />
+                );
+              }
+              return <img key={img.url} src={img.url} alt={item.title} />;
+            })}
           </div>
         ) : null}
 

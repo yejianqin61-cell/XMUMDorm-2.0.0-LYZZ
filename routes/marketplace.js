@@ -222,17 +222,20 @@ router.get('/items', async (req, res) => {
       SELECT
         i.id,
         i.title,
+        i.description,
         i.price,
         i.status,
         i.delivery_method,
         i.dorm_area,
         i.tags_json,
         i.wants_count,
+        i.views_count,
         i.created_at,
         c.slug AS category,
         c.name_zh AS category_name_zh,
         c.name_en AS category_name_en,
         COALESCE(NULLIF(u.nickname, ''), u.username) AS sellerName,
+        u.avatar AS sellerAvatar,
         img.file_path AS cover_path
       FROM marketplace_items i
       JOIN marketplace_categories c ON c.id = i.category_id
@@ -264,14 +267,17 @@ router.get('/items', async (req, res) => {
       return {
         id: r.id,
         title: r.title,
+        description: r.description || '',
         price: Number(r.price),
         status: r.status,
         delivery_method: r.delivery_method || 'pickup',
         dorm_area: r.dorm_area || null,
         wants_count: r.wants_count,
+        views_count: r.views_count != null ? Number(r.views_count) : 0,
         tags: tags || [],
         category: r.category,
         sellerName: r.sellerName,
+        sellerAvatar: assetUrl(r.sellerAvatar),
         cover: assetUrl(r.cover_path),
         created_at: r.created_at,
       };

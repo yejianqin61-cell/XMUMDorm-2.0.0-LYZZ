@@ -220,7 +220,7 @@ router.patch('/me/avatar', authenticateToken, (req, res, next) => {
     if (err) {
       return res.status(400).json({
         status: -1,
-        message: err.message || '仅支持 jpg/png/webp，单张≤8MB'
+        message: err.message || '仅支持 jpg/png/webp/gif，单张≤8MB'
       });
     }
     next();
@@ -231,7 +231,7 @@ router.patch('/me/avatar', authenticateToken, (req, res, next) => {
       return res.status(400).json({ status: -1, message: '请上传图片' });
     }
     const ext = path.extname(req.file.originalname || '').toLowerCase() || '.jpg';
-    const safeExt = ['.jpg', '.jpeg', '.png', '.webp'].includes(ext) ? (ext === '.jpeg' ? '.jpg' : ext) : '.jpg';
+    const safeExt = ['.jpg', '.jpeg', '.png', '.webp', '.gif'].includes(ext) ? (ext === '.jpeg' ? '.jpg' : ext) : '.jpg';
     // 每次更新头像使用带时间戳的新文件名，避免浏览器长时间缓存旧头像
     const ts = Date.now();
     const key = `avatars/user_${req.user.id}_${ts}${safeExt}`;

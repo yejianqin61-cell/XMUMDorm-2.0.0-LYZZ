@@ -175,7 +175,7 @@ function Mailbox() {
         };
       })
       .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-  }, [data?.list]);
+  }, [data?.list, tab]);
 
   const handleGroupClick = (g) => {
     const unread = (g?.sorted || []).filter((x) => !x.is_read);
@@ -294,7 +294,7 @@ function Mailbox() {
                 style={{ animationDelay: `${idx * 70}ms` }}
               >
                 <Link to={linkTo} className="social-card-link" onClick={() => handleGroupClick(g)}>
-                  {isAnnouncement ? (
+                  {isAnnouncement && tab !== 'marketplace' ? (
                     <div className="mailbox-ann-only" aria-label={isZh ? '公告内容' : 'Announcement content'}>
                       {String(title || g.latest?.extra?.content || '').trim() || (isZh ? '（公告内容为空）' : '(Empty announcement)')}
                     </div>

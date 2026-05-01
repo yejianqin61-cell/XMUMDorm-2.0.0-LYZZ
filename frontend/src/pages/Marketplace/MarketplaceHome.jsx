@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Search, UserCircle } from 'lucide-react';
+import { Filter, Search, UserCircle } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { getMarketplaceCategories, listMarketplaceItems } from '../../api/marketplace';
 import { QK } from '../../query/queryKeys';
+import MarketplaceItemCard from './MarketplaceItemCard';
 import './Marketplace.css';
 
 function statusLabel(s, isZh) {
@@ -28,6 +29,9 @@ function MarketplaceHome() {
   const [status, setStatus] = useState('all');
   const [priceMin, setPriceMin] = useState('');
   const [priceMax, setPriceMax] = useState('');
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [draftPriceMin, setDraftPriceMin] = useState('');
+  const [draftPriceMax, setDraftPriceMax] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [keyword, setKeyword] = useState('');
   const [q, setQ] = useState('');
@@ -66,6 +70,8 @@ function MarketplaceHome() {
 
   const categories = useMemo(() => catQuery.data || [], [catQuery.data]);
   const list = useMemo(() => itemsQuery.data?.list || [], [itemsQuery.data]);
+  const isLoading = itemsQuery.isFetching && !itemsQuery.data;
+  const showSkeletons = itemsQuery.isFetching && (itemsQuery.data?.list || []).length === 0;
 
   return (
     <div className="mp-page">
@@ -158,73 +164,138 @@ function MarketplaceHome() {
         })}
       </div>
 
-      <div className="mp-filters">
-        <button
-          type="button"
-          className={`mp-chip ${status === 'all' ? 'is-on' : ''}`}
-          onClick={() => setStatus('all')}
-        >
-          {isZh ? '全部状态' : 'All status'}
-        </button>
-        {['on_sale', 'sold'].map((s) => {
-          const on = status === s;
-          return (
-            <button key={s} type="button" className={`mp-chip ${on ? 'is-on' : ''}`} onClick={() => setStatus(s)}>
-              {statusLabel(s, isZh)}
-            </button>
-          );
-        })}
+      <div className="mp-filterbar" aria-label={isZh ? '筛选' : 'Filters'}>
+        <div className="mp-filterbar-scroll">
+          <button
+            type="button"
+            className={`mp-chip ${status === 'all' ? 'is-on' : ''}`}
+            onClick={() => setStatus('all')}
+          >
+            {isZh ? '全部' : 'All'}
+          </button>
+          {['on_sale', 'sold'].map((s) => {
+            const on = status === s;
+            return (
+              <button key={s} type="button" className={`mp-chip ${on ? 'is-on' : ''}`} onClick={() => setStatus(s)}>
+                {statusLabel(s, isZh)}
+              </button>
+            );
+          })}
 
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <input
-            className="mp-input mp-input-sm"
-            inputMode="decimal"
-            placeholder={isZh ? '最低价' : 'Min'}
-            value={priceMin}
-            onChange={(e) => setPriceMin(e.target.value)}
-          />
-          <input
-            className="mp-input mp-input-sm"
-            inputMode="decimal"
-            placeholder={isZh ? '最高价' : 'Max'}
-            value={priceMax}
-            onChange={(e) => setPriceMax(e.target.value)}
-          />
+          <button
+            type="button"
+            className={`mp-chip mp-chip-icon ${drawerOpen ? 'is-on' : ''}`}
+            onClick={() => {
+              if (!drawerOpen) {
+                setDraftPriceMin(priceMin);
+                setDraftPriceMax(priceMax);
+              }
+              setDrawerOpen((v) => !v);
+            }}
+            aria-label={isZh ? '高级筛选' : 'Advanced filters'}
+            title={isZh ? '高级筛选' : 'Advanced filters'}
+          >
+            <Filter size={16} aria-hidden />
+            {isZh ? '筛选' : 'Filter'}
+          </button>
         </div>
-        <button type="button" className="mp-btn" onClick={() => itemsQuery.refetch()}>
-          {isZh ? '筛选' : 'Filter'}
-        </button>
+
+        <div className={`mp-drawer ${drawerOpen ? 'is-open' : ''}`} aria-hidden={!drawerOpen}>
+          <div className="mp-drawer-inner">
+            <div className="mp-drawer-row">
+              <div className="mp-drawer-label">{isZh ? '价格区间' : 'Price range'}</div>
+              <div className="mp-drawer-fields">
+                <input
+                  className="mp-input mp-input-sm"
+                  inputMode="decimal"
+                  placeholder={isZh ? '最低价' : 'Min'}
+                  value={draftPriceMin}
+                  onChange={(e) => setDraftPriceMin(e.target.value)}
+                />
+                <span className="mp-drawer-sep" aria-hidden="true">—</span>
+                <input
+                  className="mp-input mp-input-sm"
+                  inputMode="decimal"
+                  placeholder={isZh ? '最高价' : 'Max'}
+                  value={draftPriceMax}
+                  onChange={(e) => setDraftPriceMax(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="mp-drawer-actions">
+              <button
+                type="button"
+                className="mp-btn"
+                onClick={() => {
+                  setDraftPriceMin('');
+                  setDraftPriceMax('');
+                  setPriceMin('');
+                  setPriceMax('');
+                  setDrawerOpen(false);
+                }}
+              >
+                {isZh ? '清除' : 'Clear'}
+              </button>
+              <button
+                type="button"
+                className="mp-btn mp-btn-primary"
+                onClick={() => {
+                  setPriceMin(draftPriceMin);
+                  setPriceMax(draftPriceMax);
+                  setDrawerOpen(false);
+                  itemsQuery.refetch();
+                }}
+              >
+                {isZh ? '应用' : 'Apply'}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="mp-grid">
-        {list.map((it) => (
-          <Link key={it.id} to={`/about/second-hand/item/${it.id}`} className="mp-card">
-            <div className="mp-card-cover">
-              {it.cover ? <img src={it.cover} alt={it.title} /> : <div>{isZh ? '暂无图片' : 'No image'}</div>}
-            </div>
-            <div className="mp-card-body">
-              <div className="mp-card-title">{it.title}</div>
-              <div className="mp-card-sub">
-                <div className="mp-price">{isZh ? `RM ${it.price}` : `RM ${it.price}`}</div>
-                <div className={`mp-badge ${it.status === 'sold' ? 'sold' : ''}`}>
-                  {statusLabel(it.status, isZh)}
+      <div className="mp-feed">
+        {showSkeletons
+          ? Array.from({ length: 10 }).map((_, i) => (
+              <div key={`sk-${i}`} className="mp-feed-card mp-feed-skeleton" aria-hidden="true">
+                <div className="mp-feed-head">
+                  <div className="mp-skel-circle" />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="mp-skel-line mp-skel-line--title" />
+                    <div className="mp-skel-line mp-skel-line--meta" />
+                  </div>
+                  <div className="mp-skel-pill" />
+                </div>
+                <div className="mp-feed-media mp-skel-cover" />
+              <div className="mp-feed-body">
+                  <div className="mp-skel-line mp-skel-line--title" />
+                  <div className="mp-skel-line" />
+                </div>
+              <div className="mp-feed-body" style={{ paddingTop: 0 }}>
+                <div className="mp-skel-line mp-skel-line--price" />
+                <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                  <div className="mp-skel-pill" />
+                  <div className="mp-skel-pill" />
                 </div>
               </div>
-              <div className="mp-card-sub" style={{ marginTop: 8 }}>
-                <div>{it.dorm_area ? (isZh ? `宿舍 ${it.dorm_area}` : `Dorm ${it.dorm_area}`) : (isZh ? '宿舍未知' : 'Dorm N/A')}</div>
-                <div>{deliveryLabel(it.delivery_method, isZh)}</div>
               </div>
-              <div className="mp-card-sub" style={{ marginTop: 8 }}>
-                <div>{it.sellerName || (isZh ? '匿名卖家' : 'Seller')}</div>
-                <div>{isZh ? `想要 ${it.wants_count || 0}` : `Wants ${it.wants_count || 0}`}</div>
-              </div>
-            </div>
-          </Link>
-        ))}
+            ))
+          : list.map((it) => <MarketplaceItemCard key={it.id} item={it} />)}
       </div>
 
       {!itemsQuery.isFetching && list.length === 0 ? (
-        <div className="mp-empty">{isZh ? '暂无商品，去发布一个吧' : 'No items yet. Publish one.'}</div>
+        <div className="mp-empty">
+          <div className="mp-empty-illus" aria-hidden="true">
+            <svg width="120" height="92" viewBox="0 0 120 92" fill="none">
+              <path d="M12 66c10-12 22-18 36-18 22 0 26 14 44 14 8 0 14-2 16-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              <path d="M20 30h80c6 0 10 4 10 10v26c0 6-4 10-10 10H20c-6 0-10-4-10-10V40c0-6 4-10 10-10z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/>
+              <path d="M36 30l6-12h36l6 12" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/>
+              <circle cx="44" cy="50" r="5" stroke="currentColor" strokeWidth="2"/>
+            </svg>
+          </div>
+          <div className="mp-empty-title">{isZh ? '没有找到商品' : 'No items found'}</div>
+          <div className="mp-empty-sub">{isZh ? '试试换个分类或调整筛选条件。' : 'Try a different category or adjust filters.'}</div>
+        </div>
       ) : null}
     </div>
   );

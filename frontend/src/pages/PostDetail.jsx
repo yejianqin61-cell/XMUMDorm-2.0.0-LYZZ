@@ -195,17 +195,117 @@ function PostDetail() {
     e.preventDefault();
     if (requireLogin()) return;
     if (!newComment.trim()) return;
+    const content = newComment.trim();
+    const parentId = replyingTo?.id ?? null;
+
     setSubmitLoading(true);
-    try {
-      await createComment(postId, {
-        content: newComment.trim(),
-        parent_id: replyingTo?.id ?? undefined,
+
+    // ===== 乐观更新（一级 + 二级）=====
+    const prevComments = queryClient.getQueryData(QK.postComments(postId));
+    const prevDetail = queryClient.getQueryData(QK.postDetail(postId, tokenKey));
+
+    const tempId = -Date.now();
+    const nowIso = new Date().toISOString();
+    const me = user
+      ? {
+          id: user.id,
+          username: user.username,
+          nickname: user.nickname,
+          avatar: prefixAvatar(user.avatar),
+        }
+      : null;
+
+    const optimisticNode = {
+      id: tempId,
+      post_id: postId,
+      user_id: user?.id,
+      parent_id: parentId,
+      content,
+      created_at: nowIso,
+      author: me,
+      replies: [],
+      __optimistic: true,
+    };
+
+    const bumpCommentCountInPostCaches = (delta) => {
+      queryClient.setQueryData(QK.postDetail(postId, tokenKey), (old) => {
+        if (!old || old.id !== postId) return old;
+        const next = Math.max(0, Number(old.comment_count || 0) + delta);
+        return { ...old, comment_count: next };
       });
+      queryClient.setQueriesData(
+        {
+          predicate: (q) => {
+            const key = q.queryKey || [];
+            return key[0] === 'posts' && key[1] === 'infinite' && key[2] === tokenKey;
+          },
+        },
+        (old) => {
+          if (!old || !old.pages || !Array.isArray(old.pages)) return old;
+          const nextPages = old.pages.map((pg) => {
+            const list = Array.isArray(pg.list) ? pg.list : [];
+            const nextList = list.map((it) => {
+              if (!it || it.id !== postId) return it;
+              const next = Math.max(0, Number(it.comment_count || 0) + delta);
+              return { ...it, comment_count: next };
+            });
+            return { ...pg, list: nextList };
+          });
+          return { ...old, pages: nextPages };
+        }
+      );
+    };
+
+    // 先清空输入框/退出回复态，让 UI 立刻“提交成功感”
+    setNewComment('');
+    setReplyingTo(null);
+
+    // 写入评论树缓存
+    queryClient.setQueryData(QK.postComments(postId), (old) => {
+      const list = Array.isArray(old) ? [...old] : [];
+      if (!parentId) {
+        return [optimisticNode, ...list];
+      }
+      return list.map((c) => {
+        if (!c || c.id !== parentId) return c;
+        const replies = Array.isArray(c.replies) ? c.replies : [];
+        return { ...c, replies: [...replies, { ...optimisticNode, replies: undefined }] };
+      });
+    });
+    bumpCommentCountInPostCaches(1);
+
+    try {
+      const created = await createComment(postId, {
+        content,
+        parent_id: parentId ?? undefined,
+      });
+
+      const normalized = created
+        ? mapCommentTree({
+            ...created,
+            replies: [],
+          })
+        : null;
+
+      queryClient.setQueryData(QK.postComments(postId), (old) => {
+        const list = Array.isArray(old) ? [...old] : [];
+        if (!parentId) {
+          return list.map((c) => (c && c.id === tempId ? (normalized || c) : c));
+        }
+        return list.map((c) => {
+          if (!c || c.id !== parentId) return c;
+          const replies = Array.isArray(c.replies) ? c.replies : [];
+          const nextReplies = replies.map((r) => (r && r.id === tempId ? (normalized || r) : r));
+          return { ...c, replies: nextReplies };
+        });
+      });
+
       Toast.success('评论成功');
-      await queryClient.invalidateQueries({ queryKey: QK.postComments(postId) });
-      setNewComment('');
-      setReplyingTo(null);
     } catch (err) {
+      // 回滚：评论树 + comment_count
+      queryClient.setQueryData(QK.postComments(postId), prevComments);
+      queryClient.setQueryData(QK.postDetail(postId, tokenKey), prevDetail);
+      bumpCommentCountInPostCaches(-1);
       Toast.error(getApiErrorMessage(err));
     } finally {
       setSubmitLoading(false);
