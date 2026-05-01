@@ -43,6 +43,12 @@ function ClubProfile() {
     enabled: Number.isFinite(clubId) && clubId > 0,
   });
 
+  const data = q.data;
+  const basic = data?.basicInfo;
+  const join = data?.joinInfo;
+  const following = !!basic?.viewer?.following;
+  const canManage = !!basic?.viewer?.canManage || user?.role === 'admin';
+
   const followMut = useMutation({
     mutationFn: async () => await toggleClubFollow(clubId),
     onSuccess: async () => {
@@ -50,19 +56,6 @@ function ClubProfile() {
       await queryClient.invalidateQueries({ queryKey: QK.clubProfile(clubId) });
     },
   });
-
-  const data = q.data;
-  const basic = data?.basicInfo;
-  const join = data?.joinInfo;
-  const activities = useMemo(() => data?.activities || [], [data]);
-  const posts = useMemo(() => data?.posts || [], [data]);
-  const members = useMemo(() => data?.members || [], [data]);
-
-  if (q.isLoading) return <div className="state-loading">加载中</div>;
-  if (q.isError || !basic) return <div className="state-error">{q.error?.message || (isZh ? '加载失败' : 'Failed')}</div>;
-
-  const following = !!basic?.viewer?.following;
-  const canManage = !!basic?.viewer?.canManage || user?.role === 'admin';
 
   const saveClubMut = useMutation({
     mutationFn: async () => {
@@ -86,7 +79,7 @@ function ClubProfile() {
   const usersQ = useQuery({
     queryKey: ['clubs', 'userSearch', clubId, userQuery],
     queryFn: async () => await searchUsersByEmailForClub(clubId, userQuery.trim()),
-    enabled: canManage && userQuery.trim().length >= 2,
+    enabled: !!canManage && userQuery.trim().length >= 2,
   });
 
   const addMemberMut = useMutation({
@@ -122,6 +115,13 @@ function ClubProfile() {
       await queryClient.invalidateQueries({ queryKey: QK.clubProfile(clubId) });
     },
   });
+
+  const activities = useMemo(() => data?.activities || [], [data]);
+  const posts = useMemo(() => data?.posts || [], [data]);
+  const members = useMemo(() => data?.members || [], [data]);
+
+  if (q.isLoading) return <div className="state-loading">加载中</div>;
+  if (q.isError || !basic) return <div className="state-error">{q.error?.message || (isZh ? '加载失败' : 'Failed')}</div>;
 
   return (
     <div className="club-page">
