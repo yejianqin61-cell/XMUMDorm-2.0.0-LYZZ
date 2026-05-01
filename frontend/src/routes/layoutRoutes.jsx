@@ -22,6 +22,10 @@ import SquareErrands from '../pages/SquareErrands';
 import ClubProfile from '../pages/Clubs/ClubProfile';
 import ActivityDetail from '../pages/Clubs/ActivityDetail';
 import ClubPostDetail from '../pages/Clubs/ClubPostDetail';
+import ClubListPage from '../pages/Clubs/ClubListPage';
+import MyClubs from '../pages/Clubs/MyClubs';
+import PublishActivity from '../pages/Clubs/PublishActivity';
+import CreateClub from '../pages/Clubs/CreateClub';
 import ErrandDetail from '../pages/Errands/ErrandDetail';
 import PublishErrand from '../pages/Errands/PublishErrand';
 import HandbookArticleDetail from '../pages/Handbook/HandbookArticleDetail';
@@ -74,9 +78,13 @@ export const layoutRoutes = (
     <Route path="about/disclaimer" element={<Disclaimer />} />
     <Route path="about/contact" element={<ContactUs />} />
     <Route path="about/club" element={<SquareClub />} />
+    <Route path="about/club/list" element={<ClubListPage />} />
+    <Route path="about/club/my" element={<MyClubs />} />
+    <Route path="about/club/new" element={<CreateClub />} />
     <Route path="about/club/:id" element={<ClubProfile />} />
     <Route path="about/club/activity/:id" element={<ActivityDetail />} />
     <Route path="about/club/post/:id" element={<ClubPostDetail />} />
+    <Route path="about/club/activity/new" element={<PublishActivity />} />
     <Route path="about/second-hand" element={<SquareSecondHand />} />
     <Route path="about/second-hand/new" element={<MarketplacePublish />} />
     <Route path="about/second-hand/me/wants" element={<MarketplaceMyWants />} />

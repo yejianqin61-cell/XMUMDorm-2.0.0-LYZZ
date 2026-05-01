@@ -18,6 +18,14 @@ const { query } = require('../database');
 const sanitizeHtml = require('sanitize-html');
 const authenticateToken = require('../middleware/auth');
 const jwt = require('jsonwebtoken');
+const { assetUrl } = require('../utils/assets');
+const { uploadBuffer, guessContentType, isObjectStorageConfigured } = require('../services/objectStorage');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+const CLUB_CATEGORIES = new Set(['music', 'tech', 'culture', 'sport', 'art']);
+const ACTIVITY_STATUS = new Set(['upcoming', 'ongoing', 'ended']);
 
 function parseOptionalUser(req) {
   if (!req.headers.authorization) return null;
@@ -28,6 +36,10 @@ function parseOptionalUser(req) {
   } catch (_) {
     return null;
   }
+}
+
+function isSiteAdmin(req) {
+  return req.user && req.user.role === 'admin';
 }
 
 function cleanText(input, maxLen) {
@@ -50,6 +62,63 @@ function computeActivityStatus(startTime, endTime) {
   if (now < s) return 'upcoming';
   if (Number.isFinite(e) && now > e) return 'ended';
   return 'ongoing';
+}
+
+function computeActivityStatus2(row) {
+  const override = row && row.status ? String(row.status) : '';
+  if (override && ACTIVITY_STATUS.has(override)) return override;
+  return computeActivityStatus(row?.start_time, row?.end_time);
+}
+
+function normalizeClubCategory(x) {
+  const s = String(x || '').toLowerCase();
+  return CLUB_CATEGORIES.has(s) ? s : null;
+}
+
+function normalizeActivityStatus(x) {
+  const s = String(x || '').toLowerCase();
+  return ACTIVITY_STATUS.has(s) ? s : null;
+}
+
+function extFromMime(mime, originalName) {
+  const extMap = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp', 'image/gif': '.gif' };
+  const e = extMap[mime];
+  if (e) return e;
+  const byName = path.extname(originalName || '').toLowerCase();
+  return byName || '.jpg';
+}
+
+function ensureUploadsDir(relDir) {
+  const dir = path.join(process.cwd(), 'uploads', relDir);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
+const clubLogoUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 8 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const okMime = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.mimetype);
+    const okExt = ['.jpg', '.jpeg', '.png', '.webp', '.gif'].includes(ext);
+    if (!okMime || !okExt) return cb(new Error('仅支持 jpg / png / webp / gif 格式'));
+    cb(null, true);
+  },
+}).single('logo');
+
+async function saveClubLogo(file, clubId) {
+  if (!file || !file.buffer) return null;
+  const ext = extFromMime(file.mimetype, file.originalname);
+  const key = `clubs/club_${clubId}${ext}`;
+  const useObjectStorage = isObjectStorageConfigured();
+  if (useObjectStorage) {
+    await uploadBuffer({ key, body: file.buffer, contentType: guessContentType(file.mimetype, ext) });
+    return key;
+  }
+  ensureUploadsDir('clubs');
+  const outPath = path.join(process.cwd(), 'uploads', key);
+  fs.writeFileSync(outPath, file.buffer);
+  return key;
 }
 
 async function getStatsForTargets(targetType, ids) {
@@ -82,6 +151,17 @@ async function getViewerLikedMap(userId, targetType, ids) {
   return new Map((rows || []).map((r) => [Number(r.target_id), true]));
 }
 
+async function userCanManageClub(userId, clubId) {
+  if (!userId || !clubId) return false;
+  const rows = await query(
+    'SELECT role FROM club_members WHERE club_id = ? AND user_id = ? LIMIT 1',
+    [clubId, userId]
+  );
+  const r = rows && rows[0];
+  if (!r) return false;
+  return String(r.role) === 'admin';
+}
+
 // =========================
 // Tabs meta (optional)
 // GET /api/clubs/tabs
@@ -98,6 +178,277 @@ router.get('/tabs', async (req, res) => {
   });
 });
 
+// =========================
+// User search by email (site admin)
+// GET /api/clubs/users/search?email=
+// =========================
+router.get('/users/search', authenticateToken, async (req, res, next) => {
+  try {
+    if (!isSiteAdmin(req)) return res.status(403).json({ status: -1, message: '无权限' });
+    const email = cleanText(req.query.email, 120);
+    if (!email) return res.json({ status: 0, data: { list: [] } });
+    const rows = await query(
+      'SELECT id, email, username, nickname, avatar, role FROM users WHERE email LIKE ? ORDER BY id DESC LIMIT 20',
+      [`%${email}%`]
+    );
+    res.json({
+      status: 0,
+      data: {
+        list: (rows || []).map((u) => ({
+          id: u.id,
+          email: u.email,
+          username: u.username,
+          nickname: u.nickname,
+          avatar: u.avatar ? assetUrl(u.avatar) : null,
+          role: u.role,
+        })),
+      },
+    });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// =========================
+// User search by email (club admin)
+// GET /api/clubs/:id/users/search?email=
+// =========================
+router.get('/:id/users/search', authenticateToken, async (req, res, next) => {
+  try {
+    const clubId = toInt(req.params.id, 0);
+    if (!clubId) return res.status(400).json({ status: -1, message: '参数错误' });
+    const userId = Number(req.user?.id);
+    const canManage = isSiteAdmin(req) || (await userCanManageClub(userId, clubId));
+    if (!canManage) return res.status(403).json({ status: -1, message: '无权限' });
+
+    const email = cleanText(req.query.email, 120);
+    if (!email) return res.json({ status: 0, data: { list: [] } });
+    const rows = await query(
+      'SELECT id, email, username, nickname, avatar, role FROM users WHERE email LIKE ? ORDER BY id DESC LIMIT 20',
+      [`%${email}%`]
+    );
+    res.json({
+      status: 0,
+      data: {
+        list: (rows || []).map((u) => ({
+          id: u.id,
+          email: u.email,
+          username: u.username,
+          nickname: u.nickname,
+          avatar: u.avatar ? assetUrl(u.avatar) : null,
+          role: u.role,
+        })),
+      },
+    });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// =========================
+// Create club (site admin)
+// POST /api/clubs  (multipart/form-data)
+// fields: name, category, description, ig, xhs, signupLink, contactText, adminEmail(optional)
+// file: logo
+// =========================
+router.post('/', authenticateToken, (req, res, next) => {
+  clubLogoUpload(req, res, (err) => {
+    if (err) return res.status(400).json({ status: -1, message: err.message || '上传失败' });
+    next();
+  });
+}, async (req, res, next) => {
+  try {
+    if (!isSiteAdmin(req)) return res.status(403).json({ status: -1, message: '无权限' });
+    const name = cleanText(req.body?.name, 120);
+    const category = normalizeClubCategory(req.body?.category);
+    const description = cleanText(req.body?.description, 2000);
+    const contactText = cleanText(req.body?.contactText, 255);
+    const signupLink = cleanText(req.body?.signupLink, 500);
+    const ig = cleanText(req.body?.ig, 80);
+    const xhs = cleanText(req.body?.xhs, 120);
+    const adminEmail = cleanText(req.body?.adminEmail, 120);
+
+    if (!name) return res.status(400).json({ status: -1, message: '社团名字不能为空' });
+    if (!category) return res.status(400).json({ status: -1, message: '社团分类不能为空' });
+
+    const r = await query(
+      'INSERT INTO clubs (name, category, avatar, description, contact_text, signup_link, ig, xhs) VALUES (?, ?, NULL, ?, ?, ?, ?, ?)',
+      [name, category, description || null, contactText || null, signupLink || null, ig || null, xhs || null]
+    );
+    const clubId = r.insertId;
+
+    // upload logo if provided
+    if (req.file) {
+      const key = await saveClubLogo(req.file, clubId);
+      if (key) await query('UPDATE clubs SET avatar = ? WHERE id = ?', [key, clubId]);
+    }
+
+    // assign admin: provided email (if exists) + creator (req.user.id)
+    const adminIds = new Set([Number(req.user.id)]);
+    if (adminEmail) {
+      const urows = await query('SELECT id FROM users WHERE email = ? LIMIT 1', [adminEmail]);
+      if (urows && urows[0]) adminIds.add(Number(urows[0].id));
+    }
+    for (const uid of adminIds) {
+      await query(
+        'INSERT INTO club_members (club_id, user_id, role) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE role = VALUES(role)',
+        [clubId, uid, 'admin']
+      );
+    }
+
+    res.status(201).json({ status: 0, data: { id: clubId } });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// =========================
+// Update club (club admin or site admin)
+// PATCH /api/clubs/:id (multipart/form-data)
+// =========================
+router.patch('/:id', authenticateToken, (req, res, next) => {
+  clubLogoUpload(req, res, (err) => {
+    if (err) return res.status(400).json({ status: -1, message: err.message || '上传失败' });
+    next();
+  });
+}, async (req, res, next) => {
+  try {
+    const clubId = toInt(req.params.id, 0);
+    const userId = Number(req.user?.id);
+    if (!clubId) return res.status(400).json({ status: -1, message: '参数错误' });
+    const canManage = isSiteAdmin(req) || (await userCanManageClub(userId, clubId));
+    if (!canManage) return res.status(403).json({ status: -1, message: '无权限' });
+
+    const name = cleanText(req.body?.name, 120);
+    const category = normalizeClubCategory(req.body?.category);
+    const description = cleanText(req.body?.description, 2000);
+    const contactText = cleanText(req.body?.contactText, 255);
+    const signupLink = cleanText(req.body?.signupLink, 500);
+    const ig = cleanText(req.body?.ig, 80);
+    const xhs = cleanText(req.body?.xhs, 120);
+
+    const fields = [];
+    const params = [];
+    if (name) { fields.push('name = ?'); params.push(name); }
+    if (category) { fields.push('category = ?'); params.push(category); }
+    if (description != null) { fields.push('description = ?'); params.push(description || null); }
+    if (contactText != null) { fields.push('contact_text = ?'); params.push(contactText || null); }
+    if (signupLink != null) { fields.push('signup_link = ?'); params.push(signupLink || null); }
+    if (ig != null) { fields.push('ig = ?'); params.push(ig || null); }
+    if (xhs != null) { fields.push('xhs = ?'); params.push(xhs || null); }
+
+    if (req.file) {
+      const key = await saveClubLogo(req.file, clubId);
+      if (key) {
+        fields.push('avatar = ?');
+        params.push(key);
+      }
+    }
+
+    if (!fields.length) return res.json({ status: 0, message: 'ok' });
+    params.push(clubId);
+    await query(`UPDATE clubs SET ${fields.join(', ')} WHERE id = ?`, params);
+    res.json({ status: 0, message: 'ok' });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// =========================
+// Add member/admin by email (club admin or site admin)
+// POST /api/clubs/:id/members { email, role }
+// =========================
+router.post('/:id/members', authenticateToken, async (req, res, next) => {
+  try {
+    const clubId = toInt(req.params.id, 0);
+    const userId = Number(req.user?.id);
+    if (!clubId) return res.status(400).json({ status: -1, message: '参数错误' });
+    const canManage = isSiteAdmin(req) || (await userCanManageClub(userId, clubId));
+    if (!canManage) return res.status(403).json({ status: -1, message: '无权限' });
+
+    const email = cleanText(req.body?.email, 120);
+    const role = String(req.body?.role || 'member').toLowerCase() === 'admin' ? 'admin' : 'member';
+    if (!email) return res.status(400).json({ status: -1, message: '邮箱不能为空' });
+
+    const urows = await query('SELECT id FROM users WHERE email = ? LIMIT 1', [email]);
+    if (!urows || !urows[0]) return res.status(404).json({ status: -1, message: '未找到该用户' });
+    const targetUserId = Number(urows[0].id);
+
+    await query(
+      'INSERT INTO club_members (club_id, user_id, role) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE role = VALUES(role)',
+      [clubId, targetUserId, role]
+    );
+
+    res.json({ status: 0, message: '已添加' });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// =========================
+// Create activity (club admin or site admin)
+// POST /api/clubs/:id/activities
+// =========================
+router.post('/:id/activities', authenticateToken, async (req, res, next) => {
+  try {
+    const clubId = toInt(req.params.id, 0);
+    const userId = Number(req.user?.id);
+    if (!clubId) return res.status(400).json({ status: -1, message: '参数错误' });
+    const canManage = isSiteAdmin(req) || (await userCanManageClub(userId, clubId));
+    if (!canManage) return res.status(403).json({ status: -1, message: '无权限' });
+
+    const title = cleanText(req.body?.title, 160);
+    const summary = cleanText(req.body?.summary, 255);
+    const location = cleanText(req.body?.location, 160);
+    const signupLink = cleanText(req.body?.signupLink, 500);
+    const startTime = req.body?.time ? new Date(String(req.body.time)) : null;
+    const endTime = req.body?.endTime ? new Date(String(req.body.endTime)) : null;
+    const status = normalizeActivityStatus(req.body?.status);
+
+    if (!title) return res.status(400).json({ status: -1, message: '标题不能为空' });
+    const st = startTime && !Number.isNaN(startTime.getTime()) ? startTime : null;
+    const et = endTime && !Number.isNaN(endTime.getTime()) ? endTime : null;
+
+    const r = await query(
+      `
+      INSERT INTO club_activities
+        (club_id, title, summary, cover, start_time, end_time, location, signup_link, status)
+      VALUES
+        (?, ?, ?, NULL, ?, ?, ?, ?, ?)
+      `,
+      [clubId, title, summary || null, st, et, location || null, signupLink || null, status || null]
+    );
+    res.status(201).json({ status: 0, data: { id: r.insertId } });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// =========================
+// Update activity status (club admin or site admin)
+// PATCH /api/clubs/activities/:id/status { status }
+// =========================
+router.patch('/activities/:id/status', authenticateToken, async (req, res, next) => {
+  try {
+    const activityId = toInt(req.params.id, 0);
+    const status = normalizeActivityStatus(req.body?.status);
+    if (!activityId || !status) return res.status(400).json({ status: -1, message: '参数错误' });
+
+    const rows = await query('SELECT id, club_id FROM club_activities WHERE id = ? LIMIT 1', [activityId]);
+    const a = rows && rows[0];
+    if (!a) return res.status(404).json({ status: -1, message: '活动不存在' });
+
+    const clubId = Number(a.club_id);
+    const userId = Number(req.user?.id);
+    const canManage = isSiteAdmin(req) || (await userCanManageClub(userId, clubId));
+    if (!canManage) return res.status(403).json({ status: -1, message: '无权限' });
+
+    await query('UPDATE club_activities SET status = ? WHERE id = ?', [status, activityId]);
+    res.json({ status: 0, message: 'ok' });
+  } catch (e) {
+    next(e);
+  }
+});
 // =========================
 // Track view
 // POST /api/clubs/views { targetType: 'activity'|'post', targetId }
@@ -168,6 +519,43 @@ router.post('/:id/follow', authenticateToken, async (req, res, next) => {
     }
     await query('INSERT INTO club_follows (user_id, club_id) VALUES (?, ?)', [userId, clubId]);
     return res.json({ status: 0, data: { following: true } });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// =========================
+// My clubs (memberships)
+// GET /api/clubs/me/clubs
+// =========================
+router.get('/me/clubs', authenticateToken, async (req, res, next) => {
+  try {
+    const userId = Number(req.user?.id);
+    const rows = await query(
+      `
+      SELECT c.*,
+        (SELECT COUNT(*) FROM club_follows f2 WHERE f2.club_id = c.id) AS followers
+      FROM club_members m
+      JOIN clubs c ON c.id = m.club_id
+      WHERE m.user_id = ?
+      ORDER BY (m.role='admin') DESC, m.created_at DESC, c.id DESC
+      LIMIT 200;
+      `,
+      [userId]
+    );
+
+    res.json({
+      status: 0,
+      data: {
+        list: (rows || []).map((r) => ({
+          id: r.id,
+          name: r.name,
+          avatar: r.avatar ? assetUrl(r.avatar) : null,
+          description: r.description || '',
+          followers: Number(r.followers || 0),
+        })),
+      },
+    });
   } catch (e) {
     next(e);
   }
@@ -295,7 +683,7 @@ router.get('/activities', async (req, res, next) => {
           location: r.location,
           clubId: r.club_id,
           clubName: r.club_name,
-          status: computeActivityStatus(r.start_time, r.end_time),
+          status: computeActivityStatus2(r),
           signupLink: r.signup_link,
           stats: stats.get(Number(r.id)) || { likes: 0, views: 0 },
           viewer: { liked: !!liked.get(Number(r.id)) },
@@ -464,7 +852,7 @@ router.get('/activity/:id', async (req, res, next) => {
         location: a.location,
         clubId: a.club_id,
         clubName: a.club_name,
-        status: computeActivityStatus(a.start_time, a.end_time),
+        status: computeActivityStatus2(a),
         signupLink: a.signup_link,
         stats: stats.get(id) || { likes: 0, views: 0 },
         viewer: { liked: !!liked.get(id) },
@@ -571,6 +959,7 @@ router.get('/:id', async (req, res, next) => {
       ? await query('SELECT 1 AS ok FROM club_follows WHERE user_id = ? AND club_id = ? LIMIT 1', [viewerId, id])
       : [];
     const following = !!(followingRows && followingRows[0]);
+    const canManage = viewerId ? (await userCanManageClub(viewerId, id)) : false;
 
     res.json({
       status: 0,
@@ -579,15 +968,39 @@ router.get('/:id', async (req, res, next) => {
         basicInfo: {
           id: c.id,
           name: c.name,
-          avatar: c.avatar,
+          avatar: c.avatar ? assetUrl(c.avatar) : null,
+          category: c.category || null,
           description: c.description || '',
           followers,
-          viewer: { following },
+          viewer: { following, canManage },
         },
         joinInfo: {
           contactText: c.contact_text || '',
           signupLink: c.signup_link || '',
+          ig: c.ig || '',
+          xhs: c.xhs || '',
         },
+        members: await (async () => {
+          const mrows = await query(
+            `
+            SELECT m.user_id, m.role, u.email, u.username, u.nickname, u.avatar
+            FROM club_members m
+            JOIN users u ON u.id = m.user_id
+            WHERE m.club_id = ?
+            ORDER BY (m.role='admin') DESC, m.created_at DESC
+            LIMIT 200;
+            `,
+            [id]
+          );
+          return (mrows || []).map((m) => ({
+            id: m.user_id,
+            role: m.role,
+            email: m.email,
+            username: m.username,
+            nickname: m.nickname,
+            avatar: m.avatar ? assetUrl(m.avatar) : null,
+          }));
+        })(),
         activities: (activities || []).map((a) => ({
           id: a.id,
           title: a.title,
@@ -596,7 +1009,7 @@ router.get('/:id', async (req, res, next) => {
           endTime: a.end_time,
           location: a.location,
           clubId: a.club_id,
-          status: computeActivityStatus(a.start_time, a.end_time),
+          status: computeActivityStatus2(a),
           signupLink: a.signup_link,
           stats: actStats.get(Number(a.id)) || { likes: 0, views: 0 },
         })),
