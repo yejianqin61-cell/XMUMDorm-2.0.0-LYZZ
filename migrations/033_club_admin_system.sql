@@ -46,3 +46,11 @@ SET @col_exists := (
 SET @sql := IF(@col_exists = 0, 'ALTER TABLE club_activities ADD COLUMN status VARCHAR(12) NULL COMMENT ''upcoming/ongoing/ended (optional override)'' AFTER signup_link', 'SELECT 1');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
+-- activities: tag/category (for filtering)
+SET @col_exists := (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'club_activities' AND COLUMN_NAME = 'tag'
+);
+SET @sql := IF(@col_exists = 0, 'ALTER TABLE club_activities ADD COLUMN tag VARCHAR(20) NULL AFTER title', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+

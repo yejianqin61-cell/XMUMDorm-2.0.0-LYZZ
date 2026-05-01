@@ -33,6 +33,7 @@ function ClubProfile() {
   const [userQuery, setUserQuery] = useState('');
 
   const [actTitle, setActTitle] = useState('');
+  const [actTag, setActTag] = useState('music');
   const [actTime, setActTime] = useState('');
   const [actSummary, setActSummary] = useState('');
   const [actLocation, setActLocation] = useState('');
@@ -48,6 +49,7 @@ function ClubProfile() {
   const join = data?.joinInfo;
   const following = !!basic?.viewer?.following;
   const canManage = !!basic?.viewer?.canManage || user?.role === 'admin';
+  const isMember = !!basic?.viewer?.isMember || !!canManage;
 
   const followMut = useMutation({
     mutationFn: async () => await toggleClubFollow(clubId),
@@ -102,7 +104,7 @@ function ClubProfile() {
   }
 
   const actMut = useMutation({
-    mutationFn: async () => await createClubActivity(clubId, { title: actTitle, time: actTime, summary: actSummary, location: actLocation }),
+    mutationFn: async () => await createClubActivity(clubId, { title: actTitle, tag: actTag, time: actTime, summary: actSummary, location: actLocation }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: QK.clubProfile(clubId) });
       setActTitle(''); setActTime(''); setActSummary(''); setActLocation('');
@@ -168,6 +170,26 @@ function ClubProfile() {
             </a>
           ) : null}
         </div>
+
+        {isMember ? (
+          <div className="club-section">
+            <div className="club-section-h">{isZh ? '成员' : 'Members'}</div>
+            {members.length === 0 ? <div className="club-mini-empty">{isZh ? '暂无成员' : 'No members'}</div> : null}
+            <div className="club-mini-list">
+              {members.map((m) => (
+                <div key={m.id} className="club-mini-card">
+                  <div className="club-card-row">
+                    {m.avatar ? <img src={m.avatar} alt="" className="club-avatar" /> : <div className="club-avatar club-avatar--ph" />}
+                    <div className="club-card-main">
+                      <div className="club-card-name">{m.nickname || m.username || (isZh ? '成员' : 'Member')}</div>
+                      <div className="club-card-desc">{[m.email, m.role].filter(Boolean).join(' · ')}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
         {canManage ? (
           <div className="club-admin-panel">
@@ -285,6 +307,16 @@ function ClubProfile() {
             <div className="club-admin-subh">{isZh ? '发布活动' : 'Post activity'}</div>
             <div className="club-admin-form">
               <label className="club-field">
+                <div className="club-label">{isZh ? '标签' : 'Tag'}</div>
+                <select className="club-input" value={actTag} onChange={(e) => setActTag(e.target.value)}>
+                  <option value="music">{isZh ? '音乐' : 'Music'}</option>
+                  <option value="tech">{isZh ? '科技' : 'Tech'}</option>
+                  <option value="culture">{isZh ? '文化' : 'Culture'}</option>
+                  <option value="sport">{isZh ? '运动' : 'Sport'}</option>
+                  <option value="art">{isZh ? '艺术' : 'Art'}</option>
+                </select>
+              </label>
+              <label className="club-field">
                 <div className="club-label">{isZh ? '标题' : 'Title'}</div>
                 <input className="club-input" value={actTitle} onChange={(e) => setActTitle(e.target.value)} />
               </label>
@@ -315,6 +347,7 @@ function ClubProfile() {
               </div>
               {canManage ? (
                 <div className="club-admin-activity-row">
+                  {a.tag ? <span className="club-chip">{a.tag}</span> : null}
                   <span className="club-chip">{a.status}</span>
                   <button
                     type="button"

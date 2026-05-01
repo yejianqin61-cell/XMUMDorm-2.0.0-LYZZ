@@ -162,6 +162,15 @@ async function userCanManageClub(userId, clubId) {
   return String(r.role) === 'admin';
 }
 
+async function userIsClubMember(userId, clubId) {
+  if (!userId || !clubId) return false;
+  const rows = await query(
+    'SELECT 1 AS ok FROM club_members WHERE club_id = ? AND user_id = ? LIMIT 1',
+    [clubId, userId]
+  );
+  return !!(rows && rows[0]);
+}
+
 // =========================
 // Tabs meta (optional)
 // GET /api/clubs/tabs
@@ -401,6 +410,7 @@ router.post('/:id/activities', authenticateToken, async (req, res, next) => {
     const summary = cleanText(req.body?.summary, 255);
     const location = cleanText(req.body?.location, 160);
     const signupLink = cleanText(req.body?.signupLink, 500);
+    const tag = normalizeClubCategory(req.body?.tag);
     const startTime = req.body?.time ? new Date(String(req.body.time)) : null;
     const endTime = req.body?.endTime ? new Date(String(req.body.endTime)) : null;
     const status = normalizeActivityStatus(req.body?.status);
@@ -412,11 +422,11 @@ router.post('/:id/activities', authenticateToken, async (req, res, next) => {
     const r = await query(
       `
       INSERT INTO club_activities
-        (club_id, title, summary, cover, start_time, end_time, location, signup_link, status)
+        (club_id, title, tag, summary, cover, start_time, end_time, location, signup_link, status)
       VALUES
-        (?, ?, ?, NULL, ?, ?, ?, ?, ?)
+        (?, ?, ?, ?, NULL, ?, ?, ?, ?, ?)
       `,
-      [clubId, title, summary || null, st, et, location || null, signupLink || null, status || null]
+      [clubId, title, tag || null, summary || null, st, et, location || null, signupLink || null, status || null]
     );
     res.status(201).json({ status: 0, data: { id: r.insertId } });
   } catch (e) {
@@ -576,7 +586,7 @@ router.get('/feed', async (req, res, next) => {
     // Simple strategy: take latest activities + latest posts then merge by created_at.
     const actRows = await query(
       `
-      SELECT a.id, a.title, a.summary, a.cover, a.created_at, a.club_id, c.name AS club_name
+      SELECT a.id, a.title, a.summary, a.cover, a.created_at, a.club_id, a.tag, c.name AS club_name, c.category AS club_category
       FROM club_activities a
       JOIN clubs c ON c.id = a.club_id
       ORDER BY a.created_at DESC
@@ -585,7 +595,7 @@ router.get('/feed', async (req, res, next) => {
     );
     const postRows = await query(
       `
-      SELECT p.id, p.title, p.content, p.images, p.created_at, p.club_id, c.name AS club_name
+      SELECT p.id, p.title, p.content, p.images, p.created_at, p.club_id, c.name AS club_name, c.category AS club_category
       FROM club_posts p
       JOIN clubs c ON c.id = p.club_id
       ORDER BY p.created_at DESC
@@ -609,6 +619,8 @@ router.get('/feed', async (req, res, next) => {
         summary: r.summary || '',
         clubId: r.club_id,
         clubName: r.club_name,
+        clubCategory: r.club_category || null,
+        tag: r.tag || null,
         createdAt: r.created_at,
         stats: actStats.get(Number(r.id)) || { likes: 0, views: 0 },
         viewer: { liked: !!actLiked.get(Number(r.id)) },
@@ -628,6 +640,7 @@ router.get('/feed', async (req, res, next) => {
         summary: cleanText(r.content, 90),
         clubId: r.club_id,
         clubName: r.club_name,
+        clubCategory: r.club_category || null,
         createdAt: r.created_at,
         stats: postStats.get(Number(r.id)) || { likes: 0, views: 0 },
         viewer: { liked: !!postLiked.get(Number(r.id)) },
@@ -677,6 +690,7 @@ router.get('/activities', async (req, res, next) => {
         list: (rows || []).map((r) => ({
           id: r.id,
           title: r.title,
+          tag: r.tag || null,
           cover: r.cover,
           time: r.start_time,
           endTime: r.end_time,
@@ -845,6 +859,7 @@ router.get('/activity/:id', async (req, res, next) => {
       data: {
         id: a.id,
         title: a.title,
+        tag: a.tag || null,
         summary: a.summary || '',
         cover: a.cover,
         time: a.start_time,
@@ -960,6 +975,7 @@ router.get('/:id', async (req, res, next) => {
       : [];
     const following = !!(followingRows && followingRows[0]);
     const canManage = viewerId ? (await userCanManageClub(viewerId, id)) : false;
+    const isMember = viewerId ? (await userIsClubMember(viewerId, id)) : false;
 
     res.json({
       status: 0,
@@ -972,7 +988,7 @@ router.get('/:id', async (req, res, next) => {
           category: c.category || null,
           description: c.description || '',
           followers,
-          viewer: { following, canManage },
+          viewer: { following, canManage, isMember },
         },
         joinInfo: {
           contactText: c.contact_text || '',
@@ -1004,6 +1020,7 @@ router.get('/:id', async (req, res, next) => {
         activities: (activities || []).map((a) => ({
           id: a.id,
           title: a.title,
+          tag: a.tag || null,
           cover: a.cover,
           time: a.start_time,
           endTime: a.end_time,

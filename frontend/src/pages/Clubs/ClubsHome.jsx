@@ -10,17 +10,11 @@ import './Clubs.css';
 const FILTERS = [
   { key: 'all', zh: '全部', en: 'All' },
   { key: 'music', zh: '音乐', en: 'Music' },
-  { key: 'sports', zh: '运动', en: 'Sports' },
   { key: 'tech', zh: '科技', en: 'Tech' },
+  { key: 'culture', zh: '文化', en: 'Culture' },
+  { key: 'sport', zh: '运动', en: 'Sport' },
+  { key: 'art', zh: '艺术', en: 'Art' },
 ];
-
-function guessCategoryByClubName(name) {
-  const s = String(name || '').toLowerCase();
-  if (s.includes('吉他') || s.includes('guitar') || s.includes('music') || s.includes('band')) return 'music';
-  if (s.includes('羽毛球') || s.includes('badminton') || s.includes('sports') || s.includes('篮球')) return 'sports';
-  if (s.includes('摄影') || s.includes('photo') || s.includes('tech') || s.includes('robot')) return 'tech';
-  return 'all';
-}
 
 function formatDateTime(t) {
   if (!t) return '';
@@ -47,7 +41,7 @@ function ClubsHome() {
   const list = useMemo(() => {
     const raw = q.data?.list || [];
     if (filter === 'all') return raw;
-    return raw.filter((x) => guessCategoryByClubName(x.clubName) === filter);
+    return raw.filter((x) => (x.clubCategory || 'all') === filter);
   }, [q.data, filter]);
   const errorMsg = q.error?.message || (isZh ? '加载失败，请稍后再试' : 'Failed to load');
 
