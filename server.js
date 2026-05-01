@@ -40,6 +40,8 @@ const scheduleRoutes = require('./routes/schedule');
 const diaryRoutes = require('./routes/diary');
 const pushRoutes = require('./routes/push');
 const marketplaceRoutes = require('./routes/marketplace');
+const errandsRoutes = require('./routes/errands');
+const clubsRoutes = require('./routes/clubs');
 
 // 8. 创建一个 Express 应用实例
 const app = express();
@@ -157,6 +159,8 @@ app.use('/api/schedule', scheduleRoutes);
 app.use('/api/diary', diaryRoutes);
 app.use('/api/push', pushRoutes);
 app.use('/api/marketplace', marketplaceRoutes);
+app.use('/api/errands', errandsRoutes);
+app.use('/api/clubs', clubsRoutes);
 
 // ============================================
 // 错误处理中间件

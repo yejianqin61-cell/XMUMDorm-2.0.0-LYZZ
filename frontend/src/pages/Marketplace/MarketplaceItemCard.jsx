@@ -1,7 +1,7 @@
 import { memo, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Clock3, Sparkles } from 'lucide-react';
+import { Clock3 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import './Marketplace.css';
 
@@ -32,69 +32,66 @@ function MarketplaceItemCard({ item }) {
   const isZh = lang !== 'en';
   const it = item || {};
 
-  const locationText = it.dorm_area ? (isZh ? `宿舍 ${it.dorm_area}` : `Dorm ${it.dorm_area}`) : (isZh ? '宿舍未知' : 'Dorm N/A');
   const timeText = formatRelativeTime(it.created_at, isZh);
-  const viewsText = String(Number(it.views_count || 0));
-  const viewsLabel = isZh ? `${viewsText} 看过` : `${viewsText} views`;
+  const locationCode = it.dorm_area ? String(it.dorm_area) : '';
+  const delivery = deliveryLabel(it.delivery_method, isZh);
+  const viewsLabel = isZh ? `${Number(it.views_count || 0)}查看` : `${Number(it.views_count || 0)} views`;
 
   const tags = useMemo(() => {
     const raw = Array.isArray(it.tags) ? it.tags : [];
     const picked = raw.map((t) => String(t || '').trim()).filter(Boolean).slice(0, 2);
-    const del = deliveryLabel(it.delivery_method, isZh);
-    return [...picked, del].slice(0, 3);
+    return picked;
   }, [it.tags, it.delivery_method, isZh]);
 
-  const desc = String(it.description || '').trim();
-  const hasDesc = !!desc;
+  const title = String(it.title || '').trim();
+  const sellerName = String(it.sellerName || (isZh ? '匿名卖家' : 'Seller'));
+  const userBadge = isZh ? '校园用户' : 'Campus';
 
   return (
-    <Link to={`/about/second-hand/item/${it.id}`} className="mp-feed-card">
-      <div className="mp-feed-media mp-feed-media--flush">
-        <div className="mp-views-pill mp-views-pill--float" aria-label={isZh ? '浏览量' : 'Views'}>
-          <Sparkles size={14} aria-hidden />
-          <span>{viewsLabel}</span>
-        </div>
+    <Link to={`/about/second-hand/item/${it.id}`} className="mp-hcard">
+      <div className="mp-hcard-img">
         <motion.img
           layoutId={`mp-cover-${it.id}`}
           src={it.cover || ''}
-          alt={it.title || ''}
-          className="mp-feed-img"
+          alt={title}
           style={{ opacity: it.cover ? 1 : 0 }}
         />
-        {!it.cover ? <div className="mp-feed-img-fallback">{isZh ? '暂无图片' : 'No image'}</div> : null}
+        {!it.cover ? <div className="mp-hcard-img-fallback">{isZh ? '暂无图片' : 'No image'}</div> : null}
       </div>
 
-      <div className="mp-feed-body">
-        <div className="mp-seller-row">
-          <span className="mp-seller-avatar mp-seller-avatar--sm" aria-hidden="true">
-            <img src={it.sellerAvatar || '/default-avatar.svg'} alt="" />
-          </span>
-          <div className="mp-seller-row-text">
-            <span className="mp-seller-name mp-seller-name--sm">{it.sellerName || (isZh ? '匿名卖家' : 'Seller')}</span>
-            <span className="mp-seller-sub mp-seller-sub--sm">
-              <span className="mp-time">
-                <Clock3 size={13} aria-hidden />
-                {timeText}
-              </span>
-              <span className="mp-dot" aria-hidden="true">·</span>
-              <span>{locationText}</span>
-            </span>
+      <div className="mp-hcard-body">
+        <div className="mp-hcard-title-row">
+          <span className="mp-hcard-highlight">{delivery}</span>
+          <div className="mp-hcard-title" title={title}>
+            {title || (isZh ? '（无标题）' : '(Untitled)')}
           </div>
         </div>
 
-        <div className="mp-feed-title mp-feed-title--clean">{it.title || (isZh ? '（无标题）' : '(Untitled)')}</div>
-        <div className="mp-feed-price mp-feed-price--clean">{isZh ? `RM ${it.price}` : `$${it.price}`}</div>
+        <div className="mp-hcard-meta">
+          <span className="mp-hcard-time">
+            <Clock3 size={14} aria-hidden />
+            {timeText}
+          </span>
+          <span className="mp-dot" aria-hidden="true">·</span>
+          <span className="mp-hcard-badge">{userBadge}</span>
+        </div>
 
-        {hasDesc ? (
-          <div className="mp-feed-desc">
-            <span className="mp-feed-desc-text">{desc}</span>
-            <span className="mp-see-more">{isZh ? '查看更多' : 'See more'}</span>
-          </div>
-        ) : null}
-        <div className="mp-feed-tags" aria-label={isZh ? '标签' : 'Tags'}>
-          {tags.map((t) => (
-            <span key={t} className="mp-tag-pill">{t}</span>
-          ))}
+        <div className="mp-hcard-price-row">
+          <span className="mp-hcard-price">{isZh ? `RM ${it.price}` : `$${it.price}`}</span>
+          <span className="mp-hcard-views">{viewsLabel}</span>
+        </div>
+
+        <div className="mp-hcard-bottom">
+          <span className="mp-hcard-seller-avatar" aria-hidden="true">
+            <img src={it.sellerAvatar || '/default-avatar.svg'} alt="" />
+          </span>
+          <span className="mp-hcard-seller">{sellerName}</span>
+          {locationCode ? (
+            <>
+              <span className="mp-dot" aria-hidden="true">·</span>
+              <span className="mp-hcard-loc">{locationCode}</span>
+            </>
+          ) : null}
         </div>
       </div>
     </Link>

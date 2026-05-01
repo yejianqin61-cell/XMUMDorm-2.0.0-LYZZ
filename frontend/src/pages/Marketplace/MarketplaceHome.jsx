@@ -254,30 +254,17 @@ function MarketplaceHome() {
         </div>
       </div>
 
-      <div className="mp-feed">
+      <div className="mp-list">
         {showSkeletons
           ? Array.from({ length: 10 }).map((_, i) => (
-              <div key={`sk-${i}`} className="mp-feed-card mp-feed-skeleton" aria-hidden="true">
-                <div className="mp-feed-head">
-                  <div className="mp-skel-circle" />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div className="mp-skel-line mp-skel-line--title" />
-                    <div className="mp-skel-line mp-skel-line--meta" />
-                  </div>
-                  <div className="mp-skel-pill" />
-                </div>
-                <div className="mp-feed-media mp-skel-cover" />
-              <div className="mp-feed-body">
+              <div key={`sk-${i}`} className="mp-hcard mp-hcard--skeleton" aria-hidden="true">
+                <div className="mp-hcard-img mp-skel-cover" />
+                <div className="mp-hcard-body">
                   <div className="mp-skel-line mp-skel-line--title" />
-                  <div className="mp-skel-line" />
+                  <div className="mp-skel-line mp-skel-line--meta" />
+                  <div className="mp-skel-line mp-skel-line--price" />
+                  <div className="mp-skel-line mp-skel-line--meta" />
                 </div>
-              <div className="mp-feed-body" style={{ paddingTop: 0 }}>
-                <div className="mp-skel-line mp-skel-line--price" />
-                <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-                  <div className="mp-skel-pill" />
-                  <div className="mp-skel-pill" />
-                </div>
-              </div>
               </div>
             ))
           : list.map((it) => <MarketplaceItemCard key={it.id} item={it} />)}

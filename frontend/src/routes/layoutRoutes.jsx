@@ -19,6 +19,11 @@ import MarketplaceChat from '../pages/Marketplace/MarketplaceChat';
 import SquareTrending from '../pages/SquareTrending';
 import SquareFreshmanGuide from '../pages/SquareFreshmanGuide';
 import SquareErrands from '../pages/SquareErrands';
+import ClubProfile from '../pages/Clubs/ClubProfile';
+import ActivityDetail from '../pages/Clubs/ActivityDetail';
+import ClubPostDetail from '../pages/Clubs/ClubPostDetail';
+import ErrandDetail from '../pages/Errands/ErrandDetail';
+import PublishErrand from '../pages/Errands/PublishErrand';
 import HandbookArticleDetail from '../pages/Handbook/HandbookArticleDetail';
 import HandbookEditor from '../pages/Handbook/HandbookEditor';
 import HandbookMe from '../pages/Handbook/HandbookMe';
@@ -69,6 +74,9 @@ export const layoutRoutes = (
     <Route path="about/disclaimer" element={<Disclaimer />} />
     <Route path="about/contact" element={<ContactUs />} />
     <Route path="about/club" element={<SquareClub />} />
+    <Route path="about/club/:id" element={<ClubProfile />} />
+    <Route path="about/club/activity/:id" element={<ActivityDetail />} />
+    <Route path="about/club/post/:id" element={<ClubPostDetail />} />
     <Route path="about/second-hand" element={<SquareSecondHand />} />
     <Route path="about/second-hand/new" element={<MarketplacePublish />} />
     <Route path="about/second-hand/me/wants" element={<MarketplaceMyWants />} />
@@ -85,6 +93,8 @@ export const layoutRoutes = (
     <Route path="about/freshman-guide/course-review/:id/edit" element={<CourseReviewCreate />} />
     <Route path="about/freshman-guide/course-review/:id" element={<CourseReviewDetail />} />
     <Route path="about/errands" element={<SquareErrands />} />
+    <Route path="about/errands/new" element={<PublishErrand />} />
+    <Route path="about/errands/:id" element={<ErrandDetail />} />
     <Route path="myzone" element={<MyZone />} />
     <Route path="user/:id" element={<UserZone />} />
     <Route path="myzone/posts" element={<MyPosts />} />

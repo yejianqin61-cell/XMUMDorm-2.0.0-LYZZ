@@ -1,10 +1,7 @@
+import ClubsHome from './Clubs/ClubsHome';
+
 function SquareClub() {
-  return (
-    <div className="page-placeholder">
-      <p>Club</p>
-      <p className="page-hint">Coming soon</p>
-    </div>
-  );
+  return <ClubsHome />;
 }
 
 export default SquareClub;

@@ -50,4 +50,16 @@ export const QK = {
   marketplaceCategories: () => ['marketplace', 'categories'],
   marketplaceItems: (params) => ['marketplace', 'items', params || {}],
   marketplaceItemDetail: (id, tokenKey) => ['marketplace', 'item', id, tokenKey || '_guest'],
+
+  /** Errands（跑腿） */
+  errandsList: (params) => ['errands', 'list', params || {}],
+  errandDetail: (id) => ['errands', 'detail', id],
+
+  /** Clubs（社团广场） */
+  clubTabs: () => ['clubs', 'tabs'],
+  clubFeed: (params) => ['clubs', 'feed', params || {}],
+  clubActivities: (params) => ['clubs', 'activities', params || {}],
+  clubsList: (params) => ['clubs', 'list', params || {}],
+  clubPosts: (params) => ['clubs', 'posts', params || {}],
+  clubProfile: (id) => ['clubs', 'profile', id],
 };

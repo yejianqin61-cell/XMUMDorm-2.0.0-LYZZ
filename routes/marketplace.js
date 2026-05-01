@@ -425,6 +425,12 @@ router.post('/items', authenticateToken, (req, res, next) => {
     const cat = catRows && catRows[0];
     if (!cat) return res.status(400).json({ status: -1, message: '分类不存在' });
 
+    // 本地/切环境时常见：JWT token 里的用户 id 在当前库不存在 → 外键失败
+    const userRows = await query('SELECT id FROM users WHERE id = ? LIMIT 1', [req.user.id]);
+    if (!userRows || !userRows[0]) {
+      return res.status(401).json({ status: -1, message: '当前登录已失效（用户不存在），请退出后重新登录/注册' });
+    }
+
     const files = req.files || [];
     if (files.length > MAX_IMAGES_PER_ITEM) {
       return res.status(400).json({ status: -1, message: `图片最多 ${MAX_IMAGES_PER_ITEM} 张` });

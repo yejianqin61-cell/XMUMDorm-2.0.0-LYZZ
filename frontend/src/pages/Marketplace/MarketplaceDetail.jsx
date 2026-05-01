@@ -19,6 +19,7 @@ import {
 } from '../../api/marketplace';
 import { queryClient } from '../../query/queryClient';
 import { Toast } from '../../context/ToastContext';
+import ImagePreview from '../../components/ImagePreview';
 import './Marketplace.css';
 
 function statusLabel(s, isZh) {
@@ -40,6 +41,9 @@ function MarketplaceDetail() {
   const [ownerMenuOpen, setOwnerMenuOpen] = useState(false);
   const [chatText, setChatText] = useState('');
   const chatEndRef = useRef(null);
+  const [imagePreview, setImagePreview] = useState({ open: false, index: 0 });
+  const [carouselIndex, setCarouselIndex] = useState(0);
+  const [carouselDir, setCarouselDir] = useState(1);
 
   const tokenKey = token ? token.slice(0, 16) : '_guest';
 
@@ -51,6 +55,7 @@ function MarketplaceDetail() {
 
   const item = q.data;
   const images = useMemo(() => item?.images || [], [item]);
+  const imageUrls = useMemo(() => (images || []).map((x) => x.url).filter(Boolean), [images]);
   const isSeller = !!item?.viewer?.canEdit;
 
   const threadsQuery = useQuery({
@@ -249,22 +254,34 @@ function MarketplaceDetail() {
           </div>
         ) : null}
 
-        {images.length ? (
-          <div className="mp-detail-images">
-            {images.map((img, idx) => {
-              const isFirst = idx === 0;
-              if (isFirst) {
-                return (
-                  <motion.img
-                    key={img.url}
-                    layoutId={`mp-cover-${item.id}`}
-                    src={img.url}
-                    alt={item.title}
-                  />
-                );
-              }
-              return <img key={img.url} src={img.url} alt={item.title} />;
-            })}
+        {imageUrls.length ? (
+          <div className="mp-detail-media">
+            {imageUrls.length === 1 ? (
+              <button
+                type="button"
+                className="mp-detail-hero"
+                onClick={() => setImagePreview({ open: true, index: 0 })}
+                aria-label={isZh ? '预览图片' : 'Preview image'}
+              >
+                <motion.img
+                  layoutId={`mp-cover-${item.id}`}
+                  src={imageUrls[0]}
+                  alt={item.title}
+                />
+              </button>
+            ) : (
+              <StackedCardCarousel
+                urls={imageUrls}
+                index={carouselIndex}
+                dir={carouselDir}
+                onChangeIndex={(next, dir) => {
+                  setCarouselDir(dir);
+                  setCarouselIndex(next);
+                }}
+                onOpenPreview={(i) => setImagePreview({ open: true, index: i })}
+                sharedLayoutId={`mp-cover-${item.id}`}
+              />
+            )}
           </div>
         ) : null}
 
@@ -281,6 +298,14 @@ function MarketplaceDetail() {
         </div>
 
         <div className="mp-detail-desc">{item.description}</div>
+
+        {imagePreview.open && imageUrls.length > 0 ? (
+          <ImagePreview
+            urls={imageUrls}
+            initialIndex={imagePreview.index}
+            onClose={() => setImagePreview({ open: false, index: 0 })}
+          />
+        ) : null}
 
         {/* Private chat area */}
         <div className="mp-chat-card" aria-label={isZh ? '私密对话' : 'Private chat'}>
@@ -382,4 +407,108 @@ function MarketplaceDetail() {
 }
 
 export default MarketplaceDetail;
+
+function mod(n, m) {
+  return ((n % m) + m) % m;
+}
+
+function StackedCardCarousel({ urls, index, onChangeIndex, onOpenPreview, dir, sharedLayoutId }) {
+  const n = Array.isArray(urls) ? urls.length : 0;
+  if (!n) return null;
+
+  const stack = [
+    { scale: 1, x: 0, y: 0, opacity: 1, blur: 0, rotate: 0 },
+    { scale: 0.94, x: 15, y: -15, opacity: 0.6, blur: 4, rotate: -2 },
+    { scale: 0.88, x: 30, y: -30, opacity: 0.3, blur: 8, rotate: -4 },
+  ];
+
+  const count = Math.min(3, n);
+  const ids = Array.from({ length: count }, (_, i) => mod(index + i, n));
+
+  const go = (delta) => {
+    if (n <= 1) return;
+    const next = mod(index + delta, n);
+    onChangeIndex(next, delta > 0 ? 1 : -1);
+  };
+
+  const frontId = ids[0];
+
+  return (
+    <div className="mp-detail-carousel" aria-label="Image carousel">
+      <div className="mp-detail-carousel-stack">
+        {ids.slice(1).reverse().map((id, revIdx) => {
+          const pos = ids.length - (revIdx + 1);
+          const s = stack[pos];
+          return (
+            <motion.button
+              key={`stack-${id}`}
+              type="button"
+              className="mp-detail-carousel-card"
+              onClick={() => onOpenPreview(id)}
+              style={{ zIndex: 10 + (3 - pos) }}
+              animate={{
+                scale: s.scale,
+                x: s.x,
+                y: s.y,
+                opacity: s.opacity,
+                rotate: s.rotate,
+                filter: `blur(${s.blur}px)`,
+              }}
+              transition={{ type: 'spring', stiffness: 520, damping: 38 }}
+            >
+              <img src={urls[id]} alt="" className="mp-detail-carousel-img" draggable={false} />
+            </motion.button>
+          );
+        })}
+
+        <motion.button
+          key={`front-${frontId}`}
+          type="button"
+          className="mp-detail-carousel-card mp-detail-carousel-card--front"
+          onClick={() => onOpenPreview(frontId)}
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.12}
+          onDragEnd={(_, info) => {
+            const swipe = Math.abs(info.offset.x) > 60 || Math.abs(info.velocity.x) > 700;
+            if (!swipe) return;
+            if (info.offset.x < 0) go(1);
+            else go(-1);
+          }}
+          initial={{ scale: 1, x: 0, y: 0, opacity: 1, rotate: 0, filter: 'blur(0px)' }}
+          animate={{ scale: 1, x: 0, y: 0, opacity: 1, rotate: 0, filter: 'blur(0px)' }}
+          transition={{ type: 'spring', stiffness: 520, damping: 38 }}
+          style={{ zIndex: 30 }}
+        >
+          <motion.img
+            layoutId={sharedLayoutId || undefined}
+            src={urls[frontId]}
+            alt=""
+            className="mp-detail-carousel-img"
+            draggable={false}
+          />
+        </motion.button>
+
+        <button type="button" className="mp-detail-carousel-arrow mp-detail-carousel-arrow--left" onClick={() => go(-1)} aria-label="Previous">
+          ‹
+        </button>
+        <button type="button" className="mp-detail-carousel-arrow mp-detail-carousel-arrow--right" onClick={() => go(1)} aria-label="Next">
+          ›
+        </button>
+      </div>
+
+      <div className="mp-detail-carousel-dots" aria-label="Pagination">
+        {urls.map((_, i) => (
+          <button
+            key={`dot-${i}`}
+            type="button"
+            className={`mp-detail-carousel-dot ${i === index ? 'is-active' : ''}`}
+            onClick={() => onChangeIndex(i, i > index ? 1 : -1)}
+            aria-label={`Go to ${i + 1}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
 

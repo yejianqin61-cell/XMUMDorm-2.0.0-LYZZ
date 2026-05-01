@@ -10,8 +10,9 @@
 const mysql = require('mysql2/promise');
 
 // 从环境变量获取数据库配置
-// Railway 等平台可能提供单连接串：DATABASE_URL 或 MYSQL_URL（格式：mysql://user:pass@host:port/database）
-const connectionUrl = process.env.DATABASE_URL || process.env.MYSQL_URL;
+// Railway 等平台可能提供单连接串：DATABASE_URL / MYSQL_URL（或本项目里常用的 RAILWAY_MYSQL_URL）
+// 格式：mysql://user:pass@host:port/database
+const connectionUrl = process.env.DATABASE_URL || process.env.MYSQL_URL || process.env.RAILWAY_MYSQL_URL;
 const poolOptions = {
   waitForConnections: true,
   connectionLimit: 10,
