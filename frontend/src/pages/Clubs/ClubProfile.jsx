@@ -18,6 +18,25 @@ function ClubProfile() {
   const { token } = useAuth();
   const { user } = useAuth();
 
+  // NOTE: keep all hooks before any early return to avoid React hooks order issues.
+  const [editOpen, setEditOpen] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editCategory, setEditCategory] = useState('music');
+  const [editDesc, setEditDesc] = useState('');
+  const [editContact, setEditContact] = useState('');
+  const [editSignup, setEditSignup] = useState('');
+  const [editIg, setEditIg] = useState('');
+  const [editXhs, setEditXhs] = useState('');
+  const [editLogo, setEditLogo] = useState(null);
+  const [memberEmail, setMemberEmail] = useState('');
+  const [memberRole, setMemberRole] = useState('member');
+  const [userQuery, setUserQuery] = useState('');
+
+  const [actTitle, setActTitle] = useState('');
+  const [actTime, setActTime] = useState('');
+  const [actSummary, setActSummary] = useState('');
+  const [actLocation, setActLocation] = useState('');
+
   const q = useQuery({
     queryKey: QK.clubProfile(clubId),
     queryFn: async () => await getClubProfile(clubId),
@@ -44,19 +63,6 @@ function ClubProfile() {
 
   const following = !!basic?.viewer?.following;
   const canManage = !!basic?.viewer?.canManage || user?.role === 'admin';
-
-  const [editOpen, setEditOpen] = useState(false);
-  const [editName, setEditName] = useState(basic?.name || '');
-  const [editCategory, setEditCategory] = useState(basic?.category || 'music');
-  const [editDesc, setEditDesc] = useState(basic?.description || '');
-  const [editContact, setEditContact] = useState(join?.contactText || '');
-  const [editSignup, setEditSignup] = useState(join?.signupLink || '');
-  const [editIg, setEditIg] = useState(join?.ig || '');
-  const [editXhs, setEditXhs] = useState(join?.xhs || '');
-  const [editLogo, setEditLogo] = useState(null);
-  const [memberEmail, setMemberEmail] = useState('');
-  const [memberRole, setMemberRole] = useState('member');
-  const [userQuery, setUserQuery] = useState('');
 
   const saveClubMut = useMutation({
     mutationFn: async () => {
@@ -91,10 +97,17 @@ function ClubProfile() {
     },
   });
 
-  const [actTitle, setActTitle] = useState('');
-  const [actTime, setActTime] = useState('');
-  const [actSummary, setActSummary] = useState('');
-  const [actLocation, setActLocation] = useState('');
+  function primeEditFieldsFromProfile() {
+    setEditName(basic?.name || '');
+    setEditCategory(basic?.category || 'music');
+    setEditDesc(basic?.description || '');
+    setEditContact(join?.contactText || '');
+    setEditSignup(join?.signupLink || '');
+    setEditIg(join?.ig || '');
+    setEditXhs(join?.xhs || '');
+    setEditLogo(null);
+  }
+
   const actMut = useMutation({
     mutationFn: async () => await createClubActivity(clubId, { title: actTitle, time: actTime, summary: actSummary, location: actLocation }),
     onSuccess: async () => {
@@ -160,7 +173,17 @@ function ClubProfile() {
           <div className="club-admin-panel">
             <div className="club-admin-row">
               <div className="club-admin-h">{isZh ? '管理面板' : 'Admin'}</div>
-              <button type="button" className="club-admin-toggle pressable" onClick={() => setEditOpen((v) => !v)}>
+              <button
+                type="button"
+                className="club-admin-toggle pressable"
+                onClick={() => {
+                  setEditOpen((v) => {
+                    const next = !v;
+                    if (next) primeEditFieldsFromProfile();
+                    return next;
+                  });
+                }}
+              >
                 <Save size={16} aria-hidden /> {editOpen ? (isZh ? '收起' : 'Collapse') : (isZh ? '编辑社团' : 'Edit')}
               </button>
             </div>
