@@ -956,31 +956,38 @@ router.get('/feed', async (req, res, next) => {
     const offset = (page - 1) * pageSize;
 
     // Simple strategy: take latest activities + latest posts then merge by created_at.
-    const actRows = await query(
-      `
+    const [actRows, postRows] = await Promise.all([
+      query(
+        `
       SELECT a.*, c.name AS club_name, c.category AS club_category
       FROM club_activities a
       JOIN clubs c ON c.id = a.club_id
       ORDER BY a.created_at DESC
       LIMIT ${pageSize} OFFSET ${offset};
       `
-    );
-    const postRows = await query(
-      `
-      SELECT p.id, p.title, p.content, p.images, p.created_at, p.club_id, c.name AS club_name, c.category AS club_category
+      ),
+      query(
+        `
+      SELECT p.id, p.title,
+             SUBSTRING(COALESCE(p.content, ''), 1, 800) AS content,
+             p.images, p.created_at, p.club_id, c.name AS club_name, c.category AS club_category
       FROM club_posts p
       JOIN clubs c ON c.id = p.club_id
       ORDER BY p.created_at DESC
       LIMIT ${pageSize} OFFSET ${offset};
       `
-    );
+      ),
+    ]);
 
     const actIds = (actRows || []).map((r) => Number(r.id));
     const postIds = (postRows || []).map((r) => Number(r.id));
-    const actStats = await getStatsForTargets('activity', actIds);
-    const postStats = await getStatsForTargets('post', postIds);
-    const actLiked = await getViewerLikedMap(viewerId, 'activity', actIds);
-    const postLiked = await getViewerLikedMap(viewerId, 'post', postIds);
+    // 分类型 IN 可走 (target_type,target_id) / 主键；大 OR 在部分 MySQL 版本上计划较差，故四路并行
+    const [actStats, postStats, actLiked, postLiked] = await Promise.all([
+      getStatsForTargets('activity', actIds),
+      getStatsForTargets('post', postIds),
+      getViewerLikedMap(viewerId, 'activity', actIds),
+      getViewerLikedMap(viewerId, 'post', postIds),
+    ]);
 
     const items = [
       ...(actRows || []).map((r) => {

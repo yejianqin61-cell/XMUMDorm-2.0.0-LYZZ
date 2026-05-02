@@ -4,25 +4,14 @@
   padding: 12px 12px calc(var(--tabbar-height) + var(--safe-bottom) + 24px);
 }
 
-/* 活动详情：在 Layout 已限高的 .app-main-inner 内 flex 撑满（勿用整屏 100vh，避免比 .app-main 更高产生幽灵滚动） */
+/* 活动/帖子详情：子路由在 Layout 的 Outlet 下由 .app-main（overflow:auto）整体滚动，勿再限高+overflow:hidden 锁死 */
 .club-page.club-page--floating-comments {
-  --club-gap-above-tabbar: 12px;
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-  max-height: 100%;
+  display: block;
+  max-width: 860px;
+  margin: 0 auto;
   width: 100%;
   box-sizing: border-box;
-  overflow: hidden;
-  overscroll-behavior: none;
-  padding: 12px 12px var(--club-gap-above-tabbar);
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.club-page--floating-comments .club-activity-detail-main {
-  flex-shrink: 0;
+  padding: 12px 12px calc(var(--tabbar-height, 72px) + var(--safe-bottom, 0px) + 96px);
 }
 
 .club-battle-page {
@@ -1585,13 +1574,13 @@ a.club-mini-card--link {
   border-radius: 18px;
 }
 
-/* 活动详情：评论白盒 = 剩余纵向 flex；仅列表区域滚动 */
+/* 活动/帖子详情：评论白盒随内容增高，整页与主内容一起在 .app-main 内滚动 */
 .club-page--floating-comments .club-comments-container {
-  flex: 1;
+  flex: 0 0 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
   margin-top: 12px;
   margin-bottom: 0;
   padding: 14px 14px 0;
@@ -1606,9 +1595,9 @@ a.club-mini-card--link {
   flex-shrink: 0;
 }
 
-/* 0 条评论时：白盒底部多向下延伸 50px（仅空列表占位） */
+/* 0 条评论时：白盒底部略加高，避免 FAB 压住空态文案（整页由 .app-main 滚动，不宜过大） */
 .club-page--floating-comments .club-comments-container:has(.club-comments-empty--fill) {
-  padding-bottom: 175px;
+  padding-bottom: 120px;
 }
 
 .club-comments-list--flush {
@@ -1617,13 +1606,9 @@ a.club-mini-card--link {
 }
 
 .club-page--floating-comments .club-comments-list--stretch {
-  flex: 1;
+  flex: 0 0 auto;
   min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-  touch-action: pan-y;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -1634,22 +1619,22 @@ a.club-mini-card--link {
 }
 
 .club-page--floating-comments .club-comments-list--stretch .club-comments-empty--fill {
-  flex: 1;
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12% 20px 22%;
+  padding: 48px 20px 72px;
   text-align: center;
   min-height: 140px;
 }
 
 .club-page--floating-comments .club-comments-loading--fill {
-  flex: 1;
+  flex: 0 0 auto;
   min-height: 140px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12% 16px 20%;
+  padding: 48px 16px 64px;
 }
 
 .club-comments-title {
