@@ -4,6 +4,27 @@
   padding: 12px 12px calc(var(--tabbar-height) + var(--safe-bottom) + 24px);
 }
 
+/* 活动详情：在 Layout 已限高的 .app-main-inner 内 flex 撑满（勿用整屏 100vh，避免比 .app-main 更高产生幽灵滚动） */
+.club-page.club-page--floating-comments {
+  --club-gap-above-tabbar: 12px;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  overscroll-behavior: none;
+  padding: 12px 12px var(--club-gap-above-tabbar);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.club-page--floating-comments .club-activity-detail-main {
+  flex-shrink: 0;
+}
+
 .club-battle-page {
   max-width: none;
 }
@@ -1134,8 +1155,8 @@ a.club-admin-toolbtn--link {
 .club-admin-activity-row {
   margin-top: 8px;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
   gap: 10px;
 }
 
@@ -1354,6 +1375,19 @@ a.club-admin-toolbtn--link {
   border-radius: 16px;
   padding: 12px;
 }
+.club-mini-card--row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+a.club-mini-card-main {
+  flex: 1;
+  min-width: 0;
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
 a.club-mini-card--link {
   display: block;
   text-decoration: none;
@@ -1439,6 +1473,33 @@ a.club-mini-card--link {
   gap: 10px;
 }
 
+.club-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 800;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  background: rgba(254, 242, 242, 0.96);
+  color: rgba(185, 28, 28, 0.95);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.club-delete-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.club-delete-btn--compact {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.club-delete-btn--icon-only {
+  padding: 8px;
+  border-radius: 12px;
+}
+
 .club-like-btn {
   display: inline-flex;
   align-items: center;
@@ -1473,6 +1534,19 @@ a.club-mini-card--link {
   margin-top: 10px;
 }
 
+.club-img-grid-cell {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  text-align: left;
+}
+
 .club-img {
   width: 100%;
   aspect-ratio: 1/1;
@@ -1491,5 +1565,425 @@ a.club-mini-card--link {
   .club-img-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+/* ---------- 社团活动 / 日常帖 评论 ---------- */
+.club-comments {
+  margin-top: 16px;
+  padding: 14px 14px 8px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.04);
+}
+
+/* 浮动输入模式（无 fillVertical 时保留底部留白） */
+.club-comments--floating:not(.club-comments-container) {
+  margin-top: 16px;
+  margin-bottom: 0;
+  padding: 14px 14px calc(72px + env(safe-area-inset-bottom, 0px));
+  border-radius: 18px;
+}
+
+/* 活动详情：评论白盒 = 剩余纵向 flex；仅列表区域滚动 */
+.club-page--floating-comments .club-comments-container {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  margin-top: 12px;
+  margin-bottom: 0;
+  padding: 14px 14px 0;
+  border-radius: 18px 18px 24px 24px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.06);
+}
+
+.club-page--floating-comments .club-comments-container > .club-comments-title,
+.club-page--floating-comments .club-comments-container > .club-comments-error {
+  flex-shrink: 0;
+}
+
+/* 0 条评论时：白盒底部多向下延伸 50px（仅空列表占位） */
+.club-page--floating-comments .club-comments-container:has(.club-comments-empty--fill) {
+  padding-bottom: 175px;
+}
+
+.club-comments-list--flush {
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.club-page--floating-comments .club-comments-list--stretch {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.club-page--floating-comments .club-comments-list--stretch .club-comments-item {
+  flex: 0 0 auto;
+}
+
+.club-page--floating-comments .club-comments-list--stretch .club-comments-empty--fill {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12% 20px 22%;
+  text-align: center;
+  min-height: 140px;
+}
+
+.club-page--floating-comments .club-comments-loading--fill {
+  flex: 1;
+  min-height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12% 16px 20%;
+}
+
+.club-comments-title {
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 950;
+  line-height: 1.25;
+  color: #111827;
+  overflow-wrap: anywhere;
+}
+
+.club-comments-error {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: rgba(185, 28, 28, 0.95);
+}
+
+.club-comments-loading {
+  padding: 12px 0;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.club-comments-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.club-comments-empty {
+  list-style: none;
+  margin: 0;
+  padding: 10px 2px 0;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.club-comments-item {
+  list-style: none;
+}
+
+.club-comments-thread {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.club-comments-thread--reply {
+  margin-top: 10px;
+  padding-left: 8px;
+  border-left: 2px solid rgba(0, 0, 0, 0.06);
+}
+
+.club-comments-avatar {
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.club-comments-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.club-comments-avatar img.is-default {
+  padding: 6px;
+  object-fit: contain;
+  opacity: 0.85;
+}
+
+.club-comments-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.club-comments-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.club-comments-name {
+  font-size: 13px;
+  font-weight: 900;
+  color: rgba(17, 24, 39, 0.88);
+}
+
+.club-comments-reply,
+.club-comments-delete {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(59, 130, 246, 0.95);
+  cursor: pointer;
+}
+
+.club-comments-delete {
+  color: rgba(107, 114, 128, 0.95);
+}
+
+.club-comments-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: rgba(17, 24, 39, 0.88);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.club-comments-replies {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.club-comments-replying {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 10px 12px 6px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(59, 130, 246, 0.08);
+  font-size: 12px;
+  color: rgba(30, 64, 175, 0.95);
+}
+
+.club-comments-replying-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.club-comments-replying-cancel {
+  flex: 0 0 auto;
+  border: none;
+  background: none;
+  font-weight: 800;
+  cursor: pointer;
+  color: rgba(37, 99, 235, 0.95);
+}
+
+.club-comments-replying--sheet {
+  margin: 0 0 12px;
+}
+
+/* ---------- 活动详情：FAB + 底部抽屉评论 ---------- */
+.club-comment-fab {
+  position: fixed;
+  right: 20px;
+  /* 贴在 Tab 栏上沿之上；0 评论时由 --club-fab-empty-lift 再上移 25px（JS 写入 html） */
+  bottom: calc(10px + var(--tabbar-height, 72px) + var(--safe-bottom, 0px) + 12px + var(--club-fab-empty-lift, 0px));
+  z-index: 1200;
+  width: 56px;
+  height: 56px;
+  border: none;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  background: linear-gradient(135deg, #2563eb 0%, #06b6d4 55%, #3b82f6 100%);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+.club-comment-fab:active {
+  transform: scale(0.94);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+@keyframes club-fab-ring {
+  0% {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 0 rgba(37, 99, 235, 0.45);
+  }
+  70% {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 14px rgba(37, 99, 235, 0);
+  }
+  100% {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 0 rgba(37, 99, 235, 0);
+  }
+}
+
+.club-comment-fab.is-pulse {
+  animation: club-fab-ring 0.38s ease-out 1;
+}
+
+.club-comment-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1290;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  background: rgba(15, 23, 42, 0.38);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.club-comment-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1300;
+  max-width: 860px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding: 10px 14px 0;
+  border-radius: 20px 20px 0 0;
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: none;
+  box-shadow: 0 -12px 40px rgba(15, 23, 42, 0.12);
+  animation: club-sheet-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes club-sheet-in {
+  from {
+    transform: translateY(110%);
+    opacity: 0.85;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.club-comment-sheet-handle {
+  width: 40px;
+  height: 4px;
+  margin: 4px auto 12px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.club-comment-sheet-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.club-comment-sheet-textarea {
+  flex: 1;
+  min-width: 0;
+  min-height: 96px;
+  max-height: 40vh;
+  resize: vertical;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  font-size: 15px;
+  line-height: 1.45;
+  font-family: inherit;
+  outline: none;
+  background: #fff;
+  color: rgba(17, 24, 39, 0.92);
+}
+
+.club-comment-sheet-textarea:focus {
+  border-color: rgba(37, 99, 235, 0.55);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+}
+
+.club-comment-sheet-send {
+  flex: 0 0 auto;
+  align-self: stretch;
+  min-height: 44px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 900;
+  font-size: 15px;
+  cursor: pointer;
+  color: #fff;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+}
+
+.club-comment-sheet-send:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.club-comments-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 4px;
+  padding: 8px 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.club-comments-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  outline: none;
+}
+
+.club-comments-send {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: none;
+  background: rgba(17, 24, 39, 0.92);
+  color: #fff;
+  cursor: pointer;
+}
+
+.club-comments-send:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 

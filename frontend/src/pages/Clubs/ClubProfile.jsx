@@ -1,12 +1,21 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { ExternalLink, MapPin, ArrowLeft, UserPlus, PlusCircle, Save, UserRoundPlus, Pencil, MessageSquarePlus } from 'lucide-react';
+import { ExternalLink, MapPin, ArrowLeft, UserPlus, PlusCircle, Save, UserRoundPlus, Pencil, MessageSquarePlus, Trash2 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { Toast } from '../../context/ToastContext';
 import { QK } from '../../query/queryKeys';
-import { addClubMember, getClubProfile, searchUsersByEmailForClub, toggleClubFollow, updateClub, updateClubActivityStatus } from '../../api/clubs';
+import {
+  addClubMember,
+  deleteClubActivity,
+  deleteClubPost,
+  getClubProfile,
+  searchUsersByEmailForClub,
+  toggleClubFollow,
+  updateClub,
+  updateClubActivityStatus,
+} from '../../api/clubs';
 import { queryClient } from '../../query/queryClient';
 import { getApiErrorMessage } from '../../utils/apiError';
 import './Clubs.css';
@@ -156,6 +165,28 @@ function ClubProfile() {
       await queryClient.invalidateQueries({ queryKey: ['clubs', 'square', 'feed'] });
       await queryClient.invalidateQueries({ queryKey: ['clubs'] });
     },
+  });
+
+  const deleteActivityMut = useMutation({
+    mutationFn: (activityId) => deleteClubActivity(activityId),
+    onSuccess: async () => {
+      Toast.success(isZh ? '已删除' : 'Deleted');
+      await queryClient.invalidateQueries({ queryKey: QK.clubProfile(clubId) });
+      await queryClient.invalidateQueries({ queryKey: ['clubs', 'square', 'feed'] });
+      await queryClient.invalidateQueries({ queryKey: ['clubs'] });
+    },
+    onError: (err) => Toast.error(getApiErrorMessage(err)),
+  });
+
+  const deletePostMut = useMutation({
+    mutationFn: (postId) => deleteClubPost(postId),
+    onSuccess: async () => {
+      Toast.success(isZh ? '已删除' : 'Deleted');
+      await queryClient.invalidateQueries({ queryKey: QK.clubProfile(clubId) });
+      await queryClient.invalidateQueries({ queryKey: ['clubs', 'square', 'feed'] });
+      await queryClient.invalidateQueries({ queryKey: ['clubs'] });
+    },
+    onError: (err) => Toast.error(getApiErrorMessage(err)),
   });
 
   const activities = useMemo(() => data?.activities || [], [data]);
@@ -387,10 +418,12 @@ function ClubProfile() {
         <div className="club-mini-list">
           {activities.slice(0, 6).map((a) => (
             <div key={a.id} className="club-mini-card">
-              <div className="club-mini-title">{a.title}</div>
-              <div className="club-mini-sub">
-                {[a.time ? new Date(a.time).toLocaleString() : '', a.location].filter(Boolean).join(' · ')}
-              </div>
+              <Link to={`/about/club/activity/${a.id}`} className="club-mini-card-main pressable">
+                <div className="club-mini-title">{a.title}</div>
+                <div className="club-mini-sub">
+                  {[a.time ? new Date(a.time).toLocaleString() : '', a.location].filter(Boolean).join(' · ')}
+                </div>
+              </Link>
               {canManage ? (
                 <div className="club-admin-activity-row">
                   {a.tag ? <span className="club-chip">{a.tag}</span> : null}
@@ -409,6 +442,19 @@ function ClubProfile() {
                       ? (isZh ? '恢复进行中' : 'Resume')
                       : (isZh ? '标记结束' : 'Mark ended')}
                   </button>
+                  <button
+                    type="button"
+                    className="club-delete-btn club-delete-btn--compact pressable"
+                    disabled={deleteActivityMut.isPending}
+                    onClick={() => {
+                      if (window.confirm(isZh ? '确定删除该活动？删除后不可恢复。' : 'Delete this activity? This cannot be undone.')) {
+                        deleteActivityMut.mutate(a.id);
+                      }
+                    }}
+                  >
+                    <Trash2 size={14} aria-hidden />
+                    {isZh ? '删除' : 'Delete'}
+                  </button>
                 </div>
               ) : null}
               {a.signupLink ? (
@@ -426,10 +472,28 @@ function ClubProfile() {
         {posts.length === 0 ? <div className="club-mini-empty">{isZh ? '暂无内容' : 'No posts'}</div> : null}
         <div className="club-mini-list">
           {posts.slice(0, 6).map((p) => (
-            <Link key={p.id} to={`/about/club/post/${p.id}`} className="club-mini-card club-mini-card--link pressable">
-              <div className="club-mini-title">{p.content ? String(p.content).slice(0, 40) : (isZh ? '社团日常' : 'Club post')}</div>
-              <div className="club-mini-sub">{p.createdAt ? new Date(p.createdAt).toLocaleString() : ''}</div>
-            </Link>
+            <div key={p.id} className="club-mini-card club-mini-card--row">
+              <Link to={`/about/club/post/${p.id}`} className="club-mini-card-main pressable">
+                <div className="club-mini-title">{p.content ? String(p.content).slice(0, 40) : (isZh ? '社团日常' : 'Club post')}</div>
+                <div className="club-mini-sub">{p.createdAt ? new Date(p.createdAt).toLocaleString() : ''}</div>
+              </Link>
+              {canManage ? (
+                <button
+                  type="button"
+                  className="club-delete-btn club-delete-btn--icon-only pressable"
+                  title={isZh ? '删除' : 'Delete'}
+                  aria-label={isZh ? '删除该日常帖' : 'Delete post'}
+                  disabled={deletePostMut.isPending}
+                  onClick={() => {
+                    if (window.confirm(isZh ? '确定删除该日常帖？删除后不可恢复。' : 'Delete this post? This cannot be undone.')) {
+                      deletePostMut.mutate(p.id);
+                    }
+                  }}
+                >
+                  <Trash2 size={16} aria-hidden />
+                </button>
+              ) : null}
+            </div>
           ))}
         </div>
       </section>

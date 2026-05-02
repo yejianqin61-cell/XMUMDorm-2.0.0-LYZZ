@@ -108,6 +108,19 @@
   min-height: 100%;
 }
 
+/* 活动详情：子页自管高度与内部滚动，避免 .app-main 再出现一层纵向滚动（幽灵滚动） */
+.app-main-inner:has(> .club-page--floating-comments) {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-main:has(.club-page--floating-comments) {
+  overflow: hidden;
+}
+
 /* ---------- 公告弹窗 ---------- */
 .app-ann-modal-backdrop {
   position: fixed;

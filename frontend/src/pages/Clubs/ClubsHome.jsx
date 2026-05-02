@@ -5,7 +5,12 @@ import { Eye, Heart } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { getClubFeed } from '../../api/clubs';
+import { API_BASE_URL } from '../../api/config';
 import './Clubs.css';
+
+function prefixMediaUrl(url) {
+  return url && !url.startsWith('http') ? `${API_BASE_URL}${url}` : url;
+}
 
 const FILTERS = [
   { key: 'all', zh: '全部', en: 'All' },
@@ -130,7 +135,7 @@ function ClubsHome() {
           const href = x.type === 'activity' ? `/about/club/activity/${x.id}` : `/about/club/post/${x.id}`;
           const tagText = x.type === 'activity' ? (isZh ? '活动' : 'ACTIVITY') : (isZh ? '日常' : 'POST');
           const when = formatDateTime(x.createdAt);
-          const cover = x.cover;
+          const cover = x.cover ? prefixMediaUrl(x.cover) : null;
           return (
             <Link key={`${x.type}-${x.id}`} to={href} className="club-hcard pressable">
               <div className="club-hcard-img">

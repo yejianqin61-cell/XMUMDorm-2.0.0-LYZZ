@@ -38,6 +38,10 @@ function parseOptionalUser(req) {
   }
 }
 
+function viewerIsSiteAdmin(viewer) {
+  return !!(viewer && String(viewer.role || '') === 'admin');
+}
+
 function isSiteAdmin(req) {
   return req.user && req.user.role === 'admin';
 }
@@ -92,6 +96,25 @@ function ensureUploadsDir(relDir) {
   const dir = path.join(process.cwd(), 'uploads', relDir);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   return dir;
+}
+
+/**
+ * 解析 JSON 图片数组（MySQL JSON：mysql2 可能返回 string | Buffer | 已解析的 Array）
+ * @param {unknown} raw
+ * @param {number} maxLen
+ * @returns {string[]}
+ */
+function parseJsonImageArray(raw, maxLen) {
+  if (raw == null || raw === '') return [];
+  try {
+    let v = raw;
+    if (Buffer.isBuffer(raw)) v = JSON.parse(raw.toString('utf8'));
+    else if (typeof raw === 'string') v = JSON.parse(raw);
+    if (!Array.isArray(v)) return [];
+    return v.filter(Boolean).map(String).slice(0, maxLen);
+  } catch {
+    return [];
+  }
 }
 
 const clubLogoUpload = multer({
@@ -152,18 +175,7 @@ async function saveActivityImage(file, activityId, index) {
 }
 
 function activityImageKeysFromRow(row) {
-  let keys = [];
-  try {
-    const raw = row?.images;
-    if (raw == null || raw === '') {
-      keys = [];
-    } else {
-      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
-      keys = Array.isArray(parsed) ? parsed.filter(Boolean).map(String).slice(0, 4) : [];
-    }
-  } catch {
-    keys = [];
-  }
+  let keys = parseJsonImageArray(row?.images, 4);
   if (!keys.length && row?.cover) keys = [String(row.cover)];
   return keys;
 }
@@ -234,6 +246,222 @@ async function userIsClubMember(userId, clubId) {
     [clubId, userId]
   );
   return !!(rows && rows[0]);
+}
+
+/** 远程库尚未执行 037 迁移时避免整页 500 */
+function isMissingClubCommentsTable(err) {
+  return err && err.code === 'ER_NO_SUCH_TABLE' && String(err.sqlMessage || '').includes('club_comments');
+}
+
+/** 表存在但缺少 deleted_at（旧表结构 / 漏加列） */
+function isUnknownClubCommentsDeletedAtColumn(err) {
+  const msg = String(err?.sqlMessage || err?.message || '').toLowerCase();
+  if (!msg.includes('deleted_at')) return false;
+  return err?.code === 'ER_BAD_FIELD_ERROR' || Number(err?.errno) === 1054;
+}
+
+async function getClubCommentCount(targetType, targetId) {
+  try {
+    const rows = await query(
+      'SELECT COUNT(*) AS c FROM club_comments WHERE target_type = ? AND target_id = ? AND deleted_at IS NULL',
+      [targetType, targetId]
+    );
+    return rows && rows[0] ? Number(rows[0].c) : 0;
+  } catch (e) {
+    if (isMissingClubCommentsTable(e)) return 0;
+    if (isUnknownClubCommentsDeletedAtColumn(e)) {
+      const rows = await query(
+        'SELECT COUNT(*) AS c FROM club_comments WHERE target_type = ? AND target_id = ?',
+        [targetType, targetId]
+      );
+      return rows && rows[0] ? Number(rows[0].c) : 0;
+    }
+    throw e;
+  }
+}
+
+function mapClubCommentRows(rows) {
+  const all = rows || [];
+  const top = all.filter((r) => r.parent_id == null);
+  const replies = all.filter((r) => r.parent_id != null);
+  return top.map((t) => ({
+    id: t.id,
+    user_id: t.user_id,
+    parent_id: t.parent_id,
+    content: t.content,
+    created_at: t.created_at,
+    author: {
+      username: t.username,
+      nickname: t.nickname,
+      avatar: t.avatar ? assetUrl(t.avatar) : null,
+    },
+    replies: replies
+      .filter((r) => r.parent_id === t.id)
+      .map((r) => ({
+        id: r.id,
+        user_id: r.user_id,
+        parent_id: r.parent_id,
+        content: r.content,
+        created_at: r.created_at,
+        author: {
+          username: r.username,
+          nickname: r.nickname,
+          avatar: r.avatar ? assetUrl(r.avatar) : null,
+        },
+      })),
+  }));
+}
+
+async function fetchClubCommentsTree(targetType, targetId) {
+  const sqlWithDeleted = `SELECT c.id, c.user_id, c.parent_id, c.content, c.created_at,
+            u.username, u.nickname, u.avatar
+     FROM club_comments c
+     LEFT JOIN users u ON u.id = c.user_id
+     WHERE c.target_type = ? AND c.target_id = ? AND c.deleted_at IS NULL
+     ORDER BY c.created_at ASC`;
+  const sqlNoDeletedCol = `SELECT c.id, c.user_id, c.parent_id, c.content, c.created_at,
+            u.username, u.nickname, u.avatar
+     FROM club_comments c
+     LEFT JOIN users u ON u.id = c.user_id
+     WHERE c.target_type = ? AND c.target_id = ?
+     ORDER BY c.created_at ASC`;
+  try {
+    const rows = await query(sqlWithDeleted, [targetType, targetId]);
+    return mapClubCommentRows(rows);
+  } catch (e) {
+    if (isMissingClubCommentsTable(e)) return [];
+    if (isUnknownClubCommentsDeletedAtColumn(e)) {
+      const rows = await query(sqlNoDeletedCol, [targetType, targetId]);
+      return mapClubCommentRows(rows);
+    }
+    throw e;
+  }
+}
+
+async function insertClubComment(req, res, next, targetType, targetId) {
+  try {
+    const userId = Number(req.user?.id);
+    const { content, parent_id: parentId } = req.body || {};
+    const safeContent = cleanText(content, 500);
+    if (!targetId) return res.status(400).json({ status: -1, message: '参数错误' });
+    if (!safeContent) return res.status(400).json({ status: -1, message: '评论内容不能为空' });
+    const exists = await query(
+      targetType === 'activity'
+        ? 'SELECT id FROM club_activities WHERE id = ? LIMIT 1'
+        : 'SELECT id FROM club_posts WHERE id = ? LIMIT 1',
+      [targetId]
+    );
+    if (!exists || !exists[0]) {
+      return res.status(404).json({ status: -1, message: targetType === 'activity' ? '活动不存在' : '内容不存在' });
+    }
+
+    let parentIdNum = null;
+    if (parentId != null && parentId !== '') {
+      parentIdNum = parseInt(parentId, 10);
+      let parentRow;
+      try {
+        parentRow = await query(
+          'SELECT id, parent_id FROM club_comments WHERE id = ? AND target_type = ? AND target_id = ? AND deleted_at IS NULL',
+          [parentIdNum, targetType, targetId]
+        );
+      } catch (e) {
+        if (isUnknownClubCommentsDeletedAtColumn(e)) {
+          parentRow = await query(
+            'SELECT id, parent_id FROM club_comments WHERE id = ? AND target_type = ? AND target_id = ?',
+            [parentIdNum, targetType, targetId]
+          );
+        } else {
+          throw e;
+        }
+      }
+      if (!parentRow || !parentRow[0]) {
+        return res.status(400).json({ status: -1, message: '回复的评论不存在' });
+      }
+      if (parentRow[0].parent_id != null) {
+        return res.status(400).json({ status: -1, message: '仅支持二级评论，不能回复回复' });
+      }
+    }
+
+    const result = await query(
+      'INSERT INTO club_comments (target_type, target_id, user_id, parent_id, content) VALUES (?, ?, ?, ?, ?)',
+      [targetType, targetId, userId, parentIdNum, safeContent]
+    );
+    const rows = await query(
+      `SELECT c.id, c.user_id, c.parent_id, c.content, c.created_at, u.username, u.nickname, u.avatar
+       FROM club_comments c LEFT JOIN users u ON u.id = c.user_id WHERE c.id = ?`,
+      [result.insertId]
+    );
+    const row = rows && rows[0];
+    const data = row
+      ? {
+          id: row.id,
+          user_id: row.user_id,
+          parent_id: row.parent_id,
+          content: row.content,
+          created_at: row.created_at,
+          author: {
+            username: row.username,
+            nickname: row.nickname,
+            avatar: row.avatar ? assetUrl(row.avatar) : null,
+          },
+        }
+      : { id: result.insertId, content: safeContent, created_at: new Date().toISOString() };
+    res.json({ status: 0, message: 'ok', data });
+  } catch (e) {
+    if (isMissingClubCommentsTable(e)) {
+      return res.status(503).json({
+        status: -1,
+        message: '数据库尚未创建 club_comments 表。请在当前库执行 migrations/037_club_comments.sql（例如：node scripts/apply-sql-file.js migrations/037_club_comments.sql，需使用与线上相同的 DATABASE_URL）',
+      });
+    }
+    next(e);
+  }
+}
+
+async function deleteClubComment(req, res, next, targetType) {
+  try {
+    const targetId = toInt(req.params.id, 0);
+    const commentId = toInt(req.params.commentId, 0);
+    if (!targetId || !commentId) return res.status(400).json({ status: -1, message: '参数错误' });
+    let rows;
+    try {
+      rows = await query(
+        'SELECT id, user_id FROM club_comments WHERE id = ? AND target_type = ? AND target_id = ? AND deleted_at IS NULL',
+        [commentId, targetType, targetId]
+      );
+    } catch (e) {
+      if (isUnknownClubCommentsDeletedAtColumn(e)) {
+        rows = await query(
+          'SELECT id, user_id FROM club_comments WHERE id = ? AND target_type = ? AND target_id = ?',
+          [commentId, targetType, targetId]
+        );
+      } else {
+        throw e;
+      }
+    }
+    if (!rows || !rows[0]) return res.status(404).json({ status: -1, message: '评论不存在或已删除' });
+    if (rows[0].user_id !== req.user.id && !isSiteAdmin(req)) {
+      return res.status(403).json({ status: -1, message: '只能删除自己的评论' });
+    }
+    try {
+      await query('UPDATE club_comments SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?', [commentId]);
+    } catch (e) {
+      if (isUnknownClubCommentsDeletedAtColumn(e)) {
+        await query('DELETE FROM club_comments WHERE id = ?', [commentId]);
+      } else {
+        throw e;
+      }
+    }
+    res.json({ status: 0, message: '删除成功' });
+  } catch (e) {
+    if (isMissingClubCommentsTable(e)) {
+      return res.status(503).json({
+        status: -1,
+        message: '数据库尚未创建 club_comments 表，请先在当前库执行 migrations/037_club_comments.sql',
+      });
+    }
+    next(e);
+  }
 }
 
 // =========================
@@ -778,13 +1006,9 @@ router.get('/feed', async (req, res, next) => {
         type: 'post',
         id: r.id,
         cover: (() => {
-          try {
-            const arr = r.images ? JSON.parse(r.images) : null;
-            const first = Array.isArray(arr) && arr[0] ? arr[0] : null;
-            return first ? assetUrl(String(first)) : null;
-          } catch {
-            return null;
-          }
+          const keys = parseJsonImageArray(r.images, 4);
+          const first = keys[0];
+          return first ? assetUrl(String(first)) : null;
         })(),
         title: r.title || cleanText(r.content, 40),
         summary: cleanText(r.content, 90),
@@ -956,13 +1180,8 @@ router.get('/posts', async (req, res, next) => {
       status: 0,
       data: {
         list: (rows || []).map((r) => {
-          let images = [];
-          try {
-            const arr = r.images ? JSON.parse(r.images) : null;
-            images = Array.isArray(arr) ? arr.filter(Boolean).slice(0, 6) : [];
-          } catch {
-            images = [];
-          }
+          const imageKeys = parseJsonImageArray(r.images, 4);
+          const images = imageKeys.map((k) => assetUrl(String(k))).filter(Boolean);
           return {
             id: r.id,
             clubId: r.club_id,
@@ -1008,7 +1227,16 @@ router.get('/activity/:id', async (req, res, next) => {
     if (!a) return res.status(404).json({ status: -1, message: '活动不存在' });
     const stats = await getStatsForTargets('activity', [id]);
     const liked = await getViewerLikedMap(viewerId, 'activity', [id]);
+    const commentCount = await getClubCommentCount('activity', id);
     const media = activityMediaForClient(a);
+    let canManage = false;
+    if (viewerId) {
+      try {
+        canManage = viewerIsSiteAdmin(viewer) || (await userCanManageClub(viewerId, Number(a.club_id)));
+      } catch {
+        canManage = viewerIsSiteAdmin(viewer);
+      }
+    }
     res.json({
       status: 0,
       data: {
@@ -1025,14 +1253,72 @@ router.get('/activity/:id', async (req, res, next) => {
         clubName: a.club_name,
         status: computeActivityStatus2(a),
         signupLink: a.signup_link,
-        stats: stats.get(id) || { likes: 0, views: 0 },
-        viewer: { liked: !!liked.get(id) },
+        stats: { ...(stats.get(id) || { likes: 0, views: 0 }), comments: commentCount },
+        viewer: { liked: !!liked.get(id), canManage },
       },
     });
   } catch (e) {
     next(e);
   }
 });
+
+// =========================
+// Delete activity（社团管理员 / 站管理员）
+// DELETE /api/clubs/activity/:id
+// =========================
+router.delete('/activity/:id', authenticateToken, async (req, res, next) => {
+  try {
+    const userId = Number(req.user?.id);
+    const id = toInt(req.params.id, 0);
+    if (!id) return res.status(400).json({ status: -1, message: '参数错误' });
+    const rows = await query('SELECT id, club_id FROM club_activities WHERE id = ? LIMIT 1', [id]);
+    const row = rows && rows[0];
+    if (!row) return res.status(404).json({ status: -1, message: '内容不存在' });
+    const clubId = Number(row.club_id);
+    const canManage = isSiteAdmin(req) || (await userCanManageClub(userId, clubId));
+    if (!canManage) return res.status(403).json({ status: -1, message: '无权限' });
+    try {
+      await query('DELETE FROM club_comments WHERE target_type = ? AND target_id = ? AND parent_id IS NOT NULL', [
+        'activity',
+        id,
+      ]);
+      await query('DELETE FROM club_comments WHERE target_type = ? AND target_id = ?', ['activity', id]);
+    } catch (e) {
+      if (!isMissingClubCommentsTable(e)) throw e;
+    }
+    await query('DELETE FROM club_likes WHERE target_type = ? AND target_id = ?', ['activity', id]);
+    await query('DELETE FROM club_views WHERE target_type = ? AND target_id = ?', ['activity', id]);
+    await query('DELETE FROM club_activities WHERE id = ? LIMIT 1', [id]);
+    return res.json({ status: 0, message: 'ok' });
+  } catch (e) {
+    return next(e);
+  }
+});
+
+// =========================
+// Activity comments（一级 + 二级）
+// GET/POST /api/clubs/activity/:id/comments
+// DELETE /api/clubs/activity/:id/comments/:commentId
+// =========================
+router.get('/activity/:id/comments', async (req, res, next) => {
+  try {
+    const id = toInt(req.params.id, 0);
+    if (!id) return res.status(400).json({ status: -1, message: '参数错误' });
+    const list = await fetchClubCommentsTree('activity', id);
+    res.json({ status: 0, data: list });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post('/activity/:id/comments', authenticateToken, async (req, res, next) => {
+  const id = toInt(req.params.id, 0);
+  return insertClubComment(req, res, next, 'activity', id);
+});
+
+router.delete('/activity/:id/comments/:commentId', authenticateToken, async (req, res, next) =>
+  deleteClubComment(req, res, next, 'activity')
+);
 
 // =========================
 // Post detail
@@ -1058,14 +1344,17 @@ router.get('/post/:id', async (req, res, next) => {
     if (!p) return res.status(404).json({ status: -1, message: '内容不存在' });
     const stats = await getStatsForTargets('post', [id]);
     const liked = await getViewerLikedMap(viewerId, 'post', [id]);
-    let imageKeys = [];
-    try {
-      const arr = p.images ? JSON.parse(p.images) : null;
-      imageKeys = Array.isArray(arr) ? arr.filter(Boolean).slice(0, 12) : [];
-    } catch {
-      imageKeys = [];
-    }
+    const commentCount = await getClubCommentCount('post', id);
+    const imageKeys = parseJsonImageArray(p.images, 4);
     const images = imageKeys.map((k) => assetUrl(String(k))).filter(Boolean);
+    let canManage = false;
+    if (viewerId) {
+      try {
+        canManage = viewerIsSiteAdmin(viewer) || (await userCanManageClub(viewerId, Number(p.club_id)));
+      } catch {
+        canManage = viewerIsSiteAdmin(viewer);
+      }
+    }
     res.json({
       status: 0,
       data: {
@@ -1076,14 +1365,72 @@ router.get('/post/:id', async (req, res, next) => {
         content: p.content,
         images,
         createdAt: p.created_at,
-        stats: stats.get(id) || { likes: 0, views: 0 },
-        viewer: { liked: !!liked.get(id) },
+        stats: { ...(stats.get(id) || { likes: 0, views: 0 }), comments: commentCount },
+        viewer: { liked: !!liked.get(id), canManage },
       },
     });
   } catch (e) {
     next(e);
   }
 });
+
+// =========================
+// Delete club post（社团管理员 / 站管理员）
+// DELETE /api/clubs/post/:id
+// =========================
+router.delete('/post/:id', authenticateToken, async (req, res, next) => {
+  try {
+    const userId = Number(req.user?.id);
+    const id = toInt(req.params.id, 0);
+    if (!id) return res.status(400).json({ status: -1, message: '参数错误' });
+    const rows = await query('SELECT id, club_id FROM club_posts WHERE id = ? LIMIT 1', [id]);
+    const row = rows && rows[0];
+    if (!row) return res.status(404).json({ status: -1, message: '内容不存在' });
+    const clubId = Number(row.club_id);
+    const canManage = isSiteAdmin(req) || (await userCanManageClub(userId, clubId));
+    if (!canManage) return res.status(403).json({ status: -1, message: '无权限' });
+    try {
+      await query('DELETE FROM club_comments WHERE target_type = ? AND target_id = ? AND parent_id IS NOT NULL', [
+        'post',
+        id,
+      ]);
+      await query('DELETE FROM club_comments WHERE target_type = ? AND target_id = ?', ['post', id]);
+    } catch (e) {
+      if (!isMissingClubCommentsTable(e)) throw e;
+    }
+    await query('DELETE FROM club_likes WHERE target_type = ? AND target_id = ?', ['post', id]);
+    await query('DELETE FROM club_views WHERE target_type = ? AND target_id = ?', ['post', id]);
+    await query('DELETE FROM club_posts WHERE id = ? LIMIT 1', [id]);
+    return res.json({ status: 0, message: 'ok' });
+  } catch (e) {
+    return next(e);
+  }
+});
+
+// =========================
+// Club post comments（一级 + 二级）
+// GET/POST /api/clubs/post/:id/comments
+// DELETE /api/clubs/post/:id/comments/:commentId
+// =========================
+router.get('/post/:id/comments', async (req, res, next) => {
+  try {
+    const id = toInt(req.params.id, 0);
+    if (!id) return res.status(400).json({ status: -1, message: '参数错误' });
+    const list = await fetchClubCommentsTree('post', id);
+    res.json({ status: 0, data: list });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post('/post/:id/comments', authenticateToken, async (req, res, next) => {
+  const id = toInt(req.params.id, 0);
+  return insertClubComment(req, res, next, 'post', id);
+});
+
+router.delete('/post/:id/comments/:commentId', authenticateToken, async (req, res, next) =>
+  deleteClubComment(req, res, next, 'post')
+);
 
 // =========================
 // Club profile
@@ -1196,13 +1543,7 @@ router.get('/:id', async (req, res, next) => {
           };
         }),
         posts: (posts || []).map((p) => {
-          let imageKeys = [];
-          try {
-            const arr = p.images ? JSON.parse(p.images) : null;
-            imageKeys = Array.isArray(arr) ? arr.filter(Boolean).slice(0, 6) : [];
-          } catch {
-            imageKeys = [];
-          }
+          const imageKeys = parseJsonImageArray(p.images, 4);
           const images = imageKeys.map((k) => assetUrl(String(k))).filter(Boolean);
           return {
             id: p.id,

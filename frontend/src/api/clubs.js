@@ -1,4 +1,14 @@
-import { get, post, patch } from './request';
+import { get, post, patch, del } from './request';
+
+/** 删除社团活动（社团管理员 / 站管理员） */
+export function deleteClubActivity(activityId) {
+  return del(`/api/clubs/activity/${activityId}`);
+}
+
+/** 删除社团日常帖（社团管理员 / 站管理员） */
+export function deleteClubPost(postId) {
+  return del(`/api/clubs/post/${postId}`);
+}
 
 export function getClubTabs() {
   return get('/api/clubs/tabs');
@@ -47,6 +57,41 @@ export function getActivityDetail(id) {
 
 export function getClubPostDetail(id) {
   return get(`/api/clubs/post/${id}`);
+}
+
+/** 社团活动评论列表（树形：一级 + replies） */
+export function getClubActivityComments(activityId) {
+  return get(`/api/clubs/activity/${activityId}/comments`);
+}
+
+/** 社团日常帖评论列表 */
+export function getClubPostComments(postId) {
+  return get(`/api/clubs/post/${postId}/comments`);
+}
+
+/** 发表评论：一级不传 parent_id；回复一级传 parent_id 为该条 id */
+export function createClubActivityComment(activityId, body) {
+  const { content, parent_id } = body || {};
+  if (!content || !String(content).trim()) throw new Error('评论内容不能为空');
+  const payload = { content: String(content).trim() };
+  if (parent_id != null) payload.parent_id = parent_id;
+  return post(`/api/clubs/activity/${activityId}/comments`, payload);
+}
+
+export function createClubPostComment(postId, body) {
+  const { content, parent_id } = body || {};
+  if (!content || !String(content).trim()) throw new Error('评论内容不能为空');
+  const payload = { content: String(content).trim() };
+  if (parent_id != null) payload.parent_id = parent_id;
+  return post(`/api/clubs/post/${postId}/comments`, payload);
+}
+
+export function deleteClubActivityComment(activityId, commentId) {
+  return del(`/api/clubs/activity/${activityId}/comments/${commentId}`);
+}
+
+export function deleteClubPostComment(postId, commentId) {
+  return del(`/api/clubs/post/${postId}/comments/${commentId}`);
 }
 
 export function trackClubView(targetType, targetId) {

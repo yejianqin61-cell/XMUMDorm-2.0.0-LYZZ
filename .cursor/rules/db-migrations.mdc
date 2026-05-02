@@ -1,0 +1,17 @@
+---
+description: 新增或修改数据库迁移时，在本仓库由 Agent 用终端执行 apply，勿只写说明让用户自己跑。
+alwaysApply: true
+---
+
+# 数据库迁移（必须在 Agent 窗口执行）
+
+- 每当**新增、修改** `migrations/*.sql` 或与库结构相关的变更时，Agent 应在**当前对话里用终端**执行迁移，而不是只告诉用户去执行。
+- 标准命令（在仓库根目录）：
+
+```bash
+node scripts/apply-sql-file.js migrations/<迁移文件名>.sql
+```
+
+- 脚本会加载 `.env` 中的 `DATABASE_URL` / `MYSQL_URL` / `RAILWAY_MYSQL_URL`（见 `scripts/apply-sql-file.js`）；未配置时默认连本机 `localhost`、`DB_NAME` 一般为 `jack_campus`。**若需打到 Railway 等线上库，须确保该次执行所用的环境变量与目标库一致**（例如本机 `.env` 已指向线上连接串，或在 CI/部署流程中单独执行同一条命令）。
+- 迁移 SQL **不要**写死 `USE jack_campus;`，应让连接串决定当前库，避免 Railway 等库名非 `jack_campus` 时建错库或失败。
+- 执行后根据输出确认成功（`Applied: ...`）；若连接失败或权限错误，Agent 应排查并重试或明确说明缺少的凭据，而不是跳过执行。
