@@ -913,7 +913,7 @@ router.get('/list', async (req, res, next) => {
         list: (rows || []).map((r) => ({
           id: r.id,
           name: r.name,
-          avatar: r.avatar,
+          avatar: r.avatar ? assetUrl(r.avatar) : null,
           description: r.description || '',
           followers: Number(r.followers || 0),
           viewer: { following: !!followingMap.get(Number(r.id)) },
