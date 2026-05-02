@@ -121,17 +121,82 @@ async function saveClubLogo(file, clubId) {
   return key;
 }
 
+async function saveClubPostImage(file, postId, index) {
+  if (!file || !file.buffer) return null;
+  const ext = extFromMime(file.mimetype, file.originalname);
+  const key = `clubs/posts/cp_${postId}_${index}${ext}`;
+  const useObjectStorage = isObjectStorageConfigured();
+  if (useObjectStorage) {
+    await uploadBuffer({ key, body: file.buffer, contentType: guessContentType(file.mimetype, ext) });
+    return key;
+  }
+  ensureUploadsDir('clubs/posts');
+  const outPath = path.join(process.cwd(), 'uploads', key);
+  fs.writeFileSync(outPath, file.buffer);
+  return key;
+}
+
+async function saveActivityImage(file, activityId, index) {
+  if (!file || !file.buffer) return null;
+  const ext = extFromMime(file.mimetype, file.originalname);
+  const key = `clubs/activities/act_${activityId}_${index}${ext}`;
+  const useObjectStorage = isObjectStorageConfigured();
+  if (useObjectStorage) {
+    await uploadBuffer({ key, body: file.buffer, contentType: guessContentType(file.mimetype, ext) });
+    return key;
+  }
+  ensureUploadsDir('clubs/activities');
+  const outPath = path.join(process.cwd(), 'uploads', key);
+  fs.writeFileSync(outPath, file.buffer);
+  return key;
+}
+
+function activityImageKeysFromRow(row) {
+  let keys = [];
+  try {
+    const raw = row?.images;
+    if (raw == null || raw === '') {
+      keys = [];
+    } else {
+      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      keys = Array.isArray(parsed) ? parsed.filter(Boolean).map(String).slice(0, 4) : [];
+    }
+  } catch {
+    keys = [];
+  }
+  if (!keys.length && row?.cover) keys = [String(row.cover)];
+  return keys;
+}
+
+/** @returns {{ cover: string|null, images: Array<{ url: string }> }} */
+function activityMediaForClient(row) {
+  const keys = activityImageKeysFromRow(row);
+  const urls = keys.map((k) => assetUrl(k)).filter(Boolean);
+  return {
+    cover: urls[0] || null,
+    images: urls.map((url) => ({ url })),
+  };
+}
+
+const activityImagesUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 8 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname || '').toLowerCase();
+    const okMime = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.mimetype);
+    const okExt = ['.jpg', '.jpeg', '.png', '.webp', '.gif'].includes(ext);
+    if (!okMime || !okExt) return cb(new Error('仅支持 jpg / png / webp / gif 格式'));
+    cb(null, true);
+  },
+}).array('images', 4);
+
 async function getStatsForTargets(targetType, ids) {
   if (!ids.length) return new Map();
   const placeholders = ids.map(() => '?').join(',');
-  const likesRows = await query(
-    `SELECT target_id, COUNT(*) AS c FROM club_likes WHERE target_type = ? AND target_id IN (${placeholders}) GROUP BY target_id`,
-    [targetType, ...ids]
-  );
-  const viewsRows = await query(
-    `SELECT target_id, COUNT(*) AS c FROM club_views WHERE target_type = ? AND target_id IN (${placeholders}) GROUP BY target_id`,
-    [targetType, ...ids]
-  );
+  const params = [targetType, ...ids];
+  const likesSql = `SELECT target_id, COUNT(*) AS c FROM club_likes WHERE target_type = ? AND target_id IN (${placeholders}) GROUP BY target_id`;
+  const viewsSql = `SELECT target_id, COUNT(*) AS c FROM club_views WHERE target_type = ? AND target_id IN (${placeholders}) GROUP BY target_id`;
+  const [likesRows, viewsRows] = await Promise.all([query(likesSql, params), query(viewsSql, params)]);
   const likes = new Map((likesRows || []).map((r) => [Number(r.target_id), Number(r.c)]));
   const views = new Map((viewsRows || []).map((r) => [Number(r.target_id), Number(r.c)]));
   const out = new Map();
@@ -312,6 +377,33 @@ router.post('/', authenticateToken, (req, res, next) => {
 });
 
 // =========================
+// Update activity status (club admin or site admin)
+// PATCH /api/clubs/activities/:id/status { status }
+// 必须注册在 PATCH /:id 之前，避免被误匹配
+// =========================
+router.patch('/activities/:id/status', authenticateToken, async (req, res, next) => {
+  try {
+    const activityId = toInt(req.params.id, 0);
+    const status = normalizeActivityStatus(req.body?.status);
+    if (!activityId || !status) return res.status(400).json({ status: -1, message: '参数错误' });
+
+    const rows = await query('SELECT id, club_id FROM club_activities WHERE id = ? LIMIT 1', [activityId]);
+    const a = rows && rows[0];
+    if (!a) return res.status(404).json({ status: -1, message: '活动不存在' });
+
+    const clubId = Number(a.club_id);
+    const userId = Number(req.user?.id);
+    const canManage = isSiteAdmin(req) || (await userCanManageClub(userId, clubId));
+    if (!canManage) return res.status(403).json({ status: -1, message: '无权限' });
+
+    await query('UPDATE club_activities SET status = ? WHERE id = ?', [status, activityId]);
+    res.json({ status: 0, message: 'ok' });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// =========================
 // Update club (club admin or site admin)
 // PATCH /api/clubs/:id (multipart/form-data)
 // =========================
@@ -397,8 +489,18 @@ router.post('/:id/members', authenticateToken, async (req, res, next) => {
 // =========================
 // Create activity (club admin or site admin)
 // POST /api/clubs/:id/activities
+// JSON body 或 multipart/form-data（字段 + 最多 4 张 images）
 // =========================
-router.post('/:id/activities', authenticateToken, async (req, res, next) => {
+router.post('/:id/activities', authenticateToken, (req, res, next) => {
+  const ct = String(req.headers['content-type'] || '');
+  if (ct.toLowerCase().includes('multipart/form-data')) {
+    return activityImagesUpload(req, res, (err) => {
+      if (err) return res.status(400).json({ status: -1, message: err.message || '上传失败' });
+      next();
+    });
+  }
+  next();
+}, async (req, res, next) => {
   try {
     const clubId = toInt(req.params.id, 0);
     const userId = Number(req.user?.id);
@@ -428,37 +530,79 @@ router.post('/:id/activities', authenticateToken, async (req, res, next) => {
       `,
       [clubId, title, tag || null, summary || null, st, et, location || null, signupLink || null, status || null]
     );
-    res.status(201).json({ status: 0, data: { id: r.insertId } });
+    const activityId = r.insertId;
+
+    const files = Array.isArray(req.files) ? req.files : [];
+    const paths = [];
+    for (let i = 0; i < Math.min(4, files.length); i += 1) {
+      const key = await saveActivityImage(files[i], activityId, i);
+      if (key) paths.push(key);
+    }
+    if (paths.length) {
+      try {
+        await query('UPDATE club_activities SET images = ?, cover = ? WHERE id = ?', [
+          JSON.stringify(paths),
+          paths[0],
+          activityId,
+        ]);
+      } catch (_) {
+        await query('UPDATE club_activities SET cover = ? WHERE id = ?', [paths[0], activityId]);
+      }
+    }
+
+    res.status(201).json({ status: 0, data: { id: activityId } });
   } catch (e) {
     next(e);
   }
 });
 
 // =========================
-// Update activity status (club admin or site admin)
-// PATCH /api/clubs/activities/:id/status { status }
+// Create club post (club admin or site admin)
+// POST /api/clubs/:id/posts — JSON 或 multipart（最多 4 张 images）
 // =========================
-router.patch('/activities/:id/status', authenticateToken, async (req, res, next) => {
+router.post('/:id/posts', authenticateToken, (req, res, next) => {
+  const ct = String(req.headers['content-type'] || '');
+  if (ct.toLowerCase().includes('multipart/form-data')) {
+    return activityImagesUpload(req, res, (err) => {
+      if (err) return res.status(400).json({ status: -1, message: err.message || '上传失败' });
+      next();
+    });
+  }
+  next();
+}, async (req, res, next) => {
   try {
-    const activityId = toInt(req.params.id, 0);
-    const status = normalizeActivityStatus(req.body?.status);
-    if (!activityId || !status) return res.status(400).json({ status: -1, message: '参数错误' });
-
-    const rows = await query('SELECT id, club_id FROM club_activities WHERE id = ? LIMIT 1', [activityId]);
-    const a = rows && rows[0];
-    if (!a) return res.status(404).json({ status: -1, message: '活动不存在' });
-
-    const clubId = Number(a.club_id);
+    const clubId = toInt(req.params.id, 0);
     const userId = Number(req.user?.id);
+    if (!clubId) return res.status(400).json({ status: -1, message: '参数错误' });
     const canManage = isSiteAdmin(req) || (await userCanManageClub(userId, clubId));
     if (!canManage) return res.status(403).json({ status: -1, message: '无权限' });
 
-    await query('UPDATE club_activities SET status = ? WHERE id = ?', [status, activityId]);
-    res.json({ status: 0, message: 'ok' });
+    const title = cleanText(req.body?.title, 160);
+    const content = cleanText(req.body?.content, 8000);
+    if (!content) return res.status(400).json({ status: -1, message: '内容不能为空' });
+
+    const r = await query(
+      'INSERT INTO club_posts (club_id, title, content, images) VALUES (?, ?, ?, NULL)',
+      [clubId, title || null, content]
+    );
+    const postId = r.insertId;
+
+    const files = Array.isArray(req.files) ? req.files : [];
+    const paths = [];
+    for (let i = 0; i < Math.min(4, files.length); i += 1) {
+      const key = await saveClubPostImage(files[i], postId, i);
+      if (key) paths.push(key);
+    }
+    if (paths.length) {
+      await query('UPDATE club_posts SET images = ? WHERE id = ?', [JSON.stringify(paths), postId]);
+    }
+
+    res.status(201).json({ status: 0, data: { id: postId } });
   } catch (e) {
     next(e);
   }
 });
+
 // =========================
 // Track view
 // POST /api/clubs/views { targetType: 'activity'|'post', targetId }
@@ -586,7 +730,7 @@ router.get('/feed', async (req, res, next) => {
     // Simple strategy: take latest activities + latest posts then merge by created_at.
     const actRows = await query(
       `
-      SELECT a.id, a.title, a.summary, a.cover, a.created_at, a.club_id, a.tag, c.name AS club_name, c.category AS club_category
+      SELECT a.*, c.name AS club_name, c.category AS club_category
       FROM club_activities a
       JOIN clubs c ON c.id = a.club_id
       ORDER BY a.created_at DESC
@@ -611,27 +755,33 @@ router.get('/feed', async (req, res, next) => {
     const postLiked = await getViewerLikedMap(viewerId, 'post', postIds);
 
     const items = [
-      ...(actRows || []).map((r) => ({
-        type: 'activity',
-        id: r.id,
-        cover: r.cover,
-        title: r.title,
-        summary: r.summary || '',
-        clubId: r.club_id,
-        clubName: r.club_name,
-        clubCategory: r.club_category || null,
-        tag: r.tag || null,
-        createdAt: r.created_at,
-        stats: actStats.get(Number(r.id)) || { likes: 0, views: 0 },
-        viewer: { liked: !!actLiked.get(Number(r.id)) },
-      })),
+      ...(actRows || []).map((r) => {
+        const media = activityMediaForClient(r);
+        return {
+          type: 'activity',
+          id: r.id,
+          cover: media.cover,
+          images: media.images,
+          title: r.title,
+          summary: r.summary || '',
+          clubId: r.club_id,
+          clubName: r.club_name,
+          clubCategory: r.club_category || null,
+          tag: r.tag || null,
+          status: computeActivityStatus2(r),
+          createdAt: r.created_at,
+          stats: actStats.get(Number(r.id)) || { likes: 0, views: 0 },
+          viewer: { liked: !!actLiked.get(Number(r.id)) },
+        };
+      }),
       ...(postRows || []).map((r) => ({
         type: 'post',
         id: r.id,
         cover: (() => {
           try {
             const arr = r.images ? JSON.parse(r.images) : null;
-            return Array.isArray(arr) && arr[0] ? arr[0] : null;
+            const first = Array.isArray(arr) && arr[0] ? arr[0] : null;
+            return first ? assetUrl(String(first)) : null;
           } catch {
             return null;
           }
@@ -687,21 +837,25 @@ router.get('/activities', async (req, res, next) => {
     res.json({
       status: 0,
       data: {
-        list: (rows || []).map((r) => ({
-          id: r.id,
-          title: r.title,
-          tag: r.tag || null,
-          cover: r.cover,
-          time: r.start_time,
-          endTime: r.end_time,
-          location: r.location,
-          clubId: r.club_id,
-          clubName: r.club_name,
-          status: computeActivityStatus2(r),
-          signupLink: r.signup_link,
-          stats: stats.get(Number(r.id)) || { likes: 0, views: 0 },
-          viewer: { liked: !!liked.get(Number(r.id)) },
-        })),
+        list: (rows || []).map((r) => {
+          const media = activityMediaForClient(r);
+          return {
+            id: r.id,
+            title: r.title,
+            tag: r.tag || null,
+            cover: media.cover,
+            images: media.images,
+            time: r.start_time,
+            endTime: r.end_time,
+            location: r.location,
+            clubId: r.club_id,
+            clubName: r.club_name,
+            status: computeActivityStatus2(r),
+            signupLink: r.signup_link,
+            stats: stats.get(Number(r.id)) || { likes: 0, views: 0 },
+            viewer: { liked: !!liked.get(Number(r.id)) },
+          };
+        }),
         page,
         pageSize,
       },
@@ -854,6 +1008,7 @@ router.get('/activity/:id', async (req, res, next) => {
     if (!a) return res.status(404).json({ status: -1, message: '活动不存在' });
     const stats = await getStatsForTargets('activity', [id]);
     const liked = await getViewerLikedMap(viewerId, 'activity', [id]);
+    const media = activityMediaForClient(a);
     res.json({
       status: 0,
       data: {
@@ -861,7 +1016,8 @@ router.get('/activity/:id', async (req, res, next) => {
         title: a.title,
         tag: a.tag || null,
         summary: a.summary || '',
-        cover: a.cover,
+        cover: media.cover,
+        images: media.images,
         time: a.start_time,
         endTime: a.end_time,
         location: a.location,
@@ -902,13 +1058,14 @@ router.get('/post/:id', async (req, res, next) => {
     if (!p) return res.status(404).json({ status: -1, message: '内容不存在' });
     const stats = await getStatsForTargets('post', [id]);
     const liked = await getViewerLikedMap(viewerId, 'post', [id]);
-    let images = [];
+    let imageKeys = [];
     try {
       const arr = p.images ? JSON.parse(p.images) : null;
-      images = Array.isArray(arr) ? arr.filter(Boolean).slice(0, 12) : [];
+      imageKeys = Array.isArray(arr) ? arr.filter(Boolean).slice(0, 12) : [];
     } catch {
-      images = [];
+      imageKeys = [];
     }
+    const images = imageKeys.map((k) => assetUrl(String(k))).filter(Boolean);
     res.json({
       status: 0,
       data: {
@@ -943,39 +1100,63 @@ router.get('/:id', async (req, res, next) => {
     const c = clubs && clubs[0];
     if (!c) return res.status(404).json({ status: -1, message: '社团不存在' });
 
-    const activities = await query(
-      `
+    const activitiesSql = `
       SELECT a.*
       FROM club_activities a
       WHERE a.club_id = ?
       ORDER BY a.start_time DESC, a.created_at DESC
-      LIMIT 20;
-      `,
-      [id]
-    );
-    const posts = await query(
-      `
+      LIMIT 20`;
+    const postsSql = `
       SELECT p.*
       FROM club_posts p
       WHERE p.club_id = ?
       ORDER BY p.created_at DESC
-      LIMIT 20;
-      `,
-      [id]
-    );
+      LIMIT 20`;
+    const membersSql = `
+      SELECT m.user_id, m.role, u.email, u.username, u.nickname, u.avatar
+      FROM club_members m
+      JOIN users u ON u.id = m.user_id
+      WHERE m.club_id = ?
+      ORDER BY (m.role='admin') DESC, m.created_at ASC
+      LIMIT 200`;
+
+    const [
+      activities,
+      posts,
+      followersRows,
+      followingRows,
+      mrows,
+      selfMemberRows,
+    ] = await Promise.all([
+      query(activitiesSql, [id]),
+      query(postsSql, [id]),
+      query('SELECT COUNT(*) AS c FROM club_follows WHERE club_id = ?', [id]),
+      viewerId ? query('SELECT 1 AS ok FROM club_follows WHERE user_id = ? AND club_id = ? LIMIT 1', [viewerId, id]) : Promise.resolve([]),
+      query(membersSql, [id]),
+      viewerId ? query('SELECT role FROM club_members WHERE club_id = ? AND user_id = ? LIMIT 1', [id, viewerId]) : Promise.resolve([]),
+    ]);
 
     const actIds = (activities || []).map((r) => Number(r.id));
     const postIds = (posts || []).map((r) => Number(r.id));
-    const actStats = await getStatsForTargets('activity', actIds);
-    const postStats = await getStatsForTargets('post', postIds);
-    const followersRows = await query('SELECT COUNT(*) AS c FROM club_follows WHERE club_id = ?', [id]);
+    const [actStats, postStats] = await Promise.all([
+      getStatsForTargets('activity', actIds),
+      getStatsForTargets('post', postIds),
+    ]);
+
     const followers = followersRows && followersRows[0] ? Number(followersRows[0].c) : 0;
-    const followingRows = viewerId
-      ? await query('SELECT 1 AS ok FROM club_follows WHERE user_id = ? AND club_id = ? LIMIT 1', [viewerId, id])
-      : [];
     const following = !!(followingRows && followingRows[0]);
-    const canManage = viewerId ? (await userCanManageClub(viewerId, id)) : false;
-    const isMember = viewerId ? (await userIsClubMember(viewerId, id)) : false;
+    const selfRow = selfMemberRows && selfMemberRows[0];
+    const isMember = viewerId ? !!selfRow : false;
+    const canManage = viewerId ? String(selfRow?.role || '') === 'admin' : false;
+
+    const members = (mrows || []).map((m) => ({
+      id: m.user_id,
+      role: m.role,
+      email: m.email,
+      username: m.username,
+      nickname: m.nickname,
+      avatar: m.avatar ? assetUrl(m.avatar) : null,
+    }));
 
     res.json({
       status: 0,
@@ -996,48 +1177,33 @@ router.get('/:id', async (req, res, next) => {
           ig: c.ig || '',
           xhs: c.xhs || '',
         },
-        members: await (async () => {
-          const mrows = await query(
-            `
-            SELECT m.user_id, m.role, u.email, u.username, u.nickname, u.avatar
-            FROM club_members m
-            JOIN users u ON u.id = m.user_id
-            WHERE m.club_id = ?
-            ORDER BY (m.role='admin') DESC, m.created_at DESC
-            LIMIT 200;
-            `,
-            [id]
-          );
-          return (mrows || []).map((m) => ({
-            id: m.user_id,
-            role: m.role,
-            email: m.email,
-            username: m.username,
-            nickname: m.nickname,
-            avatar: m.avatar ? assetUrl(m.avatar) : null,
-          }));
-        })(),
-        activities: (activities || []).map((a) => ({
-          id: a.id,
-          title: a.title,
-          tag: a.tag || null,
-          cover: a.cover,
-          time: a.start_time,
-          endTime: a.end_time,
-          location: a.location,
-          clubId: a.club_id,
-          status: computeActivityStatus2(a),
-          signupLink: a.signup_link,
-          stats: actStats.get(Number(a.id)) || { likes: 0, views: 0 },
-        })),
+        members,
+        activities: (activities || []).map((a) => {
+          const media = activityMediaForClient(a);
+          return {
+            id: a.id,
+            title: a.title,
+            tag: a.tag || null,
+            cover: media.cover,
+            images: media.images,
+            time: a.start_time,
+            endTime: a.end_time,
+            location: a.location,
+            clubId: a.club_id,
+            status: computeActivityStatus2(a),
+            signupLink: a.signup_link,
+            stats: actStats.get(Number(a.id)) || { likes: 0, views: 0 },
+          };
+        }),
         posts: (posts || []).map((p) => {
-          let images = [];
+          let imageKeys = [];
           try {
             const arr = p.images ? JSON.parse(p.images) : null;
-            images = Array.isArray(arr) ? arr.filter(Boolean).slice(0, 6) : [];
+            imageKeys = Array.isArray(arr) ? arr.filter(Boolean).slice(0, 6) : [];
           } catch {
-            images = [];
+            imageKeys = [];
           }
+          const images = imageKeys.map((k) => assetUrl(String(k))).filter(Boolean);
           return {
             id: p.id,
             clubId: p.club_id,

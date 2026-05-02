@@ -84,11 +84,42 @@ export function addClubMember(clubId, email, role = 'member') {
   return post(`/api/clubs/${clubId}/members`, { email, role });
 }
 
-export function createClubActivity(clubId, body) {
-  return post(`/api/clubs/${clubId}/activities`, body);
+/**
+ * 发布社团活动。支持 JSON（无图）或 FormData（字段 + 最多 4 张 images 文件）。
+ * @param {number} clubId
+ * @param {Record<string, string|undefined>} fields - title, summary, location, signupLink, tag, time, endTime, status
+ * @param {File[]} [imageFiles]
+ */
+export function createClubActivity(clubId, fields, imageFiles = []) {
+  const files = Array.isArray(imageFiles) ? imageFiles.filter(Boolean) : [];
+  if (files.length === 0) {
+    return post(`/api/clubs/${clubId}/activities`, fields);
+  }
+  const fd = new FormData();
+  Object.entries(fields || {}).forEach(([k, v]) => {
+    if (v != null && v !== '') fd.append(k, String(v));
+  });
+  files.slice(0, 4).forEach((f) => fd.append('images', f));
+  return post(`/api/clubs/${clubId}/activities`, fd);
 }
 
 export function updateClubActivityStatus(activityId, status) {
   return patch(`/api/clubs/activities/${activityId}/status`, { status });
+}
+
+/**
+ * 发布社团日常帖（管理员）。无图走 JSON，有图走 FormData + images。
+ */
+export function createClubPost(clubId, fields, imageFiles = []) {
+  const files = Array.isArray(imageFiles) ? imageFiles.filter(Boolean) : [];
+  if (files.length === 0) {
+    return post(`/api/clubs/${clubId}/posts`, fields);
+  }
+  const fd = new FormData();
+  Object.entries(fields || {}).forEach(([k, v]) => {
+    if (v != null && v !== '') fd.append(k, String(v));
+  });
+  files.slice(0, 4).forEach((f) => fd.append('images', f));
+  return post(`/api/clubs/${clubId}/posts`, fd);
 }
 

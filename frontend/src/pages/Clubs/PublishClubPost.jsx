@@ -6,7 +6,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { Toast } from '../../context/ToastContext';
 import { QK } from '../../query/queryKeys';
-import { createClubActivity, getClubProfile } from '../../api/clubs';
+import { createClubPost, getClubProfile } from '../../api/clubs';
 import { queryClient } from '../../query/queryClient';
 import { getApiErrorMessage } from '../../utils/apiError';
 import ImagePreview from '../../components/ImagePreview';
@@ -14,20 +14,17 @@ import { StackedCardCarousel } from '../../components/StackedCardCarousel';
 import '../PostDetail.css';
 import './Clubs.css';
 
-function PublishActivity() {
+function PublishClubPost() {
   const [searchParams] = useSearchParams();
   const clubId = Number(searchParams.get('clubId') || '');
   const nav = useNavigate();
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
   const { token, user, isAdmin: siteAdmin } = useAuth();
+  const canManageFromAuth = siteAdmin || user?.role === 'admin';
 
   const [title, setTitle] = useState('');
-  const [tag, setTag] = useState('music');
-  const [time, setTime] = useState('');
-  const [summary, setSummary] = useState('');
-  const [location, setLocation] = useState('');
-  const [signupLink, setSignupLink] = useState('');
+  const [content, setContent] = useState('');
   const [imageFiles, setImageFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
   const [carouselIndex, setCarouselIndex] = useState(0);
@@ -43,7 +40,7 @@ function PublishActivity() {
   });
 
   const basic = q.data?.basicInfo;
-  const canManage = !!basic?.viewer?.canManage || siteAdmin || user?.role === 'admin';
+  const canManage = !!basic?.viewer?.canManage || canManageFromAuth;
 
   useEffect(() => {
     if ((!Number.isFinite(clubId) || clubId <= 0) && !missingClubToastRef.current) {
@@ -54,24 +51,20 @@ function PublishActivity() {
 
   useEffect(() => {
     if (q.isSuccess && basic && !canManage) {
-      Toast.error(isZh ? '无权限发布活动' : 'No permission');
+      Toast.error(isZh ? '无权限发布' : 'No permission');
       nav(`/about/club/${clubId}`, { replace: true });
     }
   }, [q.isSuccess, basic, canManage, clubId, nav, isZh]);
 
-  const actMut = useMutation({
+  const postMut = useMutation({
     mutationFn: async () =>
-      await createClubActivity(
-        clubId,
-        { title: title.trim(), tag, time: time.trim(), summary: summary.trim(), location: location.trim(), signupLink: signupLink.trim() },
-        imageFiles
-      ),
+      await createClubPost(clubId, { title: title.trim(), content: content.trim() }, imageFiles),
     onSuccess: async (data) => {
       await queryClient.invalidateQueries({ queryKey: QK.clubProfile(clubId) });
       await queryClient.invalidateQueries({ queryKey: ['clubs'] });
       const newId = data?.id;
       Toast.success(isZh ? '发布成功' : 'Published');
-      if (newId) nav(`/about/club/activity/${newId}`, { replace: true });
+      if (newId) nav(`/about/club/post/${newId}`, { replace: true });
       else nav(`/about/club/${clubId}`, { replace: true });
     },
     onError: (err) => {
@@ -100,11 +93,11 @@ function PublishActivity() {
   const submit = (e) => {
     e.preventDefault();
     if (!Number.isFinite(clubId) || clubId <= 0) return;
-    if (!title.trim()) {
-      Toast.error(isZh ? '请填写标题' : 'Title is required');
+    if (!content.trim()) {
+      Toast.error(isZh ? '请填写正文' : 'Content is required');
       return;
     }
-    actMut.mutate();
+    postMut.mutate();
   };
 
   if (!token) {
@@ -122,10 +115,10 @@ function PublishActivity() {
           <button type="button" className="club-back" onClick={() => nav(-1)} aria-label={isZh ? '返回' : 'Back'}>
             <ArrowLeft size={18} aria-hidden />
           </button>
-          <div className="club-profile-title">{isZh ? '发布活动' : 'Post activity'}</div>
+          <div className="club-profile-title">{isZh ? '发布日常' : 'New post'}</div>
           <Link className="club-profile-link" to="/about/club">{isZh ? '广场' : 'Square'}</Link>
         </div>
-        <p className="publish-activity-hint">{isZh ? '请从社团资料页点击「发布活动」进入。' : 'Use “Post activity” on a club profile page.'}</p>
+        <p className="publish-activity-hint">{isZh ? '请从社团资料页进入。' : 'Open from a club profile.'}</p>
         <Link to="/about/club/list" className="club-members-more pressable">
           {isZh ? '去社团列表' : 'Club list'}
         </Link>
@@ -142,7 +135,7 @@ function PublishActivity() {
         <button type="button" className="club-back" onClick={() => nav(-1)} aria-label={isZh ? '返回' : 'Back'}>
           <ArrowLeft size={18} aria-hidden />
         </button>
-        <div className="club-profile-title">{isZh ? '发布活动' : 'Post activity'}</div>
+        <div className="club-profile-title">{isZh ? '发布日常' : 'New post'}</div>
         <Link className="club-profile-link" to={`/about/club/${clubId}`}>
           {isZh ? '社团' : 'Club'}
         </Link>
@@ -153,34 +146,12 @@ function PublishActivity() {
 
         <form className="club-admin-form publish-activity-form" onSubmit={submit}>
           <label className="club-field">
-            <div className="club-label">{isZh ? '标签' : 'Tag'}</div>
-            <select className="club-input" value={tag} onChange={(e) => setTag(e.target.value)}>
-              <option value="music">{isZh ? '音乐' : 'Music'}</option>
-              <option value="tech">{isZh ? '科技' : 'Tech'}</option>
-              <option value="culture">{isZh ? '文化' : 'Culture'}</option>
-              <option value="sport">{isZh ? '运动' : 'Sport'}</option>
-              <option value="art">{isZh ? '艺术' : 'Art'}</option>
-            </select>
-          </label>
-          <label className="club-field">
-            <div className="club-label">{isZh ? '标题' : 'Title'}</div>
+            <div className="club-label">{isZh ? '标题（可选）' : 'Title (optional)'}</div>
             <input className="club-input" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={160} />
           </label>
           <label className="club-field">
-            <div className="club-label">{isZh ? '时间（可填）' : 'Time'}</div>
-            <input className="club-input" value={time} onChange={(e) => setTime(e.target.value)} placeholder="2026-05-01 20:30" />
-          </label>
-          <label className="club-field">
-            <div className="club-label">{isZh ? '地点' : 'Location'}</div>
-            <input className="club-input" value={location} onChange={(e) => setLocation(e.target.value)} />
-          </label>
-          <label className="club-field">
-            <div className="club-label">{isZh ? '简介' : 'Summary'}</div>
-            <textarea className="club-textarea" rows={3} value={summary} onChange={(e) => setSummary(e.target.value)} maxLength={255} />
-          </label>
-          <label className="club-field">
-            <div className="club-label">{isZh ? '报名链接' : 'Signup link'}</div>
-            <input className="club-input" value={signupLink} onChange={(e) => setSignupLink(e.target.value)} placeholder="https://…" />
+            <div className="club-label">{isZh ? '正文' : 'Content'}</div>
+            <textarea className="club-textarea" rows={8} value={content} onChange={(e) => setContent(e.target.value)} maxLength={8000} />
           </label>
 
           <div className="club-field">
@@ -206,7 +177,7 @@ function PublishActivity() {
 
           {previewUrls.length > 0 ? (
             <div className="publish-activity-preview-block">
-              <div className="club-label">{isZh ? '预览（与帖子相同的多图切换）' : 'Preview'}</div>
+              <div className="club-label">{isZh ? '预览' : 'Preview'}</div>
               <div className="post-detail-media">
                 {previewUrls.length === 1 ? (
                   <button type="button" className="post-detail-image-wrap" onClick={() => setImagePreview({ open: true, index: 0 })}>
@@ -232,9 +203,9 @@ function PublishActivity() {
             <ImagePreview urls={previewUrls} initialIndex={imagePreview.index} onClose={() => setImagePreview({ open: false, index: 0 })} />
           ) : null}
 
-          <button type="submit" className="club-admin-submit pressable" disabled={!title.trim() || actMut.isPending}>
+          <button type="submit" className="club-admin-submit pressable" disabled={!content.trim() || postMut.isPending}>
             <PlusCircle size={16} aria-hidden />
-            {actMut.isPending ? (isZh ? '发布中…' : 'Posting…') : (isZh ? '发布活动' : 'Publish')}
+            {postMut.isPending ? (isZh ? '发布中…' : 'Posting…') : (isZh ? '发布' : 'Publish')}
           </button>
         </form>
       </div>
@@ -242,4 +213,4 @@ function PublishActivity() {
   );
 }
 
-export default PublishActivity;
+export default PublishClubPost;

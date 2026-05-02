@@ -5,7 +5,9 @@ import { ArrowLeft, Eye, Heart, Image as ImageIcon } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { queryClient } from '../../query/queryClient';
+import { Toast } from '../../context/ToastContext';
 import { getClubPostDetail, toggleClubLike, trackClubView } from '../../api/clubs';
+import { getApiErrorMessage } from '../../utils/apiError';
 import './Clubs.css';
 
 function ClubPostDetail() {
@@ -30,11 +32,34 @@ function ClubPostDetail() {
     trackClubView('post', postId).catch(() => {});
   }, [postId]);
 
+  const postQK = ['clubs', 'post', postId];
+
   const likeMut = useMutation({
     mutationFn: async () => await toggleClubLike('post', postId),
-    onSuccess: async () => {
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: postQK });
+      const prev = queryClient.getQueryData(postQK);
+      queryClient.setQueryData(postQK, (old) => {
+        if (!old) return old;
+        const nextLiked = !old.viewer?.liked;
+        const base = Number(old.stats?.likes ?? 0);
+        const likes = Math.max(0, base + (nextLiked ? 1 : -1));
+        return {
+          ...old,
+          viewer: { ...old.viewer, liked: nextLiked },
+          stats: { ...old.stats, likes },
+        };
+      });
+      return { prev };
+    },
+    onError: (err, _v, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(postQK, ctx.prev);
+      Toast.error(getApiErrorMessage(err));
+    },
+    onSettled: async () => {
       await queryClient.invalidateQueries({ queryKey: ['clubs'] });
-      await queryClient.invalidateQueries({ queryKey: ['clubs', 'post', postId] });
+      await queryClient.invalidateQueries({ queryKey: postQK });
+      await queryClient.invalidateQueries({ queryKey: ['clubs', 'square', 'feed'] });
     },
   });
 

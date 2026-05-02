@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { ExternalLink, MapPin, ArrowLeft, UserPlus, PlusCircle, Save, UserRoundPlus } from 'lucide-react';
+import { ExternalLink, MapPin, ArrowLeft, UserPlus, PlusCircle, Save, UserRoundPlus, Pencil, MessageSquarePlus } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
+import { Toast } from '../../context/ToastContext';
 import { QK } from '../../query/queryKeys';
-import { addClubMember, createClubActivity, getClubProfile, searchUsersByEmailForClub, toggleClubFollow, updateClub, updateClubActivityStatus } from '../../api/clubs';
+import { addClubMember, getClubProfile, searchUsersByEmailForClub, toggleClubFollow, updateClub, updateClubActivityStatus } from '../../api/clubs';
 import { queryClient } from '../../query/queryClient';
+import { getApiErrorMessage } from '../../utils/apiError';
 import './Clubs.css';
 
 function ClubProfile() {
@@ -19,7 +21,8 @@ function ClubProfile() {
   const { user } = useAuth();
 
   // NOTE: keep all hooks before any early return to avoid React hooks order issues.
-  const [editOpen, setEditOpen] = useState(false);
+  /** 管理区折叠：null | 'edit' | 'members' */
+  const [adminPanel, setAdminPanel] = useState(null);
   const [editName, setEditName] = useState('');
   const [editCategory, setEditCategory] = useState('music');
   const [editDesc, setEditDesc] = useState('');
@@ -31,12 +34,6 @@ function ClubProfile() {
   const [memberEmail, setMemberEmail] = useState('');
   const [memberRole, setMemberRole] = useState('member');
   const [userQuery, setUserQuery] = useState('');
-
-  const [actTitle, setActTitle] = useState('');
-  const [actTag, setActTag] = useState('music');
-  const [actTime, setActTime] = useState('');
-  const [actSummary, setActSummary] = useState('');
-  const [actLocation, setActLocation] = useState('');
 
   const q = useQuery({
     queryKey: QK.clubProfile(clubId),
@@ -53,7 +50,30 @@ function ClubProfile() {
 
   const followMut = useMutation({
     mutationFn: async () => await toggleClubFollow(clubId),
-    onSuccess: async () => {
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: QK.clubProfile(clubId) });
+      const prev = queryClient.getQueryData(QK.clubProfile(clubId));
+      const was = !!prev?.basicInfo?.viewer?.following;
+      const nextFollowing = !was;
+      const delta = nextFollowing ? 1 : -1;
+      queryClient.setQueryData(QK.clubProfile(clubId), (old) => {
+        if (!old?.basicInfo) return old;
+        const f = Number(old.basicInfo.followers || 0);
+        return {
+          ...old,
+          basicInfo: {
+            ...old.basicInfo,
+            followers: Math.max(0, f + delta),
+            viewer: { ...old.basicInfo.viewer, following: nextFollowing },
+          },
+        };
+      });
+      return { prev };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(QK.clubProfile(clubId), ctx.prev);
+    },
+    onSettled: async () => {
       await queryClient.invalidateQueries({ queryKey: ['clubs'] });
       await queryClient.invalidateQueries({ queryKey: QK.clubProfile(clubId) });
     },
@@ -74,7 +94,7 @@ function ClubProfile() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: QK.clubProfile(clubId) });
-      setEditOpen(false);
+      setAdminPanel(null);
     },
   });
 
@@ -103,18 +123,38 @@ function ClubProfile() {
     setEditLogo(null);
   }
 
-  const actMut = useMutation({
-    mutationFn: async () => await createClubActivity(clubId, { title: actTitle, tag: actTag, time: actTime, summary: actSummary, location: actLocation }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: QK.clubProfile(clubId) });
-      setActTitle(''); setActTime(''); setActSummary(''); setActLocation('');
-    },
-  });
+  function toggleAdminPanel(panel) {
+    setAdminPanel((cur) => {
+      if (cur === panel) return null;
+      if (panel === 'edit') primeEditFieldsFromProfile();
+      return panel;
+    });
+  }
 
   const statusMut = useMutation({
     mutationFn: async ({ activityId, status }) => await updateClubActivityStatus(activityId, status),
-    onSuccess: async () => {
+    onMutate: async ({ activityId, status }) => {
+      await queryClient.cancelQueries({ queryKey: QK.clubProfile(clubId) });
+      const prev = queryClient.getQueryData(QK.clubProfile(clubId));
+      queryClient.setQueryData(QK.clubProfile(clubId), (old) => {
+        if (!old?.activities) return old;
+        return {
+          ...old,
+          activities: old.activities.map((a) =>
+            Number(a.id) === Number(activityId) ? { ...a, status: status || 'ended' } : a
+          ),
+        };
+      });
+      return { prev };
+    },
+    onError: (err, _vars, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(QK.clubProfile(clubId), ctx.prev);
+      Toast.error(getApiErrorMessage(err));
+    },
+    onSettled: async () => {
       await queryClient.invalidateQueries({ queryKey: QK.clubProfile(clubId) });
+      await queryClient.invalidateQueries({ queryKey: ['clubs', 'square', 'feed'] });
+      await queryClient.invalidateQueries({ queryKey: ['clubs'] });
     },
   });
 
@@ -172,129 +212,171 @@ function ClubProfile() {
         </div>
 
         {isMember ? (
-          <div className="club-section">
-            <div className="club-section-h">{isZh ? '成员' : 'Members'}</div>
-            {members.length === 0 ? <div className="club-mini-empty">{isZh ? '暂无成员' : 'No members'}</div> : null}
-            <div className="club-mini-list">
-              {members.map((m) => (
-                <div key={m.id} className="club-mini-card">
-                  <div className="club-card-row">
-                    {m.avatar ? <img src={m.avatar} alt="" className="club-avatar" /> : <div className="club-avatar club-avatar--ph" />}
-                    <div className="club-card-main">
-                      <div className="club-card-name">{m.nickname || m.username || (isZh ? '成员' : 'Member')}</div>
-                      <div className="club-card-desc">{[m.email, m.role].filter(Boolean).join(' · ')}</div>
-                    </div>
+          <div className="club-section club-section--members">
+            <div className="club-members-preview">
+              <div className="club-members-preview-head">
+                <span className="club-members-preview-title">{isZh ? '成员' : 'Members'}</span>
+                <span className="club-members-count">{members.length}</span>
+              </div>
+              {members.length === 0 ? (
+                <div className="club-mini-empty">{isZh ? '暂无成员' : 'No members'}</div>
+              ) : (
+                <>
+                  <div className="club-mini-list">
+                    {members.slice(0, 3).map((m) => (
+                      <div key={m.id} className="club-mini-card">
+                        <div className="club-card-row">
+                          {m.avatar ? <img src={m.avatar} alt="" className="club-avatar" /> : <div className="club-avatar club-avatar--ph" />}
+                          <div className="club-card-main">
+                            <div className="club-card-name">{m.nickname || m.username || (isZh ? '成员' : 'Member')}</div>
+                            <div className="club-card-desc">{[m.email, m.role].filter(Boolean).join(' · ')}</div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </div>
-              ))}
+                  {members.length > 3 ? (
+                    <Link to={`/about/club/${clubId}/members`} className="club-members-more pressable">
+                      {isZh ? '展示更多' : 'Show all'}
+                    </Link>
+                  ) : null}
+                </>
+              )}
             </div>
           </div>
         ) : null}
 
         {canManage ? (
           <div className="club-admin-panel">
-            <div className="club-admin-row">
-              <div className="club-admin-h">{isZh ? '管理面板' : 'Admin'}</div>
+            <div className="club-admin-h">{isZh ? '社团管理' : 'Club admin'}</div>
+            <div className="club-admin-toolbar" role="toolbar" aria-label={isZh ? '社团管理操作' : 'Club admin actions'}>
               <button
                 type="button"
-                className="club-admin-toggle pressable"
-                onClick={() => {
-                  setEditOpen((v) => {
-                    const next = !v;
-                    if (next) primeEditFieldsFromProfile();
-                    return next;
-                  });
-                }}
+                className={`club-admin-toolbtn pressable ${adminPanel === 'edit' ? 'is-on' : ''}`}
+                aria-expanded={adminPanel === 'edit'}
+                onClick={() => toggleAdminPanel('edit')}
               >
-                <Save size={16} aria-hidden /> {editOpen ? (isZh ? '收起' : 'Collapse') : (isZh ? '编辑社团' : 'Edit')}
+                <Pencil size={16} aria-hidden />
+                <span>{isZh ? '编辑资料' : 'Edit'}</span>
               </button>
+              <button
+                type="button"
+                className={`club-admin-toolbtn pressable ${adminPanel === 'members' ? 'is-on' : ''}`}
+                aria-expanded={adminPanel === 'members'}
+                onClick={() => toggleAdminPanel('members')}
+              >
+                <UserRoundPlus size={16} aria-hidden />
+                <span>{isZh ? '添加成员' : 'Members'}</span>
+              </button>
+              <Link
+                to={`/about/club/activity/new?clubId=${clubId}`}
+                className="club-admin-toolbtn club-admin-toolbtn--link pressable"
+              >
+                <PlusCircle size={16} aria-hidden />
+                <span>{isZh ? '发布活动' : 'Activity'}</span>
+              </Link>
+              <Link
+                to={`/about/club/post/new?clubId=${clubId}`}
+                className="club-admin-toolbtn club-admin-toolbtn--link pressable"
+              >
+                <MessageSquarePlus size={16} aria-hidden />
+                <span>{isZh ? '发布日常' : 'Post'}</span>
+              </Link>
             </div>
 
-            {editOpen ? (
-              <div className="club-admin-form">
-                <label className="club-field">
-                  <div className="club-label">{isZh ? '名字' : 'Name'}</div>
-                  <input className="club-input" value={editName} onChange={(e) => setEditName(e.target.value)} />
-                </label>
-                <label className="club-field">
-                  <div className="club-label">{isZh ? '分类' : 'Category'}</div>
-                  <select className="club-input" value={editCategory} onChange={(e) => setEditCategory(e.target.value)}>
-                    <option value="music">music</option>
-                    <option value="tech">tech</option>
-                    <option value="culture">culture</option>
-                    <option value="sport">sport</option>
-                    <option value="art">art</option>
-                  </select>
-                </label>
-                <label className="club-field">
-                  <div className="club-label">{isZh ? '简介' : 'Description'}</div>
-                  <textarea className="club-textarea" rows={3} value={editDesc} onChange={(e) => setEditDesc(e.target.value)} />
-                </label>
-                <label className="club-field">
-                  <div className="club-label">{isZh ? '联系方式' : 'Contact'}</div>
-                  <input className="club-input" value={editContact} onChange={(e) => setEditContact(e.target.value)} />
-                </label>
-                <label className="club-field">
-                  <div className="club-label">{isZh ? '报名链接' : 'Signup link'}</div>
-                  <input className="club-input" value={editSignup} onChange={(e) => setEditSignup(e.target.value)} />
-                </label>
-                <div className="club-grid2">
+            {adminPanel === 'edit' ? (
+              <div className="club-admin-panel-body">
+                <div className="club-admin-form">
                   <label className="club-field">
-                    <div className="club-label">IG</div>
-                    <input className="club-input" value={editIg} onChange={(e) => setEditIg(e.target.value)} />
+                    <div className="club-label">{isZh ? '名字' : 'Name'}</div>
+                    <input className="club-input" value={editName} onChange={(e) => setEditName(e.target.value)} />
                   </label>
                   <label className="club-field">
-                    <div className="club-label">{isZh ? '小红书' : 'XHS'}</div>
-                    <input className="club-input" value={editXhs} onChange={(e) => setEditXhs(e.target.value)} />
+                    <div className="club-label">{isZh ? '分类' : 'Category'}</div>
+                    <select className="club-input" value={editCategory} onChange={(e) => setEditCategory(e.target.value)}>
+                      <option value="music">music</option>
+                      <option value="tech">tech</option>
+                      <option value="culture">culture</option>
+                      <option value="sport">sport</option>
+                      <option value="art">art</option>
+                    </select>
                   </label>
-                </div>
-                <label className="club-field">
-                  <div className="club-label">{isZh ? 'Logo' : 'Logo'}</div>
-                  <input className="club-input" type="file" accept="image/*" onChange={(e) => setEditLogo(e.target.files?.[0] || null)} />
-                </label>
+                  <label className="club-field">
+                    <div className="club-label">{isZh ? '简介' : 'Description'}</div>
+                    <textarea className="club-textarea" rows={3} value={editDesc} onChange={(e) => setEditDesc(e.target.value)} />
+                  </label>
+                  <label className="club-field">
+                    <div className="club-label">{isZh ? '联系方式' : 'Contact'}</div>
+                    <input className="club-input" value={editContact} onChange={(e) => setEditContact(e.target.value)} />
+                  </label>
+                  <label className="club-field">
+                    <div className="club-label">{isZh ? '报名链接' : 'Signup link'}</div>
+                    <input className="club-input" value={editSignup} onChange={(e) => setEditSignup(e.target.value)} />
+                  </label>
+                  <div className="club-grid2">
+                    <label className="club-field">
+                      <div className="club-label">IG</div>
+                      <input className="club-input" value={editIg} onChange={(e) => setEditIg(e.target.value)} />
+                    </label>
+                    <label className="club-field">
+                      <div className="club-label">{isZh ? '小红书' : 'XHS'}</div>
+                      <input className="club-input" value={editXhs} onChange={(e) => setEditXhs(e.target.value)} />
+                    </label>
+                  </div>
+                  <label className="club-field">
+                    <div className="club-label">{isZh ? 'Logo' : 'Logo'}</div>
+                    <input className="club-input" type="file" accept="image/*" onChange={(e) => setEditLogo(e.target.files?.[0] || null)} />
+                  </label>
 
-                <button type="button" className="club-admin-submit pressable" disabled={saveClubMut.isPending} onClick={() => saveClubMut.mutate()}>
-                  {saveClubMut.isPending ? (isZh ? '保存中…' : 'Saving…') : (isZh ? '保存修改' : 'Save')}
-                </button>
+                  <button type="button" className="club-admin-submit pressable" disabled={saveClubMut.isPending} onClick={() => saveClubMut.mutate()}>
+                    <Save size={16} aria-hidden />
+                    {saveClubMut.isPending ? (isZh ? '保存中…' : 'Saving…') : (isZh ? '保存修改' : 'Save')}
+                  </button>
+                </div>
               </div>
             ) : null}
 
-            <div className="club-admin-member">
-              <div className="club-admin-subh">{isZh ? '添加成员/负责人' : 'Add member/admin'}</div>
-              <div className="club-admin-member-row">
-                <input
-                  className="club-input"
-                  value={memberEmail}
-                  onChange={(e) => setMemberEmail(e.target.value)}
-                  placeholder={isZh ? '输入学生邮箱…' : 'Student email...'}
-                />
-                <select className="club-input club-input--sm" value={memberRole} onChange={(e) => setMemberRole(e.target.value)}>
-                  <option value="member">{isZh ? '成员' : 'member'}</option>
-                  <option value="admin">{isZh ? '管理员' : 'admin'}</option>
-                </select>
-                <button type="button" className="club-admin-mini pressable" disabled={!memberEmail.trim() || addMemberMut.isPending} onClick={() => addMemberMut.mutate()}>
-                  <UserRoundPlus size={16} aria-hidden /> {isZh ? '添加' : 'Add'}
-                </button>
-              </div>
+            {adminPanel === 'members' ? (
+              <div className="club-admin-panel-body">
+                <div className="club-admin-member">
+                  <div className="club-admin-subh club-admin-subh--first">{isZh ? '添加成员或管理员' : 'Add member or admin'}</div>
+                  <div className="club-admin-member-row">
+                    <input
+                      className="club-input"
+                      value={memberEmail}
+                      onChange={(e) => setMemberEmail(e.target.value)}
+                      placeholder={isZh ? '输入学生邮箱…' : 'Student email...'}
+                    />
+                    <select className="club-input club-input--sm" value={memberRole} onChange={(e) => setMemberRole(e.target.value)}>
+                      <option value="member">{isZh ? '成员' : 'member'}</option>
+                      <option value="admin">{isZh ? '管理员' : 'admin'}</option>
+                    </select>
+                    <button type="button" className="club-admin-mini pressable" disabled={!memberEmail.trim() || addMemberMut.isPending} onClick={() => addMemberMut.mutate()}>
+                      <UserRoundPlus size={16} aria-hidden /> {isZh ? '添加' : 'Add'}
+                    </button>
+                  </div>
 
-              <div className="club-admin-subh">{isZh ? '按邮箱搜索用户' : 'Search user by email'}</div>
-              <input className="club-input" value={userQuery} onChange={(e) => setUserQuery(e.target.value)} placeholder="xxx@xmu.edu.my" />
-              {usersQ.data?.list?.length ? (
-                <div className="club-admin-search-list">
-                  {usersQ.data.list.map((u) => (
-                    <div key={u.id} className="club-admin-search-item">
-                      <div className="club-admin-search-main">
-                        <div className="club-admin-search-name">{u.nickname || u.username}</div>
-                        <div className="club-admin-search-email">{u.email}</div>
-                      </div>
-                      <button type="button" className="club-admin-mini pressable" onClick={() => { setMemberEmail(u.email); }}>
-                        {isZh ? '填入' : 'Use'}
-                      </button>
+                  <div className="club-admin-subh">{isZh ? '按邮箱搜索用户' : 'Search user by email'}</div>
+                  <input className="club-input" value={userQuery} onChange={(e) => setUserQuery(e.target.value)} placeholder="xxx@xmu.edu.my" />
+                  {usersQ.data?.list?.length ? (
+                    <div className="club-admin-search-list">
+                      {usersQ.data.list.map((u) => (
+                        <div key={u.id} className="club-admin-search-item">
+                          <div className="club-admin-search-main">
+                            <div className="club-admin-search-name">{u.nickname || u.username}</div>
+                            <div className="club-admin-search-email">{u.email}</div>
+                          </div>
+                          <button type="button" className="club-admin-mini pressable" onClick={() => { setMemberEmail(u.email); }}>
+                            {isZh ? '填入' : 'Use'}
+                          </button>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  ) : null}
                 </div>
-              ) : null}
-            </div>
+              </div>
+            ) : null}
+
           </div>
         ) : null}
       </div>
@@ -302,42 +384,6 @@ function ClubProfile() {
       <section className="club-section">
         <div className="club-section-h">{isZh ? '活动' : 'Activities'}</div>
         {activities.length === 0 ? <div className="club-mini-empty">{isZh ? '暂无活动' : 'No activities'}</div> : null}
-        {canManage ? (
-          <div className="club-admin-activity">
-            <div className="club-admin-subh">{isZh ? '发布活动' : 'Post activity'}</div>
-            <div className="club-admin-form">
-              <label className="club-field">
-                <div className="club-label">{isZh ? '标签' : 'Tag'}</div>
-                <select className="club-input" value={actTag} onChange={(e) => setActTag(e.target.value)}>
-                  <option value="music">{isZh ? '音乐' : 'Music'}</option>
-                  <option value="tech">{isZh ? '科技' : 'Tech'}</option>
-                  <option value="culture">{isZh ? '文化' : 'Culture'}</option>
-                  <option value="sport">{isZh ? '运动' : 'Sport'}</option>
-                  <option value="art">{isZh ? '艺术' : 'Art'}</option>
-                </select>
-              </label>
-              <label className="club-field">
-                <div className="club-label">{isZh ? '标题' : 'Title'}</div>
-                <input className="club-input" value={actTitle} onChange={(e) => setActTitle(e.target.value)} />
-              </label>
-              <label className="club-field">
-                <div className="club-label">{isZh ? '时间（可填）' : 'Time'}</div>
-                <input className="club-input" value={actTime} onChange={(e) => setActTime(e.target.value)} placeholder="2026-05-01 20:30" />
-              </label>
-              <label className="club-field">
-                <div className="club-label">{isZh ? '地点' : 'Location'}</div>
-                <input className="club-input" value={actLocation} onChange={(e) => setActLocation(e.target.value)} />
-              </label>
-              <label className="club-field">
-                <div className="club-label">{isZh ? '简介' : 'Summary'}</div>
-                <textarea className="club-textarea" rows={2} value={actSummary} onChange={(e) => setActSummary(e.target.value)} />
-              </label>
-              <button type="button" className="club-admin-submit pressable" disabled={!actTitle.trim() || actMut.isPending} onClick={() => actMut.mutate()}>
-                <PlusCircle size={16} aria-hidden /> {actMut.isPending ? (isZh ? '发布中…' : 'Posting…') : (isZh ? '发布活动' : 'Post')}
-              </button>
-            </div>
-          </div>
-        ) : null}
         <div className="club-mini-list">
           {activities.slice(0, 6).map((a) => (
             <div key={a.id} className="club-mini-card">
@@ -353,9 +399,15 @@ function ClubProfile() {
                     type="button"
                     className="club-admin-mini pressable"
                     disabled={statusMut.isPending}
-                    onClick={() => statusMut.mutate({ activityId: a.id, status: 'ended' })}
+                    onClick={() => {
+                      const cur = String(a.status || '');
+                      const next = cur === 'ended' ? 'ongoing' : 'ended';
+                      statusMut.mutate({ activityId: a.id, status: next });
+                    }}
                   >
-                    {isZh ? '标记结束' : 'Mark ended'}
+                    {String(a.status || '') === 'ended'
+                      ? (isZh ? '恢复进行中' : 'Resume')
+                      : (isZh ? '标记结束' : 'Mark ended')}
                   </button>
                 </div>
               ) : null}
@@ -374,10 +426,10 @@ function ClubProfile() {
         {posts.length === 0 ? <div className="club-mini-empty">{isZh ? '暂无内容' : 'No posts'}</div> : null}
         <div className="club-mini-list">
           {posts.slice(0, 6).map((p) => (
-            <div key={p.id} className="club-mini-card">
+            <Link key={p.id} to={`/about/club/post/${p.id}`} className="club-mini-card club-mini-card--link pressable">
               <div className="club-mini-title">{p.content ? String(p.content).slice(0, 40) : (isZh ? '社团日常' : 'Club post')}</div>
               <div className="club-mini-sub">{p.createdAt ? new Date(p.createdAt).toLocaleString() : ''}</div>
-            </div>
+            </Link>
           ))}
         </div>
       </section>

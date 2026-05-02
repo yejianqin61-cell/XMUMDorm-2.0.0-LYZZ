@@ -20,8 +20,10 @@ import SquareTrending from '../pages/SquareTrending';
 import SquareFreshmanGuide from '../pages/SquareFreshmanGuide';
 import SquareErrands from '../pages/SquareErrands';
 import ClubProfile from '../pages/Clubs/ClubProfile';
+import ClubMembersPage from '../pages/Clubs/ClubMembersPage';
 import ActivityDetail from '../pages/Clubs/ActivityDetail';
 import ClubPostDetail from '../pages/Clubs/ClubPostDetail';
+import PublishClubPost from '../pages/Clubs/PublishClubPost';
 import ClubListPage from '../pages/Clubs/ClubListPage';
 import MyClubs from '../pages/Clubs/MyClubs';
 import PublishActivity from '../pages/Clubs/PublishActivity';
@@ -81,8 +83,10 @@ export const layoutRoutes = (
     <Route path="about/club/list" element={<ClubListPage />} />
     <Route path="about/club/my" element={<MyClubs />} />
     <Route path="about/club/new" element={<CreateClub />} />
+    <Route path="about/club/:id/members" element={<ClubMembersPage />} />
     <Route path="about/club/:id" element={<ClubProfile />} />
     <Route path="about/club/activity/:id" element={<ActivityDetail />} />
+    <Route path="about/club/post/new" element={<PublishClubPost />} />
     <Route path="about/club/post/:id" element={<ClubPostDetail />} />
     <Route path="about/club/activity/new" element={<PublishActivity />} />
     <Route path="about/second-hand" element={<SquareSecondHand />} />

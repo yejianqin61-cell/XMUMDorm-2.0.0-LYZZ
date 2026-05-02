@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Heart, MoreHorizontal, SendHorizonal, Smile } from 'lucide-react';
+import { Heart, MoreHorizontal, SendHorizonal, Smile } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import {
@@ -17,6 +17,7 @@ import { API_BASE_URL } from '../api/config';
 import { Toast } from '../context/ToastContext';
 import EmptyState from '../components/EmptyState';
 import ImagePreview from '../components/ImagePreview';
+import { StackedCardCarousel } from '../components/StackedCardCarousel';
 import LikeBurst from '../components/LikeBurst';
 import { formatPostTime } from '../utils/formatTime';
 import { getApiErrorMessage } from '../utils/apiError';
@@ -669,113 +670,3 @@ function PostDetail() {
 }
 
 export default PostDetail;
-
-function mod(n, m) {
-  return ((n % m) + m) % m;
-}
-
-function StackedCardCarousel({ urls, index, onChangeIndex, onOpenPreview, dir }) {
-  const n = Array.isArray(urls) ? urls.length : 0;
-  if (!n) return null;
-
-  const stack = [
-    { scale: 1, x: 0, y: 0, opacity: 1, blur: 0, rotate: 0 },
-    { scale: 0.94, x: 15, y: -15, opacity: 0.6, blur: 4, rotate: -2 },
-    { scale: 0.88, x: 30, y: -30, opacity: 0.3, blur: 8, rotate: -4 },
-  ];
-
-  const count = Math.min(3, n);
-  const ids = Array.from({ length: count }, (_, i) => mod(index + i, n));
-
-  const go = (delta) => {
-    if (n <= 1) return;
-    const next = mod(index + delta, n);
-    onChangeIndex(next, delta > 0 ? 1 : -1);
-  };
-
-  const frontId = ids[0];
-
-  return (
-    <div className="post-detail-carousel" aria-label="Image carousel">
-      <div className="post-detail-carousel-stack">
-        {/* back -> middle */}
-        {ids.slice(1).reverse().map((id, revIdx) => {
-          const pos = ids.length - (revIdx + 1); // 2 or 1
-          const s = stack[pos];
-          return (
-            <motion.button
-              key={`stack-${id}`}
-              type="button"
-              className="post-detail-carousel-card"
-              onClick={() => onOpenPreview(id)}
-              style={{ zIndex: 10 + (3 - pos) }}
-              animate={{
-                scale: s.scale,
-                x: s.x,
-                y: s.y,
-                opacity: s.opacity,
-                rotate: s.rotate,
-                filter: `blur(${s.blur}px)`,
-              }}
-              transition={{ type: 'spring', stiffness: 520, damping: 38 }}
-            >
-              <img src={urls[id]} alt="" className="post-detail-carousel-img" draggable={false} />
-            </motion.button>
-          );
-        })}
-
-        {/* front card with fly-out */}
-        <AnimatePresence initial={false} custom={dir} mode="popLayout">
-          <motion.button
-            key={`front-${frontId}`}
-            type="button"
-            className="post-detail-carousel-card post-detail-carousel-card--front"
-            onClick={() => onOpenPreview(frontId)}
-            drag="x"
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={0.12}
-            onDragEnd={(_, info) => {
-              const swipe = Math.abs(info.offset.x) > 60 || Math.abs(info.velocity.x) > 700;
-              if (!swipe) return;
-              if (info.offset.x < 0) go(1);
-              else go(-1);
-            }}
-            custom={dir}
-            initial={{ scale: 1, x: 0, y: 0, opacity: 1, rotate: 0, filter: 'blur(0px)' }}
-            animate={{ scale: 1, x: 0, y: 0, opacity: 1, rotate: 0, filter: 'blur(0px)' }}
-            exit={(d) => ({
-              x: d > 0 ? 140 : -140,
-              y: -40,
-              rotate: d > 0 ? 14 : -14,
-              opacity: 0,
-              transition: { type: 'spring', stiffness: 520, damping: 40 },
-            })}
-            transition={{ type: 'spring', stiffness: 520, damping: 38 }}
-            style={{ zIndex: 30 }}
-          >
-            <img src={urls[frontId]} alt="" className="post-detail-carousel-img" draggable={false} />
-          </motion.button>
-        </AnimatePresence>
-
-        <button type="button" className="post-detail-carousel-arrow post-detail-carousel-arrow--left" onClick={() => go(-1)} aria-label="Previous">
-          <ChevronLeft size={18} aria-hidden />
-        </button>
-        <button type="button" className="post-detail-carousel-arrow post-detail-carousel-arrow--right" onClick={() => go(1)} aria-label="Next">
-          <ChevronRight size={18} aria-hidden />
-        </button>
-      </div>
-
-      <div className="post-detail-carousel-dots" aria-label="Pagination">
-        {urls.map((_, i) => (
-          <button
-            key={`dot-${i}`}
-            type="button"
-            className={`post-detail-carousel-dot ${i === index ? 'is-active' : ''}`}
-            onClick={() => onChangeIndex(i, i > index ? 1 : -1)}
-            aria-label={`Go to ${i + 1}`}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}

@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Eye, Heart, Plus } from 'lucide-react';
+import { Eye, Heart } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
-import { getClubFeed, listClubActivities, listClubPosts, listClubs } from '../../api/clubs';
+import { getClubFeed } from '../../api/clubs';
 import './Clubs.css';
 
 const FILTERS = [
@@ -27,11 +27,16 @@ function formatDateTime(t) {
   return `${mm}-${dd} ${hh}:${mi}`;
 }
 
+function activityIsDone(x) {
+  return x?.type === 'activity' && String(x?.status || '') === 'ended';
+}
+
 function ClubsHome() {
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
   const { isAdmin } = useAuth();
   const [filter, setFilter] = useState('all');
+  const [lifecycle, setLifecycle] = useState('open');
 
   const q = useQuery({
     queryKey: ['clubs', 'square', 'feed'],
@@ -40,9 +45,10 @@ function ClubsHome() {
 
   const list = useMemo(() => {
     const raw = q.data?.list || [];
-    if (filter === 'all') return raw;
-    return raw.filter((x) => (x.clubCategory || 'all') === filter);
-  }, [q.data, filter]);
+    const byCat = filter === 'all' ? raw : raw.filter((x) => (x.clubCategory || 'all') === filter);
+    if (lifecycle === 'done') return byCat.filter((x) => activityIsDone(x));
+    return byCat.filter((x) => x.type === 'post' || (x.type === 'activity' && !activityIsDone(x)));
+  }, [q.data, filter, lifecycle]);
   const errorMsg = q.error?.message || (isZh ? '加载失败，请稍后再试' : 'Failed to load');
 
   return (
@@ -74,23 +80,42 @@ function ClubsHome() {
         </Link>
       </div>
 
-      {/* Middle filter bar */}
-      <div className="club-filter" role="tablist" aria-label="club content filter">
-        {FILTERS.map((f) => {
-          const active = filter === f.key;
-          return (
-            <button
-              key={f.key}
-              type="button"
-              className={`club-filter-tab ${active ? 'is-active' : ''}`}
-              onClick={() => setFilter(f.key)}
-              role="tab"
-              aria-selected={active}
-            >
-              {isZh ? f.zh : f.en}
-            </button>
-          );
-        })}
+      {/* Middle: category tabs + Open/Done */}
+      <div className="club-filter-bar">
+        <div className="club-filter" role="tablist" aria-label="club category filter">
+          {FILTERS.map((f) => {
+            const active = filter === f.key;
+            return (
+              <button
+                key={f.key}
+                type="button"
+                className={`club-filter-tab ${active ? 'is-active' : ''}`}
+                onClick={() => setFilter(f.key)}
+                role="tab"
+                aria-selected={active}
+              >
+                {isZh ? f.zh : f.en}
+              </button>
+            );
+          })}
+        </div>
+        <div className="club-lifecycle" role="group" aria-label={isZh ? '活动状态筛选' : 'Activity state'}>
+          {(['open', 'done']).map((key) => {
+            const active = lifecycle === key;
+            const label = key === 'open' ? (isZh ? '进行中' : 'Open') : (isZh ? '已结束' : 'Done');
+            return (
+              <button
+                key={key}
+                type="button"
+                className={`club-lifecycle-pill ${active ? 'is-active' : ''}`}
+                onClick={() => setLifecycle(key)}
+                aria-pressed={active}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {q.isLoading ? <div className="state-loading">加载中</div> : null}
@@ -127,11 +152,6 @@ function ClubsHome() {
           );
         })}
       </div>
-
-      {/* Floating action button */}
-      <Link to="/about/club/activity/new" className="club-fab pressable" aria-label={isZh ? '发布活动' : 'Post Activity'}>
-        <Plus size={22} aria-hidden />
-      </Link>
     </div>
   );
 }
