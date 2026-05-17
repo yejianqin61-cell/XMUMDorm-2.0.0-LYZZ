@@ -48,6 +48,7 @@ import ProfileEdit from '../pages/ProfileEdit';
 import Mailbox from '../pages/Mailbox';
 import CanteenArea from '../pages/CanteenArea';
 import CanteenHome from '../pages/CanteenHome';
+import CanteenBannerManage from '../pages/CanteenBannerManage';
 import CanteenSearch from '../pages/CanteenSearch';
 import MerchantList from '../pages/MerchantList';
 import AreaProductRanking from '../pages/AreaProductRanking';
@@ -120,6 +121,7 @@ export const layoutRoutes = (
     <Route path="eat" element={<CanteenHome />} />
     <Route path="eat/map" element={<CanteenArea />} />
     <Route path="eat/search" element={<CanteenSearch />} />
+    <Route path="eat/banners" element={<CanteenBannerManage />} />
     <Route path="eat/rankings" element={<Rankings />} />
     <Route path="eat/:area/ranking" element={<AreaProductRanking />} />
     <Route path="eat/:area" element={<MerchantList />} />

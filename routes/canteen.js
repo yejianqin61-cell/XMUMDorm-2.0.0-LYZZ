@@ -14,7 +14,8 @@ const {
   commentImagesUpload,
   saveProductImages,
   saveCommentImages,
-  shopLogoUpload
+  shopLogoUpload,
+  bannerImageUpload
 } = require('../middleware/upload');
 const { onPrimaryCommentChange } = require('../services/rankingStats');
 const { logAudit } = require('../services/auditLog');
@@ -29,6 +30,68 @@ const RATING_ENUM = ['夯爆了', '顶级', '人上人', 'NPC', '拉完了'];
 
 /** 吃货广场：与 migrations/032_food_square_tag.sql、树洞发帖 tag 一致 */
 const FOOD_SQUARE_TAG_SLUG = 'food-square';
+const BANNER_LINK_TYPES = ['none', 'product', 'shop', 'post', 'url', 'region'];
+const BANNER_TYPES = ['content', 'ad'];
+
+function invalidateBannerCache() {
+  simpleCache.delete('canteen:banners:v1');
+}
+
+async function saveBannerImageFile(file, bannerId) {
+  const ext = path.extname(file.originalname || '').toLowerCase() || '.jpg';
+  const safeExt = ['.jpg', '.jpeg', '.png', '.webp'].includes(ext) ? (ext === '.jpeg' ? '.jpg' : ext) : '.jpg';
+  const key = `canteen/banners/banner_${bannerId}${safeExt}`;
+  await uploadBuffer({ key, body: file.buffer, contentType: guessContentType(file.mimetype, safeExt) });
+  return key;
+}
+
+function parseBannerBody(body) {
+  const raw = body || {};
+  const type = raw.type === 'ad' ? 'ad' : 'content';
+  const title = cleanText(raw.title);
+  const subtitle = raw.subtitle != null && String(raw.subtitle).trim() !== ''
+    ? cleanText(raw.subtitle)
+    : null;
+  let link_type = String(raw.link_type || 'none');
+  if (!BANNER_LINK_TYPES.includes(link_type)) link_type = 'none';
+  let link_target = raw.link_target != null ? String(raw.link_target).trim() : '';
+  if (link_type === 'none') link_target = null;
+  else if (!link_target) link_target = null;
+  const sort_order = parseInt(raw.sort_order, 10);
+  const is_active = raw.is_active === '0' || raw.is_active === 0 || raw.is_active === false ? 0 : 1;
+  const startsRaw = raw.starts_at != null ? String(raw.starts_at).trim() : '';
+  const endsRaw = raw.ends_at != null ? String(raw.ends_at).trim() : '';
+  const starts_at = startsRaw ? new Date(startsRaw) : null;
+  const ends_at = endsRaw ? new Date(endsRaw) : null;
+  return {
+    type,
+    title,
+    subtitle,
+    link_type,
+    link_target,
+    sort_order: Number.isFinite(sort_order) ? sort_order : 0,
+    is_active,
+    starts_at: starts_at && !Number.isNaN(starts_at.getTime()) ? starts_at : null,
+    ends_at: ends_at && !Number.isNaN(ends_at.getTime()) ? ends_at : null,
+  };
+}
+
+function mapBannerAdminRow(r) {
+  return {
+    id: r.id,
+    type: r.type,
+    title: r.title,
+    subtitle: r.subtitle || '',
+    image_url: assetUrl(r.image_url),
+    image_path: r.image_url,
+    link_type: r.link_type,
+    link_target: r.link_target || '',
+    sort_order: r.sort_order,
+    is_active: !!r.is_active,
+    starts_at: r.starts_at,
+    ends_at: r.ends_at,
+  };
+}
 
 /** 未上传图片的商品使用的默认图（与前端 public/products 文件名一致，便于同源 /products/* 加载） */
 const DEFAULT_PRODUCT_IMAGE_PATH = process.env.DEFAULT_PRODUCT_IMAGE_PATH || '/products/default.png';
@@ -1826,7 +1889,7 @@ router.get('/search', async (req, res) => {
         `SELECT p.id, p.content, p.created_at, u.id AS author_id, u.username, u.nickname, u.avatar
          FROM posts p
          JOIN users u ON p.user_id = u.id
-         WHERE p.is_deleted = 0 AND p.is_hidden = 0 AND p.content LIKE ? ESCAPE '\\'
+         WHERE p.deleted_at IS NULL AND p.hidden_by_admin = 0 AND p.content LIKE ? ESCAPE '\\'
          ORDER BY p.created_at DESC
          LIMIT ? OFFSET ?`,
         [safeQ, pageSize + 1, offset]
@@ -1882,6 +1945,198 @@ router.get('/banners', async (req, res) => {
     res.status(200).json({ status: 0, message: '获取成功', data: list });
   } catch (e) {
     console.error('轮播获取错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
+/** 管理员：全部轮播（含未生效） */
+router.get('/banners/all', authenticateToken, async (req, res) => {
+  try {
+    if (!isAdmin(req)) {
+      return res.status(403).json({ status: -1, message: '仅管理员可操作' });
+    }
+    const rows = await query(
+      `SELECT id, type, title, subtitle, image_url, link_type, link_target,
+              sort_order, starts_at, ends_at, is_active
+       FROM canteen_banners
+       ORDER BY sort_order ASC, id ASC`
+    );
+    const list = (rows || []).map(mapBannerAdminRow);
+    res.status(200).json({ status: 0, message: '获取成功', data: list });
+  } catch (e) {
+    console.error('轮播管理列表错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
+router.post('/banners', authenticateToken, (req, res, next) => {
+  bannerImageUpload(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ status: -1, message: err.message || '图片格式或大小不符合要求' });
+    }
+    next();
+  });
+}, async (req, res) => {
+  try {
+    if (!isAdmin(req)) {
+      return res.status(403).json({ status: -1, message: '仅管理员可操作' });
+    }
+    const parsed = parseBannerBody(req.body);
+    if (!parsed.title) {
+      return res.status(400).json({ status: -1, message: '标题不能为空' });
+    }
+    let imagePath = req.body && req.body.image_url != null ? String(req.body.image_url).trim() : '';
+    if (!imagePath && !req.file) {
+      return res.status(400).json({ status: -1, message: '请上传图片或填写图片地址' });
+    }
+    const ins = await query(
+      `INSERT INTO canteen_banners
+         (type, title, subtitle, image_url, link_type, link_target, sort_order, starts_at, ends_at, is_active)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        parsed.type,
+        parsed.title,
+        parsed.subtitle,
+        imagePath || '/products/default.png',
+        parsed.link_type,
+        parsed.link_target,
+        parsed.sort_order,
+        parsed.starts_at,
+        parsed.ends_at,
+        parsed.is_active,
+      ]
+    );
+    const bannerId = ins && ins.insertId;
+    if (req.file && bannerId) {
+      imagePath = await saveBannerImageFile(req.file, bannerId);
+      await query('UPDATE canteen_banners SET image_url = ? WHERE id = ?', [imagePath, bannerId]);
+    }
+    invalidateBannerCache();
+    const rows = await query(
+      `SELECT id, type, title, subtitle, image_url, link_type, link_target,
+              sort_order, starts_at, ends_at, is_active
+       FROM canteen_banners WHERE id = ?`,
+      [bannerId]
+    );
+    logAudit({
+      userId: req.user.id,
+      role: req.user.role,
+      action: 'CANTEEN_BANNER_CREATE',
+      targetType: 'canteen_banner',
+      targetId: bannerId,
+      ip: req.ip || null,
+      userAgent: req.get('user-agent') || null,
+    });
+    res.status(201).json({
+      status: 0,
+      message: '创建成功',
+      data: rows && rows[0] ? mapBannerAdminRow(rows[0]) : { id: bannerId },
+    });
+  } catch (e) {
+    console.error('轮播创建错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
+router.patch('/banners/:id', authenticateToken, (req, res, next) => {
+  bannerImageUpload(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ status: -1, message: err.message || '图片格式或大小不符合要求' });
+    }
+    next();
+  });
+}, async (req, res) => {
+  try {
+    if (!isAdmin(req)) {
+      return res.status(403).json({ status: -1, message: '仅管理员可操作' });
+    }
+    const bannerId = parseInt(req.params.id, 10);
+    if (!bannerId) return res.status(400).json({ status: -1, message: '轮播 ID 无效' });
+    const existing = await query('SELECT id FROM canteen_banners WHERE id = ?', [bannerId]);
+    if (!existing || !existing.length) {
+      return res.status(404).json({ status: -1, message: '轮播不存在' });
+    }
+    const parsed = parseBannerBody(req.body);
+    if (!parsed.title) {
+      return res.status(400).json({ status: -1, message: '标题不能为空' });
+    }
+    const updates = [
+      'type = ?', 'title = ?', 'subtitle = ?', 'link_type = ?', 'link_target = ?',
+      'sort_order = ?', 'starts_at = ?', 'ends_at = ?', 'is_active = ?',
+      'updated_at = CURRENT_TIMESTAMP',
+    ];
+    const params = [
+      parsed.type,
+      parsed.title,
+      parsed.subtitle,
+      parsed.link_type,
+      parsed.link_target,
+      parsed.sort_order,
+      parsed.starts_at,
+      parsed.ends_at,
+      parsed.is_active,
+    ];
+    if (req.file) {
+      const imagePath = await saveBannerImageFile(req.file, bannerId);
+      updates.push('image_url = ?');
+      params.push(imagePath);
+    } else if (req.body && req.body.image_url != null && String(req.body.image_url).trim()) {
+      updates.push('image_url = ?');
+      params.push(String(req.body.image_url).trim());
+    }
+    params.push(bannerId);
+    await query(`UPDATE canteen_banners SET ${updates.join(', ')} WHERE id = ?`, params);
+    invalidateBannerCache();
+    const rows = await query(
+      `SELECT id, type, title, subtitle, image_url, link_type, link_target,
+              sort_order, starts_at, ends_at, is_active
+       FROM canteen_banners WHERE id = ?`,
+      [bannerId]
+    );
+    logAudit({
+      userId: req.user.id,
+      role: req.user.role,
+      action: 'CANTEEN_BANNER_UPDATE',
+      targetType: 'canteen_banner',
+      targetId: bannerId,
+      ip: req.ip || null,
+      userAgent: req.get('user-agent') || null,
+    });
+    res.status(200).json({
+      status: 0,
+      message: '更新成功',
+      data: rows && rows[0] ? mapBannerAdminRow(rows[0]) : null,
+    });
+  } catch (e) {
+    console.error('轮播更新错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
+router.delete('/banners/:id', authenticateToken, async (req, res) => {
+  try {
+    if (!isAdmin(req)) {
+      return res.status(403).json({ status: -1, message: '仅管理员可操作' });
+    }
+    const bannerId = parseInt(req.params.id, 10);
+    if (!bannerId) return res.status(400).json({ status: -1, message: '轮播 ID 无效' });
+    const result = await query('DELETE FROM canteen_banners WHERE id = ?', [bannerId]);
+    if (!result || result.affectedRows === 0) {
+      return res.status(404).json({ status: -1, message: '轮播不存在' });
+    }
+    invalidateBannerCache();
+    logAudit({
+      userId: req.user.id,
+      role: req.user.role,
+      action: 'CANTEEN_BANNER_DELETE',
+      targetType: 'canteen_banner',
+      targetId: bannerId,
+      ip: req.ip || null,
+      userAgent: req.get('user-agent') || null,
+    });
+    res.status(200).json({ status: 0, message: '删除成功' });
+  } catch (e) {
+    console.error('轮播删除错误:', e);
     res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
   }
 });
@@ -1965,7 +2220,7 @@ router.get('/food-articles', async (req, res) => {
       `SELECT COUNT(*) AS total
        FROM posts p
        INNER JOIN post_tag_map ptm ON ptm.post_id = p.id AND ptm.tag_id = ?
-       WHERE p.is_deleted = 0 AND p.is_hidden = 0`,
+       WHERE p.deleted_at IS NULL AND p.hidden_by_admin = 0`,
       [tagId]
     );
     const total = (countRows && countRows[0]) ? countRows[0].total : 0;
@@ -1976,11 +2231,11 @@ router.get('/food-articles', async (req, res) => {
         `SELECT p.id, p.title, p.content, p.user_id, p.created_at,
                 u.username, u.nickname, u.avatar,
                 (SELECT COUNT(*) FROM post_likes WHERE post_id = p.id) AS like_count,
-                (SELECT COUNT(*) FROM comments WHERE post_id = p.id AND is_deleted = 0) AS comment_count
+                (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count
          FROM posts p
          INNER JOIN post_tag_map ptm ON ptm.post_id = p.id AND ptm.tag_id = ?
          JOIN users u ON p.user_id = u.id
-         WHERE p.is_deleted = 0 AND p.is_hidden = 0
+         WHERE p.deleted_at IS NULL AND p.hidden_by_admin = 0
          ORDER BY p.created_at DESC
          LIMIT ? OFFSET ?`,
         [tagId, pageSize + 1, offset]
@@ -1992,11 +2247,11 @@ router.get('/food-articles', async (req, res) => {
           `SELECT p.id, p.content, p.user_id, p.created_at,
                   u.username, u.nickname, u.avatar,
                   (SELECT COUNT(*) FROM post_likes WHERE post_id = p.id) AS like_count,
-                  (SELECT COUNT(*) FROM comments WHERE post_id = p.id AND is_deleted = 0) AS comment_count
+                  (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count
            FROM posts p
            INNER JOIN post_tag_map ptm ON ptm.post_id = p.id AND ptm.tag_id = ?
            JOIN users u ON p.user_id = u.id
-           WHERE p.is_deleted = 0 AND p.is_hidden = 0
+           WHERE p.deleted_at IS NULL AND p.hidden_by_admin = 0
            ORDER BY p.created_at DESC
            LIMIT ? OFFSET ?`,
           [tagId, pageSize + 1, offset]

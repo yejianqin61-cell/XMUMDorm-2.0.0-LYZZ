@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
 import { getCanteenStrings } from '../../i18n/canteenStrings';
 import { getCanteenBanners } from '../../api/canteen';
 import { QK } from '../../query/queryKeys';
@@ -14,8 +15,11 @@ const LINK_NAV = {
   region: (target) => `/eat/${target}`,
 };
 
+const AUTOPLAY_MS = 4000;
+
 export default function CanteenBannerCarousel() {
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
   const t = getCanteenStrings(isZh);
@@ -29,13 +33,29 @@ export default function CanteenBannerCarousel() {
   const intervalRef = useRef(null);
 
   const len = banners.length;
-  const next = useCallback(() => { if (len > 0) setIdx((p) => (p + 1) % len); }, [len]);
+  const next = useCallback(() => {
+    if (len > 0) setIdx((p) => (p + 1) % len);
+  }, [len]);
+  const prev = useCallback(() => {
+    if (len > 0) setIdx((p) => (p - 1 + len) % len);
+  }, [len]);
+
+  const resetAutoplay = useCallback(() => {
+    clearInterval(intervalRef.current);
+    if (len > 1) {
+      intervalRef.current = setInterval(next, AUTOPLAY_MS);
+    }
+  }, [len, next]);
 
   useEffect(() => {
-    if (len <= 1) return;
-    intervalRef.current = setInterval(next, 4000);
+    if (len <= 1) return undefined;
+    intervalRef.current = setInterval(next, AUTOPLAY_MS);
     return () => clearInterval(intervalRef.current);
   }, [len, next]);
+
+  useEffect(() => {
+    if (idx >= len && len > 0) setIdx(0);
+  }, [idx, len]);
 
   const handleClick = (b) => {
     if (b.link_type === 'url' && b.link_target) {
@@ -46,6 +66,11 @@ export default function CanteenBannerCarousel() {
     if (path && b.link_target) {
       navigate(path(b.link_target));
     }
+  };
+
+  const stopNav = (e) => {
+    e.stopPropagation();
+    resetAutoplay();
   };
 
   if (isLoading) {
@@ -62,19 +87,67 @@ export default function CanteenBannerCarousel() {
 
   return (
     <div className="canteen-banner-wrap">
-      <div className="canteen-banner-card" onClick={() => handleClick(b)}>
-        <img
-          src={productImageUrl(b.image_url)}
-          alt={b.title}
-          className="canteen-banner-img"
-          loading="lazy"
-        />
-        <div className="canteen-banner-info">
-          <div className="canteen-banner-title-row">
-            <span className="canteen-banner-title">{b.title}</span>
-            {b.type === 'ad' && <span className="canteen-banner-ad-tag">{t.bannerAd}</span>}
+      <div className="canteen-banner-viewport">
+        {isAdmin && (
+          <Link
+            to="/eat/banners"
+            className="canteen-banner-admin-link"
+            onClick={stopNav}
+          >
+            {t.bannerManage}
+          </Link>
+        )}
+        {len > 1 && (
+          <>
+            <button
+              type="button"
+              className="canteen-banner-nav canteen-banner-nav--prev"
+              aria-label={t.bannerPrev}
+              onClick={(e) => {
+                stopNav(e);
+                prev();
+              }}
+            >
+              <span aria-hidden>‹</span>
+            </button>
+            <button
+              type="button"
+              className="canteen-banner-nav canteen-banner-nav--next"
+              aria-label={t.bannerNext}
+              onClick={(e) => {
+                stopNav(e);
+                next();
+              }}
+            >
+              <span aria-hidden>›</span>
+            </button>
+          </>
+        )}
+        <div
+          className="canteen-banner-card"
+          role="button"
+          tabIndex={0}
+          onClick={() => handleClick(b)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleClick(b);
+            }
+          }}
+        >
+          <img
+            src={productImageUrl(b.image_url)}
+            alt={b.title}
+            className="canteen-banner-img"
+            loading="lazy"
+          />
+          <div className="canteen-banner-info">
+            <div className="canteen-banner-title-row">
+              <span className="canteen-banner-title">{b.title}</span>
+              {b.type === 'ad' && <span className="canteen-banner-ad-tag">{t.bannerAd}</span>}
+            </div>
+            {b.subtitle && <span className="canteen-banner-subtitle">{b.subtitle}</span>}
           </div>
-          {b.subtitle && <span className="canteen-banner-subtitle">{b.subtitle}</span>}
         </div>
       </div>
       {len > 1 && (
@@ -85,7 +158,11 @@ export default function CanteenBannerCarousel() {
               type="button"
               className={`canteen-banner-dot${i === idx ? ' canteen-banner-dot--active' : ''}`}
               aria-label={t.bannerSlide(i + 1)}
-              onClick={() => { setIdx(i); clearInterval(intervalRef.current); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIdx(i);
+                resetAutoplay();
+              }}
             />
           ))}
         </div>

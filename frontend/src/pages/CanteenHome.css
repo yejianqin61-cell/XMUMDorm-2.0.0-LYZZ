@@ -90,6 +90,57 @@
   position: relative;
 }
 
+.canteen-banner-viewport {
+  position: relative;
+}
+
+.canteen-banner-nav {
+  position: absolute;
+  top: 50%;
+  z-index: 3;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 22px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.canteen-banner-nav:active {
+  background: rgba(0, 0, 0, 0.5);
+}
+.canteen-banner-nav--prev {
+  left: 8px;
+}
+.canteen-banner-nav--next {
+  right: 8px;
+}
+
+.canteen-banner-admin-link {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 4;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  text-decoration: none;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
 .canteen-banner-card {
   border-radius: var(--post-ios-radius-lg);
   overflow: hidden;
@@ -171,6 +222,169 @@
   border-radius: var(--post-ios-radius-lg);
   background: var(--post-ios-fill);
   animation: canteen-shimmer 1.5s infinite;
+}
+
+/* ====== 轮播管理（管理员） ====== */
+.canteen-banner-admin-page .canteen-home-inner {
+  padding-bottom: 32px;
+}
+.canteen-banner-admin-hint {
+  font-size: 13px;
+  color: var(--post-ios-secondary-label);
+  margin: 0 0 12px;
+  line-height: 1.45;
+}
+.canteen-muted {
+  color: var(--post-ios-tertiary-label);
+  font-size: 13px;
+}
+.canteen-error {
+  color: var(--post-ios-red);
+  font-size: 13px;
+}
+.canteen-banner-admin-list {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.canteen-banner-admin-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: var(--post-ios-radius-lg);
+  background: var(--post-ios-secondary-bg);
+  box-shadow: var(--post-ios-shadow-card);
+}
+.canteen-banner-admin-thumb {
+  width: 72px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+  background: var(--post-ios-fill);
+}
+.canteen-banner-admin-item-body {
+  flex: 1;
+  min-width: 0;
+}
+.canteen-banner-admin-item-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--post-ios-label);
+}
+.canteen-banner-admin-inactive {
+  margin-left: 6px;
+  font-size: 10px;
+  color: var(--post-ios-red);
+  border: 1px solid var(--post-ios-red);
+  border-radius: 4px;
+  padding: 0 4px;
+}
+.canteen-banner-admin-item-sub,
+.canteen-banner-admin-item-meta {
+  font-size: 12px;
+  color: var(--post-ios-secondary-label);
+  margin-top: 2px;
+}
+.canteen-banner-admin-item-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.canteen-banner-admin-item-actions button {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--post-ios-separator);
+  background: var(--post-ios-bg);
+  color: var(--post-ios-accent);
+  cursor: pointer;
+}
+.canteen-banner-admin-del {
+  color: var(--post-ios-red) !important;
+}
+.canteen-banner-admin-add {
+  width: 100%;
+  margin-bottom: 16px;
+  padding: 10px;
+  border-radius: var(--post-ios-radius-lg);
+  border: 1px dashed var(--post-ios-separator);
+  background: transparent;
+  color: var(--post-ios-accent);
+  font-weight: 600;
+  cursor: pointer;
+}
+.canteen-banner-admin-form {
+  padding: 14px;
+  border-radius: var(--post-ios-radius-lg);
+  background: var(--post-ios-secondary-bg);
+  box-shadow: var(--post-ios-shadow-card);
+}
+.canteen-banner-admin-form-title {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 700;
+}
+.canteen-banner-admin-preview {
+  width: 100%;
+  max-height: 140px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  background: var(--post-ios-fill);
+}
+.canteen-banner-admin-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--post-ios-secondary-label);
+  margin-bottom: 10px;
+}
+.canteen-banner-admin-label input,
+.canteen-banner-admin-label select {
+  font-size: 14px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--post-ios-separator);
+  background: var(--post-ios-bg);
+  color: var(--post-ios-label);
+}
+.canteen-banner-admin-check {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+.canteen-banner-admin-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+.canteen-banner-admin-save {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 10px;
+  background: var(--post-ios-accent);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+.canteen-banner-admin-save:disabled {
+  opacity: 0.6;
+}
+.canteen-banner-admin-cancel {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--post-ios-separator);
+  background: var(--post-ios-bg);
+  color: var(--post-ios-label);
+  cursor: pointer;
 }
 
 @keyframes canteen-shimmer {

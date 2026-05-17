@@ -66,6 +66,7 @@ export const QK = {
   /** V3.0 食堂首页 */
   canteenSearch: (q, type) => ['canteen', 'search', q || '', type || 'all'],
   canteenBanners: () => ['canteen', 'banners'],
+  canteenBannersAdmin: () => ['canteen', 'banners', 'admin'],
   canteenPickRandom: (excludeId) => ['canteen', 'pickRandom', excludeId || 0],
   canteenFoodArticles: (page, pageSize) => ['canteen', 'foodArticles', page, pageSize],
 };

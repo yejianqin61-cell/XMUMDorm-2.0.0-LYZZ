@@ -243,6 +243,45 @@ export function getCanteenBanners() {
   return get('/api/canteen/banners');
 }
 
+/** 管理员：全部轮播 */
+export function getCanteenBannersAdmin() {
+  return get('/api/canteen/banners/all');
+}
+
+/**
+ * 创建轮播。有 imageFile 时用 FormData，否则 JSON（需 image_url）
+ */
+export function createCanteenBanner(payload, imageFile) {
+  if (imageFile) {
+    const form = new FormData();
+    Object.entries(payload || {}).forEach(([k, v]) => {
+      if (v != null && v !== '') form.append(k, v);
+    });
+    form.append('image', imageFile);
+    return post('/api/canteen/banners', form);
+  }
+  return post('/api/canteen/banners', payload);
+}
+
+/**
+ * 更新轮播。有 imageFile 时用 FormData
+ */
+export function updateCanteenBanner(id, payload, imageFile) {
+  if (imageFile) {
+    const form = new FormData();
+    Object.entries(payload || {}).forEach(([k, v]) => {
+      if (v != null && v !== '') form.append(k, v);
+    });
+    form.append('image', imageFile);
+    return patch(`/api/canteen/banners/${id}`, form);
+  }
+  return patch(`/api/canteen/banners/${id}`, payload);
+}
+
+export function deleteCanteenBanner(id) {
+  return del(`/api/canteen/banners/${id}`);
+}
+
 /** 随机推荐一道菜，exclude_id 可选 */
 export function pickRandomMeal(excludeId) {
   const q = excludeId != null && excludeId > 0 ? `?exclude_id=${excludeId}` : '';

@@ -44,6 +44,7 @@ const TITLE_BY_PATH_ZH = {
   '/myzone/diary': '多年日记本',
   '/eat/search': '搜索',
   '/eat/map': '食堂地图',
+  '/eat/banners': '轮播管理',
 };
 
 const TITLE_BY_PATH_EN = {
@@ -62,6 +63,7 @@ const TITLE_BY_PATH_EN = {
   '/myzone/diary': 'Diary',
   '/eat/search': 'Search',
   '/eat/map': 'Canteen Map',
+  '/eat/banners': 'Carousel',
 };
 
 /** 需要显示返回键的路径（含 /post/:id 详情页、帖子搜索/话题） */

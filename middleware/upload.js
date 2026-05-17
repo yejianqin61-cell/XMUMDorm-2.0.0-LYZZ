@@ -70,6 +70,19 @@ const shopLogoUpload = multer({
   }
 }).single('logo');
 
+/** 食堂轮播图：单张静态图，字段名 image */
+const bannerImageUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_IMAGE_MIMES.includes(file.mimetype) || !ALLOWED_IMAGE_EXT.includes(ext)) {
+      return cb(new Error('仅支持 jpg / png / webp 格式'));
+    }
+    cb(null, true);
+  }
+}).single('image');
+
 /**
  * 将内存中的帖子图片上传：若已配置对象存储则上传到云存储，否则写入本地 uploads/posts/
  * 返回的 key 统一为 posts/post_<postId>_<index>.<ext>，供 assetUrl 拼接 URL
@@ -190,6 +203,7 @@ module.exports = {
   postImagesUpload,
   avatarUpload,
   shopLogoUpload,
+  bannerImageUpload,
   savePostImages,
   productImagesUpload,
   commentImagesUpload,
