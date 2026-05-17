@@ -62,4 +62,10 @@ export const QK = {
   clubsList: (params) => ['clubs', 'list', params || {}],
   clubPosts: (params) => ['clubs', 'posts', params || {}],
   clubProfile: (id) => ['clubs', 'profile', id],
+
+  /** V3.0 食堂首页 */
+  canteenSearch: (q, type) => ['canteen', 'search', q || '', type || 'all'],
+  canteenBanners: () => ['canteen', 'banners'],
+  canteenPickRandom: (excludeId) => ['canteen', 'pickRandom', excludeId || 0],
+  canteenFoodArticles: (page, pageSize) => ['canteen', 'foodArticles', page, pageSize],
 };

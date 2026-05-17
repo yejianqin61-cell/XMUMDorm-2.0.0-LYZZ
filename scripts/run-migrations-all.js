@@ -51,6 +51,7 @@ const MIGRATIONS = [
   { file: '006_audit_logs.sql', dir: path.join(ROOT, 'migrations') },
   { file: '007_product_favorites.sql', dir: path.join(ROOT, 'migrations') },
   { file: '008_email_verification_codes.sql', dir: path.join(ROOT, 'migrations') },
+  { file: '031_canteen_banners.sql', dir: path.join(ROOT, 'migrations') },
 ];
 
 async function run() {

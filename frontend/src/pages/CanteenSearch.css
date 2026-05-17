@@ -1,0 +1,175 @@
+/* 食堂统一搜索页 */
+.canteen-search-page {
+  min-height: 100%;
+  padding: 0 16px;
+  padding-bottom: calc(var(--tabbar-height, 72px) + var(--safe-bottom, 0px) + 24px);
+}
+
+/* ====== 搜索栏 ====== */
+.canteen-search-form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--post-ios-bg-grouped);
+}
+
+.canteen-search-input {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: var(--post-ios-radius-md);
+  border: 1px solid var(--post-ios-separator);
+  background: var(--post-ios-card);
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--post-ios-label);
+  outline: none;
+}
+.canteen-search-input::placeholder {
+  color: var(--post-ios-tertiary-label);
+}
+
+.canteen-search-cancel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--post-ios-accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* ====== 类型 Tab ====== */
+.canteen-search-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 0 0 10px;
+}
+
+.canteen-search-tab {
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid var(--post-ios-separator);
+  border-radius: 999px;
+  background: var(--post-ios-card);
+  color: var(--post-ios-secondary-label);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 180ms ease;
+}
+.canteen-search-tab--active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* ====== 结果 ====== */
+.canteen-search-results {
+  padding-top: 8px;
+}
+
+.canteen-search-empty-hint {
+  text-align: center;
+  padding: 60px 20px;
+  font-size: 14px;
+  color: var(--post-ios-tertiary-label);
+}
+
+.canteen-search-section {
+  margin-bottom: 20px;
+}
+
+.canteen-search-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--post-ios-secondary-label);
+  margin: 0 0 10px;
+}
+
+.canteen-search-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.canteen-search-product-card {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  border-radius: var(--post-ios-radius-md);
+  background: var(--post-ios-card);
+  box-shadow: var(--post-ios-shadow-card);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.canteen-search-product-card:active {
+  opacity: 0.8;
+}
+
+.canteen-search-product-img {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--post-ios-fill);
+}
+
+.canteen-search-product-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.canteen-search-product-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--post-ios-label);
+}
+
+.canteen-search-product-meta {
+  font-size: 12px;
+  color: var(--post-ios-secondary-label);
+  margin-top: 2px;
+}
+
+/* ====== 文章结果 ====== */
+.canteen-search-article-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.canteen-search-article-item {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--post-ios-separator);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.canteen-search-article-item:last-child {
+  border-bottom: none;
+}
+.canteen-search-article-item:active {
+  opacity: 0.7;
+}
+
+.canteen-search-article-excerpt {
+  margin: 0 0 4px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--post-ios-label);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.canteen-search-article-meta {
+  font-size: 12px;
+  color: var(--post-ios-tertiary-label);
+}

@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import TabBar from './TabBar';
 import { getTabIndex, getTabRootPath } from './TabBar';
 import TreeHole from '../pages/TreeHole';
-import CanteenArea from '../pages/CanteenArea';
+import CanteenHome from '../pages/CanteenHome';
 import AboutUs from '../pages/AboutUs';
 import MyZone from '../pages/MyZone';
 import { useLanguage } from '../context/LanguageContext';
@@ -23,7 +23,7 @@ const UNREAD_ANN_STALE_MS = 3 * 60 * 1000;
 
 const TAB_ROOT_COMPONENTS = {
   '/': TreeHole,
-  '/eat': CanteenArea,
+  '/eat': CanteenHome,
   '/about': AboutUs,
   '/myzone': MyZone,
 };
@@ -42,6 +42,8 @@ const TITLE_BY_PATH_ZH = {
   '/about/profile': '关于我们',
   '/myzone/schedule': '课程表',
   '/myzone/diary': '多年日记本',
+  '/eat/search': '搜索',
+  '/eat/map': '食堂地图',
 };
 
 const TITLE_BY_PATH_EN = {
@@ -58,6 +60,8 @@ const TITLE_BY_PATH_EN = {
   '/about/profile': 'About us',
   '/myzone/schedule': 'Schedule',
   '/myzone/diary': 'Diary',
+  '/eat/search': 'Search',
+  '/eat/map': 'Canteen Map',
 };
 
 /** 需要显示返回键的路径（含 /post/:id 详情页、帖子搜索/话题） */
@@ -115,7 +119,7 @@ function Layout() {
 
   // iOS Safari 对 overscroll-behavior 支持不稳定：对“不可滚动”的 Tab（Eat/Square）全局禁止下拉回弹
   useEffect(() => {
-    const shouldLock = isRootTabPage && (activeTabIndex === 1 || activeTabIndex === 2);
+    const shouldLock = isRootTabPage && activeTabIndex === 2;
     if (!shouldLock) return;
     const handler = (e) => {
       e.preventDefault();
@@ -253,8 +257,8 @@ function Layout() {
                 <div className="tab-stack-pane" data-active={activeTabIndex === 0} aria-label="TreeHole">
                   {mountedTabs.has(0) ? <TreeHole /> : null}
                 </div>
-                <div className="tab-stack-pane tab-stack-pane--no-scroll" data-active={activeTabIndex === 1} aria-label="Eat" onTouchMove={preventTouchScroll}>
-                  {mountedTabs.has(1) ? <CanteenArea /> : null}
+                <div className="tab-stack-pane" data-active={activeTabIndex === 1} aria-label="Eat">
+                  {mountedTabs.has(1) ? <CanteenHome /> : null}
                 </div>
                 <div className="tab-stack-pane tab-stack-pane--no-scroll" data-active={activeTabIndex === 2} aria-label="Square" onTouchMove={preventTouchScroll}>
                   {mountedTabs.has(2) ? <AboutUs /> : null}

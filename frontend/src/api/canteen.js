@@ -228,3 +228,29 @@ export function getMyFavorites(options = {}) {
   const { page = 1, pageSize = 20 } = options;
   return get(`/api/canteen/my-favorites?page=${page}&pageSize=${pageSize}`);
 }
+
+// ---------- V3.0 首页新增 ----------
+
+/** 统一搜索：q, page, pageSize, type */
+export function searchCanteen(q, options = {}) {
+  const { page = 1, pageSize = 10, type = 'all' } = options;
+  const qe = encodeURIComponent(String(q || '').trim());
+  return get(`/api/canteen/search?q=${qe}&page=${page}&pageSize=${pageSize}&type=${type}`);
+}
+
+/** 获取轮播列表 */
+export function getCanteenBanners() {
+  return get('/api/canteen/banners');
+}
+
+/** 随机推荐一道菜，exclude_id 可选 */
+export function pickRandomMeal(excludeId) {
+  const q = excludeId != null && excludeId > 0 ? `?exclude_id=${excludeId}` : '';
+  return get(`/api/canteen/pick-random${q}`);
+}
+
+/** 吃货广场文章流 */
+export function getFoodArticles(options = {}) {
+  const { page = 1, pageSize = 10 } = options;
+  return get(`/api/canteen/food-articles?page=${page}&pageSize=${pageSize}`);
+}

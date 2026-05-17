@@ -47,6 +47,8 @@ import MyReviews from '../pages/MyReviews';
 import ProfileEdit from '../pages/ProfileEdit';
 import Mailbox from '../pages/Mailbox';
 import CanteenArea from '../pages/CanteenArea';
+import CanteenHome from '../pages/CanteenHome';
+import CanteenSearch from '../pages/CanteenSearch';
 import MerchantList from '../pages/MerchantList';
 import AreaProductRanking from '../pages/AreaProductRanking';
 import FoodList from '../pages/FoodList';
@@ -115,7 +117,9 @@ export const layoutRoutes = (
     <Route path="myzone/schedule" element={<Schedule />} />
     <Route path="myzone/diary" element={<Diary />} />
     <Route path="mailbox" element={<Mailbox />} />
-    <Route path="eat" element={<CanteenArea />} />
+    <Route path="eat" element={<CanteenHome />} />
+    <Route path="eat/map" element={<CanteenArea />} />
+    <Route path="eat/search" element={<CanteenSearch />} />
     <Route path="eat/rankings" element={<Rankings />} />
     <Route path="eat/:area/ranking" element={<AreaProductRanking />} />
     <Route path="eat/:area" element={<MerchantList />} />

@@ -1771,4 +1771,215 @@ router.get('/rankings/active-users', async (req, res) => {
   }
 });
 
+// ============================================
+// V3.0 食堂首页改版新增路由
+// ============================================
+
+// ---------- 模块一：统一搜索 ----------
+router.get('/search', async (req, res) => {
+  try {
+    const q = (req.query.q || '').trim();
+    if (!q || q.length > 50) {
+      return res.status(200).json({ status: -1, message: !q ? '请输入搜索关键词' : '搜索词过长（最多50字符）', data: { products: [], articles: [], hasMore: { products: false, articles: false } } });
+    }
+    const type = (req.query.type || 'all').trim();
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const pageSize = Math.min(50, Math.max(1, parseInt(req.query.pageSize, 10) || 10));
+    const offset = (page - 1) * pageSize;
+    const safeQ = `%${q.replace(/[%_\\]/g, '\\$&')}%`;
+
+    let products = [];
+    let articles = [];
+    let hasMoreP = false;
+    let hasMoreA = false;
+
+    if (type === 'all' || type === 'products') {
+      const rows = await query(
+        `SELECT p.id, p.name, p.shop_id, s.name AS shop_name, s.region_id, r.code AS region_code,
+                p.cover_url, p.comprehensive_score
+         FROM products p
+         JOIN shops s ON p.shop_id = s.id AND s.deleted_at IS NULL
+         JOIN regions r ON s.region_id = r.id
+         WHERE p.deleted_at IS NULL AND p.name LIKE ? ESCAPE '\\'
+         ORDER BY p.comprehensive_score DESC, p.id DESC
+         LIMIT ? OFFSET ?`,
+        [safeQ, pageSize + 1, offset]
+      );
+      hasMoreP = rows.length > pageSize;
+      products = rows.slice(0, pageSize).map((r) => ({
+        id: r.id,
+        name: r.name,
+        shop_id: r.shop_id,
+        shop_name: r.shop_name,
+        region_code: r.region_code,
+        cover_url: assetUrl(r.cover_url),
+        comprehensive_score: r.comprehensive_score,
+      }));
+    }
+
+    if (type === 'all' || type === 'articles') {
+      // 搜索帖子内容，按创建时间排序
+      const rows = await query(
+        `SELECT p.id, p.content, p.created_at, u.id AS author_id, u.username, u.nickname, u.avatar
+         FROM posts p
+         JOIN users u ON p.user_id = u.id
+         WHERE p.is_deleted = 0 AND p.is_hidden = 0 AND p.content LIKE ? ESCAPE '\\'
+         ORDER BY p.created_at DESC
+         LIMIT ? OFFSET ?`,
+        [safeQ, pageSize + 1, offset]
+      );
+      hasMoreA = rows.length > pageSize;
+      articles = rows.slice(0, pageSize).map((r) => {
+        const plain = (r.content || '').replace(/<[^>]*>/g, '').replace(/!\[.*?\]\([^)]*\)/g, '').replace(/\n+/g, ' ').trim();
+        return {
+          id: r.id,
+          title_or_excerpt: plain.slice(0, 80) || '（无文字内容）',
+          author: { id: r.author_id, name: r.nickname || r.username || '匿名 Anonymous', avatar: assetUrl(r.avatar) },
+          created_at: r.created_at,
+        };
+      });
+    }
+
+    res.status(200).json({
+      status: 0,
+      message: '搜索成功',
+      data: { q, products, articles, hasMore: { products: false, articles: false } },
+    });
+  } catch (e) {
+    console.error('食堂搜索错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
+// ---------- 模块二：推荐轮播 ----------
+router.get('/banners', async (req, res) => {
+  try {
+    const now = new Date();
+    const rows = await simpleCache.getOrSet('canteen:banners:v1', 5 * 60 * 1000, async () => {
+      return await query(
+        `SELECT id, type, title, subtitle, image_url, link_type, link_target
+         FROM canteen_banners
+         WHERE is_active = 1
+           AND (starts_at IS NULL OR starts_at <= ?)
+           AND (ends_at IS NULL OR ends_at >= ?)
+         ORDER BY sort_order ASC, id ASC
+         LIMIT 10`,
+        [now, now]
+      );
+    });
+    const list = (rows || []).map((r) => ({
+      id: r.id,
+      type: r.type,
+      title: r.title,
+      subtitle: r.subtitle || '',
+      image_url: assetUrl(r.image_url),
+      link_type: r.link_type,
+      link_target: r.link_target || '',
+    }));
+    res.status(200).json({ status: 0, message: '获取成功', data: list });
+  } catch (e) {
+    console.error('轮播获取错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
+// ---------- 模块五：今天吃什么 ----------
+router.get('/pick-random', async (req, res) => {
+  try {
+    const excludeId = parseInt(req.query.exclude_id, 10) || 0;
+    const rows = await query(
+      `SELECT p.id, p.name, p.cover_url, p.comprehensive_score,
+              s.id AS shop_id, s.name AS shop_name, r.code AS region_code
+       FROM products p
+       JOIN shops s ON p.shop_id = s.id AND s.deleted_at IS NULL
+       JOIN regions r ON s.region_id = r.id
+       WHERE p.deleted_at IS NULL
+         AND p.cover_url IS NOT NULL AND p.cover_url != ''
+         AND p.comprehensive_score > 0
+         ${excludeId > 0 ? 'AND p.id != ?' : ''}
+       ORDER BY RAND()
+       LIMIT 1`,
+      excludeId > 0 ? [excludeId] : []
+    );
+    if (!rows || rows.length === 0) {
+      return res.status(200).json({ status: -1, message: '暂无推荐菜品', data: null });
+    }
+    const r = rows[0];
+    res.status(200).json({
+      status: 0,
+      message: '随机推荐成功',
+      data: {
+        id: r.id,
+        name: r.name,
+        cover_url: assetUrl(r.cover_url),
+        comprehensive_score: r.comprehensive_score,
+        shop_id: r.shop_id,
+        shop_name: r.shop_name,
+        region_code: r.region_code,
+      },
+    });
+  } catch (e) {
+    console.error('随机推荐错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
+// ---------- 模块六：吃货广场 ----------
+router.get('/food-articles', async (req, res) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const pageSize = Math.min(20, Math.max(1, parseInt(req.query.pageSize, 10) || 10));
+    const offset = (page - 1) * pageSize;
+
+    // 方案 A：返回近 90 天内带图且内容较长的帖子作为“美食文章”流
+    // 后续可通过 tag/channel 精确筛选
+    const countRows = await query(
+      `SELECT COUNT(*) AS total
+       FROM posts p
+       WHERE p.is_deleted = 0 AND p.is_hidden = 0
+         AND p.created_at >= DATE_SUB(NOW(), INTERVAL 90 DAY)
+         AND CHAR_LENGTH(p.content) > 30
+         AND p.content LIKE '%<img%'`
+    );
+    const total = (countRows && countRows[0]) ? countRows[0].total : 0;
+
+    const rows = await query(
+      `SELECT p.id, p.content, p.user_id, p.created_at,
+              u.username, u.nickname, u.avatar,
+              (SELECT COUNT(*) FROM post_likes WHERE post_id = p.id) AS like_count,
+              (SELECT COUNT(*) FROM comments WHERE post_id = p.id AND is_deleted = 0) AS comment_count
+       FROM posts p
+       JOIN users u ON p.user_id = u.id
+       WHERE p.is_deleted = 0 AND p.is_hidden = 0
+         AND p.created_at >= DATE_SUB(NOW(), INTERVAL 90 DAY)
+         AND CHAR_LENGTH(p.content) > 30
+         AND p.content LIKE '%<img%'
+       ORDER BY p.created_at DESC
+       LIMIT ? OFFSET ?`,
+      [pageSize + 1, offset]
+    );
+    const hasMore = rows.length > pageSize;
+    const list = rows.slice(0, pageSize).map((r) => {
+      const plain = (r.content || '').replace(/<[^>]*>/g, '').replace(/!\[.*?\]\([^)]*\)/g, '').replace(/\n+/g, ' ').trim();
+      // 提取第一张图片
+      let cover = null;
+      const imgMatch = r.content.match(/<img[^>]+src="([^"]+)"/);
+      if (imgMatch) cover = imgMatch[1];
+      return {
+        id: r.id,
+        title_or_excerpt: plain.slice(0, 100) || '（无文字内容）',
+        cover_url: cover,
+        author: { id: r.user_id, name: r.nickname || r.username || '匿名 Anonymous', avatar: assetUrl(r.avatar) },
+        like_count: r.like_count || 0,
+        comment_count: r.comment_count || 0,
+        created_at: r.created_at,
+      };
+    });
+    res.status(200).json({ status: 0, message: '获取成功', data: { list, total, page, pageSize, hasMore } });
+  } catch (e) {
+    console.error('吃货广场错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
 module.exports = router;
