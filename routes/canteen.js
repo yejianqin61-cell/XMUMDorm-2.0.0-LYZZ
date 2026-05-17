@@ -39,7 +39,9 @@ function invalidateBannerCache() {
 
 async function saveBannerImageFile(file, bannerId) {
   const ext = path.extname(file.originalname || '').toLowerCase() || '.jpg';
-  const safeExt = ['.jpg', '.jpeg', '.png', '.webp'].includes(ext) ? (ext === '.jpeg' ? '.jpg' : ext) : '.jpg';
+  const safeExt = ['.jpg', '.jpeg', '.png', '.webp', '.gif'].includes(ext)
+    ? (ext === '.jpeg' ? '.jpg' : ext)
+    : '.jpg';
   const key = `canteen/banners/banner_${bannerId}${safeExt}`;
   await uploadBuffer({ key, body: file.buffer, contentType: guessContentType(file.mimetype, safeExt) });
   return key;
@@ -1852,6 +1854,7 @@ router.get('/search', async (req, res) => {
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const pageSize = Math.min(50, Math.max(1, parseInt(req.query.pageSize, 10) || 10));
     const offset = (page - 1) * pageSize;
+    const limitCount = pageSize + 1;
     const safeQ = `%${q.replace(/[%_\\]/g, '\\$&')}%`;
 
     let products = [];
@@ -1868,8 +1871,8 @@ router.get('/search', async (req, res) => {
          JOIN regions r ON s.region_id = r.id
          WHERE p.deleted_at IS NULL AND p.name LIKE ? ESCAPE '\\'
          ORDER BY p.comprehensive_score DESC, p.id DESC
-         LIMIT ? OFFSET ?`,
-        [safeQ, pageSize + 1, offset]
+         LIMIT ${limitCount} OFFSET ${offset}`,
+        [safeQ]
       );
       hasMoreP = rows.length > pageSize;
       products = rows.slice(0, pageSize).map((r) => ({
@@ -1891,8 +1894,8 @@ router.get('/search', async (req, res) => {
          JOIN users u ON p.user_id = u.id
          WHERE p.deleted_at IS NULL AND p.hidden_by_admin = 0 AND p.content LIKE ? ESCAPE '\\'
          ORDER BY p.created_at DESC
-         LIMIT ? OFFSET ?`,
-        [safeQ, pageSize + 1, offset]
+         LIMIT ${limitCount} OFFSET ${offset}`,
+        [safeQ]
       );
       hasMoreA = rows.length > pageSize;
       articles = rows.slice(0, pageSize).map((r) => {
@@ -2205,6 +2208,7 @@ router.get('/food-articles', async (req, res) => {
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const pageSize = Math.min(20, Math.max(1, parseInt(req.query.pageSize, 10) || 10));
     const offset = (page - 1) * pageSize;
+    const limitCount = pageSize + 1;
 
     const tagRows = await query('SELECT id FROM tags WHERE slug = ? LIMIT 1', [FOOD_SQUARE_TAG_SLUG]);
     if (!tagRows || tagRows.length === 0) {
@@ -2237,8 +2241,8 @@ router.get('/food-articles', async (req, res) => {
          JOIN users u ON p.user_id = u.id
          WHERE p.deleted_at IS NULL AND p.hidden_by_admin = 0
          ORDER BY p.created_at DESC
-         LIMIT ? OFFSET ?`,
-        [tagId, pageSize + 1, offset]
+         LIMIT ${limitCount} OFFSET ${offset}`,
+        [tagId]
       );
     } catch (qErr) {
       const msg = (qErr && (qErr.message || qErr.code || '')).toString();
@@ -2253,8 +2257,8 @@ router.get('/food-articles', async (req, res) => {
            JOIN users u ON p.user_id = u.id
            WHERE p.deleted_at IS NULL AND p.hidden_by_admin = 0
            ORDER BY p.created_at DESC
-           LIMIT ? OFFSET ?`,
-          [tagId, pageSize + 1, offset]
+           LIMIT ${limitCount} OFFSET ${offset}`,
+          [tagId]
         );
       } else {
         throw qErr;

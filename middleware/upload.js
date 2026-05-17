@@ -70,14 +70,14 @@ const shopLogoUpload = multer({
   }
 }).single('logo');
 
-/** 食堂轮播图：单张静态图，字段名 image */
+/** 食堂轮播图：jpg/png/webp/gif，字段名 image */
 const bannerImageUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: MAX_FILE_SIZE },
   fileFilter: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
-    if (!ALLOWED_IMAGE_MIMES.includes(file.mimetype) || !ALLOWED_IMAGE_EXT.includes(ext)) {
-      return cb(new Error('仅支持 jpg / png / webp 格式'));
+    if (!ALLOWED_POST_IMAGE_MIMES.includes(file.mimetype) || !ALLOWED_POST_IMAGE_EXT.includes(ext)) {
+      return cb(new Error('仅支持 jpg / png / webp / gif 格式'));
     }
     cb(null, true);
   }

@@ -239,7 +239,7 @@ export default function CanteenBannerManage() {
             <input
               ref={fileRef}
               type="file"
-              accept="image/jpeg,image/png,image/webp"
+              accept="image/jpeg,image/png,image/webp,image/gif"
               onChange={(ev) => onPickImage(ev.target.files?.[0])}
             />
           </label>

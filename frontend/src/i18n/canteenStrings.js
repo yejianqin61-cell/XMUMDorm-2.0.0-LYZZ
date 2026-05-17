@@ -55,7 +55,7 @@ export function getCanteenStrings(isZh) {
     bannerTitleRequired: isZh ? '请填写标题' : 'Title is required',
     bannerImageRequired: isZh ? '请上传图片或填写图片地址' : 'Upload an image or enter image URL',
     bannerInactive: isZh ? '未启用' : 'Inactive',
-    bannerFieldImage: isZh ? '上传图片' : 'Upload image',
+    bannerFieldImage: isZh ? '上传图片（jpg/png/webp/gif）' : 'Upload image (jpg/png/webp/gif)',
     bannerFieldImageUrl: isZh ? '图片地址（可选，与上传二选一）' : 'Image URL (optional if uploading)',
     bannerFieldType: isZh ? '类型' : 'Type',
     bannerTypeContent: isZh ? '内容推荐' : 'Content',
