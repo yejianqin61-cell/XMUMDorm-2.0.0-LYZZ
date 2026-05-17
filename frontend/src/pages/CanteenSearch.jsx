@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useLanguage } from '../context/LanguageContext';
+import { getCanteenStrings } from '../i18n/canteenStrings';
 import { searchCanteen } from '../api/canteen';
 import { QK } from '../query/queryKeys';
 import { productImageUrl } from '../api/config';
@@ -10,9 +12,21 @@ import './CanteenSearch.css';
 export default function CanteenSearch() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { lang } = useLanguage();
+  const isZh = lang !== 'en';
+  const t = getCanteenStrings(isZh);
   const q = searchParams.get('q') || '';
   const [input, setInput] = useState(q);
   const [type, setType] = useState('all');
+
+  const tabs = useMemo(
+    () => [
+      { key: 'all', label: t.searchTabAll },
+      { key: 'products', label: t.searchTabProducts },
+      { key: 'articles', label: t.searchTabArticles },
+    ],
+    [t.searchTabAll, t.searchTabProducts, t.searchTabArticles]
+  );
 
   useEffect(() => {
     setInput(q);
@@ -30,63 +44,56 @@ export default function CanteenSearch() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const t = input.trim();
-    if (t) setSearchParams({ q: t });
+    const trimmed = input.trim();
+    if (trimmed) setSearchParams({ q: trimmed });
   };
 
   return (
     <div className="canteen-search-page">
-      {/* 搜索栏 */}
       <form className="canteen-search-form" onSubmit={handleSubmit}>
         <input
           type="search"
           className="canteen-search-input"
-          placeholder="搜索菜品、美食文章..."
+          placeholder={t.searchPlaceholder}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           maxLength={50}
           autoFocus
         />
         <button type="button" className="canteen-search-cancel" onClick={() => navigate(-1)}>
-          取消
+          {t.searchCancel}
         </button>
       </form>
 
-      {/* 类型切换 */}
       {q && (
         <div className="canteen-search-tabs">
-          {[
-            { key: 'all', label: '全部' },
-            { key: 'products', label: '菜品' },
-            { key: 'articles', label: '文章' },
-          ].map((t) => (
+          {tabs.map((tabItem) => (
             <button
-              key={t.key}
+              key={tabItem.key}
               type="button"
-              className={`canteen-search-tab${type === t.key ? ' canteen-search-tab--active' : ''}`}
-              onClick={() => setType(t.key)}
+              className={`canteen-search-tab${type === tabItem.key ? ' canteen-search-tab--active' : ''}`}
+              onClick={() => setType(tabItem.key)}
             >
-              {t.label}
+              {tabItem.label}
             </button>
           ))}
         </div>
       )}
 
-      {/* 结果 */}
       <div className="canteen-search-results">
         {!q ? (
-          <div className="canteen-search-empty-hint">输入关键词搜索菜品和美食文章</div>
+          <div className="canteen-search-empty-hint">{t.searchEmptyHint}</div>
         ) : isLoading ? (
           <div className="state-loading" />
         ) : isError ? (
-          <div className="state-error">搜索失败，请稍后重试</div>
+          <div className="state-error">{t.searchFailed}</div>
         ) : (
           <>
             {(type === 'all' || type === 'products') && (
               <div className="canteen-search-section">
-                <h3 className="canteen-search-section-title">菜品 ({products.length})</h3>
+                <h3 className="canteen-search-section-title">{t.searchSectionProducts(products.length)}</h3>
                 {products.length === 0 ? (
-                  <div className="state-empty">未找到相关菜品</div>
+                  <div className="state-empty">{t.searchNoProducts}</div>
                 ) : (
                   <div className="canteen-search-grid">
                     {products.map((p) => (
@@ -100,7 +107,7 @@ export default function CanteenSearch() {
                           <span className="canteen-search-product-name">{p.name}</span>
                           <span className="canteen-search-product-meta">
                             {p.shop_name} · {p.region_code}
-                            {p.comprehensive_score > 0 && ` · ${Number(p.comprehensive_score).toFixed(1)}分`}
+                            {p.comprehensive_score > 0 && ` · ${Number(p.comprehensive_score).toFixed(1)}${t.rankPoints}`}
                           </span>
                         </div>
                       </div>
@@ -112,9 +119,9 @@ export default function CanteenSearch() {
 
             {(type === 'all' || type === 'articles') && (
               <div className="canteen-search-section">
-                <h3 className="canteen-search-section-title">文章 ({articles.length})</h3>
+                <h3 className="canteen-search-section-title">{t.searchSectionArticles(articles.length)}</h3>
                 {articles.length === 0 ? (
-                  <div className="state-empty">未找到相关文章</div>
+                  <div className="state-empty">{t.searchNoArticles}</div>
                 ) : (
                   <div className="canteen-search-article-list">
                     {articles.map((a) => (
@@ -125,7 +132,7 @@ export default function CanteenSearch() {
                       >
                         <p className="canteen-search-article-excerpt">{a.title_or_excerpt}</p>
                         <span className="canteen-search-article-meta">
-                          {a.author?.name || '匿名'} · {formatPostTime(a.created_at)}
+                          {a.author?.name || t.anonymous} · {formatPostTime(a.created_at)}
                         </span>
                       </div>
                     ))}

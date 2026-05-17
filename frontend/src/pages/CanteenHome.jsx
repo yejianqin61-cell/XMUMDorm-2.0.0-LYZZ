@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
+import { getCanteenStrings } from '../i18n/canteenStrings';
 import CanteenSearchBar from '../components/canteen/CanteenSearchBar';
 import CanteenBannerCarousel from '../components/canteen/CanteenBannerCarousel';
 import CanteenRegionGrid from '../components/canteen/CanteenRegionGrid';
@@ -9,6 +11,10 @@ import './CanteenHome.css';
 
 /** V3.0 食堂工具型首页 */
 export default function CanteenHome() {
+  const { lang } = useLanguage();
+  const isZh = lang !== 'en';
+  const t = getCanteenStrings(isZh);
+
   return (
     <div className="canteen-home-page">
       <div className="canteen-home-inner">
@@ -20,7 +26,7 @@ export default function CanteenHome() {
         <CanteenFoodSquare />
         <div className="canteen-section canteen-home-footer">
           <Link to="/eat/map" className="canteen-home-map-link">
-            地图模式
+            {t.mapMode}
           </Link>
         </div>
       </div>

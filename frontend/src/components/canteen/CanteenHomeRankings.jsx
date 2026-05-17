@@ -1,22 +1,28 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../../context/LanguageContext';
+import { getCanteenStrings } from '../../i18n/canteenStrings';
 import {
   getRankingsHotProducts,
   getRankingsTopShops,
   getRankingsNewHitProducts,
 } from '../../api/rankings';
-import { QK } from '../../query/queryKeys';
 import { productImageUrl } from '../../api/config';
-
-const TABS = [
-  { key: 'products', label: '菜品榜' },
-  { key: 'shops', label: '店铺榜' },
-  { key: 'new', label: '新品榜' },
-];
 
 export default function CanteenHomeRankings() {
   const navigate = useNavigate();
+  const { lang } = useLanguage();
+  const isZh = lang !== 'en';
+  const t = getCanteenStrings(isZh);
+  const TABS = useMemo(
+    () => [
+      { key: 'products', label: t.tabProducts },
+      { key: 'shops', label: t.tabShops },
+      { key: 'new', label: t.tabNew },
+    ],
+    [t.tabProducts, t.tabShops, t.tabNew]
+  );
   const [tab, setTab] = useState(0);
   const results = useQueries({
     queries: [
@@ -32,18 +38,22 @@ export default function CanteenHomeRankings() {
   const isError = query.isError;
 
   const renderItem = (item, i) => {
-    if (tab === 1) return (
-      <div key={item.shop_id || i} className="canteen-rank-item" onClick={() => navigate(`/eat/merchant/${item.shop_id}`)}>
-        <span className={`canteen-rank-badge canteen-rank-badge--${i < 3 ? i + 1 : 'n'}`}>{i + 1}</span>
-        <div className="canteen-rank-icon-wrap">
-          <img src={item.logo_url ? productImageUrl(item.logo_url) : '/shops/default.jpg'} alt={item.shop_name} className="canteen-rank-thumb" />
+    if (tab === 1) {
+      return (
+        <div key={item.shop_id || i} className="canteen-rank-item" onClick={() => navigate(`/eat/merchant/${item.shop_id}`)}>
+          <span className={`canteen-rank-badge canteen-rank-badge--${i < 3 ? i + 1 : 'n'}`}>{i + 1}</span>
+          <div className="canteen-rank-icon-wrap">
+            <img src={item.logo_url ? productImageUrl(item.logo_url) : '/shops/default.jpg'} alt={item.shop_name} className="canteen-rank-thumb" />
+          </div>
+          <div className="canteen-rank-body">
+            <span className="canteen-rank-name">{item.shop_name}</span>
+            <span className="canteen-rank-meta">
+              {t.rankScore} {Number(item.comprehensive_score || 0).toFixed(1)}
+            </span>
+          </div>
         </div>
-        <div className="canteen-rank-body">
-          <span className="canteen-rank-name">{item.shop_name}</span>
-          <span className="canteen-rank-meta">综合分 {Number(item.comprehensive_score || 0).toFixed(1)}</span>
-        </div>
-      </div>
-    );
+      );
+    }
     return (
       <div key={item.product_id || item.product_name || i} className="canteen-rank-item" onClick={() => navigate(`/eat/food/${item.product_id}`)}>
         <span className={`canteen-rank-badge canteen-rank-badge--${i < 3 ? i + 1 : 'n'}`}>{i + 1}</span>
@@ -54,7 +64,9 @@ export default function CanteenHomeRankings() {
           <span className="canteen-rank-name">{item.product_name || item.name}</span>
           <span className="canteen-rank-meta">
             {item.shop_name || item.region_code || ''}
-            {item.comprehensive_score != null ? ` · ${Number(item.comprehensive_score).toFixed(1)}分` : ''}
+            {item.comprehensive_score != null
+              ? ` · ${Number(item.comprehensive_score).toFixed(1)}${t.rankPoints}`
+              : ''}
           </span>
         </div>
       </div>
@@ -64,20 +76,20 @@ export default function CanteenHomeRankings() {
   return (
     <div className="canteen-section">
       <div className="canteen-section-header">
-        <h3 className="canteen-section-title">排行榜</h3>
+        <h3 className="canteen-section-title">{t.rankingsTitle}</h3>
         <button type="button" className="canteen-section-more" onClick={() => navigate('/eat/rankings')}>
-          查看完整榜单 →
+          {t.rankingsViewAll}
         </button>
       </div>
       <div className="canteen-rank-tabs">
-        {TABS.map((t, i) => (
+        {TABS.map((tabItem, i) => (
           <button
-            key={t.key}
+            key={tabItem.key}
             type="button"
             className={`canteen-rank-tab${tab === i ? ' canteen-rank-tab--active' : ''}`}
             onClick={() => setTab(i)}
           >
-            {t.label}
+            {tabItem.label}
           </button>
         ))}
       </div>
@@ -85,9 +97,9 @@ export default function CanteenHomeRankings() {
         {isLoading ? (
           <div className="state-loading" style={{ paddingTop: 60 }} />
         ) : isError ? (
-          <div className="state-error">加载失败，请稍后重试</div>
+          <div className="state-error">{t.loadFailed}</div>
         ) : items.length === 0 ? (
-          <div className="state-empty">暂无数据</div>
+          <div className="state-empty">{t.noData}</div>
         ) : (
           items.slice(0, 5).map(renderItem)
         )}

@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../../context/LanguageContext';
+import { getCanteenStrings } from '../../i18n/canteenStrings';
 import { getRegions } from '../../api/canteen';
 import { QK } from '../../query/queryKeys';
 
@@ -11,7 +13,15 @@ const REGION_ICONS = {
   other: '/OTHERS.png',
 };
 
+function regionLabel(r, t) {
+  if (r.code === 'other') return t.regionOthers;
+  return r.name || r.code;
+}
+
 export default function CanteenRegionGrid() {
+  const { lang } = useLanguage();
+  const isZh = lang !== 'en';
+  const t = getCanteenStrings(isZh);
   const { data, isLoading, isError } = useQuery({
     queryKey: QK.canteenRegions(),
     queryFn: getRegions,
@@ -34,7 +44,7 @@ export default function CanteenRegionGrid() {
 
   return (
     <div className="canteen-section">
-      <h3 className="canteen-section-title">食堂入口</h3>
+      <h3 className="canteen-section-title">{t.regionSectionTitle}</h3>
       <div className="canteen-region-grid">
         {regions.map((r) => (
           <Link
@@ -45,11 +55,11 @@ export default function CanteenRegionGrid() {
             <div className="canteen-region-icon-wrap">
               <img
                 src={REGION_ICONS[r.code] || '/OTHERS.png'}
-                alt={r.name || r.code}
+                alt={regionLabel(r, t)}
                 className="canteen-region-icon"
               />
             </div>
-            <span className="canteen-region-name">{r.name || r.code}</span>
+            <span className="canteen-region-name">{regionLabel(r, t)}</span>
           </Link>
         ))}
       </div>

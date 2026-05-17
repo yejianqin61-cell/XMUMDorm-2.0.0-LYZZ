@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { useNavigate, Navigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -7,6 +7,7 @@ import { Toast } from '../context/ToastContext';
 import { createPost, getPostTagsList } from '../api/posts';
 import { getApiErrorMessage } from '../utils/apiError';
 import { QK } from '../query/queryKeys';
+import { FOOD_SQUARE_TAG_SLUG } from '../constants/canteen';
 import './PostNew.css';
 
 const POST_TAGS_STALE_MS = 15 * 60 * 1000;
@@ -18,6 +19,8 @@ function PostNew() {
   const { lang } = useLanguage();
   const isEn = lang === 'en';
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const preselectTagSlug = (searchParams.get('tag') || '').trim();
   const tokenKey = token ?? 'guest';
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -35,6 +38,17 @@ function PostNew() {
   });
 
   const tagLabel = (t) => (isEn ? (t.name_en || t.name_zh) : (t.name_zh || t.name_en));
+
+  useEffect(() => {
+    if (!preselectTagSlug || !allTags.length) return;
+    const t = allTags.find((x) => x.slug === preselectTagSlug);
+    if (!t) return;
+    setSelectedTagIds((prev) => {
+      if (prev.includes(t.id)) return prev;
+      if (prev.length >= 3) return prev;
+      return [...prev, t.id];
+    });
+  }, [preselectTagSlug, allTags]);
 
   const toggleTag = (tagId) => {
     setSelectedTagIds((prev) => {
@@ -93,9 +107,12 @@ function PostNew() {
       }
       const created = await createPost(payload);
       Toast.success(isAdmin ? '公告发布成功' : '发布成功');
+      const createdTagSlugs = new Set((created?.tags || []).map((t) => t?.slug).filter(Boolean));
+      const hasFoodSquareTag =
+        createdTagSlugs.has(FOOD_SQUARE_TAG_SLUG) ||
+        allTags.some((t) => t.slug === FOOD_SQUARE_TAG_SLUG && selectedTagIds.includes(t.id));
       // 立刻插入到树洞瀑布流缓存，确保发完马上能看到（无需等重新拉取）
       if (!isAdmin && created && created.id) {
-        const createdTagSlugs = new Set((created.tags || []).map((t) => t?.slug).filter(Boolean));
         // 精确更新 “全部帖子” 的无限列表缓存（tagSlug === '_all'）
         queryClient.setQueryData(QK.postsInfinite(tokenKey, 10, null), (old) => {
           if (!old || !old.pages || !Array.isArray(old.pages) || old.pages.length === 0) return old;
@@ -119,7 +136,15 @@ function PostNew() {
         }
       }
       queryClient.invalidateQueries({ queryKey: ['posts'] });
-      navigate(created?.id ? `/post/${created.id}` : '/', { replace: true });
+      if (hasFoodSquareTag) {
+        queryClient.invalidateQueries({ queryKey: ['canteen', 'foodArticles'] });
+      }
+      const fromFoodSquare = preselectTagSlug === FOOD_SQUARE_TAG_SLUG;
+      if (fromFoodSquare) {
+        navigate(created?.id ? `/post/${created.id}` : '/eat', { replace: true });
+      } else {
+        navigate(created?.id ? `/post/${created.id}` : '/', { replace: true });
+      }
     } catch (err) {
       Toast.error(getApiErrorMessage(err));
     } finally {
@@ -132,7 +157,9 @@ function PostNew() {
       <p className="postnew-anonymous-hint">
         {isAdmin
           ? '发布公告后，所有用户在登录时会弹出提示，并在「信箱」中长期保存。Announcements will be shown to all users on login.'
-          : '发帖为匿名。他人点赞或评论时，会在「信箱」中收到提醒。Posts are anonymous; you will get like/comment notifications in Mailbox.'}
+          : preselectTagSlug === FOOD_SQUARE_TAG_SLUG
+            ? '发布到「吃货广场」：请保留「吃货广场」标签，帖子会自动出现在食堂吃货广场。发帖为匿名。'
+            : '发帖为匿名。他人点赞或评论时，会在「信箱」中收到提醒。Posts are anonymous; you will get like/comment notifications in Mailbox.'}
       </p>
       <form className="postnew-form" onSubmit={handleSubmit}>
         {!isAdmin && allTags.length > 0 && (

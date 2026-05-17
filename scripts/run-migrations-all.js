@@ -13,7 +13,8 @@ const mysql = require('mysql2/promise');
 const ROOT = path.join(__dirname, '..');
 require('dotenv').config({ path: path.join(ROOT, '.env') });
 
-const connectionUrl = process.env.DATABASE_URL || process.env.MYSQL_URL;
+// 与 database.js 一致：连接串优先于 DB_*
+const connectionUrl = process.env.DATABASE_URL || process.env.MYSQL_URL || process.env.RAILWAY_MYSQL_URL;
 
 function getDbNameFromUrl(url) {
   try {
@@ -52,6 +53,7 @@ const MIGRATIONS = [
   { file: '007_product_favorites.sql', dir: path.join(ROOT, 'migrations') },
   { file: '008_email_verification_codes.sql', dir: path.join(ROOT, 'migrations') },
   { file: '031_canteen_banners.sql', dir: path.join(ROOT, 'migrations') },
+  { file: '032_food_square_tag.sql', dir: path.join(ROOT, 'migrations') },
 ];
 
 async function run() {

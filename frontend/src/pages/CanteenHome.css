@@ -446,6 +446,55 @@
 }
 
 /* ====== 吃货广场 ====== */
+.canteen-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.canteen-section-head .canteen-section-title {
+  margin: 0;
+}
+
+.canteen-food-compose-btn {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.canteen-food-compose-btn:active {
+  opacity: 0.88;
+}
+
+.canteen-food-hint {
+  margin: 0 0 10px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--post-ios-secondary-label);
+}
+
+.canteen-pick-empty {
+  text-align: center;
+  padding: 16px;
+  background: var(--post-ios-card);
+  border-radius: var(--post-ios-radius-md);
+  color: var(--post-ios-secondary-label);
+  font-size: 14px;
+}
+
+.canteen-pick-empty p {
+  margin: 0 0 10px;
+}
+
 .canteen-food-empty {
   text-align: center;
   padding: 20px;

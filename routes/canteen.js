@@ -27,6 +27,9 @@ const { simpleCache } = require('../utils/simpleCache');
 
 const RATING_ENUM = ['夯爆了', '顶级', '人上人', 'NPC', '拉完了'];
 
+/** 吃货广场：与 migrations/032_food_square_tag.sql、树洞发帖 tag 一致 */
+const FOOD_SQUARE_TAG_SLUG = 'food-square';
+
 /** 未上传图片的商品使用的默认图（与前端 public/products 文件名一致，便于同源 /products/* 加载） */
 const DEFAULT_PRODUCT_IMAGE_PATH = process.env.DEFAULT_PRODUCT_IMAGE_PATH || '/products/default.png';
 function ensureProductDefaultImage(product) {
@@ -1883,36 +1886,53 @@ router.get('/banners', async (req, res) => {
   }
 });
 
-// ---------- 模块五：今天吃什么 ----------
+// ---------- 模块五：今天吃什么（从所有已有一级评分的商品中随机） ----------
 router.get('/pick-random', async (req, res) => {
   try {
     const excludeId = parseInt(req.query.exclude_id, 10) || 0;
+    const params = [];
+    let excludeSql = '';
+    if (excludeId > 0) {
+      excludeSql = 'AND p.id != ?';
+      params.push(excludeId);
+    }
     const rows = await query(
-      `SELECT p.id, p.name, p.cover_url, p.comprehensive_score,
-              s.id AS shop_id, s.name AS shop_name, r.code AS region_code
+      `SELECT p.id, p.name, p.comprehensive_score, p.review_count,
+              s.id AS shop_id, s.name AS shop_name, r.code AS region_code,
+              (SELECT pi.file_path FROM product_images pi
+               WHERE pi.product_id = p.id ORDER BY pi.sort_order ASC LIMIT 1) AS product_image_path
        FROM products p
        JOIN shops s ON p.shop_id = s.id AND s.deleted_at IS NULL
        JOIN regions r ON s.region_id = r.id
        WHERE p.deleted_at IS NULL
-         AND p.cover_url IS NOT NULL AND p.cover_url != ''
-         AND p.comprehensive_score > 0
-         ${excludeId > 0 ? 'AND p.id != ?' : ''}
+         AND EXISTS (
+           SELECT 1 FROM product_comments pc
+           WHERE pc.product_id = p.id
+             AND pc.parent_id IS NULL
+             AND pc.deleted_at IS NULL
+             AND pc.rating IS NOT NULL
+         )
+         ${excludeSql}
        ORDER BY RAND()
        LIMIT 1`,
-      excludeId > 0 ? [excludeId] : []
+      params
     );
     if (!rows || rows.length === 0) {
-      return res.status(200).json({ status: -1, message: '暂无推荐菜品', data: null });
+      return res.status(200).json({ status: 0, message: '暂无已评分菜品', data: null });
     }
     const r = rows[0];
+    const imagePath = r.product_image_path
+      ? assetUrl(r.product_image_path)
+      : DEFAULT_PRODUCT_IMAGE_PATH;
     res.status(200).json({
       status: 0,
       message: '随机推荐成功',
       data: {
         id: r.id,
         name: r.name,
-        cover_url: assetUrl(r.cover_url),
-        comprehensive_score: r.comprehensive_score,
+        cover_url: imagePath,
+        comprehensive_score: r.comprehensive_score != null ? Number(r.comprehensive_score) : null,
+        review_count: r.review_count != null ? Number(r.review_count) : null,
         shop_id: r.shop_id,
         shop_name: r.shop_name,
         region_code: r.region_code,
@@ -1924,50 +1944,77 @@ router.get('/pick-random', async (req, res) => {
   }
 });
 
-// ---------- 模块六：吃货广场 ----------
+// ---------- 模块六：吃货广场（树洞带「吃货广场」tag 的帖子） ----------
 router.get('/food-articles', async (req, res) => {
   try {
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const pageSize = Math.min(20, Math.max(1, parseInt(req.query.pageSize, 10) || 10));
     const offset = (page - 1) * pageSize;
 
-    // 方案 A：返回近 90 天内带图且内容较长的帖子作为“美食文章”流
-    // 后续可通过 tag/channel 精确筛选
+    const tagRows = await query('SELECT id FROM tags WHERE slug = ? LIMIT 1', [FOOD_SQUARE_TAG_SLUG]);
+    if (!tagRows || tagRows.length === 0) {
+      return res.status(200).json({
+        status: 0,
+        message: '获取成功',
+        data: { list: [], total: 0, page, pageSize, hasMore: false },
+      });
+    }
+    const tagId = tagRows[0].id;
+
     const countRows = await query(
       `SELECT COUNT(*) AS total
        FROM posts p
-       WHERE p.is_deleted = 0 AND p.is_hidden = 0
-         AND p.created_at >= DATE_SUB(NOW(), INTERVAL 90 DAY)
-         AND CHAR_LENGTH(p.content) > 30
-         AND p.content LIKE '%<img%'`
+       INNER JOIN post_tag_map ptm ON ptm.post_id = p.id AND ptm.tag_id = ?
+       WHERE p.is_deleted = 0 AND p.is_hidden = 0`,
+      [tagId]
     );
     const total = (countRows && countRows[0]) ? countRows[0].total : 0;
 
-    const rows = await query(
-      `SELECT p.id, p.content, p.user_id, p.created_at,
-              u.username, u.nickname, u.avatar,
-              (SELECT COUNT(*) FROM post_likes WHERE post_id = p.id) AS like_count,
-              (SELECT COUNT(*) FROM comments WHERE post_id = p.id AND is_deleted = 0) AS comment_count
-       FROM posts p
-       JOIN users u ON p.user_id = u.id
-       WHERE p.is_deleted = 0 AND p.is_hidden = 0
-         AND p.created_at >= DATE_SUB(NOW(), INTERVAL 90 DAY)
-         AND CHAR_LENGTH(p.content) > 30
-         AND p.content LIKE '%<img%'
-       ORDER BY p.created_at DESC
-       LIMIT ? OFFSET ?`,
-      [pageSize + 1, offset]
-    );
+    let rows;
+    try {
+      rows = await query(
+        `SELECT p.id, p.title, p.content, p.user_id, p.created_at,
+                u.username, u.nickname, u.avatar,
+                (SELECT COUNT(*) FROM post_likes WHERE post_id = p.id) AS like_count,
+                (SELECT COUNT(*) FROM comments WHERE post_id = p.id AND is_deleted = 0) AS comment_count
+         FROM posts p
+         INNER JOIN post_tag_map ptm ON ptm.post_id = p.id AND ptm.tag_id = ?
+         JOIN users u ON p.user_id = u.id
+         WHERE p.is_deleted = 0 AND p.is_hidden = 0
+         ORDER BY p.created_at DESC
+         LIMIT ? OFFSET ?`,
+        [tagId, pageSize + 1, offset]
+      );
+    } catch (qErr) {
+      const msg = (qErr && (qErr.message || qErr.code || '')).toString();
+      if (msg.includes('Unknown column') && msg.includes('title')) {
+        rows = await query(
+          `SELECT p.id, p.content, p.user_id, p.created_at,
+                  u.username, u.nickname, u.avatar,
+                  (SELECT COUNT(*) FROM post_likes WHERE post_id = p.id) AS like_count,
+                  (SELECT COUNT(*) FROM comments WHERE post_id = p.id AND is_deleted = 0) AS comment_count
+           FROM posts p
+           INNER JOIN post_tag_map ptm ON ptm.post_id = p.id AND ptm.tag_id = ?
+           JOIN users u ON p.user_id = u.id
+           WHERE p.is_deleted = 0 AND p.is_hidden = 0
+           ORDER BY p.created_at DESC
+           LIMIT ? OFFSET ?`,
+          [tagId, pageSize + 1, offset]
+        );
+      } else {
+        throw qErr;
+      }
+    }
     const hasMore = rows.length > pageSize;
     const list = rows.slice(0, pageSize).map((r) => {
       const plain = (r.content || '').replace(/<[^>]*>/g, '').replace(/!\[.*?\]\([^)]*\)/g, '').replace(/\n+/g, ' ').trim();
-      // 提取第一张图片
+      const titleTrim = (r.title || '').trim();
       let cover = null;
-      const imgMatch = r.content.match(/<img[^>]+src="([^"]+)"/);
-      if (imgMatch) cover = imgMatch[1];
+      const imgMatch = (r.content || '').match(/<img[^>]+src="([^"]+)"/);
+      if (imgMatch) cover = assetUrl(imgMatch[1]);
       return {
         id: r.id,
-        title_or_excerpt: plain.slice(0, 100) || '（无文字内容）',
+        title_or_excerpt: titleTrim || plain.slice(0, 100) || '（无文字内容）',
         cover_url: cover,
         author: { id: r.user_id, name: r.nickname || r.username || '匿名 Anonymous', avatar: assetUrl(r.avatar) },
         like_count: r.like_count || 0,

@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../../context/LanguageContext';
+import { getCanteenStrings } from '../../i18n/canteenStrings';
 import { getCanteenBanners } from '../../api/canteen';
 import { QK } from '../../query/queryKeys';
 import { productImageUrl } from '../../api/config';
@@ -14,6 +16,9 @@ const LINK_NAV = {
 
 export default function CanteenBannerCarousel() {
   const navigate = useNavigate();
+  const { lang } = useLanguage();
+  const isZh = lang !== 'en';
+  const t = getCanteenStrings(isZh);
   const { data, isLoading, isError } = useQuery({
     queryKey: QK.canteenBanners(),
     queryFn: getCanteenBanners,
@@ -25,7 +30,6 @@ export default function CanteenBannerCarousel() {
 
   const len = banners.length;
   const next = useCallback(() => { if (len > 0) setIdx((p) => (p + 1) % len); }, [len]);
-  const prev = useCallback(() => { if (len > 0) setIdx((p) => (p - 1 + len) % len); }, [len]);
 
   useEffect(() => {
     if (len <= 1) return;
@@ -68,7 +72,7 @@ export default function CanteenBannerCarousel() {
         <div className="canteen-banner-info">
           <div className="canteen-banner-title-row">
             <span className="canteen-banner-title">{b.title}</span>
-            {b.type === 'ad' && <span className="canteen-banner-ad-tag">广告</span>}
+            {b.type === 'ad' && <span className="canteen-banner-ad-tag">{t.bannerAd}</span>}
           </div>
           {b.subtitle && <span className="canteen-banner-subtitle">{b.subtitle}</span>}
         </div>
@@ -80,7 +84,7 @@ export default function CanteenBannerCarousel() {
               key={i}
               type="button"
               className={`canteen-banner-dot${i === idx ? ' canteen-banner-dot--active' : ''}`}
-              aria-label={`第 ${i + 1} 张`}
+              aria-label={t.bannerSlide(i + 1)}
               onClick={() => { setIdx(i); clearInterval(intervalRef.current); }}
             />
           ))}
