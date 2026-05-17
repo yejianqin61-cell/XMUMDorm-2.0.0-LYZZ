@@ -1855,7 +1855,15 @@ router.get('/search', async (req, res) => {
     const pageSize = Math.min(50, Math.max(1, parseInt(req.query.pageSize, 10) || 10));
     const offset = (page - 1) * pageSize;
     const limitCount = pageSize + 1;
-    const safeQ = `%${q.replace(/[%_\\]/g, '\\$&')}%`;
+    const safe = q.replace(/[%_\\]/g, '');
+    if (!safe) {
+      return res.status(200).json({
+        status: 0,
+        message: '搜索成功',
+        data: { q, products: [], articles: [], hasMore: { products: false, articles: false } },
+      });
+    }
+    const likePattern = `%${safe}%`;
 
     let products = [];
     let articles = [];
@@ -1865,14 +1873,16 @@ router.get('/search', async (req, res) => {
     if (type === 'all' || type === 'products') {
       const rows = await query(
         `SELECT p.id, p.name, p.shop_id, s.name AS shop_name, s.region_id, r.code AS region_code,
-                p.cover_url, p.comprehensive_score
+                p.comprehensive_score,
+                (SELECT pi.file_path FROM product_images pi
+                 WHERE pi.product_id = p.id ORDER BY pi.sort_order ASC LIMIT 1) AS product_image_path
          FROM products p
          JOIN shops s ON p.shop_id = s.id AND s.deleted_at IS NULL
          JOIN regions r ON s.region_id = r.id
-         WHERE p.deleted_at IS NULL AND p.name LIKE ? ESCAPE '\\'
+         WHERE p.deleted_at IS NULL AND p.name LIKE ?
          ORDER BY p.comprehensive_score DESC, p.id DESC
          LIMIT ${limitCount} OFFSET ${offset}`,
-        [safeQ]
+        [likePattern]
       );
       hasMoreP = rows.length > pageSize;
       products = rows.slice(0, pageSize).map((r) => ({
@@ -1881,28 +1891,59 @@ router.get('/search', async (req, res) => {
         shop_id: r.shop_id,
         shop_name: r.shop_name,
         region_code: r.region_code,
-        cover_url: assetUrl(r.cover_url),
+        cover_url: assetUrl(r.product_image_path) || DEFAULT_PRODUCT_IMAGE_PATH,
         comprehensive_score: r.comprehensive_score,
       }));
     }
 
     if (type === 'all' || type === 'articles') {
-      // 搜索帖子内容，按创建时间排序
-      const rows = await query(
-        `SELECT p.id, p.content, p.created_at, u.id AS author_id, u.username, u.nickname, u.avatar
-         FROM posts p
-         JOIN users u ON p.user_id = u.id
-         WHERE p.deleted_at IS NULL AND p.hidden_by_admin = 0 AND p.content LIKE ? ESCAPE '\\'
-         ORDER BY p.created_at DESC
-         LIMIT ${limitCount} OFFSET ${offset}`,
-        [safeQ]
-      );
+      // 美食文章：带「吃货广场」标签的帖子，匹配标题或正文
+      let rows;
+      try {
+        rows = await query(
+          `SELECT p.id, p.title, p.content, p.created_at, u.id AS author_id, u.username, u.nickname, u.avatar
+           FROM posts p
+           JOIN users u ON p.user_id = u.id
+           WHERE p.deleted_at IS NULL AND p.hidden_by_admin = 0
+             AND (p.content LIKE ? OR p.title LIKE ?)
+             AND EXISTS (
+               SELECT 1 FROM post_tag_map ptm
+               INNER JOIN tags tg ON tg.id = ptm.tag_id
+               WHERE ptm.post_id = p.id AND tg.slug = ?
+             )
+           ORDER BY p.created_at DESC
+           LIMIT ${limitCount} OFFSET ${offset}`,
+          [likePattern, likePattern, FOOD_SQUARE_TAG_SLUG]
+        );
+      } catch (qErr) {
+        const msg = (qErr && (qErr.message || qErr.code || '')).toString();
+        if (msg.includes('Unknown column') && msg.includes('title')) {
+          rows = await query(
+            `SELECT p.id, p.content, p.created_at, u.id AS author_id, u.username, u.nickname, u.avatar
+             FROM posts p
+             JOIN users u ON p.user_id = u.id
+             WHERE p.deleted_at IS NULL AND p.hidden_by_admin = 0
+               AND p.content LIKE ?
+               AND EXISTS (
+                 SELECT 1 FROM post_tag_map ptm
+                 INNER JOIN tags tg ON tg.id = ptm.tag_id
+                 WHERE ptm.post_id = p.id AND tg.slug = ?
+               )
+             ORDER BY p.created_at DESC
+             LIMIT ${limitCount} OFFSET ${offset}`,
+            [likePattern, FOOD_SQUARE_TAG_SLUG]
+          );
+        } else {
+          throw qErr;
+        }
+      }
       hasMoreA = rows.length > pageSize;
       articles = rows.slice(0, pageSize).map((r) => {
         const plain = (r.content || '').replace(/<[^>]*>/g, '').replace(/!\[.*?\]\([^)]*\)/g, '').replace(/\n+/g, ' ').trim();
+        const titleTrim = (r.title || '').trim();
         return {
           id: r.id,
-          title_or_excerpt: plain.slice(0, 80) || '（无文字内容）',
+          title_or_excerpt: titleTrim || plain.slice(0, 80) || '（无文字内容）',
           author: { id: r.author_id, name: r.nickname || r.username || '匿名 Anonymous', avatar: assetUrl(r.avatar) },
           created_at: r.created_at,
         };
@@ -1912,7 +1953,7 @@ router.get('/search', async (req, res) => {
     res.status(200).json({
       status: 0,
       message: '搜索成功',
-      data: { q, products, articles, hasMore: { products: false, articles: false } },
+      data: { q, products, articles, hasMore: { products: hasMoreP, articles: hasMoreA } },
     });
   } catch (e) {
     console.error('食堂搜索错误:', e);
