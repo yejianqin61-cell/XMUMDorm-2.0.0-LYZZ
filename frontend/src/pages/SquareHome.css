@@ -1,0 +1,221 @@
+/* V3.0 广场信息流首页 */
+.square-home-page {
+  min-height: 100%;
+  padding: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: var(--post-ios-bg-grouped, #f2f2f7);
+}
+
+.square-home-inner {
+  padding: 12px 16px;
+  padding-bottom: calc(var(--tabbar-height, 72px) + var(--safe-bottom, 0px) + 24px);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.square-section {
+  margin-top: 8px;
+}
+
+.square-section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.square-section-title {
+  margin: 0 0 10px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--post-ios-label);
+}
+
+.square-section-more {
+  font-size: 13px;
+  color: var(--post-ios-accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* ====== 热搜 ====== */
+.square-trending-list {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--post-ios-radius-md);
+  background: var(--post-ios-card);
+  box-shadow: var(--post-ios-shadow-card);
+  overflow: hidden;
+}
+
+.square-trending-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--post-ios-separator);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.square-trending-item:last-child {
+  border-bottom: none;
+}
+.square-trending-item:active {
+  background: var(--post-ios-fill);
+}
+
+.square-trending-rank {
+  font-size: 17px;
+  font-weight: 800;
+  width: 24px;
+  text-align: center;
+}
+
+.square-trending-title {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--post-ios-label);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.square-trending-count {
+  font-size: 12px;
+  color: var(--post-ios-secondary-label);
+  white-space: nowrap;
+}
+
+/* ====== 四宫格 ====== */
+.square-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.square-grid-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 12px;
+  border-radius: var(--post-ios-radius-md);
+  background: var(--post-ios-card);
+  box-shadow: var(--post-ios-shadow-card);
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 140ms ease;
+}
+.square-grid-card:active {
+  transform: scale(0.95);
+}
+
+.square-grid-icon {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.square-grid-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--post-ios-label);
+}
+
+/* ====== 校园此刻 ====== */
+.square-campus-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 8px;
+  background: var(--post-ios-fill);
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.square-campus-tab {
+  flex: 1;
+  text-align: center;
+  padding: 7px 0;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: var(--post-ios-secondary-label);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+.square-campus-tab--active {
+  background: var(--post-ios-card);
+  color: var(--post-ios-label);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.square-campus-list {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--post-ios-radius-md);
+  background: var(--post-ios-card);
+  box-shadow: var(--post-ios-shadow-card);
+  overflow: hidden;
+}
+
+.square-campus-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--post-ios-separator);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.square-campus-item:last-child {
+  border-bottom: none;
+}
+.square-campus-item:active {
+  background: var(--post-ios-fill);
+}
+
+.square-campus-org {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.square-campus-badge {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.square-campus-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--post-ios-label);
+}
+
+.square-campus-meta {
+  font-size: 11px;
+  color: var(--post-ios-tertiary-label);
+}
+
+/* ====== 底部 ====== */
+.square-home-footer {
+  text-align: center;
+  padding: 8px 0;
+}
+.square-home-map-link {
+  font-size: 13px;
+  color: var(--post-ios-tertiary-label);
+  text-decoration: none;
+}

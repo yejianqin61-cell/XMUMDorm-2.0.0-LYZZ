@@ -69,4 +69,17 @@ export const QK = {
   canteenBannersAdmin: () => ['canteen', 'banners', 'admin'],
   canteenPickRandom: (excludeId) => ['canteen', 'pickRandom', excludeId || 0],
   canteenFoodArticles: (page, pageSize) => ['canteen', 'foodArticles', page, pageSize],
+
+  /** V3.0 组织系统 */
+  myOrganizations: () => ['organizations', 'me'],
+  organizationsList: (type) => ['organizations', 'list', type || ''],
+  organizationMembers: (id) => ['organizations', 'members', id],
+
+  /** V3.0 广场 */
+  trendingTopics: () => ['square', 'trending'],
+  trendingTopicDetail: (id) => ['square', 'trending', id],
+  trendingPosts: (id, page) => ['square', 'trending', id, 'posts', page],
+  campusFeed: (tab, page) => ['square', 'campusFeed', tab, page],
+  campusPostDetail: (id) => ['square', 'campusPost', id],
+  squareBanners: () => ['square', 'banners'],
 };

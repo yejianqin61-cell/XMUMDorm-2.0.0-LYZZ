@@ -5,6 +5,12 @@ import PostDetail from '../pages/PostDetail';
 import PostSearch from '../pages/PostSearch';
 import PostTagFeed from '../pages/PostTagFeed';
 import AboutUs from '../pages/AboutUs';
+import SquareHome from '../pages/SquareHome';
+import SquareTrendingList from '../pages/SquareTrendingList';
+import SquareTrendingDetail from '../pages/SquareTrendingDetail';
+import SquareTrendingPostNew from '../pages/SquareTrendingPostNew';
+import SquareCampusPostNew from '../pages/SquareCampusPostNew';
+import SquareOrgAdmin from '../pages/SquareOrgAdmin';
 import AboutTeam from '../pages/AboutTeam';
 import AboutThanks from '../pages/AboutThanks';
 import AboutEditorNote from '../pages/AboutEditorNote';
@@ -16,7 +22,6 @@ import MarketplaceDetail from '../pages/Marketplace/MarketplaceDetail';
 import MarketplacePublish from '../pages/Marketplace/MarketplacePublish';
 import MarketplaceMyWants from '../pages/Marketplace/MarketplaceMyWants';
 import MarketplaceChat from '../pages/Marketplace/MarketplaceChat';
-import SquareTrending from '../pages/SquareTrending';
 import SquareFreshmanGuide from '../pages/SquareFreshmanGuide';
 import SquareErrands from '../pages/SquareErrands';
 import ClubProfile from '../pages/Clubs/ClubProfile';
@@ -71,7 +76,8 @@ export const layoutRoutes = (
     <Route path="post/:id" element={<PostDetail />} />
     <Route path="posts/search" element={<PostSearch />} />
     <Route path="posts/tag/:slug" element={<PostTagFeed />} />
-    <Route path="about" element={<AboutUs />} />
+    <Route path="about" element={<SquareHome />} />
+    <Route path="about/map" element={<AboutUs />} />
     <Route path="about/thanks" element={<AboutThanks />} />
     <Route path="about/profile" element={<AboutProfile />} />
     {/* 兼容旧路径：原本挂在 /about 下会导致 Tab 误高亮到“广场” */}
@@ -98,7 +104,11 @@ export const layoutRoutes = (
     <Route path="about/second-hand/chat/:threadId" element={<MarketplaceChat />} />
     <Route path="about/second-hand/item/:id" element={<MarketplaceDetail />} />
     <Route path="about/second-hand/item/:id/edit" element={<MarketplacePublish />} />
-    <Route path="about/trending" element={<SquareTrending />} />
+    <Route path="about/trending" element={<SquareTrendingList />} />
+    <Route path="about/trending/:id" element={<SquareTrendingDetail />} />
+    <Route path="about/trending/:id/new" element={<SquareTrendingPostNew />} />
+    <Route path="about/campus/new" element={<SquareCampusPostNew />} />
+    <Route path="about/admin/orgs" element={<SquareOrgAdmin />} />
     <Route path="about/freshman-guide" element={<SquareFreshmanGuide />} />
     <Route path="about/freshman-guide/me" element={<HandbookMe />} />
     <Route path="about/freshman-guide/new" element={<HandbookEditor />} />

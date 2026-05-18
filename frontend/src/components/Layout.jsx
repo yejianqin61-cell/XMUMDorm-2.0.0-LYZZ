@@ -7,6 +7,7 @@ import { getTabIndex, getTabRootPath } from './TabBar';
 import TreeHole from '../pages/TreeHole';
 import CanteenHome from '../pages/CanteenHome';
 import AboutUs from '../pages/AboutUs';
+import SquareHome from '../pages/SquareHome';
 import MyZone from '../pages/MyZone';
 import { useLanguage } from '../context/LanguageContext';
 import { enterFullscreen } from '../utils/fullscreen';
@@ -24,7 +25,7 @@ const UNREAD_ANN_STALE_MS = 3 * 60 * 1000;
 const TAB_ROOT_COMPONENTS = {
   '/': TreeHole,
   '/eat': CanteenHome,
-  '/about': AboutUs,
+  '/about': SquareHome,
   '/myzone': MyZone,
 };
 
@@ -45,6 +46,7 @@ const TITLE_BY_PATH_ZH = {
   '/eat/search': '搜索',
   '/eat/map': '食堂地图',
   '/eat/banners': '轮播管理',
+  '/about/trending': '热搜榜',
 };
 
 const TITLE_BY_PATH_EN = {
@@ -64,6 +66,7 @@ const TITLE_BY_PATH_EN = {
   '/eat/search': 'Search',
   '/eat/map': 'Canteen Map',
   '/eat/banners': 'Carousel',
+  '/about/trending': 'Trending',
 };
 
 /** 需要显示返回键的路径（含 /post/:id 详情页、帖子搜索/话题） */
@@ -120,15 +123,7 @@ function Layout() {
   };
 
   // iOS Safari 对 overscroll-behavior 支持不稳定：对“不可滚动”的 Tab（Eat/Square）全局禁止下拉回弹
-  useEffect(() => {
-    const shouldLock = isRootTabPage && activeTabIndex === 2;
-    if (!shouldLock) return;
-    const handler = (e) => {
-      e.preventDefault();
-    };
-    document.addEventListener('touchmove', handler, { passive: false });
-    return () => document.removeEventListener('touchmove', handler);
-  }, [activeTabIndex, isRootTabPage]);
+  // iOS 下拉回弹锁已不再需要（所有 Tab 页均为滚动列表）
 
   const handleAnnouncementKnow = async (id) => {
     queryClient.setQueryData(QK.unreadAnnouncements(tokenKey), (old) => {
@@ -218,6 +213,16 @@ function Layout() {
       title = isZh ? '编者的话' : "Editor's Note";
     } else if (pathname === '/about/algorithm') {
       title = isZh ? '评分算法说明' : 'Scoring Algorithm';
+    } else if (pathname.startsWith('/about/trending/') && pathname.endsWith('/new')) {
+      title = isZh ? '参与讨论' : 'Join Discussion';
+    } else if (pathname.startsWith('/about/trending/')) {
+      title = isZh ? '热搜详情' : 'Trending';
+    } else if (pathname === '/about/campus/new') {
+      title = isZh ? '发布校园通知' : 'Campus Post';
+    } else if (pathname === '/about/admin/orgs') {
+      title = isZh ? '组织管理' : 'Org Admin';
+    } else if (pathname === '/about/map') {
+      title = isZh ? '广场地图' : 'Square Map';
     } else {
       title = isZh ? '厦马小筑' : 'XMUM Dorm';
     }
@@ -262,8 +267,8 @@ function Layout() {
                 <div className="tab-stack-pane" data-active={activeTabIndex === 1} aria-label="Eat">
                   {mountedTabs.has(1) ? <CanteenHome /> : null}
                 </div>
-                <div className="tab-stack-pane tab-stack-pane--no-scroll" data-active={activeTabIndex === 2} aria-label="Square" onTouchMove={preventTouchScroll}>
-                  {mountedTabs.has(2) ? <AboutUs /> : null}
+                <div className="tab-stack-pane" data-active={activeTabIndex === 2} aria-label="Square">
+                  {mountedTabs.has(2) ? <SquareHome /> : null}
                 </div>
                 <div className="tab-stack-pane tab-stack-pane--myzone" data-active={activeTabIndex === 3} aria-label="MyZone">
                   {mountedTabs.has(3) ? <MyZone /> : null}

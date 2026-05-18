@@ -1,0 +1,143 @@
+import { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { getMyOrganizations } from '../api/organizations';
+import { postCampusPost } from '../api/square';
+import { QK } from '../query/queryKeys';
+
+export default function SquareCampusPostNew() {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const defaultTab = searchParams.get('tab') || 'school';
+  const [tab, setTab] = useState(defaultTab);
+  const [orgId, setOrgId] = useState('');
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  const { data, isLoading } = useQuery({
+    queryKey: QK.myOrganizations(),
+    queryFn: getMyOrganizations,
+    staleTime: 60 * 1000,
+  });
+  const orgs = Array.isArray(data) ? data : data?.data || [];
+
+  // 按 tab 过滤可用组织
+  const allowedTypes = tab === 'college' ? ['College'] : ['SchoolDepartment', 'Official'];
+  const availableOrgs = orgs.filter((o) => allowedTypes.includes(o.type));
+
+  useEffect(() => {
+    if (availableOrgs.length > 0 && !orgId) {
+      setOrgId(String(availableOrgs[0].id));
+    }
+  }, [availableOrgs, orgId]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!orgId || !title.trim() || !content.trim()) return;
+    setSubmitting(true);
+    setError('');
+    try {
+      await postCampusPost({
+        organization_id: parseInt(orgId, 10),
+        feed_tab: tab,
+        title: title.trim(),
+        content: content.trim(),
+      });
+      navigate('/about', { replace: true });
+    } catch (err) {
+      setError(err.message || '发布失败');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="square-home-page">
+      <div className="square-home-inner">
+        <div className="square-section">
+          <h3 className="square-section-title">发布校园通知</h3>
+
+          <div className="square-campus-tabs" style={{ marginBottom: 12 }}>
+            {[
+              { key: 'school', label: '学校公告' },
+              { key: 'college', label: '学院通知' },
+            ].map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                className={`square-campus-tab${tab === t.key ? ' square-campus-tab--active' : ''}`}
+                onClick={() => { setTab(t.key); setOrgId(''); }}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          {isLoading ? (
+            <div className="state-loading" style={{ paddingTop: 40 }} />
+          ) : availableOrgs.length === 0 ? (
+            <div className="state-empty">
+              你没有{tab === 'college' ? '学院' : '学校官方'}组织的发帖权限
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit}>
+              <label style={{ fontSize: 13, color: 'var(--post-ios-secondary-label)', display: 'block', marginBottom: 4 }}>
+                发布身份
+              </label>
+              <select
+                className="canteen-search-input"
+                style={{ width: '100%', boxSizing: 'border-box', marginBottom: 12 }}
+                value={orgId}
+                onChange={(e) => setOrgId(e.target.value)}
+              >
+                {availableOrgs.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.name} ({o.title || '成员'})
+                  </option>
+                ))}
+              </select>
+
+              <label style={{ fontSize: 13, color: 'var(--post-ios-secondary-label)', display: 'block', marginBottom: 4 }}>
+                标题
+              </label>
+              <input
+                type="text"
+                className="canteen-search-input"
+                style={{ width: '100%', boxSizing: 'border-box', marginBottom: 12 }}
+                placeholder="输入标题..."
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                maxLength={200}
+              />
+
+              <label style={{ fontSize: 13, color: 'var(--post-ios-secondary-label)', display: 'block', marginBottom: 4 }}>
+                内容
+              </label>
+              <textarea
+                className="canteen-search-input"
+                style={{ width: '100%', minHeight: 120, resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                placeholder="输入正文..."
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                maxLength={5000}
+              />
+
+              {error && <p style={{ color: 'var(--post-ios-red)', fontSize: 13, margin: '8px 0' }}>{error}</p>}
+
+              <button
+                type="submit"
+                className="canteen-pick-btn pressable"
+                disabled={submitting || !title.trim() || !content.trim() || !orgId}
+                style={{ marginTop: 12, opacity: submitting ? 0.6 : 1 }}
+              >
+                {submitting ? '发布中...' : '发布'}
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

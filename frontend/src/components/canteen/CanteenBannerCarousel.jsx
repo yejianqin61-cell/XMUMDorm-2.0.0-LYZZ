@@ -17,15 +17,19 @@ const LINK_NAV = {
 
 const AUTOPLAY_MS = 4000;
 
-export default function CanteenBannerCarousel() {
+export default function CanteenBannerCarousel({
+  fetchFn = getCanteenBanners,
+  queryKey = QK.canteenBanners(),
+  adminTo = '/eat/banners',
+}) {
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
   const t = getCanteenStrings(isZh);
   const { data, isLoading, isError } = useQuery({
-    queryKey: QK.canteenBanners(),
-    queryFn: getCanteenBanners,
+    queryKey,
+    queryFn: fetchFn,
     staleTime: 5 * 60 * 1000,
   });
   const banners = Array.isArray(data) ? data : data?.data || [];
@@ -90,7 +94,7 @@ export default function CanteenBannerCarousel() {
       <div className="canteen-banner-viewport">
         {isAdmin && (
           <Link
-            to="/eat/banners"
+            to={adminTo}
             className="canteen-banner-admin-link"
             onClick={stopNav}
           >
