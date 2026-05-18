@@ -75,7 +75,14 @@ export async function request(path, options = {}) {
     throw err;
   }
 
-  return data.data !== undefined ? data.data : data;
+  const business = data.data !== undefined ? data.data : data;
+  if (data.exp != null) {
+    if (business != null && typeof business === 'object' && !Array.isArray(business)) {
+      return { ...business, __exp: data.exp };
+    }
+    return { __payload: business, __exp: data.exp };
+  }
+  return business;
 }
 
 /**

@@ -1,0 +1,27 @@
+.user-level-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: 600;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.user-level-badge--sm {
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.user-level-badge--md {
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.user-level-badge-emoji {
+  font-size: 1em;
+  line-height: 1;
+}
+
+.user-level-badge-lv {
+  opacity: 0.92;
+}

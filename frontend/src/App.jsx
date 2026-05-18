@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './query/queryClient';
 import { AuthProvider } from './context/AuthContext';
+import { ExpFeedbackProvider } from './context/ExpFeedbackContext';
 import { ToastProvider } from './context/ToastContext';
 import { LanguageProvider } from './context/LanguageContext';
 import AuthGuard from './components/AuthGuard';
@@ -59,6 +60,7 @@ function MainApp() {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <ToastProvider>
+            <ExpFeedbackProvider>
             <LanguageProvider>
               <Routes>
                 <Route path="/login" element={<Login />} />
@@ -76,6 +78,7 @@ function MainApp() {
                 </Route>
               </Routes>
             </LanguageProvider>
+            </ExpFeedbackProvider>
           </ToastProvider>
         </AuthProvider>
       </QueryClientProvider>

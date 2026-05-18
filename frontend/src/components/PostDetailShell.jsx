@@ -9,6 +9,7 @@ import ImagePreview from './ImagePreview';
 import { StackedCardCarousel } from './StackedCardCarousel';
 import LikeBurst from './LikeBurst';
 import { formatPostTime } from '../utils/formatTime';
+import UserLevelBadge from './UserLevelBadge';
 import '../pages/PostDetail.css';
 
 function prefixAvatar(url) {
@@ -172,6 +173,9 @@ export default function PostDetailShell({
           <div className="post-detail-author-info">
             <div className="post-detail-name-tags">
               <span className="post-detail-username">{displayName}</span>
+              {author.level ? (
+                <UserLevelBadge level={author.level} badgeEmoji={author.badgeEmoji} size="sm" isZh={!isEn} />
+              ) : null}
               {tags.length > 0 && (
                 <div className="post-detail-tags" aria-label={isEn ? 'Tags' : '标签'}>
                   {tags.map((t) =>
@@ -269,6 +273,9 @@ export default function PostDetailShell({
                   <div className="post-detail-thread-meta">
                     <span className="post-detail-thread-name">
                       {(c.author?.nickname ?? c.author?.username ?? c.author?.name) || (isEn ? 'Anonymous' : '匿名')}
+                      {c.author?.level ? (
+                        <UserLevelBadge level={c.author.level} badgeEmoji={c.author.badgeEmoji} size="sm" isZh={!isEn} />
+                      ) : null}
                     </span>
                     <button
                       type="button"
@@ -310,6 +317,9 @@ export default function PostDetailShell({
                         <div className="post-detail-thread-meta">
                           <span className="post-detail-thread-name">
                             {(r.author?.nickname ?? r.author?.username ?? r.author?.name) || (isEn ? 'Anonymous' : '匿名')}
+                            {r.author?.level ? (
+                              <UserLevelBadge level={r.author.level} badgeEmoji={r.author.badgeEmoji} size="sm" isZh={!isEn} />
+                            ) : null}
                           </span>
                           {onDeleteComment && (r.user_id === user?.id || isAdmin) && (
                             <button

@@ -129,7 +129,7 @@ export function AuthProvider({ children }) {
       if (data.data) localStorage.setItem(STORAGE_USER, JSON.stringify(data.data));
       setToken(data.token);
       setUser(data.data || null);
-      return { success: true };
+      return { success: true, exp: data.exp || null };
     }
 
     return {

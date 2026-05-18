@@ -15,6 +15,8 @@ import {
 } from '../api/posts';
 import { API_BASE_URL } from '../api/config';
 import { Toast } from '../context/ToastContext';
+import { useExpFeedback } from '../context/ExpFeedbackContext';
+import UserLevelBadge from '../components/UserLevelBadge';
 import EmptyState from '../components/EmptyState';
 import ImagePreview from '../components/ImagePreview';
 import { StackedCardCarousel } from '../components/StackedCardCarousel';
@@ -50,6 +52,7 @@ function PostDetail() {
   const { lang } = useLanguage();
   const isEn = lang === 'en';
   const { isLoggedIn, token, user, isAdmin } = useAuth();
+  const { handleExpResponse } = useExpFeedback();
   const postId = Number(id);
   const tokenKey = token ?? 'guest';
 
@@ -150,6 +153,7 @@ function PostDetail() {
     );
     try {
       const data = await toggleLike(postId);
+      handleExpResponse(data);
       // 以服务端返回为准（如果和乐观状态不一致，纠正一次）
       const finalLiked = data?.liked ?? optimisticLiked;
       if (finalLiked !== optimisticLiked) {
@@ -280,6 +284,7 @@ function PostDetail() {
         content,
         parent_id: parentId ?? undefined,
       });
+      handleExpResponse(created);
 
       const normalized = created
         ? mapCommentTree({
@@ -464,6 +469,9 @@ function PostDetail() {
           <div className="post-detail-author-info">
             <div className="post-detail-name-tags">
               <span className="post-detail-username">{displayName}</span>
+              {author.level ? (
+                <UserLevelBadge level={author.level} badgeEmoji={author.badgeEmoji} size="sm" isZh={!isEn} />
+              ) : null}
               {detailTags.length > 0 && (
                 <div className="post-detail-tags" aria-label={isEn ? 'Tags' : '标签'}>
                   {detailTags.map((t) =>
@@ -570,6 +578,9 @@ function PostDetail() {
                   <div className="post-detail-thread-meta">
                     <span className="post-detail-thread-name">
                       {(c.author?.nickname ?? c.author?.username) || 'Anonymous'}
+                      {c.author?.level ? (
+                        <UserLevelBadge level={c.author.level} badgeEmoji={c.author.badgeEmoji} size="sm" isZh={!isEn} />
+                      ) : null}
                     </span>
                     <button type="button" className="post-detail-reply-btn" onClick={() => { startReply(c); focusComposer(); }}>
                       {isEn ? 'Reply' : '回复'}
@@ -604,6 +615,9 @@ function PostDetail() {
                         <div className="post-detail-thread-meta">
                           <span className="post-detail-thread-name">
                             {(r.author?.nickname ?? r.author?.username) || 'Anonymous'}
+                            {r.author?.level ? (
+                              <UserLevelBadge level={r.author.level} badgeEmoji={r.author.badgeEmoji} size="sm" isZh={!isEn} />
+                            ) : null}
                           </span>
                           {(r.user_id === user?.id || isAdmin) && (
                             <button

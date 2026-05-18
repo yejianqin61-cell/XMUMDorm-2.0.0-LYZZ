@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { useExpFeedback } from '../context/ExpFeedbackContext';
 import { Toast } from '../context/ToastContext';
 import { getApiErrorMessage } from '../utils/apiError';
 import AuthPageShell from '../components/auth/AuthPageShell';
@@ -18,6 +19,7 @@ function Login() {
   const [loading, setLoading] = useState(false);
 
   const { login, skipLogin } = useAuth();
+  const { handleExpResponse } = useExpFeedback();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || '/';
@@ -33,6 +35,7 @@ function Login() {
     try {
       const result = await login(sid, password);
       if (result.success) {
+        if (result.exp) handleExpResponse({ __exp: result.exp });
         Toast.success('登录成功，正在跳转… Login success, redirecting…');
         setTimeout(() => navigate(from, { replace: true }), 500);
       } else {

@@ -14,6 +14,9 @@ const sanitizeHtml = require('sanitize-html');
 const { logAudit } = require('../services/auditLog');
 const { assetUrl } = require('../utils/assets');
 const { simpleCache } = require('../utils/simpleCache');
+const { grantExp, revokeByRef, checkAndGrantPostPopularRewards, formatAuthorLevel } = require('../services/expService');
+const { attachExp } = require('../utils/expResponse');
+const { isPostContentEligible, isCommentEligible } = require('../utils/expEligibility');
 
 // 统一的文本清洗，防止 XSS 注入（去掉所有 HTML 标签，只保留纯文本）
 function cleanText(input) {
@@ -126,7 +129,8 @@ function attachPostExtra(rows, req) {
         id: row.author_id,
         username: row.author_username,
         nickname: row.author_nickname,
-        avatar: assetUrl(row.author_avatar)
+        avatar: assetUrl(row.author_avatar),
+        ...formatAuthorLevel({ level: row.author_level, badge: row.author_badge }),
       } : null,
       images: [],
       like_count: row.like_count != null ? Number(row.like_count) : 0,
@@ -172,7 +176,8 @@ function mergePostRows(rows, req) {
           id: row.author_id,
           username: row.author_username,
           nickname: row.author_nickname,
-          avatar: assetUrl(row.author_avatar)
+          avatar: assetUrl(row.author_avatar),
+          ...formatAuthorLevel({ level: row.author_level, badge: row.author_badge }),
         } : null,
         images: [],
         like_count: row.like_count != null ? Number(row.like_count) : 0,
@@ -324,6 +329,8 @@ router.post('/', authenticateToken, (req, res, next) => {
     const rows = await query(
       `SELECT p.id, p.user_id, p.title, p.content, p.type, p.created_at, p.updated_at, p.hidden_by_admin,
         u.id AS author_id, u.username AS author_username, u.nickname AS author_nickname, u.avatar AS author_avatar,
+          u.level AS author_level, u.badge AS author_badge,
+        u.level AS author_level, u.badge AS author_badge,
         pi.file_path AS image_path, pi.sort_order,
         (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
         (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count,
@@ -345,11 +352,21 @@ router.post('/', authenticateToken, (req, res, next) => {
     }
     const [withTags] = await enrichPostsWithTags([post]);
     post = withTags;
-    res.status(200).json({
+
+    let expResult = null;
+    if (type === 'normal' && isPostContentEligible(title, content)) {
+      expResult = await grantExp(req.user.id, {
+        action: 'post',
+        refType: 'treehole_post',
+        refId: postId,
+      });
+    }
+
+    res.status(200).json(attachExp({
       status: 0,
       message: '发布成功！',
-      data: post
-    });
+      data: post,
+    }, expResult));
   } catch (e) {
     console.error('发布帖子错误:', e);
     const msg = process.env.NODE_ENV === 'development' ? (e.message || String(e)) : '服务器错误，请稍后重试';
@@ -404,6 +421,7 @@ router.get('/', async (req, res) => {
       rows = await query(
         `SELECT p.id, p.user_id, p.title, p.content, p.type, p.deleted_at, p.hidden_by_admin, p.created_at, p.updated_at,
           u.id AS author_id, u.username AS author_username, u.nickname AS author_nickname, u.avatar AS author_avatar,
+          u.level AS author_level, u.badge AS author_badge,
           pi.file_path AS image_path, pi.sort_order,
           (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
           (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count,
@@ -422,6 +440,7 @@ router.get('/', async (req, res) => {
         rows = await query(
           `SELECT p.id, p.user_id, p.content, p.type, p.deleted_at, p.hidden_by_admin, p.created_at, p.updated_at,
             u.id AS author_id, u.username AS author_username, u.nickname AS author_nickname, u.avatar AS author_avatar,
+          u.level AS author_level, u.badge AS author_badge,
             pi.file_path AS image_path, pi.sort_order,
             (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
             (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count,
@@ -619,6 +638,7 @@ router.get('/:id', async (req, res) => {
       rows = await query(
         `SELECT p.id, p.user_id, p.title, p.content, p.type, p.deleted_at, p.hidden_by_admin, p.created_at, p.updated_at,
           u.id AS author_id, u.username AS author_username, u.nickname AS author_nickname, u.avatar AS author_avatar,
+          u.level AS author_level, u.badge AS author_badge,
           pi.file_path AS image_path, pi.sort_order,
           COALESCE(plc.like_count, 0) AS like_count,
           COALESCE(cc.comment_count, 0) AS comment_count,
@@ -652,6 +672,7 @@ router.get('/:id', async (req, res) => {
         rows = await query(
           `SELECT p.id, p.user_id, p.content, p.type, p.deleted_at, p.hidden_by_admin, p.created_at, p.updated_at,
             u.id AS author_id, u.username AS author_username, u.nickname AS author_nickname, u.avatar AS author_avatar,
+          u.level AS author_level, u.badge AS author_badge,
             pi.file_path AS image_path, pi.sort_order,
             COALESCE(plc.like_count, 0) AS like_count,
             COALESCE(cc.comment_count, 0) AS comment_count,
@@ -796,21 +817,47 @@ router.post('/:id/like', authenticateToken, async (req, res) => {
     if (!posts || posts.length === 0) {
       return res.status(404).json({ status: -1, message: '帖子不存在或已删除' });
     }
+    const [postAuthor] = await query('SELECT user_id FROM posts WHERE id = ?', [postId]);
+    const authorId = postAuthor && postAuthor.user_id;
+
     const existing = await query('SELECT 1 FROM post_likes WHERE user_id = ? AND post_id = ?', [req.user.id, postId]);
     if (existing && existing.length > 0) {
       await query('DELETE FROM post_likes WHERE user_id = ? AND post_id = ?', [req.user.id, postId]);
-      return res.status(200).json({ status: 0, message: '已取消点赞', data: { post_id: postId, liked: false } });
+      let expResult = null;
+      if (authorId && authorId !== req.user.id) {
+        expResult = await revokeByRef(req.user.id, {
+          action: 'like',
+          refType: 'treehole_post',
+          refId: postId,
+        });
+      }
+      return res.status(200).json(attachExp({
+        status: 0,
+        message: '已取消点赞',
+        data: { post_id: postId, liked: false },
+      }, expResult));
     }
     await query('INSERT INTO post_likes (user_id, post_id) VALUES (?, ?)', [req.user.id, postId]);
-    // 通知帖子作者（排除自己点赞）
-    const [postAuthor] = await query('SELECT user_id FROM posts WHERE id = ?', [postId]);
-    if (postAuthor && postAuthor.user_id && postAuthor.user_id !== req.user.id) {
+    let expResult = null;
+    if (authorId && authorId !== req.user.id) {
+      expResult = await grantExp(req.user.id, {
+        action: 'like',
+        refType: 'treehole_post',
+        refId: postId,
+      });
+      await checkAndGrantPostPopularRewards('treehole', postId, authorId);
+    }
+    if (authorId && authorId !== req.user.id) {
       await query(
         'INSERT INTO notifications (user_id, type, post_id, from_user_id) VALUES (?, ?, ?, ?)',
-        [postAuthor.user_id, 'like', postId, req.user.id]
+        [authorId, 'like', postId, req.user.id]
       );
     }
-    res.status(200).json({ status: 0, message: '点赞成功！', data: { post_id: postId, liked: true } });
+    res.status(200).json(attachExp({
+      status: 0,
+      message: '点赞成功！',
+      data: { post_id: postId, liked: true },
+    }, expResult));
   } catch (e) {
     console.error('点赞错误:', e);
     res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
@@ -831,7 +878,7 @@ router.get('/:id/comments', async (req, res) => {
     }
     const rows = await query(
       `SELECT c.id, c.post_id, c.user_id, c.parent_id, c.content, c.deleted_at, c.created_at,
-        u.username, u.nickname, u.avatar
+        u.username, u.nickname, u.avatar, u.level, u.badge
        FROM comments c
        LEFT JOIN users u ON c.user_id = u.id
        WHERE c.post_id = ? AND c.deleted_at IS NULL
@@ -842,11 +889,21 @@ router.get('/:id/comments', async (req, res) => {
     const replies = (rows || []).filter((r) => r.parent_id != null);
     const list = top.map((t) => ({
       ...t,
-      author: { username: t.username, nickname: t.nickname, avatar: assetUrl(t.avatar) },
+      author: {
+        username: t.username,
+        nickname: t.nickname,
+        avatar: assetUrl(t.avatar),
+        ...formatAuthorLevel({ level: t.level, badge: t.badge }),
+      },
       replies: replies.filter((r) => r.parent_id === t.id).map((r) => ({
         ...r,
-        author: { username: r.username, nickname: r.nickname, avatar: assetUrl(r.avatar) }
-      }))
+        author: {
+          username: r.username,
+          nickname: r.nickname,
+          avatar: assetUrl(r.avatar),
+          ...formatAuthorLevel({ level: r.level, badge: r.badge }),
+        },
+      })),
     }));
     simpleCache.set(cacheKey, list, 10 * 1000);
     res.status(200).json({ status: 0, message: '获取成功', data: list });
@@ -898,15 +955,31 @@ router.post('/:id/comments', authenticateToken, async (req, res) => {
     simpleCache.delete(`post_comments_v1:${postId}`);
     // 详情缓存按 viewer 维度，评论写入后不强依赖立刻更新；短 TTL 下自然过期即可
     const rows = await query(
-      'SELECT c.id, c.post_id, c.user_id, c.parent_id, c.content, c.created_at, u.username, u.nickname, u.avatar FROM comments c LEFT JOIN users u ON c.user_id = u.id WHERE c.id = ?',
+      'SELECT c.id, c.post_id, c.user_id, c.parent_id, c.content, c.created_at, u.username, u.nickname, u.avatar, u.level, u.badge FROM comments c LEFT JOIN users u ON c.user_id = u.id WHERE c.id = ?',
       [result.insertId]
     );
     const row = rows && rows[0];
     const data = row ? {
       ...row,
-      author: { username: row.username, nickname: row.nickname, avatar: assetUrl(row.avatar) }
+      author: {
+        username: row.username,
+        nickname: row.nickname,
+        avatar: assetUrl(row.avatar),
+        ...formatAuthorLevel({ level: row.level, badge: row.badge }),
+      },
     } : { id: result.insertId, content: safeContent, created_at: new Date().toISOString() };
-    res.status(200).json({ status: 0, message: '评论成功！', data });
+
+    let expResult = null;
+    if (postRow && postRow.user_id !== req.user.id && isCommentEligible(safeContent)) {
+      expResult = await grantExp(req.user.id, {
+        action: 'comment',
+        refType: 'treehole_post',
+        refId: postId,
+      });
+      await checkAndGrantPostPopularRewards('treehole', postId, postRow.user_id);
+    }
+
+    res.status(200).json(attachExp({ status: 0, message: '评论成功！', data }, expResult));
   } catch (e) {
     console.error('评论错误:', e);
     res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });

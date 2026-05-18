@@ -17,6 +17,7 @@ import AboutTeam from '../pages/AboutTeam';
 import AboutThanks from '../pages/AboutThanks';
 import AboutEditorNote from '../pages/AboutEditorNote';
 import AboutAlgorithm from '../pages/AboutAlgorithm';
+import AboutLevelAlgorithm from '../pages/AboutLevelAlgorithm';
 import AboutProfile from '../pages/AboutProfile';
 import SquareClub from '../pages/SquareClub';
 import SquareSecondHand from '../pages/SquareSecondHand';
@@ -88,6 +89,7 @@ export const layoutRoutes = (
     <Route path="about/team" element={<AboutTeam />} />
     <Route path="about/editor-note" element={<AboutEditorNote />} />
     <Route path="about/algorithm" element={<AboutAlgorithm />} />
+    <Route path="about/level-algorithm" element={<AboutLevelAlgorithm />} />
     <Route path="about/diary" element={<Navigate to="/myzone/diary" replace />} />
     <Route path="about/disclaimer" element={<Disclaimer />} />
     <Route path="about/contact" element={<ContactUs />} />

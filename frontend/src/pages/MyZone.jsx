@@ -26,6 +26,8 @@ import { getMyFavorites, getMyProductReviews } from '../api/canteen';
 import { getScheduleWeek } from '../api/schedule';
 import { getTodayTodos } from '../api/todos';
 import { formatTodoDueDisplay } from '../utils/formatTodoDue';
+import UserLevelBadge from '../components/UserLevelBadge';
+import LevelProgressBar from '../components/LevelProgressBar';
 
 function MyZoneStrings(isZh) {
   return {
@@ -239,14 +241,18 @@ function MyZone() {
               </motion.button>
 
               <div className="min-w-0 flex-1 pt-1">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <p className="truncate text-[18px] font-semibold text-slate-900">
                     {isLoggedIn ? displayName : t.logIn}
                   </p>
+                  {isLoggedIn && user?.level ? (
+                    <UserLevelBadge level={user.level} badgeEmoji={user.badgeEmoji} size="md" isZh={isZh} />
+                  ) : null}
                 </div>
                 <p className="mt-1 text-[13px] leading-relaxed text-slate-400">
                   {isLoggedIn ? t.bioLoggedIn : t.bioLoggedOut}
                 </p>
+                <LevelProgressBar level={user?.level} levelProgress={user?.levelProgress} isZh={isZh} />
               </div>
 
               <motion.button

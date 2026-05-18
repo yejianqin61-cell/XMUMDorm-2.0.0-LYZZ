@@ -26,6 +26,8 @@ const jwt = require('jsonwebtoken');
 const { query } = require('../database');
 const { logAudit } = require('../services/auditLog');
 const { sendVerificationEmail } = require('../services/email');
+const { grantExp } = require('../services/expService');
+const { attachExp } = require('../utils/expResponse');
 
 // 从环境变量获取 JWT 密钥
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
@@ -595,8 +597,10 @@ router.post('/login', async (req, res) => {
       meta: { email: email || null, username: username || null },
     });
 
+    const expResult = await grantExp(user.id, { action: 'login' });
+
     // 7. 返回成功响应
-    res.status(200).json({
+    res.status(200).json(attachExp({
       status: 0,
       message: '登录成功！',
       token: token,
@@ -605,9 +609,9 @@ router.post('/login', async (req, res) => {
         student_id: user.student_id,
         username: user.username,
         email: user.email,
-        role: user.role
-      }
-    });
+        role: user.role,
+      },
+    }, expResult));
 
   } catch (error) {
     // 错误处理

@@ -10,6 +10,7 @@ import {
 } from '../api/square';
 import { API_BASE_URL } from '../api/config';
 import { Toast } from '../context/ToastContext';
+import { useExpFeedback } from '../context/ExpFeedbackContext';
 import { getApiErrorMessage } from '../utils/apiError';
 import { QK } from '../query/queryKeys';
 import PostDetailShell from '../components/PostDetailShell';
@@ -34,6 +35,7 @@ export default function SquareTrendingPostDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { isLoggedIn, token, user, isAdmin } = useAuth();
+  const { handleExpResponse } = useExpFeedback();
   const postId = parseInt(id, 10);
   const tokenKey = token ?? 'guest';
 
@@ -82,6 +84,7 @@ export default function SquareTrendingPostDetail() {
     setLikeCount((c) => (optimistic ? c + 1 : Math.max(0, c - 1)));
     try {
       const data = await likeTrendingPost(postId);
+      handleExpResponse(data);
       if (data?.liked != null) setLiked(!!data.liked);
       if (data?.like_count != null) setLikeCount(data.like_count);
     } catch (err) {
@@ -95,10 +98,11 @@ export default function SquareTrendingPostDetail() {
     async ({ content, parentId }) => {
       setSubmitLoading(true);
       try {
-        await postTrendingPostComment(postId, {
+        const res = await postTrendingPostComment(postId, {
           content,
           parent_id: parentId ?? undefined,
         });
+        handleExpResponse(res);
         await queryClient.invalidateQueries({ queryKey: QK.trendingPostComments(postId) });
         await queryClient.invalidateQueries({ queryKey: QK.trendingPostDetail(postId, tokenKey) });
         Toast.success('评论成功');

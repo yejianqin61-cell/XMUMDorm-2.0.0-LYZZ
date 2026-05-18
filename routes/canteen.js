@@ -25,6 +25,9 @@ const path = require('path');
 const { assetUrl } = require('../utils/assets');
 const { uploadBuffer, guessContentType } = require('../services/objectStorage');
 const { simpleCache } = require('../utils/simpleCache');
+const { grantExp } = require('../services/expService');
+const { attachExp } = require('../utils/expResponse');
+const { isQualityReview } = require('../utils/expEligibility');
 
 const RATING_ENUM = ['夯爆了', '顶级', '人上人', 'NPC', '拉完了'];
 
@@ -164,6 +167,37 @@ function cleanText(input) {
     allowedAttributes: {}
   });
   return cleaned.trim();
+}
+
+/** 转义 LIKE 通配符，供模糊搜索使用 */
+function escapeLikeToken(raw) {
+  return String(raw || '')
+    .trim()
+    .replace(/[%_\\]/g, '\\$&');
+}
+
+/** 将搜索词拆成 token，每 token 须在任一字段中模糊命中（LIKE %token%） */
+function tokenizeSearchQuery(q) {
+  return String(q || '')
+    .trim()
+    .split(/\s+/)
+    .map(escapeLikeToken)
+    .filter(Boolean);
+}
+
+function buildFuzzyLikeClause(tokens, fields) {
+  if (!tokens.length || !fields.length) {
+    return { clause: '1=0', params: [] };
+  }
+  const parts = [];
+  const params = [];
+  for (const token of tokens) {
+    const like = `%${token}%`;
+    const fieldExprs = fields.map((f) => `${f} LIKE ?`).join(' OR ');
+    parts.push(`(${fieldExprs})`);
+    params.push(...fields.map(() => like));
+  }
+  return { clause: parts.join(' AND '), params };
 }
 
 function isAdmin(req) {
@@ -1461,7 +1495,33 @@ router.post('/products/:productId/comments', authenticateToken, (req, res, next)
     }
     const comment = Object.values(commentById)[0];
     if (comment) comment.images.sort((a, b) => a.sort_order - b.sort_order);
-    res.status(200).json({ status: 0, message: '评论成功', data: comment });
+    let expResult = null;
+    if (parentId === null) {
+      expResult = await grantExp(req.user.id, {
+        action: 'cafeteria_review',
+        refType: 'product_comment',
+        refId: commentId,
+      });
+      const hasImages = (files && files.length > 0) || (rows && rows.some((r) => r.image_path));
+      if (isQualityReview(content, hasImages)) {
+        const bonus = await grantExp(req.user.id, {
+          action: 'quality_bonus',
+          refType: 'product_comment',
+          refId: commentId,
+        });
+        if (bonus.delta && expResult) {
+          expResult = {
+            ...bonus,
+            delta: (expResult.delta || 0) + bonus.delta,
+            messages: [...(expResult.messages || []), ...(bonus.messages || [])],
+          };
+        } else if (bonus.delta) {
+          expResult = bonus;
+        }
+      }
+    }
+
+    res.status(200).json(attachExp({ status: 0, message: '评论成功', data: comment }, expResult));
   } catch (e) {
     console.error('发表评论错误:', e);
     res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
@@ -1922,15 +1982,17 @@ router.get('/search', async (req, res) => {
     const pageSize = Math.min(50, Math.max(1, parseInt(req.query.pageSize, 10) || 10));
     const offset = (page - 1) * pageSize;
     const limitCount = pageSize + 1;
-    const safe = q.replace(/[%_\\]/g, '');
-    if (!safe) {
+    const tokens = tokenizeSearchQuery(q);
+    if (!tokens.length) {
       return res.status(200).json({
         status: 0,
         message: '搜索成功',
         data: { q, products: [], articles: [], hasMore: { products: false, articles: false } },
       });
     }
-    const likePattern = `%${safe}%`;
+
+    const productFuzzy = buildFuzzyLikeClause(tokens, ['p.name', "COALESCE(p.description, '')"]);
+    const articleFuzzy = buildFuzzyLikeClause(tokens, ["COALESCE(p.title, '')"]);
 
     let products = [];
     let articles = [];
@@ -1950,10 +2012,10 @@ router.get('/search', async (req, res) => {
          FROM products p
          JOIN shops s ON p.shop_id = s.id AND s.deleted_at IS NULL
          JOIN regions r ON s.region_id = r.id
-         WHERE p.deleted_at IS NULL AND p.name LIKE ?
+         WHERE p.deleted_at IS NULL AND (${productFuzzy.clause})
          ORDER BY p.comprehensive_score DESC, p.id DESC
          LIMIT ${limitCount} OFFSET ${offset}`,
-        [likePattern]
+        productFuzzy.params
       );
       hasMoreP = rows.length > pageSize;
       products = rows.slice(0, pageSize).map((r) => ({
@@ -1968,7 +2030,7 @@ router.get('/search', async (req, res) => {
     }
 
     if (type === 'all' || type === 'articles') {
-      // 美食文章：带「吃货广场」标签的帖子，匹配标题或正文
+      // 美食文章：带「吃货广场」标签的帖子，模糊匹配标题
       let rows;
       try {
         rows = await query(
@@ -1976,7 +2038,7 @@ router.get('/search', async (req, res) => {
            FROM posts p
            JOIN users u ON p.user_id = u.id
            WHERE p.deleted_at IS NULL AND p.hidden_by_admin = 0
-             AND (p.content LIKE ? OR p.title LIKE ?)
+             AND (${articleFuzzy.clause})
              AND EXISTS (
                SELECT 1 FROM post_tag_map ptm
                INNER JOIN tags tg ON tg.id = ptm.tag_id
@@ -1984,17 +2046,18 @@ router.get('/search', async (req, res) => {
              )
            ORDER BY p.created_at DESC
            LIMIT ${limitCount} OFFSET ${offset}`,
-          [likePattern, likePattern, FOOD_SQUARE_TAG_SLUG]
+          [...articleFuzzy.params, FOOD_SQUARE_TAG_SLUG]
         );
       } catch (qErr) {
         const msg = (qErr && (qErr.message || qErr.code || '')).toString();
         if (msg.includes('Unknown column') && msg.includes('title')) {
+          const legacyArticleFuzzy = buildFuzzyLikeClause(tokens, ['p.content']);
           rows = await query(
             `SELECT p.id, p.content, p.created_at, u.id AS author_id, u.username, u.nickname, u.avatar
              FROM posts p
              JOIN users u ON p.user_id = u.id
              WHERE p.deleted_at IS NULL AND p.hidden_by_admin = 0
-               AND p.content LIKE ?
+               AND (${legacyArticleFuzzy.clause})
                AND EXISTS (
                  SELECT 1 FROM post_tag_map ptm
                  INNER JOIN tags tg ON tg.id = ptm.tag_id
@@ -2002,7 +2065,7 @@ router.get('/search', async (req, res) => {
                )
              ORDER BY p.created_at DESC
              LIMIT ${limitCount} OFFSET ${offset}`,
-            [likePattern, FOOD_SQUARE_TAG_SLUG]
+            [...legacyArticleFuzzy.params, FOOD_SQUARE_TAG_SLUG]
           );
         } else {
           throw qErr;

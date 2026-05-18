@@ -5,6 +5,8 @@ import { useLanguage } from '../context/LanguageContext';
 import { API_BASE_URL } from '../api/config';
 import { formatPostTime } from '../utils/formatTime';
 import { toggleLike } from '../api/posts';
+import { useExpFeedback } from '../context/ExpFeedbackContext';
+import UserLevelBadge from './UserLevelBadge';
 import ImagePreview from './ImagePreview';
 import './PostCard.css';
 
@@ -13,9 +15,14 @@ function useAuthor(post) {
   if (post.author && typeof post.author === 'object') {
     const a = post.author;
     const avatar = a.avatar ? (a.avatar.startsWith('http') ? a.avatar : `${API_BASE_URL}${a.avatar}`) : null;
-    return { username: a.nickname ?? a.username ?? '匿名', avatar };
+    return {
+      username: a.nickname ?? a.username ?? '匿名',
+      avatar,
+      level: a.level,
+      badgeEmoji: a.badgeEmoji,
+    };
   }
-  return { username: '匿名', avatar: null };
+  return { username: '匿名', avatar: null, level: null };
 }
 
 function prefixImageUrl(url) {
@@ -66,7 +73,9 @@ function PostCard({ post, variant = 'list' }) {
   const coverUrl = hasImages ? prefixImageUrl(post.images[0]?.url) : null;
 
   const { isLoggedIn } = useAuth();
+  const { handleExpResponse } = useExpFeedback();
   const navigate = useNavigate();
+  const isZh = lang !== 'en';
   const [likeNum, setLikeNum] = useState(initialLike);
   const [liked, setLiked] = useState(!!post.user_liked);
 
@@ -84,6 +93,7 @@ function PostCard({ post, variant = 'list' }) {
     }
     try {
       const data = await toggleLike(id);
+      handleExpResponse(data);
       setLiked(data?.liked ?? !liked);
       setLikeNum((c) => (data?.liked ? c + 1 : Math.max(0, c - 1)));
     } catch (_) {
@@ -182,6 +192,9 @@ function PostCard({ post, variant = 'list' }) {
               )}
             </div>
             <span className="post-card-username">{author.username}</span>
+            {author.level ? (
+              <UserLevelBadge level={author.level} badgeEmoji={author.badgeEmoji} size="sm" isZh={isZh} />
+            ) : null}
           </div>
           <button
             type="button"

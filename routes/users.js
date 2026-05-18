@@ -14,6 +14,8 @@ const { avatarUpload } = require('../middleware/upload');
 const { assetUrl } = require('../utils/assets');
 const { uploadBuffer, guessContentType } = require('../services/objectStorage');
 const { simpleCache } = require('../utils/simpleCache');
+const { getUserLevelSummary, formatAuthorLevel } = require('../services/expService');
+const { getExpProgress } = require('../constants/levelThresholds');
 
 const DEFAULT_AVATAR = '/uploads/default-avatar.png'; // 无头像时前端用此路径（可保留本地静态或后续迁移到 CDN）
 
@@ -46,7 +48,7 @@ router.get('/me', authenticateToken, async (req, res) => {
     const cacheKey = `users:me:v1:${req.user.id}`;
     const rows = await simpleCache.getOrSet(cacheKey, ttlMs, async () => {
       return await query(
-        'SELECT id, student_id, username, email, role, avatar, nickname, weekly_comment_count, created_at FROM users WHERE id = ?',
+        'SELECT id, student_id, username, email, role, level, exp, badge, avatar, nickname, weekly_comment_count, created_at FROM users WHERE id = ?',
         [req.user.id]
       );
     });
@@ -63,11 +65,29 @@ router.get('/me', authenticateToken, async (req, res) => {
       nickname: u.nickname,
       avatar: u.avatar ? assetUrl(u.avatar) : DEFAULT_AVATAR,
       weekly_comment_count: u.weekly_comment_count != null ? u.weekly_comment_count : 0,
-      created_at: u.created_at
+      created_at: u.created_at,
+      ...formatAuthorLevel(u),
+      levelProgress: getExpProgress(u.exp != null ? u.exp : 0),
     };
     res.status(200).json({ status: 0, message: '获取成功', data });
   } catch (e) {
     console.error('获取当前用户错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
+// ============================================
+// 当前用户等级详情
+// ============================================
+router.get('/me/level', authenticateToken, async (req, res) => {
+  try {
+    const summary = await getUserLevelSummary(req.user.id);
+    if (!summary) {
+      return res.status(404).json({ status: -1, message: '用户不存在' });
+    }
+    res.status(200).json({ status: 0, message: '获取成功', data: summary });
+  } catch (e) {
+    console.error('获取等级错误:', e);
     res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
   }
 });
@@ -95,7 +115,7 @@ router.get('/:id/profile', async (req, res) => {
     }
 
     const users = await query(
-      'SELECT id, username, email, avatar, nickname, role, weekly_comment_count FROM users WHERE id = ?',
+      'SELECT id, username, email, avatar, nickname, role, level, exp, badge, weekly_comment_count FROM users WHERE id = ?',
       [userId]
     );
     if (!users || users.length === 0) {
@@ -169,7 +189,9 @@ router.get('/:id/profile', async (req, res) => {
         email: u.email,
         avatar: u.avatar ? assetUrl(u.avatar) : DEFAULT_AVATAR,
         role: u.role,
-        weekly_comment_count: u.weekly_comment_count != null ? u.weekly_comment_count : 0
+        weekly_comment_count: u.weekly_comment_count != null ? u.weekly_comment_count : 0,
+        ...formatAuthorLevel(u),
+        levelProgress: getExpProgress(u.exp != null ? u.exp : 0),
       },
       posts: postList,
       stats: {

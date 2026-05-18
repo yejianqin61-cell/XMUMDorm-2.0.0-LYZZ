@@ -1,11 +1,13 @@
 import { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { postTrendingPost } from '../api/square';
+import { useExpFeedback } from '../context/ExpFeedbackContext';
 import { getUploadUrl } from '../api/config';
 
 export default function SquareTrendingPostNew() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { handleExpResponse } = useExpFeedback();
   const [content, setContent] = useState('');
   const [files, setFiles] = useState([]);
   const [previews, setPreviews] = useState([]);
@@ -38,7 +40,8 @@ export default function SquareTrendingPostNew() {
     setSubmitting(true);
     setError('');
     try {
-      await postTrendingPost(parseInt(id, 10), { content: text }, files.length > 0 ? files : null);
+      const res = await postTrendingPost(parseInt(id, 10), { content: text }, files.length > 0 ? files : null);
+      handleExpResponse(res);
       navigate(`/about/trending/${id}`, { replace: true });
     } catch (err) {
       setError(err.message || '发布失败');

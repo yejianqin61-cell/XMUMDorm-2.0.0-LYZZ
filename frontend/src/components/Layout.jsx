@@ -40,6 +40,7 @@ const TITLE_BY_PATH_ZH = {
   '/myzone/reviews': '我的点评',
   '/myzone/profile': '修改资料',
   '/about/algorithm': '评分算法说明',
+  '/about/level-algorithm': '等级算法说明',
   '/about/profile': '关于我们',
   '/myzone/schedule': '课程表',
   '/myzone/diary': '多年日记本',
@@ -60,6 +61,7 @@ const TITLE_BY_PATH_EN = {
   '/myzone/reviews': 'My Reviews',
   '/myzone/profile': 'Profile',
   '/about/algorithm': 'Scoring Algorithm',
+  '/about/level-algorithm': 'Level System',
   '/about/profile': 'About us',
   '/myzone/schedule': 'Schedule',
   '/myzone/diary': 'Diary',
@@ -213,6 +215,8 @@ function Layout() {
       title = isZh ? '编者的话' : "Editor's Note";
     } else if (pathname === '/about/algorithm') {
       title = isZh ? '评分算法说明' : 'Scoring Algorithm';
+    } else if (pathname === '/about/level-algorithm') {
+      title = isZh ? '等级算法说明' : 'Level System';
     } else if (pathname.startsWith('/about/trending/') && pathname.endsWith('/new')) {
       title = isZh ? '参与讨论' : 'Join Discussion';
     } else if (pathname.startsWith('/about/trending/')) {

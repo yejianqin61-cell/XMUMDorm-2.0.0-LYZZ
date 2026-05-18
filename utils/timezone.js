@@ -37,9 +37,19 @@ function shanghaiDaysAgoStart(days) {
   return new Date(utc);
 }
 
+/** 东八区当前自然日 YYYY-MM-DD（经验每日上限） */
+function shanghaiDateOnly() {
+  const sh = nowInShanghai();
+  const y = sh.getFullYear();
+  const m = String(sh.getMonth() + 1).padStart(2, '0');
+  const d = String(sh.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 module.exports = {
   nowInShanghai,
   isMondayZeroInShanghai,
   shanghaiDateString,
-  shanghaiDaysAgoStart
+  shanghaiDaysAgoStart,
+  shanghaiDateOnly,
 };

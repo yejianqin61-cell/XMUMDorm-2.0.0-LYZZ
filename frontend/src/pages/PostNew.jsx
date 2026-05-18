@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { Toast } from '../context/ToastContext';
+import { useExpFeedback } from '../context/ExpFeedbackContext';
 import { createPost, getPostTagsList } from '../api/posts';
 import { getApiErrorMessage } from '../utils/apiError';
 import { QK } from '../query/queryKeys';
@@ -16,6 +17,7 @@ const POST_TAGS_STALE_MS = 15 * 60 * 1000;
 function PostNew() {
   const queryClient = useQueryClient();
   const { isLoggedIn, isAdmin, token } = useAuth();
+  const { handleExpResponse } = useExpFeedback();
   const { lang } = useLanguage();
   const isEn = lang === 'en';
   const navigate = useNavigate();
@@ -106,6 +108,7 @@ function PostNew() {
         payload.tagIds = selectedTagIds;
       }
       const created = await createPost(payload);
+      handleExpResponse(created);
       Toast.success(isAdmin ? '公告发布成功' : '发布成功');
       const createdTagSlugs = new Set((created?.tags || []).map((t) => t?.slug).filter(Boolean));
       const hasFoodSquareTag =

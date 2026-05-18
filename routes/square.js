@@ -15,6 +15,9 @@ const { assetUrl } = require('../utils/assets');
 const { uploadBuffer, guessContentType } = require('../services/objectStorage');
 const { simpleCache } = require('../utils/simpleCache');
 const sanitizeHtml = require('sanitize-html');
+const { grantExp, revokeByRef, checkAndGrantPostPopularRewards } = require('../services/expService');
+const { attachExp } = require('../utils/expResponse');
+const { isPostContentEligible, isCommentEligible } = require('../utils/expEligibility');
 
 const BANNER_LINK_TYPES = ['none', 'product', 'shop', 'post', 'url', 'region'];
 
@@ -275,7 +278,16 @@ router.post('/trending/:id/posts', authenticateToken, (req, res, next) => {
       await query('INSERT INTO trending_post_images (post_id, file_path, sort_order) VALUES (?, ?, ?)', [postId, key, i]);
     }
 
-    res.status(200).json({ status: 0, message: '发布成功', data: { id: postId } });
+    let expResult = null;
+    if (isPostContentEligible(null, content)) {
+      expResult = await grantExp(req.user.id, {
+        action: 'post',
+        refType: 'trending_post',
+        refId: postId,
+      });
+    }
+
+    res.status(200).json(attachExp({ status: 0, message: '发布成功', data: { id: postId } }, expResult));
   } catch (e) {
     console.error('热搜发帖错误:', e);
     res.status(500).json({ status: -1, message: '服务器错误' });
@@ -373,11 +385,24 @@ router.post('/trending/posts/:id/comments', authenticateToken, async (req, res) 
       if (!parents || parents.length === 0) return res.status(200).json({ status: -1, message: '父评论不存在' });
     }
 
+    const [postRow] = await query('SELECT user_id FROM trending_posts WHERE id = ?', [postId]);
+
     const result = await query(
       'INSERT INTO trending_post_comments (post_id, user_id, parent_id, content) VALUES (?, ?, ?, ?)',
       [postId, req.user.id, parentId, content]
     );
-    res.status(200).json({ status: 0, message: '评论成功', data: { id: result.insertId } });
+
+    let expResult = null;
+    if (postRow && postRow.user_id !== req.user.id && isCommentEligible(content)) {
+      expResult = await grantExp(req.user.id, {
+        action: 'comment',
+        refType: 'trending_post',
+        refId: postId,
+      });
+      await checkAndGrantPostPopularRewards('trending', postId, postRow.user_id);
+    }
+
+    res.status(200).json(attachExp({ status: 0, message: '评论成功', data: { id: result.insertId } }, expResult));
   } catch (e) {
     console.error('热搜帖评论错误:', e);
     res.status(500).json({ status: -1, message: '服务器错误' });
@@ -391,24 +416,43 @@ router.post('/trending/posts/:id/like', authenticateToken, async (req, res) => {
     const posts = await query('SELECT id FROM trending_posts WHERE id = ? AND deleted_at IS NULL', [postId]);
     if (!posts || posts.length === 0) return res.status(200).json({ status: -1, message: '帖子不存在' });
 
+    const [postAuthor] = await query('SELECT user_id FROM trending_posts WHERE id = ?', [postId]);
+    const authorId = postAuthor && postAuthor.user_id;
+
     const existing = await query(
       'SELECT 1 FROM trending_post_likes WHERE post_id = ? AND user_id = ?',
       [postId, req.user.id]
     );
     let liked;
+    let expResult = null;
     if (existing && existing.length > 0) {
       await query('DELETE FROM trending_post_likes WHERE post_id = ? AND user_id = ?', [postId, req.user.id]);
       liked = false;
+      if (authorId && authorId !== req.user.id) {
+        expResult = await revokeByRef(req.user.id, {
+          action: 'like',
+          refType: 'trending_post',
+          refId: postId,
+        });
+      }
     } else {
       await query('INSERT INTO trending_post_likes (post_id, user_id) VALUES (?, ?)', [postId, req.user.id]);
       liked = true;
+      if (authorId && authorId !== req.user.id) {
+        expResult = await grantExp(req.user.id, {
+          action: 'like',
+          refType: 'trending_post',
+          refId: postId,
+        });
+        await checkAndGrantPostPopularRewards('trending', postId, authorId);
+      }
     }
     const [cntRow] = await query('SELECT COUNT(*) AS cnt FROM trending_post_likes WHERE post_id = ?', [postId]);
-    res.status(200).json({
+    res.status(200).json(attachExp({
       status: 0,
       message: liked ? '点赞成功' : '已取消点赞',
       data: { liked, like_count: (cntRow && cntRow.cnt) || 0 },
-    });
+    }, expResult));
   } catch (e) {
     console.error('热搜帖点赞错误:', e);
     res.status(500).json({ status: -1, message: '服务器错误' });
