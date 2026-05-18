@@ -25,6 +25,48 @@
   justify-content: space-between;
 }
 
+.square-trending-topic-header {
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.square-trending-topic-header-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.square-trending-topic-desc {
+  margin: 0 0 6px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--post-ios-secondary-label);
+}
+
+.square-trending-topic-meta {
+  font-size: 12px;
+  color: var(--post-ios-tertiary-label);
+}
+
+.square-trending-join-btn {
+  flex-shrink: 0;
+  margin-top: 2px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 999px;
+  background: var(--post-ios-accent, #007aff);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(0, 122, 255, 0.28);
+}
+
+.square-trending-join-btn:active {
+  transform: scale(0.97);
+  opacity: 0.92;
+}
+
 .square-section-title {
   margin: 0 0 10px;
   font-size: 17px;

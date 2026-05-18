@@ -49,19 +49,21 @@ export default function SquareTrendingDetail() {
           <div className="state-loading" style={{ paddingTop: 60 }} />
         ) : (
           <div className="square-section">
-            <h3 className="square-section-title">{topic.title || '热搜详情'}</h3>
-            {topic.description && (
-              <p style={{ fontSize: 13, color: 'var(--post-ios-secondary-label)', margin: '0 0 8px' }}>
-                {topic.description}
-              </p>
-            )}
-            <span style={{ fontSize: 12, color: 'var(--post-ios-tertiary-label)' }}>
-              {topic.post_count || 0} 条讨论
-            </span>
-            <div style={{ marginTop: 12 }}>
+            <div className="square-section-header square-trending-topic-header">
+              <div className="square-trending-topic-header-main">
+                <h3 className="square-section-title" style={{ marginBottom: topic.description ? 6 : 4 }}>
+                  {topic.title || '热搜详情'}
+                </h3>
+                {topic.description && (
+                  <p className="square-trending-topic-desc">{topic.description}</p>
+                )}
+                <span className="square-trending-topic-meta">
+                  {topic.post_count || 0} 条讨论
+                </span>
+              </div>
               <button
                 type="button"
-                className="canteen-pick-btn pressable"
+                className="square-trending-join-btn pressable"
                 onClick={() => navigate(`/about/trending/${topicId}/new`)}
               >
                 参与讨论

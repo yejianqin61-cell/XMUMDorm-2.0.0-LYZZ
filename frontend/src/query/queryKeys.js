@@ -81,10 +81,11 @@ export const QK = {
   trendingTopics: () => ['square', 'trending'],
   trendingTopicDetail: (id) => ['square', 'trending', id],
   trendingPosts: (id, page) => ['square', 'trending', id, 'posts', page],
-  trendingPostDetail: (postId) => ['square', 'trending', 'post', postId],
+  trendingPostDetail: (postId, tokenKey) => ['square', 'trending', 'post', postId, tokenKey || '_guest'],
   trendingPostComments: (postId) => ['square', 'trending', 'post', postId, 'comments'],
   campusFeed: (tab, page) => ['square', 'campusFeed', tab, page],
-  campusPostDetail: (id) => ['square', 'campusPost', id],
+  campusPostDetail: (id, tokenKey) => ['square', 'campusPost', id, tokenKey || '_guest'],
+  campusPostComments: (id) => ['square', 'campusPost', id, 'comments'],
   squareBanners: () => ['square', 'banners'],
 
   /** 待办事项 */

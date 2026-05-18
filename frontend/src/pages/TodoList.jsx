@@ -4,6 +4,12 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getTodos, createTodo, updateTodo, toggleTodo, deleteTodo } from '../api/todos';
 import { QK } from '../query/queryKeys';
+import {
+  localTodayDateStr,
+  normalizeTodoDueDate,
+  normalizeTodoDueTime,
+  formatTodoDueDisplay,
+} from '../utils/formatTodoDue';
 import { motion, AnimatePresence } from 'framer-motion';
 import './TodoList.css';
 
@@ -87,8 +93,8 @@ export default function TodoList() {
     setFormTitle(todo.title);
     setFormDesc(todo.description || '');
     setFormPriority(todo.priority);
-    setFormDueDate(todo.due_date || '');
-    setFormDueTime(todo.due_time || '');
+    setFormDueDate(normalizeTodoDueDate(todo.due_date));
+    setFormDueTime(normalizeTodoDueTime(todo.due_time));
     setFormListType(todo.list_type);
     setShowForm(true);
   };
@@ -121,8 +127,11 @@ export default function TodoList() {
     );
   }
 
-  const todayStr = new Date().toISOString().slice(0, 10);
-  const isOverdue = (todo) => todo.due_date && todo.due_date < todayStr && !todo.is_completed;
+  const todayStr = localTodayDateStr();
+  const isOverdue = (todo) => {
+    const d = normalizeTodoDueDate(todo.due_date);
+    return d && d < todayStr && !todo.is_completed;
+  };
 
   return (
     <div className="todolist-page">
@@ -264,9 +273,9 @@ export default function TodoList() {
                     <span style={{ color: PRIORITY_COLORS[todo.priority], fontWeight: 600 }}>
                       {isZh ? PRIORITY_LABELS[todo.priority] : ['None','Low','Med','High'][todo.priority]}
                     </span>
-                    {todo.due_date && (
+                    {formatTodoDueDisplay(todo.due_date, todo.due_time) && (
                       <span style={{ color: isOverdue(todo) ? '#f44336' : 'var(--post-ios-tertiary-label)' }}>
-                        {todo.due_date}{todo.due_time ? ` ${todo.due_time}` : ''}
+                        {formatTodoDueDisplay(todo.due_date, todo.due_time)}
                       </span>
                     )}
                     {todo.list_type !== 'personal' && (

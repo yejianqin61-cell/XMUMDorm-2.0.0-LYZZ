@@ -25,6 +25,7 @@ import { getProfile } from '../api/users';
 import { getMyFavorites, getMyProductReviews } from '../api/canteen';
 import { getScheduleWeek } from '../api/schedule';
 import { getTodayTodos } from '../api/todos';
+import { formatTodoDueDisplay } from '../utils/formatTodoDue';
 
 function MyZoneStrings(isZh) {
   return {
@@ -415,8 +416,8 @@ function TodayTodoPreview() {
             <div style={{ width: 4, height: 28, borderRadius: 2, background: item.priority >= 3 ? '#f44336' : item.priority >= 2 ? '#ff9800' : '#e0e0e0', flexShrink: 0 }} />
             <div className="flex-1 min-w-0">
               <p className="text-[13px] text-slate-700 truncate">{item.title}</p>
-              {item.due_date && (
-                <p className="text-[11px] text-slate-400">{item.due_date}{item.due_time ? ` ${item.due_time}` : ''}</p>
+              {formatTodoDueDisplay(item.due_date, item.due_time) && (
+                <p className="text-[11px] text-slate-400">{formatTodoDueDisplay(item.due_date, item.due_time)}</p>
               )}
             </div>
           </div>

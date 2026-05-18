@@ -12,6 +12,37 @@ function cleanText(input) {
   return sanitizeHtml(raw, { allowedTags: [], allowedAttributes: {} }).trim();
 }
 
+function localTodayDateStr() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function mapTodoRow(r) {
+  return {
+    id: r.id,
+    title: r.title,
+    description: r.description || '',
+    priority: r.priority,
+    due_date: r.due_date ?? null,
+    due_time: r.due_time ?? null,
+    is_completed: !!r.is_completed,
+    completed_at: r.completed_at,
+    list_type: r.list_type,
+    created_at: r.created_at,
+    updated_at: r.updated_at,
+  };
+}
+
+const TODO_SELECT_FIELDS = `
+  id, user_id, title, description, priority,
+  DATE_FORMAT(due_date, '%Y-%m-%d') AS due_date,
+  TIME_FORMAT(due_time, '%H:%i') AS due_time,
+  is_completed, completed_at, list_type, created_at, updated_at
+`;
+
 // 获取待办列表
 router.get('/', authenticateToken, async (req, res) => {
   try {
@@ -41,23 +72,11 @@ router.get('/', authenticateToken, async (req, res) => {
     const total = (countRows && countRows[0]) ? countRows[0].total : 0;
 
     const rows = await query(
-      `SELECT * FROM todos ${where} ORDER BY priority DESC, due_date ASC, created_at DESC LIMIT ${pageSize} OFFSET ${offset}`,
+      `SELECT ${TODO_SELECT_FIELDS} FROM todos ${where} ORDER BY priority DESC, due_date ASC, created_at DESC LIMIT ${pageSize} OFFSET ${offset}`,
       params
     );
     const hasMore = offset + pageSize < total;
-    const list = (rows || []).map((r) => ({
-      id: r.id,
-      title: r.title,
-      description: r.description || '',
-      priority: r.priority,
-      due_date: r.due_date,
-      due_time: r.due_time,
-      is_completed: !!r.is_completed,
-      completed_at: r.completed_at,
-      list_type: r.list_type,
-      created_at: r.created_at,
-      updated_at: r.updated_at,
-    }));
+    const list = (rows || []).map(mapTodoRow);
 
     res.status(200).json({ status: 0, message: '获取成功', data: { list, total, page, pageSize, hasMore } });
   } catch (e) {
@@ -69,24 +88,27 @@ router.get('/', authenticateToken, async (req, res) => {
 // 今日待办摘要
 router.get('/today', authenticateToken, async (req, res) => {
   try {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localTodayDateStr();
 
     const allRows = await query(
-      'SELECT * FROM todos WHERE user_id = ? AND (due_date = ? OR due_date IS NULL) ORDER BY priority DESC, due_date ASC, created_at ASC',
+      `SELECT ${TODO_SELECT_FIELDS} FROM todos WHERE user_id = ? AND (due_date = ? OR due_date IS NULL) ORDER BY priority DESC, due_date ASC, created_at ASC`,
       [req.user.id, today]
     );
 
     const total = allRows.length;
     const completed = allRows.filter((r) => r.is_completed).length;
     const active = allRows.filter((r) => !r.is_completed);
-    const topItems = active.slice(0, 3).map((r) => ({
-      id: r.id,
-      title: r.title,
-      priority: r.priority,
-      due_date: r.due_date,
-      due_time: r.due_time,
-      list_type: r.list_type,
-    }));
+    const topItems = active.slice(0, 3).map((r) => {
+      const row = mapTodoRow(r);
+      return {
+        id: row.id,
+        title: row.title,
+        priority: row.priority,
+        due_date: row.due_date,
+        due_time: row.due_time,
+        list_type: row.list_type,
+      };
+    });
 
     res.status(200).json({
       status: 0, message: '获取成功',

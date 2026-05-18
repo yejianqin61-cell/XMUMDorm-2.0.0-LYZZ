@@ -82,6 +82,18 @@ export function getCampusPostDetail(id) {
   return get(`/api/square/campus-posts/${id}`);
 }
 
+export function getCampusPostComments(postId) {
+  return get(`/api/square/campus-posts/${postId}/comments`);
+}
+
+export function postCampusPostComment(postId, body) {
+  return post(`/api/square/campus-posts/${postId}/comments`, body);
+}
+
+export function likeCampusPost(postId) {
+  return post(`/api/square/campus-posts/${postId}/like`, {});
+}
+
 // ---------- 广场轮播 ----------
 export function getSquareBanners() {
   return get('/api/square/banners');
