@@ -9,7 +9,9 @@ import SquareHome from '../pages/SquareHome';
 import SquareTrendingList from '../pages/SquareTrendingList';
 import SquareTrendingDetail from '../pages/SquareTrendingDetail';
 import SquareTrendingPostNew from '../pages/SquareTrendingPostNew';
+import SquareTrendingPostDetail from '../pages/SquareTrendingPostDetail';
 import SquareCampusPostNew from '../pages/SquareCampusPostNew';
+import SquareCampusPostDetail from '../pages/SquareCampusPostDetail';
 import SquareOrgAdmin from '../pages/SquareOrgAdmin';
 import AboutTeam from '../pages/AboutTeam';
 import AboutThanks from '../pages/AboutThanks';
@@ -43,6 +45,7 @@ import CourseReviewDetail from '../pages/Handbook/CourseReviewDetail';
 import CourseReviewCreate from '../pages/Handbook/CourseReviewCreate';
 import Schedule from '../pages/Schedule';
 import Diary from '../pages/Diary';
+import TodoList from '../pages/TodoList';
 import Disclaimer from '../pages/Disclaimer';
 import ContactUs from '../pages/ContactUs';
 import MyZone from '../pages/MyZone';
@@ -107,7 +110,9 @@ export const layoutRoutes = (
     <Route path="about/trending" element={<SquareTrendingList />} />
     <Route path="about/trending/:id" element={<SquareTrendingDetail />} />
     <Route path="about/trending/:id/new" element={<SquareTrendingPostNew />} />
+    <Route path="about/trending/post/:id" element={<SquareTrendingPostDetail />} />
     <Route path="about/campus/new" element={<SquareCampusPostNew />} />
+    <Route path="about/campus/:id" element={<SquareCampusPostDetail />} />
     <Route path="about/admin/orgs" element={<SquareOrgAdmin />} />
     <Route path="about/freshman-guide" element={<SquareFreshmanGuide />} />
     <Route path="about/freshman-guide/me" element={<HandbookMe />} />
@@ -126,6 +131,7 @@ export const layoutRoutes = (
     <Route path="myzone/reviews" element={<MyReviews />} />
     <Route path="myzone/profile" element={<ProfileEdit />} />
     <Route path="myzone/schedule" element={<Schedule />} />
+    <Route path="myzone/todos" element={<TodoList />} />
     <Route path="myzone/diary" element={<Diary />} />
     <Route path="mailbox" element={<Mailbox />} />
     <Route path="eat" element={<CanteenHome />} />

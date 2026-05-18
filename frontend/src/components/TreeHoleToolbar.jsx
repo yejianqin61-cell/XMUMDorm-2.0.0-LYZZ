@@ -1,25 +1,28 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bell, Globe, Search } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { Bell, Globe, Plus, Search } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getPostTagsList } from '../api/posts';
+import { getVisibleTags } from '../api/tags';
 import { getUnreadSummary } from '../api/notifications';
 import { QK } from '../query/queryKeys';
+import TreeHoleTagPanel from './TreeHoleTagPanel';
 import './TreeHoleToolbar.css';
 
 const POST_TAGS_STALE_MS = 15 * 60 * 1000;
 const UNREAD_SUMMARY_STALE_MS = 10 * 1000;
 
 /**
- * 树洞页：搜索栏 + 前 5 个标签 + 下拉全部标签（管理员可创建/删除）
+ * 树洞页：搜索栏 + 用户可见标签 + 延伸按钮管理标签
  * @param {string | null} [selectedSlug] 当前筛选的标签 slug，null 为全部
  * @param {(slug: string | null) => void} [onSelectTagSlug] 选择/取消标签（不跳转，由父级刷新列表）
  */
 function TreeHoleToolbar({ selectedSlug = null, onSelectTagSlug }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { isLoggedIn, token } = useAuth();
   const { lang, setLang } = useLanguage();
   const isZh = lang !== 'en';
@@ -29,9 +32,11 @@ function TreeHoleToolbar({ selectedSlug = null, onSelectTagSlug }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [keyword, setKeyword] = useState('');
   const [auraDismissed, setAuraDismissed] = useState(false);
+  const [tagPanelOpen, setTagPanelOpen] = useState(false);
   const searchInputRef = useRef(null);
   const searchWrapRef = useRef(null);
 
+  // 公开标签列表（用于非登录态回退 + 管理员增删后刷新）
   const tagsQuery = useQuery({
     queryKey: QK.postTagsList(),
     queryFn: getPostTagsList,
@@ -39,6 +44,24 @@ function TreeHoleToolbar({ selectedSlug = null, onSelectTagSlug }) {
     select: (data) => (Array.isArray(data) ? data : []),
   });
   const tags = tagsQuery.data ?? [];
+
+  // 登录用户：获取自定义可见性标签
+  const visibleQuery = useQuery({
+    queryKey: QK.postTagsVisible(),
+    queryFn: getVisibleTags,
+    enabled: isLoggedIn && !!token,
+    staleTime: 2 * 60 * 1000,
+  });
+  const visibleTags = visibleQuery.data?.visible || [];
+  const hiddenTags = visibleQuery.data?.hidden || [];
+
+  // 展示的标签：登录用户用自定义可见标签，否则回退到前10个
+  const topTags = useMemo(() => {
+    if (isLoggedIn && visibleQuery.data) {
+      return visibleTags;
+    }
+    return tags.slice(0, 10);
+  }, [isLoggedIn, visibleQuery.data, visibleTags, tags]);
 
   const unreadSummaryQuery = useQuery({
     queryKey: ['notifications', 'unreadSummary', tokenKey],
@@ -96,7 +119,10 @@ function TreeHoleToolbar({ selectedSlug = null, onSelectTagSlug }) {
     onSelectTagSlug(slug);
   };
 
-  const topTags = useMemo(() => tags.slice(0, 10), [tags]);
+  const handleTagsChange = () => {
+    queryClient.invalidateQueries({ queryKey: QK.postTagsVisible() });
+    queryClient.invalidateQueries({ queryKey: QK.postTagsList() });
+  };
 
   const onSubmitSearch = (e) => {
     e.preventDefault();
@@ -230,7 +256,7 @@ function TreeHoleToolbar({ selectedSlug = null, onSelectTagSlug }) {
         </div>
       </div>
 
-      {/* Tag bar: airy typography + masked edges + search circle aligned */}
+      {/* Tag bar: airy typography + masked edges + extend button */}
       <div className="mt-7 flex items-center gap-3">
         <div className="relative flex-1 overflow-hidden treehole-tag-mask">
           <div className="treehole-tag-scroll flex items-center gap-6 overflow-x-auto whitespace-nowrap px-3 text-[14px]">
@@ -271,7 +297,27 @@ function TreeHoleToolbar({ selectedSlug = null, onSelectTagSlug }) {
             })}
           </div>
         </div>
+
+        {/* Extend button: manage visible tags */}
+        {isLoggedIn && (
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.92 }}
+            onClick={() => setTagPanelOpen(true)}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white/70 text-slate-500 shadow-sm backdrop-blur-md shrink-0"
+            aria-label={isZh ? '管理标签' : 'Manage tags'}
+          >
+            <Plus size={18} />
+          </motion.button>
+        )}
       </div>
+
+      {/* Tag management panel */}
+      <TreeHoleTagPanel
+        open={tagPanelOpen}
+        onClose={() => setTagPanelOpen(false)}
+        onTagsChange={handleTagsChange}
+      />
     </div>
   );
 }

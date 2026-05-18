@@ -17,8 +17,33 @@ export function getTrendingPosts(id, options = {}) {
   return get(`/api/square/trending/${id}/posts?page=${page}&pageSize=${pageSize}`);
 }
 
-export function postTrendingPost(id, body) {
+export function postTrendingPost(id, body, files) {
+  if (files && files.length > 0) {
+    const form = new FormData();
+    form.append('content', body.content || '');
+    files.forEach((f) => form.append('images', f));
+    return post(`/api/square/trending/${id}/posts`, form);
+  }
   return post(`/api/square/trending/${id}/posts`, body);
+}
+
+// 热搜帖子详情
+export function getTrendingPostDetail(postId) {
+  return get(`/api/square/trending/posts/${postId}`);
+}
+
+// 热搜帖子评论
+export function getTrendingPostComments(postId) {
+  return get(`/api/square/trending/posts/${postId}/comments`);
+}
+
+export function postTrendingPostComment(postId, body) {
+  return post(`/api/square/trending/posts/${postId}/comments`, body);
+}
+
+// 热搜帖子点赞
+export function likeTrendingPost(postId) {
+  return post(`/api/square/trending/posts/${postId}/like`, {});
 }
 
 // Admin
@@ -40,7 +65,16 @@ export function getCampusFeed(options = {}) {
   return get(`/api/square/campus-feed?tab=${tab}&page=${page}&pageSize=${pageSize}`);
 }
 
-export function postCampusPost(body) {
+export function postCampusPost(body, files) {
+  if (files && files.length > 0) {
+    const form = new FormData();
+    form.append('organization_id', body.organization_id);
+    form.append('feed_tab', body.feed_tab);
+    form.append('title', body.title || '');
+    form.append('content', body.content || '');
+    files.forEach((f) => form.append('images', f));
+    return post('/api/square/campus-posts', form);
+  }
   return post('/api/square/campus-posts', body);
 }
 

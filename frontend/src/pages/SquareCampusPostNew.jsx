@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getMyOrganizations } from '../api/organizations';
@@ -13,8 +13,11 @@ export default function SquareCampusPostNew() {
   const [orgId, setOrgId] = useState('');
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [files, setFiles] = useState([]);
+  const [previews, setPreviews] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const fileInputRef = useRef(null);
 
   const { data, isLoading } = useQuery({
     queryKey: QK.myOrganizations(),
@@ -33,6 +36,24 @@ export default function SquareCampusPostNew() {
     }
   }, [availableOrgs, orgId]);
 
+  const handleFileChange = (e) => {
+    const selected = Array.from(e.target.files || []);
+    if (selected.length + files.length > 3) {
+      setError('最多上传3张图片');
+      return;
+    }
+    const newPreviews = selected.map((f) => URL.createObjectURL(f));
+    setFiles((prev) => [...prev, ...selected]);
+    setPreviews((prev) => [...prev, ...newPreviews]);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const removeFile = (index) => {
+    URL.revokeObjectURL(previews[index]);
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+    setPreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!orgId || !title.trim() || !content.trim()) return;
@@ -44,7 +65,7 @@ export default function SquareCampusPostNew() {
         feed_tab: tab,
         title: title.trim(),
         content: content.trim(),
-      });
+      }, files.length > 0 ? files : null);
       navigate('/about', { replace: true });
     } catch (err) {
       setError(err.message || '发布失败');
@@ -118,10 +139,53 @@ export default function SquareCampusPostNew() {
               <textarea
                 className="canteen-search-input"
                 style={{ width: '100%', minHeight: 120, resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }}
-                placeholder="输入正文..."
+                placeholder="输入正文...（支持换行）"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 maxLength={5000}
+              />
+
+              {/* Image previews */}
+              {previews.length > 0 && (
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+                  {previews.map((url, i) => (
+                    <div key={i} style={{ position: 'relative', width: 80, height: 80, borderRadius: 8, overflow: 'hidden' }}>
+                      <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <button
+                        type="button"
+                        onClick={() => removeFile(i)}
+                        style={{
+                          position: 'absolute', top: 2, right: 2,
+                          width: 20, height: 20, borderRadius: '50%',
+                          background: 'rgba(0,0,0,0.6)', color: '#fff',
+                          border: 'none', cursor: 'pointer', fontSize: 12, lineHeight: '20px',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {files.length < 3 && (
+                <button
+                  type="button"
+                  className="canteen-food-compose-btn pressable"
+                  style={{ marginTop: 8 }}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  添加图片/GIF ({files.length}/3)
+                </button>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                style={{ display: 'none' }}
+                onChange={handleFileChange}
               />
 
               {error && <p style={{ color: 'var(--post-ios-red)', fontSize: 13, margin: '8px 0' }}>{error}</p>}

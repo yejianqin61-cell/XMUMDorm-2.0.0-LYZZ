@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getTrendingTopics, getCampusFeed, getSquareBanners } from '../api/square';
 import CanteenBannerCarousel from '../components/canteen/CanteenBannerCarousel';
+import { useAuth } from '../context/AuthContext';
+import { getUploadUrl } from '../api/config';
 import { QK } from '../query/queryKeys';
 import { formatPostTime } from '../utils/formatTime';
 import './SquareHome.css';
@@ -79,6 +81,7 @@ function SquareGrid() {
 
 function CampusBlock() {
   const navigate = useNavigate();
+  const { isLoggedIn } = useAuth();
   const [tab, setTab] = useState('school');
   const { data, isLoading, isError } = useQuery({
     queryKey: QK.campusFeed(tab, 1),
@@ -90,7 +93,18 @@ function CampusBlock() {
 
   return (
     <div className="square-section">
-      <h3 className="square-section-title">📢 校园此刻</h3>
+      <div className="square-section-header">
+        <h3 className="square-section-title">📢 校园此刻</h3>
+        {isLoggedIn && (
+          <button
+            type="button"
+            className="square-section-more"
+            onClick={() => navigate(`/about/campus/new?tab=${tab}`)}
+          >
+            + 发布
+          </button>
+        )}
+      </div>
       <div className="square-campus-tabs">
         {[
           { key: 'school', label: '学校公告' },
@@ -120,12 +134,24 @@ function CampusBlock() {
               className="square-campus-item pressable"
               onClick={() => navigate(`/about/campus/${p.id}`)}
             >
-              <span className="square-campus-org">
-                📢 {p.organization?.name || ''}
-                <span className="square-campus-badge">官方认证</span>
-              </span>
-              <span className="square-campus-title">{p.title}</span>
-              <span className="square-campus-meta">{formatPostTime(p.created_at)}</span>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                {p.images && p.images.length > 0 && (
+                  <img
+                    src={getUploadUrl(p.images[0].url)}
+                    alt=""
+                    style={{ width: 60, height: 60, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }}
+                    loading="lazy"
+                  />
+                )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <span className="square-campus-org">
+                    📢 {p.organization?.name || ''}
+                    <span className="square-campus-badge">官方认证</span>
+                  </span>
+                  <span className="square-campus-title">{p.title}</span>
+                  <span className="square-campus-meta">{formatPostTime(p.created_at)}</span>
+                </div>
+              </div>
             </div>
           ))}
         </div>
@@ -139,12 +165,12 @@ export default function SquareHome() {
   return (
     <div className="square-home-page">
       <div className="square-home-inner">
-        <TrendingBlock />
         <CanteenBannerCarousel
           fetchFn={getSquareBanners}
           queryKey={QK.squareBanners()}
           adminTo="/about/admin/orgs?tab=banners"
         />
+        <TrendingBlock />
         <SquareGrid />
         <CampusBlock />
         <div className="square-section square-home-footer">

@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { getTrendingTopicDetail, getTrendingPosts } from '../api/square';
 import { QK } from '../query/queryKeys';
+import { getUploadUrl } from '../api/config';
 import { formatPostTime } from '../utils/formatTime';
 import './SquareHome.css';
 
@@ -79,17 +80,40 @@ export default function SquareTrendingDetail() {
             <div className="state-empty">暂无讨论，来做第一个发言的人吧</div>
           ) : (
             <div className="square-campus-list">
-              {posts.map((p) => (
-                <div key={p.id} className="square-campus-item">
-                  <span className="square-campus-org">
-                    {p.author?.name || '匿名'}
-                  </span>
-                  <p style={{ margin: '4px 0', fontSize: 14, lineHeight: 1.5, color: 'var(--post-ios-label)' }}>
-                    {p.content}
-                  </p>
-                  <span className="square-campus-meta">{formatPostTime(p.created_at)}</span>
-                </div>
-              ))}
+              {posts.map((p) => {
+                const firstImage = p.images && p.images.length > 0 ? p.images[0] : null;
+                return (
+                  <div
+                    key={p.id}
+                    className="square-campus-item pressable"
+                    onClick={() => navigate(`/about/trending/post/${p.id}`)}
+                  >
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                      {firstImage && (
+                        <img
+                          src={getUploadUrl(firstImage.url)}
+                          alt=""
+                          style={{ width: 60, height: 60, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }}
+                          loading="lazy"
+                        />
+                      )}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <span className="square-campus-org">
+                          {p.author?.name || '匿名'}
+                        </span>
+                        <p style={{ margin: '4px 0', fontSize: 14, lineHeight: 1.5, color: 'var(--post-ios-label)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                          {p.content}
+                        </p>
+                        <div style={{ display: 'flex', gap: 12, fontSize: 12, color: 'var(--post-ios-tertiary-label)' }}>
+                          <span>{formatPostTime(p.created_at)}</span>
+                          <span>👍 {p.like_count || 0}</span>
+                          <span>💬 {p.comment_count || 0}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
               {hasNextPage && (
                 <button
                   type="button"

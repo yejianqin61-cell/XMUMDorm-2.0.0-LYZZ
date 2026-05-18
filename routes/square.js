@@ -8,7 +8,7 @@ const router = express.Router();
 const path = require('path');
 const { query } = require('../database');
 const authenticateToken = require('../middleware/auth');
-const { bannerImageUpload } = require('../middleware/upload');
+const { bannerImageUpload, postImagesUpload } = require('../middleware/upload');
 const { logAudit } = require('../services/auditLog');
 const { assetUrl } = require('../utils/assets');
 const { uploadBuffer, guessContentType } = require('../services/objectStorage');
@@ -36,6 +36,26 @@ async function saveSquareBannerImage(file, bannerId) {
     ? (ext === '.jpeg' ? '.jpg' : ext)
     : '.jpg';
   const key = `square/banners/banner_${bannerId}${safeExt}`;
+  await uploadBuffer({ key, body: file.buffer, contentType: guessContentType(file.mimetype, safeExt) });
+  return key;
+}
+
+async function saveTrendingPostImage(file, postId, index) {
+  const ext = path.extname(file.originalname || '').toLowerCase() || '.jpg';
+  const safeExt = ['.jpg', '.jpeg', '.png', '.webp', '.gif'].includes(ext)
+    ? (ext === '.jpeg' ? '.jpg' : ext)
+    : '.jpg';
+  const key = `square/trending/posts/post_${postId}_${index}${safeExt}`;
+  await uploadBuffer({ key, body: file.buffer, contentType: guessContentType(file.mimetype, safeExt) });
+  return key;
+}
+
+async function saveCampusPostImage(file, postId, index) {
+  const ext = path.extname(file.originalname || '').toLowerCase() || '.jpg';
+  const safeExt = ['.jpg', '.jpeg', '.png', '.webp', '.gif'].includes(ext)
+    ? (ext === '.jpeg' ? '.jpg' : ext)
+    : '.jpg';
+  const key = `square/campus/posts/post_${postId}_${index}${safeExt}`;
   await uploadBuffer({ key, body: file.buffer, contentType: guessContentType(file.mimetype, safeExt) });
   return key;
 }
@@ -135,10 +155,36 @@ router.get('/trending/:id/posts', async (req, res) => {
        LIMIT ${pageSize} OFFSET ${offset}`,
       [topicId]
     );
+
+    // 批量获取图片、点赞数、评论数
+    const postIds = (rows || []).map((r) => r.id);
+    const [imageRows, likeRows, commentRows] = await Promise.all(
+      postIds.length > 0
+        ? [
+            query(`SELECT post_id, file_path, sort_order FROM trending_post_images WHERE post_id IN (${postIds.join(',')}) ORDER BY sort_order ASC`),
+            query(`SELECT post_id, COUNT(*) AS cnt FROM trending_post_likes WHERE post_id IN (${postIds.join(',')}) GROUP BY post_id`),
+            query(`SELECT post_id, COUNT(*) AS cnt FROM trending_post_comments WHERE post_id IN (${postIds.join(',')}) AND deleted_at IS NULL GROUP BY post_id`),
+          ]
+        : [[], [], []]
+    );
+
+    const imagesMap = {};
+    for (const img of imageRows || []) {
+      if (!imagesMap[img.post_id]) imagesMap[img.post_id] = [];
+      imagesMap[img.post_id].push({ url: assetUrl(img.file_path), sort_order: img.sort_order });
+    }
+    const likesMap = {};
+    for (const l of likeRows || []) likesMap[l.post_id] = l.cnt;
+    const commentsMap = {};
+    for (const c of commentRows || []) commentsMap[c.post_id] = c.cnt;
+
     const list = (rows || []).map((r) => ({
       id: r.id,
       content: r.content,
       created_at: r.created_at,
+      images: imagesMap[r.id] || [],
+      like_count: likesMap[r.id] || 0,
+      comment_count: commentsMap[r.id] || 0,
       author: {
         id: r.user_id,
         name: r.nickname || r.username || '匿名',
@@ -153,8 +199,13 @@ router.get('/trending/:id/posts', async (req, res) => {
   }
 });
 
-// ---------- 发帖到热搜 ----------
-router.post('/trending/:id/posts', authenticateToken, async (req, res) => {
+// ---------- 发帖到热搜（支持图片） ----------
+router.post('/trending/:id/posts', authenticateToken, (req, res, next) => {
+  postImagesUpload(req, res, (err) => {
+    if (err) return res.status(400).json({ status: -1, message: err.message || '图片上传失败' });
+    next();
+  });
+}, async (req, res) => {
   try {
     const topicId = parseInt(req.params.id, 10);
     const content = cleanText(req.body.content);
@@ -168,9 +219,144 @@ router.post('/trending/:id/posts', authenticateToken, async (req, res) => {
       'INSERT INTO trending_posts (topic_id, user_id, content) VALUES (?, ?, ?)',
       [topicId, req.user.id, content]
     );
-    res.status(200).json({ status: 0, message: '发布成功', data: { id: result.insertId } });
+    const postId = result.insertId;
+
+    // 保存图片
+    const files = req.files || [];
+    for (let i = 0; i < files.length; i++) {
+      const key = await saveTrendingPostImage(files[i], postId, i);
+      await query('INSERT INTO trending_post_images (post_id, file_path, sort_order) VALUES (?, ?, ?)', [postId, key, i]);
+    }
+
+    res.status(200).json({ status: 0, message: '发布成功', data: { id: postId } });
   } catch (e) {
     console.error('热搜发帖错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误' });
+  }
+});
+
+// ---------- 热搜帖详情 ----------
+router.get('/trending/posts/:id', async (req, res) => {
+  try {
+    const postId = parseInt(req.params.id, 10);
+    const rows = await query(
+      `SELECT p.id, p.topic_id, p.content, p.created_at,
+              u.id AS user_id, u.username, u.nickname, u.avatar
+       FROM trending_posts p
+       JOIN users u ON p.user_id = u.id
+       WHERE p.id = ? AND p.deleted_at IS NULL`,
+      [postId]
+    );
+    if (!rows || rows.length === 0) return res.status(200).json({ status: -1, message: '帖子不存在' });
+    const r = rows[0];
+
+    const [imgRows, likeRows, commentRows] = await Promise.all([
+      query('SELECT file_path, sort_order FROM trending_post_images WHERE post_id = ? ORDER BY sort_order ASC', [postId]),
+      query('SELECT COUNT(*) AS cnt FROM trending_post_likes WHERE post_id = ?', [postId]),
+      query('SELECT COUNT(*) AS cnt FROM trending_post_comments WHERE post_id = ? AND deleted_at IS NULL', [postId]),
+    ]);
+
+    res.status(200).json({
+      status: 0, message: '获取成功',
+      data: {
+        id: r.id,
+        topic_id: r.topic_id,
+        content: r.content,
+        created_at: r.created_at,
+        images: (imgRows || []).map((img) => ({ url: assetUrl(img.file_path), sort_order: img.sort_order })),
+        like_count: (likeRows && likeRows[0]) ? likeRows[0].cnt : 0,
+        comment_count: (commentRows && commentRows[0]) ? commentRows[0].cnt : 0,
+        author: { id: r.user_id, name: r.nickname || r.username || '匿名', avatar: assetUrl(r.avatar) },
+      },
+    });
+  } catch (e) {
+    console.error('热搜帖详情错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误' });
+  }
+});
+
+// ---------- 热搜帖评论列表 ----------
+router.get('/trending/posts/:id/comments', async (req, res) => {
+  try {
+    const postId = parseInt(req.params.id, 10);
+    const rows = await query(
+      `SELECT c.id, c.post_id, c.user_id, c.parent_id, c.content, c.created_at,
+              u.username, u.nickname, u.avatar
+       FROM trending_post_comments c
+       LEFT JOIN users u ON c.user_id = u.id
+       WHERE c.post_id = ? AND c.deleted_at IS NULL
+       ORDER BY c.created_at ASC`,
+      [postId]
+    );
+    const list = (rows || []).map((r) => ({
+      id: r.id,
+      post_id: r.post_id,
+      user_id: r.user_id,
+      parent_id: r.parent_id,
+      content: r.content,
+      created_at: r.created_at,
+      author: {
+        id: r.user_id,
+        name: r.nickname || r.username || '匿名',
+        avatar: assetUrl(r.avatar),
+      },
+    }));
+    res.status(200).json({ status: 0, message: '获取成功', data: list });
+  } catch (e) {
+    console.error('热搜帖评论列表错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误' });
+  }
+});
+
+// ---------- 发表热搜帖评论 ----------
+router.post('/trending/posts/:id/comments', authenticateToken, async (req, res) => {
+  try {
+    const postId = parseInt(req.params.id, 10);
+    const content = cleanText(req.body.content);
+    const parentId = req.body.parent_id ? parseInt(req.body.parent_id, 10) : null;
+    if (!content) return res.status(200).json({ status: -1, message: '内容不能为空' });
+
+    // 校验帖子存在
+    const posts = await query('SELECT id FROM trending_posts WHERE id = ? AND deleted_at IS NULL', [postId]);
+    if (!posts || posts.length === 0) return res.status(200).json({ status: -1, message: '帖子不存在' });
+
+    // 如果是回复，校验父评论存在且属于同一帖子
+    if (parentId) {
+      const parents = await query('SELECT id FROM trending_post_comments WHERE id = ? AND post_id = ? AND deleted_at IS NULL', [parentId, postId]);
+      if (!parents || parents.length === 0) return res.status(200).json({ status: -1, message: '父评论不存在' });
+    }
+
+    const result = await query(
+      'INSERT INTO trending_post_comments (post_id, user_id, parent_id, content) VALUES (?, ?, ?, ?)',
+      [postId, req.user.id, parentId, content]
+    );
+    res.status(200).json({ status: 0, message: '评论成功', data: { id: result.insertId } });
+  } catch (e) {
+    console.error('热搜帖评论错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误' });
+  }
+});
+
+// ---------- 热搜帖点赞/取消点赞 ----------
+router.post('/trending/posts/:id/like', authenticateToken, async (req, res) => {
+  try {
+    const postId = parseInt(req.params.id, 10);
+    const posts = await query('SELECT id FROM trending_posts WHERE id = ? AND deleted_at IS NULL', [postId]);
+    if (!posts || posts.length === 0) return res.status(200).json({ status: -1, message: '帖子不存在' });
+
+    const existing = await query(
+      'SELECT 1 FROM trending_post_likes WHERE post_id = ? AND user_id = ?',
+      [postId, req.user.id]
+    );
+    if (existing && existing.length > 0) {
+      await query('DELETE FROM trending_post_likes WHERE post_id = ? AND user_id = ?', [postId, req.user.id]);
+      res.status(200).json({ status: 0, message: '已取消点赞', data: { liked: false } });
+    } else {
+      await query('INSERT INTO trending_post_likes (post_id, user_id) VALUES (?, ?)', [postId, req.user.id]);
+      res.status(200).json({ status: 0, message: '点赞成功', data: { liked: true } });
+    }
+  } catch (e) {
+    console.error('热搜帖点赞错误:', e);
     res.status(500).json({ status: -1, message: '服务器错误' });
   }
 });
@@ -267,12 +453,24 @@ router.get('/campus-feed', async (req, res) => {
        LIMIT ${pageSize} OFFSET ${offset}`,
       [tab]
     );
+    // 批量获取图片
+    const postIds = (rows || []).map((r) => r.id);
+    const imgRows = postIds.length > 0
+      ? await query(`SELECT post_id, file_path, sort_order FROM campus_post_images WHERE post_id IN (${postIds.join(',')}) ORDER BY sort_order ASC`)
+      : [];
+    const imagesMap = {};
+    for (const img of imgRows || []) {
+      if (!imagesMap[img.post_id]) imagesMap[img.post_id] = [];
+      imagesMap[img.post_id].push({ url: assetUrl(img.file_path), sort_order: img.sort_order });
+    }
+
     const list = (rows || []).map((r) => ({
       id: r.id,
       title: r.title,
       content: r.content,
       feed_tab: r.feed_tab,
       created_at: r.created_at,
+      images: imagesMap[r.id] || [],
       organization: {
         id: r.org_id,
         name: r.org_name,
@@ -292,8 +490,13 @@ router.get('/campus-feed', async (req, res) => {
   }
 });
 
-// ---------- 发校园帖（组织身份） ----------
-router.post('/campus-posts', authenticateToken, async (req, res) => {
+// ---------- 发校园帖（组织身份，支持图片） ----------
+router.post('/campus-posts', authenticateToken, (req, res, next) => {
+  postImagesUpload(req, res, (err) => {
+    if (err) return res.status(400).json({ status: -1, message: err.message || '图片上传失败' });
+    next();
+  });
+}, async (req, res) => {
   try {
     const organizationId = parseInt(req.body.organization_id, 10);
     const feedTab = req.body.feed_tab === 'college' ? 'college' : 'school';
@@ -323,7 +526,16 @@ router.post('/campus-posts', authenticateToken, async (req, res) => {
       'INSERT INTO campus_posts (organization_id, author_user_id, feed_tab, title, content) VALUES (?, ?, ?, ?, ?)',
       [organizationId, req.user.id, feedTab, title, content]
     );
-    res.status(200).json({ status: 0, message: '发布成功', data: { id: result.insertId } });
+    const postId = result.insertId;
+
+    // 保存图片
+    const files = req.files || [];
+    for (let i = 0; i < files.length; i++) {
+      const key = await saveCampusPostImage(files[i], postId, i);
+      await query('INSERT INTO campus_post_images (post_id, file_path, sort_order) VALUES (?, ?, ?)', [postId, key, i]);
+    }
+
+    res.status(200).json({ status: 0, message: '发布成功', data: { id: postId } });
   } catch (e) {
     console.error('发校园帖错误:', e);
     res.status(500).json({ status: -1, message: '服务器错误' });
@@ -346,6 +558,9 @@ router.get('/campus-posts/:id', async (req, res) => {
     );
     if (!rows || rows.length === 0) return res.status(200).json({ status: -1, message: '帖子不存在' });
     const r = rows[0];
+
+    const imgRows = await query('SELECT file_path, sort_order FROM campus_post_images WHERE post_id = ? ORDER BY sort_order ASC', [id]);
+
     res.status(200).json({
       status: 0, message: '获取成功',
       data: {
@@ -354,6 +569,7 @@ router.get('/campus-posts/:id', async (req, res) => {
         content: r.content,
         feed_tab: r.feed_tab,
         created_at: r.created_at,
+        images: (imgRows || []).map((img) => ({ url: assetUrl(img.file_path), sort_order: img.sort_order })),
         organization: { id: r.org_id, name: r.org_name, type: r.org_type, avatar: assetUrl(r.org_avatar) },
         author: { id: r.author_id, name: r.nickname || r.username || '匿名' },
       },

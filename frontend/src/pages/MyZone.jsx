@@ -21,10 +21,10 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { Toast } from '../context/ToastContext';
 import { getProfile } from '../api/users';
 import { getMyFavorites, getMyProductReviews } from '../api/canteen';
 import { getScheduleWeek } from '../api/schedule';
+import { getTodayTodos } from '../api/todos';
 
 function MyZoneStrings(isZh) {
   return {
@@ -112,7 +112,7 @@ function MyZone() {
     navigate('/', { replace: true });
   };
 
-  const handleTodoClick = () => Toast.success(t.todoSoon);
+  const handleTodoClick = () => navigate('/myzone/todos');
 
   const scheduleTodayQuery = useQuery({
     queryKey: ['myzone', 'scheduleWeek', 1],
@@ -292,6 +292,9 @@ function MyZone() {
             />
           </motion.section>
 
+          {/* 今日待办缩略卡片 */}
+          {isLoggedIn && <TodayTodoPreview />}
+
           <motion.section
             variants={listItem}
             className="mt-5 rounded-3xl bg-white p-4 shadow-sm"
@@ -302,7 +305,7 @@ function MyZone() {
               <UtilityTile to="/eat" title={t.canteen} icon={<UtensilsCrossed className="h-5 w-5" />} iconStyle={softIcon('rgba(59,130,246,0.12)', 'rgb(37,99,235)')} />
               <UtilityTile to="/myzone/schedule" title={t.schedule} icon={<CalendarDays className="h-5 w-5" />} iconStyle={softIcon('rgba(34,197,94,0.12)', 'rgb(22,163,74)')} />
               <UtilityTile to="/myzone/diary" title={t.diary} icon={<NotebookText className="h-5 w-5" />} iconStyle={softIcon('rgba(168,85,247,0.12)', 'rgb(147,51,234)')} />
-              <UtilityTile asButton onClick={handleTodoClick} title={t.todo} icon={<Star className="h-5 w-5" />} iconStyle={softIcon('rgba(234,179,8,0.14)', 'rgb(202,138,4)')} />
+              <UtilityTile to="/myzone/todos" title={t.todo} icon={<Star className="h-5 w-5" />} iconStyle={softIcon('rgba(234,179,8,0.14)', 'rgb(202,138,4)')} />
               {isLoggedIn && isMerchant && (
                 <UtilityTile to="/merchant/manage" title={t.storeManage} icon={<Store className="h-5 w-5" />} iconStyle={softIcon('rgba(99,102,241,0.12)', 'rgb(79,70,229)')} />
               )}
@@ -359,6 +362,67 @@ function MyZone() {
         </motion.div>
       </div>
     </div>
+  );
+}
+
+function TodayTodoPreview() {
+  const navigate = useNavigate();
+  const { isZh } = useLanguage();
+  const { data } = useQuery({
+    queryKey: ['todos', 'today'],
+    queryFn: getTodayTodos,
+    staleTime: 30 * 1000,
+  });
+  const info = data?.data || data || {};
+  const topItems = info.topItems || [];
+  const active = info.active || 0;
+
+  if (active === 0 && topItems.length === 0) {
+    return (
+      <motion.section className="mt-5 rounded-3xl bg-white p-4 shadow-sm" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+        <div className="flex items-center justify-between px-1">
+          <h2 className="text-[15px] font-semibold text-slate-900">
+            {isZh ? '今日待办' : 'Today\'s Todos'}
+          </h2>
+          <button type="button" onClick={() => navigate('/myzone/todos')} className="text-[13px] text-blue-600 font-medium">
+            {isZh ? '添加' : 'Add'}
+          </button>
+        </div>
+        <p className="px-1 pt-3 text-[13px] text-slate-400">
+          {isZh ? '今天还没有待办事项' : 'No todos for today'}
+        </p>
+      </motion.section>
+    );
+  }
+
+  return (
+    <motion.section className="mt-5 rounded-3xl bg-white p-4 shadow-sm" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+      <div className="flex items-center justify-between px-1 mb-3">
+        <h2 className="text-[15px] font-semibold text-slate-900">
+          {isZh ? '今日待办' : 'Today\'s Todos'} ({active})
+        </h2>
+        <button type="button" onClick={() => navigate('/myzone/todos')} className="text-[13px] text-blue-600 font-medium">
+          {isZh ? '查看全部' : 'View all'} →
+        </button>
+      </div>
+      <div className="divide-y divide-slate-100">
+        {topItems.map((item) => (
+          <div
+            key={item.id}
+            className="flex items-center gap-2 py-2 cursor-pointer"
+            onClick={() => navigate('/myzone/todos')}
+          >
+            <div style={{ width: 4, height: 28, borderRadius: 2, background: item.priority >= 3 ? '#f44336' : item.priority >= 2 ? '#ff9800' : '#e0e0e0', flexShrink: 0 }} />
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] text-slate-700 truncate">{item.title}</p>
+              {item.due_date && (
+                <p className="text-[11px] text-slate-400">{item.due_date}{item.due_time ? ` ${item.due_time}` : ''}</p>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </motion.section>
   );
 }
 

@@ -538,6 +538,64 @@ router.delete('/tags/:tagId', authenticateToken, async (req, res) => {
 });
 
 // ============================================
+// 标签可见性管理（用户自定义 Tag 栏展示）
+// ============================================
+
+// 获取所有标签及当前用户的可见性状态
+router.get('/tags/visible', authenticateToken, async (req, res) => {
+  try {
+    const tagRows = await query('SELECT id, slug, name_zh, name_en, created_at FROM tags ORDER BY created_at ASC, id ASC');
+    const visRows = await query(
+      'SELECT tag_id, visible FROM tag_visibility WHERE user_id = ?',
+      [req.user.id]
+    );
+    const visMap = {};
+    for (const v of visRows || []) {
+      visMap[v.tag_id] = !!v.visible;
+    }
+    // 默认：前10个tag可见（与现有逻辑一致）；已显式设置的按用户偏好
+    const allTags = (tagRows || []).map((t, i) => ({
+      ...t,
+      visible: t.id in visMap ? visMap[t.id] : i < 10,
+    }));
+    const visible = allTags.filter((t) => t.visible);
+    const hidden = allTags.filter((t) => !t.visible);
+    res.status(200).json({ status: 0, message: 'ok', data: { all: allTags, visible, hidden } });
+  } catch (e) {
+    if (e.code === 'ER_NO_SUCH_TABLE') {
+      // tag_visibility 表尚未迁移，回退到全部可见
+      const tagRows = await query('SELECT id, slug, name_zh, name_en, created_at FROM tags ORDER BY created_at ASC, id ASC');
+      const allTags = (tagRows || []).map((t) => ({ ...t, visible: true }));
+      return res.status(200).json({ status: 0, message: 'ok', data: { all: allTags, visible: allTags, hidden: [] } });
+    }
+    console.error('标签可见性查询错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
+// 设置单个标签的可见性
+router.patch('/tags/:tagId/visible', authenticateToken, async (req, res) => {
+  try {
+    const tagId = parseInt(req.params.tagId, 10);
+    if (!tagId) return res.status(400).json({ status: -1, message: '标签 ID 无效' });
+    const bodyVisible = req.body && req.body.visible;
+    const visible = bodyVisible === true || bodyVisible === 1 || bodyVisible === '1' ? 1 : 0;
+
+    await query(
+      'INSERT INTO tag_visibility (user_id, tag_id, visible) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE visible = VALUES(visible)',
+      [req.user.id, tagId, visible]
+    );
+    res.status(200).json({ status: 0, message: 'ok', data: { tag_id: tagId, visible: !!visible } });
+  } catch (e) {
+    if (e.code === 'ER_NO_SUCH_TABLE') {
+      return res.status(503).json({ status: -1, message: '请先执行数据库迁移 047 Run migration 047' });
+    }
+    console.error('标签可见性设置错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
+// ============================================
 // 帖子详情
 // ============================================
 router.get('/:id', async (req, res) => {

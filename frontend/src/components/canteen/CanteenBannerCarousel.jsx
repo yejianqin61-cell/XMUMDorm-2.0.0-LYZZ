@@ -7,6 +7,7 @@ import { getCanteenStrings } from '../../i18n/canteenStrings';
 import { getCanteenBanners } from '../../api/canteen';
 import { QK } from '../../query/queryKeys';
 import { productImageUrl } from '../../api/config';
+import './CanteenBannerCarousel.css';
 
 const LINK_NAV = {
   product: (target) => `/eat/food/${target}`,
@@ -131,6 +132,7 @@ export default function CanteenBannerCarousel({
           className="canteen-banner-card"
           role="button"
           tabIndex={0}
+          aria-label={b.title}
           onClick={() => handleClick(b)}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
@@ -139,18 +141,22 @@ export default function CanteenBannerCarousel({
             }
           }}
         >
-          <img
-            src={productImageUrl(b.image_url)}
-            alt={b.title}
-            className="canteen-banner-img"
-            loading="lazy"
-          />
-          <div className="canteen-banner-info">
-            <div className="canteen-banner-title-row">
-              <span className="canteen-banner-title">{b.title}</span>
-              {b.type === 'ad' && <span className="canteen-banner-ad-tag">{t.bannerAd}</span>}
+          <div className="canteen-banner-media">
+            <img
+              src={productImageUrl(b.image_url)}
+              alt=""
+              className="canteen-banner-img"
+              loading="lazy"
+            />
+            <div className="canteen-banner-vignette-top" aria-hidden />
+            <div className="canteen-banner-vignette-bottom" aria-hidden />
+            <div className="canteen-banner-content">
+              <div className="canteen-banner-title-row">
+                <span className="canteen-banner-title">{b.title}</span>
+                {b.type === 'ad' && <span className="canteen-banner-ad-tag">{t.bannerAd}</span>}
+              </div>
+              {b.subtitle ? <span className="canteen-banner-subtitle">{b.subtitle}</span> : null}
             </div>
-            {b.subtitle && <span className="canteen-banner-subtitle">{b.subtitle}</span>}
           </div>
         </div>
       </div>

@@ -12,6 +12,8 @@ export const QK = {
   postComments: (postId) => ['posts', 'comments', postId],
   /** 帖子标签列表（全站共用，管理员增删后 invalidate） */
   postTagsList: () => ['posts', 'tags'],
+  /** 用户标签可见性（含全部/可见/隐藏分区） */
+  postTagsVisible: () => ['posts', 'tags', 'visible'],
   /** 未读全站公告（按 token 区分，避免串缓存） */
   unreadAnnouncements: (tokenKey) => ['notifications', 'unreadAnnouncements', tokenKey],
 
@@ -79,7 +81,13 @@ export const QK = {
   trendingTopics: () => ['square', 'trending'],
   trendingTopicDetail: (id) => ['square', 'trending', id],
   trendingPosts: (id, page) => ['square', 'trending', id, 'posts', page],
+  trendingPostDetail: (postId) => ['square', 'trending', 'post', postId],
+  trendingPostComments: (postId) => ['square', 'trending', 'post', postId, 'comments'],
   campusFeed: (tab, page) => ['square', 'campusFeed', tab, page],
   campusPostDetail: (id) => ['square', 'campusPost', id],
   squareBanners: () => ['square', 'banners'],
+
+  /** 待办事项 */
+  todosList: (filters) => ['todos', 'list', filters],
+  todosToday: () => ['todos', 'today'],
 };

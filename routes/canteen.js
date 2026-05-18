@@ -97,11 +97,63 @@ function mapBannerAdminRow(r) {
 
 /** 未上传图片的商品使用的默认图（与前端 public/products 文件名一致，便于同源 /products/* 加载） */
 const DEFAULT_PRODUCT_IMAGE_PATH = process.env.DEFAULT_PRODUCT_IMAGE_PATH || '/products/default.png';
-function ensureProductDefaultImage(product) {
+
+/** 获取商品第一张点评图片（按 sort_order），无则返回 null */
+async function getFirstReviewImageForProduct(productId) {
+  const rows = await query(
+    `SELECT pci.file_path FROM product_comment_images pci
+     JOIN product_comments pc ON pci.comment_id = pc.id
+     WHERE pc.product_id = ? AND pc.deleted_at IS NULL
+     ORDER BY pci.sort_order ASC, pci.created_at ASC
+     LIMIT 1`,
+    [productId]
+  );
+  if (rows && rows.length > 0 && rows[0].file_path) {
+    return assetUrl(rows[0].file_path);
+  }
+  return null;
+}
+
+/** 批量获取商品第一张点评图片 */
+async function batchGetFirstReviewImages(productIds) {
+  if (!productIds || productIds.length === 0) return {};
+  const placeholders = productIds.map(() => '?').join(',');
+  const rows = await query(
+    `SELECT pc.product_id, pci.file_path FROM product_comment_images pci
+     JOIN product_comments pc ON pci.comment_id = pc.id
+     WHERE pc.product_id IN (${placeholders}) AND pc.deleted_at IS NULL
+     ORDER BY pci.sort_order ASC, pci.created_at ASC`,
+    productIds
+  );
+  const map = {};
+  for (const r of rows || []) {
+    if (!map[r.product_id] && r.file_path) {
+      map[r.product_id] = assetUrl(r.file_path);
+    }
+  }
+  return map;
+}
+
+/** 确保商品至少有默认图；当无商家图时优先使用点评第一张图片，其次用默认占位图 */
+async function ensureProductDefaultImageAsync(product) {
   if (product && product.images && product.images.length === 0) {
-    product.images = [{ url: DEFAULT_PRODUCT_IMAGE_PATH, sort_order: 0 }];
+    const reviewImage = product.id ? await getFirstReviewImageForProduct(product.id) : null;
+    product.images = [{ url: reviewImage || DEFAULT_PRODUCT_IMAGE_PATH, sort_order: 0 }];
   }
   return product;
+}
+
+/** 批量确保商品默认图 */
+async function ensureProductListDefaultImages(list) {
+  const needFallback = list.filter((p) => p && p.images && p.images.length === 0);
+  if (needFallback.length > 0) {
+    const ids = needFallback.map((p) => p.id);
+    const reviewMap = await batchGetFirstReviewImages(ids);
+    for (const p of needFallback) {
+      p.images = [{ url: reviewMap[p.id] || DEFAULT_PRODUCT_IMAGE_PATH, sort_order: 0 }];
+    }
+  }
+  return list;
 }
 
 // 统一的文本清洗，防止 XSS 注入（去掉所有 HTML 标签，只保留纯文本）
@@ -421,20 +473,23 @@ async function buildRegionTopProductsList(regionId, limitRaw) {
     if (r.file_path) byId[r.id].images.push({ url: assetUrl(r.file_path, r.updated_at), sort_order: r.sort_order });
   }
 
-  return ids
-    .map((id, index) => {
+  const products = ids
+    .map((id) => {
       const p = byId[id];
       if (!p) return null;
       p.images.sort((a, b) => a.sort_order - b.sort_order);
-      const ensured = ensureProductDefaultImage({ ...p });
-      const rs = scoreById.get(id);
-      return {
-        ...ensured,
-        rank: index + 1,
-        comprehensive_score: rs != null && !Number.isNaN(rs) ? rs : ensured.comprehensive_score,
-      };
+      return { ...p };
     })
     .filter(Boolean);
+  await ensureProductListDefaultImages(products);
+  return products.map((p, index) => {
+    const rs = scoreById.get(p.id);
+    return {
+      ...p,
+      rank: index + 1,
+      comprehensive_score: rs != null && !Number.isNaN(rs) ? rs : p.comprehensive_score,
+    };
+  });
 }
 
 // 按区域 code（如 D6、LY3）取分区商品榜，与 /regions/:id/top-products 数据一致
@@ -900,7 +955,7 @@ router.post('/products', authenticateToken, (req, res, next) => {
     }
     const product = byId[productId];
     if (product) product.images.sort((a, b) => a.sort_order - b.sort_order);
-    ensureProductDefaultImage(product);
+    await ensureProductDefaultImageAsync(product);
     res.status(200).json({ status: 0, message: '创建成功', data: product });
   } catch (e) {
     console.error('创建商品错误:', e);
@@ -963,10 +1018,12 @@ router.get('/shops/:shopId/products', async (req, res) => {
       }
       if (r.file_path) byId[r.id].images.push({ url: assetUrl(r.file_path, r.updated_at), sort_order: r.sort_order });
     }
-    const list = Object.values(byId).map((p) => {
-      p.images.sort((a, b) => a.sort_order - b.sort_order);
-      return ensureProductDefaultImage(p);
-    });
+    const list = await ensureProductListDefaultImages(
+      Object.values(byId).map((p) => {
+        p.images.sort((a, b) => a.sort_order - b.sort_order);
+        return p;
+      })
+    );
     res.status(200).json({ status: 0, message: '获取成功', data: list });
   } catch (e) {
     console.error('获取店铺商品列表错误:', e);
@@ -1028,10 +1085,12 @@ router.get('/shops/:shopId/hot-products', async (req, res) => {
       }
       if (r.file_path) byId[r.id].images.push({ url: assetUrl(r.file_path, r.updated_at), sort_order: r.sort_order });
     }
-    const list = Object.values(byId).map((p) => {
-      p.images.sort((a, b) => a.sort_order - b.sort_order);
-      return ensureProductDefaultImage(p);
-    });
+    const list = await ensureProductListDefaultImages(
+      Object.values(byId).map((p) => {
+        p.images.sort((a, b) => a.sort_order - b.sort_order);
+        return p;
+      })
+    );
     res.status(200).json({ status: 0, message: '获取成功', data: list });
   } catch (e) {
     console.error('获取本店热门商品错误:', e);
@@ -1104,7 +1163,7 @@ router.get('/products/:productId', async (req, res) => {
     }
     const product = byId[productId];
     if (product) product.images.sort((a, b) => a.sort_order - b.sort_order);
-    ensureProductDefaultImage(product);
+    await ensureProductDefaultImageAsync(product);
 
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const pageSize = Math.min(50, Math.max(1, parseInt(req.query.pageSize, 10) || 10));
@@ -1238,7 +1297,7 @@ router.patch('/products/:productId', authenticateToken, (req, res, next) => {
     }
     const product = byId[productId];
     if (product) product.images.sort((a, b) => a.sort_order - b.sort_order);
-    ensureProductDefaultImage(product);
+    await ensureProductDefaultImageAsync(product);
     res.status(200).json({ status: 0, message: '修改成功', data: product });
   } catch (e) {
     console.error('修改商品错误:', e);
@@ -1689,7 +1748,11 @@ router.get('/rankings/hot-products', async (req, res) => {
     const rows = await simpleCache.getOrSet('canteen:rankings:hot-products:v1', ttlMs, async () => {
       return await query(
         `SELECT p.id, p.shop_id, p.name, p.comprehensive_score, p.review_count, p.created_at, s.name AS shop_name,
-          (SELECT pi.file_path FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.sort_order ASC LIMIT 1) AS product_image_path
+          (SELECT pi.file_path FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.sort_order ASC LIMIT 1) AS product_image_path,
+          (SELECT pci2.file_path FROM product_comment_images pci2
+           JOIN product_comments pc2 ON pci2.comment_id = pc2.id
+           WHERE pc2.product_id = p.id AND pc2.deleted_at IS NULL
+           ORDER BY pci2.sort_order ASC, pci2.created_at ASC LIMIT 1) AS review_image_path
          FROM products p
          JOIN shops s ON p.shop_id = s.id AND s.deleted_at IS NULL
          WHERE p.deleted_at IS NULL AND p.review_count > 0 AND p.comprehensive_score IS NOT NULL
@@ -1706,7 +1769,7 @@ router.get('/rankings/hot-products', async (req, res) => {
       comprehensive_score: Number(r.comprehensive_score),
       review_count: r.review_count,
       created_at: r.created_at,
-      product_image: assetUrl(r.product_image_path) || DEFAULT_PRODUCT_IMAGE_PATH,
+      product_image: assetUrl(r.product_image_path) || assetUrl(r.review_image_path) || DEFAULT_PRODUCT_IMAGE_PATH,
     }));
     list.forEach((item, i) => { item.rank = i + 1; });
     res.status(200).json({ status: 0, message: '获取成功', data: list });
@@ -1784,7 +1847,11 @@ router.get('/rankings/new-hit-products', async (req, res) => {
     const rows = await simpleCache.getOrSet(cacheKey, ttlMs, async () => {
       return await query(
         `SELECT p.id, p.shop_id, p.name, p.comprehensive_score, p.review_count, p.created_at, s.name AS shop_name,
-          (SELECT pi.file_path FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.sort_order ASC LIMIT 1) AS product_image_path
+          (SELECT pi.file_path FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.sort_order ASC LIMIT 1) AS product_image_path,
+          (SELECT pci2.file_path FROM product_comment_images pci2
+           JOIN product_comments pc2 ON pci2.comment_id = pc2.id
+           WHERE pc2.product_id = p.id AND pc2.deleted_at IS NULL
+           ORDER BY pci2.sort_order ASC, pci2.created_at ASC LIMIT 1) AS review_image_path
          FROM products p
          JOIN shops s ON p.shop_id = s.id AND s.deleted_at IS NULL
          WHERE p.deleted_at IS NULL AND p.review_count > 0 AND p.comprehensive_score IS NOT NULL AND p.created_at >= ?
@@ -1802,7 +1869,7 @@ router.get('/rankings/new-hit-products', async (req, res) => {
       comprehensive_score: Number(r.comprehensive_score),
       review_count: r.review_count,
       created_at: r.created_at,
-      product_image: assetUrl(r.product_image_path) || DEFAULT_PRODUCT_IMAGE_PATH,
+      product_image: assetUrl(r.product_image_path) || assetUrl(r.review_image_path) || DEFAULT_PRODUCT_IMAGE_PATH,
     }));
     res.status(200).json({ status: 0, message: '获取成功', data: list });
   } catch (e) {
@@ -1875,7 +1942,11 @@ router.get('/search', async (req, res) => {
         `SELECT p.id, p.name, p.shop_id, s.name AS shop_name, s.region_id, r.code AS region_code,
                 p.comprehensive_score,
                 (SELECT pi.file_path FROM product_images pi
-                 WHERE pi.product_id = p.id ORDER BY pi.sort_order ASC LIMIT 1) AS product_image_path
+                 WHERE pi.product_id = p.id ORDER BY pi.sort_order ASC LIMIT 1) AS product_image_path,
+                (SELECT pci2.file_path FROM product_comment_images pci2
+                 JOIN product_comments pc2 ON pci2.comment_id = pc2.id
+                 WHERE pc2.product_id = p.id AND pc2.deleted_at IS NULL
+                 ORDER BY pci2.sort_order ASC, pci2.created_at ASC LIMIT 1) AS review_image_path
          FROM products p
          JOIN shops s ON p.shop_id = s.id AND s.deleted_at IS NULL
          JOIN regions r ON s.region_id = r.id
@@ -1891,7 +1962,7 @@ router.get('/search', async (req, res) => {
         shop_id: r.shop_id,
         shop_name: r.shop_name,
         region_code: r.region_code,
-        cover_url: assetUrl(r.product_image_path) || DEFAULT_PRODUCT_IMAGE_PATH,
+        cover_url: assetUrl(r.product_image_path) || assetUrl(r.review_image_path) || DEFAULT_PRODUCT_IMAGE_PATH,
         comprehensive_score: r.comprehensive_score,
       }));
     }
@@ -2276,7 +2347,8 @@ router.get('/food-articles', async (req, res) => {
         `SELECT p.id, p.title, p.content, p.user_id, p.created_at,
                 u.username, u.nickname, u.avatar,
                 (SELECT COUNT(*) FROM post_likes WHERE post_id = p.id) AS like_count,
-                (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count
+                (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count,
+                (SELECT pi.file_path FROM post_images pi WHERE pi.post_id = p.id ORDER BY pi.sort_order ASC LIMIT 1) AS first_image_path
          FROM posts p
          INNER JOIN post_tag_map ptm ON ptm.post_id = p.id AND ptm.tag_id = ?
          JOIN users u ON p.user_id = u.id
@@ -2292,7 +2364,8 @@ router.get('/food-articles', async (req, res) => {
           `SELECT p.id, p.content, p.user_id, p.created_at,
                   u.username, u.nickname, u.avatar,
                   (SELECT COUNT(*) FROM post_likes WHERE post_id = p.id) AS like_count,
-                  (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count
+                  (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count,
+                  (SELECT pi.file_path FROM post_images pi WHERE pi.post_id = p.id ORDER BY pi.sort_order ASC LIMIT 1) AS first_image_path
            FROM posts p
            INNER JOIN post_tag_map ptm ON ptm.post_id = p.id AND ptm.tag_id = ?
            JOIN users u ON p.user_id = u.id
@@ -2310,8 +2383,14 @@ router.get('/food-articles', async (req, res) => {
       const plain = (r.content || '').replace(/<[^>]*>/g, '').replace(/!\[.*?\]\([^)]*\)/g, '').replace(/\n+/g, ' ').trim();
       const titleTrim = (r.title || '').trim();
       let cover = null;
-      const imgMatch = (r.content || '').match(/<img[^>]+src="([^"]+)"/);
-      if (imgMatch) cover = assetUrl(imgMatch[1]);
+      // 优先使用 post_images 表中的第一张图，构造缩略图路径
+      if (r.first_image_path) {
+        const thumbPath = r.first_image_path.replace(/^posts\//, 'posts/thumbs/').replace(/\.[^.]+$/, '.webp');
+        cover = assetUrl(thumbPath);
+      } else {
+        const imgMatch = (r.content || '').match(/<img[^>]+src="([^"]+)"/);
+        if (imgMatch) cover = assetUrl(imgMatch[1]);
+      }
       return {
         id: r.id,
         title_or_excerpt: titleTrim || plain.slice(0, 100) || '（无文字内容）',

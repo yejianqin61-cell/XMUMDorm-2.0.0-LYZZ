@@ -1,0 +1,11 @@
+-- 树洞Tag栏可见性管理：允许每个用户自定义Tag栏展示哪些tag
+CREATE TABLE IF NOT EXISTS tag_visibility (
+  user_id INT NOT NULL,
+  tag_id INT NOT NULL,
+  visible TINYINT NOT NULL DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (user_id, tag_id),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
