@@ -64,3 +64,27 @@ export function updateSquareBanner(id, body) {
 export function deleteSquareBanner(id) {
   return del(`/api/square/banners/${id}`);
 }
+
+export function createSquareBannerForm(payload, imageFile) {
+  if (imageFile) {
+    const form = new FormData();
+    Object.entries(payload || {}).forEach(([k, v]) => {
+      if (v != null && v !== '') form.append(k, v);
+    });
+    form.append('image', imageFile);
+    return post('/api/square/banners', form);
+  }
+  return post('/api/square/banners', payload);
+}
+
+export function updateSquareBannerForm(id, payload, imageFile) {
+  if (imageFile) {
+    const form = new FormData();
+    Object.entries(payload || {}).forEach(([k, v]) => {
+      if (v != null && v !== '') form.append(k, v);
+    });
+    form.append('image', imageFile);
+    return patch(`/api/square/banners/${id}`, form);
+  }
+  return patch(`/api/square/banners/${id}`, payload);
+}

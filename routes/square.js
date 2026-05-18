@@ -5,11 +5,17 @@
  */
 const express = require('express');
 const router = express.Router();
+const path = require('path');
 const { query } = require('../database');
 const authenticateToken = require('../middleware/auth');
+const { bannerImageUpload } = require('../middleware/upload');
 const { logAudit } = require('../services/auditLog');
 const { assetUrl } = require('../utils/assets');
+const { uploadBuffer, guessContentType } = require('../services/objectStorage');
+const { simpleCache } = require('../utils/simpleCache');
 const sanitizeHtml = require('sanitize-html');
+
+const BANNER_LINK_TYPES = ['none', 'product', 'shop', 'post', 'url', 'region'];
 
 function cleanText(input) {
   const raw = input == null ? '' : String(input);
@@ -18,6 +24,36 @@ function cleanText(input) {
 
 function isAdmin(req) {
   return req.user && req.user.role === 'admin';
+}
+
+function invalidateSquareBannerCache() {
+  simpleCache.delete('square:banners:v1');
+}
+
+async function saveSquareBannerImage(file, bannerId) {
+  const ext = path.extname(file.originalname || '').toLowerCase() || '.jpg';
+  const safeExt = ['.jpg', '.jpeg', '.png', '.webp', '.gif'].includes(ext)
+    ? (ext === '.jpeg' ? '.jpg' : ext)
+    : '.jpg';
+  const key = `square/banners/banner_${bannerId}${safeExt}`;
+  await uploadBuffer({ key, body: file.buffer, contentType: guessContentType(file.mimetype, safeExt) });
+  return key;
+}
+
+function parseBannerBody(body) {
+  const raw = body || {};
+  const type = raw.type === 'ad' ? 'ad' : 'content';
+  const title = cleanText(raw.title);
+  const subtitle = raw.subtitle != null && String(raw.subtitle).trim() !== ''
+    ? cleanText(raw.subtitle) : null;
+  let link_type = String(raw.link_type || 'none');
+  if (!BANNER_LINK_TYPES.includes(link_type)) link_type = 'none';
+  let link_target = raw.link_target != null ? String(raw.link_target).trim() : '';
+  if (link_type === 'none') link_target = null;
+  else if (!link_target) link_target = null;
+  const sort_order = parseInt(raw.sort_order, 10);
+  const is_active = raw.is_active === '0' || raw.is_active === 0 || raw.is_active === false ? 0 : 1;
+  return { type, title, subtitle, link_type, link_target, sort_order: Number.isFinite(sort_order) ? sort_order : 0, is_active };
 }
 
 // ============================================
@@ -329,25 +365,28 @@ router.get('/campus-posts/:id', async (req, res) => {
 });
 
 // ============================================
-// 广场轮播（与食堂轮播结构一致、数据独立）
+// 广场轮播（与食堂轮播结构一致、数据独立；支持上传图片/gif）
 // ============================================
 
 router.get('/banners', async (req, res) => {
   try {
     const now = new Date();
-    const rows = await query(
-      `SELECT id, type, title, subtitle, image_url, link_type, link_target
-       FROM square_banners
-       WHERE is_active = 1
-         AND (starts_at IS NULL OR starts_at <= ?)
-         AND (ends_at IS NULL OR ends_at >= ?)
-       ORDER BY sort_order ASC, id ASC
-       LIMIT 10`,
-      [now, now]
-    );
+    const rows = await simpleCache.getOrSet('square:banners:v1', 5 * 60 * 1000, async () => {
+      return await query(
+        `SELECT id, type, title, subtitle, image_url, link_type, link_target, sort_order
+         FROM square_banners
+         WHERE is_active = 1
+           AND (starts_at IS NULL OR starts_at <= ?)
+           AND (ends_at IS NULL OR ends_at >= ?)
+         ORDER BY sort_order ASC, id ASC
+         LIMIT 10`,
+        [now, now]
+      );
+    });
     const list = (rows || []).map((r) => ({
       id: r.id, type: r.type, title: r.title, subtitle: r.subtitle || '',
       image_url: assetUrl(r.image_url), link_type: r.link_type, link_target: r.link_target || '',
+      sort_order: r.sort_order,
     }));
     res.status(200).json({ status: 0, message: '获取成功', data: list });
   } catch (e) {
@@ -356,39 +395,115 @@ router.get('/banners', async (req, res) => {
   }
 });
 
-router.post('/banners', authenticateToken, async (req, res) => {
+// Admin: 全量列表（含未生效，供管理端）
+router.get('/banners/admin', authenticateToken, async (req, res) => {
   if (!isAdmin(req)) return res.status(403).json({ status: -1, message: '仅管理员' });
   try {
-    const { type, title, subtitle, image_url, link_type, link_target, sort_order } = req.body;
-    if (!title || !image_url) return res.status(200).json({ status: -1, message: '请填写标题和图片URL' });
-    const result = await query(
-      `INSERT INTO square_banners (type, title, subtitle, image_url, link_type, link_target, sort_order)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [type || 'content', cleanText(title), cleanText(subtitle), image_url, link_type || 'none', link_target || null, parseInt(sort_order, 10) || 0]
+    const rows = await query(
+      'SELECT id, type, title, subtitle, image_url, link_type, link_target, sort_order, is_active FROM square_banners ORDER BY sort_order ASC, id ASC'
     );
-    res.status(200).json({ status: 0, message: '轮播创建成功', data: { id: result.insertId } });
+    const list = (rows || []).map((r) => ({
+      ...r, subtitle: r.subtitle || '', link_target: r.link_target || '',
+      image_url: assetUrl(r.image_url),
+    }));
+    res.status(200).json({ status: 0, message: '获取成功', data: list });
+  } catch (e) {
+    console.error('广场轮播管理列表错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误' });
+  }
+});
+
+// 上传图片
+router.post('/banners/upload', authenticateToken, (req, res, next) => {
+  if (!isAdmin(req)) return res.status(403).json({ status: -1, message: '仅管理员' });
+  bannerImageUpload(req, res, (err) => {
+    if (err) return res.status(400).json({ status: -1, message: err.message || '图片格式或大小不符合要求' });
+    next();
+  });
+}, async (req, res) => {
+  try {
+    const file = req.file;
+    if (!file) return res.status(400).json({ status: -1, message: '请选择图片' });
+    // 先插入占位记录获取 id，用于生成 key
+    const result = await query(
+      'INSERT INTO square_banners (type, title, image_url) VALUES (?, ?, ?)',
+      ['content', '_uploading', '']
+    );
+    const bannerId = result.insertId;
+    const key = await saveSquareBannerImage(file, bannerId);
+    await query('UPDATE square_banners SET image_url = ? WHERE id = ?', [key, bannerId]);
+    invalidateSquareBannerCache();
+    res.status(200).json({ status: 0, message: '上传成功', data: { id: bannerId, image_url: assetUrl(key) } });
+  } catch (e) {
+    console.error('广场轮播上传错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误' });
+  }
+});
+
+// 创建（支持 multipart 上传图片或填写 URL）
+router.post('/banners', authenticateToken, (req, res, next) => {
+  if (!isAdmin(req)) return res.status(403).json({ status: -1, message: '仅管理员' });
+  bannerImageUpload(req, res, (err) => {
+    if (err) return res.status(400).json({ status: -1, message: err.message || '图片格式或大小不符合要求' });
+    next();
+  });
+}, async (req, res) => {
+  try {
+    const parsed = parseBannerBody(req.body);
+    if (!parsed.title) return res.status(400).json({ status: -1, message: '标题不能为空' });
+    let imagePath = req.body && req.body.image_url != null ? String(req.body.image_url).trim() : '';
+    if (!imagePath && !req.file) return res.status(400).json({ status: -1, message: '请上传图片或填写图片地址' });
+    const result = await query(
+      `INSERT INTO square_banners (type, title, subtitle, image_url, link_type, link_target, sort_order, is_active)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [parsed.type, parsed.title, parsed.subtitle, imagePath, parsed.link_type, parsed.link_target, parsed.sort_order, parsed.is_active]
+    );
+    const bannerId = result.insertId;
+    if (req.file) {
+      const key = await saveSquareBannerImage(req.file, bannerId);
+      await query('UPDATE square_banners SET image_url = ? WHERE id = ?', [key, bannerId]);
+    }
+    invalidateSquareBannerCache();
+    res.status(200).json({ status: 0, message: '轮播创建成功', data: { id: bannerId } });
   } catch (e) {
     console.error('广场轮播创建错误:', e);
     res.status(500).json({ status: -1, message: '服务器错误' });
   }
 });
 
-router.patch('/banners/:id', authenticateToken, async (req, res) => {
+// 编辑（支持 multipart 上传新图片或填写新 URL）
+router.patch('/banners/:id', authenticateToken, (req, res, next) => {
   if (!isAdmin(req)) return res.status(403).json({ status: -1, message: '仅管理员' });
+  bannerImageUpload(req, res, (err) => {
+    if (err) return res.status(400).json({ status: -1, message: err.message || '图片格式或大小不符合要求' });
+    next();
+  });
+}, async (req, res) => {
   try {
-    const id = parseInt(req.params.id, 10);
-    const sets = []; const params = [];
-    if (req.body.title !== undefined) { sets.push('title = ?'); params.push(cleanText(req.body.title)); }
-    if (req.body.subtitle !== undefined) { sets.push('subtitle = ?'); params.push(cleanText(req.body.subtitle)); }
-    if (req.body.image_url !== undefined) { sets.push('image_url = ?'); params.push(req.body.image_url); }
-    if (req.body.type !== undefined) { sets.push('type = ?'); params.push(req.body.type); }
-    if (req.body.link_type !== undefined) { sets.push('link_type = ?'); params.push(req.body.link_type); }
-    if (req.body.link_target !== undefined) { sets.push('link_target = ?'); params.push(req.body.link_target); }
-    if (req.body.sort_order !== undefined) { sets.push('sort_order = ?'); params.push(parseInt(req.body.sort_order, 10) || 0); }
-    if (req.body.is_active !== undefined) { sets.push('is_active = ?'); params.push(req.body.is_active ? 1 : 0); }
-    if (sets.length === 0) return res.status(200).json({ status: -1, message: '无更新内容' });
-    params.push(id);
+    const bannerId = parseInt(req.params.id, 10);
+    if (!bannerId) return res.status(400).json({ status: -1, message: '轮播 ID 无效' });
+    const existing = await query('SELECT id FROM square_banners WHERE id = ?', [bannerId]);
+    if (!existing || !existing.length) return res.status(404).json({ status: -1, message: '轮播不存在' });
+    const parsed = parseBannerBody(req.body);
+    if (!parsed.title) return res.status(400).json({ status: -1, message: '标题不能为空' });
+    const sets = [];
+    const params = [];
+    sets.push('type = ?'); params.push(parsed.type);
+    sets.push('title = ?'); params.push(parsed.title);
+    sets.push('subtitle = ?'); params.push(parsed.subtitle || null);
+    sets.push('link_type = ?'); params.push(parsed.link_type);
+    sets.push('link_target = ?'); params.push(parsed.link_target);
+    sets.push('sort_order = ?'); params.push(parsed.sort_order);
+    sets.push('is_active = ?'); params.push(parsed.is_active);
+    if (req.file) {
+      const key = await saveSquareBannerImage(req.file, bannerId);
+      sets.push('image_url = ?'); params.push(key);
+    } else if (req.body && req.body.image_url != null) {
+      sets.push('image_url = ?'); params.push(String(req.body.image_url).trim());
+    }
+    params.push(bannerId);
     await query(`UPDATE square_banners SET ${sets.join(', ')} WHERE id = ?`, params);
+    invalidateSquareBannerCache();
     res.status(200).json({ status: 0, message: '轮播更新成功' });
   } catch (e) {
     console.error('广场轮播更新错误:', e);
@@ -400,6 +515,7 @@ router.delete('/banners/:id', authenticateToken, async (req, res) => {
   if (!isAdmin(req)) return res.status(403).json({ status: -1, message: '仅管理员' });
   try {
     await query('DELETE FROM square_banners WHERE id = ?', [parseInt(req.params.id, 10)]);
+    invalidateSquareBannerCache();
     res.status(200).json({ status: 0, message: '轮播已删除' });
   } catch (e) {
     console.error('广场轮播删除错误:', e);

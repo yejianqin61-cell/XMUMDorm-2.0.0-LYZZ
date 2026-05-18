@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -16,10 +16,11 @@ import {
   updateTrendingTopic,
   deleteTrendingTopic,
   getSquareBanners,
-  createSquareBanner,
-  updateSquareBanner,
+  createSquareBannerForm,
+  updateSquareBannerForm,
   deleteSquareBanner,
 } from '../api/square';
+import { productImageUrl } from '../api/config';
 import { QK } from '../query/queryKeys';
 import './SquareHome.css';
 
@@ -287,6 +288,8 @@ function TrendingAdmin() {
 }
 
 // ========== 广场轮播管理 ==========
+const EMPTY_BANNER = { type: 'content', title: '', subtitle: '', image_url: '', link_type: 'none', link_target: '', sort_order: '0', is_active: true };
+
 function BannersAdmin() {
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({
@@ -295,7 +298,7 @@ function BannersAdmin() {
     staleTime: 30 * 1000,
   });
   const banners = Array.isArray(data) ? data : data?.data || [];
-  const [showNew, setShowNew] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [editBanner, setEditBanner] = useState(null);
 
   const deleteMutation = useMutation({
@@ -307,7 +310,7 @@ function BannersAdmin() {
     <div>
       <div className="square-section-header" style={{ marginBottom: 10 }}>
         <h3 className="square-section-title" style={{ margin: 0 }}>广场轮播</h3>
-        <button type="button" className="square-section-more" onClick={() => setShowNew(true)}>
+        <button type="button" className="square-section-more" onClick={() => { setEditBanner(null); setShowForm(true); }}>
           + 新建
         </button>
       </div>
@@ -320,77 +323,114 @@ function BannersAdmin() {
         <div className="square-campus-list">
           {banners.map((b) => (
             <div key={b.id} className="square-campus-item" style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
+              <img src={productImageUrl(b.image_url)} alt="" style={{ width: 48, height: 32, borderRadius: 4, objectFit: 'cover', flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0, margin: '0 8px' }}>
                 <span style={{ fontSize: 14, fontWeight: 600 }}>{b.title}</span>
                 <span style={{ fontSize: 11, color: 'var(--post-ios-tertiary-label)', marginLeft: 8 }}>
                   {b.type === 'ad' ? '广告' : '内容'} · 排序 {b.sort_order || 0}
                 </span>
               </div>
               <div style={{ display: 'flex', gap: 6 }}>
-                <button type="button" className="square-section-more" onClick={() => setEditBanner(b)}>编辑</button>
+                <button type="button" className="square-section-more" onClick={() => { setEditBanner(b); setShowForm(true); }}>编辑</button>
                 <button type="button" className="square-section-more" style={{ color: 'var(--post-ios-red)' }}
-                  onClick={() => { if (window.confirm('确定删除？')) deleteMutation.mutate(b.id); }}>
-                  删除
-                </button>
+                  onClick={() => { if (window.confirm('确定删除？')) deleteMutation.mutate(b.id); }}>删除</button>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {(showNew || editBanner) && (
-        <BannerForm banner={editBanner} onClose={() => { setShowNew(false); setEditBanner(null); }} />
-      )}
+      {showForm && <BannerForm banner={editBanner} onClose={() => { setShowForm(false); setEditBanner(null); }} />}
     </div>
   );
 }
 
 function BannerForm({ banner, onClose }) {
   const queryClient = useQueryClient();
-  const [title, setTitle] = useState(banner?.title || '');
-  const [subtitle, setSubtitle] = useState(banner?.subtitle || '');
-  const [imageUrl, setImageUrl] = useState(banner?.image_url || '');
-  const [type, setType] = useState(banner?.type || 'content');
-  const [linkType, setLinkType] = useState(banner?.link_type || 'none');
-  const [linkTarget, setLinkTarget] = useState(banner?.link_target || '');
-  const [sortOrder, setSortOrder] = useState(banner?.sort_order || 0);
+  const fileRef = useRef(null);
+  const isEdit = !!banner;
 
-  const mutation = useMutation({
-    mutationFn: (body) => banner
-      ? updateSquareBanner(banner.id, body)
-      : createSquareBanner(body),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QK.squareBanners() });
-      onClose();
-    },
+  const [form, setForm] = useState({
+    type: banner?.type || 'content',
+    title: banner?.title || '',
+    subtitle: banner?.subtitle || '',
+    image_url: banner?.image_url || '',
+    link_type: banner?.link_type || 'none',
+    link_target: banner?.link_target || '',
+    sort_order: String(banner?.sort_order ?? 0),
+    is_active: banner ? !!banner.is_active : true,
+  });
+  const [imageFile, setImageFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(banner?.image_url ? productImageUrl(banner.image_url) : '');
+  const [saving, setSaving] = useState(false);
+
+  const onPickImage = (file) => {
+    if (!file) return;
+    setImageFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+    if (fileRef.current) fileRef.current.value = '';
+  };
+
+  const buildPayload = () => ({
+    type: form.type,
+    title: form.title.trim(),
+    subtitle: form.subtitle.trim(),
+    link_type: form.link_type,
+    link_target: form.link_type === 'none' ? '' : form.link_target.trim(),
+    sort_order: String(parseInt(form.sort_order, 10) || 0),
+    is_active: form.is_active ? '1' : '0',
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    mutation.mutate({
-      title: title.trim(),
-      subtitle: subtitle.trim(),
-      image_url: imageUrl.trim(),
-      type,
-      link_type: linkType,
-      link_target: linkTarget.trim(),
-      sort_order: sortOrder,
-    });
+    if (!form.title.trim()) return;
+    if (!isEdit && !imageFile && !form.image_url.trim()) return;
+    setSaving(true);
+    try {
+      if (isEdit) {
+        await updateSquareBannerForm(banner.id, buildPayload(), imageFile || undefined);
+      } else {
+        await createSquareBannerForm(buildPayload(), imageFile || undefined);
+      }
+      queryClient.invalidateQueries({ queryKey: QK.squareBanners() });
+      onClose();
+    } catch {} finally { setSaving(false); }
   };
 
   return (
     <div style={{ marginTop: 12, padding: 12, borderRadius: 12, background: 'var(--post-ios-card)', boxShadow: 'var(--post-ios-shadow-card)' }}>
-      <h4 style={{ margin: '0 0 10px', fontSize: 14 }}>{banner ? '编辑轮播' : '新建轮播'}</h4>
+      <h4 style={{ margin: '0 0 10px', fontSize: 14 }}>{isEdit ? '编辑轮播' : '新建轮播'}</h4>
+
+      {previewUrl && <img src={previewUrl} alt="" style={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: 8, marginBottom: 10 }} />}
+
       <form onSubmit={handleSubmit}>
-        <input className="canteen-search-input" style={{ width: '100%', boxSizing: 'border-box', marginBottom: 8 }} placeholder="标题" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100} required />
-        <input className="canteen-search-input" style={{ width: '100%', boxSizing: 'border-box', marginBottom: 8 }} placeholder="副标题（可选）" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} maxLength={200} />
-        <input className="canteen-search-input" style={{ width: '100%', boxSizing: 'border-box', marginBottom: 8 }} placeholder="图片URL" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} required />
+        <label style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>上传图片（jpg/png/webp/gif）</label>
+        <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif"
+          onChange={(ev) => onPickImage(ev.target.files?.[0])}
+          style={{ marginBottom: 8, fontSize: 13 }}
+        />
+
+        <label style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>或填写图片URL</label>
+        <input className="canteen-search-input" style={{ width: '100%', boxSizing: 'border-box', marginBottom: 8 }} placeholder="https:// 或 /path/to/image.gif"
+          value={form.image_url}
+          onChange={(e) => { setForm((f) => ({ ...f, image_url: e.target.value })); setImageFile(null); }}
+        />
+
+        <select className="canteen-search-input" style={{ width: '100%', boxSizing: 'border-box', marginBottom: 8 }} value={form.type}
+          onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}>
+          <option value="content">内容推荐</option>
+          <option value="ad">广告</option>
+        </select>
+
+        <input className="canteen-search-input" style={{ width: '100%', boxSizing: 'border-box', marginBottom: 8 }} placeholder="标题 *" value={form.title}
+          onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} maxLength={100} required />
+
+        <input className="canteen-search-input" style={{ width: '100%', boxSizing: 'border-box', marginBottom: 8 }} placeholder="副标题（可选）" value={form.subtitle}
+          onChange={(e) => setForm((f) => ({ ...f, subtitle: e.target.value }))} maxLength={200} />
+
         <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-          <select className="canteen-search-input" style={{ flex: 1, boxSizing: 'border-box' }} value={type} onChange={(e) => setType(e.target.value)}>
-            <option value="content">内容推荐</option>
-            <option value="ad">广告</option>
-          </select>
-          <select className="canteen-search-input" style={{ flex: 1, boxSizing: 'border-box' }} value={linkType} onChange={(e) => setLinkType(e.target.value)}>
+          <select className="canteen-search-input" style={{ flex: 1, boxSizing: 'border-box' }} value={form.link_type}
+            onChange={(e) => setForm((f) => ({ ...f, link_type: e.target.value, link_target: '' }))}>
             <option value="none">无跳转</option>
             <option value="url">URL</option>
             <option value="product">商品</option>
@@ -398,14 +438,23 @@ function BannerForm({ banner, onClose }) {
             <option value="post">帖子</option>
             <option value="region">区域</option>
           </select>
+          <input type="number" className="canteen-search-input" style={{ flex: 1, boxSizing: 'border-box' }} placeholder="排序"
+            value={form.sort_order} onChange={(e) => setForm((f) => ({ ...f, sort_order: e.target.value }))} />
         </div>
-        {linkType !== 'none' && (
-          <input className="canteen-search-input" style={{ width: '100%', boxSizing: 'border-box', marginBottom: 8 }} placeholder="跳转目标（ID/URL/code）" value={linkTarget} onChange={(e) => setLinkTarget(e.target.value)} />
+
+        {form.link_type !== 'none' && (
+          <input className="canteen-search-input" style={{ width: '100%', boxSizing: 'border-box', marginBottom: 8 }} placeholder="跳转目标（ID/URL/code）" value={form.link_target}
+            onChange={(e) => setForm((f) => ({ ...f, link_target: e.target.value }))} />
         )}
-        <input type="number" className="canteen-search-input" style={{ width: '100%', boxSizing: 'border-box', marginBottom: 8 }} placeholder="排序（越小越前）" value={sortOrder} onChange={(e) => setSortOrder(parseInt(e.target.value, 10) || 0)} />
+
+        <label style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+          <input type="checkbox" checked={form.is_active} onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))} />
+          上线
+        </label>
+
         <div style={{ display: 'flex', gap: 8 }}>
-          <button type="submit" className="canteen-pick-btn pressable" style={{ fontSize: 13, padding: '8px 16px' }} disabled={mutation.isPending}>
-            {mutation.isPending ? '保存中...' : '保存'}
+          <button type="submit" className="canteen-pick-btn pressable" style={{ fontSize: 13, padding: '8px 16px' }} disabled={saving}>
+            {saving ? '保存中...' : '保存'}
           </button>
           <button type="button" className="canteen-pick-reroll pressable" style={{ fontSize: 13 }} onClick={onClose}>取消</button>
         </div>
