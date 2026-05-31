@@ -744,6 +744,55 @@ router.patch('/configs/:key', async (req, res) => {
   }
 });
 
+// 获取等级系统配置（聚合三个 key）
+router.get('/level-config', async (req, res) => {
+  try {
+    const rows = await query(
+      `SELECT config_key, config_value FROM system_configs
+       WHERE config_key IN ('level_thresholds', 'exp_daily_caps', 'exp_action_rewards')`
+    );
+    const config = {};
+    for (const r of rows) {
+      try { config[r.config_key] = JSON.parse(r.config_value); } catch (_) { config[r.config_key] = r.config_value; }
+    }
+    res.json({ status: 0, data: config });
+  } catch (err) {
+    console.error('[admin/level-config]', err);
+    res.status(500).json({ status: -1, message: '获取等级配置失败' });
+  }
+});
+
+// 更新等级系统配置
+router.patch('/level-config', async (req, res) => {
+  try {
+    const adminId = req.user.id;
+    const { level_thresholds, exp_daily_caps, exp_action_rewards } = req.body;
+
+    const updates = { level_thresholds, exp_daily_caps, exp_action_rewards };
+    for (const [key, value] of Object.entries(updates)) {
+      if (value !== undefined) {
+        const str = typeof value === 'string' ? value : JSON.stringify(value);
+        await query(
+          `INSERT INTO system_configs (config_key, config_value, updated_by) VALUES (?, ?, ?)
+           ON DUPLICATE KEY UPDATE config_value = VALUES(config_value), updated_by = VALUES(updated_by)`,
+          [key, str, adminId]
+        );
+      }
+    }
+
+    logAudit({
+      userId: adminId, role: 'admin', action: 'ADMIN_CONFIG_UPDATE',
+      targetType: 'level_config', ip: req.ip,
+      meta: { keys: Object.keys(updates).filter((k) => updates[k] !== undefined) },
+    }).catch(() => {});
+
+    res.json({ status: 0, message: '等级配置已更新' });
+  } catch (err) {
+    console.error('[admin/level-config]', err);
+    res.status(500).json({ status: -1, message: '更新等级配置失败' });
+  }
+});
+
 // ============================================
 // 敏感词管理
 // ============================================
@@ -953,5 +1002,399 @@ async function resolveContentUrl(targetType, targetId) {
     return { url: null, label: null };
   }
 }
+
+// ============================================
+// 通用内容管理（8 模块统一后台）
+// ============================================
+
+const CONTENT_MODULES = {
+  treehole: {
+    label: '树洞帖子',
+    table: 'posts',
+    idField: 'id',
+    titleField: 'COALESCE(p.title, LEFT(p.content, 60)) AS title',
+    contentField: 'p.content',
+    userField: 'p.user_id',
+    timeField: 'p.created_at',
+    deletedField: 'p.deleted_at',
+    hiddenField: 'p.hidden_by_admin',
+    searchFields: ['p.content'],
+    joinUser: true,
+    listFields: 'p.id, COALESCE(p.title, LEFT(p.content, 60)) AS title, u.username, p.created_at, p.deleted_at, p.hidden_by_admin',
+    listOrder: 'p.created_at DESC',
+    hasComments: true,
+    commentTable: 'comments',
+    commentIdField: 'id',
+    commentParentField: 'post_id',
+    commentUserField: 'user_id',
+    commentContentField: 'content',
+    commentTimeField: 'created_at',
+    commentDeletedField: 'deleted_at',
+  },
+  canteen: {
+    label: '食堂点评',
+    table: 'product_comments',
+    idField: 'id',
+    titleField: 'LEFT(pc.content, 60) AS title',
+    contentField: 'pc.content',
+    userField: 'pc.user_id',
+    timeField: 'pc.created_at',
+    deletedField: 'pc.deleted_at',
+    hiddenField: null,
+    searchFields: ['pc.content'],
+    joinUser: true,
+    listFields: 'pc.id, LEFT(pc.content, 60) AS title, u.username, pc.created_at, pc.deleted_at',
+    listOrder: 'pc.created_at DESC',
+    tableAlias: 'pc',
+    hasComments: true,
+    commentTable: 'product_comments',
+    commentIdField: 'id',
+    commentParentField: 'parent_id',
+    commentUserField: 'user_id',
+    commentContentField: 'content',
+    commentTimeField: 'created_at',
+    commentDeletedField: 'deleted_at',
+    commentParentIsParent: true,
+  },
+  trending: {
+    label: '热搜帖子',
+    table: 'trending_posts',
+    idField: 'id',
+    titleField: 'LEFT(tp.content, 60) AS title',
+    contentField: 'tp.content',
+    userField: 'tp.user_id',
+    timeField: 'tp.created_at',
+    deletedField: 'tp.deleted_at',
+    hiddenField: 'tp.hidden_by_admin',
+    searchFields: ['tp.content'],
+    joinUser: true,
+    listFields: 'tp.id, LEFT(tp.content, 60) AS title, u.username, tp.created_at, tp.deleted_at, tp.hidden_by_admin',
+    listOrder: 'tp.created_at DESC',
+    tableAlias: 'tp',
+    hasComments: true,
+    commentTable: 'trending_post_comments',
+    commentIdField: 'id',
+    commentParentField: 'post_id',
+    commentUserField: 'user_id',
+    commentContentField: 'content',
+    commentTimeField: 'created_at',
+    commentDeletedField: 'deleted_at',
+  },
+  campus: {
+    label: '校园此刻',
+    table: 'posts',
+    idField: 'id',
+    titleField: 'LEFT(p2.content, 60) AS title',
+    contentField: 'p2.content',
+    userField: 'p2.user_id',
+    timeField: 'p2.created_at',
+    deletedField: 'p2.deleted_at',
+    hiddenField: null,
+    searchFields: ['p2.content'],
+    joinUser: true,
+    listFields: 'p2.id, LEFT(p2.content, 60) AS title, u.username, p2.created_at, p2.deleted_at',
+    listOrder: 'p2.created_at DESC',
+    tableAlias: 'p2',
+    hasComments: true,
+    commentTable: 'campus_post_comments',
+    commentIdField: 'id',
+    commentParentField: 'post_id',
+    commentUserField: 'user_id',
+    commentContentField: 'content',
+    commentTimeField: 'created_at',
+    commentDeletedField: 'deleted_at',
+  },
+  club: {
+    label: '社团内容',
+    table: 'club_posts',
+    idField: 'id',
+    titleField: 'COALESCE(cp.title, LEFT(cp.content, 60)) AS title',
+    contentField: 'cp.content',
+    userField: null,
+    timeField: 'cp.created_at',
+    deletedField: null,
+    hiddenField: null,
+    searchFields: ['cp.title', 'cp.content'],
+    joinUser: false,
+    listFields: 'cp.id, COALESCE(cp.title, LEFT(cp.content, 60)) AS title, cp.created_at',
+    listOrder: 'cp.created_at DESC',
+    tableAlias: 'cp',
+    hasComments: true,
+    commentTable: 'club_comments',
+    commentIdField: 'id',
+    commentParentField: 'target_id',
+    commentParentType: 'post',
+    commentParentTypeField: 'target_type',
+    commentUserField: 'user_id',
+    commentContentField: 'content',
+    commentTimeField: 'created_at',
+    commentDeletedField: 'deleted_at',
+  },
+  marketplace: {
+    label: '二手市场',
+    table: 'marketplace_items',
+    idField: 'id',
+    titleField: 'mi.title AS title',
+    contentField: 'mi.description',
+    userField: 'mi.seller_user_id',
+    timeField: 'mi.created_at',
+    deletedField: 'mi.deleted_at',
+    hiddenField: null,
+    statusField: 'mi.status',
+    searchFields: ['mi.title', 'mi.description'],
+    joinUser: true,
+    listFields: 'mi.id, mi.title, u.username, mi.created_at, mi.deleted_at, mi.status',
+    listOrder: 'mi.created_at DESC',
+    tableAlias: 'mi',
+  },
+  errand: {
+    label: '跑腿帖子',
+    table: 'errands',
+    idField: 'id',
+    titleField: 'e.title AS title',
+    contentField: 'e.detail',
+    userField: 'e.owner_user_id',
+    timeField: 'e.created_at',
+    deletedField: null,
+    hiddenField: null,
+    statusField: 'e.status',
+    searchFields: ['e.title', 'e.detail'],
+    joinUser: true,
+    listFields: 'e.id, e.title, u.username, e.created_at, e.status',
+    listOrder: 'e.created_at DESC',
+    tableAlias: 'e',
+  },
+  handbook: {
+    label: '一站通文章',
+    table: 'handbook_articles',
+    idField: 'id',
+    titleField: 'ha.title AS title',
+    contentField: 'ha.content',
+    userField: 'ha.author_user_id',
+    timeField: 'ha.created_at',
+    deletedField: null,
+    hiddenField: null,
+    statusField: 'ha.status',
+    searchFields: ['ha.title', 'ha.content'],
+    joinUser: true,
+    listFields: 'ha.id, ha.title, u.username, ha.created_at, ha.status',
+    listOrder: 'ha.created_at DESC',
+    tableAlias: 'ha',
+    hasComments: true,
+    commentTable: 'handbook_comments',
+    commentIdField: 'id',
+    commentParentField: 'article_id',
+    commentUserField: 'user_id',
+    commentContentField: 'content',
+    commentTimeField: 'created_at',
+    commentDeletedField: 'deleted_at',
+  },
+  'course-review': {
+    label: '课程点评',
+    table: 'course_reviews',
+    idField: 'id',
+    titleField: 'cr.title AS title',
+    contentField: 'cr.content',
+    userField: 'cr.created_by',
+    timeField: 'cr.created_at',
+    deletedField: 'cr.deleted_at',
+    hiddenField: null,
+    searchFields: ['cr.title', 'cr.content'],
+    joinUser: true,
+    listFields: 'cr.id, cr.title, u.username, cr.created_at, cr.deleted_at',
+    listOrder: 'cr.created_at DESC',
+    tableAlias: 'cr',
+    hasComments: true,
+    commentTable: 'course_review_comments',
+    commentIdField: 'id',
+    commentParentField: 'review_id',
+    commentUserField: 'user_id',
+    commentContentField: 'content',
+    commentTimeField: 'created_at',
+    commentDeletedField: 'deleted_at',
+  },
+};
+
+// 内容列表
+router.get('/contents/:module', async (req, res) => {
+  try {
+    const mod = CONTENT_MODULES[req.params.module];
+    if (!mod) return res.status(400).json({ status: -1, message: '未知模块' });
+
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const pageSize = Math.min(50, Math.max(1, parseInt(req.query.pageSize, 10) || 20));
+    const offset = (page - 1) * pageSize;
+    const search = req.query.search || '';
+    const alias = mod.tableAlias || mod.table.charAt(0);
+
+    let where = 'WHERE 1=1';
+    const params = [];
+
+    if (mod.deletedField) {
+      where += ` AND ${mod.deletedField} IS NULL`;
+    }
+    if (mod.hiddenField) {
+      where += ` AND ${mod.hiddenField} = 0`;
+    }
+    if (search && mod.searchFields.length > 0) {
+      const clauses = mod.searchFields.map((f) => `${f} LIKE ?`);
+      where += ` AND (${clauses.join(' OR ')})`;
+      const like = `%${search}%`;
+      mod.searchFields.forEach(() => params.push(like));
+    }
+
+    const fromClause = mod.joinUser
+      ? `FROM ${mod.table} ${alias} LEFT JOIN users u ON ${mod.userField} = u.id`
+      : `FROM ${mod.table} ${alias}`;
+
+    const [countResult, rows] = await Promise.all([
+      query(`SELECT COUNT(*) AS total ${fromClause} ${where}`, params),
+      query(
+        `SELECT ${mod.listFields} ${fromClause} ${where} ORDER BY ${mod.listOrder} LIMIT ${pageSize} OFFSET ${offset}`,
+        params
+      ),
+    ]);
+
+    const total = countResult[0]?.total || 0;
+
+    res.json({
+      status: 0,
+      data: { list: rows, total, page, pageSize, hasMore: offset + rows.length < total, moduleLabel: mod.label },
+    });
+  } catch (err) {
+    console.error('[admin/contents]', err);
+    res.status(500).json({ status: -1, message: '获取内容列表失败' });
+  }
+});
+
+// 内容详情（含评论）
+router.get('/contents/:module/:id', async (req, res) => {
+  try {
+    const mod = CONTENT_MODULES[req.params.module];
+    if (!mod) return res.status(400).json({ status: -1, message: '未知模块' });
+
+    const contentId = parseInt(req.params.id, 10);
+    if (!contentId) return res.status(400).json({ status: -1, message: '无效ID' });
+
+    const alias = mod.tableAlias || mod.table.charAt(0);
+    const fromClause = mod.joinUser
+      ? `FROM ${mod.table} ${alias} LEFT JOIN users u ON ${mod.userField} = u.id`
+      : `FROM ${mod.table} ${alias}`;
+
+    const rows = await query(
+      `SELECT ${mod.listFields}, ${mod.contentField || 'NULL'} AS content ${fromClause} WHERE ${alias}.${mod.idField} = ?`,
+      [contentId]
+    );
+    if (!rows || rows.length === 0) return res.status(404).json({ status: -1, message: '内容不存在' });
+
+    const item = rows[0];
+
+    // 查评论
+    let comments = [];
+    if (mod.hasComments) {
+      const cAlias = mod.commentTable.charAt(0);
+      let commentWhere = `WHERE ${cAlias}.${mod.commentParentField} = ?`;
+      const commentParams = [contentId];
+      if (mod.commentParentType) {
+        commentWhere += ` AND ${cAlias}.${mod.commentParentTypeField} = ?`;
+        commentParams.push(mod.commentParentType);
+      }
+      if (mod.commentDeletedField) {
+        commentWhere += ` AND ${cAlias}.${mod.commentDeletedField} IS NULL`;
+      }
+      if (mod.commentParentIsParent) {
+        commentWhere += ` AND ${cAlias}.parent_id IS NULL`;
+      }
+      comments = await query(
+        `SELECT ${cAlias}.${mod.commentIdField} AS id, ${cAlias}.${mod.commentUserField} AS user_id,
+                ${cAlias}.${mod.commentContentField} AS content, ${cAlias}.${mod.commentTimeField} AS created_at,
+                ${mod.commentDeletedField ? `${cAlias}.${mod.commentDeletedField} AS deleted_at` : 'NULL AS deleted_at'},
+                cu.username
+         FROM ${mod.commentTable} ${cAlias}
+         LEFT JOIN users cu ON ${cAlias}.${mod.commentUserField} = cu.id
+         ${commentWhere}
+         ORDER BY ${cAlias}.${mod.commentTimeField} DESC
+         LIMIT 100`,
+        commentParams
+      );
+    }
+
+    res.json({ status: 0, data: { ...item, comments, moduleLabel: mod.label } });
+  } catch (err) {
+    console.error('[admin/contents/:id]', err);
+    res.status(500).json({ status: -1, message: '获取内容详情失败' });
+  }
+});
+
+// 隐藏/恢复内容
+router.patch('/contents/:module/:id/toggle-visibility', async (req, res) => {
+  try {
+    const mod = CONTENT_MODULES[req.params.module];
+    if (!mod) return res.status(400).json({ status: -1, message: '未知模块' });
+
+    const contentId = parseInt(req.params.id, 10);
+    const { hidden } = req.body; // true = hide, false = restore
+    const adminId = req.user.id;
+
+    if (!mod.hiddenField && !mod.deletedField) {
+      return res.status(400).json({ status: -1, message: '该模块不支持隐藏/恢复操作，请使用删除' });
+    }
+
+    if (mod.hiddenField) {
+      await query(`UPDATE ${mod.table} SET ${mod.hiddenField} = ? WHERE ${mod.idField} = ?`, [hidden ? 1 : 0, contentId]);
+    } else if (mod.deletedField) {
+      if (hidden) {
+        await query(`UPDATE ${mod.table} SET ${mod.deletedField} = NOW() WHERE ${mod.idField} = ?`, [contentId]);
+      } else {
+        await query(`UPDATE ${mod.table} SET ${mod.deletedField} = NULL WHERE ${mod.idField} = ?`, [contentId]);
+      }
+    }
+
+    logAudit({
+      userId: adminId,
+      role: 'admin',
+      action: hidden ? 'ADMIN_HIDE_CONTENT' : 'ADMIN_RESTORE_CONTENT',
+      targetType: req.params.module,
+      targetId: contentId,
+      ip: req.ip,
+    }).catch(() => {});
+
+    res.json({ status: 0, message: hidden ? '已隐藏' : '已恢复' });
+  } catch (err) {
+    console.error('[admin/contents/toggle]', err);
+    res.status(500).json({ status: -1, message: '操作失败' });
+  }
+});
+
+// 删除内容
+router.delete('/contents/:module/:id', async (req, res) => {
+  try {
+    const mod = CONTENT_MODULES[req.params.module];
+    if (!mod) return res.status(400).json({ status: -1, message: '未知模块' });
+
+    const contentId = parseInt(req.params.id, 10);
+    const adminId = req.user.id;
+
+    if (mod.deletedField) {
+      await query(`UPDATE ${mod.table} SET ${mod.deletedField} = NOW() WHERE ${mod.idField} = ?`, [contentId]);
+    } else {
+      await query(`DELETE FROM ${mod.table} WHERE ${mod.idField} = ?`, [contentId]);
+    }
+
+    logAudit({
+      userId: adminId,
+      role: 'admin',
+      action: 'ADMIN_DELETE_CONTENT',
+      targetType: req.params.module,
+      targetId: contentId,
+      ip: req.ip,
+    }).catch(() => {});
+
+    res.json({ status: 0, message: '已删除' });
+  } catch (err) {
+    console.error('[admin/contents/delete]', err);
+    res.status(500).json({ status: -1, message: '删除失败' });
+  }
+});
 
 module.exports = router;

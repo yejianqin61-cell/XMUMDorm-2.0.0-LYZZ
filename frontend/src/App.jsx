@@ -21,6 +21,8 @@ import AnnouncementManage from './pages/Admin/AnnouncementManage';
 import AuditLogList from './pages/Admin/AuditLogList';
 import SystemConfig from './pages/Admin/SystemConfig';
 import SensitiveWordsManage from './pages/Admin/SensitiveWordsManage';
+import ContentList from './pages/Admin/ContentList';
+import ContentDetail from './pages/Admin/ContentDetail';
 import { layoutRoutes } from './routes/layoutRoutes';
 import './App.css';
 import './styles/states.css';
@@ -104,6 +106,8 @@ function MainApp() {
                   <Route path="logs" element={<AuditLogList />} />
                   <Route path="config" element={<SystemConfig />} />
                   <Route path="sensitive-words" element={<SensitiveWordsManage />} />
+                  <Route path="contents/:module" element={<ContentList />} />
+                  <Route path="contents/:module/:id" element={<ContentDetail />} />
                 </Route>
               </Routes>
             </LanguageProvider>
