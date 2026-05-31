@@ -66,20 +66,22 @@ function ErrandDetail() {
         </button>
         <div className="err-detail-title">{isZh ? '任务详情' : 'Errand detail'}</div>
         {canDelete ? (
-          <button
-            type="button"
-            className="err-detail-delete pressable"
-            onClick={() => {
-              const ok = window.confirm(isZh ? '确定删除该任务吗？' : 'Delete this errand?');
-              if (ok) delMut.mutate();
-            }}
-            disabled={delMut.isPending}
-            aria-label={isZh ? '删除' : 'Delete'}
-            title={isZh ? '删除' : 'Delete'}
-          >
-            <Trash2 size={18} aria-hidden />
-          </button>
-          <ReportButton target_type="errand" target_id={e.id} className="text-slate-400 hover:text-red-500" />
+          <>
+            <button
+              type="button"
+              className="err-detail-delete pressable"
+              onClick={() => {
+                const ok = window.confirm(isZh ? '确定删除该任务吗？' : 'Delete this errand?');
+                if (ok) delMut.mutate();
+              }}
+              disabled={delMut.isPending}
+              aria-label={isZh ? '删除' : 'Delete'}
+              title={isZh ? '删除' : 'Delete'}
+            >
+              <Trash2 size={18} aria-hidden />
+            </button>
+            <ReportButton target_type="errand" target_id={e.id} className="text-slate-400 hover:text-red-500" />
+          </>
         ) : (
           <Link className="err-detail-edit" to="/about/errands">{isZh ? '列表' : 'List'}</Link>
         )}
