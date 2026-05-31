@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import EmptyState from '../components/EmptyState';
-import { clearNotifications, getNotifications, markNotificationRead } from '../api/notifications';
+import { clearNotifications, clearNotificationsByModule, getNotifications, getUnreadSummary, markNotificationRead } from '../api/notifications';
 import { getApiErrorMessage } from '../utils/apiError';
 import './Mailbox.css';
 
@@ -83,9 +83,20 @@ function Mailbox() {
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
   const [data, setData] = useState({ list: [], hasMore: false });
+  const [unreadCounts, setUnreadCounts] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [tab, setTab] = useState('social'); // social | marketplace
+  const [tab, setTab] = useState('all'); // all | treehole | trending | canteen | marketplace | club | system
+
+  const MODULE_TABS = [
+    { key: 'all', label: '全部', labelEn: 'All' },
+    { key: 'treehole', label: '树洞', labelEn: 'Treehole' },
+    { key: 'trending', label: '热搜', labelEn: 'Trending' },
+    { key: 'canteen', label: '食堂', labelEn: 'Canteen' },
+    { key: 'marketplace', label: '二手', labelEn: 'Market' },
+    { key: 'club', label: '社团', labelEn: 'Club' },
+    { key: 'system', label: '系统', labelEn: 'System' },
+  ];
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -96,13 +107,12 @@ function Mailbox() {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    getNotifications({ page: 1, pageSize: 50 })
+    const opts = { page: 1, pageSize: 50 };
+    if (tab !== 'all') opts.module = tab;
+    getNotifications(opts)
       .then((res) => {
         if (cancelled) return;
-        setData({
-          list: res?.list ?? [],
-          hasMore: !!res?.hasMore,
-        });
+        setData({ list: res?.list ?? [], hasMore: !!res?.hasMore });
       })
       .catch((err) => {
         if (!cancelled) setError(getApiErrorMessage(err));
@@ -110,15 +120,16 @@ function Mailbox() {
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
+    // 拉取未读计数
+    getUnreadSummary().then((s) => {
+      if (!cancelled) setUnreadCounts(s?.byModule || {});
+    }).catch(() => {});
     return () => { cancelled = true; };
-  }, [isLoggedIn]);
+  }, [isLoggedIn, tab]);
 
   const groups = useMemo(() => {
     const raw = Array.isArray(data?.list) ? data.list : [];
-    const list = raw.filter((n) => {
-      if (tab === 'marketplace') return n?.type === 'marketplace';
-      return n?.type !== 'marketplace';
-    });
+    const list = raw; // filtering is now done server-side via module param
     const map = new Map();
     for (const n of list) {
       const t = n && n.target ? n.target : null;
@@ -218,44 +229,42 @@ function Mailbox() {
   return (
     <div className="mailbox-page">
       <div className="mailbox-topbar">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minWidth: 0 }}>
-          <p className="mailbox-intro">
-            {isZh ? 'Social Glass Stream · 聚合通知（按内容卡片显示）' : 'Social Glass Stream · Aggregated notifications'}
-          </p>
-          <div className="mailbox-tabs" role="tablist" aria-label="notification tabs">
-            <button
-              type="button"
-              className={`mailbox-tab ${tab === 'social' ? 'is-on' : ''}`}
-              onClick={() => setTab('social')}
-              role="tab"
-              aria-selected={tab === 'social'}
-            >
-              {isZh ? '社交' : 'Social'}
-            </button>
-            <button
-              type="button"
-              className={`mailbox-tab ${tab === 'marketplace' ? 'is-on' : ''}`}
-              onClick={() => setTab('marketplace')}
-              role="tab"
-              aria-selected={tab === 'marketplace'}
-            >
-              {isZh ? '二手市场' : 'Marketplace'}
-            </button>
-          </div>
+        <div className="mailbox-tabs" role="tablist" aria-label="notification tabs" style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
+          {MODULE_TABS.map((mt) => {
+            const count = mt.key === 'all'
+              ? Object.values(unreadCounts).reduce((a, b) => a + b, 0)
+              : (unreadCounts[mt.key] || 0);
+            return (
+              <button
+                key={mt.key}
+                type="button"
+                className={`mailbox-tab ${tab === mt.key ? 'is-on' : ''}`}
+                onClick={() => setTab(mt.key)}
+                role="tab"
+                aria-selected={tab === mt.key}
+                style={{ position: 'relative', padding: '6px 12px', fontSize: 13 }}
+              >
+                {isZh ? mt.label : mt.labelEn}
+                {count > 0 && (
+                  <span style={{ marginLeft: 4, background: tab === mt.key ? '#fff' : '#ef4444', color: tab === mt.key ? '#ef4444' : '#fff', borderRadius: 10, padding: '0 6px', fontSize: 11, fontWeight: 600 }}>
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
         <button
           type="button"
           className="mailbox-clear-btn"
           onClick={async () => {
-            const ok = window.confirm(
-              tab === 'marketplace'
-                ? (isZh ? '清空二手市场通知？' : 'Clear marketplace notifications?')
-                : (isZh ? '清空社交通知？（公告无法清除）' : 'Clear social notifications? (Announcements cannot be cleared)')
-            );
+            const tabLabel = isZh ? MODULE_TABS.find((t) => t.key === tab)?.label || tab : tab;
+            const ok = window.confirm(isZh ? `清空${tabLabel}通知？` : `Clear ${tabLabel} notifications?`);
             if (!ok) return;
             try {
-              await clearNotifications(tab === 'marketplace' ? 'marketplace' : 'social');
-              const res = await getNotifications({ page: 1, pageSize: 50 });
+              if (tab === 'all') await clearNotifications('social');
+              else await clearNotificationsByModule(tab);
+              const res = await getNotifications({ page: 1, pageSize: 50, module: tab !== 'all' ? tab : undefined });
               setData({ list: res?.list ?? [], hasMore: !!res?.hasMore });
             } catch (e) {
               setError(getApiErrorMessage(e));

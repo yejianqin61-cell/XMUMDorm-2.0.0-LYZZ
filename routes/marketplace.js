@@ -12,6 +12,7 @@ const { query } = require('../database');
 const authenticateToken = require('../middleware/auth');
 const { checkSanction } = require('../middleware/checkSanction');
 const sensitiveWordFilter = require('../middleware/sensitiveWordFilter');
+const { createNotification } = require('../services/notificationService');
 const { assetUrl } = require('../utils/assets');
 const { simpleCache } = require('../utils/simpleCache');
 const { uploadBuffer, guessContentType, isObjectStorageConfigured } = require('../services/objectStorage');
@@ -119,7 +120,7 @@ async function notifyMarketplaceMessage({ toUserId, fromUserId, threadId, itemId
     });
     await query(
       'INSERT INTO notifications (user_id, type, from_user_id, extra) VALUES (?, ?, ?, ?)',
-      [toUserId, 'marketplace', fromUserId, extra]
+      [toUserId, 'marketplace_chat', fromUserId, extra]
     );
   } catch (e) {
     console.warn('[marketplace chat notify] skipped:', e && (e.code || e.message || e));
@@ -587,6 +588,14 @@ router.post('/items/:id/want', authenticateToken, async (req, res) => {
     } else {
       await query('INSERT INTO marketplace_item_wants (user_id, item_id) VALUES (?, ?)', [req.user.id, id]);
       await query('UPDATE marketplace_items SET wants_count = wants_count + 1 WHERE id = ?', [id]);
+      // 通知卖家
+      const itemRow = await query('SELECT seller_user_id, title FROM marketplace_items WHERE id = ? LIMIT 1', [id]);
+      if (itemRow && itemRow[0] && itemRow[0].seller_user_id !== req.user.id) {
+        createNotification({
+          userId: itemRow[0].seller_user_id, type: 'marketplace_want', fromUserId: req.user.id,
+          extra: { targetType: 'marketplace_item', targetId: id, targetTitle: itemRow[0].title, targetPath: `/about/second-hand/item/${id}` },
+        }).catch(() => {});
+      }
     }
     const cntRows = await query('SELECT wants_count FROM marketplace_items WHERE id = ? LIMIT 1', [id]);
     const wantsCount = cntRows && cntRows[0] ? cntRows[0].wants_count : 0;

@@ -10,6 +10,7 @@ const router = express.Router();
 const { query } = require('../database');
 const { checkSanction } = require('../middleware/checkSanction');
 const sensitiveWordFilter = require('../middleware/sensitiveWordFilter');
+const { createNotification } = require('../services/notificationService');
 const authenticateToken = require('../middleware/auth');
 const {
   productImagesUpload,
@@ -1522,6 +1523,29 @@ router.post('/products/:productId/comments', authenticateToken, checkSanction, s
         }
       }
     }
+
+    // 通知：一级点评通知商家，二级回复通知被回复者
+    try {
+      if (parentId) {
+        // 二级回复：通知被回复的一级评论发布者
+        const [parentComment] = await query('SELECT user_id FROM product_comments WHERE id = ?', [parentId]);
+        if (parentComment && parentComment.user_id && parentComment.user_id !== req.user.id) {
+          createNotification({
+            userId: parentComment.user_id, type: 'canteen_reply', fromUserId: req.user.id,
+            extra: { targetType: 'product', targetId: productId, targetTitle: prod?.[0]?.name || '', targetPath: `/eat/food/${productId}`, content: (content || '').slice(0, 80) },
+          }).catch(() => {});
+        }
+      } else {
+        // 一级点评：通知商家
+        const [shop] = await query('SELECT user_id FROM shops WHERE id = ?', [shopId]);
+        if (shop && shop.user_id && shop.user_id !== req.user.id) {
+          createNotification({
+            userId: shop.user_id, type: 'canteen_review', fromUserId: req.user.id,
+            extra: { targetType: 'product', targetId: productId, targetTitle: prod?.[0]?.name || '', targetPath: `/eat/food/${productId}`, content: (content || '').slice(0, 80), rating },
+          }).catch(() => {});
+        }
+      }
+    } catch (_) { /* 通知失败不影响主流程 */ }
 
     res.status(200).json(attachExp({ status: 0, message: '评论成功', data: comment }, expResult));
   } catch (e) {

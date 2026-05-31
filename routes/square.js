@@ -10,6 +10,7 @@ const jwt = require('jsonwebtoken');
 const { query } = require('../database');
 const { checkSanction } = require('../middleware/checkSanction');
 const sensitiveWordFilter = require('../middleware/sensitiveWordFilter');
+const { createNotification } = require('../services/notificationService');
 const authenticateToken = require('../middleware/auth');
 const { bannerImageUpload, postImagesUpload } = require('../middleware/upload');
 const { logAudit } = require('../services/auditLog');
@@ -404,6 +405,11 @@ router.post('/trending/posts/:id/comments', authenticateToken, checkSanction, se
       await checkAndGrantPostPopularRewards('trending', postId, postRow.user_id);
     }
 
+    // 通知帖主
+    if (postRow && postRow.user_id && postRow.user_id !== req.user.id) {
+      createNotification({ userId: postRow.user_id, type: 'trending_comment', fromUserId: req.user.id, postId, commentId: result.insertId, extra: { content: content.slice(0, 80) } }).catch(() => {});
+    }
+
     res.status(200).json(attachExp({ status: 0, message: '评论成功', data: { id: result.insertId } }, expResult));
   } catch (e) {
     console.error('热搜帖评论错误:', e);
@@ -448,6 +454,10 @@ router.post('/trending/posts/:id/like', authenticateToken, async (req, res) => {
         });
         await checkAndGrantPostPopularRewards('trending', postId, authorId);
       }
+    }
+    // 通知帖主
+    if (liked && authorId && authorId !== req.user.id) {
+      createNotification({ userId: authorId, type: 'trending_like', fromUserId: req.user.id, postId }).catch(() => {});
     }
     const [cntRow] = await query('SELECT COUNT(*) AS cnt FROM trending_post_likes WHERE post_id = ?', [postId]);
     res.status(200).json(attachExp({
@@ -770,6 +780,13 @@ router.post('/campus-posts/:id/comments', authenticateToken, checkSanction, sens
           author: mapCommentAuthor(row),
         }
       : { id: result.insertId, content };
+
+    // 通知帖主
+    const [cpAuthor] = await query('SELECT author_user_id FROM campus_posts WHERE id = ?', [postId]);
+    if (cpAuthor && cpAuthor.author_user_id && cpAuthor.author_user_id !== req.user.id) {
+      createNotification({ userId: cpAuthor.author_user_id, type: 'campus_comment', fromUserId: req.user.id, postId, commentId: result.insertId, extra: { content: content.slice(0, 80) } }).catch(() => {});
+    }
+
     res.status(200).json({ status: 0, message: '评论成功', data });
   } catch (e) {
     if (e.code === 'ER_NO_SUCH_TABLE') {
@@ -798,6 +815,13 @@ router.post('/campus-posts/:id/like', authenticateToken, async (req, res) => {
     } else {
       await query('INSERT INTO campus_post_likes (post_id, user_id) VALUES (?, ?)', [postId, req.user.id]);
       liked = true;
+    }
+    // 通知帖主
+    if (liked) {
+      const [authorRow] = await query('SELECT author_user_id FROM campus_posts WHERE id = ?', [postId]);
+      if (authorRow && authorRow.author_user_id && authorRow.author_user_id !== req.user.id) {
+        createNotification({ userId: authorRow.author_user_id, type: 'campus_like', fromUserId: req.user.id, postId }).catch(() => {});
+      }
     }
     const [cntRow] = await query('SELECT COUNT(*) AS cnt FROM campus_post_likes WHERE post_id = ?', [postId]);
     res.status(200).json({

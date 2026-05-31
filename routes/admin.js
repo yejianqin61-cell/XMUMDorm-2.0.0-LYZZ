@@ -9,6 +9,7 @@ const { query } = require('../database');
 const authenticateToken = require('../middleware/auth');
 const requireAdmin = require('../middleware/adminAuth');
 const { logAudit } = require('../services/auditLog');
+const { createNotification, createNotificationBatch } = require('../services/notificationService');
 const sensitiveWordFilter = require('../middleware/sensitiveWordFilter');
 
 // 所有路由都需要登录 + 管理员权限
@@ -231,6 +232,16 @@ router.post('/users/:id/ban', async (req, res) => {
       userAgent: req.headers['user-agent']?.slice(0, 255),
       meta: { duration, reason },
     }).catch(() => {});
+
+    // 通知被封用户（fire-and-forget，失败不影响封禁操作）
+    try {
+      const banMsg = durationDays ? `你的账号已被封禁 ${durationDays} 天` : '你的账号已被永久封禁';
+      const extraMsg = reason ? `${banMsg}，原因：${reason}` : banMsg;
+      createNotification({
+        userId, type: 'system_ban', fromUserId: adminId,
+        extra: { message: extraMsg, duration: durationDays, reason },
+      }).catch(() => {});
+    } catch (_) { /* 通知失败不阻断封禁 */ }
 
     res.json({ status: 0, message: '封禁成功' });
   } catch (err) {
@@ -555,7 +566,7 @@ router.post('/announcements', async (req, res) => {
 
     await query(
       `INSERT INTO notifications (user_id, type, post_id, from_user_id)
-       SELECT u.id, 'announcement', ?, ? FROM users u WHERE u.status = 'active'`,
+       SELECT u.id, 'system_announcement', ?, ? FROM users u WHERE u.status = 'active'`,
       [postId, adminId]
     );
 

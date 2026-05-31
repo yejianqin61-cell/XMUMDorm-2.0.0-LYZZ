@@ -19,6 +19,7 @@ const sanitizeHtml = require('sanitize-html');
 const authenticateToken = require('../middleware/auth');
 const { checkSanction } = require('../middleware/checkSanction');
 const sensitiveWordFilter = require('../middleware/sensitiveWordFilter');
+const { createNotification, createNotificationBatch } = require('../services/notificationService');
 const jwt = require('jsonwebtoken');
 const { assetUrl } = require('../utils/assets');
 const { uploadBuffer, guessContentType, isObjectStorageConfigured } = require('../services/objectStorage');
@@ -408,6 +409,32 @@ async function insertClubComment(req, res, next, targetType, targetId) {
           },
         }
       : { id: result.insertId, content: safeContent, created_at: new Date().toISOString() };
+
+    // 通知社团管理员 + 被回复者
+    try {
+      let clubId = null;
+      if (targetType === 'activity') {
+        const [a] = await query('SELECT club_id FROM club_activities WHERE id = ?', [targetId]);
+        clubId = a?.club_id;
+      } else {
+        const [p] = await query('SELECT club_id FROM club_posts WHERE id = ?', [targetId]);
+        clubId = p?.club_id;
+      }
+      if (clubId) {
+        const admins = await query('SELECT user_id FROM club_members WHERE club_id = ? AND role = ?', [clubId, 'admin']);
+        const adminIds = admins.map((a) => a.user_id).filter((id) => id !== userId);
+        if (adminIds.length > 0) {
+          createNotificationBatch(adminIds, { type: 'club_comment', fromUserId: userId, extra: { targetType: `club_${targetType}`, targetId, targetPath: targetType === 'activity' ? `/about/club/activity/${targetId}` : `/about/club/post/${targetId}`, content: safeContent.slice(0, 80) } }).catch(() => {});
+        }
+        if (parentIdNum) {
+          const [pc] = await query('SELECT user_id FROM club_comments WHERE id = ?', [parentIdNum]);
+          if (pc && pc.user_id && pc.user_id !== userId && !adminIds.includes(pc.user_id)) {
+            createNotification({ userId: pc.user_id, type: 'club_comment', fromUserId: userId, extra: { targetType: `club_${targetType}`, targetId, targetPath: targetType === 'activity' ? `/about/club/activity/${targetId}` : `/about/club/post/${targetId}`, content: safeContent.slice(0, 80) } }).catch(() => {});
+          }
+        }
+      }
+    } catch (_) {}
+
     res.json({ status: 0, message: 'ok', data });
   } catch (e) {
     if (isMissingClubCommentsTable(e)) {
@@ -877,6 +904,24 @@ router.post('/likes/toggle', authenticateToken, async (req, res, next) => {
       return res.json({ status: 0, data: { liked: false } });
     }
     await query('INSERT INTO club_likes (user_id, target_type, target_id) VALUES (?, ?, ?)', [userId, targetType, targetId]);
+    // 通知社团管理员
+    try {
+      let clubId = null;
+      if (targetType === 'activity') {
+        const [a] = await query('SELECT club_id FROM club_activities WHERE id = ?', [targetId]);
+        clubId = a?.club_id;
+      } else if (targetType === 'post') {
+        const [p] = await query('SELECT club_id FROM club_posts WHERE id = ?', [targetId]);
+        clubId = p?.club_id;
+      }
+      if (clubId) {
+        const admins = await query('SELECT user_id FROM club_members WHERE club_id = ? AND role = ?', [clubId, 'admin']);
+        const adminIds = admins.map((a) => a.user_id).filter((id) => id !== userId);
+        if (adminIds.length > 0) {
+          createNotificationBatch(adminIds, { type: 'club_like', fromUserId: userId, extra: { targetType: `club_${targetType}`, targetId, targetPath: targetType === 'activity' ? `/about/club/activity/${targetId}` : `/about/club/post/${targetId}` } }).catch(() => {});
+        }
+      }
+    } catch (_) {}
     return res.json({ status: 0, data: { liked: true } });
   } catch (e) {
     next(e);
@@ -902,6 +947,14 @@ router.post('/:id/follow', authenticateToken, async (req, res, next) => {
       return res.json({ status: 0, data: { following: false } });
     }
     await query('INSERT INTO club_follows (user_id, club_id) VALUES (?, ?)', [userId, clubId]);
+    // 通知社团管理员
+    try {
+      const admins = await query('SELECT user_id FROM club_members WHERE club_id = ? AND role = ?', [clubId, 'admin']);
+      const adminIds = admins.map((a) => a.user_id).filter((id) => id !== userId);
+      if (adminIds.length > 0) {
+        createNotificationBatch(adminIds, { type: 'club_follow', fromUserId: userId, extra: { targetType: 'club', targetId: clubId, targetPath: `/about/club/${clubId}` } }).catch(() => {});
+      }
+    } catch (_) {}
     return res.json({ status: 0, data: { following: true } });
   } catch (e) {
     next(e);

@@ -14,7 +14,6 @@ jest.mock('../../middleware/adminAuth', () => (req, res, next) => {
   return res.status(403).json({ status: -1, message: '需要管理员权限' });
 });
 jest.mock('../../services/auditLog', () => ({ logAudit: jest.fn().mockResolvedValue() }));
-
 const { query } = require('../../database');
 const adminRoutes = require('../../routes/admin');
 

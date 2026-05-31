@@ -301,7 +301,7 @@ router.post('/', authenticateToken, checkSanction, sensitiveWordFilter, (req, re
       const extra = JSON.stringify({ content: content.slice(0, 600) });
       await query(
         `INSERT INTO notifications (user_id, type, post_id, from_user_id, extra)
-         SELECT id, 'announcement', ?, ?, ? FROM users`,
+         SELECT id, 'system_announcement', ?, ?, ? FROM users`,
         [postId, req.user.id, extra]
       );
     }
@@ -852,7 +852,7 @@ router.post('/:id/like', authenticateToken, async (req, res) => {
     if (authorId && authorId !== req.user.id) {
       await query(
         'INSERT INTO notifications (user_id, type, post_id, from_user_id) VALUES (?, ?, ?, ?)',
-        [authorId, 'like', postId, req.user.id]
+        [authorId, 'treehole_like', postId, req.user.id]
       );
     }
     res.status(200).json(attachExp({
@@ -951,7 +951,7 @@ router.post('/:id/comments', authenticateToken, checkSanction, sensitiveWordFilt
     if (postRow && postRow.user_id && postRow.user_id !== req.user.id) {
       await query(
         'INSERT INTO notifications (user_id, type, post_id, comment_id, from_user_id, extra) VALUES (?, ?, ?, ?, ?, ?)',
-        [postRow.user_id, 'comment', postId, result.insertId, req.user.id, JSON.stringify({ content: String(content).trim().slice(0, 80) })]
+        [postRow.user_id, 'treehole_comment', postId, result.insertId, req.user.id, JSON.stringify({ content: String(content).trim().slice(0, 80) })]
       );
     }
     simpleCache.delete(`post_comments_v1:${postId}`);

@@ -11,6 +11,7 @@ const { query } = require('../database');
 const authenticateToken = require('../middleware/auth');
 const { assetUrl } = require('../utils/assets');
 const { simpleCache } = require('../utils/simpleCache');
+const { getModuleTypes } = require('../services/notificationService');
 
 // 为通知附加帖子/发送者等摘要
 async function attachNotificationExtra(rows) {
@@ -93,12 +94,20 @@ router.get('/', authenticateToken, async (req, res) => {
     if (!Number.isInteger(limitNum) || limitNum < 1 || !Number.isInteger(offsetNum) || offsetNum < 0) {
       return res.status(400).json({ status: -1, message: '分页参数无效' });
     }
-    const type = req.query.type; // comment | like | announcement
+    const type = req.query.type; // 单类型筛选（兼容旧版）
+    const mod = req.query.module; // 模块筛选（新增）
     const isRead = req.query.is_read; // 0 | 1
 
     let where = 'n.user_id = ?';
     const params = [req.user.id];
-    if (type) {
+    if (mod) {
+      const types = getModuleTypes(mod);
+      if (types) {
+        const placeholders = types.map(() => '?').join(',');
+        where += ` AND n.type IN (${placeholders})`;
+        params.push(...types);
+      }
+    } else if (type) {
       where += ' AND n.type = ?';
       params.push(type);
     }
@@ -167,15 +176,16 @@ router.get('/unread-summary', authenticateToken, async (req, res) => {
     for (const r of rows || []) {
       byType[r.type] = Number(r.cnt) || 0;
     }
-    const social =
-      (byType.like || 0) +
-      (byType.comment || 0) +
-      (byType.handbook_comment || 0) +
-      (byType.course_review_comment || 0);
-    // 预留：二手市场/聊天类通知（未来如果写入 notifications.type='marketplace' 等即可自动点亮）
-    const chat = (byType.marketplace || 0) + (byType.chat || 0);
+    // 按模块聚合（从 notificationService 获取模块定义）
+    const { MODULE_TYPES: allModuleTypes } = require('../services/notificationService');
+    const byModule = {};
+    for (const [modName, types] of Object.entries(allModuleTypes)) {
+      let sum = 0;
+      for (const t of types) sum += byType[t] || 0;
+      byModule[modName] = sum;
+    }
     const total = Object.values(byType).reduce((a, b) => a + (Number(b) || 0), 0);
-    res.status(200).json({ status: 0, message: 'ok', data: { social, chat, total, byType } });
+    res.status(200).json({ status: 0, message: 'ok', data: { total, byType, byModule } });
   } catch (e) {
     console.error('未读汇总错误:', e);
     res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
@@ -188,14 +198,27 @@ router.get('/unread-summary', authenticateToken, async (req, res) => {
 router.delete('/clear', authenticateToken, async (req, res) => {
   try {
     const scope = String(req.query.scope || '').trim();
-    if (scope === 'marketplace') {
-      await query("DELETE FROM notifications WHERE user_id = ? AND type = 'marketplace'", [req.user.id]);
+    const mod = String(req.query.module || '').trim();
+
+    if (mod) {
+      const types = getModuleTypes(mod);
+      if (!types) return res.status(400).json({ status: -1, message: '未知模块' });
+      const placeholders = types.map(() => '?').join(',');
+      await query(`DELETE FROM notifications WHERE user_id = ? AND type IN (${placeholders})`, [req.user.id, ...types]);
+    } else if (scope === 'marketplace') {
+      const types = getModuleTypes('marketplace');
+      const placeholders = types.map(() => '?').join(',');
+      await query(`DELETE FROM notifications WHERE user_id = ? AND type IN (${placeholders})`, [req.user.id, ...types]);
     } else if (scope === 'social') {
-      // 社交：排除公告与 marketplace
-      await query("DELETE FROM notifications WHERE user_id = ? AND type <> 'announcement' AND type <> 'marketplace'", [req.user.id]);
+      const systemTypes = getModuleTypes('system');
+      const mktTypes = getModuleTypes('marketplace');
+      const excludeTypes = [...systemTypes, ...mktTypes];
+      const placeholders = excludeTypes.map(() => '?').join(',');
+      await query(`DELETE FROM notifications WHERE user_id = ? AND type NOT IN (${placeholders})`, [req.user.id, ...excludeTypes]);
     } else {
-      // 默认：清空除公告外全部
-      await query("DELETE FROM notifications WHERE user_id = ? AND type <> 'announcement'", [req.user.id]);
+      const systemTypes = getModuleTypes('system');
+      const placeholders = systemTypes.map(() => '?').join(',');
+      await query(`DELETE FROM notifications WHERE user_id = ? AND type NOT IN (${placeholders})`, [req.user.id, ...systemTypes]);
     }
     res.status(200).json({ status: 0, message: 'ok', data: { cleared: true } });
   } catch (e) {
