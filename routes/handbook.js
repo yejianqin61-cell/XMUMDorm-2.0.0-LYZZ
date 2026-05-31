@@ -11,6 +11,7 @@ const express = require('express');
 const router = express.Router();
 const { query } = require('../database');
 const authenticateToken = require('../middleware/auth');
+const { checkSanction } = require('../middleware/checkSanction');
 const { assetUrl } = require('../utils/assets');
 const { simpleCache } = require('../utils/simpleCache');
 const multer = require('multer');
@@ -401,7 +402,7 @@ router.get('/articles/:id', async (req, res) => {
 // - 普通用户：创建= draft；更新仅限自己；不允许 publish/hidden
 // - admin：可设置 status=draft/published/hidden，可管理任意文章
 // ============================================
-router.post('/articles', authenticateToken, async (req, res) => {
+router.post('/articles', authenticateToken, checkSanction, async (req, res) => {
   try {
     const title = cleanText(req.body && req.body.title, 200);
     const summary = cleanText(req.body && req.body.summary, 400) || null;
@@ -696,7 +697,7 @@ router.get('/articles/:id/comments', async (req, res) => {
   }
 });
 
-router.post('/articles/:id/comments', authenticateToken, async (req, res) => {
+router.post('/articles/:id/comments', authenticateToken, checkSanction, async (req, res) => {
   try {
     const id = toInt(req.params.id, 0);
     if (!id) return res.status(400).json({ status: -1, message: '文章 ID 无效' });
@@ -1162,7 +1163,7 @@ router.get('/course-reviews/:id', async (req, res) => {
   }
 });
 
-router.post('/course-reviews', authenticateToken, async (req, res) => {
+router.post('/course-reviews', authenticateToken, checkSanction, async (req, res) => {
   try {
     const courseName = cleanText(req.body && (req.body.courseName ?? req.body.course_name), 180);
     const teacher = cleanText(req.body && req.body.teacher, 120);
@@ -1435,7 +1436,7 @@ router.get('/course-reviews/:id/comments', async (req, res) => {
   }
 });
 
-router.post('/course-reviews/:id/comments', authenticateToken, async (req, res) => {
+router.post('/course-reviews/:id/comments', authenticateToken, checkSanction, async (req, res) => {
   try {
     const id = toInt(req.params.id, 0);
     if (!id) return res.status(400).json({ status: -1, message: 'ID 无效' });

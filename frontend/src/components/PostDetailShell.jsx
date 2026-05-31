@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Heart, SendHorizonal, Smile } from 'lucide-react';
+import ReportButton from './ReportButton';
 import { useLanguage } from '../context/LanguageContext';
 import { API_BASE_URL } from '../api/config';
 import EmptyState from './EmptyState';
@@ -45,6 +46,7 @@ export default function PostDetailShell({
   title = null,
   metaSlot = null,
   tags = [],
+  reportTargetType = null,
 }) {
   const navigate = useNavigate();
   const { lang } = useLanguage();
@@ -249,6 +251,9 @@ export default function PostDetailShell({
             <Heart size={18} aria-hidden fill={liked ? 'currentColor' : 'none'} />
             <span className="post-detail-like-count">{likeCount}</span>
           </motion.button>
+          {reportTargetType && postId && (
+            <ReportButton target_type={reportTargetType} target_id={postId} className="post-detail-report-btn" />
+          )}
         </div>
       </article>
 

@@ -8,6 +8,7 @@
 const express = require('express');
 const router = express.Router();
 const { query } = require('../database');
+const { checkSanction } = require('../middleware/checkSanction');
 const authenticateToken = require('../middleware/auth');
 const { postImagesUpload, savePostImages } = require('../middleware/upload');
 const sanitizeHtml = require('sanitize-html');
@@ -199,7 +200,7 @@ function mergePostRows(rows, req) {
 // ============================================
 // 发布帖子（登录 + 可选图片，最多 3 张）
 // ============================================
-router.post('/', authenticateToken, (req, res, next) => {
+router.post('/', authenticateToken, checkSanction, (req, res, next) => {
   postImagesUpload(req, res, (err) => {
     if (err) {
       return res.status(400).json({
@@ -916,7 +917,7 @@ router.get('/:id/comments', async (req, res) => {
 // ============================================
 // 发表评论（一级或二级）
 // ============================================
-router.post('/:id/comments', authenticateToken, async (req, res) => {
+router.post('/:id/comments', authenticateToken, checkSanction, async (req, res) => {
   try {
     const postId = parseInt(req.params.id, 10);
     const { content, parent_id: parentId } = req.body || {};

@@ -11,6 +11,16 @@ import Layout from './components/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ResetPassword from './pages/ResetPassword';
+import AdminLayout from './components/Admin/AdminLayout';
+import AdminDashboard from './pages/Admin/AdminDashboard';
+import UserList from './pages/Admin/UserList';
+import UserDetail from './pages/Admin/UserDetail';
+import ReportList from './pages/Admin/ReportList';
+import ReportDetail from './pages/Admin/ReportDetail';
+import AnnouncementManage from './pages/Admin/AnnouncementManage';
+import AuditLogList from './pages/Admin/AuditLogList';
+import SystemConfig from './pages/Admin/SystemConfig';
+import SensitiveWordsManage from './pages/Admin/SensitiveWordsManage';
 import { layoutRoutes } from './routes/layoutRoutes';
 import './App.css';
 import './styles/states.css';
@@ -75,6 +85,25 @@ function MainApp() {
                   }
                 >
                   {layoutRoutes}
+                </Route>
+                {/* 管理员后台（独立布局，不使用主 Layout 的 TabBar） */}
+                <Route
+                  path="/myzone/admin"
+                  element={
+                    <AuthGuard>
+                      <AdminLayout />
+                    </AuthGuard>
+                  }
+                >
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="users" element={<UserList />} />
+                  <Route path="users/:id" element={<UserDetail />} />
+                  <Route path="reports" element={<ReportList />} />
+                  <Route path="reports/:id" element={<ReportDetail />} />
+                  <Route path="announcements" element={<AnnouncementManage />} />
+                  <Route path="logs" element={<AuditLogList />} />
+                  <Route path="config" element={<SystemConfig />} />
+                  <Route path="sensitive-words" element={<SensitiveWordsManage />} />
                 </Route>
               </Routes>
             </LanguageProvider>

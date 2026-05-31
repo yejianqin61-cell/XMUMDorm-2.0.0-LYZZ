@@ -8,6 +8,7 @@ const router = express.Router();
 const path = require('path');
 const jwt = require('jsonwebtoken');
 const { query } = require('../database');
+const { checkSanction } = require('../middleware/checkSanction');
 const authenticateToken = require('../middleware/auth');
 const { bannerImageUpload, postImagesUpload } = require('../middleware/upload');
 const { logAudit } = require('../services/auditLog');
@@ -250,7 +251,7 @@ router.get('/trending/:id/posts', async (req, res) => {
 });
 
 // ---------- 发帖到热搜（支持图片） ----------
-router.post('/trending/:id/posts', authenticateToken, (req, res, next) => {
+router.post('/trending/:id/posts', authenticateToken, checkSanction, (req, res, next) => {
   postImagesUpload(req, res, (err) => {
     if (err) return res.status(400).json({ status: -1, message: err.message || '图片上传失败' });
     next();
@@ -368,7 +369,7 @@ router.get('/trending/posts/:id/comments', async (req, res) => {
 });
 
 // ---------- 发表热搜帖评论 ----------
-router.post('/trending/posts/:id/comments', authenticateToken, async (req, res) => {
+router.post('/trending/posts/:id/comments', authenticateToken, checkSanction, async (req, res) => {
   try {
     const postId = parseInt(req.params.id, 10);
     const content = cleanText(req.body.content);
@@ -589,7 +590,7 @@ router.get('/campus-feed', async (req, res) => {
 });
 
 // ---------- 发校园帖（组织身份，支持图片） ----------
-router.post('/campus-posts', authenticateToken, (req, res, next) => {
+router.post('/campus-posts', authenticateToken, checkSanction, (req, res, next) => {
   postImagesUpload(req, res, (err) => {
     if (err) return res.status(400).json({ status: -1, message: err.message || '图片上传失败' });
     next();
@@ -723,7 +724,7 @@ router.get('/campus-posts/:id/comments', async (req, res) => {
 });
 
 // ---------- 发表校园帖评论 ----------
-router.post('/campus-posts/:id/comments', authenticateToken, async (req, res) => {
+router.post('/campus-posts/:id/comments', authenticateToken, checkSanction, async (req, res) => {
   try {
     const postId = parseInt(req.params.id, 10);
     const content = cleanText(req.body.content);

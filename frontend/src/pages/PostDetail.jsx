@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Heart, MoreHorizontal, SendHorizonal, Smile } from 'lucide-react';
+import ReportButton from '../components/ReportButton';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import {
@@ -555,6 +556,9 @@ function PostDetail() {
             <Heart size={18} aria-hidden fill={liked ? 'currentColor' : 'none'} />
             <span className="post-detail-like-count">{likeCount}</span>
           </motion.button>
+          {!isAuthor && (
+            <ReportButton target_type="post" target_id={post.id} className="post-detail-report-btn" />
+          )}
         </div>
       </article>
       <LikeBurst ref={likeBurstRef} />

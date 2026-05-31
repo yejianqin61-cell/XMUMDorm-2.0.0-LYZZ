@@ -134,6 +134,7 @@ export default function SquareTrendingPostDetail() {
       emptyTitle="帖子不存在"
       emptyActionLabel="返回"
       onEmptyAction={() => navigate(-1)}
+      reportTargetType="trending_post"
     />
   );
 }

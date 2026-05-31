@@ -5,6 +5,7 @@ import {
   CalendarDays,
   ChevronRight,
   Clock3,
+  Gauge,
   MapPin,
   Heart,
   LogIn,
@@ -98,7 +99,7 @@ function MyZone() {
   const isZh = lang !== 'en';
   const t = MyZoneStrings(isZh);
 
-  const { isLoggedIn, isMerchant, displayName, displayAvatar, user, userLoading, logout } = useAuth();
+  const { isLoggedIn, isMerchant, isAdmin, displayName, displayAvatar, user, userLoading, logout } = useAuth();
   const userId = user?.id ? Number(user.id) : 0;
 
   const goLogin = () => navigate('/login', { state: { from: { pathname: '/myzone' } } });
@@ -315,6 +316,9 @@ function MyZone() {
               <UtilityTile to="/myzone/todos" title={t.todo} icon={<Star className="h-5 w-5" />} iconStyle={softIcon('rgba(234,179,8,0.14)', 'rgb(202,138,4)')} />
               {isLoggedIn && isMerchant && (
                 <UtilityTile to="/merchant/manage" title={t.storeManage} icon={<Store className="h-5 w-5" />} iconStyle={softIcon('rgba(99,102,241,0.12)', 'rgb(79,70,229)')} />
+              )}
+              {isLoggedIn && isAdmin && (
+                <UtilityTile to="/myzone/admin" title={isZh ? '管理员后台' : 'Admin Panel'} icon={<Gauge className="h-5 w-5" />} iconStyle={softIcon('rgba(15,23,42,0.10)', 'rgb(15,23,42)')} />
               )}
             </div>
           </motion.section>

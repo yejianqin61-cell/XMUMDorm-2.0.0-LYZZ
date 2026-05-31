@@ -12,7 +12,10 @@
     "migrate:title": "node scripts/run-migration-013-title.js",
     "migrate:title:railway": "node scripts/migrate-railway-013-posts-title-safe.js",
     "migrate:perf:railway": "node scripts/migrate-railway-014-perf-indexes-safe.js",
-    "backfill:post-thumbs": "node scripts/backfill-post-thumbs.js"
+    "backfill:post-thumbs": "node scripts/backfill-post-thumbs.js",
+    "test": "jest",
+    "test:coverage": "jest --coverage",
+    "test:watch": "jest --watch"
   },
   "keywords": [
     "campus",
@@ -39,6 +42,9 @@
     "web-push": "^3.6.7"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "@jest/globals": "^30.4.1",
+    "jest": "^30.4.2",
+    "nodemon": "^3.1.14",
+    "supertest": "^7.2.2"
   }
 }
