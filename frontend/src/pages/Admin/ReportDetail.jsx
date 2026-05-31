@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Loader2, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Loader2, AlertTriangle } from 'lucide-react';
 import { getAdminReportDetail, processReport } from '../../api/admin';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -105,6 +105,21 @@ export default function ReportDetail() {
           <InfoItem label={isZh ? '目标类型' : 'Target Type'} value={report.target_type} />
           <InfoItem label={isZh ? '目标ID' : 'Target ID'} value={report.target_id} />
         </div>
+
+        {/* 跳转到被举报内容 */}
+        {report.content_url && (
+          <div className="mt-3 pt-3 border-t border-slate-100">
+            <Link
+              to={report.content_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-blue-50 px-4 py-2.5 text-[13px] font-semibold text-blue-700 hover:bg-blue-100 transition-colors"
+            >
+              <ArrowUpRight className="h-4 w-4" />
+              {report.content_label || (isZh ? '查看被举报内容' : 'View reported content')}
+            </Link>
+          </div>
+        )}
         {report.detail && (
           <div className="mt-3 pt-3 border-t border-slate-100">
             <div className="text-[12px] text-slate-400 mb-1">{isZh ? '补充说明' : 'Detail'}</div>

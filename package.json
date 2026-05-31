@@ -8,6 +8,7 @@
     "dev": "nodemon server.js",
     "import-products": "node scripts/bulk-import-products.js",
     "migrate:all": "node scripts/run-migrations-all.js",
+    "migrate:admin": "node scripts/apply-sql-file.js migrations/056_admin_system.sql && node scripts/apply-sql-file.js migrations/057_user_status.sql",
     "migrate:square": "node scripts/run-migrations-041-045.js",
     "migrate:title": "node scripts/run-migration-013-title.js",
     "migrate:title:railway": "node scripts/migrate-railway-013-posts-title-safe.js",

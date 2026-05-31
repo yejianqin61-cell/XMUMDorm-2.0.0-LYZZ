@@ -132,8 +132,8 @@ router.get('/users', async (req, res) => {
                 u.banned_until, u.muted_until, u.created_at, u.last_login_at
          FROM users u ${where}
          ORDER BY u.created_at DESC
-         LIMIT ? OFFSET ?`,
-        [...params, pageSize, offset]
+         LIMIT ${pageSize} OFFSET ${offset}`,
+        params
       ),
     ]);
 
@@ -415,8 +415,8 @@ router.get('/reports', async (req, res) => {
          LEFT JOIN users u2 ON r.reported_user_id = u2.id
          ${where}
          ORDER BY FIELD(r.status, 'pending', 'processing', 'resolved', 'dismissed'), r.created_at DESC
-         LIMIT ? OFFSET ?`,
-        [...params, pageSize, offset]
+         LIMIT ${pageSize} OFFSET ${offset}`,
+        params
       ),
     ]);
 
@@ -432,7 +432,7 @@ router.get('/reports', async (req, res) => {
   }
 });
 
-// 举报详情
+// 举报详情（含被举报内容的跳转链接）
 router.get('/reports/:id', async (req, res) => {
   try {
     const reportId = parseInt(req.params.id, 10);
@@ -448,7 +448,14 @@ router.get('/reports/:id', async (req, res) => {
     );
     if (!rows || rows.length === 0) return res.status(404).json({ status: -1, message: '举报不存在' });
 
-    res.json({ status: 0, data: rows[0] });
+    const report = rows[0];
+
+    // 解析被举报内容的跳转链接
+    const contentInfo = await resolveContentUrl(report.target_type, report.target_id);
+    report.content_url = contentInfo.url;
+    report.content_label = contentInfo.label;
+
+    res.json({ status: 0, data: report });
   } catch (err) {
     console.error('[admin/reports/:id]', err);
     res.status(500).json({ status: -1, message: '获取举报详情失败' });
@@ -513,8 +520,7 @@ router.get('/announcements', async (req, res) => {
         `SELECT p.id, p.content AS title, p.created_at, u.username AS author
          FROM posts p LEFT JOIN users u ON p.user_id = u.id
          WHERE p.type = 'announcement' AND p.deleted_at IS NULL
-         ORDER BY p.created_at DESC LIMIT ? OFFSET ?`,
-        [pageSize, offset]
+         ORDER BY p.created_at DESC LIMIT ${pageSize} OFFSET ${offset}`
       ),
     ]);
 
@@ -661,8 +667,8 @@ router.get('/audit-logs', async (req, res) => {
          LEFT JOIN users u ON a.user_id = u.id
          ${where}
          ORDER BY a.created_at DESC
-         LIMIT ? OFFSET ?`,
-        [...params, pageSize, offset]
+         LIMIT ${pageSize} OFFSET ${offset}`,
+        params
       ),
     ]);
 
@@ -753,7 +759,7 @@ router.get('/sensitive-words', async (req, res) => {
 
     const [countResult, rows] = await Promise.all([
       query(`SELECT COUNT(*) AS total FROM sensitive_words ${where}`, params),
-      query(`SELECT * FROM sensitive_words ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`, [...params, pageSize, offset]),
+      query(`SELECT * FROM sensitive_words ${where} ORDER BY created_at DESC LIMIT ${pageSize} OFFSET ${offset}`, params),
     ]);
 
     const total = countResult[0]?.total || 0;
@@ -857,5 +863,63 @@ router.patch('/sensitive-words/:id/toggle', async (req, res) => {
     res.status(500).json({ status: -1, message: '操作失败' });
   }
 });
+
+// ============================================
+// 辅助函数：解析被举报内容的跳转链接
+// ============================================
+
+async function resolveContentUrl(targetType, targetId) {
+  const id = parseInt(targetId, 10);
+  const labels = {
+    post: '查看树洞帖子', comment: '查看帖子评论', trending_post: '查看热搜帖子',
+    campus_post: '查看校园此刻', product_comment: '查看食堂点评',
+    club_activity: '查看社团活动', club_post: '查看社团帖子',
+    marketplace: '查看二手商品', errand: '查看跑腿帖子',
+    handbook_article: '查看一站通文章', handbook_comment: '查看一站通评论',
+    course_review: '查看课程点评',
+  };
+
+  try {
+    switch (targetType) {
+      case 'post':
+        return { url: `/post/${id}`, label: labels.post };
+      case 'trending_post':
+        return { url: `/about/trending/post/${id}`, label: labels.trending_post };
+      case 'campus_post':
+        return { url: `/about/campus/${id}`, label: labels.campus_post };
+      case 'comment': {
+        const commentRows = await query('SELECT post_id FROM comments WHERE id = ?', [id]);
+        const postId = commentRows[0]?.post_id;
+        return { url: postId ? `/post/${postId}` : null, label: postId ? `${labels.comment} → 帖子#${postId}` : labels.comment };
+      }
+      case 'product_comment': {
+        const pcRows = await query('SELECT product_id FROM product_comments WHERE id = ?', [id]);
+        const productId = pcRows[0]?.product_id;
+        return { url: productId ? `/eat/food/${productId}` : null, label: productId ? `${labels.product_comment} → 菜品#${productId}` : labels.product_comment };
+      }
+      case 'club_activity':
+        return { url: `/about/club/activity/${id}`, label: labels.club_activity };
+      case 'club_post':
+        return { url: `/about/club/post/${id}`, label: labels.club_post };
+      case 'marketplace':
+        return { url: `/about/second-hand/item/${id}`, label: labels.marketplace };
+      case 'errand':
+        return { url: `/about/errands/${id}`, label: labels.errand };
+      case 'handbook_article':
+        return { url: `/about/freshman-guide/a/${id}`, label: labels.handbook_article };
+      case 'handbook_comment': {
+        const hcRows = await query('SELECT article_id FROM handbook_comments WHERE id = ?', [id]);
+        const articleId = hcRows[0]?.article_id;
+        return { url: articleId ? `/about/freshman-guide/a/${articleId}` : null, label: articleId ? `${labels.handbook_comment} → 文章#${articleId}` : labels.handbook_comment };
+      }
+      case 'course_review':
+        return { url: `/about/freshman-guide/course-review/${id}`, label: labels.course_review };
+      default:
+        return { url: null, label: null };
+    }
+  } catch (_) {
+    return { url: null, label: null };
+  }
+}
 
 module.exports = router;
