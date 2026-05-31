@@ -11,6 +11,15 @@ const REASON_LABELS = {
   illegal_trade: '违规交易', other: '其他',
 };
 
+const TARGET_LABELS = {
+  post: '树洞帖子', comment: '帖子评论', trending_post: '热搜帖子',
+  campus_post: '校园此刻', product_comment: '食堂点评',
+  club_activity: '社团活动', club_post: '社团帖子',
+  marketplace: '二手商品', errand: '跑腿帖子',
+  handbook_article: '一站通文章', handbook_comment: '一站通评论',
+  course_review: '课程点评',
+};
+
 const ACTIONS = [
   { value: 'dismiss', label: '忽略举报', labelEn: 'Dismiss', color: 'border-slate-200 text-slate-600 hover:bg-slate-50', bgColor: '' },
   { value: 'hide_content', label: '隐藏内容', labelEn: 'Hide Content', color: 'border-amber-200 text-amber-600 hover:bg-amber-50', bgColor: '' },
@@ -102,7 +111,7 @@ export default function ReportDetail() {
           <InfoItem label={isZh ? '被举报人' : 'Reported'} value={report.reported_name || '-'} />
           <InfoItem label={isZh ? '举报原因' : 'Reason'} value={isZh ? (REASON_LABELS[report.reason] || report.reason) : report.reason} />
           <InfoItem label={isZh ? '举报时间' : 'Time'} value={report.created_at ? new Date(report.created_at).toLocaleString('zh-CN') : '-'} />
-          <InfoItem label={isZh ? '目标类型' : 'Target Type'} value={report.target_type} />
+          <InfoItem label={isZh ? '目标类型' : 'Target Type'} value={isZh ? (TARGET_LABELS[report.target_type] || report.target_type) : report.target_type} />
           <InfoItem label={isZh ? '目标ID' : 'Target ID'} value={report.target_id} />
         </div>
 

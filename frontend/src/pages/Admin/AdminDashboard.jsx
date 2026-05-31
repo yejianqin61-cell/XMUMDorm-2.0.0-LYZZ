@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Users,
   UserPlus,
@@ -38,9 +38,19 @@ const REASON_LABELS = {
   illegal_trade: '违规交易', other: '其他',
 };
 
+const TARGET_LABELS = {
+  post: '树洞帖子', comment: '帖子评论', trending_post: '热搜帖子',
+  campus_post: '校园此刻', product_comment: '食堂点评',
+  club_activity: '社团活动', club_post: '社团帖子',
+  marketplace: '二手商品', errand: '跑腿帖子',
+  handbook_article: '一站通文章', handbook_comment: '一站通评论',
+  course_review: '课程点评',
+};
+
 export default function AdminDashboard() {
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
+  const navigate = useNavigate();
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['admin', 'dashboard'],
@@ -140,11 +150,15 @@ export default function AdminDashboard() {
             </thead>
             <tbody>
               {stats.recentReports.map((r) => (
-                <tr key={r.id} className="border-b border-slate-50 hover:bg-slate-50">
+                <tr
+                  key={r.id}
+                  className="border-b border-slate-50 hover:bg-blue-50/50 cursor-pointer transition-colors"
+                  onClick={() => navigate(`/myzone/admin/reports/${r.id}`)}
+                >
                   <td className="px-4 py-2 text-slate-600 whitespace-nowrap">
                     {r.created_at ? new Date(r.created_at).toLocaleDateString('zh-CN') : '-'}
                   </td>
-                  <td className="px-4 py-2 text-slate-600">{r.target_type}</td>
+                  <td className="px-4 py-2 text-slate-600">{isZh ? (TARGET_LABELS[r.target_type] || r.target_type) : r.target_type}</td>
                   <td className="px-4 py-2 text-slate-600">
                     {isZh ? (REASON_LABELS[r.reason] || r.reason) : r.reason}
                   </td>

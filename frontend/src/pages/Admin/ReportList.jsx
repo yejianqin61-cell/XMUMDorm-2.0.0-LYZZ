@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Loader2, AlertTriangle } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ChevronLeft, ChevronRight, ExternalLink, Loader2, AlertTriangle } from 'lucide-react';
 import { getAdminReports } from '../../api/admin';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -19,6 +19,15 @@ const REASON_LABELS = {
   spam: '垃圾广告', fraud: '诈骗信息', abuse: '辱骂攻击',
   nsfw: '色情内容', trolling: '恶意引战', privacy: '侵犯隐私',
   illegal_trade: '违规交易', other: '其他',
+};
+
+const TARGET_LABELS = {
+  post: '树洞帖子', comment: '帖子评论', trending_post: '热搜帖子',
+  campus_post: '校园此刻', product_comment: '食堂点评',
+  club_activity: '社团活动', club_post: '社团帖子',
+  marketplace: '二手商品', errand: '跑腿帖子',
+  handbook_article: '一站通文章', handbook_comment: '一站通评论',
+  course_review: '课程点评',
 };
 
 function ReportStatusBadge({ status, isZh }) {
@@ -39,6 +48,7 @@ function ReportStatusBadge({ status, isZh }) {
 export default function ReportList() {
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
+  const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState('');
 
@@ -115,7 +125,7 @@ export default function ReportList() {
                   <span className="font-medium">{r.reported_name || '-'}</span>
                 </div>
                 <div className="flex items-center gap-2 mt-1.5">
-                  <span className="text-[12px] text-slate-400">{r.target_type}</span>
+                  <span className="text-[12px] text-slate-400">{isZh ? (TARGET_LABELS[r.target_type] || r.target_type) : r.target_type}</span>
                   <span className="inline-block rounded-full bg-amber-50 text-amber-700 px-2 py-0.5 text-[11px] font-medium">
                     {isZh ? (REASON_LABELS[r.reason] || r.reason) : r.reason}
                   </span>
@@ -140,22 +150,33 @@ export default function ReportList() {
                   <th className="text-left px-4 py-3 font-medium">{isZh ? '模块' : 'Module'}</th>
                   <th className="text-left px-4 py-3 font-medium">{isZh ? '原因' : 'Reason'}</th>
                   <th className="text-left px-4 py-3 font-medium">{isZh ? '状态' : 'Status'}</th>
+                  <th className="text-center px-4 py-3 font-medium">{isZh ? '操作' : 'Action'}</th>
                 </tr>
               </thead>
               <tbody>
                 {list.map((r) => (
-                  <tr key={r.id} className="border-b border-slate-50 hover:bg-slate-50">
+                  <tr
+                    key={r.id}
+                    className="border-b border-slate-50 hover:bg-blue-50/50 cursor-pointer transition-colors"
+                    onClick={() => navigate(`/myzone/admin/reports/${r.id}`)}
+                  >
                     <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
                       {r.created_at ? new Date(r.created_at).toLocaleDateString('zh-CN') : '-'}
                     </td>
                     <td className="px-4 py-3 text-slate-600">{r.reporter_name || '-'}</td>
                     <td className="px-4 py-3 text-slate-600">{r.reported_name || '-'}</td>
-                    <td className="px-4 py-3 text-slate-600">{r.target_type}</td>
+                    <td className="px-4 py-3 text-slate-600">{isZh ? (TARGET_LABELS[r.target_type] || r.target_type) : r.target_type}</td>
                     <td className="px-4 py-3 text-slate-600">
                       {isZh ? (REASON_LABELS[r.reason] || r.reason) : r.reason}
                     </td>
                     <td className="px-4 py-3">
                       <ReportStatusBadge status={r.status} isZh={isZh} />
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="inline-flex items-center gap-1 text-blue-600 font-medium hover:text-blue-800">
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        {isZh ? '查看' : 'View'}
+                      </span>
                     </td>
                   </tr>
                 ))}
