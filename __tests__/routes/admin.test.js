@@ -68,7 +68,7 @@ describe('Admin Routes', () => {
 
       const res = await supertest(app()).get('/api/admin/dashboard');
       expect(res.status).toBe(200);
-      expect(res.body.status).toBe(1);
+      expect(res.body.status).toBe(0);
       expect(res.body.data.totalUsers).toBe(1100);
       expect(res.body.data.pendingReports).toBe(8);
       expect(res.body.data.contentStats.treeholePosts).toBe(2000);
@@ -153,7 +153,7 @@ describe('Admin Routes', () => {
 
       const res = await supertest(app()).post('/api/admin/users/5/ban').send({ duration: 7, reason: 'spam' });
       expect(res.status).toBe(200);
-      expect(res.body.status).toBe(1);
+      expect(res.body.status).toBe(0);
     });
 
     it('rejects banning admin', async () => {
@@ -237,7 +237,7 @@ describe('Admin Routes', () => {
       query.mockResolvedValueOnce([{ id: 1, reporter_id: 10, target_type: 'post', target_id: 42, reason: 'spam', status: 'pending', reporter_name: 'ua', reported_name: 'ub' }]);
       const res = await supertest(app()).get('/api/admin/reports/1');
       expect(res.status).toBe(200);
-      expect(res.body.status).toBe(1);
+      expect(res.body.status).toBe(0);
       expect(res.body.data.id).toBe(1);
     });
 

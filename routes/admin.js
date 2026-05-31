@@ -63,7 +63,7 @@ router.get('/dashboard', async (req, res) => {
     }).catch(() => {});
 
     res.json({
-      status: 1,
+      status: 0,
       data: {
         totalUsers: count(0),
         studentCount: count(1),
@@ -140,7 +140,7 @@ router.get('/users', async (req, res) => {
     const total = countResult[0]?.total || 0;
 
     res.json({
-      status: 1,
+      status: 0,
       data: { list: rows, total, page, pageSize, hasMore: offset + rows.length < total },
     });
   } catch (err) {
@@ -176,7 +176,7 @@ router.get('/users/:id', async (req, res) => {
     ]);
 
     res.json({
-      status: 1,
+      status: 0,
       data: {
         ...user,
         postCount: postCount[0]?.c || 0,
@@ -231,7 +231,7 @@ router.post('/users/:id/ban', async (req, res) => {
       meta: { duration, reason },
     }).catch(() => {});
 
-    res.json({ status: 1, message: '封禁成功' });
+    res.json({ status: 0, message: '封禁成功' });
   } catch (err) {
     console.error('[admin/users/:id/ban]', err);
     res.status(500).json({ status: -1, message: '封禁操作失败' });
@@ -268,7 +268,7 @@ router.post('/users/:id/unban', async (req, res) => {
       userAgent: req.headers['user-agent']?.slice(0, 255),
     }).catch(() => {});
 
-    res.json({ status: 1, message: '已解除封禁' });
+    res.json({ status: 0, message: '已解除封禁' });
   } catch (err) {
     console.error('[admin/users/:id/unban]', err);
     res.status(500).json({ status: -1, message: '解除封禁失败' });
@@ -312,7 +312,7 @@ router.post('/users/:id/mute', async (req, res) => {
       meta: { duration, reason },
     }).catch(() => {});
 
-    res.json({ status: 1, message: '禁言成功' });
+    res.json({ status: 0, message: '禁言成功' });
   } catch (err) {
     console.error('[admin/users/:id/mute]', err);
     res.status(500).json({ status: -1, message: '禁言操作失败' });
@@ -346,7 +346,7 @@ router.post('/users/:id/unmute', async (req, res) => {
       userAgent: req.headers['user-agent']?.slice(0, 255),
     }).catch(() => {});
 
-    res.json({ status: 1, message: '已解除禁言' });
+    res.json({ status: 0, message: '已解除禁言' });
   } catch (err) {
     console.error('[admin/users/:id/unmute]', err);
     res.status(500).json({ status: -1, message: '解除禁言失败' });
@@ -377,7 +377,7 @@ router.delete('/users/:id', async (req, res) => {
       userAgent: req.headers['user-agent']?.slice(0, 255),
     }).catch(() => {});
 
-    res.json({ status: 1, message: '账号已注销' });
+    res.json({ status: 0, message: '账号已注销' });
   } catch (err) {
     console.error('[admin/users/:id/delete]', err);
     res.status(500).json({ status: -1, message: '删除账号失败' });
@@ -423,7 +423,7 @@ router.get('/reports', async (req, res) => {
     const total = countResult[0]?.total || 0;
 
     res.json({
-      status: 1,
+      status: 0,
       data: { list: rows, total, page, pageSize, hasMore: offset + rows.length < total },
     });
   } catch (err) {
@@ -448,7 +448,7 @@ router.get('/reports/:id', async (req, res) => {
     );
     if (!rows || rows.length === 0) return res.status(404).json({ status: -1, message: '举报不存在' });
 
-    res.json({ status: 1, data: rows[0] });
+    res.json({ status: 0, data: rows[0] });
   } catch (err) {
     console.error('[admin/reports/:id]', err);
     res.status(500).json({ status: -1, message: '获取举报详情失败' });
@@ -489,7 +489,7 @@ router.patch('/reports/:id/process', async (req, res) => {
       meta: { action, note },
     }).catch(() => {});
 
-    res.json({ status: 1, message: '处理完成' });
+    res.json({ status: 0, message: '处理完成' });
   } catch (err) {
     console.error('[admin/reports/:id/process]', err);
     res.status(500).json({ status: -1, message: '处理举报失败' });
@@ -521,7 +521,7 @@ router.get('/announcements', async (req, res) => {
     const total = countResult[0]?.total || 0;
 
     res.json({
-      status: 1,
+      status: 0,
       data: { list: rows, total, page, pageSize, hasMore: offset + rows.length < total },
     });
   } catch (err) {
@@ -563,7 +563,7 @@ router.post('/announcements', async (req, res) => {
       meta: { title },
     }).catch(() => {});
 
-    res.json({ status: 1, data: { id: postId }, message: '公告发布成功' });
+    res.json({ status: 0, data: { id: postId }, message: '公告发布成功' });
   } catch (err) {
     console.error('[admin/announcements]', err);
     res.status(500).json({ status: -1, message: '发布公告失败' });
@@ -593,7 +593,7 @@ router.patch('/announcements/:id', async (req, res) => {
       userAgent: req.headers['user-agent']?.slice(0, 255),
     }).catch(() => {});
 
-    res.json({ status: 1, message: '公告已更新' });
+    res.json({ status: 0, message: '公告已更新' });
   } catch (err) {
     console.error('[admin/announcements/:id]', err);
     res.status(500).json({ status: -1, message: '更新公告失败' });
@@ -621,7 +621,7 @@ router.delete('/announcements/:id', async (req, res) => {
       userAgent: req.headers['user-agent']?.slice(0, 255),
     }).catch(() => {});
 
-    res.json({ status: 1, message: '公告已删除' });
+    res.json({ status: 0, message: '公告已删除' });
   } catch (err) {
     console.error('[admin/announcements/:id]', err);
     res.status(500).json({ status: -1, message: '删除公告失败' });
@@ -669,7 +669,7 @@ router.get('/audit-logs', async (req, res) => {
     const total = countResult[0]?.total || 0;
 
     res.json({
-      status: 1,
+      status: 0,
       data: { list: rows, total, page, pageSize, hasMore: offset + rows.length < total },
     });
   } catch (err) {
@@ -690,7 +690,7 @@ router.get('/configs', async (req, res) => {
     for (const r of rows) {
       configs[r.config_key] = { value: r.config_value, description: r.description };
     }
-    res.json({ status: 1, data: configs });
+    res.json({ status: 0, data: configs });
   } catch (err) {
     console.error('[admin/configs]', err);
     res.status(500).json({ status: -1, message: '获取系统配置失败' });
@@ -725,7 +725,7 @@ router.patch('/configs/:key', async (req, res) => {
       meta: { key, value: String(value) },
     }).catch(() => {});
 
-    res.json({ status: 1, message: '配置已更新' });
+    res.json({ status: 0, message: '配置已更新' });
   } catch (err) {
     console.error('[admin/configs]', err);
     res.status(500).json({ status: -1, message: '更新配置失败' });
@@ -759,7 +759,7 @@ router.get('/sensitive-words', async (req, res) => {
     const total = countResult[0]?.total || 0;
 
     res.json({
-      status: 1,
+      status: 0,
       data: { list: rows, total, page, pageSize, hasMore: offset + rows.length < total },
     });
   } catch (err) {
@@ -793,7 +793,7 @@ router.post('/sensitive-words', async (req, res) => {
       meta: { word: trimmed, action: 'create' },
     }).catch(() => {});
 
-    res.json({ status: 1, message: '敏感词已添加' });
+    res.json({ status: 0, message: '敏感词已添加' });
   } catch (err) {
     console.error('[admin/sensitive-words]', err);
     res.status(500).json({ status: -1, message: '添加敏感词失败' });
@@ -823,7 +823,7 @@ router.post('/sensitive-words/batch', async (req, res) => {
       }
     }
 
-    res.json({ status: 1, message: `成功导入 ${added} 个敏感词`, data: { added } });
+    res.json({ status: 0, message: `成功导入 ${added} 个敏感词`, data: { added } });
   } catch (err) {
     console.error('[admin/sensitive-words/batch]', err);
     res.status(500).json({ status: -1, message: '批量导入失败' });
@@ -835,7 +835,7 @@ router.delete('/sensitive-words/:id', async (req, res) => {
   try {
     const wordId = parseInt(req.params.id, 10);
     await query('DELETE FROM sensitive_words WHERE id = ?', [wordId]);
-    res.json({ status: 1, message: '已删除' });
+    res.json({ status: 0, message: '已删除' });
   } catch (err) {
     console.error('[admin/sensitive-words/:id]', err);
     res.status(500).json({ status: -1, message: '删除失败' });
@@ -851,7 +851,7 @@ router.patch('/sensitive-words/:id/toggle', async (req, res) => {
 
     const newState = rows[0].enabled ? 0 : 1;
     await query('UPDATE sensitive_words SET enabled = ? WHERE id = ?', [newState, wordId]);
-    res.json({ status: 1, data: { enabled: !!newState }, message: newState ? '已启用' : '已停用' });
+    res.json({ status: 0, data: { enabled: !!newState }, message: newState ? '已启用' : '已停用' });
   } catch (err) {
     console.error('[admin/sensitive-words/:id/toggle]', err);
     res.status(500).json({ status: -1, message: '操作失败' });

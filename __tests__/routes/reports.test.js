@@ -62,7 +62,7 @@ describe('Report Submission Routes', () => {
         .send({ target_type: 'post', target_id: 42, reason: 'spam', detail: '广告内容' });
 
       expect(res.status).toBe(200);
-      expect(res.body.status).toBe(1);
+      expect(res.body.status).toBe(0);
       expect(res.body.data.id).toBe(1);
     });
 

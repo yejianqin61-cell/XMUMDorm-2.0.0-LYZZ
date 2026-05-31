@@ -91,7 +91,7 @@ router.post('/', authenticateToken, async (req, res) => {
       }
     } catch (_) { /* 自动规则失败不影响举报提交 */ }
 
-    res.json({ status: 1, data: { id: result.insertId }, message: '举报提交成功' });
+    res.json({ status: 0, data: { id: result.insertId }, message: '举报提交成功' });
   } catch (err) {
     console.error('[reports]', err);
     res.status(500).json({ status: -1, message: '提交举报失败' });
