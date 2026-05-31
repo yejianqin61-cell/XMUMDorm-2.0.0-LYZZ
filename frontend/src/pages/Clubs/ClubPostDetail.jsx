@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Eye, Heart, MessageCircle, Trash2 } from 'lucide-react';
+import ReportButton from '../../components/ReportButton';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { queryClient } from '../../query/queryClient';
@@ -176,6 +177,7 @@ function ClubPostDetail() {
                 <span>{isZh ? '删除' : 'Delete'}</span>
               </button>
             ) : null}
+            <ReportButton target_type="club_post" target_id={postId} className="text-slate-400 hover:text-red-500" />
           </div>
         </div>
       </div>

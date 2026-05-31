@@ -31,7 +31,8 @@ router.post('/', authenticateToken, async (req, res) => {
     const validTargets = [
       'post', 'comment', 'product_comment', 'club_activity', 'club_post',
       'marketplace', 'errand', 'handbook_article', 'handbook_comment',
-      'course_review', 'trending_post', 'campus_post'
+      'course_review', 'trending_post', 'campus_post',
+      'trending_comment', 'campus_comment', 'club_comment', 'course_review_comment',
     ];
     if (!validTargets.includes(target_type)) {
       return res.status(400).json({ status: -1, message: '无效的举报目标类型' });
@@ -113,6 +114,18 @@ async function findReportedUser(targetType, targetId) {
       break;
     case 'comment':
       sql = 'SELECT user_id FROM comments WHERE id = ?';
+      break;
+    case 'trending_comment':
+      sql = 'SELECT user_id FROM trending_post_comments WHERE id = ?';
+      break;
+    case 'campus_comment':
+      sql = 'SELECT user_id FROM campus_post_comments WHERE id = ?';
+      break;
+    case 'club_comment':
+      sql = 'SELECT user_id FROM club_comments WHERE id = ?';
+      break;
+    case 'course_review_comment':
+      sql = 'SELECT user_id FROM course_review_comments WHERE id = ?';
       break;
     case 'product_comment':
       sql = 'SELECT user_id FROM product_comments WHERE id = ?';

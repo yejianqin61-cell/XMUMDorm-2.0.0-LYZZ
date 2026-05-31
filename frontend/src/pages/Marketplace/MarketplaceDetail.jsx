@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Heart, MoreVertical } from 'lucide-react';
+import ReportButton from '../../components/ReportButton';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { QK } from '../../query/queryKeys';
@@ -195,7 +196,7 @@ function MarketplaceDetail() {
             >
               <Heart size={18} aria-hidden />
             </button>
-
+            <ReportButton target_type="marketplace" target_id={item?.id} className="mp-icon-btn" />
             {item?.viewer?.canEdit ? (
               <>
                 <button type="button" className="mp-btn" onClick={() => nav(`/about/second-hand/item/${id}/edit`)}>

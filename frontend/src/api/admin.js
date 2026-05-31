@@ -86,8 +86,8 @@ export function createAnnouncement({ title, content }) {
   return post('/api/admin/announcements', { title, content });
 }
 
-export function updateAnnouncement(id, { content }) {
-  return patch(`/api/admin/announcements/${id}`, { content });
+export function updateAnnouncement(id, { title, content }) {
+  return patch(`/api/admin/announcements/${id}`, { title, content });
 }
 
 export function deleteAnnouncement(id) {

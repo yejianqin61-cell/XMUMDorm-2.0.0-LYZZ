@@ -47,6 +47,7 @@ export default function PostDetailShell({
   metaSlot = null,
   tags = [],
   reportTargetType = null,
+  commentReportType = null,
 }) {
   const navigate = useNavigate();
   const { lang } = useLanguage();
@@ -292,6 +293,9 @@ export default function PostDetailShell({
                     >
                       {isEn ? 'Reply' : '回复'}
                     </button>
+                    {commentReportType && (
+                      <ReportButton target_type={commentReportType} target_id={c.id} className="post-detail-report-btn" iconOnly />
+                    )}
                     {onDeleteComment && (c.user_id === user?.id || isAdmin) && (
                       <button
                         type="button"
@@ -326,6 +330,9 @@ export default function PostDetailShell({
                               <UserLevelBadge level={r.author.level} badgeEmoji={r.author.badgeEmoji} size="sm" isZh={!isEn} />
                             ) : null}
                           </span>
+                          {commentReportType && (
+                            <ReportButton target_type={commentReportType} target_id={r.id} className="post-detail-report-btn" iconOnly />
+                          )}
                           {onDeleteComment && (r.user_id === user?.id || isAdmin) && (
                             <button
                               type="button"

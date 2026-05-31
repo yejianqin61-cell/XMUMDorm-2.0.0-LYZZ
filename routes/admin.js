@@ -9,6 +9,7 @@ const { query } = require('../database');
 const authenticateToken = require('../middleware/auth');
 const requireAdmin = require('../middleware/adminAuth');
 const { logAudit } = require('../services/auditLog');
+const sensitiveWordFilter = require('../middleware/sensitiveWordFilter');
 
 // 所有路由都需要登录 + 管理员权限
 router.use(authenticateToken);
@@ -517,7 +518,7 @@ router.get('/announcements', async (req, res) => {
     const [countResult, rows] = await Promise.all([
       query('SELECT COUNT(*) AS total FROM posts WHERE type = \'announcement\''),
       query(
-        `SELECT p.id, p.content AS title, p.created_at, u.username AS author
+        `SELECT p.id, p.title, p.content, p.created_at, u.username AS author
          FROM posts p LEFT JOIN users u ON p.user_id = u.id
          WHERE p.type = 'announcement' AND p.deleted_at IS NULL
          ORDER BY p.created_at DESC LIMIT ${pageSize} OFFSET ${offset}`
@@ -547,8 +548,8 @@ router.post('/announcements', async (req, res) => {
     }
 
     const result = await query(
-      `INSERT INTO posts (user_id, content, type) VALUES (?, ?, 'announcement')`,
-      [adminId, content]
+      `INSERT INTO posts (user_id, title, content, type) VALUES (?, ?, ?, 'announcement')`,
+      [adminId, title, content]
     );
     const postId = result.insertId;
 
@@ -569,7 +570,7 @@ router.post('/announcements', async (req, res) => {
       meta: { title },
     }).catch(() => {});
 
-    res.json({ status: 0, data: { id: postId }, message: '公告发布成功' });
+    res.json({ status: 0, data: { id: postId, title }, message: '公告发布成功' });
   } catch (err) {
     console.error('[admin/announcements]', err);
     res.status(500).json({ status: -1, message: '发布公告失败' });
@@ -581,13 +582,18 @@ router.patch('/announcements/:id', async (req, res) => {
   try {
     const postId = parseInt(req.params.id, 10);
     const adminId = req.user.id;
-    const { content } = req.body;
+    const { title, content } = req.body;
 
-    if (!postId || !content) {
+    if (!postId || (!title && !content)) {
       return res.status(400).json({ status: -1, message: '缺少必要参数' });
     }
 
-    await query('UPDATE posts SET content = ? WHERE id = ? AND type = \'announcement\'', [content, postId]);
+    const updates = [];
+    const params = [];
+    if (title !== undefined) { updates.push('title = ?'); params.push(title); }
+    if (content !== undefined) { updates.push('content = ?'); params.push(content); }
+    params.push(postId);
+    await query(`UPDATE posts SET ${updates.join(', ')} WHERE id = ? AND type = 'announcement'`, params);
 
     logAudit({
       userId: adminId,
@@ -799,6 +805,7 @@ router.post('/sensitive-words', async (req, res) => {
       meta: { word: trimmed, action: 'create' },
     }).catch(() => {});
 
+    sensitiveWordFilter.refreshCache().catch(() => {});
     res.json({ status: 0, message: '敏感词已添加' });
   } catch (err) {
     console.error('[admin/sensitive-words]', err);
@@ -829,6 +836,7 @@ router.post('/sensitive-words/batch', async (req, res) => {
       }
     }
 
+    sensitiveWordFilter.refreshCache().catch(() => {});
     res.json({ status: 0, message: `成功导入 ${added} 个敏感词`, data: { added } });
   } catch (err) {
     console.error('[admin/sensitive-words/batch]', err);
@@ -841,6 +849,7 @@ router.delete('/sensitive-words/:id', async (req, res) => {
   try {
     const wordId = parseInt(req.params.id, 10);
     await query('DELETE FROM sensitive_words WHERE id = ?', [wordId]);
+    sensitiveWordFilter.refreshCache().catch(() => {});
     res.json({ status: 0, message: '已删除' });
   } catch (err) {
     console.error('[admin/sensitive-words/:id]', err);
@@ -857,6 +866,7 @@ router.patch('/sensitive-words/:id/toggle', async (req, res) => {
 
     const newState = rows[0].enabled ? 0 : 1;
     await query('UPDATE sensitive_words SET enabled = ? WHERE id = ?', [newState, wordId]);
+    sensitiveWordFilter.refreshCache().catch(() => {});
     res.json({ status: 0, data: { enabled: !!newState }, message: newState ? '已启用' : '已停用' });
   } catch (err) {
     console.error('[admin/sensitive-words/:id/toggle]', err);
@@ -891,6 +901,28 @@ async function resolveContentUrl(targetType, targetId) {
         const commentRows = await query('SELECT post_id FROM comments WHERE id = ?', [id]);
         const postId = commentRows[0]?.post_id;
         return { url: postId ? `/post/${postId}` : null, label: postId ? `${labels.comment} → 帖子#${postId}` : labels.comment };
+      }
+      case 'trending_comment': {
+        const tr = await query('SELECT post_id FROM trending_post_comments WHERE id = ?', [id]);
+        const postId = tr[0]?.post_id;
+        return { url: postId ? `/about/trending/post/${postId}` : null, label: postId ? `热搜评论 → 帖子#${postId}` : '热搜评论' };
+      }
+      case 'campus_comment': {
+        const cr = await query('SELECT post_id FROM campus_post_comments WHERE id = ?', [id]);
+        const postId = cr[0]?.post_id;
+        return { url: postId ? `/about/campus/${postId}` : null, label: postId ? `校园此刻评论 → 帖子#${postId}` : '校园此刻评论' };
+      }
+      case 'club_comment': {
+        const cc = await query('SELECT target_type, target_id FROM club_comments WHERE id = ?', [id]);
+        const t = cc[0];
+        if (t?.target_type === 'activity') return { url: `/about/club/activity/${t.target_id}`, label: `社团评论 → 活动#${t.target_id}` };
+        if (t?.target_type === 'post') return { url: `/about/club/post/${t.target_id}`, label: `社团评论 → 帖子#${t.target_id}` };
+        return { url: null, label: '社团评论' };
+      }
+      case 'course_review_comment': {
+        const crr = await query('SELECT review_id FROM course_review_comments WHERE id = ?', [id]);
+        const rid = crr[0]?.review_id;
+        return { url: rid ? `/about/freshman-guide/course-review/${rid}` : null, label: rid ? `课程评论 → #${rid}` : '课程评论' };
       }
       case 'product_comment': {
         const pcRows = await query('SELECT product_id FROM product_comments WHERE id = ?', [id]);

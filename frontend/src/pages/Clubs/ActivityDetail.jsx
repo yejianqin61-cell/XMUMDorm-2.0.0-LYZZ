@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ArrowLeft, ExternalLink, Eye, Heart, MapPin, MessageCircle, Trash2 } from 'lucide-react';
+import ReportButton from '../../components/ReportButton';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { QK } from '../../query/queryKeys';
@@ -204,6 +205,7 @@ function ActivityDetail() {
               <span>{isZh ? '删除' : 'Delete'}</span>
             </button>
           ) : null}
+          <ReportButton target_type="club_activity" target_id={activityId} className="text-slate-400 hover:text-red-500" />
         </div>
         </div>
       </div>

@@ -9,6 +9,7 @@ const express = require('express');
 const router = express.Router();
 const { query } = require('../database');
 const { checkSanction } = require('../middleware/checkSanction');
+const sensitiveWordFilter = require('../middleware/sensitiveWordFilter');
 const authenticateToken = require('../middleware/auth');
 const {
   productImagesUpload,
@@ -893,7 +894,7 @@ router.delete('/categories/:categoryId', authenticateToken, async (req, res) => 
 // ============================================
 // 商品
 // ============================================
-router.post('/products', authenticateToken, (req, res, next) => {
+router.post('/products', authenticateToken, sensitiveWordFilter, (req, res, next) => {
   productImagesUpload(req, res, (err) => {
     if (err) {
       return res.status(400).json({
@@ -1375,7 +1376,7 @@ router.delete('/products/:productId', authenticateToken, async (req, res) => {
 // ============================================
 // 商品评论
 // ============================================
-router.post('/products/:productId/comments', authenticateToken, checkSanction, (req, res, next) => {
+router.post('/products/:productId/comments', authenticateToken, checkSanction, sensitiveWordFilter, (req, res, next) => {
   commentImagesUpload(req, res, (err) => {
     if (err) {
       return res.status(400).json({

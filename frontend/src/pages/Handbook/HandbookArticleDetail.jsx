@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import ReportButton from '../../components/ReportButton';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { Toast } from '../../context/ToastContext';
@@ -217,6 +218,7 @@ function HandbookArticleDetail() {
           </div>
 
           <div className="handbook-actions">
+            <ReportButton target_type="handbook_article" target_id={articleId} className="handbook-action-btn" />
             <button
               type="button"
               className={`handbook-action-btn ${a?.viewer?.liked ? 'is-on' : ''}`}

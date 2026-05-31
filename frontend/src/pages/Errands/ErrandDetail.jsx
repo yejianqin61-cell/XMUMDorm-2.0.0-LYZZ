@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Hand, MapPin, Phone, Trash2 } from 'lucide-react';
+import ReportButton from '../../components/ReportButton';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { QK } from '../../query/queryKeys';
@@ -78,6 +79,7 @@ function ErrandDetail() {
           >
             <Trash2 size={18} aria-hidden />
           </button>
+          <ReportButton target_type="errand" target_id={e.id} className="text-slate-400 hover:text-red-500" />
         ) : (
           <Link className="err-detail-edit" to="/about/errands">{isZh ? '列表' : 'List'}</Link>
         )}

@@ -18,6 +18,7 @@ const { query } = require('../database');
 const sanitizeHtml = require('sanitize-html');
 const authenticateToken = require('../middleware/auth');
 const { checkSanction } = require('../middleware/checkSanction');
+const sensitiveWordFilter = require('../middleware/sensitiveWordFilter');
 const jwt = require('jsonwebtoken');
 const { assetUrl } = require('../utils/assets');
 const { uploadBuffer, guessContentType, isObjectStorageConfigured } = require('../services/objectStorage');
@@ -720,7 +721,7 @@ router.post('/:id/members', authenticateToken, async (req, res, next) => {
 // POST /api/clubs/:id/activities
 // JSON body 或 multipart/form-data（字段 + 最多 4 张 images）
 // =========================
-router.post('/:id/activities', authenticateToken, checkSanction, (req, res, next) => {
+router.post('/:id/activities', authenticateToken, checkSanction, sensitiveWordFilter, (req, res, next) => {
   const ct = String(req.headers['content-type'] || '');
   if (ct.toLowerCase().includes('multipart/form-data')) {
     return activityImagesUpload(req, res, (err) => {
@@ -789,7 +790,7 @@ router.post('/:id/activities', authenticateToken, checkSanction, (req, res, next
 // Create club post (club admin or site admin)
 // POST /api/clubs/:id/posts — JSON 或 multipart（最多 4 张 images）
 // =========================
-router.post('/:id/posts', authenticateToken, checkSanction, (req, res, next) => {
+router.post('/:id/posts', authenticateToken, checkSanction, sensitiveWordFilter, (req, res, next) => {
   const ct = String(req.headers['content-type'] || '');
   if (ct.toLowerCase().includes('multipart/form-data')) {
     return activityImagesUpload(req, res, (err) => {
@@ -1319,7 +1320,7 @@ router.get('/activity/:id/comments', async (req, res, next) => {
   }
 });
 
-router.post('/activity/:id/comments', authenticateToken, checkSanction, async (req, res, next) => {
+router.post('/activity/:id/comments', authenticateToken, checkSanction, sensitiveWordFilter, async (req, res, next) => {
   const id = toInt(req.params.id, 0);
   return insertClubComment(req, res, next, 'activity', id);
 });
@@ -1431,7 +1432,7 @@ router.get('/post/:id/comments', async (req, res, next) => {
   }
 });
 
-router.post('/post/:id/comments', authenticateToken, checkSanction, async (req, res, next) => {
+router.post('/post/:id/comments', authenticateToken, checkSanction, sensitiveWordFilter, async (req, res, next) => {
   const id = toInt(req.params.id, 0);
   return insertClubComment(req, res, next, 'post', id);
 });

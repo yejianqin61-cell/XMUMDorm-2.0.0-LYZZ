@@ -154,6 +154,7 @@ export default function SquareCampusPostDetail() {
       title={post?.title || null}
       metaSlot={feedLabel ? ` · ${feedLabel}` : null}
       reportTargetType="campus_post"
+      commentReportType="campus_comment"
     />
   );
 }

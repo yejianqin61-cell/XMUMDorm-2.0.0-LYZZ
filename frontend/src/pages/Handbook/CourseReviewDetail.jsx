@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { MoreVertical, Star } from 'lucide-react';
+import ReportButton from '../../components/ReportButton';
 import { useLanguage } from '../../context/LanguageContext';
 import { createCourseReviewComment, deleteCourseReview, deleteCourseReviewComment, getCourseReviewDetail, listCourseReviewComments, rateCourseReview } from '../../api/handbook';
 import { useAuth } from '../../context/AuthContext';
@@ -76,6 +77,7 @@ function CourseReviewDetail() {
             <MoreVertical size={18} aria-hidden />
           </button>
         ) : null}
+        <ReportButton target_type="course_review" target_id={r?.id} className="handbook-action-btn" />
       </div>
 
       <div className="handbook-detail">

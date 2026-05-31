@@ -11,6 +11,7 @@ const router = express.Router();
 const { query } = require('../database');
 const authenticateToken = require('../middleware/auth');
 const { checkSanction } = require('../middleware/checkSanction');
+const sensitiveWordFilter = require('../middleware/sensitiveWordFilter');
 const { assetUrl } = require('../utils/assets');
 const { simpleCache } = require('../utils/simpleCache');
 const { uploadBuffer, guessContentType, isObjectStorageConfigured } = require('../services/objectStorage');
@@ -399,7 +400,7 @@ router.get('/items/:id', async (req, res) => {
 // ============================================
 // 发布（登录，multipart/form-data）
 // ============================================
-router.post('/items', authenticateToken, checkSanction, (req, res, next) => {
+router.post('/items', authenticateToken, checkSanction, sensitiveWordFilter, (req, res, next) => {
   itemImagesUpload(req, res, (err) => {
     if (err) return res.status(400).json({ status: -1, message: err.message || '图片上传失败' });
     next();

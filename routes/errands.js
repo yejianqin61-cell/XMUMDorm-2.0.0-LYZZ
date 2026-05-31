@@ -11,6 +11,7 @@ const router = express.Router();
 const { query } = require('../database');
 const authenticateToken = require('../middleware/auth');
 const { checkSanction } = require('../middleware/checkSanction');
+const sensitiveWordFilter = require('../middleware/sensitiveWordFilter');
 const sanitizeHtml = require('sanitize-html');
 
 const TYPES = new Set(['delivery', 'purchase', 'urgent']);
@@ -195,7 +196,7 @@ router.get('/:id', async (req, res, next) => {
 // Publish
 // POST /api/errands
 // =========================
-router.post('/', authenticateToken, checkSanction, async (req, res, next) => {
+router.post('/', authenticateToken, checkSanction, sensitiveWordFilter, async (req, res, next) => {
   try {
     const userId = req.user && req.user.id;
     const title = cleanText(req.body?.title, 120);

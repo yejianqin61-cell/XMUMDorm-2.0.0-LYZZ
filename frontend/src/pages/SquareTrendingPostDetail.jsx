@@ -135,6 +135,7 @@ export default function SquareTrendingPostDetail() {
       emptyActionLabel="返回"
       onEmptyAction={() => navigate(-1)}
       reportTargetType="trending_post"
+      commentReportType="trending_comment"
     />
   );
 }

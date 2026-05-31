@@ -589,6 +589,7 @@ function PostDetail() {
                     <button type="button" className="post-detail-reply-btn" onClick={() => { startReply(c); focusComposer(); }}>
                       {isEn ? 'Reply' : '回复'}
                     </button>
+                    <ReportButton target_type="comment" target_id={c.id} className="post-detail-report-btn" iconOnly />
                     {(c.user_id === user?.id || isAdmin) && (
                       <button
                         type="button"
@@ -623,6 +624,7 @@ function PostDetail() {
                               <UserLevelBadge level={r.author.level} badgeEmoji={r.author.badgeEmoji} size="sm" isZh={!isEn} />
                             ) : null}
                           </span>
+                          <ReportButton target_type="comment" target_id={r.id} className="post-detail-report-btn" iconOnly />
                           {(r.user_id === user?.id || isAdmin) && (
                             <button
                               type="button"

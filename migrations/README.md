@@ -111,5 +111,33 @@ mysql -u root -p jack_campus < migrations/005_shops_logo_opening_hours.sql
 | 003 | 排行榜等 |
 | **004** | **商品价格 price**（未执行则菜品价格无法保存） |
 | 005 | 店铺 logo、营业时间 |
+| **056** | **管理员后台**（`reports`、`user_sanctions`、`sensitive_words`、`system_configs`） |
+| **057** | **用户状态**（`users.status`、`banned_until`、`muted_until`、`last_login_at` 等） |
 
 若你是从零建库，建议按 001 → 002 → 003 → 004 → 005 顺序执行；若库已存在，只需补执行 004（和可选的 005）。
+
+### 执行 056 + 057：管理员后台（必做，否则后台全部「加载失败」）
+
+管理员后台 API 依赖上述表与字段。未执行时 Dashboard / 用户列表 / 举报中心等会返回 500，前端显示 Failed to load。
+
+在项目根目录（`.env` 指向**目标库**，本地或 Railway 均可）：
+
+```bash
+node scripts/apply-sql-file.js migrations/056_admin_system.sql
+node scripts/apply-sql-file.js migrations/057_user_status.sql
+```
+
+或使用专用脚本：
+
+```bash
+node scripts/run-migration-056-admin.js
+node scripts/run-migration-057-user-status.js
+```
+
+管理员账号（若尚未创建）：
+
+```bash
+node scripts/createAdmin.js
+```
+
+默认账号 `admin` / 密码见脚本注释；登录后从「我的 → 管理员后台」进入。
