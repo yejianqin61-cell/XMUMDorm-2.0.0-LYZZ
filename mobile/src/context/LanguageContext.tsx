@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 
 type Lang = 'zh' | 'en';
 
-const LanguageContext = createContext<{ lang: Lang; toggleLang: () => void } | null>(null);
+const LanguageContext = createContext<{ lang: Lang; setLang: (l: Lang) => void; toggleLang: () => void } | null>(null);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLang] = useState<Lang>('zh');
@@ -15,7 +15,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <LanguageContext.Provider value={{ lang, toggleLang }}>
+    <LanguageContext.Provider value={{ lang, setLang, toggleLang }}>
       {children}
     </LanguageContext.Provider>
   );
