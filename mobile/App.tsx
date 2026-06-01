@@ -3,6 +3,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
+import { LanguageProvider } from './src/context/LanguageContext';
 import TreeholeScreen from './src/screens/TreeholeScreen';
 import EatScreen from './src/screens/EatScreen';
 import SquareScreen from './src/screens/SquareScreen';
@@ -42,7 +43,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <StatusBar style="dark" />
-      <AuthProvider><MainApp /></AuthProvider>
+      <LanguageProvider><AuthProvider><MainApp /></AuthProvider></LanguageProvider>
     </SafeAreaProvider>
   );
 }
