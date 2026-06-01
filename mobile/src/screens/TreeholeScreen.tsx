@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, FlatList, RefreshControl, ActivityIndicator, StyleSheet, Alert, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/AuthContext';
 import { apiGet } from '../api/client';
 import PostCard from '../components/PostCard';
@@ -49,13 +48,6 @@ export default function TreeholeScreen() {
 
   return (
     <View style={styles.root}>
-      {/* 渐变背景 — 复刻 Web .treehole-page--light radial-gradient */}
-      <LinearGradient
-        colors={['rgba(34,211,238,0.24)', 'rgba(255,255,255,0)', 'rgba(16,185,129,0.20)', '#fbfcfe']}
-        locations={[0, 0.1, 0.8, 1]}
-        style={StyleSheet.absoluteFill}
-      />
-
       <SafeAreaView style={styles.safe} edges={['top']}>
         {/* 顶栏 */}
         <View style={styles.topbar}>

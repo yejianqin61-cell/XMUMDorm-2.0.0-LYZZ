@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Image, Pressable, ScrollView, Modal, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/AuthContext';
 import { apiGet, apiPost } from '../api/client';
 
@@ -64,7 +63,7 @@ export default function PostDetailModal({ post, visible, onClose, onUpdated }: P
             {heroUrl && (
               <View style={s.atmoWrap}>
                 <Image source={{ uri: heroUrl }} style={s.atmoImg} />
-                <LinearGradient colors={['rgba(255,255,255,0.2)', '#f8fafc']} style={s.atmoFade} />
+                <View style={s.atmoFade} />
               </View>
             )}
 
