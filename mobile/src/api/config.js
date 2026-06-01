@@ -5,7 +5,7 @@
  *
  * 修改此地址为你的电脑 IP（在终端执行 ipconfig 查看）
  */
-export const API_BASE_URL = 'http://192.168.1.100:4040';
+export const API_BASE_URL = 'http://10.72.10.97:4040';
 
 // 如果你是生产环境，取消下行注释并注释上行
 // export const API_BASE_URL = 'https://api.dorm.app';
