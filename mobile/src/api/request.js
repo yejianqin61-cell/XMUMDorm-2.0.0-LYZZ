@@ -69,8 +69,21 @@ export async function request(path, options = {}) {
   const res = await fetch(url, fetchOptions);
   let data;
   const contentType = res.headers.get('content-type');
-  if (contentType && contentType.includes('application/json')) {
-    data = await res.json();
+  const isJson = contentType && contentType.includes('application/json');
+  if (isJson) {
+    // 防御：即使 content-type 声称是 JSON，body 也可能不是
+    const rawText = await res.text();
+    try {
+      data = JSON.parse(rawText);
+    } catch (_) {
+      const isHtml = /^\s*</.test(rawText) || rawText.includes('<!doctype');
+      const message = isHtml
+        ? `请求异常 ${res.status}：服务器返回了网页而非 JSON。请检查 API 地址是否正确。\nURL: ${url}`
+        : (rawText.slice(0, 200) || `请求失败 ${res.status}`);
+      const err = new Error(message);
+      err.status = res.status;
+      throw err;
+    }
   } else {
     const text = await res.text();
     const isHtml = /^\s*</.test(text) || text.includes('<!doctype') || text.includes('<html');
