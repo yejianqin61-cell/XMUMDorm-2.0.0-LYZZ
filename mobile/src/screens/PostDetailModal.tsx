@@ -4,8 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { apiGet, apiPost } from '../api/client';
 
-const API = 'http://10.72.10.97:4040';
-function prefixImg(url: string) { if (!url) return null; return url.startsWith('http') ? url : `${API}${url}`; }
+import { getUploadUrl } from '../api/config';
+function prefixImg(url: string) { if (!url) return null; return getUploadUrl(url); }
 
 interface Props { post: any; visible: boolean; onClose: () => void; onUpdated: () => void; }
 

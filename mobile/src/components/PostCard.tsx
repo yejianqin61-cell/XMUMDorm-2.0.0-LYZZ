@@ -3,11 +3,11 @@ import { View, Text, Image, Pressable, StyleSheet, Alert } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { apiPost } from '../api/client';
 
-const API = 'http://10.72.10.97:4040';
+import { getUploadUrl } from '../api/config';
 
 function prefixImg(url: string) {
   if (!url) return null;
-  return url.startsWith('http') ? url : `${API}${url}`;
+  return getUploadUrl(url);
 }
 
 function formatTime(createdAt: string) {
