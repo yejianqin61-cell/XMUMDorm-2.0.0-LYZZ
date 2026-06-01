@@ -19,6 +19,7 @@ interface AuthCtx {
   login: (account: string, password: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => Promise<void>;
   skipLogin: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthCtx | null>(null);
@@ -84,6 +85,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setToken(null); setUser(null); setIsGuest(false); setCachedToken(null);
   }, []);
 
+  const refreshUser = useCallback(async () => {
+    const t = await AsyncStorage.getItem(STORAGE_TOKEN);
+    if (!t) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/users/me`, { headers: { Authorization: `Bearer ${t}` } });
+      const data = await res.json();
+      if (data.status === 0) { setUser(data.data); await AsyncStorage.setItem(STORAGE_USER, JSON.stringify(data.data)); }
+    } catch {}
+  }, []);
+
   const skipLogin = useCallback(async () => {
     await AsyncStorage.setItem(STORAGE_SKIP, '1');
     setIsGuest(true);
@@ -98,7 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isGuest,
       isAdmin: user?.role === 'admin',
       displayName: user?.nickname || user?.username || '游客',
-      login, logout, skipLogin,
+      login, logout, skipLogin, refreshUser,
     }}>
       {children}
     </AuthContext.Provider>

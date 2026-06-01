@@ -14,14 +14,16 @@ const TABS = [
   { key: 'myzone', label: '我的', icon: '👤', Screen: MyZoneScreen },
 ];
 
-export default function TabNavigator() {
+interface Props { onEditProfile: () => void; }
+
+export default function TabNavigator({ onEditProfile }: Props) {
   const [tab, setTab] = useState('treehole');
   const ActiveScreen = TABS.find((t) => t.key === tab)?.Screen || TreeholeScreen;
 
   return (
     <View style={styles.root}>
       <View style={styles.content}>
-        <ActiveScreen />
+        {tab === 'myzone' ? <MyZoneScreen onEditProfile={onEditProfile} /> : <ActiveScreen />}
       </View>
       <View style={styles.tabBar}>
         {TABS.map((t) => (
