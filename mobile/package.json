@@ -23,14 +23,25 @@
     "react-native-svg": "15.15.4"
   },
   "devDependencies": {
+    "@react-native/jest-preset": "^0.85.3",
+    "@testing-library/jest-native": "^5.4.3",
+    "@testing-library/react-native": "^13.3.3",
+    "@types/jest": "^30.0.0",
     "@types/react": "~19.2.2",
+    "babel-jest": "^30.4.1",
+    "babel-preset-expo": "^56.0.14",
+    "jest": "^30.4.2",
+    "react-test-renderer": "^19.2.6",
+    "ts-jest": "^29.4.11",
     "typescript": "~6.0.3"
   },
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "test": "jest",
+    "test:coverage": "jest --coverage"
   },
   "private": true
 }
