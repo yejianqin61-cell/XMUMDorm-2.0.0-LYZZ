@@ -29,8 +29,6 @@
     },
     "plugins": [
       "expo-image-picker",
-      "expo-linear-gradient",
-      "expo-blur",
       [
         "expo-notifications",
         {
