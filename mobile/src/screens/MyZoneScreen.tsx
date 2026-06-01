@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { apiGet } from '../api/client';
+import { API_BASE_URL } from '../api/config';
 import { getLevelByExp, getExpProgress, getBadgeForLevel } from '../context/ExpFeedbackContext';
 
 
@@ -34,7 +35,7 @@ export default function MyZoneScreen({ onEditProfile, onAboutLevel, onDiary, onT
   }, [isLoggedIn, user?.id]);
 
   const avatarUrl = user?.avatar
-    ? (user.avatar.startsWith('http') ? user.avatar : `${API}${user.avatar}`)
+    ? (user.avatar.startsWith('http') ? user.avatar : `${API_BASE_URL}${user.avatar}`)
     : null;
   const level = user?.level || 1;
   const exp = user?.exp || 0;

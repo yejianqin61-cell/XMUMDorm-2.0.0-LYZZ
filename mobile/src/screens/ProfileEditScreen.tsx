@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, Image, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { API_BASE_URL } from '../api/config';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../context/AuthContext';
@@ -15,7 +16,7 @@ export default function ProfileEditScreen({ onBack }: Props) {
   const [uploading, setUploading] = useState(false);
 
   const currentAvatar = avatarUri || (user?.avatar
-    ? (user.avatar.startsWith('http') ? user.avatar : `${API}${user.avatar}`)
+    ? (user.avatar.startsWith('http') ? user.avatar : `${API_BASE_URL}${user.avatar}`)
     : null);
 
   const pickAvatar = async () => {
@@ -32,7 +33,7 @@ export default function ProfileEditScreen({ onBack }: Props) {
     try {
       // 更新昵称
       if (nickname.trim() && nickname.trim() !== (user?.nickname || '')) {
-        await fetch(`${API}/api/users/me`, {
+        await fetch(`${API_BASE_URL}/api/users/me`, {
           method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({ nickname: nickname.trim() }),
         });
@@ -42,7 +43,7 @@ export default function ProfileEditScreen({ onBack }: Props) {
         setUploading(true);
         const form = new FormData();
         form.append('avatar', { uri: avatarUri, type: 'image/jpeg', name: 'avatar.jpg' } as any);
-        await fetch(`${API}/api/users/me/avatar`, {
+        await fetch(`${API_BASE_URL}/api/users/me/avatar`, {
           method: 'PATCH', headers: { Authorization: `Bearer ${token}` }, body: form,
         });
         setUploading(false);

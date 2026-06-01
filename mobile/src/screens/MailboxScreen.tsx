@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { apiGet } from '../api/client';
+import { API_BASE_URL } from '../api/config';
 
 
 const MODULE_TABS = [
@@ -67,7 +68,7 @@ export default function MailboxScreen() {
 
   const markRead = async (id: number) => {
     try {
-      await fetch(`${API}/api/notifications/${id}/read`, {
+      await fetch(`${API_BASE_URL}/api/notifications/${id}/read`, {
         method: 'PATCH', headers: { Authorization: `Bearer ${token}` },
       });
       setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, is_read: true } : n));
@@ -83,7 +84,7 @@ export default function MailboxScreen() {
         { text: isZh ? '清空' : 'Clear', style: 'destructive', onPress: async () => {
           setClearing(true);
           const modParam = tab !== 'all' ? `?module=${tab}` : '?scope=social';
-          await fetch(`${API}/api/notifications/clear${modParam}`, {
+          await fetch(`${API_BASE_URL}/api/notifications/clear${modParam}`, {
             method: 'DELETE', headers: { Authorization: `Bearer ${token}` },
           });
           setClearing(false);

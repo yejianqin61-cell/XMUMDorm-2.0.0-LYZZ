@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { API_BASE_URL } from '../api/config';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 
@@ -18,7 +19,7 @@ export default function FoodReviewPublishScreen({ product, onBack }: { product: 
     form.append('rating', String(rating));
     form.append('content', content.trim());
     try {
-      const res = await fetch(`${API}/api/canteen/products/${product.id}/comments`, {
+      const res = await fetch(`${API_BASE_URL}/api/canteen/products/${product.id}/comments`, {
         method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form,
       });
       const data = await res.json();

@@ -3,6 +3,7 @@ import { View, Text, Pressable, Image, ScrollView, StyleSheet, ActivityIndicator
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { apiGet } from '../api/client';
+import { API_BASE_URL } from '../api/config';
 
 
 interface Props { product: any; onBack: () => void; onReview?: (p: any) => void; }
@@ -25,9 +26,9 @@ export default function FoodDetailScreen({ product, onBack, onReview }: Props) {
   }, [product.id]);
 
   const imgUrl = detail?.images?.[0]?.url
-    ? (detail.images[0].url.startsWith('http') ? detail.images[0].url : `${API}${detail.images[0].url}`)
+    ? (detail.images[0].url.startsWith('http') ? detail.images[0].url : `${API_BASE_URL}${detail.images[0].url}`)
     : product.images?.[0]?.url
-      ? (product.images[0].url.startsWith('http') ? product.images[0].url : `${API}${product.images[0].url}`)
+      ? (product.images[0].url.startsWith('http') ? product.images[0].url : `${API_BASE_URL}${product.images[0].url}`)
       : null;
 
   return (

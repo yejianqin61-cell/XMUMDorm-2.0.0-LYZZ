@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, Image, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { apiGet } from '../api/client';
+import { API_BASE_URL } from '../api/config';
 
 
 interface Props { region: any; onBack: () => void; onProduct: (p: any) => void; }
@@ -67,7 +68,7 @@ export default function FoodListScreen({ region, onBack, onProduct }: Props) {
           columnWrapperStyle={{ gap: 10 }}
           renderItem={({ item: p }) => {
             const imgUrl = p.images?.[0]?.url
-              ? (p.images[0].url.startsWith('http') ? p.images[0].url : `${API}${p.images[0].url}`)
+              ? (p.images[0].url.startsWith('http') ? p.images[0].url : `${API_BASE_URL}${p.images[0].url}`)
               : null;
             return (
               <Pressable style={s.foodCard} onPress={() => onProduct(p)}>

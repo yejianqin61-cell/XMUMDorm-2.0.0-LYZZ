@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, FlatList, Image, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { apiGet } from '../api/client';
-
+import { prefixImg } from '../utils';
 
 export default function CanteenSearchScreen({ onBack, onSelect }: { onBack: () => void; onSelect: (p: any) => void }) {
   const [keyword, setKeyword] = useState('');
@@ -30,7 +30,7 @@ export default function CanteenSearchScreen({ onBack, onSelect }: { onBack: () =
           ListEmptyComponent={searched ? <Text style={s.empty}>未找到结果</Text> : null}
           renderItem={({item}) => (
             <Pressable style={s.item} onPress={() => onSelect(item)}>
-              <Image source={{ uri: item.images?.[0]?.url?.startsWith('http') ? item.images[0].url : `${API}${item.images?.[0]?.url || ''}` }} style={s.thumb} defaultSource={undefined} />
+              <Image source={{ uri: prefixImg(item.images?.[0]?.url) || undefined }} style={s.thumb} />
               <View style={{flex:1}}><Text style={s.name}>{item.name}</Text><Text style={s.price}>RM {item.price || '--'}</Text></View>
             </Pressable>
           )}
