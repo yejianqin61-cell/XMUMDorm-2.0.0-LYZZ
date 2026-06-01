@@ -3,8 +3,8 @@ import { View, Text, Pressable, Image, FlatList, StyleSheet, ActivityIndicator }
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { apiGet } from '../api/client';
+import { prefixImg } from '../utils';
 
-const API = 'http://10.72.10.97:4040';
 
 export default function HandbookMeScreen({ onBack, onArticle, onReview }: { onBack: () => void; onArticle: (id: number) => void; onReview: (id: number) => void }) {
   const [tab, setTab] = useState<'saved' | 'reviews'>('saved');
@@ -26,7 +26,6 @@ export default function HandbookMeScreen({ onBack, onArticle, onReview }: { onBa
     });
   }, []);
 
-  const prefixImg = (url: string) => url?.startsWith('http') ? url : `${API}${url}`;
 
   if (!isLoggedIn) {
     return <SafeAreaView style={s.bg} edges={['top']}><View style={s.header}><Pressable onPress={onBack}><Text style={s.back}>← 返回</Text></Pressable></View><Text style={s.empty}>请先登录</Text></SafeAreaView>;

@@ -6,8 +6,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { apiGet } from '../api/client';
+import { fmtTime, prefixImg } from '../utils';
 
-const API = 'http://10.72.10.97:4040';
 
 interface Props {
   onDetail: (id: number) => void;
@@ -60,7 +60,6 @@ export default function MarketplaceHomeScreen({ onDetail, onPublish, onMyWants }
     setFilterVisible(false);
   };
 
-  const prefixImg = (url: string) => url?.startsWith('http') ? url : `${API}${url}`;
 
   function fmtTime(ts: string) {
     if (!ts) return '';

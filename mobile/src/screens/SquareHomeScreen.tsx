@@ -6,8 +6,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { apiGet } from '../api/client';
+import { fmtTime, prefixImg } from '../utils';
 
-const API = 'http://10.72.10.97:4040';
 const { width: SW } = Dimensions.get('window');
 
 interface Props {
@@ -58,7 +58,6 @@ export default function SquareHomeScreen({ onTrendingDetail, onCampusPostDetail,
     if (c.status === 0) setCampusFeed(c.data?.list || []);
   }, []);
 
-  const prefixImg = (url: string) => url?.startsWith('http') ? url : `${API}${url}`;
 
   const RANK_COLORS = ['#ef4444', '#f97316', '#eab308', '#94a3b8', '#94a3b8'];
 

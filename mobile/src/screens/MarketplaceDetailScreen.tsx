@@ -6,8 +6,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { apiGet, apiPost, apiDelete } from '../api/client';
+import { prefixImg } from '../utils';
 
-const API = 'http://10.72.10.97:4040';
 const { width: SW } = Dimensions.get('window');
 
 interface Props {
@@ -37,7 +37,6 @@ export default function MarketplaceDetailScreen({ itemId, onBack, onEdit, onChat
     });
   }, [itemId]);
 
-  const prefixImg = (url: string) => url?.startsWith('http') ? url : `${API}${url}`;
 
   const handleWant = async () => {
     if (!isLoggedIn) { Alert.alert('请先登录'); return; }

@@ -4,7 +4,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../context/AuthContext';
 
-const API = 'http://10.72.10.97:4040';
 
 interface Props { onBack: () => void; }
 

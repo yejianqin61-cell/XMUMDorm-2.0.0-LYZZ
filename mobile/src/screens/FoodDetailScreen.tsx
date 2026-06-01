@@ -4,7 +4,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { apiGet } from '../api/client';
 
-const API = 'http://10.72.10.97:4040';
 
 interface Props { product: any; onBack: () => void; onReview?: (p: any) => void; }
 export default function FoodDetailScreen({ product, onBack, onReview }: Props) {

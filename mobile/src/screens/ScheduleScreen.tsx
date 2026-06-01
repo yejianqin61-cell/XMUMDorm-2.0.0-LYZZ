@@ -13,6 +13,7 @@ import {
   cancelAllReminders,
   hasScheduledReminders,
 } from '../services/scheduleReminder';
+import { fmtClock } from '../utils';
 
 const CACHE_KEY = 'dorm_schedule_cache_v1_w1';
 const DAY_LABELS = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
@@ -22,7 +23,6 @@ function getTodayDow(): number {
   return d === 0 ? 7 : d; // JS Sun=0 → our Sun=7
 }
 
-function fmtTime(t: string) { return t ? t.substring(0, 5) : '--:--'; }
 
 function addFreeSlots(courses: any[]): any[] {
   if (!courses || courses.length === 0) return courses || [];
@@ -163,7 +163,7 @@ export default function ScheduleScreen({ onBack }: { onBack: () => void }) {
                       return (
                         <View key={`free_${idx}`} style={s.freeSlot}>
                           <Text style={s.freeIcon}>{idx % 2 === 0 ? '☕' : '📖'}</Text>
-                          <Text style={s.freeText}>空档 {fmtTime(item.start_time)}-{fmtTime(item.end_time)}</Text>
+                          <Text style={s.freeText}>空档 {fmtClock(item.start_time)}-{fmtClock(item.end_time)}</Text>
                         </View>
                       );
                     }
@@ -171,8 +171,8 @@ export default function ScheduleScreen({ onBack }: { onBack: () => void }) {
                       <View key={item.course_code + '_' + idx} style={s.courseItem}>
                         <View style={s.courseAccent} />
                         <View style={s.courseTime}>
-                          <Text style={s.timeStart}>{fmtTime(item.start_time)}</Text>
-                          <Text style={s.timeEnd}>{fmtTime(item.end_time)}</Text>
+                          <Text style={s.timeStart}>{fmtClock(item.start_time)}</Text>
+                          <Text style={s.timeEnd}>{fmtClock(item.end_time)}</Text>
                         </View>
                         <View style={s.courseInfo}>
                           <Text style={s.courseName}>{item.course_name}</Text>

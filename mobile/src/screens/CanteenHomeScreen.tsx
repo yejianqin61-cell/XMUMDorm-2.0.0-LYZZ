@@ -1,28 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Pressable, Image, FlatList, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
+import React from 'react';
+import { View, Text, Pressable, Image, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useQuery } from '@tanstack/react-query';
 import { apiGet } from '../api/client';
-
-const API = 'http://10.72.10.97:4040';
+import { prefixImg } from '../utils';
 
 export default function CanteenHomeScreen({ onNavigate }: { onNavigate: (screen: string, params?: any) => void }) {
-  const [banners, setBanners] = useState<any[]>([]);
-  const [regions, setRegions] = useState<any[]>([]);
-  const [rankings, setRankings] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    Promise.all([
-      apiGet('/api/canteen/banners/all'),
-      apiGet('/api/canteen/regions'),
-      apiGet('/api/canteen/ranking?type=product&period=month'),
-    ]).then(([b, r, rk]) => {
-      if (b?.status === 0) setBanners(b.data || []);
-      if (r?.status === 0) setRegions(r.data || []);
-      if (rk?.status === 0) setRankings(rk.data?.list || rk.data || []);
-      setLoading(false);
-    });
-  }, []);
+  const { data: banners = [], isLoading: bLoad } = useQuery({
+    queryKey: ['canteen', 'banners'],
+    queryFn: () => apiGet('/api/canteen/banners').then((d: any) => d.status === 0 ? d.data || [] : []),
+    staleTime: 60000,
+  });
+  const { data: regions = [], isLoading: rLoad } = useQuery({
+    queryKey: ['canteen', 'regions'],
+    queryFn: () => apiGet('/api/canteen/regions').then((d: any) => d.status === 0 ? d.data || [] : []),
+    staleTime: 300000,
+  });
+  const { data: rankings = [], isLoading: rkLoad } = useQuery({
+    queryKey: ['canteen', 'rankings', 'hot-products'],
+    queryFn: () => apiGet('/api/canteen/rankings/hot-products').then((d: any) => d.status === 0 ? (d.data || []) : []),
+    staleTime: 30000,
+  });
+  const loading = bLoad || rLoad || rkLoad;
 
   if (loading) return <SafeAreaView style={s.bg}><ActivityIndicator style={{marginTop:60}} size="large" /></SafeAreaView>;
 
@@ -36,7 +35,7 @@ export default function CanteenHomeScreen({ onNavigate }: { onNavigate: (screen:
           <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} style={s.bannerRow}>
             {banners.map((b, i) => (
               <View key={i} style={s.banner}>
-                {b.image_url ? <Image source={{ uri: b.image_url.startsWith('http') ? b.image_url : `${API}${b.image_url}` }} style={s.bannerImg} /> : null}
+                {b.image_url ? <Image source={{ uri: prefixImg(b.image_url)! }} style={s.bannerImg} /> : null}
                 <View style={s.bannerOverlay}><Text style={s.bannerTitle}>{b.title}</Text></View>
               </View>
             ))}

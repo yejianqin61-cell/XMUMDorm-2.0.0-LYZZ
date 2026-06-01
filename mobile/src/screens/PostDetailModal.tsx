@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { apiGet, apiPost } from '../api/client';
 
 import { getUploadUrl } from '../api/config';
+import { prefixImg } from '../utils';
 function prefixImg(url: string) { if (!url) return null; return getUploadUrl(url); }
 
 interface Props { post: any; visible: boolean; onClose: () => void; onUpdated: () => void; }

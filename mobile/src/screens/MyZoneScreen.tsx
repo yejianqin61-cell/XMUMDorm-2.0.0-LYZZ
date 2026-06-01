@@ -6,7 +6,6 @@ import { useLanguage } from '../context/LanguageContext';
 import { apiGet } from '../api/client';
 import { getLevelByExp, getExpProgress, getBadgeForLevel } from '../context/ExpFeedbackContext';
 
-const API = 'http://10.72.10.97:4040';
 
 interface Props { onEditProfile: () => void; onAboutLevel?: () => void; onDiary?: () => void; onTodo?: () => void; onSchedule?: () => void; onAdmin?: () => void; onAboutProfile?: () => void; onAboutThanks?: () => void; onAboutInfo?: () => void; }
 

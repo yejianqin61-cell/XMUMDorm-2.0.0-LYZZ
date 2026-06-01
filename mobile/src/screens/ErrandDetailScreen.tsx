@@ -6,6 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { apiGet, apiPost, apiDelete } from '../api/client';
+import { fmtTime } from '../utils';
 
 interface Props { errandId: number; onBack: () => void; }
 

@@ -3,7 +3,6 @@ import { View, Text, TextInput, Pressable, StyleSheet, Alert, ActivityIndicator 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 
-const API = 'http://10.72.10.97:4040';
 
 export default function FoodReviewPublishScreen({ product, onBack }: { product: any; onBack: () => void }) {
   const { token } = useAuth();

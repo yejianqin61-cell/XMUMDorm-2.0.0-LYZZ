@@ -5,7 +5,6 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { apiGet } from '../api/client';
 
-const API = 'http://10.72.10.97:4040';
 
 const MODULE_TABS = [
   { key: 'all', label: '全部', labelEn: 'All' },

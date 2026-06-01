@@ -24,6 +24,21 @@ type ViewState =
 
 export default function SquareScreen() {
   const [view, setView] = useState<ViewState>({ screen: 'home' });
+  const [history, setHistory] = useState<ViewState[]>([]);
+
+  const navigate = (v: ViewState) => {
+    setHistory((prev) => [...prev, view]);
+    setView(v);
+  };
+  const goBack = () => {
+    if (history.length > 0) {
+      const prev = history[history.length - 1];
+      setHistory(history.slice(0, -1));
+      setView(prev);
+    } else {
+      setView({ screen: 'home' });
+    }
+  };
 
   switch (view.screen) {
     case 'trendingDetail':
@@ -31,9 +46,9 @@ export default function SquareScreen() {
         <TrendingDetailScreen
           topicId={view.topicId}
           topicTitle={view.topicTitle}
-          onBack={() => setView({ screen: 'home' })}
-          onNewPost={(topicId, topicTitle) => setView({ screen: 'newTrendingPost', topicId, topicTitle })}
-          onPostDetail={(postId) => setView({ screen: 'trendingPostDetail', postId })}
+          onBack={goBack}
+          onNewPost={(topicId, topicTitle) => navigate({ screen: 'newTrendingPost', topicId, topicTitle })}
+          onPostDetail={(postId) => navigate({ screen: 'trendingPostDetail', postId })}
         />
       );
     case 'newTrendingPost':
@@ -41,30 +56,30 @@ export default function SquareScreen() {
         <NewTrendingPostScreen
           topicId={view.topicId}
           topicTitle={view.topicTitle}
-          onBack={() => setView({ screen: 'trendingDetail', topicId: view.topicId, topicTitle: view.topicTitle })}
-          onDone={() => setView({ screen: 'trendingDetail', topicId: view.topicId, topicTitle: view.topicTitle })}
+          onBack={goBack}
+          onDone={goBack}
         />
       );
     case 'trendingPostDetail':
       return (
         <TrendingPostDetailScreen
           postId={view.postId}
-          onBack={() => setView({ screen: 'home' })}
+          onBack={goBack}
         />
       );
     case 'campusPostDetail':
       return (
         <CampusPostDetailScreen
           postId={view.postId}
-          onBack={() => setView({ screen: 'home' })}
+          onBack={goBack}
         />
       );
     case 'newCampusPost':
       return (
         <NewCampusPostScreen
           initialTab={view.tab}
-          onBack={() => setView({ screen: 'home' })}
-          onDone={() => setView({ screen: 'home' })}
+          onBack={goBack}
+          onDone={goBack}
         />
       );
     case 'clubs':
@@ -78,13 +93,13 @@ export default function SquareScreen() {
     default:
       return (
         <SquareHomeScreen
-          onTrendingDetail={(id, title) => setView({ screen: 'trendingDetail', topicId: id, topicTitle: title })}
-          onCampusPostDetail={(id) => setView({ screen: 'campusPostDetail', postId: id })}
-          onNewCampusPost={(tab) => setView({ screen: 'newCampusPost', tab })}
-          onClubs={() => setView({ screen: 'clubs' })}
-          onMarketplace={() => setView({ screen: 'marketplace' })}
-          onErrands={() => setView({ screen: 'errands' })}
-          onHandbook={() => setView({ screen: 'handbook' })}
+          onTrendingDetail={(id, title) => navigate({ screen: 'trendingDetail', topicId: id, topicTitle: title })}
+          onCampusPostDetail={(id) => navigate({ screen: 'campusPostDetail', postId: id })}
+          onNewCampusPost={(tab) => navigate({ screen: 'newCampusPost', tab })}
+          onClubs={() => navigate({ screen: 'clubs' })}
+          onMarketplace={() => navigate({ screen: 'marketplace' })}
+          onErrands={() => navigate({ screen: 'errands' })}
+          onHandbook={() => navigate({ screen: 'handbook' })}
         />
       );
   }

@@ -3,7 +3,6 @@ import { View, Text, TextInput, Pressable, FlatList, Image, StyleSheet, Activity
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { apiGet } from '../api/client';
 
-const API = 'http://10.72.10.97:4040';
 
 export default function CanteenSearchScreen({ onBack, onSelect }: { onBack: () => void; onSelect: (p: any) => void }) {
   const [keyword, setKeyword] = useState('');

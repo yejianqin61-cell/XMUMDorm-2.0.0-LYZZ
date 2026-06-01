@@ -6,8 +6,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { apiGet, apiPost } from '../api/client';
+import { fmtTime, prefixImg } from '../utils';
 
-const API = 'http://10.72.10.97:4040';
 
 interface Props {
   clubId: number;
@@ -50,7 +50,6 @@ export default function ClubProfileScreen({ clubId, onBack, onMembers, onActivit
     } catch { setFollowing(prev); setFollowersCount((c: number) => c + (prev ? 1 : -1)); }
   };
 
-  const prefixImg = (url: string) => url?.startsWith('http') ? url : `${API}${url}`;
 
   const isAdmin = user && club && (club.members || []).some((m: any) => m.user_id === user.id && m.role === 'admin');
   const canManage = isAdmin || user?.role === 'admin';

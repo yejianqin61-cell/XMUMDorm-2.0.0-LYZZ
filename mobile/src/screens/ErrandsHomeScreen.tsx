@@ -5,6 +5,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { apiGet } from '../api/client';
+import { fmtTime } from '../utils';
 
 const TYPE_TABS = [
   { key: 'all', label: '全部', icon: '📋' },

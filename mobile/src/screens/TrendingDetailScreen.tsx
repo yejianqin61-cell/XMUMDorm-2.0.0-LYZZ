@@ -6,8 +6,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { apiGet } from '../api/client';
+import { fmtTime, prefixImg } from '../utils';
 
-const API = 'http://10.72.10.97:4040';
 const PAGE_SIZE = 10;
 
 interface Props {
@@ -54,7 +54,6 @@ export default function TrendingDetailScreen({ topicId, topicTitle, onBack, onNe
     setLoadingMore(false);
   };
 
-  const prefixImg = (url: string) => url?.startsWith('http') ? url : `${API}${url}`;
 
   return (
     <SafeAreaView style={s.bg} edges={['top']}>

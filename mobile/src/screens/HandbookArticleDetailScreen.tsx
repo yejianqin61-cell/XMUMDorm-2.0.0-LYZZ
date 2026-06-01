@@ -3,8 +3,8 @@ import { View, Text, Pressable, Image, ScrollView, TextInput, StyleSheet, Activi
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { apiGet, apiPost, apiDelete } from '../api/client';
+import { fmtTime, prefixImg } from '../utils';
 
-const API = 'http://10.72.10.97:4040';
 
 export default function HandbookArticleDetailScreen({ articleId, onBack }: { articleId: number; onBack: () => void }) {
   const [article, setArticle] = useState<any>(null);
@@ -51,7 +51,6 @@ export default function HandbookArticleDetailScreen({ articleId, onBack }: { art
     else Alert.alert('评论失败', r.message);
   };
 
-  const prefixImg = (url: string) => url?.startsWith('http') ? url : `${API}${url}`;
   if (loading) return <SafeAreaView style={s.bg} edges={['top']}><View style={s.header}><Pressable onPress={onBack}><Text style={s.back}>← 返回</Text></Pressable></View><ActivityIndicator style={{ marginTop: 60 }} size="large" /></SafeAreaView>;
 
   return (

@@ -10,7 +10,7 @@ export default function RankingsScreen({ onBack }: { onBack: () => void }) {
 
   useEffect(() => {
     setLoading(true);
-    apiGet(`/api/canteen/ranking?type=product&period=${period}`).then((d) => {
+    apiGet(`/api/canteen/rankings/hot-products`).then((d) => {
       if (d.status === 0) setRankings(d.data?.list || d.data || []);
       setLoading(false);
     });

@@ -5,8 +5,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { apiGet } from '../api/client';
+import { prefixImg } from '../utils';
 
-const API = 'http://10.72.10.97:4040';
 
 interface Props { onBack: () => void; onItem: (id: number) => void; }
 
@@ -21,7 +21,6 @@ export default function MarketplaceMyWantsScreen({ onBack, onItem }: Props) {
     });
   }, []);
 
-  const prefixImg = (url: string) => url?.startsWith('http') ? url : `${API}${url}`;
 
   return (
     <SafeAreaView style={s.bg} edges={['top']}>

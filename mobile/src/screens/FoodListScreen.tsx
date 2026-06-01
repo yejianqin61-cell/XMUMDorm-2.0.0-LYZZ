@@ -3,7 +3,6 @@ import { View, Text, Pressable, Image, FlatList, StyleSheet, ActivityIndicator }
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { apiGet } from '../api/client';
 
-const API = 'http://10.72.10.97:4040';
 
 interface Props { region: any; onBack: () => void; onProduct: (p: any) => void; }
 export default function FoodListScreen({ region, onBack, onProduct }: Props) {
@@ -13,7 +12,7 @@ export default function FoodListScreen({ region, onBack, onProduct }: Props) {
   const [products, setProducts] = useState<any[]>([]);
   const [shopLoading, setShopLoading] = useState(false);
   useEffect(() => {
-    apiGet(`/api/canteen/shops?region_id=${region.id}`).then((d) => {
+    apiGet(`/api/canteen/regions/${region.id}/shops`).then((d) => {
       if (d.status === 0) setShops(d.data?.list || d.data || []);
       setLoading(false);
     });
@@ -22,7 +21,7 @@ export default function FoodListScreen({ region, onBack, onProduct }: Props) {
   const openShop = async (shop: any) => {
     setSelectedShop(shop);
     setShopLoading(true);
-    const d = await apiGet(`/api/canteen/products?shop_id=${shop.id}`);
+    const d = await apiGet(`/api/canteen/shops/${shop.id}/products`);
     if (d.status === 0) setProducts(d.data?.list || d.data || []);
     setShopLoading(false);
   };

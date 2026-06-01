@@ -3,8 +3,8 @@ import { View, Text, Pressable, Image, FlatList, StyleSheet, ActivityIndicator }
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { apiGet } from '../api/client';
+import { fmtTime, prefixImg } from '../utils';
 
-const API = 'http://10.72.10.97:4040';
 
 interface Props {
   onArticle: (id: number) => void;
@@ -41,7 +41,6 @@ export default function HandbookHomeScreen({ onArticle, onNewArticle, onMe, onCo
 
   useEffect(() => { setPage(1); fetchArticles(tabSlug, 1); }, [tabSlug]);
 
-  const prefixImg = (url: string) => url?.startsWith('http') ? url : `${API}${url}`;
 
   function fmtTime(ts: string) {
     if (!ts) return '';

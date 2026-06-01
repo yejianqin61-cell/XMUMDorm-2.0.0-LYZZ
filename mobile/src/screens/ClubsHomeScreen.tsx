@@ -5,8 +5,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { apiGet } from '../api/client';
+import { fmtTime, prefixImg } from '../utils';
 
-const API = 'http://10.72.10.97:4040';
 
 const CATEGORIES = [
   { key: 'all', label: '全部', icon: '🏛️' },
@@ -49,7 +49,6 @@ export default function ClubsHomeScreen({ onClub, onList, onMyClubs, onActivity,
     });
   }, [catFilter, lifeFilter]);
 
-  const prefixImg = (url: string) => url?.startsWith('http') ? url : `${API}${url}`;
 
   function fmtTime(ts: string) {
     if (!ts) return '';

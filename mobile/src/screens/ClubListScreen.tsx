@@ -5,8 +5,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { apiGet } from '../api/client';
+import { prefixImg } from '../utils';
 
-const API = 'http://10.72.10.97:4040';
 
 const CATEGORIES = [
   { key: 'all', label: '全部' },
@@ -48,7 +48,6 @@ export default function ClubListScreen({ onBack, onClub }: Props) {
     setClubs(filtered);
   }, [cat, search, allClubs]);
 
-  const prefixImg = (url: string) => url?.startsWith('http') ? url : `${API}${url}`;
 
   return (
     <SafeAreaView style={s.bg} edges={['top']}>
