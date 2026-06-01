@@ -6,7 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { apiGet, apiPost, apiDelete } from '../api/client';
-import { fmtTime } from '../utils';
+import { fmtDeadline } from '../utils';
 
 interface Props { errandId: number; onBack: () => void; }
 
@@ -14,11 +14,6 @@ const TYPE_LABELS: Record<string, string> = { delivery: '代取', purchase: '代
 const STATUS_LABELS: Record<string, string> = { open: '进行中', taken: '已接单', done: '已完成' };
 const STATUS_COLORS: Record<string, string> = { open: '#16a34a', taken: '#2563eb', done: '#94a3b8' };
 
-function fmtTime(ts: string) {
-  if (!ts) return '';
-  const d = new Date(ts);
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-}
 
 export default function ErrandDetailScreen({ errandId, onBack }: Props) {
   const [errand, setErrand] = useState<any>(null);
@@ -107,7 +102,7 @@ export default function ErrandDetailScreen({ errandId, onBack }: Props) {
           <Text style={s.reward}>RM {Number(errand.reward || 0).toFixed(2)}</Text>
 
           {errand.deadline && (
-            <View style={s.infoRow}><Text style={s.infoLabel}>⏰ 截止时间</Text><Text style={s.infoValue}>{fmtTime(errand.deadline)}</Text></View>
+            <View style={s.infoRow}><Text style={s.infoLabel}>⏰ 截止时间</Text><Text style={s.infoValue}>{fmtDeadline(errand.deadline)}</Text></View>
           )}
           {errand.location && (
             <View style={s.infoRow}><Text style={s.infoLabel}>📍 地点</Text><Text style={s.infoValue}>{errand.location}</Text></View>

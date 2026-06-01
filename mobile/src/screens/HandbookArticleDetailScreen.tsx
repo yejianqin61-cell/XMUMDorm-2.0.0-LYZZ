@@ -100,32 +100,3 @@ export default function HandbookArticleDetailScreen({ articleId, onBack }: { art
   );
 }
 
-function fmtTime(ts: string) { if (!ts) return ''; const d = new Date(ts); const n = new Date(); const diff = Math.floor((n.getTime() - d.getTime()) / 1000); if (diff < 60) return '刚刚'; if (diff < 3600) return `${Math.floor(diff / 60)}分钟前`; return d.toLocaleDateString(); }
-
-const s = StyleSheet.create({
-  bg: { flex: 1, backgroundColor: '#f8fafc' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 12, backgroundColor: '#fff', borderBottomWidth: 0.5, borderBottomColor: '#e2e8f0' },
-  back: { fontSize: 15, color: '#2563eb', fontWeight: '600' },
-  body: { padding: 16, paddingBottom: 120 },
-  cover: { width: '100%', height: 180, borderRadius: 14, marginBottom: 14, backgroundColor: '#f1f5f9' },
-  title: { fontSize: 20, fontWeight: '800', color: '#0f172a', marginBottom: 8 },
-  metaRow: { flexDirection: 'row', gap: 14, marginBottom: 12 },
-  meta: { fontSize: 12, color: '#94a3b8' },
-  summary: { fontSize: 14, color: '#64748b', lineHeight: 22, marginBottom: 14, padding: 12, backgroundColor: '#f8fafc', borderRadius: 10 },
-  content: { fontSize: 15, color: '#334155', lineHeight: 24, marginBottom: 16 },
-  source: { fontSize: 12, color: '#94a3b8', marginBottom: 16 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#0f172a', marginBottom: 12, marginTop: 8 },
-  commentCard: { backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 8 },
-  commentHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
-  commentAuthor: { fontSize: 13, fontWeight: '700', color: '#0f172a' },
-  commentTime: { fontSize: 11, color: '#94a3b8' },
-  commentContent: { fontSize: 14, color: '#475569', lineHeight: 20 },
-  replyHint: { fontSize: 12, color: '#2563eb', marginTop: 4 },
-  replyItem: { marginTop: 8, marginLeft: 12, paddingLeft: 10, borderLeftWidth: 2, borderLeftColor: '#e2e8f0' },
-  composer: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#fff', borderTopWidth: 0.5, borderTopColor: '#e2e8f0', paddingHorizontal: 12, paddingVertical: 8, paddingBottom: 20 },
-  replyingBar: { flexDirection: 'row', justifyContent: 'space-between', paddingBottom: 6 },
-  replyingText: { fontSize: 12, color: '#2563eb', flex: 1 },
-  composerRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  composerInput: { flex: 1, borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, fontSize: 14, color: '#0f172a', backgroundColor: '#f8fafc' },
-  sendBtn: { fontSize: 14, color: '#2563eb', fontWeight: '700' },
-});

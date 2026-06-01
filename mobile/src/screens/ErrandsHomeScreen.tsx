@@ -5,7 +5,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { apiGet } from '../api/client';
-import { fmtTime } from '../utils';
+import { fmtTime, fmtDeadline } from '../utils';
 
 const TYPE_TABS = [
   { key: 'all', label: '全部', icon: '📋' },
@@ -24,23 +24,6 @@ const TYPE_LABELS: Record<string, string> = { delivery: '代取', purchase: '代
 const STATUS_LABELS: Record<string, string> = { open: '进行中', taken: '已接单', done: '已完成' };
 const STATUS_COLORS: Record<string, string> = { open: '#16a34a', taken: '#2563eb', done: '#94a3b8' };
 
-function fmtTime(ts: string) {
-  if (!ts) return '';
-  const d = new Date(ts);
-  const now = new Date();
-  const diff = Math.floor((now.getTime() - d.getTime()) / 1000);
-  if (diff < 60) return '刚刚';
-  if (diff < 3600) return `${Math.floor(diff / 60)}分钟前`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}小时前`;
-  if (diff < 604800) return `${Math.floor(diff / 86400)}天前`;
-  return d.toLocaleDateString();
-}
-
-function fmtDeadline(ts: string) {
-  if (!ts) return '';
-  const d = new Date(ts);
-  return `${d.getMonth() + 1}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-}
 
 interface Props { onDetail: (id: number) => void; onPublish: () => void; }
 

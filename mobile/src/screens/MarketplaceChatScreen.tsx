@@ -6,7 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { apiGet, apiPost } from '../api/client';
-import { fmtTime } from '../utils';
+import { fmtClock } from '../utils';
 
 interface Props { threadId?: number; itemId?: number; onBack: () => void; }
 
@@ -138,7 +138,7 @@ export default function MarketplaceChatScreen({ threadId: initialThreadId, itemI
               <View style={[s.msgBubble, isMine(m) ? s.msgMine : s.msgTheirs]}>
                 {!isMine(m) && <Text style={s.msgSender}>{m.sender?.name || '匿名'}</Text>}
                 <Text style={[s.msgContent, isMine(m) && { color: '#fff' }]}>{m.content}</Text>
-                <Text style={[s.msgTime, isMine(m) && { color: 'rgba(255,255,255,0.6)' }]}>{fmtTime(m.created_at)}</Text>
+                <Text style={[s.msgTime, isMine(m) && { color: 'rgba(255,255,255,0.6)' }]}>{fmtClock(m.created_at)}</Text>
               </View>
             )}
             ListEmptyComponent={<Text style={s.empty}>发送第一条消息开始对话</Text>}
@@ -156,11 +156,6 @@ export default function MarketplaceChatScreen({ threadId: initialThreadId, itemI
   );
 }
 
-function fmtTime(ts: string) {
-  if (!ts) return '';
-  const d = new Date(ts);
-  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-}
 
 const s = StyleSheet.create({
   bg: { flex: 1, backgroundColor: '#f8fafc' },

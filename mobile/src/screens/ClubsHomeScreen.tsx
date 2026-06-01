@@ -50,16 +50,6 @@ export default function ClubsHomeScreen({ onClub, onList, onMyClubs, onActivity,
   }, [catFilter, lifeFilter]);
 
 
-  function fmtTime(ts: string) {
-    if (!ts) return '';
-    const d = new Date(ts);
-    const now = new Date();
-    const diff = Math.floor((now.getTime() - d.getTime()) / 1000);
-    if (diff < 60) return '刚刚';
-    if (diff < 3600) return `${Math.floor(diff / 60)}分钟前`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}小时前`;
-    return d.toLocaleDateString();
-  }
 
   return (
     <SafeAreaView style={s.bg} edges={['top']}>
