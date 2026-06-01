@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, Image, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '../context/AuthContext';
 import { apiGet } from '../api/client';
 
 const API = 'http://10.72.10.97:4040';
 
-export default function FoodDetailScreen({ product, onBack }: { product: any; onBack: () => void }) {
+interface Props { product: any; onBack: () => void; onReview?: (p: any) => void; }
+export default function FoodDetailScreen({ product, onBack, onReview }: Props) {
   const [detail, setDetail] = useState<any>(null);
   const [comments, setComments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [favorited, setFavorited] = useState(false);
+  const { token } = useAuth();
 
   useEffect(() => {
     Promise.all([
@@ -41,6 +45,18 @@ export default function FoodDetailScreen({ product, onBack }: { product: any; on
           <Text style={s.name}>{detail?.name || product.name}</Text>
           {detail?.price ? <Text style={s.price}>RM {detail.price}</Text> : null}
           {detail?.description ? <Text style={s.desc}>{detail.description}</Text> : null}
+
+          {/* 操作按钮 */}
+          <View style={s.actionRow}>
+            <Pressable onPress={() => setFavorited(!favorited)} style={[s.actionBtn, favorited && s.actionBtnActive]}>
+              <Text style={[s.actionText, favorited && s.actionTextActive]}>{favorited ? '♥ 已收藏' : '♡ 收藏'}</Text>
+            </Pressable>
+            {onReview && (
+              <Pressable onPress={() => onReview(product)} style={s.reviewBtn}>
+                <Text style={s.reviewText}>✏️ 写点评</Text>
+              </Pressable>
+            )}
+          </View>
 
           {/* 评论 */}
           <Text style={s.sectionTitle}>点评 ({comments.length})</Text>
@@ -83,5 +99,12 @@ const s = StyleSheet.create({
   rating: { fontSize: 12 },
   commentContent: { fontSize: 14, color: '#475569', lineHeight: 20 },
   replyItem: { marginTop: 8, marginLeft: 12, paddingLeft: 10, borderLeftWidth: 2, borderLeftColor: '#e2e8f0' },
+  actionRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
+  actionBtn: { flex: 1, paddingVertical: 10, borderRadius: 12, backgroundColor: '#f1f5f9', alignItems: 'center' },
+  actionBtnActive: { backgroundColor: '#fef2f2' },
+  actionText: { fontSize: 14, color: '#64748b', fontWeight: '600' },
+  actionTextActive: { color: '#ef4444' },
+  reviewBtn: { flex: 1, paddingVertical: 10, borderRadius: 12, backgroundColor: '#0f172a', alignItems: 'center' },
+  reviewText: { fontSize: 14, color: '#fff', fontWeight: '700' },
   empty: { textAlign: 'center', color: '#94a3b8', fontSize: 14, marginTop: 20 },
 });

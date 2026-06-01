@@ -2,18 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, Image, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { apiGet } from '../api/client';
-import FoodDetailScreen from './FoodDetailScreen';
 
 const API = 'http://10.72.10.97:4040';
 
-export default function FoodListScreen({ region, onBack }: { region: any; onBack: () => void }) {
+interface Props { region: any; onBack: () => void; onProduct: (p: any) => void; }
+export default function FoodListScreen({ region, onBack, onProduct }: Props) {
   const [shops, setShops] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedShop, setSelectedShop] = useState<any>(null);
   const [products, setProducts] = useState<any[]>([]);
   const [shopLoading, setShopLoading] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
-
   useEffect(() => {
     apiGet(`/api/canteen/shops?region_id=${region.id}`).then((d) => {
       if (d.status === 0) setShops(d.data?.list || d.data || []);
@@ -28,8 +26,6 @@ export default function FoodListScreen({ region, onBack }: { region: any; onBack
     if (d.status === 0) setProducts(d.data?.list || d.data || []);
     setShopLoading(false);
   };
-
-  if (selectedProduct) return <FoodDetailScreen product={selectedProduct} onBack={() => setSelectedProduct(null)} />;
 
   // 店铺列表视图
   if (!selectedShop) {
@@ -75,7 +71,7 @@ export default function FoodListScreen({ region, onBack }: { region: any; onBack
               ? (p.images[0].url.startsWith('http') ? p.images[0].url : `${API}${p.images[0].url}`)
               : null;
             return (
-              <Pressable style={s.foodCard} onPress={() => setSelectedProduct(p)}>
+              <Pressable style={s.foodCard} onPress={() => onProduct(p)}>
                 {imgUrl ? <Image source={{ uri: imgUrl }} style={s.foodImg} /> : <View style={s.foodImgPlace}><Text style={{fontSize:24}}>🍜</Text></View>}
                 <Text style={s.foodName} numberOfLines={1}>{p.name}</Text>
                 <Text style={s.foodPrice}>RM {p.price || '--'}</Text>
