@@ -50,7 +50,7 @@ export default function PostDetailModal({ post, visible, onClose, onUpdated }: P
   const heroUrl = imageUrls[0] || null;
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
+    <Modal visible={visible} animationType="slide">
       <SafeAreaView style={s.safe} edges={['top']}>
         <View style={s.topbar}>
           <Pressable onPress={onClose}><Text style={s.backText}>← 返回</Text></Pressable>
@@ -63,7 +63,7 @@ export default function PostDetailModal({ post, visible, onClose, onUpdated }: P
             {/* 头图氛围 — 复刻 Web .post-detail-atmo */}
             {heroUrl && (
               <View style={s.atmoWrap}>
-                <Image source={{ uri: heroUrl }} style={s.atmoImg} blurRadius={20} />
+                <Image source={{ uri: heroUrl }} style={s.atmoImg} />
                 <LinearGradient colors={['rgba(255,255,255,0.2)', '#f8fafc']} style={s.atmoFade} />
               </View>
             )}
