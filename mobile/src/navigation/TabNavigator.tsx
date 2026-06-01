@@ -14,16 +14,16 @@ const TABS = [
   { key: 'myzone', label: '我的', icon: '👤', Screen: MyZoneScreen },
 ];
 
-interface Props { onEditProfile: () => void; }
+interface Props { onEditProfile: () => void; onAboutLevel?: () => void; onDiary?: () => void; onTodo?: () => void; onSchedule?: () => void; onAdmin?: () => void; onAboutProfile?: () => void; onAboutThanks?: () => void; onAboutInfo?: () => void; }
 
-export default function TabNavigator({ onEditProfile }: Props) {
+export default function TabNavigator({ onEditProfile, onAboutLevel, onDiary, onTodo, onSchedule, onAdmin, onAboutProfile, onAboutThanks, onAboutInfo }: Props) {
   const [tab, setTab] = useState('treehole');
   const ActiveScreen = TABS.find((t) => t.key === tab)?.Screen || TreeholeScreen;
 
   return (
     <View style={styles.root}>
       <View style={styles.content}>
-        {tab === 'myzone' ? <MyZoneScreen onEditProfile={onEditProfile} /> : <ActiveScreen />}
+        {tab === 'myzone' ? <MyZoneScreen onEditProfile={onEditProfile} onAboutLevel={onAboutLevel} onDiary={onDiary} onTodo={onTodo} onSchedule={onSchedule} onAdmin={onAdmin} onAboutProfile={onAboutProfile} onAboutThanks={onAboutThanks} onAboutInfo={onAboutInfo} /> : <ActiveScreen />}
       </View>
       <View style={styles.tabBar}>
         {TABS.map((t) => (

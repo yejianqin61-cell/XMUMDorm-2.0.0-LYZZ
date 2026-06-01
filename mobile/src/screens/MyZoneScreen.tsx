@@ -4,13 +4,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { apiGet } from '../api/client';
+import { getLevelByExp, getExpProgress, getBadgeForLevel } from '../context/ExpFeedbackContext';
 
 const API = 'http://10.72.10.97:4040';
 
-interface Props { onEditProfile: () => void; }
+interface Props { onEditProfile: () => void; onAboutLevel?: () => void; onDiary?: () => void; onTodo?: () => void; onSchedule?: () => void; onAdmin?: () => void; onAboutProfile?: () => void; onAboutThanks?: () => void; onAboutInfo?: () => void; }
 
-export default function MyZoneScreen({ onEditProfile }: Props) {
-  const { user, isLoggedIn, isAdmin, isMerchant, displayName, logout, token } = useAuth();
+export default function MyZoneScreen({ onEditProfile, onAboutLevel, onDiary, onTodo, onSchedule, onAdmin, onAboutProfile, onAboutThanks, onAboutInfo }: Props) {
+  const { user, isLoggedIn, isAdmin, isMerchant, displayName, logout } = useAuth();
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
 
@@ -38,7 +39,8 @@ export default function MyZoneScreen({ onEditProfile }: Props) {
     : null;
   const level = user?.level || 1;
   const exp = user?.exp || 0;
-  const badge = user?.badge || '';
+  const levelProgress = getExpProgress(exp);
+  const badgeInfo = getBadgeForLevel(level);
 
   return (
     <SafeAreaView style={s.bg} edges={['top']}>
@@ -56,15 +58,15 @@ export default function MyZoneScreen({ onEditProfile }: Props) {
             <View style={s.headerInfo}>
               <View style={s.nameRow}>
                 <Text style={s.displayName}>{displayName}</Text>
-                {badge ? <Text style={s.badge}>{badge}</Text> : null}
-                <View style={s.levelBadge}><Text style={s.levelText}>Lv{level}</Text></View>
+                <Text style={s.badgeEmoji}>{badgeInfo.emoji}</Text>
+                <View style={s.levelBadge}><Text style={s.levelText}>Lv.{level}</Text></View>
               </View>
-              <Text style={s.bio}>{isZh ? '欢迎回来，祝你今天也顺利。' : 'Welcome back. Have a great day.'}</Text>
+              <Text style={s.bio}>{badgeInfo.label} · {isZh ? '欢迎回来' : 'Welcome back'}</Text>
               {/* 经验进度条 */}
               <View style={s.expBar}>
-                <View style={[s.expFill, { width: `${Math.min(100, (exp % 100) * 1.2)}%` }]} />
+                <View style={[s.expFill, { width: `${levelProgress.progress * 100}%` }]} />
               </View>
-              <Text style={s.expText}>{exp} EXP</Text>
+              <Text style={s.expText}>{levelProgress.exp - levelProgress.currentMin}/{levelProgress.nextMin} EXP</Text>
             </View>
           </View>
 
@@ -92,9 +94,9 @@ export default function MyZoneScreen({ onEditProfile }: Props) {
           <Text style={s.sectionTitle}>{isZh ? '工具' : 'Utilities'}</Text>
           <View style={s.grid2}>
             <ToolTile label={isZh ? '食堂' : 'Canteen'} emoji="🍽️" />
-            <ToolTile label={isZh ? '课程表' : 'Schedule'} emoji="📅" />
-            <ToolTile label={isZh ? '多年日记本' : 'Diary'} emoji="📖" />
-            <ToolTile label={isZh ? '待办事项' : 'To-do'} emoji="⭐" />
+            <ToolTile label={isZh ? '课程表' : 'Schedule'} emoji="📅" onPress={onSchedule} />
+            <ToolTile label={isZh ? '多年日记本' : 'Diary'} emoji="📖" onPress={onDiary} />
+            <ToolTile label={isZh ? '待办事项' : 'To-do'} emoji="⭐" onPress={onTodo} />
             {isMerchant && <ToolTile label={isZh ? '店铺管理' : 'Store'} emoji="🏪" />}
           </View>
         </View>
@@ -102,17 +104,18 @@ export default function MyZoneScreen({ onEditProfile }: Props) {
         {/* ─── 更多 ─── */}
         <View style={s.section}>
           <Text style={s.sectionTitle}>{isZh ? '更多' : 'More'}</Text>
-          <MoreRow label={isZh ? '关于我们' : 'About us'} emoji="ℹ️" />
-          <MoreRow label={isZh ? '特别鸣谢' : 'Thanks'} emoji="✨" />
-          <MoreRow label={isZh ? '免责声明' : 'Disclaimer'} emoji="⚠️" />
-          <MoreRow label={isZh ? '联系我们' : 'Contact'} emoji="📧" />
+          <MoreRow label={isZh ? '关于我们' : 'About us'} emoji="ℹ️" onPress={onAboutProfile} />
+          {onAboutLevel && <MoreRow label={isZh ? '等级体系' : 'Level System'} emoji="🎖️" onPress={onAboutLevel} />}
+          <MoreRow label={isZh ? '特别鸣谢' : 'Thanks'} emoji="✨" onPress={onAboutThanks} />
+          <MoreRow label={isZh ? '免责声明' : 'Disclaimer'} emoji="⚠️" onPress={onAboutInfo} />
+          <MoreRow label={isZh ? '联系我们' : 'Contact'} emoji="📧" onPress={onAboutInfo} />
         </View>
 
         {/* ─── 管理员入口 ─── */}
         {isAdmin && (
           <View style={s.section}>
             <Text style={s.sectionTitle}>{isZh ? '管理' : 'Admin'}</Text>
-            <MoreRow label={isZh ? '管理员后台' : 'Admin Panel'} emoji="⚙️" />
+            <MoreRow label={isZh ? '管理员后台' : 'Admin Panel'} emoji="⚙️" onPress={onAdmin} />
           </View>
         )}
 
@@ -130,17 +133,17 @@ export default function MyZoneScreen({ onEditProfile }: Props) {
   );
 }
 
-function ToolTile({ label, emoji }: { label: string; emoji: string }) {
+function ToolTile({ label, emoji, onPress }: { label: string; emoji: string; onPress?: () => void }) {
   return (
-    <Pressable style={ts.tile}>
+    <Pressable style={ts.tile} onPress={onPress}>
       <Text style={ts.emoji}>{emoji}</Text>
       <Text style={ts.label}>{label}</Text>
     </Pressable>
   );
 }
-function MoreRow({ label, emoji }: { label: string; emoji: string }) {
+function MoreRow({ label, emoji, onPress }: { label: string; emoji: string; onPress?: () => void }) {
   return (
-    <Pressable style={ts.more}>
+    <Pressable style={ts.more} onPress={onPress}>
       <Text style={ts.moreEmoji}>{emoji}</Text>
       <Text style={ts.moreLabel}>{label}</Text>
       <Text style={ts.moreArrow}>›</Text>
