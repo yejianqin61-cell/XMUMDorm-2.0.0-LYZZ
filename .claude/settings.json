@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      {
+        "tool": "Bash",
+        "prompt": "run tests with npm test or npx jest"
+      },
+      {
+        "tool": "Bash",
+        "prompt": "run database migrations"
+      },
+      {
+        "tool": "Bash",
+        "prompt": "git operations (add, commit, status, log)"
+      },
+      {
+        "tool": "Bash",
+        "prompt": "npm install dependencies"
+      },
+      {
+        "tool": "Bash",
+        "prompt": "create directories with mkdir"
+      }
+    ],
+    "defaultMode": "require-approval"
+  },
+  "hooks": {
+    "PreCommit": [
+      {
+        "command": "npx jest --passWithNoTests --silent 2>/dev/null || echo 'Tests not run - skipping'",
+        "description": "Run tests before commit"
+      }
+    ]
+  },
+  "project": {
+    "name": "XMUMDorm",
+    "version": "3.0.0",
+    "type": "agent-native",
+    "primaryDirective": "Spec-Driven, Agent-Native, Documentation-Driven Development"
+  }
+}

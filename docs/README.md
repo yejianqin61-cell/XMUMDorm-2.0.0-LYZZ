@@ -1,10 +1,31 @@
 # XMUMDorm 文档中心
 
-本目录按照软件工程生命周期分层组织，共 10 层。
+本目录按照软件工程生命周期分层组织，共 10 层。本项目采用 **Agent-Native（智能体原生）** 架构：文档是 Agent 之间的通信协议，Agent 通过文档而非对话协作。
+
+```
+Human Idea → PM Agent → Architect Agent → Task Agent → Dev Agents → QA Agent → DevOps Agent
+                    ↓              ↓            ↓            ↓            ↓           ↓
+               01-Requirement  03-Architecture  05-Tasks  07-Implement  08-Test  09-Deploy
+```
 
 ```
 Constitution → Requirement → Clarify → Architecture → Module → Tasks → Analyze → Implement → Test → Deploy
 ```
+
+### Agent 架构
+
+| Agent | 角色 | 输入 | 输出 | 定义 |
+|-------|------|------|------|------|
+| **PM Agent** | 产品经理 | Human Idea + Constitution | `01-Requirement/` PRD | [定义](../.claude/agents/pm-agent.md) |
+| **Architect Agent** | 系统架构师 | Requirements | `03-Architecture/` + `04-Module/` | [定义](../.claude/agents/architect-agent.md) |
+| **Task Agent** | 任务拆解 | Architecture | `05-Tasks/` 任务计划 | [定义](../.claude/agents/task-agent.md) |
+| **Backend Agent** | 后端开发 | Tasks | `routes/` + `migrations/` + 测试 | [定义](../.claude/agents/backend-agent.md) |
+| **Frontend Agent** | Web 前端开发 | Tasks | `frontend/src/` 代码 | [定义](../.claude/agents/frontend-agent.md) |
+| **Mobile Agent** | 移动端开发 | Tasks | `mobile/src/` 代码 | [定义](../.claude/agents/mobile-agent.md) |
+| **QA Agent** | 测试工程师 | Implementation Records | `08-Test/` + 测试代码 | [定义](../.claude/agents/qa-agent.md) |
+| **DevOps Agent** | 部署运维 | Test Reports (绿) | `09-Deploy/` 部署指南 | [定义](../.claude/agents/devops-agent.md) |
+
+> 详见 [CLAUDE.md](../CLAUDE.md) 了解项目全局指引，`.claude/` 目录了解 Agent 架构细节。
 
 ---
 
