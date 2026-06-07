@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XMUMDorm Capacitor 迁移评估报告 — 科普 + 可行性 + 待做清单</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap');
+  :root {
+    --bg: #0a0a0f;
+    --surface: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.08);
+    --text: #e8e8ef;
+    --text2: #9898a8;
+    --text3: #686878;
+    --green: #00d2a0;
+    --yellow: #ffd93d;
+    --red: #ff6b6b;
+    --blue: #54a0ff;
+    --accent: #6c5ce7;
+    --gradient: linear-gradient(135deg, #00d2a0 0%, #54a0ff 100%);
+    --gradient2: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 50%, #74b9ff 100%);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Noto Sans SC', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+  .bg-grid {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-image: radial-gradient(rgba(0,210,160,0.03) 1px, transparent 1px);
+    background-size: 40px 40px; pointer-events: none; z-index: 0;
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 32px; position: relative; z-index: 1; }
+
+  .header {
+    padding: 80px 0 60px; text-align: center;
+    border-bottom: 1px solid var(--border); margin-bottom: 60px;
+  }
+  .header .badge {
+    display: inline-block; background: var(--gradient); color: #0a0a0f;
+    padding: 6px 20px; border-radius: 20px; font-size: 13px;
+    font-weight: 700; letter-spacing: 0.5px; margin-bottom: 24px;
+  }
+  .header h1 { font-size: 44px; font-weight: 900; letter-spacing: -1px; margin-bottom: 12px; }
+  .header h1 span { background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .header .subtitle { color: var(--text2); font-size: 18px; font-weight: 300; }
+  .header .meta { margin-top: 24px; display: flex; gap: 32px; justify-content: center; color: var(--text3); font-size: 14px; }
+  .header .meta span { color: var(--text2); font-weight: 500; }
+
+  /* verdict */
+  .verdict {
+    background: var(--gradient); border-radius: 20px; padding: 48px;
+    margin-bottom: 60px; color: #0a0a0f; text-align: center;
+  }
+  .verdict h2 { font-size: 32px; font-weight: 900; margin-bottom: 8px; }
+  .verdict .big-num { font-size: 72px; font-weight: 900; line-height: 1; margin-bottom: 8px; }
+  .verdict p { font-size: 16px; opacity: 0.85; }
+
+  section { margin-bottom: 60px; }
+  section h2 { font-size: 28px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.5px; }
+  section .desc { color: var(--text3); margin-bottom: 28px; font-size: 14px; }
+
+  .glass-card {
+    background: rgba(15,15,25,0.8); border: 1px solid var(--border);
+    border-radius: 16px; padding: 32px; margin-bottom: 20px;
+    backdrop-filter: blur(20px);
+  }
+  .glass-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 16px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; padding: 12px 16px; color: var(--text3); font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
+  td { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+  tr:last-child td { border-bottom: none; }
+
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+  .dot.green { background: var(--green); }
+  .dot.yellow { background: var(--yellow); }
+  .dot.red { background: var(--red); }
+
+  /* progress */
+  .bar { height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; margin-top: 8px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; }
+  .bar-fill.g { background: var(--green); }
+  .bar-fill.y { background: var(--yellow); }
+  .bar-fill.r { background: var(--red); }
+  .bar-fill.b { background: var(--blue); }
+
+  /* checklist */
+  .check-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+  .check-item {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 20px;
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .check-item .emoji { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+  .check-item h4 { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+  .check-item p { color: var(--text2); font-size: 12px; line-height: 1.5; }
+
+  /* diff grid */
+  .diff-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .diff-card {
+    border-radius: 14px; padding: 28px; border: 1px solid var(--border);
+  }
+  .diff-card.bad { background: rgba(255,107,107,0.06); border-color: rgba(255,107,107,0.15); }
+  .diff-card.good { background: rgba(0,210,160,0.06); border-color: rgba(0,210,160,0.15); }
+
+  /* risk cards */
+  .risk-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+  .risk-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px; border-left: 3px solid var(--yellow);
+  }
+  .risk-card.high { border-left-color: var(--red); }
+  .risk-card.med { border-left-color: var(--yellow); }
+  .risk-card.low { border-left-color: var(--blue); }
+  .risk-card .tag {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 6px; display: inline-block; margin-bottom: 8px;
+  }
+  .tag.high { background: rgba(255,107,107,0.15); color: var(--red); }
+  .tag.med { background: rgba(255,217,61,0.15); color: var(--yellow); }
+  .tag.low { background: rgba(84,160,255,0.15); color: var(--blue); }
+
+  /* architecture diagram */
+  .arch-diagram {
+    background: rgba(15,15,25,0.9); border: 1px solid var(--border);
+    border-radius: 16px; padding: 40px; text-align: center;
+    font-family: 'JetBrains Mono', monospace; font-size: 14px;
+    line-height: 2.4; white-space: pre;
+    color: var(--text2);
+    overflow-x: auto;
+  }
+  .arch-diagram .hl { color: var(--green); font-weight: 600; }
+  .arch-diagram .hl2 { color: var(--blue); font-weight: 600; }
+  .arch-diagram .hl3 { color: var(--accent); }
+
+  /* code */
+  code {
+    background: rgba(255,255,255,0.06); padding: 2px 8px;
+    border-radius: 4px; font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; color: var(--green);
+  }
+
+  .footer { border-top: 1px solid var(--border); padding: 40px 0; text-align: center; color: var(--text3); font-size: 13px; margin-top: 80px; }
+
+  @media (max-width: 768px) {
+    .diff-row { grid-template-columns: 1fr; }
+    .header h1 { font-size: 28px; }
+    .verdict .big-num { font-size: 48px; }
+    .container { padding: 0 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="container">
+
+<!-- Header -->
+<div class="header">
+  <div class="badge">Technology Assessment · 2026-06-07</div>
+  <h1><span>Capacitor 迁移评估报告</span></h1>
+  <p class="subtitle">XMUMDorm Web 端 → iOS / Android 原生 App 打包方案 · 科普 + 可行性 + 待做清单</p>
+  <div class="meta">
+    <div>评估日期 <span>2026-06-07</span></div>
+    <div>项目 <span>XMUMDorm V3.0</span></div>
+    <div>当前 Web <span>React 19 + Vite 7 + Tailwind 4</span></div>
+  </div>
+</div>
+
+<!-- ============ VERDICT ============ -->
+<div class="verdict">
+  <div class="big-num">85%</div>
+  <h2>强烈推荐迁移</h2>
+  <p>当前项目 PWA 基础扎实（SW + Manifest + Push），<br>只需 7-11 天即可获得 UI 100% 一致的 iOS/Android App。</p>
+</div>
+
+<!-- ============ SECTION 0: WHAT IS CAPACITOR ============ -->
+<section>
+  <h2>零、Capacitor 是什么？—— 科普章</h2>
+  <p class="desc">5 分钟理解 Capacitor 的本质</p>
+
+  <div class="glass-card">
+    <h3>一句话定义</h3>
+    <p style="font-size:18px;font-weight:600;color:var(--green);margin-bottom:16px;">
+      Capacitor = 把你的 Web 前端装进一个原生 App 壳子，同时提供 JS 调用原生 API（相机、推送、文件等）的桥梁。
+    </p>
+    <p>它由 Ionic 团队开发，是 Cordova 的精神继承者，但设计更现代、更符合 2026 年的 Web 标准。</p>
+  </div>
+
+  <div class="glass-card">
+    <h3>和 PWA / React Native 的本质区别</h3>
+    <table>
+      <thead><tr><th>维度</th><th>PWA</th><th>Capacitor</th><th>React Native</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>渲染引擎</strong></td>
+          <td>浏览器</td>
+          <td style="color:var(--green)"><strong>系统 WebView</strong>（iOS=Safari, Android=Chrome）</td>
+          <td>JS 驱动的原生 UI</td>
+        </tr>
+        <tr>
+          <td><strong>UI 代码</strong></td>
+          <td>HTML+CSS+JS</td>
+          <td style="color:var(--green)"><strong>HTML+CSS+JS</strong>（和 Web 同一份）</td>
+          <td>JSX + RN 组件 API（不同的一套）</td>
+        </tr>
+        <tr>
+          <td><strong>CSS 支持</strong></td>
+          <td>完整</td>
+          <td style="color:var(--green)"><strong>完整</strong>（backdrop-filter, grid, animation…）</td>
+          <td>有限的 StyleSheet API</td>
+        </tr>
+        <tr>
+          <td><strong>App Store 分发</strong></td>
+          <td>❌ 不能</td>
+          <td style="color:var(--green)"><strong>✅ 可以</strong></td>
+          <td>✅ 可以</td>
+        </tr>
+        <tr>
+          <td><strong>原生 API</strong></td>
+          <td>有限的 Web API</td>
+          <td style="color:var(--green)"><strong>插件系统</strong>（相机/推送/文件/Haptics…）</td>
+          <td>原生模块</td>
+        </tr>
+        <tr>
+          <td><strong>维护成本</strong></td>
+          <td>低</td>
+          <td style="color:var(--green)"><strong>低</strong>（和 Web 同一份代码）</td>
+          <td>高（双代码库）</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="glass-card">
+    <h3>运行时架构</h3>
+    <div class="arch-diagram">
+┌──────────────────────────────────────────┐
+│           <span class="hl">你的 React App (frontend/)</span>          │
+│  86 pages · TanStack Query · CSS Glass   │
+│        完全不变，同一份代码                   │
+└──────────────┬───────────────────────────┘
+               │
+    ┌──────────▼──────────┐
+    │   <span class="hl2">Capacitor Bridge</span>      │
+    │  JS → Native 翻译层   │
+    │  Camera · Push · File │
+    └──────────┬──────────┘
+               │
+    ┌──────────▼──────────┐
+    │   <span class="hl3">WebView (系统浏览器)</span>   │
+    │  iOS: WKWebView      │
+    │  Android: Chromium    │
+    └──────────┬──────────┘
+               │
+    ┌──────────▼──────────┐
+    │     Native 壳        │
+    │  .ipa / .aab / .apk  │
+    └──────────────────────┘
+    </div>
+    <p style="margin-top:16px;color:var(--text3);font-size:13px;">
+      本质：Capacitor 不改变你的 UI 代码。你的 React App 跑在系统的 WebView 里，看起来和 Safari/Chrome 打开一模一样。Capacitor 只做两件事：打包成 App + 提供原生 API 桥接。
+    </p>
+  </div>
+</section>
+
+<!-- ============ SECTION 1: READINESS ============ -->
+<section>
+  <h2>一、当前项目适配就绪度评估</h2>
+  <p class="desc">基于真实代码扫描，每一项都有数据支撑</p>
+
+  <div class="glass-card">
+    <h3>能力矩阵</h3>
+    <table>
+      <thead><tr><th>评估项</th><th>当前状态</th><th>就绪度</th><th>证据</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>PWA 基础设施</strong></td>
+          <td><span class="dot green"></span> 已部署</td>
+          <td><div style="width:100px"><div class="bar"><div class="bar-fill g" style="width:95%"></div></div></div></td>
+          <td><code>sw.js</code> 142行（install/activate/fetch/push/notificationclick）；<code>manifest.json</code> 完整</td>
+        </tr>
+        <tr>
+          <td><strong>Service Worker 缓存策略</strong></td>
+          <td><span class="dot green"></span> 成熟</td>
+          <td><div style="width:100px"><div class="bar"><div class="bar-fill g" style="width:90%"></div></div></div></td>
+          <td>网络优先 + 静态资源缓存优先 + Vite dev 环境自动跳过 + API 离线 503 JSON 降级</td>
+        </tr>
+        <tr>
+          <td><strong>Web Push 通知</strong></td>
+          <td><span class="dot green"></span> 已实现</td>
+          <td><div style="width:100px"><div class="bar"><div class="bar-fill g" style="width:85%"></div></div></div></td>
+          <td><code>sw.js</code> push/notificationclick 事件完整（需迁移到 Capacitor Push 插件）</td>
+        </tr>
+        <tr>
+          <td><strong>液态玻璃效果 (CSS)</strong></td>
+          <td><span class="dot green"></span> 丰富</td>
+          <td><div style="width:100px"><div class="bar"><div class="bar-fill g" style="width:100%"></div></div></div></td>
+          <td><strong>245 处</strong> backdrop-filter/blur/glass 引用，覆盖 25 个文件</td>
+        </tr>
+        <tr>
+          <td><strong>响应式设计</strong></td>
+          <td><span class="dot yellow"></span> 部分完成</td>
+          <td><div style="width:100px"><div class="bar"><div class="bar-fill y" style="width:55%"></div></div></div></td>
+          <td>103 处 @media 查询，覆盖 22 个 CSS 文件；断点偏大（520px/420px）</td>
+        </tr>
+        <tr>
+          <td><strong>Tailwind CSS</strong></td>
+          <td><span class="dot green"></span> 已集成</td>
+          <td><div style="width:100px"><div class="bar"><div class="bar-fill g" style="width:90%"></div></div></div></td>
+          <td><code>vite.config.js</code> 含 <code>@tailwindcss/vite</code>；Tailwind v4.2</td>
+        </tr>
+        <tr>
+          <td><strong>Viewport Meta</strong></td>
+          <td><span class="dot green"></span> 已配置</td>
+          <td><div style="width:100px"><div class="bar"><div class="bar-fill g" style="width:100%"></div></div></div></td>
+          <td><code>index.html</code> 含 <code>width=device-width, initial-scale=1.0</code></td>
+        </tr>
+        <tr>
+          <td><strong>Safe Area 适配</strong></td>
+          <td><span class="dot red"></span> 未处理</td>
+          <td><div style="width:100px"><div class="bar"><div class="bar-fill r" style="width:10%"></div></div></div></td>
+          <td>无 <code>env(safe-area-inset-*)</code> 引用</td>
+        </tr>
+        <tr>
+          <td><strong>API 代理</strong></td>
+          <td><span class="dot green"></span> 已配置</td>
+          <td><div style="width:100px"><div class="bar"><div class="bar-fill g" style="width:90%"></div></div></div></td>
+          <td>Vite proxy: <code>/api → 127.0.0.1:4040</code>，<code>/uploads → 127.0.0.1:4040</code></td>
+        </tr>
+        <tr>
+          <td><strong>JWT 鉴权</strong></td>
+          <td><span class="dot green"></span> 无影响</td>
+          <td><div style="width:100px"><div class="bar"><div class="bar-fill g" style="width:100%"></div></div></div></td>
+          <td>HTTP Header Bearer Token，WebView 中完全透明，无需改动</td>
+        </tr>
+        <tr>
+          <td><strong>构建工具</strong></td>
+          <td><span class="dot green"></span> 理想</td>
+          <td><div style="width:100px"><div class="bar"><div class="bar-fill g" style="width:95%"></div></div></div></td>
+          <td>Vite 7：<code>vite build</code> 直接产出 Capacitor 需要的 <code>dist/</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="glass-card">
+    <h3>总体评分</h3>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px;text-align:center;">
+      <div>
+        <div style="font-size:48px;font-weight:900;color:var(--green);">85%</div>
+        <div style="color:var(--text3);font-size:12px;">基础设施就绪</div>
+      </div>
+      <div>
+        <div style="font-size:48px;font-weight:900;color:var(--yellow);">55%</div>
+        <div style="color:var(--text3);font-size:12px;">响应式适配</div>
+      </div>
+      <div>
+        <div style="font-size:48px;font-weight:900;color:var(--green);">95%</div>
+        <div style="color:var(--text3);font-size:12px;">视觉一致性</div>
+      </div>
+      <div>
+        <div style="font-size:48px;font-weight:900;color:var(--red);">10%</div>
+        <div style="color:var(--text3);font-size:12px;">Safe Area</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SECTION 2: GAPS & RISKS ============ -->
+<section>
+  <h2>二、缺陷与风险清单</h2>
+  <p class="desc">迁移前必须解决的 8 个问题</p>
+
+  <div class="risk-row">
+    <div class="risk-card high">
+      <span class="tag high">HIGH · 必须修复</span>
+      <h4>1. Safe Area 完全缺失</h4>
+      <p>当前 0 处 <code>safe-area-inset-*</code> 引用。iPhone 14 Pro+ 的灵动岛/底部横条会遮挡 UI。需全局 CSS 变量 + 页面级适配。</p>
+    </div>
+
+    <div class="risk-card high">
+      <span class="tag high">HIGH · 必须修复</span>
+      <h4>2. Touch 交互依赖 Hover</h4>
+      <p>桌面端使用 <code>:hover</code> 伪类的交互在移动端无反馈。需全局替换为 <code>:active</code> 或 <code>@media (hover: none)</code> 降级。</p>
+    </div>
+
+    <div class="risk-card med">
+      <span class="tag med">MED · 建议修复</span>
+      <h4>3. 响应式断点不足</h4>
+      <p>当前 @media 在 420px/520px。现代手机逻辑宽度：iPhone SE=375px, iPhone 14=390px, iPhone 14 Pro Max=430px。需增加 375px/390px 断点。</p>
+    </div>
+
+    <div class="risk-card med">
+      <span class="tag med">MED · 建议修复</span>
+      <h4>4. Web Push → Capacitor Push 迁移</h4>
+      <p><code>sw.js</code> 的 push 事件基于 Web Push API。在 WebView 中不可用。需安装 <code>@capacitor/push-notifications</code> 并适配。</p>
+    </div>
+
+    <div class="risk-card med">
+      <span class="tag med">MED · 建议修复</span>
+      <h4>5. 图片上传流程</h4>
+      <p>当前使用 <code>&lt;input type="file"&gt;</code> 或 Multer 上传。在 Capacitor 中需接入 <code>@capacitor/camera</code> 和 <code>@capacitor/filesystem</code> 以支持拍照/相册选择。</p>
+    </div>
+
+    <div class="risk-card low">
+      <span class="tag low">LOW · 可后续修复</span>
+      <h4>6. App 图标与启动画面</h4>
+      <p>需要 1024×1024 icon + 各尺寸自适应图标 + 启动画面。Capacitor 有工具自动生成。</p>
+    </div>
+
+    <div class="risk-card low">
+      <span class="tag low">LOW · 可后续修复</span>
+      <h4>7. 状态栏样式</h4>
+      <p>iOS 状态栏文字颜色需要配置（深色/浅色）。Capacitor StatusBar 插件 3 行代码搞定。</p>
+    </div>
+
+    <div class="risk-card low">
+      <span class="tag low">LOW · 可后续修复</span>
+      <h4>8. 深度链接与 Universal Links</h4>
+      <p>App 内跳转（如推送 → 帖子详情）需要配置 URL Scheme + iOS Associated Domains。Capacitor Deep Links 插件支持。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SECTION 3: CHECKLIST ============ -->
+<section>
+  <h2>三、迁移待做清单</h2>
+  <p class="desc">按执行顺序排列，可直接作为 Task 文档使用</p>
+
+  <div class="glass-card">
+    <h3>Phase 1: 安装与配置（0.5 天）</h3>
+    <div class="check-grid">
+      <div class="check-item"><span class="emoji">1</span><div><h4>安装 Capacitor CLI + Core</h4><p><code>npm i @capacitor/core @capacitor/cli</code></p></div></div>
+      <div class="check-item"><span class="emoji">2</span><div><h4>初始化 Capacitor 配置</h4><p><code>npx cap init Dorm com.dorm.app</code></p></div></div>
+      <div class="check-item"><span class="emoji">3</span><div><h4>配置 capacitor.config.ts</h4><p>webDir → frontend/dist, server.url（开发时用 Vite dev server）</p></div></div>
+      <div class="check-item"><span class="emoji">4</span><div><h4>验证 Web 构建</h4><p><code>npm run build</code> → dist/ 正常产出</p></div></div>
+    </div>
+  </div>
+
+  <div class="glass-card">
+    <h3>Phase 2: UI 移动端适配（3-5 天，核心工作）</h3>
+    <div class="check-grid">
+      <div class="check-item"><span class="emoji">5</span><div><h4>全局 Safe Area CSS 变量</h4><p><code>--safe-top: env(safe-area-inset-top);</code> 等 4 个变量，全局注入</p></div></div>
+      <div class="check-item"><span class="emoji">6</span><div><h4>TabBar / BottomNav 安全区</h4><p>底部 5 Tab 导航的 padding-bottom 改为 safe-area-inset-bottom</p></div></div>
+      <div class="check-item"><span class="emoji">7</span><div><h4>Header/Toolbar 安全区</h4><p>所有页面顶部的 padding-top 改为 safe-area-inset-top</p></div></div>
+      <div class="check-item"><span class="emoji">8</span><div><h4>Hover → Active 全局替换</h4><p>CSS :hover → @media (hover: hover) 降级 + :active 补充</p></div></div>
+      <div class="check-item"><span class="emoji">9</span><div><h4>响应式断点补全</h4><p>增加 375px / 390px / 430px 断点，覆盖所有 iPhone 型号</p></div></div>
+      <div class="check-item"><span class="emoji">10</span><div><h4>FAB / 浮动按钮位置</h4><p>右下角 FAB 需考虑 safe-area-inset-bottom + TabBar 高度</p></div></div>
+      <div class="check-item"><span class="emoji">11</span><div><h4>键盘弹出适配</h4><p>输入框被键盘遮挡 → Capacitor Keyboard 插件 + CSS</p></div></div>
+      <div class="check-item"><span class="emoji">12</span><div><h4>滚动反弹效果</h4><p>iOS WebView 默认有 rubber-band 滚动，可能需要 overscroll-behavior</p></div></div>
+    </div>
+  </div>
+
+  <div class="glass-card">
+    <h3>Phase 3: 原生功能桥接（2-3 天）</h3>
+    <div class="check-grid">
+      <div class="check-item"><span class="emoji">13</span><div><h4>Push Notifications</h4><p><code>@capacitor/push-notifications</code>，替代 sw.js 的 Web Push</p></div></div>
+      <div class="check-item"><span class="emoji">14</span><div><h4>相机 / 图片选择</h4><p><code>@capacitor/camera</code>，替代 input[type=file]（可选优化）</p></div></div>
+      <div class="check-item"><span class="emoji">15</span><div><h4>文件系统</h4><p><code>@capacitor/filesystem</code>，用于图片缓存/本地存储</p></div></div>
+      <div class="check-item"><span class="emoji">16</span><div><h4>Haptics 触觉反馈</h4><p><code>@capacitor/haptics</code>，点赞/按钮点击时轻微震动</p></div></div>
+      <div class="check-item"><span class="emoji">17</span><div><h4>StatusBar 状态栏</h4><p><code>@capacitor/status-bar</code>，配置深色/浅色文字</p></div></div>
+      <div class="check-item"><span class="emoji">18</span><div><h4>Splash Screen</h4><p><code>@capacitor/splash-screen</code>，App 启动时的品牌展示</p></div></div>
+    </div>
+  </div>
+
+  <div class="glass-card">
+    <h3>Phase 4: 打包与上架（1-2 天）</h3>
+    <div class="check-grid">
+      <div class="check-item"><span class="emoji">19</span><div><h4>iOS 平台添加</h4><p><code>npx cap add ios</code> → Xcode 打开 → Archive</p></div></div>
+      <div class="check-item"><span class="emoji">20</span><div><h4>Android 平台添加</h4><p><code>npx cap add android</code> → Android Studio → Build APK/AAB</p></div></div>
+      <div class="check-item"><span class="emoji">21</span><div><h4>App Icon 生成</h4><p>1024px icon → Capacitor 自动生成所有尺寸</p></div></div>
+      <div class="check-item"><span class="emoji">22</span><div><h4>App Store 提交</h4><p>截图、描述、隐私政策、分级问卷</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SECTION 4: RN vs CAPACITOR ============ -->
+<section>
+  <h2>四、Capacitor vs React Native：你的项目真实对比</h2>
+  <p class="desc">基于实际代码量和工作量数据</p>
+
+  <div class="diff-row">
+    <div class="diff-card bad">
+      <h4 style="color:var(--red);margin-bottom:16px;">❌ React Native 路线（继续）</h4>
+      <table>
+        <tr><td>已完成代码</td><td>69 screens · 11,042 行</td></tr>
+        <tr><td>仍需补全</td><td>17 screens（追上 86 pages）</td></tr>
+        <tr><td>UI 一致性</td><td>60-70%，永远有差异</td></tr>
+        <tr><td>液态玻璃</td><td>expo-blur 近似，效果打折扣</td></tr>
+        <tr><td>新 Feature 开发</td><td>后端 ×1 + 前端 ×2 + 移动端 ×1 = <strong>4 份工作量</strong></td></tr>
+        <tr><td>剩余工期</td><td><strong>3-4 周</strong>（保守估计）</td></tr>
+        <tr><td>App Store 上架</td><td>需 Apple 开发者账号（已有代码）</td></tr>
+      </table>
+    </div>
+    <div class="diff-card good">
+      <h4 style="color:var(--green);margin-bottom:16px;">✅ Capacitor 路线（切换）</h4>
+      <table>
+        <tr><td>已完成代码</td><td>86 pages · 22,372 行（无需改动）</td></tr>
+        <tr><td>需适配</td><td>Safe Area + Touch + 响应式 = CSS 层</td></tr>
+        <tr><td>UI 一致性</td><td><strong>100%</strong>，同一份 CSS</td></tr>
+        <tr><td>液态玻璃</td><td><strong>backdrop-filter 原汁原味</strong></td></tr>
+        <tr><td>新 Feature 开发</td><td>后端 ×1 + 前端 ×1 = <strong>2 份工作量</strong></td></tr>
+        <tr><td>预估工期</td><td><strong>7-11 天</strong></td></tr>
+        <tr><td>App Store 上架</td><td>需 Apple 开发者账号 + Xcode</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SECTION 5: ARCHITECTURE ============ -->
+<section>
+  <h2>五、Capacitor 项目结构（迁移后）</h2>
+  <p class="desc">你的项目将变成这样</p>
+
+  <div class="arch-diagram">
+XMUMDorm-2.0.0-LYZZ/
+├── <span class="hl">frontend/</span>          ← 唯一的 UI 代码库
+│   ├── src/
+│   │   ├── pages/       86 pages  (不变)
+│   │   ├── components/  ~60 组件  (不变)
+│   │   ├── api/         20 files  (不变)
+│   │   └── ...
+│   ├── dist/            <span class="hl2">← Capacitor 读取这个目录</span>
+│   └── package.json
+│
+├── <span class="hl3">capacitor.config.ts</span>  ← Capacitor 配置（1 个文件）
+│
+├── <span class="hl2">ios/</span>               ← Xcode 项目（自动生成）
+│   └── App/
+│       └── App.xcodeproj
+│
+├── <span class="hl2">android/</span>            ← Android 项目（自动生成）
+│   └── app/
+│
+├── routes/             ← 后端 (不变)
+├── middleware/         ← 后端 (不变)
+├── migrations/        ← 后端 (不变)
+└── server.js          ← 后端 (不变)
+  </div>
+  <p style="margin-top:16px;color:var(--text3);font-size:13px;">
+    <strong>核心变化</strong>：添加 1 个配置文件 + 2 个自动生成的原生项目目录。其余完全不改。<br>
+    <strong>mobile/</strong> 目录保留作为参考，不再投入新开发。
+  </p>
+</section>
+
+<!-- ============ SECTION 6: RECOMMENDED PATH ============ -->
+<section>
+  <h2>六、推荐执行路径</h2>
+
+  <div class="glass-card">
+    <h3>Week 1: 基础 + UI 适配 (5 天)</h3>
+    <table>
+      <thead><tr><th>天</th><th>工作</th><th>产出</th></tr></thead>
+      <tbody>
+        <tr><td>Day 1</td><td>Phase 1: 安装 Capacitor + 配置 + 构建验证</td><td>WebView 中看到 App</td></tr>
+        <tr><td>Day 2</td><td>Safe Area 全局适配 (CSS 变量 + 布局调整)</td><td>所有页面安全区正确</td></tr>
+        <tr><td>Day 3</td><td>响应式断点补全 + Hover→Active 替换</td><td>390px/430px 完美显示</td></tr>
+        <tr><td>Day 4</td><td>FAB/浮动按钮 + 键盘适配 + 滚动优化</td><td>交互细节打磨</td></tr>
+        <tr><td>Day 5</td><td>UI 全面验收：86 pages × 3 手机尺寸</td><td>UI 适配完成</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="glass-card">
+    <h3>Week 2: 原生插件 + 打包上架 (4-6 天)</h3>
+    <table>
+      <thead><tr><th>天</th><th>工作</th><th>产出</th></tr></thead>
+      <tbody>
+        <tr><td>Day 6-7</td><td>Push + Camera + StatusBar 插件集成</td><td>原生功能就绪</td></tr>
+        <tr><td>Day 8</td><td>Haptics + Splash + Deep Links</td><td>体验增强</td></tr>
+        <tr><td>Day 9</td><td>iOS 构建 + TestFlight 内部测试</td><td>iOS Beta</td></tr>
+        <tr><td>Day 10</td><td>Android 构建 + 内部测试</td><td>Android Beta</td></tr>
+        <tr><td>Day 11</td><td>App Store Connect + Google Play 提交</td><td>提交审核</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ SECTION 7: FAQ ============ -->
+<section>
+  <h2>七、常见问题 FAQ</h2>
+
+  <div class="glass-card">
+    <h3>Capacitor App 会比 React Native App 慢吗？</h3>
+    <p style="color:var(--text2);">对于 XMUMDorm 这类内容展示型 App（非游戏/非 AR），<strong>不会有可感知的差异</strong>。iOS 的 WKWebView 和 Android 的 Chromium WebView 性能都非常好。你的 glass backdrop-filter 在 CSS 中跑 GPU 合成层，比 React Native 的 JS 动画更流畅。</p>
+  </div>
+
+  <div class="glass-card">
+    <h3>需要改后端吗？</h3>
+    <p style="color:var(--text2);"><strong>完全不需要。</strong>Capacitor 只是一个"浏览器壳"——后端 API 照常响应 HTTP 请求。JWT Token 的存储和发送完全不受影响（localStorage/AsyncStorage → Capacitor Preferences 插件，但 localStorage 本身也能用）。</p>
+  </div>
+
+  <div class="glass-card">
+    <h3>App Store 审核会拒绝 Capacitor App 吗？</h3>
+    <p style="color:var(--text2);"><strong>不会。</strong>大量知名 App 使用 Capacitor/Cordova 上架（Ionic 自己就是 Capacitor 的创造者，他们大量客户在 App Store）。只要你的 App 提供原生级体验、不是纯网页套壳，审核通过没问题。</p>
+  </div>
+
+  <div class="glass-card">
+    <h3>用户能感知到这是一个 WebView App 吗？</h3>
+    <p style="color:var(--text2);"><strong>做好 Safe Area 适配就不会。</strong>最大的暴露点是：WebView 中的页面没有 safe-area-inset 适配 → iPhone 灵动岛/底部横条遮挡内容 → 用户立刻知道"这是个网页"。Phase 2 的 Safe Area 适配就是为了解决这个问题。</p>
+  </div>
+
+  <div class="glass-card">
+    <h3>那 mobile/ 目录怎么办？</h3>
+    <p style="color:var(--text2);"><strong>保留不删。</strong>69 screens + 416 tests + 4 hooks + 15 components 是优质工程资产。未来如果某个功能确实需要原生性能（比如实时视频、AR），可以局部用 RN 实现模块嵌入 Capacitor。现在先让它休眠。</p>
+  </div>
+</section>
+
+<div class="footer">
+  <p>XMUMDorm Capacitor Migration Assessment · Generated 2026-06-07</p>
+  <p>Agent-Native Architecture · docs/06-Analyze/</p>
+</div>
+
+</div>
+</body>
+</html>
