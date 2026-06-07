@@ -30,6 +30,17 @@ createRoot(document.getElementById('root')).render(
     await initPush();
   } catch {}
 
+  // Deep Links: dorm:// → navigate inside the app
+  try {
+    const { App: CapApp } = await import('@capacitor/app');
+    CapApp.addListener('appUrlOpen', (data) => {
+      const url = data.url.replace('dorm://', '/');
+      if (url && url !== '/') {
+        window.location.href = url;
+      }
+    });
+  } catch {}
+
   // SplashScreen: hide after React renders
   try {
     const { SplashScreen } = await import('@capacitor/splash-screen');
