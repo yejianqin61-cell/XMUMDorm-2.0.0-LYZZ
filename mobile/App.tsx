@@ -1,3 +1,9 @@
+/**
+ * App.tsx — Legacy entry point (kept for backward compatibility).
+ *
+ * Expo Router entry is now index.ts → app/_layout.tsx.
+ * This file is retained as a fallback only.
+ */
 import React, { useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -17,6 +23,7 @@ import AdminScreen from './src/screens/AdminScreen';
 import AboutProfileScreen from './src/screens/AboutProfileScreen';
 import AboutThanksScreen from './src/screens/AboutThanksScreen';
 import AboutInfoScreen from './src/screens/AboutInfoScreen';
+import { router } from './src/navigation/router';
 
 const queryClient = new QueryClient();
 
