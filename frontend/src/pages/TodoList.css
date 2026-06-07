@@ -161,6 +161,8 @@
   transition: opacity 0.15s;
 }
 
-.todolist-item:hover .todolist-delete-btn {
-  opacity: 1;
+@media (hover: hover) {
+  .todolist-item:hover .todolist-delete-btn {
+    opacity: 1;
+  }
 }

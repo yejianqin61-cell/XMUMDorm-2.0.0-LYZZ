@@ -60,9 +60,11 @@
   transform: scale(0.98);
 }
 
-.mailbox-clear-btn:hover {
-  background: rgba(255, 255, 255, 0.48);
-  backdrop-filter: blur(14px);
+@media (hover: hover) {
+  .mailbox-clear-btn:hover {
+    background: rgba(255, 255, 255, 0.48);
+    backdrop-filter: blur(14px);
+  }
 }
 
 .mailbox-tabs {

@@ -137,8 +137,10 @@
   color: #fff;
 }
 
-.merchant-shop-edit-btn-primary:hover:not(:disabled) {
-  background: var(--wx-green-dark);
+@media (hover: hover) {
+  .merchant-shop-edit-btn-primary:hover:not(:disabled) {
+    background: var(--wx-green-dark);
+  }
 }
 
 .merchant-shop-edit-btn-secondary {
@@ -147,6 +149,8 @@
   border: 1px solid var(--wx-border);
 }
 
-.merchant-shop-edit-btn-secondary:hover {
-  background: var(--wx-bar-bg);
+@media (hover: hover) {
+  .merchant-shop-edit-btn-secondary:hover {
+    background: var(--wx-bar-bg);
+  }
 }

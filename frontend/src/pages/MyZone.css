@@ -268,8 +268,10 @@
   transition: color 0.15s ease, border-color 0.15s ease;
 }
 
-.myzone-tab:hover {
-  color: var(--post-ios-label, rgba(0, 0, 0, 0.88));
+@media (hover: hover) {
+  .myzone-tab:hover {
+    color: var(--post-ios-label, rgba(0, 0, 0, 0.88));
+  }
 }
 
 .myzone-tab.active {

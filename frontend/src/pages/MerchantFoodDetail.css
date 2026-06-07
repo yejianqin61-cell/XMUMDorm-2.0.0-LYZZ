@@ -29,8 +29,10 @@
   border: 1px solid var(--wx-red, #ee0a24);
 }
 
-.merchant-food-detail-btn-delete:hover {
-  background: rgba(238, 10, 36, 0.08);
+@media (hover: hover) {
+  .merchant-food-detail-btn-delete:hover {
+    background: rgba(238, 10, 36, 0.08);
+  }
 }
 
 .merchant-food-detail-back {
@@ -45,8 +47,10 @@
   cursor: pointer;
 }
 
-.merchant-food-detail-back:hover {
-  background: rgba(7, 193, 96, 0.08);
+@media (hover: hover) {
+  .merchant-food-detail-back:hover {
+    background: rgba(7, 193, 96, 0.08);
+  }
 }
 
 .merchant-food-detail-actions {
@@ -71,8 +75,10 @@
   color: #fff;
 }
 
-.merchant-food-detail-btn-edit:hover {
-  background: var(--wx-green-dark);
+@media (hover: hover) {
+  .merchant-food-detail-btn-edit:hover {
+    background: var(--wx-green-dark);
+  }
 }
 
 .merchant-food-detail-btn-back {
@@ -81,6 +87,8 @@
   border: 1px solid var(--wx-border);
 }
 
-.merchant-food-detail-btn-back:hover {
-  background: var(--wx-bar-bg);
+@media (hover: hover) {
+  .merchant-food-detail-btn-back:hover {
+    background: var(--wx-bar-bg);
+  }
 }

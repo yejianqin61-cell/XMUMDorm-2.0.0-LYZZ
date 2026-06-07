@@ -67,9 +67,11 @@
   transition: background 0.15s, color 0.15s;
 }
 
-.admin-sidebar__link:hover {
-  background: #f1f5f9;
-  color: #0f172a;
+@media (hover: hover) {
+  .admin-sidebar__link:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+  }
 }
 
 .admin-sidebar__link--active {
@@ -126,9 +128,11 @@
   cursor: pointer;
 }
 
-.admin-topbar__back-btn:hover {
-  background: #f1f5f9;
-  color: #0f172a;
+@media (hover: hover) {
+  .admin-topbar__back-btn:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+  }
 }
 
 .admin-content {

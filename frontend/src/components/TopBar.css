@@ -54,8 +54,10 @@
   color: rgba(11, 17, 34, 0.72);
 }
 
-.top-bar-back:hover {
-  color: var(--post-ios-accent, #007aff);
+@media (hover: hover) {
+  .top-bar-back:hover {
+    color: var(--post-ios-accent, #007aff);
+  }
 }
 
 .top-bar-back:active {
@@ -133,8 +135,10 @@
   border-radius: 4px;
 }
 
-.top-bar-lang-btn:hover {
-  color: rgba(11, 17, 34, 0.86);
+@media (hover: hover) {
+  .top-bar-lang-btn:hover {
+    color: rgba(11, 17, 34, 0.86);
+  }
 }
 
 .top-bar-lang-btn.active {
@@ -146,8 +150,10 @@
   opacity: 0.6;
 }
 
-.top-bar-mailbox:hover {
-  color: var(--post-ios-accent, #007aff);
+@media (hover: hover) {
+  .top-bar-mailbox:hover {
+    color: var(--post-ios-accent, #007aff);
+  }
 }
 
 .top-bar-mailbox:active {

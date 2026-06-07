@@ -70,9 +70,11 @@
   transition: border-color 0.2s, background 0.2s, color 0.2s;
 }
 
-.food-review-publish-rating-btn:hover {
-  border-color: var(--wx-green);
-  color: var(--wx-green);
+@media (hover: hover) {
+  .food-review-publish-rating-btn:hover {
+    border-color: var(--wx-green);
+    color: var(--wx-green);
+  }
 }
 
 .food-review-publish-rating-btn.active {
@@ -149,9 +151,11 @@
   background: var(--wx-bar-bg);
 }
 
-.food-review-publish-image-add:hover {
-  border-color: var(--wx-green);
-  color: var(--wx-green);
+@media (hover: hover) {
+  .food-review-publish-image-add:hover {
+    border-color: var(--wx-green);
+    color: var(--wx-green);
+  }
 }
 
 .food-review-publish-file-input {
@@ -166,8 +170,10 @@
   color: var(--wx-text-secondary);
 }
 
-.food-review-publish-image-add:hover .food-review-publish-image-add-inner {
-  color: var(--wx-green);
+@media (hover: hover) {
+  .food-review-publish-image-add:hover .food-review-publish-image-add-inner {
+    color: var(--wx-green);
+  }
 }
 
 .food-review-publish-message {
@@ -213,8 +219,10 @@
   overflow: hidden;
 }
 
-.food-review-publish-submit:hover {
-  filter: brightness(1.02);
+@media (hover: hover) {
+  .food-review-publish-submit:hover {
+    filter: brightness(1.02);
+  }
 }
 
 .food-review-publish-submit:active {
@@ -286,6 +294,8 @@
   cursor: pointer;
 }
 
-.food-review-publish-back:hover {
-  background: rgba(7, 193, 96, 0.08);
+@media (hover: hover) {
+  .food-review-publish-back:hover {
+    background: rgba(7, 193, 96, 0.08);
+  }
 }

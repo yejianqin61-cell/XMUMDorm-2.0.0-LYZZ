@@ -2,7 +2,7 @@
 .toast-wrap {
   position: fixed;
   left: 50%;
-  top: 24%;
+  top: calc(24% + var(--safe-top));
   transform: translateX(-50%);
   z-index: 10000;
   pointer-events: none;

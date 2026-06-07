@@ -518,8 +518,10 @@
   overflow: hidden;
 }
 
-.merchant-list-ranking-full-link:hover {
-  background: rgba(255, 255, 255, 0.34);
+@media (hover: hover) {
+  .merchant-list-ranking-full-link:hover {
+    background: rgba(255, 255, 255, 0.34);
+  }
 }
 
 .merchant-list-ranking-full-link--pill {
@@ -653,8 +655,10 @@
   transition-delay: calc(var(--i, 0) * 60ms);
 }
 
-.merchant-list-hot-card:hover {
-  filter: brightness(1.03);
+@media (hover: hover) {
+  .merchant-list-hot-card:hover {
+    filter: brightness(1.03);
+  }
 }
 
 .merchant-list-hot-card--top1 {
@@ -873,11 +877,13 @@
 
 /* Neo‑brutalism shadow：仅 hover 时出现（非常轻但很“锐”） */
 @media (hover: hover) {
-  .merchant-min:hover {
-    background: linear-gradient(135deg, rgba(56, 189, 248, 0.05), rgba(255, 255, 255, 0));
-    box-shadow: 6px 6px 0 rgba(26, 26, 26, 0.06);
-    transform: translate3d(-1px, -1px, 0) scale(1.02);
-  }
+@media (hover: hover) {
+    .merchant-min:hover {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.05), rgba(255, 255, 255, 0));
+      box-shadow: 6px 6px 0 rgba(26, 26, 26, 0.06);
+      transform: translate3d(-1px, -1px, 0) scale(1.02);
+    }
+}
 }
 
 .merchant-min:active {

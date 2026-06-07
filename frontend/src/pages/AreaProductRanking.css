@@ -14,8 +14,10 @@
   text-decoration: none;
 }
 
-.area-ranking-back-link:hover {
-  text-decoration: underline;
+@media (hover: hover) {
+  .area-ranking-back-link:hover {
+    text-decoration: underline;
+  }
 }
 
 .area-ranking-main-card {

@@ -136,9 +136,11 @@
   transition: transform 160ms ease, filter 160ms ease;
 }
 
-.treehole-glass-card:hover {
-  transform: translateY(-1px) scale(1.01);
-  filter: brightness(1.03);
+@media (hover: hover) {
+  .treehole-glass-card:hover {
+    transform: translateY(-1px) scale(1.01);
+    filter: brightness(1.03);
+  }
 }
 
 .treehole-glass-card:active {
@@ -500,9 +502,11 @@
   font-family: var(--post-ios-font, inherit);
 }
 
-.treehole-fab:hover {
-  filter: brightness(1.05);
-  color: #fff;
+@media (hover: hover) {
+  .treehole-fab:hover {
+    filter: brightness(1.05);
+    color: #fff;
+  }
 }
 
 /* --------- Debug HUD (only when ?debug=1) --------- */
@@ -582,9 +586,11 @@
   }
 
   /* remove hover transform path on mobile */
-  .treehole-glass-card:hover {
-    transform: none;
-    filter: none;
-  }
+@media (hover: hover) {
+    .treehole-glass-card:hover {
+      transform: none;
+      filter: none;
+    }
+}
 }
 

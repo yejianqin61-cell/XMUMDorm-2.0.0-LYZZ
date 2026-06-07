@@ -36,9 +36,11 @@
   transition: background 0.2s, color 0.2s;
 }
 
-.empty-state-btn:hover {
-  background: rgba(7, 193, 96, 0.08);
-  color: var(--wx-green);
+@media (hover: hover) {
+  .empty-state-btn:hover {
+    background: rgba(7, 193, 96, 0.08);
+    color: var(--wx-green);
+  }
 }
 
 .empty-state-btn:focus-visible {

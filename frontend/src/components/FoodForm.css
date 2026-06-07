@@ -70,8 +70,10 @@
   background: var(--wx-bar-bg);
 }
 
-.food-form-image-wrap:hover {
-  border-color: var(--wx-green);
+@media (hover: hover) {
+  .food-form-image-wrap:hover {
+    border-color: var(--wx-green);
+  }
 }
 
 .food-form-file-input {
@@ -137,8 +139,10 @@
   color: #fff;
 }
 
-.food-form-btn-primary:hover {
-  background: var(--wx-green-dark);
+@media (hover: hover) {
+  .food-form-btn-primary:hover {
+    background: var(--wx-green-dark);
+  }
 }
 
 .food-form-btn-secondary {
@@ -147,6 +151,8 @@
   border: 1px solid var(--wx-border);
 }
 
-.food-form-btn-secondary:hover {
-  background: var(--wx-bar-bg);
+@media (hover: hover) {
+  .food-form-btn-secondary:hover {
+    background: var(--wx-bar-bg);
+  }
 }

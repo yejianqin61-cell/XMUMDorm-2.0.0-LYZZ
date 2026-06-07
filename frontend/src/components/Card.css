@@ -12,8 +12,10 @@
   transition: background 0.2s;
 }
 
-.card:hover {
-  background: var(--wx-bar-bg);
+@media (hover: hover) {
+  .card:hover {
+    background: var(--wx-bar-bg);
+  }
 }
 
 .card:focus-visible {

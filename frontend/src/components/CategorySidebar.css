@@ -67,9 +67,11 @@
   z-index: 1;
 }
 
-.category-sidebar-item:hover {
-  background: rgba(0, 0, 0, 0.04);
-  color: var(--wx-text);
+@media (hover: hover) {
+  .category-sidebar-item:hover {
+    background: rgba(0, 0, 0, 0.04);
+    color: var(--wx-text);
+  }
 }
 
 .category-sidebar-item.active {

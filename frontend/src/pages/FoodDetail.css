@@ -36,8 +36,10 @@
   border-radius: 8px;
 }
 
-.food-detail-back-btn:hover {
-  background: rgba(7, 193, 96, 0.08);
+@media (hover: hover) {
+  .food-detail-back-btn:hover {
+    background: rgba(7, 193, 96, 0.08);
+  }
 }
 
 /* Bottom floating action bar */
@@ -278,8 +280,10 @@
   color: var(--wx-text-secondary);
 }
 
-.food-detail-review-delete:hover {
-  color: var(--wx-red, #ee0a24);
+@media (hover: hover) {
+  .food-detail-review-delete:hover {
+    color: var(--wx-red, #ee0a24);
+  }
 }
 
 .food-detail-reply-delete {
@@ -292,9 +296,11 @@
   margin-left: 8px;
 }
 
-.food-detail-reply-delete:hover {
-  text-decoration: underline;
-  color: var(--wx-red, #ee0a24);
+@media (hover: hover) {
+  .food-detail-reply-delete:hover {
+    text-decoration: underline;
+    color: var(--wx-red, #ee0a24);
+  }
 }
 
 .food-detail-review-like {
@@ -307,8 +313,10 @@
   cursor: pointer;
 }
 
-.food-detail-review-like:hover {
-  background: rgba(0, 0, 0, 0.1);
+@media (hover: hover) {
+  .food-detail-review-like:hover {
+    background: rgba(0, 0, 0, 0.1);
+  }
 }
 
 .food-detail-review-like.is-liked {
@@ -325,8 +333,10 @@
   font-size: 12px;
 }
 
-.food-detail-review-reply-btn:hover {
-  text-decoration: underline;
+@media (hover: hover) {
+  .food-detail-review-reply-btn:hover {
+    text-decoration: underline;
+  }
 }
 
 /* 二级评论（仅展示，无点赞，缩进比一级短） */

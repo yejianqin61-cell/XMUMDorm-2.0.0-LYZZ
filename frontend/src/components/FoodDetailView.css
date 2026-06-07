@@ -108,8 +108,10 @@
   color: var(--wx-text-secondary);
 }
 
-.food-detail-view-delete:hover {
-  color: var(--wx-red, #ee0a24);
+@media (hover: hover) {
+  .food-detail-view-delete:hover {
+    color: var(--wx-red, #ee0a24);
+  }
 }
 
 .food-detail-view-rating {

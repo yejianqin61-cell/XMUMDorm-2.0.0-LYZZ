@@ -3,12 +3,17 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App.jsx';
 import './registerServiceWorker';
+import { initCapacitor } from './utils/capacitor';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <App />
   </StrictMode>,
 );
+
+// Capacitor: detect native platform without affecting web
+// Falls back silently to 'web' if @capacitor/core is unavailable
+initCapacitor();
 /*
 index.html 里有 <div id="root"></div>
         ↓

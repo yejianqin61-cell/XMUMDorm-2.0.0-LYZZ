@@ -182,16 +182,20 @@
   transition-delay: calc(var(--i, 0) * 70ms);
 }
 
-.rankings-row:hover {
-  filter: brightness(1.05);
+@media (hover: hover) {
+  .rankings-row:hover {
+    filter: brightness(1.05);
+  }
 }
 
 .rankings-row-static {
   cursor: default;
 }
 
-.rankings-row-static:hover {
-  background: transparent;
+@media (hover: hover) {
+  .rankings-row-static:hover {
+    background: transparent;
+  }
 }
 
 .rankings-badge {

@@ -56,8 +56,10 @@
   background: var(--wx-bar-bg);
 }
 
-.store-form-logo-wrap:hover {
-  border-color: var(--wx-green);
+@media (hover: hover) {
+  .store-form-logo-wrap:hover {
+    border-color: var(--wx-green);
+  }
 }
 
 .store-form-file-input {
@@ -123,8 +125,10 @@
   color: #fff;
 }
 
-.store-form-btn-primary:hover {
-  background: var(--wx-green-dark);
+@media (hover: hover) {
+  .store-form-btn-primary:hover {
+    background: var(--wx-green-dark);
+  }
 }
 
 .store-form-btn-secondary {
@@ -133,6 +137,8 @@
   border: 1px solid var(--wx-border);
 }
 
-.store-form-btn-secondary:hover {
-  background: var(--wx-bar-bg);
+@media (hover: hover) {
+  .store-form-btn-secondary:hover {
+    background: var(--wx-bar-bg);
+  }
 }

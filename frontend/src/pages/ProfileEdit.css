@@ -40,8 +40,10 @@
   display: block;
 }
 
-.profile-edit-avatar-wrap:hover {
-  border-color: var(--wx-green);
+@media (hover: hover) {
+  .profile-edit-avatar-wrap:hover {
+    border-color: var(--wx-green);
+  }
 }
 
 .profile-edit-avatar-input {
@@ -121,6 +123,8 @@
   cursor: pointer;
 }
 
-.profile-edit-btn:hover {
-  background: var(--wx-green-dark);
+@media (hover: hover) {
+  .profile-edit-btn:hover {
+    background: var(--wx-green-dark);
+  }
 }

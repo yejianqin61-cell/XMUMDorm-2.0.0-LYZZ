@@ -666,8 +666,10 @@
   backdrop-filter: blur(10px);
 }
 
-.mp-detail-carousel-arrow:hover {
-  background: rgba(0, 0, 0, 0.48);
+@media (hover: hover) {
+  .mp-detail-carousel-arrow:hover {
+    background: rgba(0, 0, 0, 0.48);
+  }
 }
 
 .mp-detail-carousel-arrow--left {

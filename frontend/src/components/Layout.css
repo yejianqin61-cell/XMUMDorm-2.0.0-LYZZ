@@ -197,12 +197,16 @@
   font-weight: 500;
 }
 
-.app-ann-know-btn:hover {
-  filter: brightness(1.06);
+@media (hover: hover) {
+  .app-ann-know-btn:hover {
+    filter: brightness(1.06);
+  }
 }
 
-.app-ann-know-all-btn:hover {
-  background: rgba(0, 0, 0, 0.08);
+@media (hover: hover) {
+  .app-ann-know-all-btn:hover {
+    background: rgba(0, 0, 0, 0.08);
+  }
 }
 
 /* ---------- Tab 滑动过渡（当前页滑出，新页滑入，微信风格缓动）---------- */

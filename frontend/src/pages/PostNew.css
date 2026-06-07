@@ -159,8 +159,10 @@
   transition: background 0.15s ease;
 }
 
-.postnew-image-add:hover {
-  background: var(--post-ios-fill-pressed, rgba(118, 118, 128, 0.18));
+@media (hover: hover) {
+  .postnew-image-add:hover {
+    background: var(--post-ios-fill-pressed, rgba(118, 118, 128, 0.18));
+  }
 }
 
 .postnew-file-input {
@@ -176,8 +178,10 @@
   color: var(--post-ios-tertiary-label, rgba(60, 60, 67, 0.36));
 }
 
-.postnew-image-add:hover .postnew-image-add-inner {
-  color: var(--post-ios-accent, #007aff);
+@media (hover: hover) {
+  .postnew-image-add:hover .postnew-image-add-inner {
+    color: var(--post-ios-accent, #007aff);
+  }
 }
 
 .postnew-submit {
@@ -195,8 +199,10 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.postnew-submit:hover:not(:disabled) {
-  filter: brightness(1.05);
+@media (hover: hover) {
+  .postnew-submit:hover:not(:disabled) {
+    filter: brightness(1.05);
+  }
 }
 
 .postnew-submit:disabled {

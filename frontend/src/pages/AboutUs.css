@@ -348,8 +348,10 @@
   transition: transform 120ms ease, filter 140ms ease, opacity 140ms ease;
 }
 
-.square-sticker--link:hover {
-  filter: brightness(1.04) drop-shadow(0 14px 26px rgba(2, 6, 23, 0.26));
+@media (hover: hover) {
+  .square-sticker--link:hover {
+    filter: brightness(1.04) drop-shadow(0 14px 26px rgba(2, 6, 23, 0.26));
+  }
 }
 
 .square-sticker--link:active {
@@ -460,12 +462,16 @@
   --danmaku-speed: 7s;
 }
 
-.square-sticker--link[data-id='trending']:hover {
-  transform: scale(1.03);
+@media (hover: hover) {
+  .square-sticker--link[data-id='trending']:hover {
+    transform: scale(1.03);
+  }
 }
 
-.square-sticker--link[data-id='trending']:hover {
-  --danmaku-speed: 5.5s; /* 高参与度：hover 加速 */
+@media (hover: hover) {
+  .square-sticker--link[data-id='trending']:hover {
+    --danmaku-speed: 5.5s; /* 高参与度：hover 加速 */
+  }
 }
 
 /* hover 扫光：只在 hover 时出现 */
@@ -486,9 +492,11 @@
   will-change: transform, opacity;
 }
 
-.square-sticker--link[data-id='trending']:hover::after {
-  opacity: 0.7;
-  animation: squareTrendingGlint 1.1s ease-in-out infinite;
+@media (hover: hover) {
+  .square-sticker--link[data-id='trending']:hover::after {
+    opacity: 0.7;
+    animation: squareTrendingGlint 1.1s ease-in-out infinite;
+  }
 }
 
 @keyframes squareTrendingGlint {
@@ -981,14 +989,21 @@
 }
 
 /* Focused attention：hover/按下时让角色更“跳”出来 */
-.square-sticker--link[data-id='freshman']:hover .square-sticker-img,
-.square-sticker--link[data-id='freshman']:active .square-sticker-img {
-  filter: saturate(1.22) contrast(1.18) drop-shadow(0 16px 28px rgba(2, 6, 23, 0.28));
+@media (hover: hover) {
+  
+  /* Focused attention：hover/按下时让角色更“跳”出来 */
+  .square-sticker--link[data-id='freshman']:hover .square-sticker-img,
+  .square-sticker--link[data-id='freshman']:active .square-sticker-img {
+    filter: saturate(1.22) contrast(1.18) drop-shadow(0 16px 28px rgba(2, 6, 23, 0.28));
+  }
 }
 
-.square-sticker--link[data-id='freshman']:hover::after,
-.square-sticker--link[data-id='freshman']:active::after {
-  opacity: 0.9;
+@media (hover: hover) {
+  
+  .square-sticker--link[data-id='freshman']:hover::after,
+  .square-sticker--link[data-id='freshman']:active::after {
+    opacity: 0.9;
+  }
 }
 
 /* Errands：高速奔跑体（仅对这一个贴图生效） */
@@ -1098,14 +1113,18 @@
 }
 
 /* Hover：Turbo Boost（频率×2 + 拖影更热、更亮） */
-.square-sticker--link[data-id='errands']:hover {
-  --errands-bob: 0.1s;
-  --errands-trail: rgba(249, 115, 22, 0.55);
+@media (hover: hover) {
+  .square-sticker--link[data-id='errands']:hover {
+    --errands-bob: 0.1s;
+    --errands-trail: rgba(249, 115, 22, 0.55);
+  }
 }
 
-.square-sticker--link[data-id='errands']:hover::after {
-  opacity: 0.38;
-  filter: blur(9px) drop-shadow(0 0 18px var(--errands-trail));
+@media (hover: hover) {
+  .square-sticker--link[data-id='errands']:hover::after {
+    opacity: 0.38;
+    filter: blur(9px) drop-shadow(0 0 18px var(--errands-trail));
+  }
 }
 
 /* 手机端（无 hover）加强点击反馈 */
@@ -1154,9 +1173,11 @@
   -webkit-backdrop-filter: blur(6px);
 }
 
-.square-sticker--link:hover .square-sticker-label {
-  transform: translate(-50%, calc(-50% - 2px));
-  filter: brightness(1.12) drop-shadow(0 0 8px rgba(255, 255, 255, 0.86)) drop-shadow(0 18px 30px rgba(2, 6, 23, 0.30));
+@media (hover: hover) {
+  .square-sticker--link:hover .square-sticker-label {
+    transform: translate(-50%, calc(-50% - 2px));
+    filter: brightness(1.12) drop-shadow(0 0 8px rgba(255, 255, 255, 0.86)) drop-shadow(0 18px 30px rgba(2, 6, 23, 0.30));
+  }
 }
 
 .square-sticker--link:active .square-sticker-label {

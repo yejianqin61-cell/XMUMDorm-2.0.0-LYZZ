@@ -103,9 +103,11 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.post-detail-more-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.75);
-  color: rgba(15, 23, 42, 0.85);
+@media (hover: hover) {
+  .post-detail-more-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.75);
+    color: rgba(15, 23, 42, 0.85);
+  }
 }
 
 .post-detail-more-btn:disabled {
@@ -398,9 +400,11 @@
   border-radius: var(--post-ios-radius-sm, 10px);
 }
 
-.post-detail-comment-delete:hover {
-  color: var(--post-ios-red, #ff3b30);
-  background: rgba(255, 59, 48, 0.08);
+@media (hover: hover) {
+  .post-detail-comment-delete:hover {
+    color: var(--post-ios-red, #ff3b30);
+    background: rgba(255, 59, 48, 0.08);
+  }
 }
 
 .post-detail-reply-delete {
@@ -414,8 +418,10 @@
   border-radius: var(--post-ios-radius-sm, 10px);
 }
 
-.post-detail-reply-delete:hover {
-  opacity: 0.65;
+@media (hover: hover) {
+  .post-detail-reply-delete:hover {
+    opacity: 0.65;
+  }
 }
 
 .post-detail-reply-btn {
@@ -431,8 +437,10 @@
   border-radius: 999px;
 }
 
-.post-detail-reply-btn:hover {
-  opacity: 0.65;
+@media (hover: hover) {
+  .post-detail-reply-btn:hover {
+    opacity: 0.65;
+  }
 }
 
 /* Threaded comments */

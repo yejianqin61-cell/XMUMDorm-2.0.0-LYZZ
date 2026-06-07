@@ -29,8 +29,10 @@
   text-decoration: none;
 }
 
-.food-manage-add:hover {
-  background: var(--wx-green-dark);
+@media (hover: hover) {
+  .food-manage-add:hover {
+    background: var(--wx-green-dark);
+  }
 }
 
 .food-manage-edit-shop {
@@ -45,8 +47,10 @@
   text-decoration: none;
 }
 
-.food-manage-edit-shop:hover {
-  background: rgba(7, 193, 96, 0.08);
+@media (hover: hover) {
+  .food-manage-edit-shop:hover {
+    background: rgba(7, 193, 96, 0.08);
+  }
 }
 
 .food-manage-add-category {
@@ -60,8 +64,10 @@
   cursor: pointer;
 }
 
-.food-manage-add-category:hover {
-  background: rgba(7, 193, 96, 0.08);
+@media (hover: hover) {
+  .food-manage-add-category:hover {
+    background: rgba(7, 193, 96, 0.08);
+  }
 }
 
 .food-manage-category-form {
@@ -96,8 +102,10 @@
   cursor: pointer;
 }
 
-.food-manage-category-btn:hover:not(:disabled) {
-  background: var(--wx-green-dark);
+@media (hover: hover) {
+  .food-manage-category-btn:hover:not(:disabled) {
+    background: var(--wx-green-dark);
+  }
 }
 
 .food-manage-category-btn:disabled {
@@ -114,8 +122,10 @@
   cursor: pointer;
 }
 
-.food-manage-category-cancel:hover {
-  text-decoration: underline;
+@media (hover: hover) {
+  .food-manage-category-cancel:hover {
+    text-decoration: underline;
+  }
 }
 
 .food-manage-list {

@@ -118,8 +118,10 @@
   border: 1px solid var(--wx-green);
 }
 
-.food-card-action-edit:hover {
-  background: rgba(7, 193, 96, 0.08);
+@media (hover: hover) {
+  .food-card-action-edit:hover {
+    background: rgba(7, 193, 96, 0.08);
+  }
 }
 
 .food-card-action-delete {
@@ -127,8 +129,10 @@
   border: 1px solid #e64340;
 }
 
-.food-card-action-delete:hover {
-  background: rgba(230, 67, 64, 0.08);
+@media (hover: hover) {
+  .food-card-action-delete:hover {
+    background: rgba(230, 67, 64, 0.08);
+  }
 }
 
 .food-card-wrap-merchant {
