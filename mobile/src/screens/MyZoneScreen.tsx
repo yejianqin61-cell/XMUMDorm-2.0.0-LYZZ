@@ -3,7 +3,7 @@ import { View, Text, Pressable, Image, ScrollView, StyleSheet, ActivityIndicator
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { apiGet } from '../api/client';
+import { apiGet } from '../utils/http';
 import { API_BASE_URL } from '../api/config';
 import { getLevelByExp, getExpProgress, getBadgeForLevel } from '../context/ExpFeedbackContext';
 

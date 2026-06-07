@@ -52,7 +52,7 @@ jest.mock('@react-native-async-storage/async-storage', () => {
 jest.mock('react-native', () => ({ Platform: { OS: 'ios' } }));
 jest.mock('react-native-safe-area-context', () => ({ SafeAreaView: ({ children }) => children }));
 jest.mock('../../src/context/AuthContext', () => ({ useAuth: () => ({ isLoggedIn: true }), STORAGE_TOKEN: 'token' }));
-jest.mock('../../src/api/client', () => ({
+jest.mock('../../src/utils/http', () => ({
   apiGet: jest.fn(() => Promise.resolve({ status: 0, data: {} })),
   apiPost: jest.fn(() => Promise.resolve({ status: 0, data: {} })),
   apiDelete: jest.fn(() => Promise.resolve({ status: 0, data: {} })),

@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { apiPost } from '../api/client';
+import { apiPost } from '../utils/http';
 
 const PUSH_TOKEN_KEY = 'fcm_push_token';
 const PUSH_REGISTERED_KEY = 'fcm_push_registered';

@@ -1,4 +1,4 @@
-import { get, post } from './request';
+import { get, post } from '../utils/http';
 
 export function previewScheduleImport(text) {
   return post('/api/schedule/import/preview', { text });

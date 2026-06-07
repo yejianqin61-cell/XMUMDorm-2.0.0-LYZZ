@@ -1,4 +1,4 @@
-import { get, post } from './request';
+import { get, post } from '../utils/http';
 
 export function getPushVapidPublicKey() {
   return get('/api/push/vapid-public-key', { skipAuth: true });

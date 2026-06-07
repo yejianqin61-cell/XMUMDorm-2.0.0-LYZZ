@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
-import { apiGet } from '../api/client';
+import { apiGet } from '../utils/http';
 
 export default function AdminDashboardScreen({ onNavigate }: { onNavigate: (v: any) => void }) {
   const [data, setData] = useState<any>(null);

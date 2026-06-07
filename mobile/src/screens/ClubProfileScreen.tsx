@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
-import { apiGet, apiPost } from '../api/client';
+import { apiGet, apiPost } from '../utils/http';
 import { fmtTime, prefixImg } from '../utils';
 
 

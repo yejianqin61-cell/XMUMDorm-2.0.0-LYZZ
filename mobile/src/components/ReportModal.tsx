@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, TextInput, Modal, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { useAuth } from '../context/AuthContext';
-import { apiPost } from '../api/client';
+import { apiPost } from '../utils/http';
 
 const REASONS = [
   { key: 'spam', label: '垃圾广告' },

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, TextInput, FlatList, Alert, StyleSheet, ActivityIndicator } from 'react-native';
-import { apiGet, apiPost, apiDelete } from '../api/client';
+import { apiGet, apiPost, apiDelete } from '../utils/http';
 
 export default function AdminOrgDetailScreen({ orgId, orgName, onBack }: { orgId: number; orgName: string; onBack: () => void }) {
   const [members, setMembers] = useState<any[]>([]);

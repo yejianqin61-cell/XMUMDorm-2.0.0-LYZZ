@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, FlatList, Image, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { apiGet } from '../api/client';
+import { apiGet } from '../utils/http';
 import { prefixImg } from '../utils';
 
 export default function CanteenSearchScreen({ onBack, onSelect }: { onBack: () => void; onSelect: (p: any) => void }) {

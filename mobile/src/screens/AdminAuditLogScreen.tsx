@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
-import { apiGet } from '../api/client';
+import { apiGet } from '../utils/http';
 
 const ACTION_MAP: Record<string, string> = {
   ADMIN_BAN_USER: '封禁用户', ADMIN_UNBAN_USER: '解封用户', ADMIN_MUTE_USER: '禁言用户',

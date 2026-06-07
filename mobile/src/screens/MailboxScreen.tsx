@@ -3,7 +3,7 @@ import { View, Text, Pressable, FlatList, StyleSheet, ActivityIndicator, Alert }
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { apiGet } from '../api/client';
+import { apiGet } from '../utils/http';
 import { API_BASE_URL } from '../api/config';
 
 

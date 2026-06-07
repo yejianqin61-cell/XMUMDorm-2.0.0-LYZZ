@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, TextInput, FlatList, Modal, Alert, StyleSheet, ActivityIndicator } from 'react-native';
-import { apiGet, apiPost, apiDelete } from '../api/client';
+import { apiGet, apiPost, apiDelete } from '../utils/http';
 
 export default function AdminAnnouncementScreen({ onBack }: { onBack: () => void }) {
   const [items, setItems] = useState<any[]>([]);

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Pressable, Image, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
-import { apiGet } from '../api/client';
+import { apiGet } from '../utils/http';
 import { prefixImg } from '../utils';
 
 export default function CanteenHomeScreen({ onNavigate }: { onNavigate: (screen: string, params?: any) => void }) {

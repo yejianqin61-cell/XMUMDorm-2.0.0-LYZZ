@@ -1,7 +1,7 @@
 /**
  * 排行榜 API，与后端 /api/canteen/rankings/* 对应
  */
-import { get } from './request';
+import { get } from '../utils/http';
 
 export function getRankingsHotProducts() {
   return get('/api/canteen/rankings/hot-products');

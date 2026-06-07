@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, ScrollView, TextInput, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
-import { apiGet, apiPost, apiDelete } from '../api/client';
+import { apiGet, apiPost, apiDelete } from '../utils/http';
 
 export default function CourseReviewDetailScreen({ reviewId, onBack, onEdit }: { reviewId: number; onBack: () => void; onEdit: (id: number) => void }) {
   const [review, setReview] = useState<any>(null);

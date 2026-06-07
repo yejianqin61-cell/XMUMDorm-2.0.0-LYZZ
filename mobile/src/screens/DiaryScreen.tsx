@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, Modal, StyleSheet, ActivityIndicator, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
-import { apiGet, apiPost } from '../api/client';
+import { apiGet, apiPost } from '../utils/http';
 
 const MOODS = ['🍃', '☀️', '✨', '🌧️', '🌙', '🫶', '😵‍💫', '😌'];
 const HEAT_LEVELS = [

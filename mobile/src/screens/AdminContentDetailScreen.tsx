@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, ScrollView, Alert, StyleSheet, ActivityIndicator } from 'react-native';
-import { apiGet, apiPatch, apiDelete } from '../api/client';
+import { apiGet, apiPatch, apiDelete } from '../utils/http';
 
 export default function AdminContentDetailScreen({ module: mod, id, onBack }: { module: string; id: number; onBack: () => void }) {
   const [item, setItem] = useState<any>(null);

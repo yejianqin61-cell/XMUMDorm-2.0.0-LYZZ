@@ -1,7 +1,7 @@
 /**
  * Handbook API（/api/handbook）
  */
-import { get, post, patch, del, request } from './request';
+import { get, post, patch, del, request } from '../utils/http';
 
 export function getHandbookTabs() {
   return get('/api/handbook/tabs');

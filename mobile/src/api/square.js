@@ -1,7 +1,7 @@
 /**
  * 广场系统 API（热搜 + 校园此刻）
  */
-import { get, post, patch, del } from './request';
+import { get, post, patch, del } from '../utils/http';
 
 // ---------- 热搜 ----------
 export function getTrendingTopics() {

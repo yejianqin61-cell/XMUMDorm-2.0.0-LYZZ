@@ -1,4 +1,4 @@
-import { del, get, post, patch } from './request';
+import { del, get, post, patch } from '../utils/http';
 
 export function getMarketplaceCategories() {
   return get('/api/marketplace/categories');

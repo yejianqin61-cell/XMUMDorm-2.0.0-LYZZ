@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, TextInput, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
-import { apiGet } from '../api/client';
+import { apiGet } from '../utils/http';
 
 export default function AdminUserListScreen({ onBack, onUser }: { onBack: () => void; onUser: (id: number) => void }) {
   const [users, setUsers] = useState<any[]>([]);

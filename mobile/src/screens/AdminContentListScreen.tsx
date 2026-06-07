@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, TextInput, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
-import { apiGet } from '../api/client';
+import { apiGet } from '../utils/http';
 
 const MODULES = [
   { key: 'treehole', label: '树洞' }, { key: 'canteen', label: '食堂' }, { key: 'trending', label: '热搜' },

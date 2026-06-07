@@ -2,7 +2,7 @@
  * 管理员后台 API
  * 所有接口需要管理员权限，后端会校验
  */
-import { get, post, patch, del } from './request';
+import { get, post, patch, del } from '../utils/http';
 
 // ─── Dashboard ────────────────────────────────────────────
 
@@ -105,3 +105,10 @@ export function getAdminAuditLogs({ page, pageSize, userId, action } = {}) {
   const qs = params.toString();
   return get(`/api/admin/audit-logs${qs ? `?${qs}` : ''}`);
 }
+//这踏马的已经是远古文件了，可以说是屎山的底座了
+//来时路，去时路，都是路，路是人走出来的
+//不管是屎山还是金山，都是人走出来的
+//所以，继续走吧，继续写吧，继续改吧  
+//继续走，继续写，继续改，直到走出一条路来
+//哈基米，哈基米，哈基米
+//2026.6.6到此回顾

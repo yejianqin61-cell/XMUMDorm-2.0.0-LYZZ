@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
-import { apiGet } from '../api/client';
+import { apiGet } from '../utils/http';
 
 const STATUS_TABS = [
   { key: '', label: '全部' }, { key: 'pending', label: '待处理' },

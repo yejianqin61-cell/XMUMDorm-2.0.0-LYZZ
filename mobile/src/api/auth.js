@@ -2,7 +2,7 @@
  * 认证 API：登录、注册
  * 使用 requestRaw 以获取 token（登录/注册响应在顶层返回 token）
  */
-import { requestRaw } from './request';
+import { requestRaw } from '../utils/http';
 import { getApiErrorMessage } from '../utils/apiError';
 
 /** 从 requestRaw 的 JSON 中取用户可读错误（优先后端 message，否则按 HTTP 状态兜底） */

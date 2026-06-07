@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, Alert, StyleSheet, ActivityIndicator } from 'react-native';
-import { apiGet, apiPatch } from '../api/client';
+import { apiGet, apiPatch } from '../utils/http';
 
 export default function AdminConfigScreen({ onBack }: { onBack: () => void }) {
   const [configs, setConfigs] = useState<Record<string, string>>({});

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { setCachedToken } from '../api/request';
+import { setCachedToken } from '../utils/http';
 import { API_BASE_URL } from '../api/config';
 
 const STORAGE_TOKEN = 'token';

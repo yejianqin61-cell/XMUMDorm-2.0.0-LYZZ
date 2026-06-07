@@ -1,7 +1,7 @@
 /**
  * 用户 API，与后端 /api/users 对应
  */
-import { get, patch, request } from './request';
+import { get, patch, request } from '../utils/http';
 
 export function getMe() {
   return get('/api/users/me');

@@ -1,4 +1,4 @@
-import { get, post, patch, del } from './request';
+import { get, post, patch, del } from '../utils/http';
 
 /** 删除社团活动（社团管理员 / 站管理员） */
 export function deleteClubActivity(activityId) {

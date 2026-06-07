@@ -1,7 +1,7 @@
 /**
  * 组织系统 API
  */
-import { get, post, patch, del } from './request';
+import { get, post, patch, del } from '../utils/http';
 
 export function getMyOrganizations() {
   return get('/api/organizations/me');

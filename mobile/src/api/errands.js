@@ -1,4 +1,4 @@
-import { del, get, post } from './request';
+import { del, get, post } from '../utils/http';
 
 export function listErrands(params = {}) {
   const qs = new URLSearchParams();

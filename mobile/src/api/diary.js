@@ -1,7 +1,7 @@
 /**
  * 日记本 API，与后端 /api/diary 对应
  */
-import { get, post } from './request';
+import { get, post } from '../utils/http';
 
 // 获取某天日记（默认今天），date 格式：YYYY-MM-DD
 export function getDiaryDay(date) {

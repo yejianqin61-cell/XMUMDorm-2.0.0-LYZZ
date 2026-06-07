@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, TextInput, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { apiGet } from '../api/client';
+import { apiGet } from '../utils/http';
 
 const TAG_OPTIONS = ['MPU', 'GE', 'ME', 'required', 'final', 'no final'];
 const TAG_LABELS: Record<string, string> = { MPU: 'MPU', GE: 'GE', ME: 'ME', required: '必修', final: '有期末', 'no final': '无期末' };

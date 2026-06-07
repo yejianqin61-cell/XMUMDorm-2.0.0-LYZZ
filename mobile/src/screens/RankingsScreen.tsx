@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { apiGet } from '../api/client';
+import { apiGet } from '../utils/http';
 
 export default function RankingsScreen({ onBack }: { onBack: () => void }) {
   const [rankings, setRankings] = useState<any[]>([]);

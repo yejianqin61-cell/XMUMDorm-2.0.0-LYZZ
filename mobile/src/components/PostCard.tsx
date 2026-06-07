@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Image, Pressable, StyleSheet, Alert } from 'react-native';
 import { useAuth } from '../context/AuthContext';
-import { apiPost } from '../api/client';
+import { apiPost } from '../utils/http';
 
 import { getUploadUrl } from '../api/config';
 

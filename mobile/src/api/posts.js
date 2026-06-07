@@ -2,7 +2,7 @@
  * 帖子 API，与后端 /api/posts 对应
  * 统一使用 request 工具
  */
-import { get, post, del, request } from './request';
+import { get, post, del, request } from '../utils/http';
 
 export function getPostList(options = {}) {
   const { page = 1, pageSize = 10, token, q, tagId, tagSlug } = options;

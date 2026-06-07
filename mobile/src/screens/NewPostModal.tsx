@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, Image, Modal, StyleSheet, Alert, ScrollView, ActivityIndicator } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../context/AuthContext';
-import { apiPost } from '../api/client';
+import { apiPost } from '../utils/http';
 
 interface Props { visible: boolean; onClose: () => void; onCreated: () => void; }
 

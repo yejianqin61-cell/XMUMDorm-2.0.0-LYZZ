@@ -3,7 +3,7 @@
  * 统一使用 request 工具
  */
 import { API_BASE_URL, getUploadUrl } from './config';
-import { get, post, patch, del, request } from './request';
+import { get, post, patch, del, request } from '../utils/http';
 
 // ---------- 区域与店铺 ----------
 export function getRegions() {

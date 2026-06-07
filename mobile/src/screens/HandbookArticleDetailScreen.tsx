@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, Image, ScrollView, TextInput, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
-import { apiGet, apiPost, apiDelete } from '../api/client';
+import { apiGet, apiPost, apiDelete } from '../utils/http';
 import { fmtTime, prefixImg } from '../utils';
 
 

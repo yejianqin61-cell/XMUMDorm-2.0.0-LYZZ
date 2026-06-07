@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, TextInput, FlatList, Alert, StyleSheet, ActivityIndicator } from 'react-native';
-import { apiGet, apiPost, apiPatch, apiDelete } from '../api/client';
+import { apiGet, apiPost, apiPatch, apiDelete } from '../utils/http';
 
 export default function AdminSensitiveWordsScreen({ onBack }: { onBack: () => void }) {
   const [words, setWords] = useState<any[]>([]);

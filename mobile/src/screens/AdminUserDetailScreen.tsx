@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, Alert, StyleSheet, ActivityIndicator, Modal } from 'react-native';
-import { apiGet, apiPost, apiDelete } from '../api/client';
+import { apiGet, apiPost, apiDelete } from '../utils/http';
 
 const DURATIONS = [
   { label: '1天', value: 1 }, { label: '3天', value: 3 }, { label: '7天', value: 7 },

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, FlatList, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
-import { apiGet, apiPost, apiPatch, apiDelete } from '../api/client';
+import { apiGet, apiPost, apiPatch, apiDelete } from '../utils/http';
 
 const LIST_TYPES = [
   { key: 'all', label: '全部' },

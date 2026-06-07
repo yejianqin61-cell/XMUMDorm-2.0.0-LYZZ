@@ -1,7 +1,7 @@
 /**
  * 通知 API，与后端 /api/notifications 对应
  */
-import { del, get, patch } from './request';
+import { del, get, patch } from '../utils/http';
 
 export function getNotifications(options = {}) {
   const { page = 1, pageSize = 20, type, is_read, module: mod } = options;

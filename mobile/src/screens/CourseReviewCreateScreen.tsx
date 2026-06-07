@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
-import { apiGet, apiPost, apiPatch } from '../api/client';
+import { apiGet, apiPost, apiPatch } from '../utils/http';
 
 const TAG_OPTIONS = ['MPU', 'GE', 'ME', 'required', 'final', 'no final'];
 const TAG_LABELS: Record<string, string> = { MPU: 'MPU', GE: 'GE', ME: 'ME', required: '必修', final: '有期末', 'no final': '无期末' };

@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
-import { apiGet } from '../api/client';
+import { apiGet } from '../utils/http';
 import { fmtTime, fmtDeadline } from '../utils';
 
 const TYPE_TABS = [

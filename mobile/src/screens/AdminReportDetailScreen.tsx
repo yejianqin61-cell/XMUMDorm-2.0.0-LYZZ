@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, Alert, StyleSheet, ActivityIndicator } from 'react-native';
-import { apiGet, apiPatch } from '../api/client';
+import { apiGet, apiPatch } from '../utils/http';
 
 const ACTIONS = [
   { key: 'dismiss', label: '忽略举报', color: '#f1f5f9', textColor: '#64748b' },

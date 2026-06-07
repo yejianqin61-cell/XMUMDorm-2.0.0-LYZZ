@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
-import { apiPost } from '../api/client';
+import { apiPost } from '../utils/http';
 
 interface Props { onBack: () => void; onDone: (newId: number) => void; }
 

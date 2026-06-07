@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
-import { apiGet, apiPost, apiPatch } from '../api/client';
+import { apiGet, apiPost, apiPatch } from '../utils/http';
 
 const DORM_AREAS = ['LY1', 'LY2', 'LY4', 'LY5', 'LY6', 'LY7', 'LY8', 'LY9', 'D1', 'D2', 'D3', 'D4', 'D5'];
 

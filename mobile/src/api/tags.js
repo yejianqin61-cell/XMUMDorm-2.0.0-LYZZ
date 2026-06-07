@@ -1,4 +1,4 @@
-import { get, patch } from './request';
+import { get, patch } from '../utils/http';
 
 export async function getVisibleTags() {
   return get('/api/posts/tags/visible');

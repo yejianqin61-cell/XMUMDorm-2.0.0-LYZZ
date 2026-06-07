@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
-import { apiGet, apiPost, apiPatch } from '../api/client';
+import { apiGet, apiPost, apiPatch } from '../utils/http';
 
 export default function HandbookEditorScreen({ editId, onBack, onDone }: { editId?: number; onBack: () => void; onDone: () => void }) {
   const isEdit = !!editId;

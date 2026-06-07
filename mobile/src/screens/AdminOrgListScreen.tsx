@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, TextInput, FlatList, Modal, Alert, StyleSheet, ActivityIndicator } from 'react-native';
-import { apiGet, apiPost, apiPatch } from '../api/client';
+import { apiGet, apiPost, apiPatch } from '../utils/http';
 
 const ORG_TYPES = [
   { key: 'SchoolDepartment', label: '学校部门' },

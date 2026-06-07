@@ -1,4 +1,4 @@
-import { get, post, patch, del } from './request';
+import { get, post, patch, del } from '../utils/http';
 
 export function getTodos(options = {}) {
   const params = new URLSearchParams();
