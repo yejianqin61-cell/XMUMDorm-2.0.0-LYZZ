@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XMUMDorm 开发公报 — 2026-06-07</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap');
+  :root {
+    --bg:#0a0a0f; --surface:rgba(255,255,255,0.04); --border:rgba(255,255,255,0.08);
+    --text:#e8e8ef; --text2:#9898a8; --text3:#686878; --green:#00d2a0; --yellow:#ffd93d;
+    --red:#ff6b6b; --blue:#54a0ff; --accent:#6c5ce7;
+    --gradient:linear-gradient(135deg,#00d2a0 0%,#54a0ff 100%);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.75;-webkit-font-smoothing:antialiased}
+  .bg-grid{position:fixed;top:0;left:0;width:100%;height:100%;background-image:radial-gradient(rgba(0,210,160,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+  .container{max-width:1100px;margin:0 auto;padding:0 32px;position:relative;z-index:1}
+
+  .header{padding:80px 0 60px;text-align:center;border-bottom:1px solid var(--border);margin-bottom:60px}
+  .header .badge{display:inline-block;background:var(--gradient);color:#0a0a0f;padding:6px 20px;border-radius:20px;font-size:13px;font-weight:700;letter-spacing:.5px;margin-bottom:24px}
+  .header h1{font-size:44px;font-weight:900;letter-spacing:-1px;margin-bottom:8px}
+  .header h1 span{background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .header .sub{color:var(--text2);font-size:18px;font-weight:300}
+  .header .meta{margin-top:24px;display:flex;gap:32px;justify-content:center;color:var(--text3);font-size:14px}
+  .header .meta span{color:var(--text2);font-weight:500}
+
+  .milestone{background:var(--gradient);border-radius:20px;padding:48px;margin-bottom:60px;color:#0a0a0f;text-align:center}
+  .milestone .big{font-size:64px;font-weight:900;line-height:1}
+  .milestone h2{font-size:28px;margin:8px 0}
+
+  section{margin-bottom:60px}
+  section h2{font-size:28px;font-weight:700;margin-bottom:8px;letter-spacing:-.5px}
+  section .desc{color:var(--text3);margin-bottom:24px;font-size:14px}
+
+  .glass{background:rgba(15,15,25,0.8);border:1px solid var(--border);border-radius:16px;padding:32px;margin-bottom:20px;backdrop-filter:blur(20px)}
+  .glass h3{font-size:20px;font-weight:700;margin-bottom:16px}
+
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th{text-align:left;padding:12px 16px;color:var(--text3);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+  td{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.03)}
+  tr:last-child td{border-bottom:none}
+
+  .score-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
+  .score{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px 20px;text-align:center}
+  .score .num{font-size:42px;font-weight:900}
+  .score .label{color:var(--text3);font-size:12px;margin-top:4px}
+  .num.g{color:var(--green)} .num.y{color:var(--yellow)} .num.b{color:var(--blue)}
+
+  .bar{height:8px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden;margin-top:6px}
+  .bar-f{height:100%;border-radius:4px}
+  .bar-f.g{background:var(--green)} .bar-f.y{background:var(--yellow)} .bar-f.b{background:var(--blue)}
+
+  .commit-log{font-family:'JetBrains Mono',monospace;font-size:13px;background:rgba(0,0,0,0.3);border-radius:12px;padding:24px;line-height:2}
+  .commit-log .hash{color:var(--yellow)} .commit-log .msg{color:var(--text2)}
+
+  .lesson-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+  .lesson{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;border-left:3px solid var(--accent)}
+  .lesson h4{font-size:15px;font-weight:600;margin-bottom:8px;color:var(--green)}
+  .lesson p{color:var(--text2);font-size:13px;line-height:1.6}
+
+  .road{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .road-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px;text-align:center}
+  .road-card h4{margin-bottom:12px}
+  .road-card p{color:var(--text2);font-size:13px;margin-bottom:6px}
+
+  .footer{border-top:1px solid var(--border);padding:40px 0;text-align:center;color:var(--text3);font-size:13px;margin-top:80px}
+
+  @media(max-width:768px){.score-row{grid-template-columns:repeat(2,1fr)}.road{grid-template-columns:1fr}.header h1{font-size:28px}}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="container">
+
+<!-- HEADER -->
+<div class="header">
+  <div class="badge">开发公报 · Development Bulletin</div>
+  <h1><span>XMUMDorm 开发公报</span></h1>
+  <p class="sub">Capacitor 迁移 · Agent 架构建设 · 移动端重构 · 2026-06-07</p>
+  <div class="meta">
+    <div>日期 <span>2026-06-07</span></div>
+    <div>版本 <span>V3.0 → V3.1-Capacitor</span></div>
+    <div>提交数 <span>13 commits</span></div>
+    <div>文件变更 <span>144 files, +2,399 / -181</span></div>
+  </div>
+</div>
+
+<!-- MILESTONE -->
+<div class="milestone">
+  <div class="big">🎉</div>
+  <h2>里程碑：Dorm Android App 成功运行</h2>
+  <p style="opacity:0.85">Web 前端（86 pages · CSS 液态玻璃 · TanStack Query）通过 Capacitor 打包为原生 Android APK，安装到真机，连接 Railway 生产后端，数据传输正常。</p>
+</div>
+
+<!-- ===== EXECUTIVE SUMMARY ===== -->
+<section>
+  <h2>一、执行摘要</h2>
+
+  <div class="score-row">
+    <div class="score"><div class="num g">13</div><div class="label">今日提交</div></div>
+    <div class="score"><div class="num b">144</div><div class="label">文件变更</div></div>
+    <div class="score"><div class="num g">108/108</div><div class="label">测试通过</div></div>
+    <div class="score"><div class="num y">1</div><div class="label">突破性难题解决</div></div>
+  </div>
+
+  <div class="glass">
+    <h3>今日三大成果</h3>
+    <table>
+      <tr><td style="width:180px"><strong>Capacitor 打包</strong></td><td>Web 前端 → Android APK 完成。安装真机，连接 Railway 后端，数据正常。</td></tr>
+      <tr><td><strong>Agent-Native 架构</strong></td><td>8 个 Agent 定义 + 10 个 Skills + 5 套 Rules + 6 个 Templates + 3 个 Commands。文档即通信协议。</td></tr>
+      <tr><td><strong>移动端重构</strong></td><td>RN 遗留架构债清理：Expo Router、API 统一、TreeholeScreen 549→130 行、Hooks 体系。</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ===== MODULE PROGRESS ===== -->
+<section>
+  <h2>二、各模块进度评估</h2>
+
+  <div class="glass">
+    <h3>模块完成度矩阵</h3>
+    <table>
+      <thead><tr><th>模块</th><th>完成度</th><th>今日变化</th><th>状态</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Capacitor 打包</strong></td><td><div style="width:120px"><div class="bar"><div class="bar-f g" style="width:90%"></div></div></div></td><td>从 0% 到 90%</td><td>🟢 APK 已安装真机</td></tr>
+        <tr><td><strong>Agent 架构</strong></td><td><div style="width:120px"><div class="bar"><div class="bar-f g" style="width:100%"></div></div></div></td><td>完整新建</td><td>🟢 42 文件就绪</td></tr>
+        <tr><td><strong>React Native 修复</strong></td><td><div style="width:120px"><div class="bar"><div class="bar-f g" style="width:95%"></div></div></div></td><td>4 个 Task 完成</td><td>🟢 416 tests 全绿</td></tr>
+        <tr><td><strong>Docs 重组</strong></td><td><div style="width:120px"><div class="bar"><div class="bar-f g" style="width:100%"></div></div></div></td><td>10 层生命周期</td><td>🟢 完成</td></tr>
+        <tr><td><strong>Safe Area 适配</strong></td><td><div style="width:120px"><div class="bar"><div class="bar-f g" style="width:95%"></div></div></div></td><td>从 60% 到 95%</td><td>🟢 Android 已验证</td></tr>
+        <tr><td><strong>Hover→Touch</strong></td><td><div style="width:120px"><div class="bar"><div class="bar-f g" style="width:100%"></div></div></div></td><td>76 处全部包裹</td><td>🟢 完成</td></tr>
+        <tr><td><strong>图标系统</strong></td><td><div style="width:120px"><div class="bar"><div class="bar-f g" style="width:100%"></div></div></div></td><td>88 个平台资源</td><td>🟢 完成</td></tr>
+        <tr><td><strong>iOS 打包</strong></td><td><div style="width:120px"><div class="bar"><div class="bar-f y" style="width:20%"></div></div></div></td><td>Xcode 项目就绪</td><td>🟡 缺 Mac</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ===== CODE STATISTICS ===== -->
+<section>
+  <h2>三、代码统计</h2>
+
+  <div class="glass">
+    <h3>今日提交记录（13 commits）</h3>
+    <div class="commit-log">
+<div><span class="hash">287ea22</span> <span class="msg">feat(capacitor): App Icon 生成 — 1 张源图 → 88 个平台资源</span></div>
+<div><span class="hash">f992744</span> <span class="msg">feat(capacitor): Task04 — Deep Links + Vite external config</span></div>
+<div><span class="hash">fb1d781</span> <span class="msg">feat(capacitor): Task03 — 原生插件集成 (Push + Camera + StatusBar + Splash)</span></div>
+<div><span class="hash">897f872</span> <span class="msg">feat(capacitor): Task02 — UI 适配 (Safe Area + Hover→Touch + 响应式)</span></div>
+<div><span class="hash">ec54df3</span> <span class="msg">feat(capacitor): Task01 — Capacitor 基础安装与配置</span></div>
+<div><span class="hash">4e96012</span> <span class="msg">docs: Capacitor 迁移 Task 文档 — 4 Phase / 18 子任务</span></div>
+<div><span class="hash">767f4ed</span> <span class="msg">docs: Capacitor 迁移评估报告 — 科普 + 可行性 + 待做清单</span></div>
+<div><span class="hash">e59becb</span> <span class="msg">refactor(mobile): Task02+03 — TreeholeScreen 拆分 + Hooks + Skeleton</span></div>
+<div><span class="hash">63d9ad9</span> <span class="msg">feat(mobile): Task01 — Expo Router 架构迁移</span></div>
+<div><span class="hash">443a44a</span> <span class="msg">fix(mobile): Task04 — API 层统一规范化 (78 files, 416 tests)</span></div>
+<div><span class="hash">05f0ffa</span> <span class="msg">docs: 移动端重构 Task 文档 — 4 模块 17 子任务</span></div>
+<div><span class="hash">f2c41dd</span> <span class="msg">feat: 增强 Backend Agent & Mobile Agent — 工作目录/Workflow/质量门禁</span></div>
+<div><span class="hash">21dc248</span> <span class="msg">docs: 移动端 App 项目审计报告 V3.0（HTML）</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== DIFFICULTIES & LESSONS ===== -->
+<section>
+  <h2>四、今日开发难题 & 解决方案</h2>
+
+  <div class="glass">
+    <h3>🔴 难题 #1：Android Safe Area — 状态栏遮挡内容（耗时最长）</h3>
+    <p style="color:var(--text2);margin-bottom:16px">
+      <strong>现象</strong>：APK 安装到真机后，所有页面顶部文字和状态栏（时间、电量、信号）重叠，登录页标题被遮挡。<br>
+      <strong>尝试过的方案（均失败）</strong>：
+    </p>
+    <table>
+      <tr><td>❌ CSS <code>padding-top: 28px</code> 硬编码</td><td>不同机型状态栏高度不同（24-48px），硬编码不适配</td></tr>
+      <tr><td>❌ CSS <code>env(safe-area-inset-top)</code></td><td>Android WebView 永远返回 0，此 CSS 函数在 Android 上无效</td></tr>
+      <tr><td>❌ <code>StatusBar.setOverlaysWebView({ overlay: false })</code></td><td>Android 15+ Edge-to-Edge 强制 overlay，此 API 被无视</td></tr>
+      <tr><td>❌ <code>@capacitor/status-bar</code> 动态 import</td><td>Vite <code>rollupOptions.external</code> 导致 WebView 中模块无法解析</td></tr>
+      <tr><td>❌ <code>styles.xml</code> 加 <code>windowTranslucentStatus</code></td><td>与 Capacitor WebView 主题冲突，App 闪退</td></tr>
+      <tr><td>❌ <code>window.Capacitor.Plugins.StatusBar</code> 立即调用</td><td>Capacitor 桥未初始化完成时访问，返回 undefined</td></tr>
+    </table>
+  </div>
+
+  <div class="glass">
+    <h3>✅ 最终解决方案</h3>
+    <p style="color:var(--green);font-weight:600;font-size:16px;margin-bottom:12px">
+      setTimeout(500ms) + window.Capacitor 全局 + .then().catch() 模式
+    </p>
+    <div class="commit-log">
+<span style="color:var(--text2)">// 核心逻辑（main.jsx 末尾）</span>
+<span style="color:var(--green)">setTimeout</span>(function () {
+  try {
+    var C = <span style="color:var(--blue)">window.Capacitor</span>;      <span style="color:var(--text3)">// 不用 import，直接读全局</span>
+    if (!C) return;
+
+    document.body.classList.add(<span style="color:var(--yellow)">'capacitor-native'</span>);
+
+    var SB = C.Plugins && C.Plugins.StatusBar;
+    if (SB) {
+      SB.getInfo().<span style="color:var(--green)">then</span>(function (info) {  <span style="color:var(--text3)">// .then() 非 async/await</span>
+        document.documentElement.style.setProperty(<span style="color:var(--yellow)">'--safe-top'</span>, info.height + 'px');
+      }).<span style="color:var(--green)">catch</span>(function () {});
+    }
+  } catch (_) {}
+}, <span style="color:var(--green)">500</span>);  <span style="color:var(--text3)">// 等 Capacitor 桥初始化</span>
+    </div>
+  </div>
+
+  <div class="glass">
+    <h3>🔴 难题 #2：Vite 构建与 Capacitor 模块解析冲突</h3>
+    <p style="color:var(--text2)">
+      <strong>现象</strong>：<code>npm run build:capacitor</code> 报错 "Could not resolve @capacitor/app"。<br>
+      <strong>根因</strong>：<code>@capacitor/*</code> 包安装在根目录 <code>node_modules</code>，Vite 在 <code>frontend/</code> 目录构建时找不到这些依赖。<br>
+      <strong>解决</strong>：<code>vite.config.js</code> 添加 <code>build.rollupOptions.external: (id) => id.startsWith('@capacitor/')</code>。这意味着 Vite 不打包这些模块——它们在 Capacitor WebView 运行时由系统提供。同时 Web 端永远不会触发这些 import。
+    </p>
+  </div>
+
+  <div class="glass">
+    <h3>🟡 难题 #3：Android 15 Edge-to-Edge 强制模式</h3>
+    <p style="color:var(--text2)">
+      <strong>现象</strong>：<code>targetSdkVersion=36</code> 触发 Android 15+ 强制 Edge-to-Edge。状态栏透明 + 导航栏透明，内容从屏幕顶部 (0,0) 开始绘制。<br>
+      <strong>影响</strong>：所有依赖"WebView 自动在状态栏下方"的假设失效。<br>
+      <strong>解决</strong>：JS 动态读取 <code>StatusBar.getInfo().height</code> 注入 CSS 变量 + <code>100vh → 100dvh</code> 全局替换。
+    </p>
+  </div>
+</section>
+
+<!-- ===== LESSONS LEARNED ===== -->
+<section>
+  <h2>五、经验教训</h2>
+
+  <div class="lesson-grid">
+    <div class="lesson">
+      <h4>1. Capacitor WebView ≠ 浏览器</h4>
+      <p>CSS <code>env(safe-area-inset-*)</code> 在 Android WebView 中无效。ES Module 动态 <code>import()</code> 解析行为不同。必须用 <code>window.Capacitor</code> 全局 + JS 桥接方案。</p>
+    </div>
+    <div class="lesson">
+      <h4>2. Vite external 的双刃剑</h4>
+      <p>external 让构建通过，但运行时 <code>@capacitor/*</code> 模块不存在于浏览器的模块解析器中。结论：Vite 构建的 Capacitor App 不能使用 <code>import('@capacitor/xxx')</code>，只能用 <code>window.Capacitor</code>。</p>
+    </div>
+    <div class="lesson">
+      <h4>3. setTimeout 不是 hack，是必要等待</h4>
+      <p>Capacitor 桥在 WebView 中异步初始化。React 渲染完成 ≠ Capacitor 插件就绪。500ms 延迟是保证桥已建立的必要条件。</p>
+    </div>
+    <div class="lesson">
+      <h4>4. .then().catch() 比 async/await 更安全</h4>
+      <p>在 Capacitor WebView 的初始化阶段，async/await 的 Promise rejection 可能在某些情况下无法被 try/catch 捕获。.then().catch() 显式处理了两个分支。</p>
+    </div>
+    <div class="lesson">
+      <h4>5. 100dvh 是移动端新标准</h4>
+      <p><code>100vh</code> 在 Android 15+ Edge-to-Edge 下计算错误（包含状态栏和导航栏高度）。<code>100dvh</code> 动态排除系统 UI 高度，2025+ 移动端必须使用。</p>
+    </div>
+    <div class="lesson">
+      <h4>6. 构建隔离保护 Web 体验</h4>
+      <p><code>npm run build:web</code>（绝对路径）和 <code>npm run build:capacitor --base=./</code>（相对路径）彻底分离。Web 端 108 tests 零影响证明了这个策略的正确性。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== DISTANCE TO PRODUCTION ===== -->
+<section>
+  <h2>六、距离完整上线的距离</h2>
+
+  <div class="road">
+    <div class="road-card" style="border-top:3px solid var(--green)">
+      <h4 style="color:var(--green)">✅ 已完成</h4>
+      <p>Capacitor 配置与构建</p>
+      <p>Safe Area 跨平台适配</p>
+      <p>Hover→Touch 29 文件</p>
+      <p>App Icon 88 资源</p>
+      <p>Android APK 真机运行</p>
+      <p>Railway 后端联通</p>
+      <p>108 tests 全绿</p>
+    </div>
+    <div class="road-card" style="border-top:3px solid var(--yellow)">
+      <h4 style="color:var(--yellow)">🟡 短期待办</h4>
+      <p>Push 通知 Firebase 配置</p>
+      <p>Android Release 签名</p>
+      <p>Google Play 上架审核</p>
+      <p>App 隐私政策页面</p>
+      <p>启动画面品牌优化</p>
+      <p>真机多机型验收</p>
+    </div>
+    <div class="road-card" style="border-top:3px solid var(--blue)">
+      <h4 style="color:var(--blue)">🔵 需要条件</h4>
+      <p>iOS 打包 → 需要 Mac</p>
+      <p>App Store 上架 → $99/年</p>
+      <p>Push 证书 → Firebase 项目</p>
+      <p>Deep Links → 域名验证</p>
+      <p>崩溃监控 → Sentry 集成</p>
+    </div>
+  </div>
+
+  <div class="glass" style="margin-top:20px">
+    <h3>上线进度</h3>
+    <table>
+      <tr><td style="width:150px"><strong>Android 端</strong></td><td><div style="width:300px"><div class="bar"><div class="bar-f g" style="width:75%"></div></div></div></td><td>75% — Debug APK 已运行，缺 Release 签名 + 上架</td></tr>
+      <tr><td><strong>iOS 端</strong></td><td><div style="width:300px"><div class="bar"><div class="bar-f y" style="width:20%"></div></div></div></td><td>20% — Xcode 项目就绪，缺 Mac + 开发者账号</td></tr>
+      <tr><td><strong>Web 端</strong></td><td><div style="width:300px"><div class="bar"><div class="bar-f g" style="width:100%"></div></div></div></td><td>100% — 生产环境运行中</td></tr>
+      <tr><td><strong>后端</strong></td><td><div style="width:300px"><div class="bar"><div class="bar-f g" style="width:100%"></div></div></div></td><td>100% — Railway 生产环境运行中</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ===== TOMORROW ===== -->
+<section>
+  <h2>七、明天开发计划</h2>
+
+  <div class="glass">
+    <h3>优先级排序</h3>
+    <table>
+      <thead><tr><th>优先级</th><th>任务</th><th>预估</th><th>阻塞因素</th></tr></thead>
+      <tbody>
+        <tr><td>P0</td><td>多机型 Safe Area 验收（小米/OPPO/三星）</td><td>0.5 天</td><td>需要不同品牌真机</td></tr>
+        <tr><td>P0</td><td>Android Release 签名 + 打出正式 APK</td><td>0.5 天</td><td>—</td></tr>
+        <tr><td>P1</td><td>Push 通知 Firebase 配置</td><td>1 天</td><td>需要 Google 账号 + Firebase 项目</td></tr>
+        <tr><td>P1</td><td>86 页面全量移动端 UI 验收</td><td>1 天</td><td>—</td></tr>
+        <tr><td>P2</td><td>Google Play Console 上架</td><td>0.5 天</td><td>$25 一次性费用</td></tr>
+        <tr><td>P2</td><td>App 隐私政策 + 用户协议页面</td><td>0.5 天</td><td>—</td></tr>
+        <tr><td>P3</td><td>iOS 打包（借 Mac 或云服务）</td><td>1 天</td><td>Mac + Apple Developer</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<div class="footer">
+  <p>XMUMDorm 开发公报 · 2026-06-07 · Agent-Native Architecture</p>
+  <p>Generated by html-progress-report skill · docs/07-Implement/开发公报/</p>
+</div>
+
+</div>
+</body>
+</html>
