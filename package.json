@@ -16,7 +16,12 @@
     "backfill:post-thumbs": "node scripts/backfill-post-thumbs.js",
     "test": "jest",
     "test:coverage": "jest --coverage",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "build:web": "cd frontend && npm run build",
+    "build:capacitor": "cd frontend && npx vite build --base=./",
+    "cap:sync": "npx cap sync",
+    "cap:open:ios": "npx cap open ios",
+    "cap:open:android": "npx cap open android"
   },
   "keywords": [
     "campus",
@@ -27,6 +32,9 @@
   "license": "ISC",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.888.0",
+    "@capacitor/android": "^8.4.0",
+    "@capacitor/core": "^8.4.0",
+    "@capacitor/ios": "^8.4.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
@@ -43,9 +51,11 @@
     "web-push": "^3.6.7"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.4.0",
     "@jest/globals": "^30.4.1",
     "jest": "^30.4.2",
     "nodemon": "^3.1.14",
-    "supertest": "^7.2.2"
+    "supertest": "^7.2.2",
+    "typescript": "^6.0.3"
   }
 }

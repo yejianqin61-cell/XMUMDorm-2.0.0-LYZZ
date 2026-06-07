@@ -38,3 +38,13 @@ uploads/
 
 
 coverage/
+
+# Capacitor — commit native projects, exclude build artifacts + synced web assets
+ios/App/App/public/
+ios/DerivedData/
+ios/Pods/
+android/app/build/
+android/.gradle/
+android/build/
+android/app/src/main/assets/public/
+.capacitor/

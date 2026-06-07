@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Dorm</string>
+    <string name="title_activity_main">Dorm</string>
+    <string name="package_name">com.dorm.app</string>
+    <string name="custom_url_scheme">com.dorm.app</string>
+</resources>
