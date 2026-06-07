@@ -56,6 +56,7 @@
     "web-push": "^3.6.7"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^8.4.0",
     "@jest/globals": "^30.4.1",
     "jest": "^30.4.2",

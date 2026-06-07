@@ -12,6 +12,13 @@ const config: CapacitorConfig = {
   android: {
     allowMixedContent: true,
   },
+  plugins: {
+    CapacitorAssets: {
+      iconBackgroundColor: '#E6F4FE',
+      iconBackgroundColorDark: '#0a0a0f',
+      splashBackgroundColor: '#E6F4FE',
+    },
+  },
 };
 
 export default config;
