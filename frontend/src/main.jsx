@@ -3,50 +3,12 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App.jsx';
 import './registerServiceWorker';
-import { initCapacitor, isNative } from './utils/capacitor';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <App />
   </StrictMode>,
 );
-
-// Capacitor native initialization — ZERO impact on web
-// All native code is gated behind isNative() checks
-(async () => {
-  await initCapacitor();
-  if (!isNative()) return; // Web: nothing below runs
-
-  // StatusBar: match the app's theme
-  try {
-    const { StatusBar, Style } = await import('@capacitor/status-bar');
-    StatusBar.setStyle({ style: Style.Dark });
-    StatusBar.setBackgroundColor({ color: '#ffffff' });
-  } catch {}
-
-  // Push Notifications: cap native push, web push handled by sw.js
-  try {
-    const { initPush } = await import('./services/pushService');
-    await initPush();
-  } catch {}
-
-  // Deep Links: dorm:// → navigate inside the app
-  try {
-    const { App: CapApp } = await import('@capacitor/app');
-    CapApp.addListener('appUrlOpen', (data) => {
-      const url = data.url.replace('dorm://', '/');
-      if (url && url !== '/') {
-        window.location.href = url;
-      }
-    });
-  } catch {}
-
-  // SplashScreen: hide after React renders
-  try {
-    const { SplashScreen } = await import('@capacitor/splash-screen');
-    SplashScreen.hide();
-  } catch {}
-})();
 /*
 index.html 里有 <div id="root"></div>
         ↓
@@ -61,3 +23,21 @@ React 把 App（以及 App 里的路由、Layout、页面）画进 div#root
 用户看到的是你的整站界面（登录页 / 树洞 / 发帖等）
 */
 
+// --- Capacitor Safe Area (minimal, defensive, cannot crash) ---
+setTimeout(function () {
+  try {
+    var C = window.Capacitor;
+    if (!C || C.getPlatform() === 'web') return;
+    document.body.classList.add('capacitor-native');
+    var SB = C.Plugins && C.Plugins.StatusBar;
+    if (SB && SB.getInfo) {
+      SB.getInfo().then(function (info) {
+        if (info && info.height > 0) {
+          var px = info.height + 'px';
+          document.documentElement.style.setProperty('--safe-top', px);
+          document.documentElement.style.setProperty('--safe-pt', (info.height + 12) + 'px');
+        }
+      }).catch(function () {});
+    }
+  } catch (_) {}
+}, 500);

@@ -18,7 +18,7 @@
     "test:coverage": "jest --coverage",
     "test:watch": "jest --watch",
     "build:web": "cd frontend && npm run build",
-    "build:capacitor": "cd frontend && npx vite build --base=./",
+    "build:capacitor": "cd frontend && npx vite build --base=./ --mode capacitor",
     "cap:sync": "npx cap sync",
     "cap:open:ios": "npx cap open ios",
     "cap:open:android": "npx cap open android"

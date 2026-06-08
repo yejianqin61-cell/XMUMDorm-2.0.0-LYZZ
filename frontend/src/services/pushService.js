@@ -18,7 +18,9 @@ export async function initPush() {
   if (!isNative()) return; // Web: use existing sw.js push
 
   try {
-    const { PushNotifications } = await import('@capacitor/push-notifications');
+    const C = window.Capacitor;
+    const PushNotifications = C?.Plugins?.PushNotifications;
+    if (!PushNotifications) return;
 
     // Request permission
     const perm = await PushNotifications.requestPermissions();

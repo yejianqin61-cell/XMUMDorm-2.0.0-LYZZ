@@ -83,7 +83,7 @@
 
 .image-preview-img {
   max-width: 100%;
-  max-height: calc(100vh - 96px);
+  max-height: calc(100dvh - 96px);
   object-fit: contain;
   user-select: none;
 }

@@ -18,19 +18,23 @@ let _platform = 'web';
 /**
  * Initialize Capacitor platform detection.
  * Call once in main.jsx before any Capacitor-specific code.
+ *
+ * In Capacitor WebView, window.Capacitor is injected as a global before the app loads.
+ * Vite externalizes @capacitor/*, so dynamic import() won't work — use the global.
  */
 export async function initCapacitor() {
   try {
-    const { Capacitor } = await import('@capacitor/core');
-    _platform = Capacitor.getPlatform();
-    if (_platform !== 'web') {
-      // Add class to body for CSS targeting (e.g., remove phone-simulator)
-      document.body.classList.add('capacitor-native');
-      document.body.classList.add(`capacitor-${_platform}`);
-      console.log(`[capacitor] Running on ${_platform}`);
+    // Capacitor WebView: available as window.Capacitor global
+    const Capacitor = window.Capacitor;
+    if (Capacitor) {
+      _platform = Capacitor.getPlatform();
+      if (_platform !== 'web') {
+        document.body.classList.add('capacitor-native');
+        document.body.classList.add(`capacitor-${_platform}`);
+        console.log(`[capacitor] Running on ${_platform}`);
+      }
     }
   } catch {
-    // @capacitor/core not available → web environment
     _platform = 'web';
   }
 }
