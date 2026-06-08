@@ -17,6 +17,8 @@ import UserList from './pages/Admin/UserList';
 import UserDetail from './pages/Admin/UserDetail';
 import ReportList from './pages/Admin/ReportList';
 import ReportDetail from './pages/Admin/ReportDetail';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 import AnnouncementManage from './pages/Admin/AnnouncementManage';
 import AuditLogList from './pages/Admin/AuditLogList';
 import SystemConfig from './pages/Admin/SystemConfig';
@@ -78,6 +80,8 @@ function MainApp() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/terms" element={<TermsOfService />} />
                 <Route
                   path="/"
                   element={
