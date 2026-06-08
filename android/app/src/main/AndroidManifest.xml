@@ -27,9 +27,13 @@
             android:grantUriPermissions="true">
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" />
         </provider>
+
+        <!-- JPush 极光推送 -->
+        <meta-data android:name="JPUSH_APPKEY" android:value="7fe749747d69d326bd64c725" />
+        <meta-data android:name="JPUSH_CHANNEL" android:value="developer" />
     </application>
 
     <!-- Permissions -->
-
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 </manifest>
