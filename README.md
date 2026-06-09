@@ -66,4 +66,4 @@ npm test
 
 ---
 
-*Last updated 2026-06-08 · Ye Jianqin · yejianqin61@gmail.com*
+*Last updated 2026-06-08 · Ye Jianqin · CST2509054@xmu.edu.my*
