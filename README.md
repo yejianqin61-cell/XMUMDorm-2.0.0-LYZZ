@@ -1,5 +1,6 @@
 # XMUMDorm（厦马小筑 / Jack Dorm）
-## www.xmumdorm.com
+## www.xmumdorm.com   
+### please open it on your smartphone
 
 > 厦门大学马来西亚分校（XMUM）校园社交与生活一站式平台 · All-in-One Campus Platform
 
