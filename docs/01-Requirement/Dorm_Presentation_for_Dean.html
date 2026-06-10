@@ -1,50 +1,37 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dorm — XMUM 校园数字社区平台 · 院长汇报</title>
+<title>Dorm — Building a Digital Community Infrastructure for XMUM · Dean Presentation</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+SC:wght@300;400;500;600;700;900&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
   :root {
-    --bg: #f8fafc;
-    --white: #ffffff;
-    --text: #0f172a;
-    --text2: #475569;
-    --text3: #94a3b8;
-    --blue: #2563eb;
-    --blue-light: #eff6ff;
-    --emerald: #059669;
-    --emerald-light: #ecfdf5;
-    --amber: #d97706;
-    --amber-light: #fffbeb;
-    --slate: #f1f5f9;
-    --border: #e2e8f0;
-    --radius: 16px;
+    --bg: #f8fafc; --white: #ffffff; --text: #0f172a; --text2: #475569; --text3: #94a3b8;
+    --blue: #2563eb; --blue-light: #eff6ff;
+    --emerald: #059669; --emerald-light: #ecfdf5;
+    --amber: #d97706; --amber-light: #fffbeb;
+    --slate: #f1f5f9; --border: #e2e8f0; --radius: 16px;
     --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
     --shadow-md: 0 4px 6px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.04);
-    --shadow-lg: 0 10px 25px rgba(0,0,0,0.06);
   }
   * { margin:0; padding:0; box-sizing:border-box }
   body {
-    font-family: 'Inter', 'Noto Sans SC', -apple-system, sans-serif;
+    font-family: 'Inter', -apple-system, sans-serif;
     background: var(--bg); color: var(--text); line-height: 1.7;
     -webkit-font-smoothing: antialiased;
   }
   .container { max-width: 960px; margin: 0 auto; padding: 0 28px }
 
-  /* Hero */
   .hero {
     background: linear-gradient(160deg, #f0f9ff 0%, #ecfdf5 40%, #fefce8 100%);
     padding: 80px 0 64px; text-align: center;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 56px;
+    border-bottom: 1px solid var(--border); margin-bottom: 56px;
   }
   .hero .badge {
     display: inline-block; background: var(--blue); color: #fff;
     padding: 6px 18px; border-radius: 20px; font-size: 12px;
-    font-weight: 700; letter-spacing: 0.5px; margin-bottom: 20px;
-    text-transform: uppercase;
+    font-weight: 700; letter-spacing: 0.5px; margin-bottom: 20px; text-transform: uppercase;
   }
   .hero h1 { font-size: 40px; font-weight: 900; letter-spacing: -1px; color: #0f172a }
   .hero h1 span { color: var(--blue) }
@@ -54,45 +41,36 @@
   .hero .meta-item .num { font-size: 32px; font-weight: 800; color: var(--blue) }
   .hero .meta-item .lbl { font-size: 12px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px }
 
-  /* Sections */
   section { margin-bottom: 48px }
   section h2 { font-size: 28px; font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 10px }
   section .lead { color: var(--text2); font-size: 15px; margin-bottom: 28px }
 
-  /* Cards */
   .card {
     background: var(--white); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 32px; margin-bottom: 20px;
-    box-shadow: var(--shadow);
+    border-radius: var(--radius); padding: 32px; margin-bottom: 20px; box-shadow: var(--shadow);
   }
-  .card h3 { font-size: 18px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px }
+  .card h3 { font-size: 18px; font-weight: 700; margin-bottom: 12px }
 
-  /* Stats Grid */
   .stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px }
   .stat-card {
     background: var(--white); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 24px 20px; text-align: center;
-    box-shadow: var(--shadow);
+    border-radius: var(--radius); padding: 24px 20px; text-align: center; box-shadow: var(--shadow);
   }
   .stat-card .num { font-size: 36px; font-weight: 900 }
   .stat-card .lbl { font-size: 13px; color: var(--text3); margin-top: 4px }
   .stat-card.blue .num { color: var(--blue) }
   .stat-card.emerald .num { color: var(--emerald) }
-  .stat-card.amber .num { color: var(--amber) }
 
-  /* Module Grid */
   .module-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 14px }
   .module-card {
     background: var(--white); border: 1px solid var(--border);
     border-radius: 12px; padding: 24px; box-shadow: var(--shadow);
-    display: flex; gap: 14px; align-items: flex-start;
-    transition: box-shadow 0.2s;
+    display: flex; gap: 14px; align-items: flex-start; transition: box-shadow 0.2s;
   }
   .module-card:hover { box-shadow: var(--shadow-md) }
   .module-card .icon {
     width: 48px; height: 48px; border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 24px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0;
   }
   .module-card .icon.blue { background: var(--blue-light) }
   .module-card .icon.emerald { background: var(--emerald-light) }
@@ -100,7 +78,6 @@
   .module-card h4 { font-size: 15px; font-weight: 700; margin-bottom: 2px }
   .module-card p { font-size: 13px; color: var(--text2); line-height: 1.5 }
 
-  /* Checklist */
   .checklist { list-style: none }
   .checklist li {
     padding: 14px 20px; background: var(--white); border: 1px solid var(--border);
@@ -110,57 +87,46 @@
   .checklist li .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0 }
   .dot.green { background: var(--emerald) }
   .dot.amber { background: var(--amber) }
+  .dot.red { background: #ef4444 }
   .checklist li strong { display: block; margin-bottom: 2px }
   .checklist li span { font-size: 13px; color: var(--text2) }
 
-  /* Timeline */
   .timeline { position: relative; padding-left: 28px }
-  .timeline::before {
-    content: ''; position: absolute; left: 11px; top: 0; bottom: 0;
-    width: 2px; background: var(--border);
-  }
+  .timeline::before { content: ''; position: absolute; left: 11px; top: 0; bottom: 0; width: 2px; background: var(--border) }
   .timeline-item { position: relative; margin-bottom: 24px }
   .timeline-item::before {
     content: ''; position: absolute; left: -22px; top: 4px;
     width: 12px; height: 12px; border-radius: 50%;
-    background: var(--blue); border: 2px solid #fff;
-    box-shadow: 0 0 0 2px var(--blue);
+    background: var(--blue); border: 2px solid #fff; box-shadow: 0 0 0 2px var(--blue);
   }
   .timeline-item .date { font-size: 12px; font-weight: 700; color: var(--blue); text-transform: uppercase; letter-spacing: 0.5px }
   .timeline-item h4 { font-size: 16px; font-weight: 600; margin: 2px 0 4px }
   .timeline-item p { font-size: 13px; color: var(--text2) }
 
-  /* Highlight Box */
   .highlight {
     background: linear-gradient(135deg, #eff6ff 0%, #ecfdf5 100%);
-    border: 1px solid #bfdbfe; border-radius: var(--radius);
-    padding: 32px; margin-bottom: 24px;
+    border: 1px solid #bfdbfe; border-radius: var(--radius); padding: 32px; margin-bottom: 24px;
   }
   .highlight h3 { color: var(--blue); margin-bottom: 8px }
   .highlight p { color: var(--text2) }
 
-  /* Two Column */
   .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px }
 
-  /* Footer */
-  .footer {
-    text-align: center; padding: 48px 0 32px;
-    border-top: 1px solid var(--border); margin-top: 64px;
-    color: var(--text3); font-size: 13px;
-  }
-
-  /* Platform Badges */
   .platform-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px }
   .platform-card {
     background: var(--white); border: 1px solid var(--border);
-    border-radius: 12px; padding: 28px 20px; text-align: center;
-    box-shadow: var(--shadow);
+    border-radius: 12px; padding: 28px 20px; text-align: center; box-shadow: var(--shadow);
   }
   .platform-card .icon { font-size: 36px; margin-bottom: 12px }
   .platform-card h4 { font-weight: 700; margin-bottom: 4px }
   .platform-card .status { font-size: 13px; font-weight: 600; padding: 4px 12px; border-radius: 12px; display: inline-block; margin-top: 8px }
   .status.green { background: var(--emerald-light); color: var(--emerald) }
   .status.amber { background: var(--amber-light); color: var(--amber) }
+
+  .footer {
+    text-align: center; padding: 48px 0 32px;
+    border-top: 1px solid var(--border); margin-top: 64px; color: var(--text3); font-size: 13px;
+  }
 
   @media (max-width: 768px) {
     .stat-grid { grid-template-columns: repeat(2,1fr) }
@@ -173,321 +139,278 @@
 </head>
 <body>
 
-<!-- ===== HERO ===== -->
 <div class="hero">
-  <div class="badge">Student Innovation Project · 学生创新项目</div>
-  <h1><span>Dorm</span> — 构建 XMUM 校园数字社区</h1>
+  <div class="badge">Student Innovation Project</div>
+  <h1><span>Dorm</span> — A Digital Community for XMUM</h1>
   <p class="sub">Building a Digital Community Infrastructure for Xiamen University Malaysia</p>
   <div class="meta">
     <div class="meta-item"><div class="num">288</div><div class="lbl">Commits</div></div>
-    <div class="meta-item"><div class="num">17</div><div class="lbl">功能模块</div></div>
-    <div class="meta-item"><div class="num">524</div><div class="lbl">测试用例</div></div>
-    <div class="meta-item"><div class="num">4.5个月</div><div class="lbl">开发周期</div></div>
+    <div class="meta-item"><div class="num">17</div><div class="lbl">Feature Modules</div></div>
+    <div class="meta-item"><div class="num">524</div><div class="lbl">Test Cases</div></div>
+    <div class="meta-item"><div class="num">4.5 mo</div><div class="lbl">Development</div></div>
   </div>
 </div>
 
 <div class="container">
 
-<!-- ===== PROBLEM ===== -->
+<!-- PROBLEM -->
 <section>
-  <h2>📋 项目背景</h2>
-  <p class="lead">为什么需要 Dorm？</p>
+  <h2>📋 The Problem</h2>
+  <p class="lead">Why does XMUM need Dorm?</p>
   <div class="card">
     <p style="font-size:16px;font-weight:500;color:var(--text);margin-bottom:16px">
-      尽管学生在校园里共同学习和生活多年，沟通、信息共享、社团活动、二手交易和社区互动仍然分散在多个互不连接的平台上。
+      Although students spend years studying and living together on campus, communication, information sharing, club activities, second-hand trading, and community interaction remain <strong>scattered across multiple disconnected platforms</strong>.
     </p>
     <div class="checklist">
-      <li><span class="dot" style="background:#ef4444"></span><div><strong>校园活动信息难发现</strong><span>活动通知分散在邮件、微信群、海报，缺少统一入口</span></div></li>
-      <li><span class="dot" style="background:#ef4444"></span><div><strong>兴趣社群连接困难</strong><span>学生难以找到志同道合的朋友，跨专业交流渠道有限</span></div></li>
-      <li><span class="dot" style="background:#ef4444"></span><div><strong>二手交易无信任平台</strong><span>校内外交易缺少安全的校内专属环境</span></div></li>
-      <li><span class="dot" style="background:#ef4444"></span><div><strong>社团管理低效</strong><span>招新、活动宣传、成员沟通依赖多平台切换</span></div></li>
-      <li><span class="dot" style="background:#ef4444"></span><div><strong>校园信息获取碎片化</strong><span>食堂、课程、手册等实用信息缺乏统一数字渠道</span></div></li>
+      <li><span class="dot red"></span><div><strong>Events are hard to discover</strong><span>Announcements scattered across emails, WeChat groups, and posters — no unified entry point</span></div></li>
+      <li><span class="dot red"></span><div><strong>Interest-based connections are difficult</strong><span>Students struggle to find like-minded peers across faculties and year groups</span></div></li>
+      <li><span class="dot red"></span><div><strong>No trusted marketplace for students</strong><span>Second-hand trading lacks a secure, campus-only environment</span></div></li>
+      <li><span class="dot red"></span><div><strong>Club management is inefficient</strong><span>Recruitment, event promotion, and member communication rely on multiple fragmented tools</span></div></li>
+      <li><span class="dot red"></span><div><strong>Campus information is siloed</strong><span>Canteen guides, timetables, and handbooks lack a unified digital channel</span></div></li>
     </div>
   </div>
 </section>
 
-<!-- ===== VISION ===== -->
+<!-- VISION -->
 <section>
-  <h2>🎯 项目愿景</h2>
+  <h2>🎯 Our Vision</h2>
   <div class="highlight">
-    <h3>构建 XMUM 的校园数字基础设施</h3>
+    <h3>Building the Digital Community Infrastructure for XMUM</h3>
     <p style="font-size:15px;margin-top:8px">
-      正如实体设施——图书馆、教学楼、学生中心——支撑着线下的校园生活，<br>
-      <strong>Dorm 致力于提供支撑线上校园生活的数字基础设施。</strong>
+      Just as physical facilities — libraries, lecture halls, and student centers — support campus life offline,<br>
+      <strong>Dorm provides the digital infrastructure that supports campus life online.</strong>
     </p>
   </div>
   <div class="two-col">
     <div class="card">
-      <h3>🌐 连接</h3>
-      <p style="color:var(--text2)">打破年级、专业、宿舍的界限，让每位学生能在统一的数字空间中找到归属感。</p>
+      <h3>🌐 Connect</h3>
+      <p style="color:var(--text2)">Break down barriers between faculties, year groups, and dormitories. Give every student a sense of belonging in a unified digital space.</p>
     </div>
     <div class="card">
-      <h3>🚀 赋能</h3>
-      <p style="color:var(--text2)">为学生社团和组织提供数字化工具，让活动宣传、成员管理和社区运营更高效。</p>
+      <h3>🚀 Empower</h3>
+      <p style="color:var(--text2)">Equip student organizations with modern digital tools — making event promotion, member management, and community operations more efficient.</p>
     </div>
   </div>
 </section>
 
-<!-- ===== WHAT DORM PROVIDES ===== -->
+<!-- WHAT DORM PROVIDES -->
 <section>
-  <h2>🛠️ 平台功能总览</h2>
-  <p class="lead">17 个核心模块，覆盖校园生活的四大场景</p>
+  <h2>🛠️ What Dorm Provides</h2>
+  <p class="lead">17 core modules covering 4 dimensions of campus life</p>
 
   <div class="module-grid">
     <div class="module-card">
       <div class="icon blue">🌳</div>
-      <div>
-        <h4>树洞 TreeHole</h4>
-        <p>校园社交空间 — 发帖 · 评论 · 点赞 · 图片/GIF · 双语 Tag · 瀑布流 · 公告</p>
-      </div>
+      <div><h4>TreeHole</h4><p>Campus social space — Posts · Comments · Likes · Images/GIF · Bilingual Tags · Waterfall Layout · Announcements</p></div>
     </div>
     <div class="module-card">
       <div class="icon emerald">🍽️</div>
-      <div>
-        <h4>食堂 Canteen</h4>
-        <p>区域→店铺→分类→商品四级体系 — 点评 · 排行榜 · 收藏 · 搜索 · 商家管理</p>
-      </div>
+      <div><h4>Canteen</h4><p>Region → Shop → Category → Product — Reviews · Leaderboards · Favorites · Search · Merchant Dashboard</p></div>
     </div>
     <div class="module-card">
       <div class="icon blue">🏛️</div>
-      <div>
-        <h4>广场 Square</h4>
-        <p>校园信息聚合中心 — 热搜榜 · 校园此刻 · 轮播图 · 四宫格入口</p>
-      </div>
+      <div><h4>Square</h4><p>Campus info hub — Trending Topics · Campus Moments · Carousel · 4-Grid Entrance</p></div>
     </div>
     <div class="module-card">
       <div class="icon emerald">👥</div>
-      <div>
-        <h4>社团 Clubs</h4>
-        <p>社团创建 · 加入 · 动态发布 · 成员管理 · 社团广场</p>
-      </div>
+      <div><h4>Clubs</h4><p>Club creation · Joining · Feed posting · Member management · Club Square</p></div>
     </div>
     <div class="module-card">
       <div class="icon amber">🛒</div>
-      <div>
-        <h4>二手市场 Marketplace</h4>
-        <p>分类筛选 · 商品发布 · 收藏 · 买卖双方私聊 · 状态管理</p>
-      </div>
+      <div><h4>Marketplace</h4><p>Category filters · Item posting (4 images) · Favorites · Buyer/Seller chat · Status management</p></div>
     </div>
     <div class="module-card">
       <div class="icon blue">🏃</div>
-      <div>
-        <h4>跑腿 Errands</h4>
-        <p>任务发布与接单 · 状态跟踪</p>
-      </div>
+      <div><h4>Errands</h4><p>Task posting & accepting · Status tracking</p></div>
     </div>
     <div class="module-card">
       <div class="icon emerald">📚</div>
-      <div>
-        <h4>一站通 Handbook</h4>
-        <p>新生手册 · 文章系统 · 评论 · 收藏 · 编辑器</p>
-      </div>
+      <div><h4>Handbook</h4><p>Freshman guide articles · Comments · Favorites · Rich text editor</p></div>
     </div>
     <div class="module-card">
       <div class="icon amber">📝</div>
-      <div>
-        <h4>课程评价 Course Reviews</h4>
-        <p>学期制匿名评价 · 评分+标签 · 可编辑/删除</p>
-      </div>
+      <div><h4>Course Reviews</h4><p>Semester-based anonymous reviews · Ratings + Tags · Editable/Deletable</p></div>
     </div>
     <div class="module-card">
       <div class="icon blue">📅</div>
-      <div>
-        <h4>课程表 Schedule</h4>
-        <p>周视图 · 今日课程 · 课前提醒</p>
-      </div>
+      <div><h4>Schedule</h4><p>Weekly calendar view · Today's classes · Pre-class reminders</p></div>
     </div>
     <div class="module-card">
       <div class="icon emerald">⭐</div>
-      <div>
-        <h4>等级系统 Level</h4>
-        <p>经验值累积 · 等级徽章 · 升级弹窗 · 进度条 · 排行榜</p>
-      </div>
+      <div><h4>Level System</h4><p>XP accumulation · Level Badges · Level-Up animation · Progress bars · Leaderboards</p></div>
     </div>
     <div class="module-card">
       <div class="icon amber">✅</div>
-      <div>
-        <h4>待办 + 日记</h4>
-        <p>今日待办管理 · 日记 CRUD · "往年今日"</p>
-      </div>
+      <div><h4>To-Do & Diary</h4><p>Daily task management · Diary CRUD · "On This Day" feature</p></div>
     </div>
     <div class="module-card">
       <div class="icon blue">🔔</div>
-      <div>
-        <h4>通知 & 推送系统</h4>
-        <p>6 模块分类信箱 · 极光推送（全厂商通道） · Web Push</p>
-      </div>
+      <div><h4>Notifications & Push</h4><p>6-category inbox · JPush multi-vendor delivery (APNs / Huawei / Xiaomi / OPPO / vivo / FCM)</p></div>
     </div>
     <div class="module-card">
       <div class="icon emerald">🛡️</div>
-      <div>
-        <h4>管理员后台 Admin</h4>
-        <p>Dashboard · 用户管理 · 举报审核 · 内容管理 · 公告 · 审计日志</p>
-      </div>
+      <div><h4>Admin Dashboard</h4><p>Data Panel · User Management · Report Review · Content Moderation · Announcements · Audit Logs</p></div>
     </div>
     <div class="module-card">
       <div class="icon amber">🔐</div>
-      <div>
-        <h4>认证系统 + 其他</h4>
-        <p>JWT · 角色体系 · 中英双语 · PWA · 隐私政策 · 用户协议</p>
-      </div>
+      <div><h4>Auth & Platform</h4><p>JWT · 3-Role System (Student/Merchant/Admin) · Bilingual (EN/ZH) · PWA · Privacy Policy</p></div>
     </div>
   </div>
 </section>
 
-<!-- ===== CURRENT STATUS ===== -->
+<!-- STATUS -->
 <section>
-  <h2>📊 当前开发状态</h2>
+  <h2>📊 Current Development Status</h2>
 
   <div class="platform-grid">
     <div class="platform-card">
       <div class="icon">🌐</div>
-      <h4>Web 平台</h4>
+      <h4>Web Platform</h4>
       <p style="font-size:13px;color:var(--text3)">99 Pages · React 19 · Vite 7</p>
-      <div class="status green">✅ 生产运行</div>
+      <div class="status green">✅ Production Live</div>
     </div>
     <div class="platform-card">
       <div class="icon">📱</div>
       <h4>Android App</h4>
-      <p style="font-size:13px;color:var(--text3)">Capacitor 8 · Release 签名</p>
-      <div class="status green">✅ APK 就绪</div>
+      <p style="font-size:13px;color:var(--text3)">Capacitor 8 · Release Signed</p>
+      <div class="status green">✅ APK Ready</div>
     </div>
     <div class="platform-card">
       <div class="icon">🍎</div>
       <h4>iOS App</h4>
-      <p style="font-size:13px;color:var(--text3)">Xcode 项目就绪 · 需 Mac</p>
-      <div class="status amber">🟡 待部署</div>
+      <p style="font-size:13px;color:var(--text3)">Xcode Project Ready · Needs Mac</p>
+      <div class="status amber">🟡 Pending</div>
     </div>
   </div>
 
   <div class="stat-grid" style="margin-top:20px">
-    <div class="stat-card blue"><div class="num">288</div><div class="lbl">代码提交</div></div>
-    <div class="stat-card emerald"><div class="num">524</div><div class="lbl">测试用例 100% 通过</div></div>
-    <div class="stat-card amber"><div class="num">60,000+</div><div class="lbl">代码行数</div></div>
-    <div class="stat-card blue"><div class="num">100+</div><div class="lbl">技术文档</div></div>
+    <div class="stat-card blue"><div class="num">288</div><div class="lbl">Git Commits</div></div>
+    <div class="stat-card emerald"><div class="num">524</div><div class="lbl">Test Cases · 100% Pass</div></div>
+    <div class="stat-card blue"><div class="num">60K+</div><div class="lbl">Lines of Code</div></div>
+    <div class="stat-card emerald"><div class="num">100+</div><div class="lbl">Technical Documents</div></div>
   </div>
 </section>
 
-<!-- ===== DEVELOPMENT TIMELINE ===== -->
+<!-- TIMELINE -->
 <section>
-  <h2>📅 开发历程</h2>
-  <p class="lead">从零到完整产品：4.5 个月独立开发</p>
+  <h2>📅 Development Timeline</h2>
+  <p class="lead">From zero to a complete product: 4.5 months of independent development</p>
 
   <div class="card">
     <div class="timeline">
       <div class="timeline-item">
-        <div class="date">2026.01.27</div>
-        <h4>项目启动 · 认证模块</h4>
-        <p>Node.js + Express 后端搭建，JWT 认证系统完成，注册/登录/角色体系建立</p>
+        <div class="date">January 27, 2026</div>
+        <h4>Project Launch · Authentication Module</h4>
+        <p>Node.js + Express backend established. JWT authentication with 3-role system (Student / Merchant / Admin) completed.</p>
       </div>
       <div class="timeline-item">
-        <div class="date">2026.02</div>
-        <h4>核心功能后端</h4>
-        <p>帖子系统 + 食堂系统 + 排行榜后台架构全部完成，数据库 57 个迁移建立</p>
+        <div class="date">February 2026</div>
+        <h4>Core Backend Systems</h4>
+        <p>Posts system · Canteen platform · Leaderboard architecture. 57 incremental database migrations established.</p>
       </div>
       <div class="timeline-item">
-        <div class="date">2026.03</div>
-        <h4>前端全面开发</h4>
-        <p>React 19 + Vite + TanStack Query，99 个页面全部完成。3 月 10 日首次上线 Railway 生产环境</p>
+        <div class="date">March 2026</div>
+        <h4>Full Frontend Development</h4>
+        <p>React 19 + Vite 7 + TanStack Query. All 99 pages completed. First production deployment on Railway (March 10).</p>
       </div>
       <div class="timeline-item">
-        <div class="date">2026.04</div>
-        <h4>功能扩展</h4>
-        <p>新生手册 · 课程评价 · 二手市场 · 跑腿 · 社团系统 · 通知推送 · PWA 支持</p>
+        <div class="date">April 2026</div>
+        <h4>Feature Expansion</h4>
+        <p>Freshman Handbook · Course Reviews · Second-hand Marketplace · Errands · Clubs · Push Notifications · PWA support.</p>
       </div>
       <div class="timeline-item">
-        <div class="date">2026.05</div>
-        <h4>治理与测试</h4>
-        <p>管理员后台 · 举报系统 · 敏感词过滤 · 等级系统 · 108 测试用例建立</p>
+        <div class="date">May 2026</div>
+        <h4>Governance & Testing</h4>
+        <p>Admin Dashboard · Report System · Sensitive Word Filter · Level System. 108 backend test cases established at 100% pass rate.</p>
       </div>
       <div class="timeline-item">
-        <div class="date">2026.06</div>
-        <h4>移动端 & 架构</h4>
-        <p>React Native 移动端开发 → 战略转向 Capacitor 打包 · Android APK 真机运行 · Agent-Native 架构 · 极光推送全平台覆盖</p>
+        <div class="date">June 2026</div>
+        <h4>Mobile & Architecture</h4>
+        <p>React Native mobile development → Strategic pivot to Capacitor packaging · Android APK on real device · Agent-Native architecture · JPush multi-vendor push integration.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ===== EDUCATIONAL VALUE ===== -->
+<!-- EDUCATIONAL VALUE -->
 <section>
-  <h2>🎓 教育价值</h2>
-  <p class="lead">Dorm 不仅仅是一个软件项目</p>
+  <h2>🎓 Educational Value & Impact</h2>
+  <p class="lead">Dorm is more than a software project</p>
 
   <div class="two-col">
     <div class="card">
-      <h3>💡 学生能力的展示</h3>
-      <p style="color:var(--text2);margin-bottom:12px">作为一名大一学生，在 AI（Claude Code）的辅助下，4.5 个月内独立完成全栈开发。</p>
+      <h3>💡 Student Achievement</h3>
+      <p style="color:var(--text2);margin-bottom:12px">As a Year 1 undergraduate, independently developed a full-stack platform in 4.5 months, powered by AI-assisted development (Claude Code).</p>
       <div class="checklist" style="list-style:none;padding:0">
-        <li style="padding:8px 0;border:none;box-shadow:none;background:none"><span class="dot green"></span> 软件工程实践</li>
-        <li style="padding:8px 0;border:none;box-shadow:none;background:none"><span class="dot green"></span> 产品设计与用户体验</li>
-        <li style="padding:8px 0;border:none;box-shadow:none;background:none"><span class="dot green"></span> Agent 工作流构建与设计</li>
-        <li style="padding:8px 0;border:none;box-shadow:none;background:none"><span class="dot green"></span> 项目管理与社区建设</li>
-        <li style="padding:8px 0;border:none;box-shadow:none;background:none"><span class="dot green"></span> 数字治理与内容管理</li>
-        <li style="padding:8px 0;border:none;box-shadow:none;background:none"><span class="dot green"></span> 创业精神</li>
+        <li style="padding:8px 0;border:none;box-shadow:none;background:none"><span class="dot green"></span> Software Engineering Practice</li>
+        <li style="padding:8px 0;border:none;box-shadow:none;background:none"><span class="dot green"></span> Product Design & UX Research</li>
+        <li style="padding:8px 0;border:none;box-shadow:none;background:none"><span class="dot green"></span> Agent Workflow Construction & Design</li>
+        <li style="padding:8px 0;border:none;box-shadow:none;background:none"><span class="dot green"></span> Project Management & Community Building</li>
+        <li style="padding:8px 0;border:none;box-shadow:none;background:none"><span class="dot green"></span> Digital Governance & Content Moderation</li>
+        <li style="padding:8px 0;border:none;box-shadow:none;background:none"><span class="dot green"></span> Entrepreneurship</li>
       </div>
     </div>
     <div class="card">
-      <h3>🏫 对 XMUM 的潜在影响</h3>
+      <h3>🏫 Potential Impact for XMUM</h3>
       <div class="checklist">
-        <li><span class="dot green"></span><div><strong>增强学生参与度</strong><span>统一平台提升校园活动参与率</span></div></li>
-        <li><span class="dot green"></span><div><strong>建立 XMUM 开源社区</strong><span>以项目为核心构建学生开发者社群</span></div></li>
-        <li><span class="dot green"></span><div><strong>打造大学品牌名片</strong><span>展示 XMUM 学生创新能力的标杆项目</span></div></li>
-        <li><span class="dot green"></span><div><strong>改善信息传播效率</strong><span>从碎片化信息到一站式数字门户</span></div></li>
-        <li><span class="dot green"></span><div><strong>支持学生组织数字化</strong><span>为社团提供现代管理工具</span></div></li>
-        <li><span class="dot green"></span><div><strong>培养校园归属感</strong><span>连接不同年级、专业的 XMUM 学生</span></div></li>
+        <li><span class="dot green"></span><div><strong>Strengthen student engagement</strong><span>A unified platform increases participation in campus activities</span></div></li>
+        <li><span class="dot green"></span><div><strong>Establish an XMUM open-source community</strong><span>Build a student developer community around the project</span></div></li>
+        <li><span class="dot green"></span><div><strong>Create a signature brand for the university</strong><span>A flagship project showcasing XMUM student innovation</span></div></li>
+        <li><span class="dot green"></span><div><strong>Improve information dissemination</strong><span>From fragmented channels to a unified digital portal</span></div></li>
+        <li><span class="dot green"></span><div><strong>Support student organizations digitally</strong><span>Provide modern management tools for clubs and societies</span></div></li>
+        <li><span class="dot green"></span><div><strong>Foster a stronger campus identity</strong><span>Connect students across faculties, years, and backgrounds</span></div></li>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ===== TECH STACK ===== -->
+<!-- TECH STACK -->
 <section>
-  <h2>⚙️ 技术架构</h2>
+  <h2>⚙️ Technical Architecture</h2>
   <div class="card">
     <table style="width:100%;border-collapse:collapse;font-size:14px">
       <thead>
         <tr style="border-bottom:2px solid var(--border)">
-          <th style="text-align:left;padding:12px 16px;color:var(--text3);font-weight:600;font-size:12px;text-transform:uppercase">层级</th>
-          <th style="text-align:left;padding:12px 16px;color:var(--text3);font-weight:600;font-size:12px;text-transform:uppercase">技术</th>
-          <th style="text-align:left;padding:12px 16px;color:var(--text3);font-weight:600;font-size:12px;text-transform:uppercase">说明</th>
+          <th style="text-align:left;padding:12px 16px;color:var(--text3);font-weight:600;font-size:12px;text-transform:uppercase">Layer</th>
+          <th style="text-align:left;padding:12px 16px;color:var(--text3);font-weight:600;font-size:12px;text-transform:uppercase">Technology</th>
+          <th style="text-align:left;padding:12px 16px;color:var(--text3);font-weight:600;font-size:12px;text-transform:uppercase">Notes</th>
         </tr>
       </thead>
       <tbody>
-        <tr><td style="padding:12px 16px;font-weight:600">后端运行时</td><td style="padding:12px 16px">Node.js + Express</td><td style="padding:12px 16px;color:var(--text2)">17 个路由模块，RESTful API</td></tr>
-        <tr style="background:var(--slate)"><td style="padding:12px 16px;font-weight:600">数据库</td><td style="padding:12px 16px">MySQL</td><td style="padding:12px 16px;color:var(--text2)">57 个增量迁移，参数化查询，逻辑删除</td></tr>
-        <tr><td style="padding:12px 16px;font-weight:600">鉴权</td><td style="padding:12px 16px">JWT</td><td style="padding:12px 16px;color:var(--text2)">Bearer Token，三级角色体系</td></tr>
-        <tr style="background:var(--slate)"><td style="padding:12px 16px;font-weight:600">Web 前端</td><td style="padding:12px 16px">React 19 + Vite 7</td><td style="padding:12px 16px;color:var(--text2)">99 页面，液态玻璃设计，中英双语</td></tr>
-        <tr><td style="padding:12px 16px;font-weight:600">移动端</td><td style="padding:12px 16px">Capacitor 8 + Android</td><td style="padding:12px 16px;color:var(--text2)">Web 代码 100% 复用打包原生 APK</td></tr>
-        <tr style="background:var(--slate)"><td style="padding:12px 16px;font-weight:600">推送</td><td style="padding:12px 16px">极光推送 JPush</td><td style="padding:12px 16px;color:var(--text2)">APNs + 华为/小米/OPPO/vivo/FCM 全覆盖</td></tr>
-        <tr><td style="padding:12px 16px;font-weight:600">状态管理</td><td style="padding:12px 16px">TanStack Query v5</td><td style="padding:12px 16px;color:var(--text2)">服务端缓存 + 乐观更新</td></tr>
-        <tr style="background:var(--slate)"><td style="padding:12px 16px;font-weight:600">图片存储</td><td style="padding:12px 16px">Cloudflare R2</td><td style="padding:12px 16px;color:var(--text2)">S3 兼容对象存储 + CDN</td></tr>
-        <tr><td style="padding:12px 16px;font-weight:600">测试</td><td style="padding:12px 16px">Jest 30 + Supertest</td><td style="padding:12px 16px;color:var(--text2)">524 用例 100% 通过</td></tr>
-        <tr style="background:var(--slate)"><td style="padding:12px 16px;font-weight:600">部署</td><td style="padding:12px 16px">Railway</td><td style="padding:12px 16px;color:var(--text2)">自动部署，生产运行 3 个月</td></tr>
+        <tr><td style="padding:12px 16px;font-weight:600">Backend Runtime</td><td style="padding:12px 16px">Node.js + Express</td><td style="padding:12px 16px;color:var(--text2)">17 route modules, RESTful API</td></tr>
+        <tr style="background:var(--slate)"><td style="padding:12px 16px;font-weight:600">Database</td><td style="padding:12px 16px">MySQL</td><td style="padding:12px 16px;color:var(--text2)">57 incremental migrations, parameterized queries, soft deletes</td></tr>
+        <tr><td style="padding:12px 16px;font-weight:600">Authentication</td><td style="padding:12px 16px">JWT</td><td style="padding:12px 16px;color:var(--text2)">Bearer Token, 3-role system (student/merchant/admin)</td></tr>
+        <tr style="background:var(--slate)"><td style="padding:12px 16px;font-weight:600">Web Frontend</td><td style="padding:12px 16px">React 19 + Vite 7</td><td style="padding:12px 16px;color:var(--text2)">99 pages, Liquid Glass design, Bilingual</td></tr>
+        <tr><td style="padding:12px 16px;font-weight:600">Mobile</td><td style="padding:12px 16px">Capacitor 8 + Android</td><td style="padding:12px 16px;color:var(--text2)">100% Web code reuse, native APK packaging</td></tr>
+        <tr style="background:var(--slate)"><td style="padding:12px 16px;font-weight:600">Push Notifications</td><td style="padding:12px 16px">JPush</td><td style="padding:12px 16px;color:var(--text2)">APNs + Huawei/Xiaomi/OPPO/vivo/FCM — all vendor channels</td></tr>
+        <tr><td style="padding:12px 16px;font-weight:600">State Management</td><td style="padding:12px 16px">TanStack Query v5</td><td style="padding:12px 16px;color:var(--text2)">Server-state caching + Optimistic updates</td></tr>
+        <tr style="background:var(--slate)"><td style="padding:12px 16px;font-weight:600">Image Storage</td><td style="padding:12px 16px">Cloudflare R2</td><td style="padding:12px 16px;color:var(--text2)">S3-compatible object storage + CDN</td></tr>
+        <tr><td style="padding:12px 16px;font-weight:600">Testing</td><td style="padding:12px 16px">Jest 30 + Supertest</td><td style="padding:12px 16px;color:var(--text2)">524 total test cases, 100% pass rate</td></tr>
+        <tr style="background:var(--slate)"><td style="padding:12px 16px;font-weight:600">Deployment</td><td style="padding:12px 16px">Railway</td><td style="padding:12px 16px;color:var(--text2)">Automatic deployment, 3 months in production</td></tr>
       </tbody>
     </table>
   </div>
 </section>
 
-<!-- ===== LOOKING FORWARD ===== -->
+<!-- LOOKING FORWARD -->
 <section>
-  <h2>🔭 展望</h2>
+  <h2>🔭 Looking Forward</h2>
   <div class="highlight">
-    <h3>成为 XMUM 可持续的数字生态</h3>
+    <h3>A Sustainable Digital Ecosystem for XMUM</h3>
     <p style="font-size:15px;margin-top:8px">
-      Dorm 的目标是成为一个支持学生生活、强化社区连接、<br>
-      体现 XMUM 创新精神的<strong>可持续数字生态系统</strong>。
+      Dorm aims to become a <strong>sustainable digital ecosystem</strong> that supports student life,<br>
+      strengthens community connections, and reflects the innovative spirit of XMUM.
     </p>
   </div>
   <div class="card">
-    <h3>下一步</h3>
+    <h3>Next Steps</h3>
     <div class="checklist">
-      <li><span class="dot green"></span><div><strong>校内测试与反馈收集</strong><span>邀请 XMUM 学生使用并提供改进建议</span></div></li>
-      <li><span class="dot green"></span><div><strong>Android App 商店上架</strong><span>国内应用商店（华为/小米/OPPO）+ Google Play</span></div></li>
-      <li><span class="dot green"></span><div><strong>iOS App 部署</strong><span>需要 Apple 开发者设备与账号</span></div></li>
-      <li><span class="dot green"></span><div><strong>建立 XMUM 开源社区</strong><span>以 Dorm 为核心，吸引学生开发者参与共建</span></div></li>
-      <li><span class="dot green"></span><div><strong>申请软件著作权</strong><span>知识产权保护</span></div></li>
-      <li><span class="dot green"></span><div><strong>申请学校资金支持</strong><span>用于服务器、开发者账号、域名等基础设施</span></div></li>
+      <li><span class="dot green"></span><div><strong>Campus testing & feedback collection</strong><span>Invite XMUM students to use the platform and provide feedback</span></div></li>
+      <li><span class="dot green"></span><div><strong>App Store publication</strong><span>Domestic Android stores (Huawei/Xiaomi/OPPO) + Google Play</span></div></li>
+      <li><span class="dot green"></span><div><strong>iOS App deployment</strong><span>Requires Apple developer device and account</span></div></li>
+      <li><span class="dot green"></span><div><strong>Establish XMUM open-source community</strong><span>Attract student developers to contribute to the project</span></div></li>
+      <li><span class="dot green"></span><div><strong>Software copyright registration</strong><span>Intellectual property protection</span></div></li>
+      <li><span class="dot green"></span><div><strong>Apply for university funding</strong><span>Server infrastructure, developer accounts, domain name</span></div></li>
     </div>
   </div>
 </section>
@@ -496,7 +419,7 @@
   <p><strong>Dorm — Building a Digital Community Infrastructure for XMUM</strong></p>
   <p>Developer: Ye Jianqin · yejianqin61@gmail.com · GitHub: yejianqin61-cell/XMUMDorm-2.0.0-LYZZ</p>
   <p style="margin-top:4px">Production: https://xmumdorm-200-lyzz-production.up.railway.app</p>
-  <p style="font-size:11px;margin-top:12px;color:#cbd5e1">Generated 2026-06-08 for Dean Presentation</p>
+  <p style="font-size:11px;margin-top:12px;color:#cbd5e1">Generated 2026-06-08 · Dean Presentation</p>
 </div>
 
 </div>
