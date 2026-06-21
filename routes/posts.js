@@ -493,6 +493,39 @@ router.get('/tags', async (req, res) => {
   }
 });
 
+router.get('/hot-tags', async (req, res) => {
+  try {
+    const limit = Math.min(12, Math.max(1, parseInt(req.query.limit, 10) || 8));
+    const rows = await simpleCache.getOrSet(`posts:hot-tags:v1:${limit}`, 10 * 60 * 1000, async () => {
+      return await query(
+        `SELECT t.id, t.slug, t.name_zh, t.name_en, COUNT(*) AS usage_count
+           FROM post_tag_map ptm
+           JOIN tags t ON t.id = ptm.tag_id
+           JOIN posts p ON p.id = ptm.post_id
+          WHERE p.deleted_at IS NULL
+            AND p.hidden_by_admin = 0
+            AND p.type = 'normal'
+          GROUP BY t.id, t.slug, t.name_zh, t.name_en
+          ORDER BY usage_count DESC, t.created_at ASC, t.id ASC
+          LIMIT ${limit}`
+      );
+    });
+    const list = (rows || []).map((row) => ({
+      id: Number(row.id),
+      slug: row.slug,
+      name: row.name_zh || row.name_en || row.slug || '话题',
+      usage_count: Number(row.usage_count) || 0,
+    }));
+    res.status(200).json({ status: 0, message: 'ok', data: list });
+  } catch (e) {
+    if (e.code === 'ER_NO_SUCH_TABLE') {
+      return res.status(200).json({ status: 0, message: 'ok', data: [] });
+    }
+    console.error('热门标签列表错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
 // ============================================
 // 创建标签（仅管理员）
 // ============================================

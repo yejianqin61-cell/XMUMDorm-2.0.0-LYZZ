@@ -7,6 +7,14 @@ export function getSquareHomeSummary() {
   return get('/api/square/home-summary');
 }
 
+export function getSquarePersonalizedSummary() {
+  return get('/api/square/personalized-summary');
+}
+
+export function getSquareRecommendations() {
+  return get('/api/square/recommendations');
+}
+
 // ---------- 热搜 ----------
 export function getTrendingTopics() {
   return get('/api/square/trending');

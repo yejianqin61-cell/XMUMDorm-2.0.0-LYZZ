@@ -1,7 +1,10 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { getSquareBanners, getSquareHomeSummary } from '../api/square';
+import { getHotPostTags } from '../api/posts';
+import { getSquareBanners, getSquareHomeSummary, getSquarePersonalizedSummary } from '../api/square';
 import CanteenBannerCarousel from '../components/canteen/CanteenBannerCarousel';
+import HotTagsStrip from '../components/square/HotTagsStrip';
+import MyCampusRecommendations from '../components/square/MyCampusRecommendations';
 import TodayCampusHero from '../components/square/TodayCampusHero';
 import TodayCampusSummary from '../components/square/TodayCampusSummary';
 import TodayCampusQuickActions from '../components/square/TodayCampusQuickActions';
@@ -36,6 +39,16 @@ export default function SquareHome() {
     queryFn: getSquareHomeSummary,
     staleTime: 30 * 1000,
   });
+  const personalizedQuery = useQuery({
+    queryKey: QK.squarePersonalizedSummary(),
+    queryFn: getSquarePersonalizedSummary,
+    staleTime: 60 * 1000,
+  });
+  const hotTagsQuery = useQuery({
+    queryKey: QK.postHotTags(8),
+    queryFn: () => getHotPostTags(8),
+    staleTime: 60 * 1000,
+  });
 
   const summary = summaryQuery.data || {
     hot_topics: [],
@@ -44,6 +57,13 @@ export default function SquareHome() {
     campus_highlights: [],
     quick_stats: {},
   };
+  const personalizedSummary = personalizedQuery.data || {
+    cards: [],
+    hot_tags: [],
+    is_personalized: false,
+    profile: {},
+  };
+  const hotTags = hotTagsQuery.data || personalizedSummary.hot_tags || [];
 
   const latestTopicTitle = summary.hot_topics?.[0]?.title || '';
   const latestCampusTitle = summary.campus_highlights?.[0]?.title || '';
@@ -77,9 +97,15 @@ export default function SquareHome() {
               />
             </FadeInSection>
             <FadeInSection delay={0.05}>
-              <TodayCampusSummary summary={summary} />
+              <MyCampusRecommendations summary={personalizedSummary} />
+            </FadeInSection>
+            <FadeInSection delay={0.06}>
+              <HotTagsStrip tags={hotTags} />
             </FadeInSection>
             <FadeInSection delay={0.07}>
+              <TodayCampusSummary summary={summary} />
+            </FadeInSection>
+            <FadeInSection delay={0.08}>
               <Link to="/publish" className="square-home-publish-link">
                 <AppCard className="square-home-publish-card" interactive strong>
                   <div className="square-home-publish-card__row">
@@ -93,16 +119,16 @@ export default function SquareHome() {
                 </AppCard>
               </Link>
             </FadeInSection>
-            <FadeInSection delay={0.08}>
+            <FadeInSection delay={0.09}>
               <TodayCampusQuickActions actions={QUICK_ACTIONS} />
             </FadeInSection>
-            <FadeInSection delay={0.11}>
+            <FadeInSection delay={0.12}>
               <TodayCampusHotActivities activities={summary.hot_activities || []} />
             </FadeInSection>
-            <FadeInSection delay={0.14}>
+            <FadeInSection delay={0.15}>
               <TodayCampusHotTopics topics={summary.hot_topics || []} />
             </FadeInSection>
-            <FadeInSection delay={0.17}>
+            <FadeInSection delay={0.18}>
               <TodayCampusModuleGrid items={GRID_ITEMS} />
             </FadeInSection>
           </>

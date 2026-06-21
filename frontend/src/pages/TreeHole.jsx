@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
 import { Heart, MessageCircle } from 'lucide-react';
 import TreeHoleToolbar from '../components/TreeHoleToolbar';
 import SkeletonPost from '../components/SkeletonPost';
+import InterestRecommendationBlock from '../components/square/InterestRecommendationBlock';
+import RelatedCampusTopicsBlock from '../components/square/RelatedCampusTopicsBlock';
 import ErrorState from '../components/ui/ErrorState';
 import RouteTransition from '../components/ui/RouteTransition';
 import { getPostList } from '../api/posts';
+import { getSquareRecommendations } from '../api/square';
 import { getApiErrorMessage } from '../utils/apiError';
 import { API_BASE_URL } from '../api/config';
 import { saveScroll, takeScroll } from '../utils/scrollCache';
@@ -143,6 +146,32 @@ function readSessionInfinitePages(pageSize) {
   }
 }
 
+function buildRhythmEntries(posts, blocks) {
+  const postEntries = (posts || []).map((post) => ({ type: 'post', key: `post-${post.id}`, post }));
+  if (!blocks || blocks.length === 0) return postEntries;
+
+  const result = [];
+  const interval = Math.max(3, Math.ceil(postEntries.length / (blocks.length + 1)));
+  let nextInsertAt = interval;
+  let blockIndex = 0;
+
+  for (let i = 0; i < postEntries.length; i += 1) {
+    result.push(postEntries[i]);
+    if (blockIndex < blocks.length && i + 1 >= nextInsertAt && i + 1 < postEntries.length) {
+      result.push(blocks[blockIndex]);
+      blockIndex += 1;
+      nextInsertAt += interval;
+    }
+  }
+
+  while (blockIndex < blocks.length) {
+    result.push(blocks[blockIndex]);
+    blockIndex += 1;
+  }
+
+  return result;
+}
+
 function TreeHole() {
   const location = useLocation();
   const debug = useMemo(() => {
@@ -204,6 +233,11 @@ function TreeHole() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     refetchOnMount: false,
+  });
+  const recommendationQuery = useQuery({
+    queryKey: QK.squareRecommendations(),
+    queryFn: getSquareRecommendations,
+    staleTime: 60 * 1000,
   });
 
   const list = useMemo(
@@ -353,6 +387,35 @@ function TreeHole() {
   const showInitialSkeleton = isPending && list.length === 0;
   const showRefreshing = !showInitialSkeleton && isFetching && list.length > 0;
   const errorMsg = infiniteError ? getApiErrorMessage(infiniteError) : null;
+  const recommendationData = recommendationQuery.data || {
+    interest_posts: [],
+    campus_topics: [],
+    fallback_topics: [],
+  };
+  const leftColumnEntries = useMemo(
+    () => buildRhythmEntries(leftColumn, recommendationData.interest_posts?.length ? [{
+      type: 'interest',
+      key: 'interest-rhythm',
+      items: recommendationData.interest_posts.slice(0, 3),
+    }] : []),
+    [leftColumn, recommendationData.interest_posts]
+  );
+  const rightColumnEntries = useMemo(
+    () => buildRhythmEntries(
+      rightColumn,
+      (recommendationData.campus_topics?.length || recommendationData.fallback_topics?.length)
+        ? [{
+            type: 'campus',
+            key: 'campus-rhythm',
+            items: (recommendationData.campus_topics?.length
+              ? recommendationData.campus_topics
+              : recommendationData.fallback_topics
+            ).slice(0, 3),
+          }]
+        : []
+    ),
+    [rightColumn, recommendationData.campus_topics, recommendationData.fallback_topics]
+  );
 
   const gridRef = useRef(null);
   const [gridW, setGridW] = useState(0);
@@ -519,8 +582,17 @@ function TreeHole() {
             <>
               <div className="treehole-grid">
                 <div className="treehole-column">
-                  {leftColumn.map((post) => (
-                    <TreeHoleGlassCard key={post.id} post={post} eager={isCoarse} mobileStable={isCoarse} />
+                  {leftColumnEntries.map((entry) => (
+                    entry.type === 'post' ? (
+                      <TreeHoleGlassCard
+                        key={entry.key}
+                        post={entry.post}
+                        eager={isCoarse}
+                        mobileStable={isCoarse}
+                      />
+                    ) : (
+                      <InterestRecommendationBlock key={entry.key} items={entry.items} />
+                    )
                   ))}
                   {isFetchingNextPage ? (
                     <>
@@ -530,8 +602,17 @@ function TreeHole() {
                   ) : null}
                 </div>
                 <div className="treehole-column treehole-column-right">
-                  {rightColumn.map((post) => (
-                    <TreeHoleGlassCard key={post.id} post={post} eager={isCoarse} mobileStable={isCoarse} />
+                  {rightColumnEntries.map((entry) => (
+                    entry.type === 'post' ? (
+                      <TreeHoleGlassCard
+                        key={entry.key}
+                        post={entry.post}
+                        eager={isCoarse}
+                        mobileStable={isCoarse}
+                      />
+                    ) : (
+                      <RelatedCampusTopicsBlock key={entry.key} items={entry.items} />
+                    )
                   ))}
                   {isFetchingNextPage ? (
                     <>

@@ -22,6 +22,10 @@ const { grantExp, revokeByRef, checkAndGrantPostPopularRewards } = require('../s
 const { attachExp } = require('../utils/expResponse');
 const { isPostContentEligible, isCommentEligible } = require('../utils/expEligibility');
 const { getSquareHomeSummary } = require('../services/squareHomeService');
+const {
+  getSquarePersonalizedSummary,
+  getSquareRecommendations,
+} = require('../services/squareRecommendationService');
 
 const BANNER_LINK_TYPES = ['none', 'product', 'shop', 'post', 'url', 'region'];
 
@@ -139,6 +143,30 @@ router.get('/home-summary', async (req, res) => {
   } catch (error) {
     console.error('广场首页聚合错误:', error);
     res.status(500).json({ status: -1, message: '服务器错误' });
+  }
+});
+
+router.get('/personalized-summary', async (req, res) => {
+  try {
+    const viewer = parseOptionalUser(req);
+    const userId = viewer && viewer.id != null ? parseInt(viewer.id, 10) : 0;
+    const data = await getSquarePersonalizedSummary(userId);
+    res.status(200).json({ status: 0, message: 'èŽ·å–æˆåŠŸ', data });
+  } catch (error) {
+    console.error('å¹¿åœºä¸ªæ€§åŒ–æ‘˜è¦é”™è¯¯:', error);
+    res.status(500).json({ status: -1, message: 'æœåŠ¡å™¨é”™è¯¯' });
+  }
+});
+
+router.get('/recommendations', async (req, res) => {
+  try {
+    const viewer = parseOptionalUser(req);
+    const userId = viewer && viewer.id != null ? parseInt(viewer.id, 10) : 0;
+    const data = await getSquareRecommendations(userId);
+    res.status(200).json({ status: 0, message: 'èŽ·å–æˆåŠŸ', data });
+  } catch (error) {
+    console.error('å¹¿åœºæŽ¨èæµé”™è¯¯:', error);
+    res.status(500).json({ status: -1, message: 'æœåŠ¡å™¨é”™è¯¯' });
   }
 });
 

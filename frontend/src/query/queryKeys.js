@@ -12,6 +12,7 @@ export const QK = {
   postComments: (postId) => ['posts', 'comments', postId],
   /** 帖子标签列表（全站共用，管理员增删后 invalidate） */
   postTagsList: () => ['posts', 'tags'],
+  postHotTags: (limit) => ['posts', 'hotTags', limit || 8],
   /** 用户标签可见性（含全部/可见/隐藏分区） */
   postTagsVisible: () => ['posts', 'tags', 'visible'],
   /** 未读全站公告（按 token 区分，避免串缓存） */
@@ -79,6 +80,8 @@ export const QK = {
 
   /** V3.0 广场 */
   squareHomeSummary: () => ['square', 'homeSummary'],
+  squarePersonalizedSummary: () => ['square', 'personalizedSummary'],
+  squareRecommendations: () => ['square', 'recommendations'],
   trendingTopics: () => ['square', 'trending'],
   trendingTopicDetail: (id) => ['square', 'trending', id],
   trendingPosts: (id, page) => ['square', 'trending', id, 'posts', page],

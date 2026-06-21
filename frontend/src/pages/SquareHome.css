@@ -25,11 +25,22 @@
   gap: 12px;
 }
 
+.square-section-header--stack {
+  align-items: flex-start;
+}
+
 .square-section-title {
   margin: 0;
   font-size: 18px;
   font-weight: 700;
   color: var(--post-ios-label);
+}
+
+.square-section-subtitle {
+  margin: 6px 0 0;
+  color: var(--ui-text-secondary);
+  font-size: 13px;
+  line-height: 1.55;
 }
 
 .square-section-more {
@@ -296,6 +307,107 @@
   color: inherit;
 }
 
+.square-recommend-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.square-recommend-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.square-recommend-card {
+  min-height: 158px;
+  background:
+    linear-gradient(145deg, rgba(15, 118, 110, 0.12), rgba(14, 165, 233, 0.04)),
+    rgba(255, 255, 255, 0.96);
+}
+
+.square-recommend-card .ui-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+}
+
+.square-recommend-card__top {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.square-recommend-card__badge {
+  width: fit-content;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.88);
+  color: #0f766e;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.square-recommend-card__reason {
+  color: rgba(15, 23, 42, 0.58);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.square-recommend-card__title {
+  margin: 0;
+  color: #10233b;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.square-recommend-card__subtitle,
+.square-recommend-card__meta {
+  margin: 0;
+  color: rgba(16, 35, 59, 0.72);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.square-hot-tags-strip {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.square-hot-tags-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.square-hot-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  text-decoration: none;
+  color: inherit;
+  white-space: nowrap;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.92);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+}
+
+.square-hot-tag-chip__name {
+  color: #10233b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.square-hot-tag-chip__meta {
+  color: rgba(16, 35, 59, 0.58);
+  font-size: 12px;
+}
+
 .square-home-publish-card {
   background:
     linear-gradient(135deg, rgba(26, 115, 232, 0.12), rgba(14, 165, 233, 0.05)),
@@ -356,8 +468,13 @@
     font-size: 28px;
   }
 
+  .square-recommend-grid,
   .today-campus-summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .square-recommend-grid {
+    grid-template-columns: 1fr;
   }
 
   .today-campus-summary-card:last-child {

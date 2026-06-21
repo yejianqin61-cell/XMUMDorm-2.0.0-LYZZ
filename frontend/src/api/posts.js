@@ -21,6 +21,10 @@ export function getPostTagsList() {
   return get('/api/posts/tags');
 }
 
+export function getHotPostTags(limit = 8) {
+  return get(`/api/posts/hot-tags?limit=${Math.min(12, Math.max(1, Number(limit) || 8))}`);
+}
+
 /** 创建标签（管理员） */
 export function createPostTag(body) {
   const { name_zh, name_en, slug } = body || {};

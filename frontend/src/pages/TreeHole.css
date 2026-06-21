@@ -448,6 +448,72 @@
   gap: 6px;
 }
 
+.treehole-rhythm-card {
+  background:
+    linear-gradient(145deg, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.88)),
+    rgba(15, 23, 42, 0.92);
+  color: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  box-shadow: 0 24px 70px rgba(2, 6, 23, 0.14);
+}
+
+.treehole-rhythm-card--campus {
+  background:
+    linear-gradient(145deg, rgba(17, 94, 89, 0.94), rgba(6, 95, 70, 0.86)),
+    rgba(15, 118, 110, 0.92);
+}
+
+.treehole-rhythm-card .ui-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+}
+
+.treehole-rhythm-card__eyebrow {
+  color: rgba(226, 232, 240, 0.78);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.treehole-rhythm-card__title {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.treehole-rhythm-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.treehole-rhythm-link {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-decoration: none;
+  color: inherit;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.treehole-rhythm-link__title {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.treehole-rhythm-link__meta {
+  font-size: 12px;
+  color: rgba(226, 232, 240, 0.78);
+  line-height: 1.45;
+}
+
 /* 右下角：iOS 式主操作（系统蓝圆形 +） */
 .treehole-fab {
   position: fixed;
