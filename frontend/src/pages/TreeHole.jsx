@@ -6,6 +6,8 @@ import { motion } from 'framer-motion';
 import { Heart, MessageCircle } from 'lucide-react';
 import TreeHoleToolbar from '../components/TreeHoleToolbar';
 import SkeletonPost from '../components/SkeletonPost';
+import ErrorState from '../components/ui/ErrorState';
+import RouteTransition from '../components/ui/RouteTransition';
 import { getPostList } from '../api/posts';
 import { getApiErrorMessage } from '../utils/apiError';
 import { API_BASE_URL } from '../api/config';
@@ -441,7 +443,7 @@ function TreeHole() {
   const gridScrollTop = Math.max(0, scrollTop - (gridTop || 0));
 
   return (
-    <div className={`treehole-page treehole-page--light ${isCoarse ? 'treehole-page--mobile' : ''}`}>
+    <RouteTransition className={`treehole-page treehole-page--light ${isCoarse ? 'treehole-page--mobile' : ''}`}>
       <TreeHoleToolbar selectedSlug={selectedTagSlug} onSelectTagSlug={handleSelectTag} />
       {debug ? (
         <div className="treehole-debug" role="status" aria-live="polite">
@@ -472,9 +474,7 @@ function TreeHole() {
         </div>
       ) : null}
       {errorMsg && (
-        <p className="treehole-error state-error" role="alert">
-          {errorMsg}
-        </p>
+        <ErrorState className="treehole-error" title="树洞加载失败" description={errorMsg} />
       )}
       {showInitialSkeleton ? (
         <div className="treehole-content">
@@ -555,7 +555,7 @@ function TreeHole() {
           )}
         </div>
       )}
-    </div>
+    </RouteTransition>
   );
 }
 

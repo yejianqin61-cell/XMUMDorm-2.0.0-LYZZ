@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import ActionCard from '../ui/ActionCard';
 
 export default function TodayCampusQuickActions({ actions }) {
   return (
@@ -8,11 +9,15 @@ export default function TodayCampusQuickActions({ actions }) {
       </div>
       <div className="today-campus-quick-actions">
         {actions.map((action) => (
-          <Link key={action.to} to={action.to} className="today-campus-quick-action pressable">
-            <span className="today-campus-quick-action__icon" aria-hidden="true">{action.icon}</span>
-            <span className="today-campus-quick-action__label">{action.label}</span>
-            <span className="today-campus-quick-action__hint">{action.hint}</span>
-          </Link>
+          <ActionCard
+            key={action.to}
+            as={Link}
+            to={action.to}
+            className="today-campus-quick-action pressable"
+            icon={action.icon}
+            title={action.label}
+            hint={action.hint}
+          />
         ))}
       </div>
     </section>

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import ActionCard from '../ui/ActionCard';
 
 export default function TodayCampusModuleGrid({ items }) {
   return (
@@ -8,11 +9,15 @@ export default function TodayCampusModuleGrid({ items }) {
       </div>
       <div className="square-grid">
         {items.map((item) => (
-          <Link key={item.to} to={item.to} className="square-grid-card pressable">
-            <span className="square-grid-icon" aria-hidden="true">{item.icon}</span>
-            <span className="square-grid-label">{item.label}</span>
-            <span className="square-grid-desc">{item.hint}</span>
-          </Link>
+          <ActionCard
+            key={item.to}
+            as={Link}
+            to={item.to}
+            className="square-grid-card pressable"
+            icon={item.icon}
+            title={item.label}
+            hint={item.hint}
+          />
         ))}
       </div>
     </section>

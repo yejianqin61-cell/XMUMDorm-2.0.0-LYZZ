@@ -2,7 +2,10 @@ import { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import EmptyState from '../components/EmptyState';
+import EmptyState from '../components/ui/EmptyState';
+import ErrorState from '../components/ui/ErrorState';
+import PageSkeleton from '../components/ui/PageSkeleton';
+import RouteTransition from '../components/ui/RouteTransition';
 import { clearNotifications, clearNotificationsByModule, getNotifications, getUnreadSummary, markNotificationRead } from '../api/notifications';
 import { getApiErrorMessage } from '../utils/apiError';
 import './Mailbox.css';
@@ -197,37 +200,38 @@ function Mailbox() {
 
   if (!isLoggedIn) {
     return (
-      <div className="mailbox-page">
+      <RouteTransition className="mailbox-page">
         <EmptyState
           title="请先登录"
           description="登录后查看信箱。Please log in to view mailbox."
           actionLabel="去登录"
           actionTo="/login"
+          icon="✉"
         />
-      </div>
+      </RouteTransition>
     );
   }
 
   if (loading) {
     return (
-      <div className="mailbox-page">
-        <p className="mailbox-loading state-loading">加载中…</p>
-      </div>
+      <RouteTransition className="mailbox-page">
+        <PageSkeleton items={4} />
+      </RouteTransition>
     );
   }
 
   if (error) {
     return (
-      <div className="mailbox-page">
-        <p className="mailbox-error state-error">{error}</p>
-      </div>
+      <RouteTransition className="mailbox-page">
+        <ErrorState title="信箱加载失败" description={error} onActionClick={() => window.location.reload()} />
+      </RouteTransition>
     );
   }
 
   const list = groups || [];
 
   return (
-    <div className="mailbox-page">
+    <RouteTransition className="mailbox-page">
       <div className="mailbox-topbar">
         <div className="mailbox-tabs" role="tablist" aria-label="notification tabs" style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
           {MODULE_TABS.map((mt) => {
@@ -275,7 +279,7 @@ function Mailbox() {
         </button>
       </div>
       {list.length === 0 ? (
-        <EmptyState title="暂无通知" description="No notifications yet." />
+        <EmptyState title="暂无通知" description="No notifications yet." icon="✉" />
       ) : (
         <ul className="social-stream">
           {list.map((g, idx) => {
@@ -342,7 +346,7 @@ function Mailbox() {
           })}
         </ul>
       )}
-    </div>
+    </RouteTransition>
   );
 }
 

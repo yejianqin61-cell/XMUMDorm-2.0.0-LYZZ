@@ -9,7 +9,10 @@ import { formatRatingLabel } from '../constants/rating';
 import { getApiErrorMessage } from '../utils/apiError';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import EmptyState from '../components/EmptyState';
+import EmptyState from '../components/ui/EmptyState';
+import ErrorState from '../components/ui/ErrorState';
+import PageSkeleton from '../components/ui/PageSkeleton';
+import RouteTransition from '../components/ui/RouteTransition';
 // 注意：此页使用 Tailwind 现代样式，不再复用旧的 MyZone.css（会带来深色遮罩等旧样式干扰）
 
 const TAB_POSTS = 'posts';
@@ -249,29 +252,25 @@ function UserZone() {
 
   if (!userId) {
     return (
-      <div className="min-h-[100svh] bg-[#F9FAFB] px-4 pb-8 pt-6">
-        <EmptyState title={t.userNotFound} description={t.userNotFound} actionLabel={t.backHome} actionTo="/" />
-      </div>
+      <RouteTransition className="min-h-[100svh] bg-[#F9FAFB] px-4 pb-8 pt-6">
+        <EmptyState title={t.userNotFound} description={t.userNotFound} actionLabel={t.backHome} actionTo="/" icon="👤" />
+      </RouteTransition>
     );
   }
 
   if (loading && !profileUser) {
     return (
-      <div className="min-h-[100svh] bg-[#F9FAFB] px-4 pb-8 pt-6">
-        <div className="rounded-3xl bg-white px-4 py-4 text-[13px] font-medium text-slate-400 ring-1 ring-slate-100">
-          {t.loading}
-        </div>
-      </div>
+      <RouteTransition className="min-h-[100svh] bg-[#F9FAFB] px-4 pb-8 pt-6">
+        <PageSkeleton hero items={2} />
+      </RouteTransition>
     );
   }
 
   if (error && !profileUser) {
     return (
-      <div className="min-h-[100svh] bg-[#F9FAFB] px-4 pb-8 pt-6">
-        <div className="rounded-3xl bg-white px-4 py-4 text-[13px] font-medium text-rose-600 ring-1 ring-rose-100" role="alert">
-          {error}
-        </div>
-      </div>
+      <RouteTransition className="min-h-[100svh] bg-[#F9FAFB] px-4 pb-8 pt-6">
+        <ErrorState title={t.userNotFound} description={error} />
+      </RouteTransition>
     );
   }
 
@@ -282,7 +281,7 @@ function UserZone() {
   const locale = isZh ? 'zh-CN' : 'en-US';
 
   return (
-    <div className="min-h-[100svh] w-full bg-[#F9FAFB]">
+    <RouteTransition className="min-h-[100svh] w-full bg-[#F9FAFB]">
       <div className="px-4 pb-[calc(var(--tabbar-height)+var(--safe-bottom)+24px)] pt-6">
         <motion.div variants={pageWrap} initial="hidden" animate="show">
           {/* Header */}
@@ -324,9 +323,7 @@ function UserZone() {
           </div>
 
           {error && (
-            <p className="mt-3 rounded-2xl bg-white px-4 py-3 text-[13px] font-medium text-rose-600 ring-1 ring-rose-100" role="alert">
-              {error}
-            </p>
+            <ErrorState className="mt-3" title="资料加载失败" description={error} />
           )}
 
           {/* Tabs */}
@@ -403,13 +400,9 @@ function UserZone() {
                   transition={{ duration: 0.22 }}
                 >
                   {reviewsLoading ? (
-                    <p className="rounded-2xl bg-white px-4 py-3 text-[13px] font-medium text-slate-400 ring-1 ring-slate-100">
-                      {t.loading}
-                    </p>
+                    <PageSkeleton items={2} />
                   ) : reviewsError ? (
-                    <p className="rounded-2xl bg-white px-4 py-3 text-[13px] font-medium text-rose-600 ring-1 ring-rose-100">
-                      {reviewsError}
-                    </p>
+                    <ErrorState title="点评加载失败" description={reviewsError} />
                   ) : reviews.length === 0 ? (
                     <EmptyIllustration title={t.reviewsEmptyTitle} description={t.reviewsEmptyDesc} actionLabel={t.eatNow} actionTo="/eat" />
                   ) : (
@@ -433,13 +426,9 @@ function UserZone() {
                   transition={{ duration: 0.22 }}
                 >
                   {favoritesLoading ? (
-                    <p className="rounded-2xl bg-white px-4 py-3 text-[13px] font-medium text-slate-400 ring-1 ring-slate-100">
-                      {t.loading}
-                    </p>
+                    <PageSkeleton items={2} />
                   ) : favoritesError ? (
-                    <p className="rounded-2xl bg-white px-4 py-3 text-[13px] font-medium text-rose-600 ring-1 ring-rose-100">
-                      {favoritesError}
-                    </p>
+                    <ErrorState title="收藏加载失败" description={favoritesError} />
                   ) : favorites.length === 0 ? (
                     <EmptyIllustration title={t.favEmptyTitle} description={t.favEmptyDesc} actionLabel={t.eatNow} actionTo="/eat" />
                   ) : (
@@ -455,7 +444,7 @@ function UserZone() {
           </div>
         </motion.div>
       </div>
-    </div>
+    </RouteTransition>
   );
 }
 
@@ -625,22 +614,7 @@ function FadeImg({ src, alt, className }) {
 
 function EmptyIllustration({ title, description, actionLabel, actionTo }) {
   return (
-    <div className="rounded-3xl bg-white px-6 py-10 text-center ring-1 ring-slate-100" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-      <div className="mx-auto mb-4 h-16 w-16 rounded-2xl bg-slate-50 ring-1 ring-slate-100 grid place-items-center">
-        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="text-slate-300" aria-hidden="true">
-          <path d="M4 6h16M4 12h10M4 18h6" strokeLinecap="round" />
-        </svg>
-      </div>
-      <div className="text-[15px] font-semibold text-slate-900">{title}</div>
-      {description ? <div className="mt-1 text-[13px] font-medium text-slate-400">{description}</div> : null}
-      {actionLabel && actionTo ? (
-        <div className="mt-5">
-          <Link to={actionTo} className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2.5 text-[13px] font-semibold text-white active:scale-[0.98]">
-            {actionLabel}
-          </Link>
-        </div>
-      ) : null}
-    </div>
+    <EmptyState title={title} description={description} actionLabel={actionLabel} actionTo={actionTo} icon="🗂" />
   );
 }
 

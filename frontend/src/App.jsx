@@ -28,6 +28,9 @@ import ContentDetail from './pages/Admin/ContentDetail';
 import { layoutRoutes } from './routes/layoutRoutes';
 import './App.css';
 import './styles/states.css';
+import './styles/tokens.css';
+import './styles/card.css';
+import './styles/state.css';
 
 function SplashScreen({ fadeOut, onReady }) {
   const videoRef = useRef(null);

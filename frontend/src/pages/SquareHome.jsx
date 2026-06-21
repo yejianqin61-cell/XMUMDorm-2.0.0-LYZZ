@@ -8,6 +8,10 @@ import TodayCampusQuickActions from '../components/square/TodayCampusQuickAction
 import TodayCampusHotActivities from '../components/square/TodayCampusHotActivities';
 import TodayCampusHotTopics from '../components/square/TodayCampusHotTopics';
 import TodayCampusModuleGrid from '../components/square/TodayCampusModuleGrid';
+import PageSkeleton from '../components/ui/PageSkeleton';
+import ErrorState from '../components/ui/ErrorState';
+import FadeInSection from '../components/ui/FadeInSection';
+import RouteTransition from '../components/ui/RouteTransition';
 import { QK } from '../query/queryKeys';
 import './SquareHome.css';
 
@@ -24,21 +28,6 @@ const QUICK_ACTIONS = [
   { to: '/about/club', icon: '🎫', label: '找活动', hint: '进入社团和活动页' },
   { to: '/about/map', icon: '🗺️', label: '校园地图', hint: '切到地图模式浏览' },
 ];
-
-function SquareHomeSkeleton() {
-  return (
-    <div className="square-home-skeleton" aria-hidden="true">
-      <div className="square-home-skeleton__hero" />
-      <div className="square-home-skeleton__metrics">
-        <span />
-        <span />
-        <span />
-      </div>
-      <div className="square-home-skeleton__block" />
-      <div className="square-home-skeleton__block square-home-skeleton__block--short" />
-    </div>
-  );
-}
 
 export default function SquareHome() {
   const summaryQuery = useQuery({
@@ -59,29 +48,48 @@ export default function SquareHome() {
   const latestCampusTitle = summary.campus_highlights?.[0]?.title || '';
 
   return (
-    <div className="square-home-page">
+    <RouteTransition className="square-home-page">
       <div className="square-home-inner">
-        <CanteenBannerCarousel
-          fetchFn={getSquareBanners}
-          queryKey={QK.squareBanners()}
-          adminTo="/about/admin/orgs?tab=banners"
-        />
+        <FadeInSection delay={0}>
+          <CanteenBannerCarousel
+            fetchFn={getSquareBanners}
+            queryKey={QK.squareBanners()}
+            adminTo="/about/admin/orgs?tab=banners"
+          />
+        </FadeInSection>
         {summaryQuery.isLoading ? (
-          <SquareHomeSkeleton />
+          <PageSkeleton hero metrics={3} items={2} className="square-home-skeleton" />
         ) : summaryQuery.isError ? (
-          <div className="state-error square-home-state">首页摘要加载失败，请下拉刷新后重试。</div>
+          <ErrorState
+            className="square-home-state"
+            title="首页摘要加载失败"
+            description="请下拉刷新后重试。"
+            onActionClick={() => summaryQuery.refetch()}
+          />
         ) : (
           <>
-            <TodayCampusHero
-              quickStats={summary.quick_stats}
-              latestTopicTitle={latestTopicTitle}
-              latestCampusTitle={latestCampusTitle}
-            />
-            <TodayCampusSummary summary={summary} />
-            <TodayCampusQuickActions actions={QUICK_ACTIONS} />
-            <TodayCampusHotActivities activities={summary.hot_activities || []} />
-            <TodayCampusHotTopics topics={summary.hot_topics || []} />
-            <TodayCampusModuleGrid items={GRID_ITEMS} />
+            <FadeInSection delay={0.02}>
+              <TodayCampusHero
+                quickStats={summary.quick_stats}
+                latestTopicTitle={latestTopicTitle}
+                latestCampusTitle={latestCampusTitle}
+              />
+            </FadeInSection>
+            <FadeInSection delay={0.05}>
+              <TodayCampusSummary summary={summary} />
+            </FadeInSection>
+            <FadeInSection delay={0.08}>
+              <TodayCampusQuickActions actions={QUICK_ACTIONS} />
+            </FadeInSection>
+            <FadeInSection delay={0.11}>
+              <TodayCampusHotActivities activities={summary.hot_activities || []} />
+            </FadeInSection>
+            <FadeInSection delay={0.14}>
+              <TodayCampusHotTopics topics={summary.hot_topics || []} />
+            </FadeInSection>
+            <FadeInSection delay={0.17}>
+              <TodayCampusModuleGrid items={GRID_ITEMS} />
+            </FadeInSection>
           </>
         )}
         <div className="square-section square-home-footer">
@@ -90,6 +98,6 @@ export default function SquareHome() {
           </Link>
         </div>
       </div>
-    </div>
+    </RouteTransition>
   );
 }

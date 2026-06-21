@@ -1,4 +1,6 @@
 import { useNavigate } from 'react-router-dom';
+import InfoCard from '../ui/InfoCard';
+import EmptyState from '../ui/EmptyState';
 
 export default function TodayCampusHotTopics({ topics }) {
   const navigate = useNavigate();
@@ -12,20 +14,25 @@ export default function TodayCampusHotTopics({ topics }) {
         </button>
       </div>
       {topics.length === 0 ? (
-        <div className="square-panel-empty">暂时没有热搜话题，下一条热门正在发酵。</div>
+        <EmptyState
+          className="square-panel-empty"
+          title="暂时没有热搜话题"
+          description="下一条热门正在发酵。"
+          icon="🔥"
+        />
       ) : (
         <div className="today-campus-topic-grid">
           {topics.map((topic, index) => (
-            <button
+            <InfoCard
               key={topic.id}
-              type="button"
               className="today-campus-topic-card pressable"
+              as="button"
+              type="button"
               onClick={() => navigate(`/about/trending/${topic.id}`)}
-            >
-              <span className="today-campus-topic-card__rank">#{index + 1}</span>
-              <strong className="today-campus-topic-card__title">{topic.title}</strong>
-              <span className="today-campus-topic-card__meta">{topic.post_count || 0} 条讨论</span>
-            </button>
+              eyebrow={`#${index + 1}`}
+              title={topic.title}
+              meta={`${topic.post_count || 0} 条讨论`}
+            />
           ))}
         </div>
       )}

@@ -1,5 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { formatPostTime } from '../../utils/formatTime';
+import MediaCard from '../ui/MediaCard';
+import EmptyState from '../ui/EmptyState';
 
 export default function TodayCampusHotActivities({ activities }) {
   const navigate = useNavigate();
@@ -13,25 +15,26 @@ export default function TodayCampusHotActivities({ activities }) {
         </button>
       </div>
       {activities.length === 0 ? (
-        <div className="square-panel-empty">今天还没有上新的活动，稍后再来看看。</div>
+        <EmptyState
+          className="square-panel-empty"
+          title="今天还没有上新的活动"
+          description="稍后再来看看，新的活动会出现在这里。"
+          icon="⌛"
+        />
       ) : (
         <div className="today-campus-list">
           {activities.map((activity) => (
-            <button
+            <MediaCard
               key={activity.id}
-              type="button"
               className="today-campus-list-item pressable"
+              as="button"
+              type="button"
               onClick={() => navigate(`/about/club/activity/${activity.id}`)}
-            >
-              <div className="today-campus-list-item__main">
-                <span className="today-campus-list-item__eyebrow">
-                  {activity.club_name || '社团活动'} · {formatPostTime(activity.start_time || activity.created_at)}
-                </span>
-                <strong className="today-campus-list-item__title">{activity.title}</strong>
-                <span className="today-campus-list-item__desc">{activity.summary || activity.location || '点击查看活动详情'}</span>
-              </div>
-              <span className="today-campus-list-item__meta">{activity.status_label || '进行中'}</span>
-            </button>
+              eyebrow={`${activity.club_name || '社团活动'} · ${formatPostTime(activity.start_time || activity.created_at)}`}
+              title={activity.title}
+              description={activity.summary || activity.location || '点击查看活动详情'}
+              pill={activity.status_label || '进行中'}
+            />
           ))}
         </div>
       )}
