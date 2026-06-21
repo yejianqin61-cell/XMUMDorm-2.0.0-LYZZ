@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { ArrowLeft, ExternalLink, Eye, Heart, MapPin, MessageCircle, Trash2 } from 'lucide-react';
+import { ArrowLeft, CalendarPlus2, ExternalLink, Eye, Heart, ListTodo, MapPin, MessageCircle, Trash2 } from 'lucide-react';
 import ReportButton from '../../components/ReportButton';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
@@ -17,6 +17,7 @@ import {
   toggleClubLike,
   trackClubView,
 } from '../../api/clubs';
+import { createTodo } from '../../api/todos';
 import { getApiErrorMessage } from '../../utils/apiError';
 import { API_BASE_URL } from '../../api/config';
 import ImagePreview from '../../components/ImagePreview';
@@ -27,6 +28,73 @@ import './Clubs.css';
 
 function prefixImageUrl(url) {
   return url && !url.startsWith('http') ? `${API_BASE_URL}${url}` : url;
+}
+
+function parseDateTime(value) {
+  if (!value) return null;
+  const text = String(value).trim();
+  const normalized = text.includes('T') ? text : text.replace(' ', 'T');
+  const date = new Date(normalized);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatDatePart(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return null;
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function formatTimePart(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return null;
+  const hour = String(date.getHours()).padStart(2, '0');
+  const minute = String(date.getMinutes()).padStart(2, '0');
+  return `${hour}:${minute}`;
+}
+
+function toIcsStamp(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
+  return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+}
+
+function escapeIcsText(value) {
+  return String(value || '')
+    .replace(/\\/g, '\\\\')
+    .replace(/\n/g, '\\n')
+    .replace(/,/g, '\\,')
+    .replace(/;/g, '\\;');
+}
+
+function downloadEventIcs(activity) {
+  const start = parseDateTime(activity?.time);
+  if (!start) return false;
+  const end = parseDateTime(activity?.endTime) || new Date(start.getTime() + 60 * 60 * 1000);
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//XMUMDorm//Campus Activity//EN',
+    'BEGIN:VEVENT',
+    `UID:club-activity-${activity.id}@xmumdorm`,
+    `DTSTAMP:${toIcsStamp(new Date())}`,
+    `DTSTART:${toIcsStamp(start)}`,
+    `DTEND:${toIcsStamp(end)}`,
+    `SUMMARY:${escapeIcsText(activity.title)}`,
+    `LOCATION:${escapeIcsText(activity.location || '')}`,
+    `DESCRIPTION:${escapeIcsText([activity.clubName, activity.summary].filter(Boolean).join(' | '))}`,
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ];
+  const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = `${String(activity.title || 'activity').replace(/[\\/:*?"<>|]+/g, '-').slice(0, 48) || 'activity'}.ics`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return true;
 }
 
 function ActivityDetail() {
@@ -165,6 +233,27 @@ function ActivityDetail() {
     }
   }, [a?.time]);
 
+  const todoMut = useMutation({
+    mutationFn: async () => {
+      const start = parseDateTime(a?.time);
+      return createTodo({
+        title: `${isZh ? '社团活动' : 'Club activity'}: ${a?.title || ''}`.trim(),
+        description: [a?.clubName, a?.location, a?.summary].filter(Boolean).join(' | '),
+        priority: 2,
+        due_date: formatDatePart(start),
+        due_time: formatTimePart(start),
+        list_type: 'club',
+      });
+    },
+    onSuccess: async () => {
+      Toast.success(isZh ? '已加入待办' : 'Added to to-do');
+      await queryClient.invalidateQueries({ queryKey: ['todos'] });
+    },
+    onError: (err) => {
+      Toast.error(getApiErrorMessage(err));
+    },
+  });
+
   if (q.isLoading) return <div className="state-loading">加载中</div>;
   if (q.isError || !a) return <div className="state-error">{q.error?.message || (isZh ? '加载失败' : 'Failed')}</div>;
 
@@ -209,6 +298,35 @@ function ActivityDetail() {
           }}
           onCancel={() => cancelRegisterMut.mutate()}
         />
+
+        <div className="club-detail-utility-row">
+          <button
+            type="button"
+            className="club-detail-utility-btn pressable"
+            onClick={() => {
+              const ok = downloadEventIcs(a);
+              if (!ok) Toast.error(isZh ? '当前活动缺少可导出的时间信息' : 'This activity does not have exportable time info yet');
+            }}
+          >
+            <CalendarPlus2 size={16} aria-hidden />
+            <span>{isZh ? '加入日历' : 'Add to calendar'}</span>
+          </button>
+          <button
+            type="button"
+            className="club-detail-utility-btn pressable"
+            disabled={todoMut.isPending}
+            onClick={() => {
+              if (!token) {
+                nav('/login', { state: { from: { pathname: `/about/club/activity/${activityId}` } } });
+                return;
+              }
+              todoMut.mutate();
+            }}
+          >
+            <ListTodo size={16} aria-hidden />
+            <span>{todoMut.isPending ? (isZh ? '加入中…' : 'Adding…') : (isZh ? '加入待办' : 'Add to to-do')}</span>
+          </button>
+        </div>
 
         {imageUrls.length > 0 ? (
           <div className="post-detail-media" aria-label={isZh ? '活动配图' : 'Activity images'}>

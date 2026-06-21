@@ -70,6 +70,32 @@
 }
 .club-my-row::-webkit-scrollbar { display: none; }
 
+.club-detail-utility-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.club-detail-utility-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  background: rgba(255, 255, 255, 0.92);
+  color: rgba(15, 23, 42, 0.82);
+  font-size: 12px;
+  font-weight: 800;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+}
+
+.club-detail-utility-btn:disabled {
+  opacity: 0.6;
+}
+
 .club-my-row--full {
   flex-direction: column;
   overflow-x: visible;
