@@ -14,7 +14,7 @@
  */
 const express = require('express');
 const router = express.Router();
-const { query } = require('../database');
+const { pool, query } = require('../database');
 const sanitizeHtml = require('sanitize-html');
 const authenticateToken = require('../middleware/auth');
 const { checkSanction } = require('../middleware/checkSanction');
@@ -219,6 +219,34 @@ async function getStatsForTargets(targetType, ids) {
     out.set(Number(id), { likes: likes.get(Number(id)) || 0, views: views.get(Number(id)) || 0 });
   }
   return out;
+}
+
+async function getActivityRegistrationMap(activityIds, viewerId = null) {
+  if (!Array.isArray(activityIds) || activityIds.length === 0) {
+    return { counts: new Map(), viewer: new Map() };
+  }
+  const placeholders = activityIds.map(() => '?').join(',');
+  const countRows = await query(
+    `SELECT activity_id, COUNT(*) AS c
+     FROM club_activity_registrations
+     WHERE status = 'registered' AND activity_id IN (${placeholders})
+     GROUP BY activity_id`,
+    activityIds
+  );
+  const counts = new Map((countRows || []).map((row) => [Number(row.activity_id), Number(row.c) || 0]));
+  const viewer = new Map();
+  if (viewerId) {
+    const viewerRows = await query(
+      `SELECT activity_id, status
+       FROM club_activity_registrations
+       WHERE user_id = ? AND activity_id IN (${placeholders})`,
+      [viewerId, ...activityIds]
+    );
+    for (const row of viewerRows || []) {
+      viewer.set(Number(row.activity_id), String(row.status || 'cancelled') === 'registered');
+    }
+  }
+  return { counts, viewer };
 }
 
 async function getViewerLikedMap(userId, targetType, ids) {
@@ -1287,9 +1315,12 @@ router.get('/activity/:id', async (req, res, next) => {
     );
     const a = rows && rows[0];
     if (!a) return res.status(404).json({ status: -1, message: '活动不存在' });
-    const stats = await getStatsForTargets('activity', [id]);
-    const liked = await getViewerLikedMap(viewerId, 'activity', [id]);
-    const commentCount = await getClubCommentCount('activity', id);
+    const [stats, liked, commentCount, registration] = await Promise.all([
+      getStatsForTargets('activity', [id]),
+      getViewerLikedMap(viewerId, 'activity', [id]),
+      getClubCommentCount('activity', id),
+      getActivityRegistrationMap([id], viewerId),
+    ]);
     const media = activityMediaForClient(a);
     let canManage = false;
     if (viewerId) {
@@ -1315,12 +1346,214 @@ router.get('/activity/:id', async (req, res, next) => {
         clubName: a.club_name,
         status: computeActivityStatus2(a),
         signupLink: a.signup_link,
+        registration: {
+          count: registration.counts.get(id) || 0,
+          registered: !!registration.viewer.get(id),
+          deadline: a.end_time || null,
+        },
         stats: { ...(stats.get(id) || { likes: 0, views: 0 }), comments: commentCount },
         viewer: { liked: !!liked.get(id), canManage },
       },
     });
   } catch (e) {
     next(e);
+  }
+});
+
+// =========================
+// Activity registration
+// POST /api/clubs/activities/:id/register
+// DELETE /api/clubs/activities/:id/register
+// GET /api/clubs/activities/:id/registration-status
+// =========================
+router.get('/activities/:id/registration-status', authenticateToken, async (req, res, next) => {
+  try {
+    const activityId = toInt(req.params.id, 0);
+    const userId = Number(req.user?.id || 0);
+    if (!activityId) return res.status(400).json({ status: -1, message: '参数错误' });
+    const actRows = await query(
+      'SELECT id, end_time FROM club_activities WHERE id = ? LIMIT 1',
+      [activityId]
+    );
+    if (!actRows || actRows.length === 0) {
+      return res.status(404).json({ status: -1, message: '活动不存在' });
+    }
+    const registration = await getActivityRegistrationMap([activityId], userId);
+    return res.json({
+      status: 0,
+      data: {
+        activityId,
+        registered: !!registration.viewer.get(activityId),
+        count: registration.counts.get(activityId) || 0,
+        deadline: actRows[0].end_time || null,
+      },
+    });
+  } catch (e) {
+    return next(e);
+  }
+});
+
+router.post('/activities/:id/register', authenticateToken, checkSanction, async (req, res, next) => {
+  const conn = await pool.getConnection();
+  try {
+    const activityId = toInt(req.params.id, 0);
+    const userId = Number(req.user?.id || 0);
+    if (!activityId || !userId) {
+      conn.release();
+      return res.status(400).json({ status: -1, message: '参数错误' });
+    }
+
+    await conn.beginTransaction();
+    const [actRows] = await Promise.all([
+      conn.execute(
+        `SELECT a.id, a.club_id, a.title, a.end_time, c.name AS club_name
+         FROM club_activities a
+         JOIN clubs c ON c.id = a.club_id
+         WHERE a.id = ?
+         LIMIT 1`,
+        [activityId]
+      ),
+    ]);
+    const activity = actRows[0]?.[0];
+    if (!activity) {
+      await conn.rollback();
+      conn.release();
+      return res.status(404).json({ status: -1, message: '活动不存在' });
+    }
+    if (computeActivityStatus2(activity) === 'ended') {
+      await conn.rollback();
+      conn.release();
+      return res.status(400).json({ status: -1, message: '活动已结束，无法报名' });
+    }
+
+    const [selfRows] = await conn.execute(
+      'SELECT role FROM club_members WHERE club_id = ? AND user_id = ? LIMIT 1',
+      [Number(activity.club_id), userId]
+    );
+    const selfRole = String(selfRows?.[0]?.role || '');
+    if (selfRole === 'admin' || isSiteAdmin(req)) {
+      await conn.rollback();
+      conn.release();
+      return res.status(400).json({ status: -1, message: '活动管理员无需重复报名' });
+    }
+
+    await conn.execute(
+      `INSERT INTO club_activity_registrations (activity_id, user_id, status, cancelled_at)
+       VALUES (?, ?, 'registered', NULL)
+       ON DUPLICATE KEY UPDATE
+         status = VALUES(status),
+         cancelled_at = NULL,
+         updated_at = CURRENT_TIMESTAMP`,
+      [activityId, userId]
+    );
+
+    const [countRows] = await conn.execute(
+      `SELECT COUNT(*) AS c
+       FROM club_activity_registrations
+       WHERE activity_id = ? AND status = 'registered'`,
+      [activityId]
+    );
+
+    await conn.commit();
+    conn.release();
+
+    await createNotification({
+      userId,
+      type: 'activity_register_success',
+      extra: {
+        targetType: 'club_activity',
+        targetId: activityId,
+        targetTitle: activity.title || '',
+        targetPath: `/about/club/activity/${activityId}`,
+        clubId: Number(activity.club_id),
+        clubName: activity.club_name || '',
+      },
+    });
+
+    return res.json({
+      status: 0,
+      message: '报名成功',
+      data: {
+        activityId,
+        registered: true,
+        count: Number(countRows?.[0]?.c) || 0,
+        deadline: activity.end_time || null,
+      },
+    });
+  } catch (e) {
+    try { await conn.rollback(); } catch {}
+    conn.release();
+    return next(e);
+  }
+});
+
+router.delete('/activities/:id/register', authenticateToken, async (req, res, next) => {
+  const conn = await pool.getConnection();
+  try {
+    const activityId = toInt(req.params.id, 0);
+    const userId = Number(req.user?.id || 0);
+    if (!activityId || !userId) {
+      conn.release();
+      return res.status(400).json({ status: -1, message: '参数错误' });
+    }
+
+    await conn.beginTransaction();
+    const [actRows] = await conn.execute(
+      'SELECT id, end_time FROM club_activities WHERE id = ? LIMIT 1',
+      [activityId]
+    );
+    const activity = actRows?.[0];
+    if (!activity) {
+      await conn.rollback();
+      conn.release();
+      return res.status(404).json({ status: -1, message: '活动不存在' });
+    }
+
+    const [regRows] = await conn.execute(
+      `SELECT id, status
+       FROM club_activity_registrations
+       WHERE activity_id = ? AND user_id = ?
+       LIMIT 1`,
+      [activityId, userId]
+    );
+    const registration = regRows?.[0];
+    if (!registration || String(registration.status || '') !== 'registered') {
+      await conn.rollback();
+      conn.release();
+      return res.status(400).json({ status: -1, message: '当前未报名，无需取消' });
+    }
+
+    await conn.execute(
+      `UPDATE club_activity_registrations
+       SET status = 'cancelled', cancelled_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+      [registration.id]
+    );
+
+    const [countRows] = await conn.execute(
+      `SELECT COUNT(*) AS c
+       FROM club_activity_registrations
+       WHERE activity_id = ? AND status = 'registered'`,
+      [activityId]
+    );
+
+    await conn.commit();
+    conn.release();
+
+    return res.json({
+      status: 0,
+      message: '已取消报名',
+      data: {
+        activityId,
+        registered: false,
+        count: Number(countRows?.[0]?.c) || 0,
+        deadline: activity.end_time || null,
+      },
+    });
+  } catch (e) {
+    try { await conn.rollback(); } catch {}
+    conn.release();
+    return next(e);
   }
 });
 
@@ -1547,9 +1780,10 @@ router.get('/:id', async (req, res, next) => {
 
     const actIds = (activities || []).map((r) => Number(r.id));
     const postIds = (posts || []).map((r) => Number(r.id));
-    const [actStats, postStats] = await Promise.all([
+    const [actStats, postStats, actRegistrations] = await Promise.all([
       getStatsForTargets('activity', actIds),
       getStatsForTargets('post', postIds),
+      getActivityRegistrationMap(actIds, viewerId),
     ]);
 
     const followers = followersRows && followersRows[0] ? Number(followersRows[0].c) : 0;
@@ -1601,6 +1835,11 @@ router.get('/:id', async (req, res, next) => {
             clubId: a.club_id,
             status: computeActivityStatus2(a),
             signupLink: a.signup_link,
+            registration: {
+              count: actRegistrations.counts.get(Number(a.id)) || 0,
+              registered: !!actRegistrations.viewer.get(Number(a.id)),
+              deadline: a.end_time || null,
+            },
             stats: actStats.get(Number(a.id)) || { likes: 0, views: 0 },
           };
         }),

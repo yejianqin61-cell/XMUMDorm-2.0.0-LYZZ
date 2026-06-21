@@ -55,6 +55,18 @@ export function getActivityDetail(id) {
   return get(`/api/clubs/activity/${id}`);
 }
 
+export function getActivityRegistrationStatus(id) {
+  return get(`/api/clubs/activities/${id}/registration-status`);
+}
+
+export function registerClubActivity(id) {
+  return post(`/api/clubs/activities/${id}/register`, {});
+}
+
+export function cancelClubActivityRegistration(id) {
+  return del(`/api/clubs/activities/${id}/register`);
+}
+
 export function getClubPostDetail(id) {
   return get(`/api/clubs/post/${id}`);
 }

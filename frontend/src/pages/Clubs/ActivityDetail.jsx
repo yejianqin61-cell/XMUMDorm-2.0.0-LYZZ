@@ -5,10 +5,18 @@ import { ArrowLeft, ExternalLink, Eye, Heart, MapPin, MessageCircle, Trash2 } fr
 import ReportButton from '../../components/ReportButton';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
+import ActivityRegisterBar from '../../components/clubs/ActivityRegisterBar';
 import { QK } from '../../query/queryKeys';
 import { queryClient } from '../../query/queryClient';
 import { Toast } from '../../context/ToastContext';
-import { deleteClubActivity, getActivityDetail, toggleClubLike, trackClubView } from '../../api/clubs';
+import {
+  cancelClubActivityRegistration,
+  deleteClubActivity,
+  getActivityDetail,
+  registerClubActivity,
+  toggleClubLike,
+  trackClubView,
+} from '../../api/clubs';
 import { getApiErrorMessage } from '../../utils/apiError';
 import { API_BASE_URL } from '../../api/config';
 import ImagePreview from '../../components/ImagePreview';
@@ -63,6 +71,21 @@ function ActivityDetail() {
 
   const activityQK = ['clubs', 'activity', activityId];
 
+  const syncRegistrationState = (payload) => {
+    queryClient.setQueryData(activityQK, (old) => {
+      if (!old) return old;
+      return {
+        ...old,
+        registration: {
+          ...(old.registration || {}),
+          count: Number(payload?.count) || 0,
+          registered: !!payload?.registered,
+          deadline: payload?.deadline || old.registration?.deadline || old.endTime || null,
+        },
+      };
+    });
+  };
+
   const likeMut = useMutation({
     mutationFn: async () => await toggleClubLike('activity', activityId),
     onMutate: async () => {
@@ -106,6 +129,33 @@ function ActivityDetail() {
     onError: (err) => Toast.error(getApiErrorMessage(err)),
   });
 
+  const registerMut = useMutation({
+    mutationFn: async () => await registerClubActivity(activityId),
+    onSuccess: async (payload) => {
+      syncRegistrationState(payload);
+      Toast.success(isZh ? '报名成功' : 'Registered');
+      await queryClient.invalidateQueries({ queryKey: activityQK });
+      await queryClient.invalidateQueries({ queryKey: QK.clubProfile(a?.clubId) });
+      await queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+    onError: (err) => {
+      Toast.error(getApiErrorMessage(err));
+    },
+  });
+
+  const cancelRegisterMut = useMutation({
+    mutationFn: async () => await cancelClubActivityRegistration(activityId),
+    onSuccess: async (payload) => {
+      syncRegistrationState(payload);
+      Toast.success(isZh ? '已取消报名' : 'Registration cancelled');
+      await queryClient.invalidateQueries({ queryKey: activityQK });
+      await queryClient.invalidateQueries({ queryKey: QK.clubProfile(a?.clubId) });
+    },
+    onError: (err) => {
+      Toast.error(getApiErrorMessage(err));
+    },
+  });
+
   const timeText = useMemo(() => {
     if (!a?.time) return '';
     try {
@@ -142,6 +192,23 @@ function ActivityDetail() {
             </div>
           ) : null}
         </div>
+
+        <ActivityRegisterBar
+          isZh={isZh}
+          registered={!!a.registration?.registered}
+          count={a.registration?.count ?? 0}
+          deadline={a.registration?.deadline || a.endTime || null}
+          disabled={canManage}
+          loading={registerMut.isPending || cancelRegisterMut.isPending}
+          onRegister={() => {
+            if (!token) {
+              nav('/login', { state: { from: { pathname: `/about/club/activity/${activityId}` } } });
+              return;
+            }
+            registerMut.mutate();
+          }}
+          onCancel={() => cancelRegisterMut.mutate()}
+        />
 
         {imageUrls.length > 0 ? (
           <div className="post-detail-media" aria-label={isZh ? '活动配图' : 'Activity images'}>
@@ -185,6 +252,12 @@ function ActivityDetail() {
           <div className="club-like-meta">
             <Eye size={18} aria-hidden /> <span>{a.stats?.views ?? 0}</span>
           </div>
+          {a.registration ? (
+            <div className="club-like-meta">
+              <span>{isZh ? '已报名' : 'Registered'}</span>
+              <span>{a.registration.count ?? 0}</span>
+            </div>
+          ) : null}
           {a.signupLink ? (
             <a className="club-join-link pressable" href={a.signupLink} target="_blank" rel="noreferrer">
               <ExternalLink size={16} aria-hidden /> {isZh ? '外链报名' : 'Signup'}

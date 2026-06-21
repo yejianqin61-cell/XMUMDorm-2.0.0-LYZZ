@@ -1460,6 +1460,74 @@ a.club-mini-card--link {
   gap: 8px;
 }
 
+.activity-register-bar {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: linear-gradient(135deg, rgba(26, 115, 232, 0.08), rgba(255, 255, 255, 0.96));
+}
+
+.activity-register-bar__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.activity-register-bar__count {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.activity-register-bar__count-value {
+  color: rgba(15, 23, 42, 0.96);
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.activity-register-bar__count-label,
+.activity-register-bar__deadline {
+  color: rgba(15, 23, 42, 0.62);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.activity-register-bar__button {
+  flex-shrink: 0;
+  min-width: 124px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.activity-register-bar__button.is-primary {
+  background: linear-gradient(180deg, #0f7aea, #0557b1);
+  color: #fff;
+  box-shadow: 0 12px 26px rgba(5, 87, 177, 0.26);
+}
+
+.activity-register-bar__button.is-secondary {
+  background: rgba(255, 255, 255, 0.92);
+  color: rgba(15, 23, 42, 0.82);
+  border-color: rgba(15, 23, 42, 0.12);
+}
+
+.activity-register-bar__button:disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 .club-detail-actions {
   margin-top: 10px;
   display: flex;
@@ -1520,6 +1588,17 @@ a.club-mini-card--link {
   color: rgba(0,0,0,0.55);
   font-size: 13px;
   font-weight: 900;
+}
+
+@media (max-width: 640px) {
+  .activity-register-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .activity-register-bar__button {
+    width: 100%;
+  }
 }
 
 .club-img-grid {

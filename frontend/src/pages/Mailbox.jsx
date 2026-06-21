@@ -38,6 +38,18 @@ function typeLabel(t, isZh) {
   return isZh ? '发布了公告' : 'posted an announcement';
 }
 
+function buildAffairsText({ isZh, latest }) {
+  const title = latest?.extra?.targetTitle || latest?.target?.title || '';
+  const titlePart = title ? (isZh ? `《${title}》` : `"${title}"`) : (isZh ? '该活动' : 'this activity');
+  if (latest?.type === 'activity_deadline_reminder') {
+    return isZh ? `${titlePart} 的报名即将截止，请及时处理。` : `Registration for ${titlePart} is closing soon.`;
+  }
+  if (latest?.type === 'activity_start_reminder') {
+    return isZh ? `${titlePart} 即将开始，请留意活动安排。` : `${titlePart} is starting soon.`;
+  }
+  return isZh ? `你已成功报名 ${titlePart}。` : `You have successfully registered for ${titlePart}.`;
+}
+
 function buildMarketplaceText({ isZh, names, othersCount, contentTitle }) {
   const a = names[0] || (isZh ? '有人' : 'Someone');
   const b = names[1] || '';
@@ -89,7 +101,7 @@ function Mailbox() {
   const [unreadCounts, setUnreadCounts] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [tab, setTab] = useState('all'); // all | treehole | trending | canteen | marketplace | club | system
+  const [tab, setTab] = useState('all'); // all | treehole | trending | canteen | marketplace | club | affairs | system
 
   const MODULE_TABS = [
     { key: 'all', label: '全部', labelEn: 'All' },
@@ -100,6 +112,7 @@ function Mailbox() {
     { key: 'club', label: '社团', labelEn: 'Club' },
     { key: 'system', label: '系统', labelEn: 'System' },
   ];
+  MODULE_TABS.splice(MODULE_TABS.length - 1, 0, { key: 'affairs', label: '事务', labelEn: 'Affairs' });
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -136,12 +149,15 @@ function Mailbox() {
     const map = new Map();
     for (const n of list) {
       const t = n && n.target ? n.target : null;
-      const key = t && t.key ? t.key : `unknown:${n.id}`;
+      const isAffair = ['activity_register_success', 'activity_start_reminder', 'activity_deadline_reminder'].includes(n.type);
+      const baseKey = t && t.key ? t.key : `unknown:${n.id}`;
+      const key = isAffair ? `affair:${baseKey}` : baseKey;
       const isPost = t && (t.type === 'post' || t.type === 'announcement');
       if (!map.has(key)) {
         map.set(key, {
           key,
           isPost,
+          isAffair,
           target: t,
           items: [],
         });
@@ -288,7 +304,9 @@ function Mailbox() {
             const linkTo = g.content_path || '#';
             const isAnnouncement = (g.target && g.target.type === 'announcement') || g.latest?.type === 'announcement';
             const aggregateText =
-              tab === 'marketplace'
+              g.isAffair
+                ? buildAffairsText({ isZh, latest: g.latest })
+                : tab === 'marketplace'
                 ? buildMarketplaceText({ isZh, names: g.names, othersCount: g.othersCount, contentTitle: title })
                 : buildAggregateText({
                     isZh,

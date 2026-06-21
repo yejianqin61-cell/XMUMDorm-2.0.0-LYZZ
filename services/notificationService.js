@@ -22,6 +22,9 @@ const MODULE_MAP = {
   club_follow: 'club',
   club_like: 'club',
   club_comment: 'club',
+  activity_register_success: 'affairs',
+  activity_start_reminder: 'affairs',
+  activity_deadline_reminder: 'affairs',
   system_announcement: 'system',
   system_ban: 'system',
   // 兼容旧类型
@@ -42,6 +45,7 @@ const MODULE_TYPES = {
   canteen: ['canteen_review', 'canteen_reply'],
   marketplace: ['marketplace_want', 'marketplace_chat', 'marketplace'],
   club: ['club_follow', 'club_like', 'club_comment'],
+  affairs: ['activity_register_success', 'activity_start_reminder', 'activity_deadline_reminder'],
   system: ['system_announcement', 'system_ban', 'announcement'],
 };
 
