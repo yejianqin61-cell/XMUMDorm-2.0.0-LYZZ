@@ -1,12 +1,11 @@
 import { useRef, useState, useEffect, useMemo } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import TabBar from './TabBar';
 import { getTabIndex } from './TabBar';
 import TreeHole from '../pages/TreeHole';
 import CanteenHome from '../pages/CanteenHome';
-import AboutUs from '../pages/AboutUs';
 import SquareHome from '../pages/SquareHome';
 import MyZone from '../pages/MyZone';
 import { useLanguage } from '../context/LanguageContext';
@@ -23,9 +22,9 @@ import './Layout.css';
 const UNREAD_ANN_STALE_MS = 3 * 60 * 1000;
 
 const TAB_ROOT_COMPONENTS = {
+  '/about': SquareHome,
   '/': TreeHole,
   '/eat': CanteenHome,
-  '/about': SquareHome,
   '/myzone': MyZone,
 };
 
@@ -77,6 +76,7 @@ const SHOW_BACK_PATHS = ['/post/new', '/post/', '/posts/'];
 /** 整体布局：顶栏（标题+信箱）+ 内容区 + 底部 Tab；Tab 仅能通过底部点击切换；主 Tab 间切换带过渡动画 + 公告弹窗 */
 function Layout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const pathname = location.pathname;
   const queryClient = useQueryClient();
   const { isLoggedIn, token, isAdmin } = useAuth();
@@ -114,6 +114,12 @@ function Layout() {
       return next;
     });
   }, [activeTabIndex]);
+
+  useEffect(() => {
+    if (pathname === '/' && location.key === 'default') {
+      navigate('/about', { replace: true });
+    }
+  }, [location.key, navigate, pathname]);
   const isRootTabPage = useMemo(() => {
     // 只在四个根 Tab 页使用“常驻页面 + 滑块切换”，子路由仍交给 Outlet 渲染
     return pathname === '/' || pathname === '/eat' || pathname === '/about' || pathname === '/myzone';
@@ -230,7 +236,7 @@ function Layout() {
       title = isZh ? '厦马小筑' : 'XMUM Dorm';
     }
   }
-  const showTreeHoleFab = pathname === '/' && activeTabIndex === 0;
+  const showTreeHoleFab = pathname === '/' && activeTabIndex === 1;
 
   return (
     <div
@@ -254,14 +260,14 @@ function Layout() {
                   transform: `translateX(-${activeTabIndex * 25}%)`,
                 }}
               >
-                <div className="tab-stack-pane" data-active={activeTabIndex === 0} aria-label="TreeHole">
-                  {mountedTabs.has(0) ? <TreeHole /> : null}
+                <div className="tab-stack-pane" data-active={activeTabIndex === 0} aria-label="Square">
+                  {mountedTabs.has(0) ? <SquareHome /> : null}
                 </div>
-                <div className="tab-stack-pane" data-active={activeTabIndex === 1} aria-label="Eat">
-                  {mountedTabs.has(1) ? <CanteenHome /> : null}
+                <div className="tab-stack-pane" data-active={activeTabIndex === 1} aria-label="TreeHole">
+                  {mountedTabs.has(1) ? <TreeHole /> : null}
                 </div>
-                <div className="tab-stack-pane" data-active={activeTabIndex === 2} aria-label="Square">
-                  {mountedTabs.has(2) ? <SquareHome /> : null}
+                <div className="tab-stack-pane" data-active={activeTabIndex === 2} aria-label="Eat">
+                  {mountedTabs.has(2) ? <CanteenHome /> : null}
                 </div>
                 <div className="tab-stack-pane tab-stack-pane--myzone" data-active={activeTabIndex === 3} aria-label="MyZone">
                   {mountedTabs.has(3) ? <MyZone /> : null}

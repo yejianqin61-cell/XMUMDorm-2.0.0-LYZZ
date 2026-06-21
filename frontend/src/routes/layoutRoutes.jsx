@@ -85,7 +85,8 @@ function renderLazyRoute(Component) {
 /** Layout 下的子路由配置，供 App 与 Layout 四格常驻挂载共用 */
 export const layoutRoutes = (
   <>
-    <Route index element={<TreeHole />} />
+    <Route index element={<Navigate to="/about" replace />} />
+    <Route path="treehole" element={<TreeHole />} />
     <Route path="post/new" element={renderLazyRoute(PostNew)} />
     <Route path="post/:id" element={renderLazyRoute(PostDetail)} />
     <Route path="posts/search" element={renderLazyRoute(PostSearch)} />

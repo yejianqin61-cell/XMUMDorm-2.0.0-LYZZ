@@ -78,6 +78,7 @@ export const QK = {
   organizationMembers: (id) => ['organizations', 'members', id],
 
   /** V3.0 广场 */
+  squareHomeSummary: () => ['square', 'homeSummary'],
   trendingTopics: () => ['square', 'trending'],
   trendingTopicDetail: (id) => ['square', 'trending', id],
   trendingPosts: (id, page) => ['square', 'trending', id, 'posts', page],

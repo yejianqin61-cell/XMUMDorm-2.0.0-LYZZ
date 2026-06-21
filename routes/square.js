@@ -21,6 +21,7 @@ const sanitizeHtml = require('sanitize-html');
 const { grantExp, revokeByRef, checkAndGrantPostPopularRewards } = require('../services/expService');
 const { attachExp } = require('../utils/expResponse');
 const { isPostContentEligible, isCommentEligible } = require('../utils/expEligibility');
+const { getSquareHomeSummary } = require('../services/squareHomeService');
 
 const BANNER_LINK_TYPES = ['none', 'product', 'shop', 'post', 'url', 'region'];
 
@@ -128,6 +129,18 @@ function parseBannerBody(body) {
   const is_active = raw.is_active === '0' || raw.is_active === 0 || raw.is_active === false ? 0 : 1;
   return { type, title, subtitle, link_type, link_target, sort_order: Number.isFinite(sort_order) ? sort_order : 0, is_active };
 }
+
+router.get('/home-summary', async (req, res) => {
+  try {
+    const viewer = parseOptionalUser(req);
+    const userId = viewer && viewer.id != null ? parseInt(viewer.id, 10) : 0;
+    const data = await getSquareHomeSummary(userId);
+    res.status(200).json({ status: 0, message: '获取成功', data });
+  } catch (error) {
+    console.error('广场首页聚合错误:', error);
+    res.status(500).json({ status: -1, message: '服务器错误' });
+  }
+});
 
 // ============================================
 // 热搜话题

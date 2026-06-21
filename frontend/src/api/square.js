@@ -3,6 +3,10 @@
  */
 import { get, post, patch, del } from './request';
 
+export function getSquareHomeSummary() {
+  return get('/api/square/home-summary');
+}
+
 // ---------- 热搜 ----------
 export function getTrendingTopics() {
   return get('/api/square/trending');

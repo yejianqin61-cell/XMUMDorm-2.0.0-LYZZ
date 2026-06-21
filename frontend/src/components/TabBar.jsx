@@ -3,30 +3,30 @@ import { useLanguage } from '../context/LanguageContext';
 
 /** 底部 Tab：根据语言显示纯中文或纯英文 */
 const TABS = [
+  { path: '/about', iconKey: 'Square', labelZh: '广场', labelEn: 'Square' },
   { path: '/', iconKey: 'TreeHole', labelZh: '树洞', labelEn: 'TreeHole' },
   { path: '/eat', iconKey: 'Eat', labelZh: '食堂', labelEn: 'Eat' },
-  { path: '/about', iconKey: 'Square', labelZh: '广场', labelEn: 'Square' },
   { path: '/myzone', iconKey: 'My Zone', labelZh: '我的', labelEn: 'My Zone' },
 ];
 
 /** 根据当前路径得到对应的 Tab 下标（供 Layout 全屏滑动切换复用） */
 export function getTabIndex(pathname) {
   if (pathname.startsWith('/myzone')) return 3;
-  if (pathname.startsWith('/about')) return 2;
-  if (pathname.startsWith('/eat')) return 1;
-  if (pathname === '/' || pathname.startsWith('/post')) return 0;
+  if (pathname.startsWith('/eat')) return 2;
+  if (pathname === '/' || pathname.startsWith('/post') || pathname.startsWith('/treehole')) return 1;
+  if (pathname.startsWith('/about')) return 0;
   return 0;
 }
 
 /** Tab 根路径（供 Layout 滑动动画判断是否为主 Tab 切换） */
-export const TAB_ROOT_PATHS = ['/', '/eat', '/about', '/myzone'];
+export const TAB_ROOT_PATHS = ['/about', '/', '/eat', '/myzone'];
 
 /** 根据 pathname 得到所属 Tab 的根路径 */
 export function getTabRootPath(pathname) {
   if (pathname.startsWith('/myzone')) return '/myzone';
   if (pathname.startsWith('/about')) return '/about';
   if (pathname.startsWith('/eat')) return '/eat';
-  if (pathname === '/' || pathname.startsWith('/post')) return '/';
+  if (pathname === '/' || pathname.startsWith('/post') || pathname.startsWith('/treehole')) return '/';
   return pathname;
 }
 
