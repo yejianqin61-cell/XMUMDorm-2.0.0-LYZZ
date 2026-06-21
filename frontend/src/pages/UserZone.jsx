@@ -111,6 +111,9 @@ function UserZone() {
   const isOwnProfile = Boolean(isLoggedIn && user && Number(user.id) === userId);
 
   const [profileUser, setProfileUser] = useState(null);
+  const [campusIdentity, setCampusIdentity] = useState(null);
+  const [activeDirections, setActiveDirections] = useState([]);
+  const [recentParticipation, setRecentParticipation] = useState([]);
   const [posts, setPosts] = useState([]);
   const [postCount, setPostCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -156,6 +159,9 @@ function UserZone() {
         if (cancelled) return;
         const u = profileData?.user || null;
         setProfileUser(u ? { ...u, avatar: u.avatar ? prefixAvatar(u.avatar) : null } : null);
+        setCampusIdentity(profileData?.campus_identity || u?.campus_identity || null);
+        setActiveDirections(Array.isArray(profileData?.active_directions) ? profileData.active_directions : []);
+        setRecentParticipation(Array.isArray(profileData?.recent_participation) ? profileData.recent_participation : []);
         const rawPosts = profileData?.posts ?? profileData?.postList ?? [];
         const postList = rawPosts.map((p) => ({
           ...p,
@@ -279,6 +285,14 @@ function UserZone() {
   const reviewsCount = reviews.length;
   const favoritesCount = favorites.length;
   const locale = isZh ? 'zh-CN' : 'en-US';
+  const identityChips = useMemo(
+    () => [
+      campusIdentity?.college ? { key: 'college', label: isZh ? '学院' : 'College', value: campusIdentity.college } : null,
+      campusIdentity?.grade ? { key: 'grade', label: isZh ? '年级' : 'Grade', value: campusIdentity.grade } : null,
+      campusIdentity?.major ? { key: 'major', label: isZh ? '专业' : 'Major', value: campusIdentity.major } : null,
+    ].filter(Boolean),
+    [campusIdentity, isZh]
+  );
 
   return (
     <RouteTransition className="min-h-[100svh] w-full bg-[#F9FAFB]">
@@ -325,6 +339,14 @@ function UserZone() {
           {error && (
             <ErrorState className="mt-3" title="资料加载失败" description={error} />
           )}
+
+          <CampusIdentityCard
+            isZh={isZh}
+            isOwnProfile={isOwnProfile}
+            chips={identityChips}
+            activeDirections={activeDirections}
+            recentParticipation={recentParticipation}
+          />
 
           {/* Tabs */}
           {showTabs && (
@@ -453,6 +475,78 @@ function StatMini({ value, label, dim = false }) {
     <div className={`flex flex-col leading-none ${dim ? 'opacity-70' : ''}`}>
       <div className="text-[14px] font-semibold tabular-nums">{Number(value) || 0}</div>
       <div className="mt-1 text-[11px] font-medium text-white/70">{label}</div>
+    </div>
+  );
+}
+
+function CampusIdentityCard({ isZh, isOwnProfile, chips, activeDirections, recentParticipation }) {
+  const hasIdentity = chips.length > 0;
+  const hasDirections = activeDirections.length > 0;
+  const hasRecent = recentParticipation.length > 0;
+  if (!hasIdentity && !hasDirections && !hasRecent) return null;
+
+  return (
+    <div className="mt-4 rounded-3xl bg-white/96 p-5 ring-1 ring-slate-200/70" style={{ boxShadow: '0 12px 36px rgba(15, 23, 42, 0.06)' }}>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-600/80">Campus Identity</p>
+          <h2 className="mt-2 text-[20px] font-semibold tracking-tight text-slate-900">
+            {isZh ? '校园身份卡' : 'Campus Card'}
+          </h2>
+          <p className="mt-2 max-w-[42ch] text-[13px] leading-6 text-slate-500">
+            {isOwnProfile
+              ? (isZh ? '你可以在资料编辑里维护这些身份信息，并控制对外可见范围。' : 'You can edit these fields and control their visibility.')
+              : (isZh ? '这张卡片展示了对方愿意公开的校园身份与参与方向。' : 'This card shows the campus identity fields the user chose to share.')}
+          </p>
+        </div>
+        {isOwnProfile ? (
+          <Link to="/myzone/profile" className="rounded-full bg-slate-900 px-4 py-2 text-[12px] font-semibold text-white">
+            {isZh ? '编辑资料' : 'Edit'}
+          </Link>
+        ) : null}
+      </div>
+
+      {hasIdentity ? (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {chips.map((chip) => (
+            <div key={chip.key} className="rounded-2xl bg-slate-50 px-3 py-2 ring-1 ring-slate-200/70">
+              <div className="text-[11px] font-semibold text-slate-400">{chip.label}</div>
+              <div className="mt-1 text-[13px] font-semibold text-slate-800">{chip.value}</div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {hasDirections ? (
+        <div className="mt-5">
+          <div className="text-[12px] font-semibold text-slate-500">{isZh ? '活跃方向' : 'Active directions'}</div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {activeDirections.map((item) => (
+              <div key={item.key} className="rounded-full bg-emerald-50 px-3 py-2 text-[12px] text-emerald-800 ring-1 ring-emerald-100">
+                <span className="font-semibold">{item.label}</span>
+                <span className="ml-2">{item.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {hasRecent ? (
+        <div className="mt-5">
+          <div className="text-[12px] font-semibold text-slate-500">{isZh ? '最近参与' : 'Recent participation'}</div>
+          <div className="mt-3 space-y-3">
+            {recentParticipation.map((item) => (
+              <Link key={item.key} to={item.href} className="block rounded-2xl bg-slate-50 px-4 py-3 ring-1 ring-slate-200/70">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-[12px] font-semibold text-slate-500">{item.label}</span>
+                  <span className="text-[11px] text-slate-400">{timeBadge(item.created_at, isZh ? 'zh-CN' : 'en-US')}</span>
+                </div>
+                <div className="mt-1 text-[14px] font-semibold leading-6 text-slate-900">{item.title}</div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -4,9 +4,10 @@
 import { del, get, patch } from './request';
 
 export function getNotifications(options = {}) {
-  const { page = 1, pageSize = 20, type, is_read, module: mod } = options;
+  const { page = 1, pageSize = 20, type, is_read, module: mod, category } = options;
   const params = new URLSearchParams({ page, pageSize });
-  if (mod) params.set('module', mod);
+  if (category) params.set('category', category);
+  else if (mod) params.set('module', mod);
   else if (type) params.set('type', type);
   if (is_read !== undefined && is_read !== '') params.set('is_read', is_read);
   return get(`/api/notifications?${params.toString()}`);
@@ -14,6 +15,10 @@ export function getNotifications(options = {}) {
 
 export function clearNotificationsByModule(moduleName) {
   return del(`/api/notifications/clear?module=${encodeURIComponent(moduleName)}`);
+}
+
+export function clearNotificationsByCategory(category) {
+  return del(`/api/notifications/clear?category=${encodeURIComponent(category)}`);
 }
 
 export function getUnreadAnnouncements() {

@@ -49,6 +49,22 @@ const MODULE_TYPES = {
   system: ['system_announcement', 'system_ban', 'announcement'],
 };
 
+const CATEGORY_TYPES = {
+  interaction: [
+    ...MODULE_TYPES.treehole,
+    ...MODULE_TYPES.trending,
+    ...MODULE_TYPES.canteen,
+    ...MODULE_TYPES.club,
+    'handbook_comment',
+    'course_review_comment',
+  ],
+  transaction: [
+    ...MODULE_TYPES.marketplace,
+    ...MODULE_TYPES.affairs,
+  ],
+  system: [...MODULE_TYPES.system],
+};
+
 /**
  * 写入一条通知
  * @param {Object} options
@@ -112,10 +128,25 @@ function getModuleTypes(moduleName) {
   return MODULE_TYPES[moduleName] || null;
 }
 
+function getCategoryTypes(categoryName) {
+  return CATEGORY_TYPES[categoryName] || null;
+}
+
+function getNotificationCategory(type) {
+  if (!type) return 'interaction';
+  for (const [categoryName, types] of Object.entries(CATEGORY_TYPES)) {
+    if (types.includes(type)) return categoryName;
+  }
+  return 'interaction';
+}
+
 module.exports = {
   createNotification,
   createNotificationBatch,
   getModuleTypes,
+  getCategoryTypes,
+  getNotificationCategory,
   MODULE_MAP,
   MODULE_TYPES,
+  CATEGORY_TYPES,
 };

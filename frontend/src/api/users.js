@@ -19,8 +19,8 @@ export function getProfile(userId, options = {}) {
 }
 
 /**
- * 更新当前用户资料（目前仅支持昵称 nickname）
- * @param {{ nickname?: string, username?: string }} body
+ * 更新当前用户资料
+ * @param {{ nickname?: string, username?: string, college?: string, grade?: string, major?: string, show_college?: boolean, show_grade?: boolean, show_major?: boolean }} body
  */
 export function updateProfileInfo(body) {
   return patch('/api/users/me', body);

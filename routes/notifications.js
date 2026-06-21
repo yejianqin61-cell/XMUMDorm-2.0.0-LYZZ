@@ -11,7 +11,11 @@ const { query } = require('../database');
 const authenticateToken = require('../middleware/auth');
 const { assetUrl } = require('../utils/assets');
 const { simpleCache } = require('../utils/simpleCache');
-const { getModuleTypes } = require('../services/notificationService');
+const {
+  getCategoryTypes,
+  getModuleTypes,
+  getNotificationCategory,
+} = require('../services/notificationService');
 
 function getUnreadAnnouncementCacheKey(userId) {
   return `notifications:unreadAnn:v1:${userId}`;
@@ -46,6 +50,7 @@ async function attachNotificationExtra(rows) {
       extra,
       created_at: r.created_at
     };
+    item.category = getNotificationCategory(r.type);
     if (r.from_username || r.from_nickname) {
       item.from_user = {
         id: r.from_user_id,
@@ -91,7 +96,7 @@ async function attachNotificationExtra(rows) {
 }
 
 // ============================================
-// 当前用户通知列表（分页，支持 type / is_read 筛选）
+// 当前用户通知列表（分页，支持 type / module / category / is_read 筛选）
 // ============================================
 router.get('/', authenticateToken, async (req, res) => {
   try {
@@ -105,11 +110,18 @@ router.get('/', authenticateToken, async (req, res) => {
     }
     const type = req.query.type; // 单类型筛选（兼容旧版）
     const mod = req.query.module; // 模块筛选（新增）
+    const category = req.query.category; // 类别筛选（interaction|transaction|system）
     const isRead = req.query.is_read; // 0 | 1
 
     let where = 'n.user_id = ?';
     const params = [req.user.id];
-    if (mod) {
+    if (category) {
+      const types = getCategoryTypes(category);
+      if (!types) return res.status(400).json({ status: -1, message: '未知通知类别' });
+      const placeholders = types.map(() => '?').join(',');
+      where += ` AND n.type IN (${placeholders})`;
+      params.push(...types);
+    } else if (mod) {
       const types = getModuleTypes(mod);
       if (types) {
         const placeholders = types.map(() => '?').join(',');
@@ -186,15 +198,24 @@ router.get('/unread-summary', authenticateToken, async (req, res) => {
       byType[r.type] = Number(r.cnt) || 0;
     }
     // 按模块聚合（从 notificationService 获取模块定义）
-    const { MODULE_TYPES: allModuleTypes } = require('../services/notificationService');
+    const {
+      MODULE_TYPES: allModuleTypes,
+      CATEGORY_TYPES: allCategoryTypes,
+    } = require('../services/notificationService');
     const byModule = {};
     for (const [modName, types] of Object.entries(allModuleTypes)) {
       let sum = 0;
       for (const t of types) sum += byType[t] || 0;
       byModule[modName] = sum;
     }
+    const byCategory = {};
+    for (const [categoryName, types] of Object.entries(allCategoryTypes)) {
+      let sum = 0;
+      for (const t of types) sum += byType[t] || 0;
+      byCategory[categoryName] = sum;
+    }
     const total = Object.values(byType).reduce((a, b) => a + (Number(b) || 0), 0);
-    res.status(200).json({ status: 0, message: 'ok', data: { total, byType, byModule } });
+    res.status(200).json({ status: 0, message: 'ok', data: { total, byType, byModule, byCategory } });
   } catch (e) {
     console.error('未读汇总错误:', e);
     res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
@@ -208,8 +229,14 @@ router.delete('/clear', authenticateToken, async (req, res) => {
   try {
     const scope = String(req.query.scope || '').trim();
     const mod = String(req.query.module || '').trim();
+    const category = String(req.query.category || '').trim();
 
-    if (mod) {
+    if (category) {
+      const types = getCategoryTypes(category);
+      if (!types) return res.status(400).json({ status: -1, message: '未知通知类别' });
+      const placeholders = types.map(() => '?').join(',');
+      await query(`DELETE FROM notifications WHERE user_id = ? AND type IN (${placeholders})`, [req.user.id, ...types]);
+    } else if (mod) {
       const types = getModuleTypes(mod);
       if (!types) return res.status(400).json({ status: -1, message: '未知模块' });
       const placeholders = types.map(() => '?').join(',');

@@ -5,18 +5,34 @@ import { updateAvatar, updateProfileInfo } from '../api/users';
 import { getApiErrorMessage } from '../utils/apiError';
 import './ProfileEdit.css';
 
-/** 修改个人信息：头像（调 API）、用户名（本地保存，后端暂无昵称接口） */
 function ProfileEdit() {
-  const { user, isLoggedIn, displayName, displayAvatar, updateProfile, refreshUser, isAdmin } = useAuth();
-  const [username, setUsername] = useState('');
+  const { user, isLoggedIn, displayAvatar, updateProfile, refreshUser, isAdmin } = useAuth();
+  const [form, setForm] = useState({
+    nickname: '',
+    college: '',
+    grade: '',
+    major: '',
+    show_college: true,
+    show_grade: true,
+    show_major: false,
+  });
   const [avatarUrl, setAvatarUrl] = useState('');
   const [message, setMessage] = useState({ type: '', text: '' });
   const [avatarLoading, setAvatarLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    setUsername(user?.nickname ?? user?.username ?? '');
+    setForm({
+      nickname: user?.nickname ?? user?.username ?? '',
+      college: user?.college ?? '',
+      grade: user?.grade ?? '',
+      major: user?.major ?? '',
+      show_college: user?.show_college !== false,
+      show_grade: user?.show_grade !== false,
+      show_major: !!user?.show_major,
+    });
     setAvatarUrl(displayAvatar ?? '');
-  }, [user?.nickname, user?.username, displayAvatar]);
+  }, [user, displayAvatar]);
 
   if (!isLoggedIn) {
     return <Navigate to="/login" replace state={{ from: { pathname: '/myzone/profile' } }} />;
@@ -24,7 +40,7 @@ function ProfileEdit() {
 
   const showMsg = (text, type = 'success') => {
     setMessage({ text, type });
-    setTimeout(() => setMessage({ type: '', text: '' }), 2000);
+    setTimeout(() => setMessage({ type: '', text: '' }), 2200);
   };
 
   const handleAvatarFile = async (e) => {
@@ -43,29 +59,42 @@ function ProfileEdit() {
     }
   };
 
+  const handleChange = (key, value) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
-    const name = username.trim();
+    const name = form.nickname.trim();
     if (!name) {
-      setMessage({ text: 'Please enter username', type: 'error' });
-      setTimeout(() => setMessage({ type: '', text: '' }), 2000);
+      showMsg('Please enter username', 'error');
       return;
     }
     const lower = name.toLowerCase();
     const forbidden = ['admin', 'xmumdorm_official'];
     if (!isAdmin && forbidden.includes(lower)) {
-      setMessage({ text: 'This nickname is reserved.', type: 'error' });
-      setTimeout(() => setMessage({ type: '', text: '' }), 2500);
+      showMsg('This nickname is reserved.', 'error');
       return;
     }
+
+    setSaving(true);
     try {
-      // 调后端接口更新昵称（实际写入 users.nickname）
-      await updateProfileInfo({ nickname: name });
+      await updateProfileInfo({
+        nickname: name,
+        college: form.college.trim(),
+        grade: form.grade.trim(),
+        major: form.major.trim(),
+        show_college: form.show_college,
+        show_grade: form.show_grade,
+        show_major: form.show_major,
+      });
       await refreshUser();
       updateProfile({ username: name });
       showMsg('Saved');
     } catch (err) {
       showMsg(getApiErrorMessage(err), 'error');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -84,40 +113,102 @@ function ProfileEdit() {
                 disabled={avatarLoading}
               />
               {avatarLoading ? (
-                <div className="profile-edit-avatar profile-edit-avatar-loading">Uploading…</div>
+                <div className="profile-edit-avatar profile-edit-avatar-loading">Uploading...</div>
               ) : avatarUrl ? (
                 <img src={avatarUrl} alt="" className="profile-edit-avatar" />
               ) : (
-                <img
-                  src="/default-avatar.svg"
-                  alt=""
-                  className="profile-edit-avatar profile-edit-avatar-default"
-                />
+                <img src="/default-avatar.svg" alt="" className="profile-edit-avatar profile-edit-avatar-default" />
               )}
             </label>
-            <span className="profile-edit-avatar-hint">{avatarLoading ? 'Uploading…' : 'Tap to change avatar'}</span>
+            <span className="profile-edit-avatar-hint">{avatarLoading ? 'Uploading...' : 'Tap to change avatar'}</span>
           </div>
         </div>
 
-        <div className="profile-edit-field">
-          <label htmlFor="profile-username">Username</label>
-          <input
-            id="profile-username"
-            type="text"
-            placeholder="Enter username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
+        <div className="profile-edit-grid">
+          <div className="profile-edit-field">
+            <label htmlFor="profile-username">Nickname</label>
+            <input
+              id="profile-username"
+              type="text"
+              placeholder="Enter nickname"
+              value={form.nickname}
+              onChange={(e) => handleChange('nickname', e.target.value)}
+            />
+          </div>
+
+          <div className="profile-edit-field">
+            <label htmlFor="profile-college">College</label>
+            <input
+              id="profile-college"
+              type="text"
+              placeholder="e.g. School of Computing"
+              value={form.college}
+              onChange={(e) => handleChange('college', e.target.value)}
+            />
+          </div>
+
+          <div className="profile-edit-field">
+            <label htmlFor="profile-grade">Grade</label>
+            <input
+              id="profile-grade"
+              type="text"
+              placeholder="e.g. 2024"
+              value={form.grade}
+              onChange={(e) => handleChange('grade', e.target.value)}
+            />
+          </div>
+
+          <div className="profile-edit-field">
+            <label htmlFor="profile-major">Major</label>
+            <input
+              id="profile-major"
+              type="text"
+              placeholder="e.g. Computer Science"
+              value={form.major}
+              onChange={(e) => handleChange('major', e.target.value)}
+            />
+          </div>
         </div>
 
-        {message.text && (
+        <div className="profile-edit-privacy">
+          <div className="profile-edit-privacy__header">
+            <h3>Visibility</h3>
+            <p>Choose which campus identity fields can be shown on your public page.</p>
+          </div>
+          <label className="profile-edit-toggle">
+            <input
+              type="checkbox"
+              checked={form.show_college}
+              onChange={(e) => handleChange('show_college', e.target.checked)}
+            />
+            <span>Show college</span>
+          </label>
+          <label className="profile-edit-toggle">
+            <input
+              type="checkbox"
+              checked={form.show_grade}
+              onChange={(e) => handleChange('show_grade', e.target.checked)}
+            />
+            <span>Show grade</span>
+          </label>
+          <label className="profile-edit-toggle">
+            <input
+              type="checkbox"
+              checked={form.show_major}
+              onChange={(e) => handleChange('show_major', e.target.checked)}
+            />
+            <span>Show major</span>
+          </label>
+        </div>
+
+        {message.text ? (
           <p className={`profile-edit-message profile-edit-message-${message.type}`}>
             {message.text}
           </p>
-        )}
+        ) : null}
 
-        <button type="submit" className="profile-edit-btn">
-          Save
+        <button type="submit" className="profile-edit-btn" disabled={saving}>
+          {saving ? 'Saving...' : 'Save'}
         </button>
       </form>
     </div>
