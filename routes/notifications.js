@@ -13,6 +13,15 @@ const { assetUrl } = require('../utils/assets');
 const { simpleCache } = require('../utils/simpleCache');
 const { getModuleTypes } = require('../services/notificationService');
 
+function getUnreadAnnouncementCacheKey(userId) {
+  return `notifications:unreadAnn:v1:${userId}`;
+}
+
+function invalidateUnreadAnnouncementCache(userId) {
+  if (!userId) return;
+  simpleCache.delete(getUnreadAnnouncementCacheKey(userId));
+}
+
 // 为通知附加帖子/发送者等摘要
 async function attachNotificationExtra(rows) {
   if (!rows || rows.length === 0) return [];
@@ -220,6 +229,7 @@ router.delete('/clear', authenticateToken, async (req, res) => {
       const placeholders = systemTypes.map(() => '?').join(',');
       await query(`DELETE FROM notifications WHERE user_id = ? AND type NOT IN (${placeholders})`, [req.user.id, ...systemTypes]);
     }
+    invalidateUnreadAnnouncementCache(req.user.id);
     res.status(200).json({ status: 0, message: 'ok', data: { cleared: true } });
   } catch (e) {
     console.error('清空通知错误:', e);
@@ -233,7 +243,7 @@ router.delete('/clear', authenticateToken, async (req, res) => {
 router.get('/unread-announcements', authenticateToken, async (req, res) => {
   try {
     const ttlMs = Number(process.env.CACHE_UNREAD_ANN_TTL_MS || 20 * 1000); // 20s
-    const cacheKey = `notifications:unreadAnn:v1:${req.user.id}`;
+    const cacheKey = getUnreadAnnouncementCacheKey(req.user.id);
     const list = await simpleCache.getOrSet(cacheKey, ttlMs, async () => {
       const rows = await query(
         `SELECT n.id, n.type, n.is_read, n.post_id, n.extra, n.created_at, n.from_user_id,
@@ -266,6 +276,7 @@ router.patch('/:id/read', authenticateToken, async (req, res) => {
       return res.status(404).json({ status: -1, message: '通知不存在' });
     }
     await query('UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?', [id, req.user.id]);
+    invalidateUnreadAnnouncementCache(req.user.id);
     res.status(200).json({ status: 0, message: '已标记为已读' });
   } catch (e) {
     console.error('标记已读错误:', e);
@@ -287,6 +298,7 @@ router.patch('/read-batch', authenticateToken, async (req, res) => {
       `UPDATE notifications SET is_read = 1 WHERE user_id = ? AND id IN (${placeholders})`,
       [req.user.id, ...ids]
     );
+    invalidateUnreadAnnouncementCache(req.user.id);
     res.status(200).json({ status: 0, message: '已标记为已读' });
   } catch (e) {
     console.error('批量已读错误:', e);

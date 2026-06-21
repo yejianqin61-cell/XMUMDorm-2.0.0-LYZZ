@@ -18,6 +18,12 @@ const SCROLL_CACHE_KEY = 'treehole';
 // 首屏更快：先拉 10 条；首屏出来后后台再预取更多页
 const PAGE_SIZE = 10;
 const PREFETCH_PAGES_AFTER_FIRST = 3; // 额外预取 3 页 => 约 30 条
+const MotionDiv = motion.div;
+const MotionSpan = motion.span;
+
+function logTreeHoleBackgroundError(scope, err) {
+  console.warn(`[TreeHole] ${scope} failed:`, err);
+}
 
 function getTreeHoleScrollEl() {
   // Tab 常驻模式下，滚动容器是当前激活的 tab pane；否则回退到 .app-main
@@ -148,7 +154,7 @@ function TreeHole() {
   }, []);
 
   const queryClient = useQueryClient();
-  const { token, isAdmin } = useAuth();
+  const { token } = useAuth();
   const tokenKey = token ?? 'guest';
   const prefetchRef = useRef(false);
   const scrollRestoredRef = useRef(false);
@@ -276,7 +282,9 @@ function TreeHole() {
         queryFn: getRegions,
         staleTime: 5 * 60 * 1000,
       })
-      .catch(() => {});
+      .catch((err) => {
+        logTreeHoleBackgroundError('prefetch regions', err);
+      });
   }, [queryClient]);
 
   // 首屏出来后，后台“偷偷”多拉几页，减少继续下滑时的灰色空段与等待
@@ -297,11 +305,14 @@ function TreeHole() {
         // 如果中途没有更多页了就停
         if (!infinite.hasNextPage) return;
         // 这里用 await，确保顺序分页，不会并发炸后端/浪费流量
-        // eslint-disable-next-line no-await-in-loop
         await infinite.fetchNextPage();
       }
     };
-    run().catch(() => {});
+    run().catch((err) => {
+      if (!cancelled) {
+        logTreeHoleBackgroundError('prefetch posts', err);
+      }
+    });
     return () => {
       cancelled = true;
     };
@@ -316,7 +327,9 @@ function TreeHole() {
 
   const loadMore = () => {
     if (!infinite.isFetching && infinite.hasNextPage) {
-      infinite.fetchNextPage();
+      infinite.fetchNextPage().catch((err) => {
+        logTreeHoleBackgroundError('load more posts', err);
+      });
     }
   };
 
@@ -356,7 +369,9 @@ function TreeHole() {
         const remain = sc.scrollHeight - (sc.scrollTop + sc.clientHeight);
         // 手机上快速滑动时，提前一点触发，骨架尾巴更跟手
         if (remain < 2400) {
-          infinite.fetchNextPage().catch(() => {});
+          infinite.fetchNextPage().catch((err) => {
+            logTreeHoleBackgroundError('scroll prefetch next page', err);
+          });
         }
       }
 
@@ -404,7 +419,9 @@ function TreeHole() {
     if (!sc) return;
     const remain = sc.scrollHeight - (sc.scrollTop + sc.clientHeight);
     if (remain < 2400) {
-      infinite.fetchNextPage().catch(() => {});
+      infinite.fetchNextPage().catch((err) => {
+        logTreeHoleBackgroundError('near-bottom auto load', err);
+      });
     }
   }, [scrollTop, vpH, infinite.hasNextPage, infinite.isFetchingNextPage, infinite.fetchNextPage]);
 
@@ -679,7 +696,7 @@ function TreeHoleGlassCard({ post, eager = false, mobileStable = false }) {
 
   if (!cover) {
     return (
-      <motion.div variants={cardIn} initial="hidden" animate="show">
+      <MotionDiv variants={cardIn} initial="hidden" animate="show">
         <Link to={`/post/${post.id}`} className="treehole-glass-card treehole-glass-card--noimg" aria-label={display}>
           <div className="treehole-noimg-head">
             <span className="treehole-noimg-avatar">
@@ -695,30 +712,30 @@ function TreeHoleGlassCard({ post, eager = false, mobileStable = false }) {
           <div className="treehole-noimg-text">{display}</div>
 
           <div className="treehole-noimg-actions">
-            <motion.span
+            <MotionSpan
               className="treehole-noimg-action"
               whileTap={{ scale: 0.9 }}
               transition={{ type: 'spring', stiffness: 700, damping: 28 }}
             >
               <Heart size={16} aria-hidden />
               <span>{likeNum}</span>
-            </motion.span>
-            <motion.span
+            </MotionSpan>
+            <MotionSpan
               className="treehole-noimg-action"
               whileTap={{ scale: 0.9 }}
               transition={{ type: 'spring', stiffness: 700, damping: 28 }}
             >
               <MessageCircle size={16} aria-hidden />
               <span>{commentNum}</span>
-            </motion.span>
+            </MotionSpan>
           </div>
         </Link>
-      </motion.div>
+      </MotionDiv>
     );
   }
 
   return (
-    <motion.div variants={cardIn} initial="hidden" animate="show">
+    <MotionDiv variants={cardIn} initial="hidden" animate="show">
       <Link to={`/post/${post.id}`} className="treehole-glass-card" aria-label={display}>
         <div className="treehole-glass-media" aria-hidden>
           {cover && !errored ? (
@@ -770,26 +787,26 @@ function TreeHoleGlassCard({ post, eager = false, mobileStable = false }) {
         <div className="treehole-glass-content">
           <div className="treehole-glass-text">{display}</div>
           <div className="treehole-glass-actions">
-            <motion.span
+            <MotionSpan
               className="treehole-glass-action"
               whileTap={{ scale: 0.9 }}
               transition={{ type: 'spring', stiffness: 700, damping: 28 }}
             >
               <Heart size={16} aria-hidden />
               <span>{likeNum}</span>
-            </motion.span>
-            <motion.span
+            </MotionSpan>
+            <MotionSpan
               className="treehole-glass-action"
               whileTap={{ scale: 0.9 }}
               transition={{ type: 'spring', stiffness: 700, damping: 28 }}
             >
               <MessageCircle size={16} aria-hidden />
               <span>{commentNum}</span>
-            </motion.span>
+            </MotionSpan>
           </div>
         </div>
       </Link>
-    </motion.div>
+    </MotionDiv>
   );
 }
 

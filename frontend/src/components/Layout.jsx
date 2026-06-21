@@ -3,7 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import TabBar from './TabBar';
-import { getTabIndex, getTabRootPath } from './TabBar';
+import { getTabIndex } from './TabBar';
 import TreeHole from '../pages/TreeHole';
 import CanteenHome from '../pages/CanteenHome';
 import AboutUs from '../pages/AboutUs';
@@ -119,23 +119,21 @@ function Layout() {
     return pathname === '/' || pathname === '/eat' || pathname === '/about' || pathname === '/myzone';
   }, [pathname]);
 
-  // iOS Safari 对 overscroll-behavior 支持不稳定：对“禁止滚动”的 Tab 兜底阻止 touchmove
-  const preventTouchScroll = (e) => {
-    e.preventDefault();
-  };
-
   // iOS Safari 对 overscroll-behavior 支持不稳定：对“不可滚动”的 Tab（Eat/Square）全局禁止下拉回弹
   // iOS 下拉回弹锁已不再需要（所有 Tab 页均为滚动列表）
 
   const handleAnnouncementKnow = async (id) => {
-    queryClient.setQueryData(QK.unreadAnnouncements(tokenKey), (old) => {
+    const key = QK.unreadAnnouncements(tokenKey);
+    const previous = queryClient.getQueryData(key);
+    queryClient.setQueryData(key, (old) => {
       const arr = Array.isArray(old) ? old : [];
       return arr.filter((n) => n.id !== id);
     });
     try {
       await markNotificationRead(id);
-    } catch (_) {
-      // 忽略单条失败
+    } catch (err) {
+      queryClient.setQueryData(key, previous);
+      console.warn('[Layout] mark announcement read failed:', err);
     }
   };
 
@@ -147,8 +145,9 @@ function Layout() {
     if (ids.length === 0) return;
     try {
       await markNotificationsReadBatch(ids);
-    } catch (_) {
-      // 忽略批量失败
+    } catch (err) {
+      queryClient.setQueryData(key, current);
+      console.warn('[Layout] mark all announcements read failed:', err);
     }
   };
 
@@ -231,16 +230,6 @@ function Layout() {
       title = isZh ? '厦马小筑' : 'XMUM Dorm';
     }
   }
-  const showBack =
-    pathname.startsWith('/posts/') ||
-    pathname.startsWith('/post/') ||
-    (pathname.startsWith('/eat') && pathname !== '/eat') ||
-    pathname.startsWith('/merchant') ||
-    pathname === '/myzone/posts' ||
-    pathname === '/myzone/reviews' ||
-    pathname === '/myzone/profile' ||
-    pathname.startsWith('/about/');
-
   const showTreeHoleFab = pathname === '/' && activeTabIndex === 0;
 
   return (
@@ -291,7 +280,7 @@ function Layout() {
             className="treehole-top pressable"
             aria-label="回到顶端 Back to top"
             onClick={() => {
-              const pane = document.querySelector('.tab-stack-pane[data-active=\"true\"]');
+              const pane = document.querySelector('.tab-stack-pane[data-active="true"]');
               const sc = pane || document.querySelector('.app-main');
               try {
                 sc?.scrollTo?.({ top: 0, behavior: 'smooth' });

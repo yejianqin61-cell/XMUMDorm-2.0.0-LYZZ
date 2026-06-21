@@ -2,12 +2,21 @@ const express = require('express');
 const supertest = require('supertest');
 
 jest.mock('../../database', () => ({ query: jest.fn() }));
+jest.mock('../../utils/simpleCache', () => ({
+  simpleCache: {
+    get: jest.fn(),
+    set: jest.fn(),
+    delete: jest.fn(),
+    getOrSet: jest.fn(),
+  },
+}));
 jest.mock('../../middleware/auth', () => (req, _res, next) => {
   req.user = { id: 7, role: 'student' };
   next();
 });
 
 const { query } = require('../../database');
+const { simpleCache } = require('../../utils/simpleCache');
 const notificationsRoutes = require('../../routes/notifications');
 
 function app() {
@@ -24,6 +33,10 @@ function app() {
 describe('Notifications Routes', () => {
   beforeEach(() => {
     query.mockReset();
+    simpleCache.get.mockReset();
+    simpleCache.set.mockReset();
+    simpleCache.delete.mockReset();
+    simpleCache.getOrSet.mockReset();
   });
 
   describe('GET /api/notifications', () => {
@@ -61,6 +74,8 @@ describe('Notifications Routes', () => {
 
   describe('GET /api/notifications/unread-announcements', () => {
     it('queries both legacy and system announcement types', async () => {
+      simpleCache.getOrSet.mockImplementationOnce(async (_key, _ttlMs, loader) => loader());
+
       query.mockResolvedValueOnce([
         {
           id: 2,
@@ -82,6 +97,39 @@ describe('Notifications Routes', () => {
       expect(query).toHaveBeenCalledTimes(1);
       expect(query.mock.calls[0][0]).toContain("n.type IN ('announcement', 'system_announcement')");
       expect(res.body.data[0].target.type).toBe('announcement');
+    });
+  });
+
+  describe('cache invalidation', () => {
+    it('clears unread announcement cache after marking one notification as read', async () => {
+      query
+        .mockResolvedValueOnce([{ id: 12 }])
+        .mockResolvedValueOnce({ affectedRows: 1 });
+
+      const res = await supertest(app()).patch('/api/notifications/12/read').send({});
+
+      expect(res.status).toBe(200);
+      expect(simpleCache.delete).toHaveBeenCalledWith('notifications:unreadAnn:v1:7');
+    });
+
+    it('clears unread announcement cache after batch mark-read', async () => {
+      query.mockResolvedValueOnce({ affectedRows: 2 });
+
+      const res = await supertest(app())
+        .patch('/api/notifications/read-batch')
+        .send({ ids: [3, 4] });
+
+      expect(res.status).toBe(200);
+      expect(simpleCache.delete).toHaveBeenCalledWith('notifications:unreadAnn:v1:7');
+    });
+
+    it('clears unread announcement cache after clear', async () => {
+      query.mockResolvedValueOnce({ affectedRows: 5 });
+
+      const res = await supertest(app()).delete('/api/notifications/clear');
+
+      expect(res.status).toBe(200);
+      expect(simpleCache.delete).toHaveBeenCalledWith('notifications:unreadAnn:v1:7');
     });
   });
 });

@@ -19,7 +19,12 @@ async function refreshCache() {
     const rows = await query(
       'SELECT word FROM sensitive_words WHERE enabled = 1'
     );
-    cachedWords = rows.map((r) => r.word);
+    if (!Array.isArray(rows)) {
+      throw new TypeError('Expected sensitive words query to return an array');
+    }
+    cachedWords = rows
+      .map((r) => (typeof r?.word === 'string' ? r.word.trim() : ''))
+      .filter(Boolean);
     cacheTime = Date.now();
     return cachedWords;
   } catch (err) {
