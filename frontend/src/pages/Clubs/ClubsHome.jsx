@@ -67,6 +67,12 @@ function ClubsHome() {
         ) : null}
       </div>
 
+      <div className="club-top-actions">
+        <Link to="/publish" className="club-admin-create pressable">
+          {isZh ? '去发布' : 'Publish'}
+        </Link>
+      </div>
+
       {/* Top feature grid */}
       <div className="club-feature-grid">
         <Link to="/about/club/list" className="club-feature club-feature--purple pressable">

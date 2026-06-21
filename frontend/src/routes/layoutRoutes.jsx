@@ -10,6 +10,7 @@ const PostDetail = lazy(() => import('../pages/PostDetail'));
 const PostSearch = lazy(() => import('../pages/PostSearch'));
 const PostTagFeed = lazy(() => import('../pages/PostTagFeed'));
 const AboutUs = lazy(() => import('../pages/AboutUs'));
+const PublishCenter = lazy(() => import('../pages/PublishCenter'));
 const SquareTrendingList = lazy(() => import('../pages/SquareTrendingList'));
 const SquareTrendingDetail = lazy(() => import('../pages/SquareTrendingDetail'));
 const SquareTrendingPostNew = lazy(() => import('../pages/SquareTrendingPostNew'));
@@ -87,6 +88,7 @@ export const layoutRoutes = (
   <>
     <Route index element={<Navigate to="/about" replace />} />
     <Route path="treehole" element={<TreeHole />} />
+    <Route path="publish" element={renderLazyRoute(PublishCenter)} />
     <Route path="post/new" element={renderLazyRoute(PostNew)} />
     <Route path="post/:id" element={renderLazyRoute(PostDetail)} />
     <Route path="posts/search" element={renderLazyRoute(PostSearch)} />

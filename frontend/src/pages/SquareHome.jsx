@@ -8,6 +8,7 @@ import TodayCampusQuickActions from '../components/square/TodayCampusQuickAction
 import TodayCampusHotActivities from '../components/square/TodayCampusHotActivities';
 import TodayCampusHotTopics from '../components/square/TodayCampusHotTopics';
 import TodayCampusModuleGrid from '../components/square/TodayCampusModuleGrid';
+import AppCard from '../components/ui/AppCard';
 import PageSkeleton from '../components/ui/PageSkeleton';
 import ErrorState from '../components/ui/ErrorState';
 import FadeInSection from '../components/ui/FadeInSection';
@@ -77,6 +78,20 @@ export default function SquareHome() {
             </FadeInSection>
             <FadeInSection delay={0.05}>
               <TodayCampusSummary summary={summary} />
+            </FadeInSection>
+            <FadeInSection delay={0.07}>
+              <Link to="/publish" className="square-home-publish-link">
+                <AppCard className="square-home-publish-card" interactive strong>
+                  <div className="square-home-publish-card__row">
+                    <div>
+                      <p className="square-home-publish-card__eyebrow">Publish Center</p>
+                      <h3 className="square-home-publish-card__title">统一发布入口</h3>
+                      <p className="square-home-publish-card__desc">发树洞、二手、跑腿和社团内容都从这里进入。</p>
+                    </div>
+                    <span className="square-home-publish-card__arrow" aria-hidden="true">→</span>
+                  </div>
+                </AppCard>
+              </Link>
             </FadeInSection>
             <FadeInSection delay={0.08}>
               <TodayCampusQuickActions actions={QUICK_ACTIONS} />

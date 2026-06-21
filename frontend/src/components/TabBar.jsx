@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 
 /** 底部 Tab：根据语言显示纯中文或纯英文 */
@@ -44,6 +44,16 @@ function TabBar() {
       role="tablist"
       aria-label="主导航"
     >
+      <Link
+        to="/publish"
+        className="tab-publish-btn pressable"
+        aria-label={isZh ? '打开发布中心' : 'Open publish center'}
+      >
+        <span className="tab-publish-btn__icon" aria-hidden="true">
+          <PlusIcon />
+        </span>
+        <span className="tab-publish-btn__label">{isZh ? '发布' : 'Publish'}</span>
+      </Link>
       <div className="tab-bar-shell" role="presentation">
         <div
           className="tab-indicator"
@@ -72,6 +82,14 @@ function TabBar() {
         ))}
       </div>
     </nav>
+  );
+}
+
+function PlusIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden="true">
+      <path d="M12 5v14M5 12h14" />
+    </svg>
   );
 }
 

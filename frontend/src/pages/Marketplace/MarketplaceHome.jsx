@@ -137,10 +137,10 @@ function MarketplaceHome() {
             className="mp-btn mp-btn-primary"
             onClick={() => {
               if (!isLoggedIn) {
-                nav('/login', { state: { from: { pathname: '/about/second-hand/new' } } });
+                nav('/login', { state: { from: { pathname: '/publish', search: '?entry=marketplace' } } });
                 return;
               }
-              nav('/about/second-hand/new');
+              nav('/publish?entry=marketplace');
             }}
           >
             {isZh ? '发布' : 'Publish'}

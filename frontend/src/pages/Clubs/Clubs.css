@@ -344,6 +344,12 @@
   box-shadow: 0 6px 20px rgba(0,0,0,0.04);
 }
 
+.club-top-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
 /* Admin forms */
 .club-admin-form {
   display: grid;

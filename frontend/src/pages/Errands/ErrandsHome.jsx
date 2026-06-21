@@ -34,7 +34,7 @@ function ErrandsHome() {
     <div className="err-page">
       <div className="err-topbar">
         <div className="err-title">{isZh ? '跑腿服务' : 'Errands'}</div>
-        <Link className="err-pub-btn pressable" to="/about/errands/new" aria-label={isZh ? '发布任务' : 'Publish'}>
+        <Link className="err-pub-btn pressable" to="/publish?entry=errand" aria-label={isZh ? '发布任务' : 'Publish'}>
           <Plus size={18} aria-hidden />
           <span>{isZh ? '发布' : 'Publish'}</span>
         </Link>
