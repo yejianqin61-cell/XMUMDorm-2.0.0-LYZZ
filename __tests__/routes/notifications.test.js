@@ -70,6 +70,57 @@ describe('Notifications Routes', () => {
         path: '/post/42',
       });
     });
+
+    it('supports category filtering and exposes the derived category', async () => {
+      query.mockResolvedValueOnce([
+        {
+          id: 5,
+          type: 'activity_register_success',
+          is_read: 0,
+          post_id: null,
+          comment_id: null,
+          from_user_id: null,
+          extra: JSON.stringify({
+            targetType: 'club_activity',
+            targetId: 22,
+            targetTitle: 'Open Day',
+            targetPath: '/about/club/activity/22',
+          }),
+          created_at: '2026-06-03 09:00:00',
+          post_title: null,
+          from_username: null,
+          from_nickname: null,
+          from_avatar: null,
+        },
+      ]);
+
+      const res = await supertest(app()).get('/api/notifications?category=transaction');
+
+      expect(res.status).toBe(200);
+      expect(query.mock.calls[0][0]).toContain('n.type IN');
+      expect(query.mock.calls[0][1]).toContain('activity_register_success');
+      expect(res.body.data.list[0].category).toBe('transaction');
+      expect(res.body.data.list[0].target.path).toBe('/about/club/activity/22');
+    });
+  });
+
+  describe('GET /api/notifications/unread-summary', () => {
+    it('returns unread counts grouped by category', async () => {
+      query.mockResolvedValueOnce([
+        { type: 'treehole_like', cnt: 2 },
+        { type: 'activity_register_success', cnt: 1 },
+        { type: 'system_announcement', cnt: 3 },
+      ]);
+
+      const res = await supertest(app()).get('/api/notifications/unread-summary');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.byCategory).toEqual({
+        interaction: 2,
+        transaction: 1,
+        system: 3,
+      });
+    });
   });
 
   describe('GET /api/notifications/unread-announcements', () => {
@@ -130,6 +181,18 @@ describe('Notifications Routes', () => {
 
       expect(res.status).toBe(200);
       expect(simpleCache.delete).toHaveBeenCalledWith('notifications:unreadAnn:v1:7');
+    });
+
+    it('supports clearing by category', async () => {
+      query.mockResolvedValueOnce({ affectedRows: 2 });
+
+      const res = await supertest(app()).delete('/api/notifications/clear?category=transaction');
+
+      expect(res.status).toBe(200);
+      expect(query).toHaveBeenCalledWith(
+        expect.stringContaining('DELETE FROM notifications WHERE user_id = ? AND type IN'),
+        expect.arrayContaining([7, 'activity_register_success'])
+      );
     });
   });
 });

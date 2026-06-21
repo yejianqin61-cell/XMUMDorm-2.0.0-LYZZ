@@ -34,6 +34,9 @@ jest.mock('../../constants/levelThresholds', () => ({
 jest.mock('../../utils/assets', () => ({
   assetUrl: jest.fn((value) => (value ? `https://cdn.test/${value}` : null)),
 }));
+jest.mock('jsonwebtoken', () => ({
+  verify: jest.fn(() => ({ id: 12, role: 'student' })),
+}));
 
 const { query } = require('../../database');
 const { simpleCache } = require('../../utils/simpleCache');
@@ -61,7 +64,7 @@ describe('Users Routes', () => {
   });
 
   describe('GET /api/users/me', () => {
-    it('returns the current user profile through cache loader', async () => {
+    it('returns the current user profile with campus identity fields', async () => {
       simpleCache.getOrSet.mockImplementationOnce(async (_key, _ttlMs, loader) => loader());
       query.mockResolvedValueOnce([
         {
@@ -77,6 +80,12 @@ describe('Users Routes', () => {
           nickname: 'Alice',
           weekly_comment_count: 4,
           created_at: '2026-06-01 10:00:00',
+          college: 'FCSIT',
+          grade: 'Year 2',
+          major: 'SE',
+          show_college: 1,
+          show_grade: 1,
+          show_major: 0,
         },
       ]);
 
@@ -93,11 +102,12 @@ describe('Users Routes', () => {
         username: 'alice',
         nickname: 'Alice',
         avatar: 'https://cdn.test/avatars/a.jpg',
-      });
-      expect(res.body.data.levelProgress).toEqual({
-        currentLevel: 1,
-        nextLevel: 2,
-        progress: 50,
+        college: 'FCSIT',
+        grade: 'Year 2',
+        major: 'SE',
+        show_college: true,
+        show_grade: true,
+        show_major: true,
       });
     });
   });
@@ -113,24 +123,46 @@ describe('Users Routes', () => {
       expect(simpleCache.delete).not.toHaveBeenCalled();
     });
 
-    it('updates nickname and invalidates the me cache', async () => {
+    it('updates extended profile fields and invalidates the me cache', async () => {
       query.mockResolvedValueOnce({ affectedRows: 1 });
 
       const res = await supertest(app())
         .patch('/api/users/me')
-        .send({ nickname: 'New Name' });
+        .send({
+          nickname: 'New Name',
+          college: 'Business',
+          grade: 'Year 1',
+          major: 'Finance',
+          show_college: false,
+          show_grade: true,
+          show_major: true,
+        });
 
       expect(res.status).toBe(200);
-      expect(query).toHaveBeenCalledWith('UPDATE users SET nickname = ? WHERE id = ?', ['New Name', 5]);
+      expect(query).toHaveBeenCalledWith(
+        expect.stringContaining('SET nickname = ?, college = ?, grade = ?, major = ?, show_college = ?, show_grade = ?, show_major = ?'),
+        ['New Name', 'Business', 'Year 1', 'Finance', 0, 1, 1, 5]
+      );
       expect(simpleCache.delete).toHaveBeenCalledWith('users:me:v1:5');
-      expect(res.body.data).toEqual({ nickname: 'New Name' });
+      expect(res.body.data).toEqual({
+        nickname: 'New Name',
+        college: 'Business',
+        grade: 'Year 1',
+        major: 'Finance',
+        show_college: false,
+        show_grade: true,
+        show_major: true,
+      });
     });
   });
 
   describe('GET /api/users/:id/profile', () => {
-    it('returns cached profile payload without extra database calls', async () => {
+    it('returns cached profile payload keyed by viewer id', async () => {
       const cached = {
         user: { id: 12, nickname: 'Cached User' },
+        campus_identity: { college: 'FCSIT', grade: 'Year 2', major: null },
+        active_directions: [],
+        recent_participation: [],
         posts: [],
         stats: { post_count: 0, comment_received_count: 0, like_received_count: 0 },
         page: 1,
@@ -139,11 +171,67 @@ describe('Users Routes', () => {
       };
       simpleCache.get.mockReturnValueOnce(cached);
 
+      const res = await supertest(app())
+        .get('/api/users/12/profile')
+        .set('Authorization', 'Bearer mock-token');
+
+      expect(res.status).toBe(200);
+      expect(simpleCache.get).toHaveBeenCalledWith('user_profile_v3:12:viewer:12:p:1:s:10');
+      expect(query).not.toHaveBeenCalled();
+      expect(res.body.data).toEqual(cached);
+    });
+
+    it('hides private campus identity fields from public viewers', async () => {
+      simpleCache.get.mockReturnValueOnce(null);
+      query
+        .mockResolvedValueOnce([
+          {
+            id: 12,
+            username: 'bob',
+            student_id: 'S002',
+            email: 'bob@example.com',
+            avatar: 'avatars/b.jpg',
+            nickname: 'Bob',
+            role: 'student',
+            level: 2,
+            exp: 80,
+            badge: null,
+            weekly_comment_count: 1,
+            created_at: '2026-06-01 10:00:00',
+            college: 'Engineering',
+            grade: 'Year 3',
+            major: 'Robotics',
+            show_college: 1,
+            show_grade: 0,
+            show_major: 0,
+          },
+        ])
+        .mockResolvedValueOnce([{ total: 2 }])
+        .mockResolvedValueOnce([{ total: 1 }])
+        .mockResolvedValueOnce([{ total: 0 }])
+        .mockResolvedValueOnce([{ total: 4 }])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([
+          { post_count: 0, comment_received_count: 0, like_received_count: 0 },
+        ]);
+
       const res = await supertest(app()).get('/api/users/12/profile');
 
       expect(res.status).toBe(200);
-      expect(query).not.toHaveBeenCalled();
-      expect(res.body.data).toEqual(cached);
+      expect(res.body.data.campus_identity).toEqual({
+        college: 'Engineering',
+        grade: null,
+        major: null,
+        visibility: {
+          show_college: true,
+          show_grade: false,
+          show_major: false,
+        },
+      });
+      expect(res.body.data.active_directions[0]).toMatchObject({ key: 'favorite', value: 4 });
     });
   });
 });
