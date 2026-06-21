@@ -95,9 +95,7 @@ describe('Posts Routes', () => {
   describe('POST /api/posts/:id/like', () => {
     it('toggles off an existing like and revokes exp', async () => {
       query
-        .mockResolvedValueOnce([{ id: 44 }])
-        .mockResolvedValueOnce([{ user_id: 11 }])
-        .mockResolvedValueOnce([{ 1: 1 }])
+        .mockResolvedValueOnce([{ id: 44, user_id: 11 }])
         .mockResolvedValueOnce({ affectedRows: 1 });
 
       const res = await supertest(app()).post('/api/posts/44/like').send({});
@@ -115,9 +113,8 @@ describe('Posts Routes', () => {
 
     it('creates a like, grants exp, and notifies the author', async () => {
       query
-        .mockResolvedValueOnce([{ id: 88 }])
-        .mockResolvedValueOnce([{ user_id: 12 }])
-        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([{ id: 88, user_id: 12 }])
+        .mockResolvedValueOnce({ affectedRows: 0 })
         .mockResolvedValueOnce({ insertId: 1 })
         .mockResolvedValueOnce({ insertId: 2 });
 
@@ -135,6 +132,24 @@ describe('Posts Routes', () => {
       expect(query).toHaveBeenCalledWith(
         'INSERT INTO notifications (user_id, type, post_id, from_user_id) VALUES (?, ?, ?, ?)',
         [12, 'treehole_like', 88, 9]
+      );
+    });
+
+    it('treats duplicate-like races as an idempotent liked response', async () => {
+      query
+        .mockResolvedValueOnce([{ id: 66, user_id: 12 }])
+        .mockResolvedValueOnce({ affectedRows: 0 })
+        .mockRejectedValueOnce({ code: 'ER_DUP_ENTRY' });
+
+      const res = await supertest(app()).post('/api/posts/66/like').send({});
+
+      expect(res.status).toBe(200);
+      expect(res.body.data).toEqual({ post_id: 66, liked: true });
+      expect(grantExp).not.toHaveBeenCalled();
+      expect(checkAndGrantPostPopularRewards).not.toHaveBeenCalled();
+      expect(query).not.toHaveBeenCalledWith(
+        'INSERT INTO notifications (user_id, type, post_id, from_user_id) VALUES (?, ?, ?, ?)',
+        [12, 'treehole_like', 66, 9]
       );
     });
   });

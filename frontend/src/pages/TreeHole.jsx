@@ -58,6 +58,13 @@ function prefixImageUrl(url) {
   return url && !url.startsWith('http') ? `${API_BASE_URL}${url}` : url;
 }
 
+function isImageLoaded(url) {
+  if (!url) return false;
+  if (IMG_LOADED.has(url)) return true;
+  const img = IMG_CACHE.get(url);
+  return !!img && img.complete;
+}
+
 function toPostThumbUrl(fullUrl) {
   if (!fullUrl) return fullUrl;
   try {
@@ -201,6 +208,13 @@ function TreeHole() {
     () => infinite.data?.pages.flatMap((p) => p.list) ?? [],
     [infinite.data]
   );
+  const pages = useMemo(() => infinite.data?.pages ?? [], [infinite.data]);
+  const hasNextPage = !!infinite.hasNextPage;
+  const isFetching = !!infinite.isFetching;
+  const isFetchingNextPage = !!infinite.isFetchingNextPage;
+  const isPending = !!infinite.isPending;
+  const fetchNextPage = infinite.fetchNextPage;
+  const infiniteError = infinite.error;
 
   // Mobile: pre-warm a window of images ahead to reduce blank blocks
   useEffect(() => {
@@ -217,8 +231,8 @@ function TreeHole() {
   }, [isCoarse, list]);
 
   useEffect(() => {
-    pageRef.current = infinite.data?.pages.length ?? 1;
-  }, [infinite.data?.pages.length]);
+    pageRef.current = pages.length || 1;
+  }, [pages.length]);
 
   useEffect(() => {
     return () => {
@@ -230,7 +244,7 @@ function TreeHole() {
   }, []);
 
   useEffect(() => {
-    if (scrollRestoredRef.current || list.length === 0 || infinite.isFetching) return;
+    if (scrollRestoredRef.current || list.length === 0 || isFetching) return;
     if (selectedTagSlug) {
       scrollRestoredRef.current = true;
       return;
@@ -245,22 +259,22 @@ function TreeHole() {
       }
     }
     scrollRestoredRef.current = true;
-  }, [list.length, infinite.isFetching, selectedTagSlug]);
+  }, [isFetching, list.length, selectedTagSlug]);
 
   useEffect(() => {
     if (selectedTagSlug) return;
     try {
-      const last = infinite.data?.pages[infinite.data.pages.length - 1];
+      const last = pages[pages.length - 1];
       const data = {
         list,
         hasMore: last?.hasMore ?? false,
-        page: infinite.data?.pages.length ?? 1,
+        page: pages.length || 1,
       };
       sessionStorage.setItem('treehole_data', JSON.stringify(data));
     } catch {
       // ignore
     }
-  }, [list, infinite.data, selectedTagSlug]);
+  }, [list, pages, selectedTagSlug]);
 
   const handleSelectTag = useCallback((slug) => {
     setSelectedTagSlug(slug);
@@ -290,11 +304,10 @@ function TreeHole() {
   // 首屏出来后，后台“偷偷”多拉几页，减少继续下滑时的灰色空段与等待
   useEffect(() => {
     if (selectedTagSlug) return;
-    if (!infinite.data || infinite.isFetching || infinite.isFetchingNextPage) return;
-    if (!infinite.hasNextPage) return;
-    if ((infinite.data?.pages?.length ?? 0) < 1) return;
+    if (pages.length === 0 || isFetching || isFetchingNextPage) return;
+    if (!hasNextPage) return;
 
-    const already = infinite.data.pages.length;
+    const already = pages.length;
     const target = 1 + PREFETCH_PAGES_AFTER_FIRST;
     if (already >= target) return;
 
@@ -303,9 +316,9 @@ function TreeHole() {
       for (let i = already; i < target; i += 1) {
         if (cancelled) return;
         // 如果中途没有更多页了就停
-        if (!infinite.hasNextPage) return;
+        if (!hasNextPage) return;
         // 这里用 await，确保顺序分页，不会并发炸后端/浪费流量
-        await infinite.fetchNextPage();
+        await fetchNextPage();
       }
     };
     run().catch((err) => {
@@ -317,17 +330,17 @@ function TreeHole() {
       cancelled = true;
     };
   }, [
+    fetchNextPage,
+    hasNextPage,
+    isFetching,
+    isFetchingNextPage,
+    pages.length,
     selectedTagSlug,
-    infinite.data,
-    infinite.hasNextPage,
-    infinite.isFetching,
-    infinite.isFetchingNextPage,
-    infinite.fetchNextPage,
   ]);
 
   const loadMore = () => {
-    if (!infinite.isFetching && infinite.hasNextPage) {
-      infinite.fetchNextPage().catch((err) => {
+    if (!isFetching && hasNextPage) {
+      fetchNextPage().catch((err) => {
         logTreeHoleBackgroundError('load more posts', err);
       });
     }
@@ -335,9 +348,9 @@ function TreeHole() {
 
   const leftColumn = list.filter((_, i) => i % 2 === 0);
   const rightColumn = list.filter((_, i) => i % 2 === 1);
-  const showInitialSkeleton = infinite.isPending && list.length === 0;
-  const showRefreshing = !showInitialSkeleton && infinite.isFetching && list.length > 0;
-  const errorMsg = infinite.error ? getApiErrorMessage(infinite.error) : null;
+  const showInitialSkeleton = isPending && list.length === 0;
+  const showRefreshing = !showInitialSkeleton && isFetching && list.length > 0;
+  const errorMsg = infiniteError ? getApiErrorMessage(infiniteError) : null;
 
   const gridRef = useRef(null);
   const [gridW, setGridW] = useState(0);
@@ -365,11 +378,11 @@ function TreeHole() {
     if (!sc) return undefined;
     const onScroll = () => {
       // 1) 直接在滚动回调里判断是否该拉取下一页，避免“滚动->setState->effect”多一拍
-      if (infinite.hasNextPage && !infinite.isFetchingNextPage) {
+      if (hasNextPage && !isFetchingNextPage) {
         const remain = sc.scrollHeight - (sc.scrollTop + sc.clientHeight);
         // 手机上快速滑动时，提前一点触发，骨架尾巴更跟手
         if (remain < 2400) {
-          infinite.fetchNextPage().catch((err) => {
+          fetchNextPage().catch((err) => {
             logTreeHoleBackgroundError('scroll prefetch next page', err);
           });
         }
@@ -410,20 +423,20 @@ function TreeHole() {
         scrollRafRef.current = 0;
       }
     };
-  }, [infinite.hasNextPage, infinite.isFetchingNextPage, infinite.fetchNextPage]);
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   // auto load next page when near bottom (avoid white gaps)
   useEffect(() => {
-    if (!infinite.hasNextPage || infinite.isFetchingNextPage) return;
+    if (!hasNextPage || isFetchingNextPage) return;
     const sc = getTreeHoleScrollEl();
     if (!sc) return;
     const remain = sc.scrollHeight - (sc.scrollTop + sc.clientHeight);
     if (remain < 2400) {
-      infinite.fetchNextPage().catch((err) => {
+      fetchNextPage().catch((err) => {
         logTreeHoleBackgroundError('near-bottom auto load', err);
       });
     }
-  }, [scrollTop, vpH, infinite.hasNextPage, infinite.isFetchingNextPage, infinite.fetchNextPage]);
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage, scrollTop, vpH]);
 
   const gridScrollTop = Math.max(0, scrollTop - (gridTop || 0));
 
@@ -436,17 +449,17 @@ function TreeHole() {
             <span className="treehole-debug-k">posts</span>
             <span className="treehole-debug-v">{list.length}</span>
             <span className="treehole-debug-k">pages</span>
-            <span className="treehole-debug-v">{infinite.data?.pages?.length ?? 0}</span>
+            <span className="treehole-debug-v">{pages.length}</span>
           </div>
           <div className="treehole-debug-row">
             <span className="treehole-debug-k">fetch</span>
-            <span className="treehole-debug-v">{String(!!infinite.isFetching)}</span>
+            <span className="treehole-debug-v">{String(isFetching)}</span>
             <span className="treehole-debug-k">next</span>
-            <span className="treehole-debug-v">{String(!!infinite.isFetchingNextPage)}</span>
+            <span className="treehole-debug-v">{String(isFetchingNextPage)}</span>
           </div>
           <div className="treehole-debug-row">
             <span className="treehole-debug-k">hasMore</span>
-            <span className="treehole-debug-v">{String(!!infinite.hasNextPage)}</span>
+            <span className="treehole-debug-v">{String(hasNextPage)}</span>
             <span className="treehole-debug-k">imgLoaded</span>
             <span className="treehole-debug-v">{IMG_LOADED.size}</span>
           </div>
@@ -490,7 +503,7 @@ function TreeHole() {
                 viewportH={vpH}
                 overscanPx={OVERSCAN_PX}
                 topPad={0}
-                fetchingTail={infinite.isFetchingNextPage}
+                fetchingTail={isFetchingNextPage}
               />
               <VirtualColumn
                 items={rightColumn}
@@ -499,7 +512,7 @@ function TreeHole() {
                 viewportH={vpH}
                 overscanPx={OVERSCAN_PX}
                 topPad={RIGHT_COL_OFFSET_PX}
-                fetchingTail={infinite.isFetchingNextPage}
+                fetchingTail={isFetchingNextPage}
               />
             </div>
           ) : (
@@ -509,7 +522,7 @@ function TreeHole() {
                   {leftColumn.map((post) => (
                     <TreeHoleGlassCard key={post.id} post={post} eager={isCoarse} mobileStable={isCoarse} />
                   ))}
-                  {infinite.isFetchingNextPage ? (
+                  {isFetchingNextPage ? (
                     <>
                       <TreeHoleGlassSkeleton />
                       <TreeHoleGlassSkeleton />
@@ -520,7 +533,7 @@ function TreeHole() {
                   {rightColumn.map((post) => (
                     <TreeHoleGlassCard key={post.id} post={post} eager={isCoarse} mobileStable={isCoarse} />
                   ))}
-                  {infinite.isFetchingNextPage ? (
+                  {isFetchingNextPage ? (
                     <>
                       <TreeHoleGlassSkeleton />
                       <TreeHoleGlassSkeleton />
@@ -530,14 +543,14 @@ function TreeHole() {
               </div>
             </>
           )}
-          {infinite.hasNextPage && (
+          {hasNextPage && (
             <button
               type="button"
               className="treehole-load-more"
               onClick={loadMore}
-              disabled={infinite.isFetchingNextPage}
+              disabled={isFetchingNextPage}
             >
-              {infinite.isFetchingNextPage ? '加载中…' : '加载更多'}
+              {isFetchingNextPage ? '加载中…' : '加载更多'}
             </button>
           )}
         </div>
@@ -557,14 +570,14 @@ function estItemH(post, colW) {
 }
 
 function VirtualColumn({ items, columnWidth, scrollTop, viewportH, overscanPx, topPad, fetchingTail }) {
-  const arr = items || [];
+  const arr = useMemo(() => items || [], [items]);
   const padTop = Number(topPad) || 0;
   const gap = COL_GAP_PX;
   const hList = useMemo(() => {
     const hs = new Array(arr.length);
     for (let i = 0; i < arr.length; i += 1) hs[i] = estItemH(arr[i], columnWidth) + (i === 0 ? 0 : gap);
     return hs;
-  }, [arr, columnWidth]);
+  }, [arr, columnWidth, gap]);
 
   const prefix = useMemo(() => {
     const p = new Array(hList.length + 1);
@@ -661,38 +674,22 @@ function TreeHoleGlassCard({ post, eager = false, mobileStable = false }) {
   const commentNum = post.comment_count ?? post.commentCount ?? 0;
   const cover = post.images?.[0]?.url ? prefixImageUrl(post.images[0].url) : null;
   const coverThumb = cover ? toPostThumbUrl(cover) : null;
-  const [imgSrc, setImgSrc] = useState(() => coverThumb || cover);
   const title = (post.title || '').trim();
   const text = (post.content || '').trim();
-  const display = title || (text.length > 64 ? `${text.slice(0, 64)}…` : text) || ' ';
-  const [loaded, setLoaded] = useState(() => {
-    const u = coverThumb || cover;
-    if (!u) return false;
-    if (IMG_LOADED.has(u)) return true;
-    const img = IMG_CACHE.get(u);
-    return !!img && img.complete;
-  });
+  const [imgSrc, setImgSrc] = useState(() => coverThumb || cover);
+  const [loaded, setLoaded] = useState(() => isImageLoaded(coverThumb || cover));
   const [errored, setErrored] = useState(false);
 
   useEffect(() => {
-    const u = coverThumb || cover;
-    if (!u) return;
-    setImgSrc(u);
-    if (IMG_LOADED.has(u)) {
-      setLoaded(true);
+    if (coverThumb) {
+      warmImage(coverThumb);
       return;
     }
-    const img = IMG_CACHE.get(u);
-    if (img && img.complete) {
-      IMG_LOADED.add(u);
-      setLoaded(true);
-      return;
+    if (cover) {
+      warmImage(cover);
     }
-    // ensure it's warmed even if card remounts
-    warmImage(u);
-    setLoaded(false);
-    setErrored(false);
   }, [cover, coverThumb]);
+  const display = title || (text.length > 64 ? `${text.slice(0, 64)}…` : text) || ' ';
 
   if (!cover) {
     return (

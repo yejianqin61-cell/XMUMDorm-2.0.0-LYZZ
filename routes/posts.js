@@ -815,16 +815,14 @@ router.post('/:id/like', authenticateToken, async (req, res) => {
   try {
     const postId = parseInt(req.params.id, 10);
     if (!postId) return res.status(400).json({ status: -1, message: '帖子 ID 无效' });
-    const posts = await query('SELECT id FROM posts WHERE id = ? AND deleted_at IS NULL', [postId]);
+    const posts = await query('SELECT id, user_id FROM posts WHERE id = ? AND deleted_at IS NULL', [postId]);
     if (!posts || posts.length === 0) {
       return res.status(404).json({ status: -1, message: '帖子不存在或已删除' });
     }
-    const [postAuthor] = await query('SELECT user_id FROM posts WHERE id = ?', [postId]);
-    const authorId = postAuthor && postAuthor.user_id;
+    const authorId = posts[0] && posts[0].user_id;
 
-    const existing = await query('SELECT 1 FROM post_likes WHERE user_id = ? AND post_id = ?', [req.user.id, postId]);
-    if (existing && existing.length > 0) {
-      await query('DELETE FROM post_likes WHERE user_id = ? AND post_id = ?', [req.user.id, postId]);
+    const deleteResult = await query('DELETE FROM post_likes WHERE user_id = ? AND post_id = ?', [req.user.id, postId]);
+    if (deleteResult && deleteResult.affectedRows > 0) {
       let expResult = null;
       if (authorId && authorId !== req.user.id) {
         expResult = await revokeByRef(req.user.id, {
@@ -839,9 +837,17 @@ router.post('/:id/like', authenticateToken, async (req, res) => {
         data: { post_id: postId, liked: false },
       }, expResult));
     }
-    await query('INSERT INTO post_likes (user_id, post_id) VALUES (?, ?)', [req.user.id, postId]);
+    let inserted = false;
+    try {
+      await query('INSERT INTO post_likes (user_id, post_id) VALUES (?, ?)', [req.user.id, postId]);
+      inserted = true;
+    } catch (e) {
+      if (e && e.code !== 'ER_DUP_ENTRY') {
+        throw e;
+      }
+    }
     let expResult = null;
-    if (authorId && authorId !== req.user.id) {
+    if (inserted && authorId && authorId !== req.user.id) {
       expResult = await grantExp(req.user.id, {
         action: 'like',
         refType: 'treehole_post',
@@ -849,7 +855,7 @@ router.post('/:id/like', authenticateToken, async (req, res) => {
       });
       await checkAndGrantPostPopularRewards('treehole', postId, authorId);
     }
-    if (authorId && authorId !== req.user.id) {
+    if (inserted && authorId && authorId !== req.user.id) {
       await query(
         'INSERT INTO notifications (user_id, type, post_id, from_user_id) VALUES (?, ?, ?, ?)',
         [authorId, 'treehole_like', postId, req.user.id]
