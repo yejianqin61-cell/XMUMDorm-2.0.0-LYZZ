@@ -51,7 +51,7 @@ async function attachNotificationExtra(rows) {
     // - handbook/courseReview：由 extra.target* 提供
     try {
       if (item.post_id) {
-        const isAnn = item.type === 'announcement';
+        const isAnn = item.type === 'announcement' || item.type === 'system_announcement';
         const title = item.post_title || (isAnn ? (item.extra && (item.extra.content || item.extra.title)) : null) || null;
         item.target = {
           type: isAnn ? 'announcement' : 'post',
@@ -240,7 +240,7 @@ router.get('/unread-announcements', authenticateToken, async (req, res) => {
           u.username AS from_username, u.nickname AS from_nickname, u.avatar AS from_avatar
          FROM notifications n
          LEFT JOIN users u ON n.from_user_id = u.id
-         WHERE n.user_id = ? AND n.type = 'announcement' AND n.is_read = 0
+         WHERE n.user_id = ? AND n.type IN ('announcement', 'system_announcement') AND n.is_read = 0
          ORDER BY n.created_at DESC
          LIMIT 20`,
         [req.user.id]

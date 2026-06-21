@@ -16,11 +16,9 @@ import { DEFAULT_PRODUCT_IMAGE_PATH, DEFAULT_SHOP_LOGO_PATH } from '../api/confi
  * @param {string} [merchant.openingHours]
  */
 function MerchantHeader({ merchant }) {
-  if (!merchant) return null;
-
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
-  const { name, logo, description, rating, status, address, openingHours } = merchant;
+  const { name, logo, description, rating, status, address, openingHours } = merchant || {};
   const isOpen = status === 'open';
   const [helpOpen, setHelpOpen] = useState(false);
   const helpWrapRef = useRef(null);
@@ -40,7 +38,7 @@ function MerchantHeader({ merchant }) {
 
   useEffect(() => {
     if (!helpOpen) return;
-    syncHelpPos();
+    const rafId = window.requestAnimationFrame(syncHelpPos);
     const onDocClick = (e) => {
       const el = helpWrapRef.current;
       if (!el) return;
@@ -53,12 +51,15 @@ function MerchantHeader({ merchant }) {
     // 捕获滚动（包括滚动容器），用于重算浮层位置
     window.addEventListener('scroll', syncHelpPos, true);
     return () => {
+      window.cancelAnimationFrame(rafId);
       document.removeEventListener('mousedown', onDocClick);
       document.removeEventListener('touchstart', onDocClick);
       window.removeEventListener('resize', syncHelpPos);
       window.removeEventListener('scroll', syncHelpPos, true);
     };
   }, [helpOpen]);
+
+  if (!merchant) return null;
 
   return (
     <header className="merchant-header" aria-label={`商家 ${name}`}>
@@ -69,7 +70,6 @@ function MerchantHeader({ merchant }) {
           className="merchant-header-logo"
           onError={(e) => {
             // 如果你尚未把默认商家 logo 放到 frontend/public，那么回退到商品默认图
-            // eslint-disable-next-line no-param-reassign
             e.currentTarget.src = DEFAULT_PRODUCT_IMAGE_PATH;
           }}
         />
