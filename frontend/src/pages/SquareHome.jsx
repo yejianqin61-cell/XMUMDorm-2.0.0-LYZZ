@@ -1,15 +1,10 @@
-import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { BookOpenText, HandHelping, Megaphone, Shapes, Sparkles, Store, ChevronRight } from 'lucide-react';
-import { getHotPostTags } from '../api/posts';
-import { getSquareBanners, getSquareHomeSummary, getSquarePersonalizedSummary } from '../api/square';
+import { BookOpenText, HandHelping, Shapes, Store } from 'lucide-react';
+import { getSquareBanners, getSquareHomeSummary } from '../api/square';
 import CanteenBannerCarousel from '../components/canteen/CanteenBannerCarousel';
-import HotTagsStrip from '../components/square/HotTagsStrip';
-import MyCampusRecommendations from '../components/square/MyCampusRecommendations';
 import TodayCampusHero from '../components/square/TodayCampusHero';
-import TodayCampusPreviewRail from '../components/square/TodayCampusPreviewRail';
 import TodayCampusQuickActions from '../components/square/TodayCampusQuickActions';
-import AppCard from '../components/ui/AppCard';
+import TodayCampusTrendingBoard from '../components/square/TodayCampusTrendingBoard';
 import PageSkeleton from '../components/ui/PageSkeleton';
 import ErrorState from '../components/ui/ErrorState';
 import FadeInSection from '../components/ui/FadeInSection';
@@ -18,60 +13,45 @@ import { QK } from '../query/queryKeys';
 import './SquareHome.css';
 
 const PRIMARY_ACTIONS = [
-  { label: '社团广场', to: '/about/club', icon: <Shapes size={19} strokeWidth={2} />, hint: '看社团、找活动、认识同好' },
-  { label: '马校一站通', to: '/about/freshman-guide', icon: <BookOpenText size={19} strokeWidth={2} />, hint: '攻略、课程与新生信息' },
-  { label: '帮帮我', to: '/about/errands', icon: <HandHelping size={19} strokeWidth={2} />, hint: '跑腿求助，解决生活小事' },
-  { label: '出物', to: '/about/second-hand', icon: <Store size={19} strokeWidth={2} />, hint: '校园二手流通更快一点' },
+  {
+    label: '社团广场',
+    to: '/about/club',
+    icon: <Shapes size={18} strokeWidth={2} />,
+    emoji: '🎨',
+    hint: '看社团、找活动、认识同好',
+    tone: 'club',
+  },
+  {
+    label: '马校一站通',
+    to: '/about/freshman-guide',
+    icon: <BookOpenText size={18} strokeWidth={2} />,
+    emoji: '📚',
+    hint: '攻略、课程与新生信息',
+    tone: 'guide',
+  },
+  {
+    label: '帮帮我',
+    to: '/about/errands',
+    icon: <HandHelping size={18} strokeWidth={2} />,
+    emoji: '🤝',
+    hint: '跑腿求助，解决生活小事',
+    tone: 'help',
+  },
+  {
+    label: '出物',
+    to: '/about/second-hand',
+    icon: <Store size={18} strokeWidth={2} />,
+    emoji: '🪄',
+    hint: '校园二手流通更快一点',
+    tone: 'market',
+  },
 ];
-
-const EXPLORE_LINKS = [
-  { to: '/about/trending', label: '看热议' },
-  { to: '/publish', label: '发内容' },
-  { to: '/about/map', label: '地图模式' },
-];
-
-function buildPreviewItems(summary) {
-  const topics = (summary.hot_topics || []).slice(0, 2).map((topic) => ({
-    kind: 'topic',
-    id: topic.id,
-    to: `/about/trending/${topic.id}`,
-    badge: '热议',
-    title: topic.title,
-    meta: `${topic.post_count || 0} 条讨论`,
-  }));
-  const activities = (summary.hot_activities || []).slice(0, 2).map((activity) => ({
-    kind: 'activity',
-    id: activity.id,
-    to: `/about/club/activity/${activity.id}`,
-    badge: '活动',
-    title: activity.title,
-    meta: activity.club_name || activity.status_label || '社团活动',
-  }));
-
-  const merged = [];
-  const maxLength = Math.max(topics.length, activities.length);
-  for (let index = 0; index < maxLength; index += 1) {
-    if (topics[index]) merged.push(topics[index]);
-    if (activities[index]) merged.push(activities[index]);
-  }
-  return merged.slice(0, 4);
-}
 
 export default function SquareHome() {
   const summaryQuery = useQuery({
     queryKey: QK.squareHomeSummary(),
     queryFn: getSquareHomeSummary,
     staleTime: 30 * 1000,
-  });
-  const personalizedQuery = useQuery({
-    queryKey: QK.squarePersonalizedSummary(),
-    queryFn: getSquarePersonalizedSummary,
-    staleTime: 60 * 1000,
-  });
-  const hotTagsQuery = useQuery({
-    queryKey: QK.postHotTags(8),
-    queryFn: () => getHotPostTags(8),
-    staleTime: 60 * 1000,
   });
 
   const summary = summaryQuery.data || {
@@ -81,14 +61,6 @@ export default function SquareHome() {
     campus_highlights: [],
     quick_stats: {},
   };
-  const personalizedSummary = personalizedQuery.data || {
-    cards: [],
-    hot_tags: [],
-    is_personalized: false,
-    profile: {},
-  };
-  const hotTags = hotTagsQuery.data || personalizedSummary.hot_tags || [];
-  const previewItems = buildPreviewItems(summary);
 
   const latestTopicTitle = summary.hot_topics?.[0]?.title || '';
   const latestCampusTitle = summary.campus_highlights?.[0]?.title || '';
@@ -115,74 +87,20 @@ export default function SquareHome() {
           />
         ) : (
           <>
-            <FadeInSection delay={0.02}>
+            <FadeInSection delay={0.03}>
+              <TodayCampusTrendingBoard topics={summary.hot_topics || []} />
+            </FadeInSection>
+
+            <FadeInSection delay={0.06}>
               <TodayCampusQuickActions actions={PRIMARY_ACTIONS} />
             </FadeInSection>
 
-            <FadeInSection delay={0.05}>
+            <FadeInSection delay={0.1}>
               <TodayCampusHero
                 quickStats={summary.quick_stats}
                 latestTopicTitle={latestTopicTitle}
                 latestCampusTitle={latestCampusTitle}
               />
-            </FadeInSection>
-
-            <FadeInSection delay={0.08}>
-              <MyCampusRecommendations summary={personalizedSummary} />
-            </FadeInSection>
-
-            <FadeInSection delay={0.11}>
-              <HotTagsStrip tags={hotTags} />
-            </FadeInSection>
-
-            <FadeInSection delay={0.14}>
-              <TodayCampusPreviewRail items={previewItems} />
-            </FadeInSection>
-
-            <FadeInSection delay={0.16}>
-              <Link to="/publish" className="square-home-publish-link">
-                <AppCard className="square-home-publish-card" interactive strong>
-                  <div className="square-home-publish-card__row">
-                    <div>
-                      <span className="square-home-publish-card__icon" aria-hidden="true">
-                        <Megaphone size={16} strokeWidth={2} />
-                      </span>
-                      <p className="square-home-publish-card__eyebrow">Publish Center</p>
-                      <h3 className="square-home-publish-card__title">统一发布入口</h3>
-                      <p className="square-home-publish-card__desc">
-                        发树洞、二手、跑腿和社团内容都从这里进入。
-                      </p>
-                    </div>
-                    <span className="square-home-publish-card__arrow" aria-hidden="true">
-                      <ChevronRight size={18} strokeWidth={2.4} />
-                    </span>
-                  </div>
-                </AppCard>
-              </Link>
-            </FadeInSection>
-
-            <FadeInSection delay={0.2}>
-              <section className="square-section square-home-explore">
-                <div className="square-section-header square-section-header--stack">
-                  <div>
-                    <h2 className="square-section-title">继续探索</h2>
-                    <p className="square-section-subtitle">
-                      其他入口往下收，让首页先保持轻一点。
-                    </p>
-                  </div>
-                </div>
-                <div className="square-home-explore-links">
-                  {EXPLORE_LINKS.map((item) => (
-                    <Link key={item.to} to={item.to} className="square-home-explore-link">
-                      {item.label}
-                    </Link>
-                  ))}
-                </div>
-                <p className="square-home-explore-note">
-                  <Sparkles size={14} strokeWidth={2} aria-hidden="true" />
-                  首页只保留最值得点开的入口，其余内容延后展开。
-                </p>
-              </section>
             </FadeInSection>
           </>
         )}
