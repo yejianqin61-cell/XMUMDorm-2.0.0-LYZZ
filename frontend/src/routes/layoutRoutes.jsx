@@ -15,6 +15,7 @@ const SquareTrendingList = lazy(() => import('../pages/SquareTrendingList'));
 const SquareTrendingDetail = lazy(() => import('../pages/SquareTrendingDetail'));
 const SquareTrendingPostNew = lazy(() => import('../pages/SquareTrendingPostNew'));
 const SquareTrendingPostDetail = lazy(() => import('../pages/SquareTrendingPostDetail'));
+const SquareCampusFeed = lazy(() => import('../pages/SquareCampusFeed'));
 const SquareCampusPostNew = lazy(() => import('../pages/SquareCampusPostNew'));
 const SquareCampusPostDetail = lazy(() => import('../pages/SquareCampusPostDetail'));
 const SquareOrgAdmin = lazy(() => import('../pages/SquareOrgAdmin'));
@@ -126,6 +127,7 @@ export const layoutRoutes = (
     <Route path="about/trending/:id" element={renderLazyRoute(SquareTrendingDetail)} />
     <Route path="about/trending/:id/new" element={renderLazyRoute(SquareTrendingPostNew)} />
     <Route path="about/trending/post/:id" element={renderLazyRoute(SquareTrendingPostDetail)} />
+    <Route path="about/campus" element={renderLazyRoute(SquareCampusFeed)} />
     <Route path="about/campus/new" element={renderLazyRoute(SquareCampusPostNew)} />
     <Route path="about/campus/:id" element={renderLazyRoute(SquareCampusPostDetail)} />
     <Route path="about/admin/orgs" element={renderLazyRoute(SquareOrgAdmin)} />

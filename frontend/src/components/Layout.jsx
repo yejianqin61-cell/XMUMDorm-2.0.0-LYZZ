@@ -41,6 +41,7 @@ const TITLE_BY_PATH_ZH = {
   '/about/algorithm': '评分算法说明',
   '/about/level-algorithm': '等级算法说明',
   '/about/profile': '关于我们',
+  '/about/campus': '今日校园',
   '/myzone/schedule': '课程表',
   '/myzone/diary': '多年日记本',
   '/eat/search': '搜索',
@@ -62,6 +63,7 @@ const TITLE_BY_PATH_EN = {
   '/about/algorithm': 'Scoring Algorithm',
   '/about/level-algorithm': 'Level System',
   '/about/profile': 'About us',
+  '/about/campus': 'Campus Updates',
   '/myzone/schedule': 'Schedule',
   '/myzone/diary': 'Diary',
   '/eat/search': 'Search',
@@ -228,6 +230,8 @@ function Layout() {
       title = isZh ? '热搜详情' : 'Trending';
     } else if (pathname === '/about/campus/new') {
       title = isZh ? '发布校园通知' : 'Campus Post';
+    } else if (pathname.startsWith('/about/campus/')) {
+      title = isZh ? '校园通知' : 'Campus Notice';
     } else if (pathname === '/about/admin/orgs') {
       title = isZh ? '组织管理' : 'Org Admin';
     } else if (pathname === '/about/map') {

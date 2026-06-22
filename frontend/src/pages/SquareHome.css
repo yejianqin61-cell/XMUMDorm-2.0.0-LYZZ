@@ -127,6 +127,91 @@
   flex-wrap: wrap;
 }
 
+.today-campus-hero__notice-links {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.today-campus-hero__notice-link {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 18px;
+  border-radius: var(--square-card-radius-sm);
+  text-decoration: none;
+  color: #10233b;
+  border: 1px solid rgba(255, 255, 255, 0.88);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.06);
+  overflow: hidden;
+}
+
+.today-campus-hero__notice-link::after {
+  content: '';
+  position: absolute;
+  right: -12px;
+  bottom: -18px;
+  width: 84px;
+  height: 84px;
+  border-radius: 999px;
+  opacity: 0.85;
+}
+
+.today-campus-hero__notice-link--school {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(239, 246, 255, 0.9)),
+    var(--square-card-surface);
+}
+
+.today-campus-hero__notice-link--school::after {
+  background:
+    radial-gradient(circle at 35% 35%, rgba(59, 130, 246, 0.24), rgba(59, 130, 246, 0) 62%),
+    repeating-linear-gradient(135deg, rgba(59, 130, 246, 0.11), rgba(59, 130, 246, 0.11) 7px, rgba(255, 255, 255, 0) 7px, rgba(255, 255, 255, 0) 14px);
+}
+
+.today-campus-hero__notice-link--college {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(240, 253, 250, 0.92)),
+    var(--square-card-surface);
+}
+
+.today-campus-hero__notice-link--college::after {
+  background:
+    radial-gradient(circle at 35% 35%, rgba(16, 185, 129, 0.24), rgba(16, 185, 129, 0) 62%),
+    repeating-linear-gradient(45deg, rgba(16, 185, 129, 0.11), rgba(16, 185, 129, 0.11) 7px, rgba(255, 255, 255, 0) 7px, rgba(255, 255, 255, 0) 14px);
+}
+
+.today-campus-hero__notice-kicker {
+  position: relative;
+  z-index: 1;
+  font-size: 11px;
+  line-height: 1.4;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(16, 35, 59, 0.48);
+}
+
+.today-campus-hero__notice-title {
+  position: relative;
+  z-index: 1;
+  font-size: 18px;
+  line-height: 1.3;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.today-campus-hero__notice-description {
+  position: relative;
+  z-index: 1;
+  max-width: 18ch;
+  font-size: 12px;
+  line-height: 1.65;
+  color: rgba(16, 35, 59, 0.62);
+}
+
 .today-campus-chip {
   display: inline-flex;
   align-items: center;
@@ -445,6 +530,184 @@
   height: 104px;
 }
 
+.square-campus-feed-page {
+  gap: 20px;
+}
+
+.square-campus-feed-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px 22px;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.7) 48%, rgba(255, 255, 255, 0.5) 100%),
+    linear-gradient(140deg, rgba(26, 115, 232, 0.12), rgba(52, 168, 83, 0.08));
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.07);
+}
+
+.square-campus-feed-hero__eyebrow {
+  font-size: 11px;
+  line-height: 1.4;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #4a6fa1;
+}
+
+.square-campus-feed-hero__title {
+  margin: 0;
+  font-size: 32px;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-weight: 800;
+  color: #10233b;
+}
+
+.square-campus-feed-hero__subtitle {
+  margin: 0;
+  max-width: 34rem;
+  font-size: 14px;
+  line-height: 1.7;
+  color: rgba(16, 35, 59, 0.68);
+}
+
+.square-campus-feed-tabs {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.square-campus-feed-tab {
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(16, 35, 59, 0.08);
+  background: rgba(255, 255, 255, 0.74);
+  color: rgba(16, 35, 59, 0.68);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.square-campus-feed-tab--active {
+  background: #10233b;
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 10px 24px rgba(16, 35, 59, 0.16);
+}
+
+.square-campus-feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.square-campus-feed-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 22px;
+  text-decoration: none;
+  color: inherit;
+  background: var(--square-card-surface);
+  border: var(--square-card-border);
+  box-shadow: var(--square-card-shadow);
+}
+
+.square-campus-feed-card__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.square-campus-feed-card__org {
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  font-weight: 700;
+  color: rgba(16, 35, 59, 0.52);
+}
+
+.square-campus-feed-card__time {
+  flex-shrink: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(16, 35, 59, 0.46);
+}
+
+.square-campus-feed-card__body {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.square-campus-feed-card__content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.square-campus-feed-card__title {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.4;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #10233b;
+}
+
+.square-campus-feed-card__excerpt {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.75;
+  color: rgba(16, 35, 59, 0.66);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.square-campus-feed-card__image {
+  width: 88px;
+  height: 88px;
+  object-fit: cover;
+  border-radius: 18px;
+  flex-shrink: 0;
+}
+
+.square-campus-feed-more {
+  min-height: 48px;
+  border: 0;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.82);
+  color: #10233b;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.05);
+}
+
+.square-campus-feed-empty {
+  text-align: center;
+}
+
+.square-campus-feed-empty h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  color: #10233b;
+}
+
+.square-campus-feed-empty p {
+  margin: 0;
+  color: rgba(16, 35, 59, 0.62);
+  line-height: 1.65;
+}
+
 @keyframes square-home-skeleton-shimmer {
   0% {
     background-position: 200% 0;
@@ -471,6 +734,11 @@
     font-size: 14px;
   }
 
+  .today-campus-hero__notice-links,
+  .today-campus-hero__briefs {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .today-campus-quick-action {
     min-height: 164px;
   }
@@ -478,5 +746,18 @@
   .today-campus-quick-action .ui-card__body {
     min-height: 164px;
     padding: 16px;
+  }
+
+  .square-campus-feed-hero__title {
+    font-size: 28px;
+  }
+
+  .square-campus-feed-card__body {
+    flex-direction: column;
+  }
+
+  .square-campus-feed-card__image {
+    width: 100%;
+    height: 168px;
   }
 }
