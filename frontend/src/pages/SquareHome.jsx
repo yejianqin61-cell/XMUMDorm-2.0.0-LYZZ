@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { BookOpenText, HandHelping, Megaphone, Shapes, Sparkles, Store, ChevronRight } from 'lucide-react';
 import { getHotPostTags } from '../api/posts';
 import { getSquareBanners, getSquareHomeSummary, getSquarePersonalizedSummary } from '../api/square';
 import CanteenBannerCarousel from '../components/canteen/CanteenBannerCarousel';
@@ -17,10 +18,10 @@ import { QK } from '../query/queryKeys';
 import './SquareHome.css';
 
 const PRIMARY_ACTIONS = [
-  { label: '社团广场', to: '/about/club', icon: '🎨', hint: '看社团、找活动、认识同好' },
-  { label: '马校一站通', to: '/about/freshman-guide', icon: '📚', hint: '攻略、课程与新生信息' },
-  { label: '帮帮我', to: '/about/errands', icon: '🤝', hint: '跑腿求助，解决生活小事' },
-  { label: '出物', to: '/about/second-hand', icon: '🛍️', hint: '校园二手流通更快一点' },
+  { label: '社团广场', to: '/about/club', icon: <Shapes size={19} strokeWidth={2} />, hint: '看社团、找活动、认识同好' },
+  { label: '马校一站通', to: '/about/freshman-guide', icon: <BookOpenText size={19} strokeWidth={2} />, hint: '攻略、课程与新生信息' },
+  { label: '帮帮我', to: '/about/errands', icon: <HandHelping size={19} strokeWidth={2} />, hint: '跑腿求助，解决生活小事' },
+  { label: '出物', to: '/about/second-hand', icon: <Store size={19} strokeWidth={2} />, hint: '校园二手流通更快一点' },
 ];
 
 const EXPLORE_LINKS = [
@@ -143,6 +144,9 @@ export default function SquareHome() {
                 <AppCard className="square-home-publish-card" interactive strong>
                   <div className="square-home-publish-card__row">
                     <div>
+                      <span className="square-home-publish-card__icon" aria-hidden="true">
+                        <Megaphone size={16} strokeWidth={2} />
+                      </span>
                       <p className="square-home-publish-card__eyebrow">Publish Center</p>
                       <h3 className="square-home-publish-card__title">统一发布入口</h3>
                       <p className="square-home-publish-card__desc">
@@ -150,7 +154,7 @@ export default function SquareHome() {
                       </p>
                     </div>
                     <span className="square-home-publish-card__arrow" aria-hidden="true">
-                      →
+                      <ChevronRight size={18} strokeWidth={2.4} />
                     </span>
                   </div>
                 </AppCard>
@@ -174,6 +178,10 @@ export default function SquareHome() {
                     </Link>
                   ))}
                 </div>
+                <p className="square-home-explore-note">
+                  <Sparkles size={14} strokeWidth={2} aria-hidden="true" />
+                  首页只保留最值得点开的入口，其余内容延后展开。
+                </p>
               </section>
             </FadeInSection>
           </>

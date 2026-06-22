@@ -236,8 +236,11 @@
   width: 42px;
   height: 42px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.04);
+  background: rgba(248, 250, 252, 0.96);
+  color: rgba(16, 35, 59, 0.78);
+  box-shadow:
+    inset 0 0 0 1px rgba(15, 23, 42, 0.05),
+    0 8px 18px rgba(15, 23, 42, 0.04);
 }
 
 .today-campus-quick-action .ui-card__title {
@@ -460,8 +463,10 @@
 .square-home-publish-card {
   border-radius: var(--square-card-radius);
   border: var(--square-card-border);
-  background: var(--square-card-surface-accent-strong);
-  box-shadow: var(--square-card-shadow);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.9)),
+    var(--square-card-surface-accent-strong);
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.05);
 }
 
 .square-home-publish-card .ui-card__body {
@@ -475,9 +480,22 @@
   gap: 16px;
 }
 
+.square-home-publish-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  margin-bottom: 10px;
+  border-radius: 12px;
+  background: rgba(26, 115, 232, 0.08);
+  color: rgba(26, 115, 232, 0.8);
+  box-shadow: inset 0 0 0 1px rgba(26, 115, 232, 0.08);
+}
+
 .square-home-publish-card__eyebrow {
-  margin: 0 0 8px;
-  color: var(--ui-accent);
+  margin: 0 0 6px;
+  color: rgba(16, 35, 59, 0.5);
   font-size: 11px;
   line-height: 1.4;
   font-weight: 700;
@@ -486,7 +504,7 @@
 
 .square-home-publish-card__title {
   margin: 0;
-  color: var(--ui-text-primary);
+  color: #10233b;
   font-size: 19px;
   line-height: 1.35;
 }
@@ -500,9 +518,7 @@
 
 .square-home-publish-card__arrow {
   flex-shrink: 0;
-  color: var(--ui-accent);
-  font-size: 22px;
-  font-weight: 700;
+  color: rgba(16, 35, 59, 0.4);
 }
 
 .square-preview-rail {
@@ -616,6 +632,16 @@
 
 .square-home-explore-link:active {
   transform: scale(0.98);
+}
+
+.square-home-explore-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: rgba(16, 35, 59, 0.52);
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 @keyframes square-home-skeleton-shimmer {
