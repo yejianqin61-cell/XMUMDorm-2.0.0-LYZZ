@@ -1,4 +1,14 @@
 .square-home-page {
+  --square-card-radius: 22px;
+  --square-card-radius-sm: 18px;
+  --square-card-border: 1px solid rgba(255, 255, 255, 0.82);
+  --square-card-shadow: 0 14px 32px rgba(15, 23, 42, 0.06);
+  --square-card-shadow-hover: 0 18px 38px rgba(15, 23, 42, 0.09);
+  --square-card-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.88));
+  --square-card-surface-accent: linear-gradient(145deg, rgba(15, 118, 110, 0.08), rgba(14, 165, 233, 0.04)),
+    rgba(255, 255, 255, 0.94);
+  --square-card-surface-accent-strong: linear-gradient(135deg, rgba(26, 115, 232, 0.12), rgba(14, 165, 233, 0.05)),
+    rgba(255, 255, 255, 0.96);
   min-height: 100%;
   padding: 0;
   overflow-y: auto;
@@ -72,7 +82,7 @@
   background:
     radial-gradient(circle at top left, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.62) 44%, rgba(255, 255, 255, 0.42) 100%),
     linear-gradient(135deg, rgba(26, 115, 232, 0.18), rgba(52, 168, 83, 0.14));
-  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.75);
   backdrop-filter: blur(18px);
 }
@@ -138,9 +148,11 @@
   gap: 6px;
   min-width: 0;
   padding: 14px 14px 16px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: var(--square-card-radius-sm);
+  background: var(--square-card-surface);
+  border: var(--square-card-border);
+  box-shadow: var(--square-card-shadow);
+  backdrop-filter: blur(10px);
 }
 
 .today-campus-brief-card__label {
@@ -182,7 +194,11 @@
 }
 
 .today-campus-quick-action {
-  transition: transform 140ms ease, box-shadow 140ms ease;
+  border-radius: var(--square-card-radius);
+  border: var(--square-card-border);
+  background: var(--square-card-surface);
+  box-shadow: var(--square-card-shadow);
+  transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
 }
 
 .today-campus-quick-action:active,
@@ -192,10 +208,32 @@
   transform: scale(0.98);
 }
 
+.today-campus-quick-action:hover {
+  box-shadow: var(--square-card-shadow-hover);
+}
+
 .today-campus-quick-action .ui-card__body {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+  padding: 18px;
+}
+
+.today-campus-quick-action .ui-action-card__icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.04);
+}
+
+.today-campus-quick-action .ui-card__title {
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.today-campus-quick-action .ui-card__meta {
+  line-height: 1.5;
 }
 
 .today-campus-list {
@@ -310,16 +348,17 @@
 
 .square-recommend-card {
   min-height: 158px;
-  background:
-    linear-gradient(145deg, rgba(15, 118, 110, 0.12), rgba(14, 165, 233, 0.04)),
-    rgba(255, 255, 255, 0.96);
+  border-radius: var(--square-card-radius);
+  border: var(--square-card-border);
+  background: var(--square-card-surface-accent);
+  box-shadow: var(--square-card-shadow);
 }
 
 .square-recommend-card .ui-card__body {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 16px;
+  padding: 18px;
 }
 
 .square-recommend-card__top {
@@ -332,10 +371,11 @@
   width: fit-content;
   padding: 5px 10px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.92);
   color: #0f766e;
   font-size: 11px;
   font-weight: 700;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.04);
 }
 
 .square-recommend-card__reason {
@@ -381,9 +421,9 @@
   text-decoration: none;
   color: inherit;
   white-space: nowrap;
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(255, 255, 255, 0.92);
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+  background: rgba(255, 255, 255, 0.92);
+  border: var(--square-card-border);
+  box-shadow: var(--square-card-shadow);
 }
 
 .square-hot-tag-chip__name {
@@ -398,9 +438,10 @@
 }
 
 .square-home-publish-card {
-  background:
-    linear-gradient(135deg, rgba(26, 115, 232, 0.12), rgba(14, 165, 233, 0.05)),
-    var(--ui-surface-strong);
+  border-radius: var(--square-card-radius);
+  border: var(--square-card-border);
+  background: var(--square-card-surface-accent-strong);
+  box-shadow: var(--square-card-shadow);
 }
 
 .square-home-publish-card .ui-card__body {
@@ -463,8 +504,9 @@
   min-height: 40px;
   padding: 0 14px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.9);
+  border: var(--square-card-border);
+  box-shadow: var(--square-card-shadow);
   color: var(--ui-text-secondary);
   font-size: 13px;
   font-weight: 600;
