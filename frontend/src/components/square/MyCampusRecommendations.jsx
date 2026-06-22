@@ -3,7 +3,7 @@ import EmptyState from '../ui/EmptyState';
 import AppCard from '../ui/AppCard';
 
 export default function MyCampusRecommendations({ summary }) {
-  const cards = summary?.cards || [];
+  const cards = (summary?.cards || []).slice(0, 2);
   const profile = summary?.profile || {};
   const title = summary?.is_personalized ? '和我有关' : '校园推荐';
   const subtitle = summary?.is_personalized
@@ -37,7 +37,9 @@ export default function MyCampusRecommendations({ summary }) {
                   <span className="square-recommend-card__reason">{card.reason}</span>
                 </div>
                 <h3 className="square-recommend-card__title">{card.title}</h3>
-                <p className="square-recommend-card__subtitle">{card.subtitle || card.excerpt || '继续看看这条线索'}</p>
+                <p className="square-recommend-card__subtitle">
+                  {card.subtitle || card.excerpt || '继续看看这条线索'}
+                </p>
                 {card.meta ? <p className="square-recommend-card__meta">{card.meta}</p> : null}
               </AppCard>
             </Link>

@@ -11,7 +11,7 @@
   padding-bottom: calc(var(--tabbar-height, 72px) + var(--safe-bottom, 0px) + 24px);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 22px;
 }
 
 .square-section {
@@ -60,7 +60,7 @@
 .today-campus-panel {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .today-campus-hero {
@@ -178,7 +178,7 @@
 .today-campus-quick-actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 12px;
 }
 
 .today-campus-quick-action {
@@ -249,17 +249,6 @@
   justify-content: center;
   gap: 8px;
   padding: 20px 16px;
-}
-
-.square-home-footer {
-  text-align: center;
-  padding: 4px 0 10px;
-}
-
-.square-home-map-link {
-  font-size: 13px;
-  color: var(--post-ios-tertiary-label);
-  text-decoration: none;
 }
 
 .square-home-skeleton {
@@ -452,6 +441,39 @@
   color: var(--ui-accent);
   font-size: 22px;
   font-weight: 700;
+}
+
+.square-home-explore {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 2px 0 4px;
+}
+
+.square-home-explore-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.square-home-explore-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.92);
+  color: var(--ui-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 140ms ease, color 140ms ease, transform 140ms ease;
+}
+
+.square-home-explore-link:active {
+  transform: scale(0.98);
 }
 
 @keyframes square-home-skeleton-shimmer {
