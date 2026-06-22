@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import {
   getCampusPostDetail,
   getCampusPostComments,
@@ -18,13 +19,13 @@ function prefixAvatar(url) {
   return url && !url.startsWith('http') ? `${API_BASE_URL}${url}` : url;
 }
 
-function mapCommentTree(c) {
+function mapCommentTree(comment) {
   return {
-    ...c,
-    author: c.author ? { ...c.author, avatar: prefixAvatar(c.author.avatar) } : c.author,
-    replies: (c.replies || []).map((r) => ({
-      ...r,
-      author: r.author ? { ...r.author, avatar: prefixAvatar(r.author.avatar) } : r.author,
+    ...comment,
+    author: comment.author ? { ...comment.author, avatar: prefixAvatar(comment.author.avatar) } : comment.author,
+    replies: (comment.replies || []).map((reply) => ({
+      ...reply,
+      author: reply.author ? { ...reply.author, avatar: prefixAvatar(reply.author.avatar) } : reply.author,
     })),
   };
 }
@@ -34,6 +35,8 @@ export default function SquareCampusPostDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { isLoggedIn, token, user, isAdmin } = useAuth();
+  const { lang } = useLanguage();
+  const isEn = lang === 'en';
   const postId = parseInt(id, 10);
   const tokenKey = token ?? 'guest';
 
@@ -46,8 +49,8 @@ export default function SquareCampusPostDetail() {
     queryFn: () => getCampusPostDetail(postId),
     enabled: Number.isFinite(postId) && postId > 0,
     staleTime: 30 * 1000,
-    select: (d) => {
-      const post = d?.data || d || {};
+    select: (data) => {
+      const post = data?.data || data || {};
       return {
         ...post,
         author: post.author
@@ -82,7 +85,7 @@ export default function SquareCampusPostDetail() {
     const prevCount = likeCount;
     const optimistic = !prevLiked;
     setLiked(optimistic);
-    setLikeCount((c) => (optimistic ? c + 1 : Math.max(0, c - 1)));
+    setLikeCount((count) => (optimistic ? count + 1 : Math.max(0, count - 1)));
     try {
       const data = await likeCampusPost(postId);
       if (data?.liked != null) setLiked(!!data.liked);
@@ -104,7 +107,7 @@ export default function SquareCampusPostDetail() {
         });
         await queryClient.invalidateQueries({ queryKey: QK.campusPostComments(postId) });
         await queryClient.invalidateQueries({ queryKey: QK.campusPostDetail(postId, tokenKey) });
-        Toast.success('评论成功');
+        Toast.success(isEn ? 'Comment posted' : '评论成功');
       } catch (err) {
         Toast.error(getApiErrorMessage(err));
         throw err;
@@ -112,12 +115,16 @@ export default function SquareCampusPostDetail() {
         setSubmitLoading(false);
       }
     },
-    [postId, queryClient, tokenKey]
+    [postId, queryClient, tokenKey, isEn]
   );
 
   const org = post?.organization;
   const feedLabel =
-    post?.feed_tab === 'college' ? '学院通知' : post?.feed_tab === 'school' ? '学校公告' : '';
+    post?.feed_tab === 'college'
+      ? (isEn ? 'College Updates' : '学院通知')
+      : post?.feed_tab === 'school'
+        ? (isEn ? 'School Bulletin' : '学校公告')
+        : '';
 
   const headerSlot =
     org && org.name ? (
@@ -127,7 +134,7 @@ export default function SquareCampusPostDetail() {
         ) : null}
         <div className="post-detail-org-meta">
           <span className="post-detail-org-name">{org.name}</span>
-          <span className="post-detail-org-badge">官方认证</span>
+          <span className="post-detail-org-badge">{isEn ? 'Verified official' : '官方认证'}</span>
         </div>
       </div>
     ) : null;
@@ -147,8 +154,8 @@ export default function SquareCampusPostDetail() {
       user={user}
       isAdmin={isAdmin}
       loginPath="/login"
-      emptyTitle="通知不存在"
-      emptyActionLabel="返回广场"
+      emptyTitle={isEn ? 'Notice not found' : '通知不存在'}
+      emptyActionLabel={isEn ? 'Back to square' : '返回广场'}
       onEmptyAction={() => navigate('/about')}
       headerSlot={headerSlot}
       title={post?.title || null}

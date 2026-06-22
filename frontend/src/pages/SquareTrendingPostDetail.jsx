@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import {
   getTrendingPostDetail,
   getTrendingPostComments,
@@ -19,13 +20,13 @@ function prefixAvatar(url) {
   return url && !url.startsWith('http') ? `${API_BASE_URL}${url}` : url;
 }
 
-function mapCommentTree(c) {
+function mapCommentTree(comment) {
   return {
-    ...c,
-    author: c.author ? { ...c.author, avatar: prefixAvatar(c.author.avatar) } : c.author,
-    replies: (c.replies || []).map((r) => ({
-      ...r,
-      author: r.author ? { ...r.author, avatar: prefixAvatar(r.author.avatar) } : r.author,
+    ...comment,
+    author: comment.author ? { ...comment.author, avatar: prefixAvatar(comment.author.avatar) } : comment.author,
+    replies: (comment.replies || []).map((reply) => ({
+      ...reply,
+      author: reply.author ? { ...reply.author, avatar: prefixAvatar(reply.author.avatar) } : reply.author,
     })),
   };
 }
@@ -35,6 +36,8 @@ export default function SquareTrendingPostDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { isLoggedIn, token, user, isAdmin } = useAuth();
+  const { lang } = useLanguage();
+  const isEn = lang === 'en';
   const { handleExpResponse } = useExpFeedback();
   const postId = parseInt(id, 10);
   const tokenKey = token ?? 'guest';
@@ -48,8 +51,8 @@ export default function SquareTrendingPostDetail() {
     queryFn: () => getTrendingPostDetail(postId),
     enabled: Number.isFinite(postId) && postId > 0,
     staleTime: 30 * 1000,
-    select: (d) => {
-      const post = d?.data || d || {};
+    select: (data) => {
+      const post = data?.data || data || {};
       return {
         ...post,
         author: post.author
@@ -81,7 +84,7 @@ export default function SquareTrendingPostDetail() {
     const prevCount = likeCount;
     const optimistic = !prevLiked;
     setLiked(optimistic);
-    setLikeCount((c) => (optimistic ? c + 1 : Math.max(0, c - 1)));
+    setLikeCount((count) => (optimistic ? count + 1 : Math.max(0, count - 1)));
     try {
       const data = await likeTrendingPost(postId);
       handleExpResponse(data);
@@ -92,7 +95,7 @@ export default function SquareTrendingPostDetail() {
       setLikeCount(prevCount);
       Toast.error(getApiErrorMessage(err));
     }
-  }, [liked, likeCount, postId]);
+  }, [liked, likeCount, postId, handleExpResponse]);
 
   const handleSubmitComment = useCallback(
     async ({ content, parentId }) => {
@@ -105,7 +108,7 @@ export default function SquareTrendingPostDetail() {
         handleExpResponse(res);
         await queryClient.invalidateQueries({ queryKey: QK.trendingPostComments(postId) });
         await queryClient.invalidateQueries({ queryKey: QK.trendingPostDetail(postId, tokenKey) });
-        Toast.success('评论成功');
+        Toast.success(isEn ? 'Comment posted' : '评论成功');
       } catch (err) {
         Toast.error(getApiErrorMessage(err));
         throw err;
@@ -113,7 +116,7 @@ export default function SquareTrendingPostDetail() {
         setSubmitLoading(false);
       }
     },
-    [postId, queryClient, tokenKey]
+    [postId, queryClient, tokenKey, handleExpResponse, isEn]
   );
 
   return (
@@ -131,8 +134,8 @@ export default function SquareTrendingPostDetail() {
       user={user}
       isAdmin={isAdmin}
       loginPath="/login"
-      emptyTitle="帖子不存在"
-      emptyActionLabel="返回"
+      emptyTitle={isEn ? 'Post not found' : '帖子不存在'}
+      emptyActionLabel={isEn ? 'Back' : '返回'}
       onEmptyAction={() => navigate(-1)}
       reportTargetType="trending_post"
       commentReportType="trending_comment"

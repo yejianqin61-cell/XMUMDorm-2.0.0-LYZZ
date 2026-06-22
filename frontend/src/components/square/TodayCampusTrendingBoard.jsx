@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function TodayCampusTrendingBoard({ topics = [] }) {
+  const { lang } = useLanguage();
+  const isEn = lang === 'en';
   const items = topics.slice(0, 5);
   if (!items.length) return null;
 
@@ -8,10 +11,10 @@ export default function TodayCampusTrendingBoard({ topics = [] }) {
     <section className="today-campus-panel square-home-block">
       <div className="square-section-header square-section-header--stack">
         <div>
-          <h2 className="square-section-title">热搜榜</h2>
+          <h2 className="square-section-title">{isEn ? 'Trending Board' : '热搜榜'}</h2>
         </div>
         <Link to="/about/trending" className="square-section-more">
-          查看全部 →
+          {isEn ? 'View all →' : '查看全部 →'}
         </Link>
       </div>
       <div className="square-trending-board">
@@ -22,7 +25,9 @@ export default function TodayCampusTrendingBoard({ topics = [] }) {
             </span>
             <div className="square-trending-item__body">
               <h3 className="square-trending-item__title">{topic.title}</h3>
-              <p className="square-trending-item__meta">{topic.post_count || 0} 条讨论</p>
+              <p className="square-trending-item__meta">
+                {topic.post_count || 0} {isEn ? 'discussions' : '条讨论'}
+              </p>
             </div>
           </Link>
         ))}

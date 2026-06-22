@@ -1,38 +1,41 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
+import { useLanguage } from '../context/LanguageContext';
 import { getTrendingTopicDetail, getTrendingPosts } from '../api/square';
 import { QK } from '../query/queryKeys';
 import { getUploadUrl } from '../api/config';
 import { formatPostTime } from '../utils/formatTime';
 import './SquareHome.css';
 
-function getHeatTone(postCount) {
+function getHeatTone(postCount, isEn) {
   if (postCount >= 20) {
     return {
-      badge: '高热讨论',
+      badge: isEn ? 'High heat' : '高热讨论',
       icon: '🔥',
-      summary: '热度还在继续上升',
+      summary: isEn ? 'The topic is still accelerating' : '热度还在继续上升',
     };
   }
 
   if (postCount >= 8) {
     return {
-      badge: '快速升温',
+      badge: isEn ? 'Rising fast' : '快速升温',
       icon: '🚀',
-      summary: '讨论正在持续聚集',
+      summary: isEn ? 'Discussion is pulling more people in' : '讨论正在持续聚集',
     };
   }
 
   return {
-    badge: '持续发酵',
+    badge: isEn ? 'Still brewing' : '持续发酵',
     icon: '✨',
-    summary: '已经开始吸引更多关注',
+    summary: isEn ? 'More attention is starting to gather' : '已经开始吸引更多关注',
   };
 }
 
 export default function SquareTrendingDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { lang } = useLanguage();
+  const isEn = lang === 'en';
   const topicId = parseInt(id, 10);
 
   const { data: topicData, isLoading: topicLoading } = useQuery({
@@ -41,7 +44,7 @@ export default function SquareTrendingDetail() {
     staleTime: 30 * 1000,
   });
   const topic = topicData?.data || topicData || {};
-  const heatTone = getHeatTone(topic.post_count || 0);
+  const heatTone = getHeatTone(topic.post_count || 0, isEn);
 
   const {
     data: postsData,
@@ -77,7 +80,7 @@ export default function SquareTrendingDetail() {
             <div className="square-section-header square-trending-topic-header">
               <div className="square-trending-topic-header-main">
                 <div className="square-trending-topic-hero-topline">
-                  <span className="square-trending-topic-eyebrow">Trending Now</span>
+                  <span className="square-trending-topic-eyebrow">{isEn ? 'Trending Now' : '正在热议'}</span>
                   <span className="square-trending-topic-badge">
                     <span aria-hidden="true">{heatTone.icon}</span>
                     <span>{heatTone.badge}</span>
@@ -85,7 +88,7 @@ export default function SquareTrendingDetail() {
                 </div>
 
                 <h3 className="square-section-title square-trending-topic-title">
-                  {topic.title || '热搜详情'}
+                  {topic.title || (isEn ? 'Trending topic' : '热搜详情')}
                 </h3>
 
                 {topic.description && (
@@ -95,14 +98,13 @@ export default function SquareTrendingDetail() {
                 <div className="square-trending-topic-stats">
                   <span className="square-trending-topic-meta">
                     <span aria-hidden="true">💬</span>
-                    <span>{topic.post_count || 0} 条讨论</span>
+                    <span>{topic.post_count || 0} {isEn ? 'discussions' : '条讨论'}</span>
                   </span>
                   <span className="square-trending-topic-meta square-trending-topic-meta--soft">
                     <span aria-hidden="true">{heatTone.icon}</span>
                     <span>{heatTone.summary}</span>
                   </span>
                 </div>
-
               </div>
 
               <button
@@ -110,7 +112,7 @@ export default function SquareTrendingDetail() {
                 className="square-trending-join-btn pressable"
                 onClick={() => navigate(`/about/trending/${topicId}/new`)}
               >
-                参与讨论
+                {isEn ? 'Join discussion' : '参与讨论'}
               </button>
             </div>
           </div>
@@ -119,17 +121,19 @@ export default function SquareTrendingDetail() {
         <div className="square-section square-home-block square-trending-discussion">
           <div className="square-section-header square-section-header--stack">
             <div>
-              <h3 className="square-section-title">讨论区</h3>
-              <p className="square-trending-discussion__meta">按时间倒序展示，先看最新发言</p>
+              <h3 className="square-section-title">{isEn ? 'Discussion' : '讨论区'}</h3>
+              <p className="square-trending-discussion__meta">
+                {isEn ? 'Latest replies first, ordered by time' : '按时间倒序展示，先看最新发言'}
+              </p>
             </div>
           </div>
 
           {postsLoading ? (
             <div className="state-loading" style={{ paddingTop: 60 }} />
           ) : postsError ? (
-            <div className="state-error">加载失败</div>
+            <div className="state-error">{isEn ? 'Load failed' : '加载失败'}</div>
           ) : posts.length === 0 ? (
-            <div className="state-empty">暂无讨论，来做第一个发言的人吧</div>
+            <div className="state-empty">{isEn ? 'No discussion yet. Be the first to speak.' : '暂无讨论，来做第一个发言的人吧'}</div>
           ) : (
             <div className="square-trending-discussion-list">
               {posts.map((post, index) => {
@@ -155,7 +159,7 @@ export default function SquareTrendingDetail() {
                       <div className="square-trending-post-card__content">
                         <div className="square-trending-post-card__header">
                           <span className="square-trending-post-card__author">
-                            {post.author?.name || '匿名'}
+                            {post.author?.name || (isEn ? 'Anonymous' : '匿名')}
                           </span>
                           <span className="square-trending-post-card__time">
                             {formatPostTime(post.created_at)}
@@ -184,7 +188,7 @@ export default function SquareTrendingDetail() {
                   onClick={() => fetchNextPage()}
                   style={{ border: 'none', borderTop: '1px solid var(--post-ios-separator)' }}
                 >
-                  {isFetchingNextPage ? '加载中...' : '加载更多'}
+                  {isFetchingNextPage ? (isEn ? 'Loading...' : '加载中...') : (isEn ? 'Load more' : '加载更多')}
                 </button>
               )}
             </div>

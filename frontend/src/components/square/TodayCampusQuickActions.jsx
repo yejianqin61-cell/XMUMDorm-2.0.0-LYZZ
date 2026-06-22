@@ -1,12 +1,16 @@
 import { Link } from 'react-router-dom';
 import AppCard from '../ui/AppCard';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function TodayCampusQuickActions({ actions }) {
+  const { lang } = useLanguage();
+  const isEn = lang === 'en';
+
   return (
     <section className="today-campus-panel square-home-block">
       <div className="square-section-header square-section-header--stack">
         <div>
-          <h2 className="square-section-title">快捷入口</h2>
+          <h2 className="square-section-title">{isEn ? 'Quick Access' : '快捷入口'}</h2>
         </div>
       </div>
       <div className="today-campus-quick-actions">
@@ -23,8 +27,8 @@ export default function TodayCampusQuickActions({ actions }) {
                 </span>
               </div>
               <div className="today-campus-quick-action__content">
-                <h3 className="today-campus-quick-action__title">{action.label}</h3>
-                <p className="today-campus-quick-action__hint">{action.hint}</p>
+                <h3 className="today-campus-quick-action__title">{isEn ? action.labelEn || action.label : action.label}</h3>
+                <p className="today-campus-quick-action__hint">{isEn ? action.hintEn || action.hint : action.hint}</p>
               </div>
             </AppCard>
           </Link>

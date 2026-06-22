@@ -5,7 +5,7 @@ import { queryClient } from './query/queryClient';
 import { AuthProvider } from './context/AuthContext';
 import { ExpFeedbackProvider } from './context/ExpFeedbackContext';
 import { ToastProvider } from './context/ToastContext';
-import { LanguageProvider } from './context/LanguageContext';
+import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import AuthGuard from './components/AuthGuard';
 import Layout from './components/Layout';
 import Login from './pages/Login';
@@ -38,10 +38,9 @@ function SplashScreen({ fadeOut, onReady }) {
   const handleLoadedData = () => {
     const el = videoRef.current;
     if (el) {
-      // 主动触发播放，兼容部分移动端浏览器
-      const p = el.play();
-      if (p && typeof p.catch === 'function') {
-        p.catch(() => {});
+      const playPromise = el.play();
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch(() => {});
       }
     }
   };
@@ -78,7 +77,6 @@ function MainApp() {
         <AuthProvider>
           <ToastProvider>
             <ExpFeedbackProvider>
-            <LanguageProvider>
               <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
@@ -87,22 +85,21 @@ function MainApp() {
                 <Route path="/terms" element={<TermsOfService />} />
                 <Route
                   path="/"
-                  element={
+                  element={(
                     <AuthGuard>
                       <Layout />
                     </AuthGuard>
-                  }
+                  )}
                 >
                   {layoutRoutes}
                 </Route>
-                {/* 管理员后台（独立布局，不使用主 Layout 的 TabBar） */}
                 <Route
                   path="/myzone/admin"
-                  element={
+                  element={(
                     <AuthGuard>
                       <AdminLayout />
                     </AuthGuard>
-                  }
+                  )}
                 >
                   <Route index element={<AdminDashboard />} />
                   <Route path="users" element={<UserList />} />
@@ -117,7 +114,6 @@ function MainApp() {
                   <Route path="contents/:module/:id" element={<ContentDetail />} />
                 </Route>
               </Routes>
-            </LanguageProvider>
             </ExpFeedbackProvider>
           </ToastProvider>
         </AuthProvider>
@@ -126,14 +122,68 @@ function MainApp() {
   );
 }
 
-function App() {
+function InstallPrompt({ showInstallPrompt, manualGuide, onInstallLater, onInstallNow }) {
+  const { lang } = useLanguage();
+  const isEn = lang === 'en';
+
+  if (!showInstallPrompt) return null;
+
+  return (
+    <div className="install-hint-backdrop" onClick={onInstallLater}>
+      <div className="install-hint-card" onClick={(e) => e.stopPropagation()}>
+        <h2 className="install-hint-title">{isEn ? 'Add Dorm to Home Screen' : '添加 Dorm 到主屏幕'}</h2>
+        {manualGuide === 'ios-safari' && (
+          <p className="install-hint-text">
+            {isEn
+              ? 'You are using iOS Safari. Tap the Share button at the bottom, then choose “Add to Home Screen” to place Dorm on your phone desktop.'
+              : '当前在 iOS Safari 浏览器中。请点击底部中间的「分享」按钮，向下滑动并选择「添加到主屏幕 Add to Home Screen」，即可将 Dorm 添加到手机桌面。'}
+          </p>
+        )}
+        {manualGuide === 'wechat-ios' && (
+          <p className="install-hint-text">
+            {isEn
+              ? 'You are in the WeChat built-in browser. First tap the top-right menu and choose “Open in Safari”, then use Safari’s Share → Add to Home Screen to install Dorm.'
+              : '当前在微信内置浏览器中。请先点击右上角「···」选择「在 Safari 中打开」，然后在 Safari 中通过底部的「分享」→「添加到主屏幕 Add to Home Screen」将 Dorm 添加到桌面。'}
+          </p>
+        )}
+        {!manualGuide && (
+          <p className="install-hint-text">
+            {isEn
+              ? 'Install Dorm on your phone desktop for a full-screen app-like experience with faster launch.'
+              : '将 Dorm 安装到手机桌面，像 App 一样全屏使用，启动更快、体验更好。'}
+          </p>
+        )}
+        <div className="install-hint-actions">
+          <button
+            type="button"
+            className="install-hint-btn install-hint-btn-secondary"
+            onClick={onInstallLater}
+          >
+            {manualGuide ? (isEn ? 'Got it' : '知道了') : (isEn ? 'Maybe later' : '暂时不用')}
+          </button>
+          {!manualGuide && (
+            <button
+              type="button"
+              className="install-hint-btn install-hint-btn-primary"
+              onClick={onInstallNow}
+            >
+              {isEn ? 'Add to Home Screen' : '添加到主屏幕'}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AppShell() {
   const [showSplash, setShowSplash] = useState(true);
   const [fadeOut, setFadeOut] = useState(false);
   const timersRef = useRef({ fade: null, hide: null });
   const startedRef = useRef(false);
   const [installPromptEvent, setInstallPromptEvent] = useState(null);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
-  const [manualGuide, setManualGuide] = useState(null); // 'ios-safari' | 'wechat-ios' | null
+  const [manualGuide, setManualGuide] = useState(null);
 
   const startSplashTimers = useCallback(() => {
     if (startedRef.current) return;
@@ -143,10 +193,10 @@ function App() {
   }, []);
 
   useEffect(() => {
-    // 兜底：如果视频迟迟没加载，最多 3 秒后也启动计时
     const fallback = setTimeout(() => {
       startSplashTimers();
     }, 3000);
+
     return () => {
       clearTimeout(fallback);
       if (timersRef.current.fade) clearTimeout(timersRef.current.fade);
@@ -154,15 +204,14 @@ function App() {
     };
   }, [startSplashTimers]);
 
-  // 监听 PWA 安装提示（仅支持的浏览器会触发）
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') return undefined;
     const hasShown = window.localStorage.getItem('dorm-install-hint-dismissed') === 'true';
-    if (hasShown) return;
+    if (hasShown) return undefined;
 
-    function handleBeforeInstallPrompt(e) {
-      e.preventDefault();
-      setInstallPromptEvent(e);
+    function handleBeforeInstallPrompt(event) {
+      event.preventDefault();
+      setInstallPromptEvent(event);
       setShowInstallPrompt(true);
     }
 
@@ -172,20 +221,16 @@ function App() {
     };
   }, []);
 
-  // 针对 iOS Safari / 微信内置浏览器的手动“添加到主屏幕”指引
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const hasShown = window.localStorage.getItem('dorm-install-hint-dismissed') === 'true';
     if (hasShown) return;
+
     const ua = window.navigator.userAgent || '';
     const isIOS = /iP(hone|od|ad)/.test(ua);
     const isWeChat = /MicroMessenger/i.test(ua);
     const isIOSWeChat = isIOS && isWeChat;
-    const isSafari =
-      isIOS &&
-      /Safari/i.test(ua) &&
-      !/CriOS|FxiOS|EdgiOS/i.test(ua) && // 排除 iOS 上的 Chrome/Firefox/Edge
-      !isWeChat;
+    const isSafari = isIOS && /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS/i.test(ua) && !isWeChat;
 
     if (isIOSWeChat) {
       setManualGuide('wechat-ios');
@@ -208,10 +253,12 @@ function App() {
       handleInstallLater();
       return;
     }
+
     try {
       installPromptEvent.prompt();
       await installPromptEvent.userChoice;
     } catch {}
+
     handleInstallLater();
   };
 
@@ -222,53 +269,20 @@ function App() {
   return (
     <>
       <MainApp />
-      {showInstallPrompt && (
-        <div className="install-hint-backdrop" onClick={handleInstallLater}>
-          <div
-            className="install-hint-card"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="install-hint-title">添加 Dorm 到主屏幕</h2>
-            {manualGuide === 'ios-safari' && (
-              <p className="install-hint-text">
-                当前在 iOS Safari 浏览器中。请点击底部中间的「分享」按钮，向下滑动并选择「添加到主屏幕
-                Add to Home Screen」，即可将 Dorm 添加到手机桌面。
-              </p>
-            )}
-            {manualGuide === 'wechat-ios' && (
-              <p className="install-hint-text">
-                当前在微信内置浏览器中。请先点击右上角「···」选择「在 Safari 中打开」，然后在 Safari
-                中通过底部的「分享」→「添加到主屏幕 Add to Home Screen」将 Dorm 添加到桌面。
-              </p>
-            )}
-            {!manualGuide && (
-              <p className="install-hint-text">
-                将 Dorm 安装到手机桌面，像 App 一样全屏使用，启动更快、体验更好。
-              </p>
-            )}
-            <div className="install-hint-actions">
-              <button
-                type="button"
-                className="install-hint-btn install-hint-btn-secondary"
-                onClick={handleInstallLater}
-              >
-                {manualGuide ? '知道了' : '暂时不用'}
-              </button>
-              {!manualGuide && (
-                <button
-                  type="button"
-                  className="install-hint-btn install-hint-btn-primary"
-                  onClick={handleInstallNow}
-                >
-                  添加到主屏幕
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <InstallPrompt
+        showInstallPrompt={showInstallPrompt}
+        manualGuide={manualGuide}
+        onInstallLater={handleInstallLater}
+        onInstallNow={handleInstallNow}
+      />
     </>
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <LanguageProvider>
+      <AppShell />
+    </LanguageProvider>
+  );
+}

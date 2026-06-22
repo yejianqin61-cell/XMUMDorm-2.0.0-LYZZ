@@ -1,5 +1,6 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 import { getCampusFeed } from '../api/square';
 import { getUploadUrl } from '../api/config';
 import ErrorState from '../components/ui/ErrorState';
@@ -9,20 +10,36 @@ import { QK } from '../query/queryKeys';
 import { formatPostTime } from '../utils/formatTime';
 import './SquareHome.css';
 
-const FEED_TABS = [
-  {
-    key: 'school',
-    label: '学校公告',
-    eyebrow: 'School Bulletin',
-    description: '集中查看学校官方、部门与全校层面的最新通知。',
-  },
-  {
-    key: 'college',
-    label: '学院通知',
-    eyebrow: 'College Updates',
-    description: '按学院查看更贴近专业与班级日常的通知动态。',
-  },
-];
+const FEED_TABS = {
+  zh: [
+    {
+      key: 'school',
+      label: '学校公告',
+      eyebrow: 'School Bulletin',
+      description: '集中查看学校官方、部门与全校层面的最新通知。',
+    },
+    {
+      key: 'college',
+      label: '学院通知',
+      eyebrow: 'College Updates',
+      description: '按学院查看更贴近专业与班级日常的通知动态。',
+    },
+  ],
+  en: [
+    {
+      key: 'school',
+      label: 'School Bulletin',
+      eyebrow: 'School Bulletin',
+      description: 'Catch up on the latest notices from the university, departments, and school-wide channels.',
+    },
+    {
+      key: 'college',
+      label: 'College Updates',
+      eyebrow: 'College Updates',
+      description: 'Browse college-level notices that are closer to your major and class life.',
+    },
+  ],
+};
 
 function normalizeFeedResponse(page) {
   const data = page?.data || page;
@@ -34,9 +51,12 @@ function normalizeFeedResponse(page) {
 }
 
 export default function SquareCampusFeed() {
+  const { lang } = useLanguage();
+  const isEn = lang === 'en';
+  const tabs = isEn ? FEED_TABS.en : FEED_TABS.zh;
   const [searchParams, setSearchParams] = useSearchParams();
   const currentTab = searchParams.get('tab') === 'college' ? 'college' : 'school';
-  const currentMeta = FEED_TABS.find((tab) => tab.key === currentTab) || FEED_TABS[0];
+  const currentMeta = tabs.find((tab) => tab.key === currentTab) || tabs[0];
 
   const feedQuery = useInfiniteQuery({
     queryKey: QK.campusFeed(currentTab, 'infinite'),
@@ -58,8 +78,8 @@ export default function SquareCampusFeed() {
           <span className="square-campus-feed-hero__eyebrow">{currentMeta.eyebrow}</span>
           <h1 className="square-campus-feed-hero__title">{currentMeta.label}</h1>
           <p className="square-campus-feed-hero__subtitle">{currentMeta.description}</p>
-          <div className="square-campus-feed-tabs" role="tablist" aria-label="校园公告分类">
-            {FEED_TABS.map((tab) => {
+          <div className="square-campus-feed-tabs" role="tablist" aria-label={isEn ? 'Campus notice categories' : '校园公告分类'}>
+            {tabs.map((tab) => {
               const isActive = tab.key === currentTab;
               return (
                 <button
@@ -82,14 +102,18 @@ export default function SquareCampusFeed() {
         ) : feedQuery.isError ? (
           <ErrorState
             className="square-home-state"
-            title="校园公告加载失败"
-            description="请稍后刷新重试。"
+            title={isEn ? 'Failed to load campus notices' : '校园公告加载失败'}
+            description={isEn ? 'Please refresh and try again later.' : '请稍后刷新重试。'}
             onActionClick={() => feedQuery.refetch()}
           />
         ) : feedItems.length === 0 ? (
           <div className="square-home-state square-campus-feed-empty">
-            <h2>暂时还没有内容</h2>
-            <p>{currentTab === 'college' ? '学院通知更新后会优先出现在这里。' : '学校公告更新后会优先出现在这里。'}</p>
+            <h2>{isEn ? 'Nothing here yet' : '暂时还没有内容'}</h2>
+            <p>
+              {currentTab === 'college'
+                ? (isEn ? 'College updates will appear here first once they are posted.' : '学院通知更新后会优先出现在这里。')
+                : (isEn ? 'School bulletins will appear here first once they are posted.' : '学校公告更新后会优先出现在这里。')}
+            </p>
           </div>
         ) : (
           <div className="square-campus-feed-list" aria-label={currentMeta.label}>
@@ -126,7 +150,9 @@ export default function SquareCampusFeed() {
                 onClick={() => feedQuery.fetchNextPage()}
                 disabled={feedQuery.isFetchingNextPage}
               >
-                {feedQuery.isFetchingNextPage ? '加载中...' : '查看更多公告'}
+                {feedQuery.isFetchingNextPage
+                  ? (isEn ? 'Loading...' : '加载中...')
+                  : (isEn ? 'View more notices' : '查看更多公告')}
               </button>
             ) : null}
           </div>
