@@ -5,8 +5,11 @@ export default function HotTagsStrip({ tags = [] }) {
 
   return (
     <section className="today-campus-panel">
-      <div className="square-section-header">
-        <h2 className="square-section-title">热标签</h2>
+      <div className="square-section-header square-section-header--stack">
+        <div>
+          <h2 className="square-section-title">热标签</h2>
+          <p className="square-section-subtitle">用横向浏览替代纵向堆叠，让信息更轻一点。</p>
+        </div>
         <Link to="/posts/search" className="square-section-more">
           去发现 →
         </Link>
