@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import './TodoList.css';
 
 const PRIORITY_LABELS = { 0: '无', 1: '低', 2: '中', 3: '高' };
+const PRIORITY_LABELS_EN = ['None', 'Low', 'Med', 'High'];
 const PRIORITY_COLORS = { 0: '#999', 1: '#4caf50', 2: '#ff9800', 3: '#f44336' };
 const LIST_TYPES = [
   { key: 'all', labelZh: '全部', labelEn: 'All' },
@@ -22,6 +23,13 @@ const LIST_TYPES = [
   { key: 'club', labelZh: '社团', labelEn: 'Club' },
   { key: 'other', labelZh: '其他', labelEn: 'Other' },
 ];
+
+function getTodoSortValue(todo) {
+  const dueDate = normalizeTodoDueDate(todo.due_date);
+  const dueTime = normalizeTodoDueTime(todo.due_time);
+  if (!dueDate) return Number.MAX_SAFE_INTEGER;
+  return new Date(`${dueDate}T${dueTime || '23:59'}:00`).getTime();
+}
 
 export default function TodoList() {
   const { isLoggedIn } = useAuth();
@@ -49,7 +57,17 @@ export default function TodoList() {
     enabled: isLoggedIn,
     staleTime: 30 * 1000,
   });
-  const todos = data?.data?.list || data?.list || data?.data || [];
+
+  const rawTodos = data?.data?.list || data?.list || data?.data || [];
+  const todos = useMemo(() => {
+    return [...rawTodos].sort((a, b) => {
+      if (!!a.is_completed !== !!b.is_completed) return a.is_completed ? 1 : -1;
+      const timeDiff = getTodoSortValue(a) - getTodoSortValue(b);
+      if (timeDiff !== 0) return timeDiff;
+      if ((b.priority || 0) !== (a.priority || 0)) return (b.priority || 0) - (a.priority || 0);
+      return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+    });
+  }, [rawTodos]);
 
   const createMutation = useMutation({
     mutationFn: createTodo,
@@ -102,6 +120,7 @@ export default function TodoList() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formTitle.trim()) return;
+
     const body = {
       title: formTitle.trim(),
       description: formDesc.trim(),
@@ -110,6 +129,7 @@ export default function TodoList() {
       due_time: formDueTime || null,
       list_type: formListType,
     };
+
     if (editId) {
       updateMutation.mutate({ id: editId, body });
     } else {
@@ -129,8 +149,8 @@ export default function TodoList() {
 
   const todayStr = localTodayDateStr();
   const isOverdue = (todo) => {
-    const d = normalizeTodoDueDate(todo.due_date);
-    return d && d < todayStr && !todo.is_completed;
+    const dueDate = normalizeTodoDueDate(todo.due_date);
+    return dueDate && dueDate < todayStr && !todo.is_completed;
   };
 
   return (
@@ -138,17 +158,16 @@ export default function TodoList() {
       <div className="todolist-inner">
         <h2 className="todolist-title">{isZh ? '待办事项' : 'To-Do List'}</h2>
 
-        {/* Filters */}
         <div className="todolist-filters">
           <div className="todolist-filter-row">
-            {LIST_TYPES.map((lt) => (
+            {LIST_TYPES.map((listItem) => (
               <button
-                key={lt.key}
+                key={listItem.key}
                 type="button"
-                className={`todolist-filter-chip${filter === lt.key ? ' todolist-filter-chip--active' : ''}`}
-                onClick={() => setFilter(lt.key)}
+                className={`todolist-filter-chip${filter === listItem.key ? ' todolist-filter-chip--active' : ''}`}
+                onClick={() => setFilter(listItem.key)}
               >
-                {isZh ? lt.labelZh : lt.labelEn}
+                {isZh ? listItem.labelZh : listItem.labelEn}
               </button>
             ))}
           </div>
@@ -157,20 +176,19 @@ export default function TodoList() {
               { key: 'active', labelZh: '进行中', labelEn: 'Active' },
               { key: 'all', labelZh: '全部', labelEn: 'All' },
               { key: 'completed', labelZh: '已完成', labelEn: 'Done' },
-            ].map((st) => (
+            ].map((statusItem) => (
               <button
-                key={st.key}
+                key={statusItem.key}
                 type="button"
-                className={`todolist-filter-chip${statusFilter === st.key ? ' todolist-filter-chip--active' : ''}`}
-                onClick={() => setStatusFilter(st.key)}
+                className={`todolist-filter-chip${statusFilter === statusItem.key ? ' todolist-filter-chip--active' : ''}`}
+                onClick={() => setStatusFilter(statusItem.key)}
               >
-                {isZh ? st.labelZh : st.labelEn}
+                {isZh ? statusItem.labelZh : statusItem.labelEn}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Add button */}
         {!showForm && (
           <button
             type="button"
@@ -181,7 +199,6 @@ export default function TodoList() {
           </button>
         )}
 
-        {/* Form */}
         <AnimatePresence>
           {showForm && (
             <motion.form
@@ -223,8 +240,14 @@ export default function TodoList() {
                 </select>
               </div>
               <div className="todolist-form-row">
-                <input type="date" value={formDueDate} onChange={(e) => setFormDueDate(e.target.value)} className="canteen-search-input" style={{ flex: 1 }} />
-                <input type="time" value={formDueTime} onChange={(e) => setFormDueTime(e.target.value)} className="canteen-search-input" style={{ flex: 1 }} />
+                <div className="todolist-form-field">
+                  <label className="todolist-form-label">{isZh ? '日期' : 'Date'}</label>
+                  <input type="date" value={formDueDate} onChange={(e) => setFormDueDate(e.target.value)} className="canteen-search-input" />
+                </div>
+                <div className="todolist-form-field">
+                  <label className="todolist-form-label">{isZh ? '时间' : 'Time'}</label>
+                  <input type="time" value={formDueTime} onChange={(e) => setFormDueTime(e.target.value)} className="canteen-search-input" />
+                </div>
               </div>
               <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                 <button type="submit" className="canteen-pick-btn pressable" disabled={!formTitle.trim()} style={{ flex: 1 }}>
@@ -238,7 +261,6 @@ export default function TodoList() {
           )}
         </AnimatePresence>
 
-        {/* List */}
         {isLoading ? (
           <div className="state-loading" style={{ paddingTop: 60 }} />
         ) : isError ? (
@@ -249,52 +271,58 @@ export default function TodoList() {
           </div>
         ) : (
           <div className="todolist-items">
-            {todos.map((todo) => (
-              <motion.div
-                key={todo.id}
-                layout
-                className={`todolist-item${todo.is_completed ? ' todolist-item--done' : ''}${isOverdue(todo) ? ' todolist-item--overdue' : ''}`}
-              >
-                <button
-                  type="button"
-                  className={`todolist-checkbox${todo.is_completed ? ' todolist-checkbox--checked' : ''}`}
-                  onClick={() => toggleMutation.mutate(todo.id)}
+            {todos.map((todo) => {
+              const dueDisplay = formatTodoDueDisplay(todo.due_date, todo.due_time);
+              const listTypeMeta = LIST_TYPES.find((listItem) => listItem.key === todo.list_type);
+
+              return (
+                <motion.div
+                  key={todo.id}
+                  layout
+                  className={`todolist-item${todo.is_completed ? ' todolist-item--done' : ''}${isOverdue(todo) ? ' todolist-item--overdue' : ''}`}
                 >
-                  {todo.is_completed ? '✓' : ''}
-                </button>
-                <div className="todolist-item-body" onClick={() => openEdit(todo)} style={{ cursor: 'pointer' }}>
-                  <div className="todolist-item-title" style={{ textDecoration: todo.is_completed ? 'line-through' : 'none' }}>
-                    {todo.title}
-                  </div>
-                  {todo.description && (
-                    <div className="todolist-item-desc">{todo.description}</div>
-                  )}
-                  <div style={{ display: 'flex', gap: 8, fontSize: 11, marginTop: 2 }}>
-                    <span style={{ color: PRIORITY_COLORS[todo.priority], fontWeight: 600 }}>
-                      {isZh ? PRIORITY_LABELS[todo.priority] : ['None','Low','Med','High'][todo.priority]}
-                    </span>
-                    {formatTodoDueDisplay(todo.due_date, todo.due_time) && (
-                      <span style={{ color: isOverdue(todo) ? '#f44336' : 'var(--post-ios-tertiary-label)' }}>
-                        {formatTodoDueDisplay(todo.due_date, todo.due_time)}
-                      </span>
+                  <button
+                    type="button"
+                    className={`todolist-checkbox${todo.is_completed ? ' todolist-checkbox--checked' : ''}`}
+                    onClick={() => toggleMutation.mutate(todo.id)}
+                  >
+                    {todo.is_completed ? '✓' : ''}
+                  </button>
+                  <div className="todolist-item-body" onClick={() => openEdit(todo)} style={{ cursor: 'pointer' }}>
+                    <div className="todolist-item-title" style={{ textDecoration: todo.is_completed ? 'line-through' : 'none' }}>
+                      {todo.title}
+                    </div>
+                    {todo.description && (
+                      <div className="todolist-item-desc">{todo.description}</div>
                     )}
-                    {todo.list_type !== 'personal' && (
-                      <span style={{ color: 'var(--post-ios-tertiary-label)' }}>
-                        {LIST_TYPES.find((lt) => lt.key === todo.list_type)?.labelZh || todo.list_type}
+                    <div className="todolist-item-meta-row">
+                      <span className="todolist-item-priority" style={{ color: PRIORITY_COLORS[todo.priority], fontWeight: 700 }}>
+                        {isZh ? PRIORITY_LABELS[todo.priority] : PRIORITY_LABELS_EN[todo.priority]}
                       </span>
+                      {listTypeMeta && todo.list_type !== 'personal' && (
+                        <span className="todolist-item-type">
+                          {isZh ? listTypeMeta.labelZh : listTypeMeta.labelEn}
+                        </span>
+                      )}
+                    </div>
+                    {dueDisplay && (
+                      <div className="todolist-item-due" style={{ color: isOverdue(todo) ? '#f44336' : 'var(--post-ios-secondary-label)' }}>
+                        <span className="todolist-item-due-label">{isZh ? '截止' : 'Due'}</span>
+                        <span>{dueDisplay}</span>
+                      </div>
                     )}
                   </div>
-                </div>
-                <button
-                  type="button"
-                  className="todolist-delete-btn"
-                  onClick={() => deleteMutation.mutate(todo.id)}
-                  title={isZh ? '删除' : 'Delete'}
-                >
-                  ✕
-                </button>
-              </motion.div>
-            ))}
+                  <button
+                    type="button"
+                    className="todolist-delete-btn"
+                    onClick={() => deleteMutation.mutate(todo.id)}
+                    title={isZh ? '删除' : 'Delete'}
+                  >
+                    ✕
+                  </button>
+                </motion.div>
+              );
+            })}
           </div>
         )}
       </div>

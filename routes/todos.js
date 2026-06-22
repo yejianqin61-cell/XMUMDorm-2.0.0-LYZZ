@@ -72,7 +72,16 @@ router.get('/', authenticateToken, async (req, res) => {
     const total = (countRows && countRows[0]) ? countRows[0].total : 0;
 
     const rows = await query(
-      `SELECT ${TODO_SELECT_FIELDS} FROM todos ${where} ORDER BY priority DESC, due_date ASC, created_at DESC LIMIT ${pageSize} OFFSET ${offset}`,
+      `SELECT ${TODO_SELECT_FIELDS} FROM todos ${where}
+       ORDER BY
+         is_completed ASC,
+         CASE WHEN due_date IS NULL THEN 1 ELSE 0 END ASC,
+         due_date ASC,
+         CASE WHEN due_time IS NULL THEN 1 ELSE 0 END ASC,
+         due_time ASC,
+         priority DESC,
+         created_at DESC
+       LIMIT ${pageSize} OFFSET ${offset}`,
       params
     );
     const hasMore = offset + pageSize < total;
@@ -91,7 +100,16 @@ router.get('/today', authenticateToken, async (req, res) => {
     const today = localTodayDateStr();
 
     const allRows = await query(
-      `SELECT ${TODO_SELECT_FIELDS} FROM todos WHERE user_id = ? AND (due_date = ? OR due_date IS NULL) ORDER BY priority DESC, due_date ASC, created_at ASC`,
+      `SELECT ${TODO_SELECT_FIELDS} FROM todos
+       WHERE user_id = ? AND (due_date = ? OR due_date IS NULL)
+       ORDER BY
+         is_completed ASC,
+         CASE WHEN due_date IS NULL THEN 1 ELSE 0 END ASC,
+         due_date ASC,
+         CASE WHEN due_time IS NULL THEN 1 ELSE 0 END ASC,
+         due_time ASC,
+         priority DESC,
+         created_at ASC`,
       [req.user.id, today]
     );
 
