@@ -7,7 +7,6 @@ import {
   Clock3,
   Gauge,
   MapPin,
-  Heart,
   LogIn,
   LogOut,
   NotebookText,
@@ -25,8 +24,12 @@ import { useLanguage } from '../context/LanguageContext';
 import { getProfile } from '../api/users';
 import { getMyFavorites, getMyProductReviews } from '../api/canteen';
 import { getScheduleWeek } from '../api/schedule';
-import { getTodayTodos } from '../api/todos';
-import { formatTodoDueDisplay } from '../utils/formatTodoDue';
+import { getTodos } from '../api/todos';
+import {
+  formatTodoDueDisplay,
+  normalizeTodoDueDate,
+  normalizeTodoDueTime,
+} from '../utils/formatTodoDue';
 import UserLevelBadge from '../components/UserLevelBadge';
 import LevelProgressBar from '../components/LevelProgressBar';
 
@@ -40,12 +43,10 @@ function MyZoneStrings(isZh) {
     statsFavorites: isZh ? '收藏' : 'Favorites',
     currentCourse: isZh ? '当前课程' : 'Current course',
     utilities: isZh ? '工具' : 'Utilities',
-    about: isZh ? '关于' : 'About',
     canteen: isZh ? '食堂' : 'Canteen',
     schedule: isZh ? '课程表' : 'Schedule',
     diary: isZh ? '多年日记本' : 'Diary',
-    todo: isZh ? '待办事项' : 'To-do',
-    todoSoon: isZh ? '待开发' : 'Coming soon',
+    todo: 'Todo',
     more: isZh ? '更多' : 'More',
     aboutProfile: isZh ? '关于我们' : 'About us',
     aboutThanks: isZh ? '特别鸣谢' : 'Special Thanks',
@@ -78,21 +79,26 @@ function softIcon(bg, fg) {
   return { backgroundColor: bg, color: fg };
 }
 
-/** 后端 day_of_week：1=周一 … 7=周日 */
 function getTodayDayOfWeek() {
-  const js = new Date().getDay(); // 0=周日 … 6=周六
+  const js = new Date().getDay();
   return js === 0 ? 7 : js;
 }
 
 function toMinutes(hhmm) {
-  if (!hhmm) return NaN;
+  if (!hhmm) return Number.NaN;
   const s = String(hhmm).slice(0, 5);
   const [h, m] = s.split(':').map((x) => Number(x));
-  if (!Number.isFinite(h) || !Number.isFinite(m)) return NaN;
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return Number.NaN;
   return h * 60 + m;
 }
 
-/** 个人中心（现代版）：头像头部 + 3 列统计 + 内容卡片列表 */
+function getTodoSortValue(todo) {
+  const dueDate = normalizeTodoDueDate(todo.due_date);
+  const dueTime = normalizeTodoDueTime(todo.due_time);
+  if (!dueDate) return Number.MAX_SAFE_INTEGER;
+  return new Date(`${dueDate}T${dueTime || '23:59'}:00`).getTime();
+}
+
 function MyZone() {
   const navigate = useNavigate();
   const { lang } = useLanguage();
@@ -116,8 +122,6 @@ function MyZone() {
     navigate('/', { replace: true });
   };
 
-  const handleTodoClick = () => navigate('/myzone/todos');
-
   const scheduleTodayQuery = useQuery({
     queryKey: ['myzone', 'scheduleWeek', 1],
     enabled: isLoggedIn,
@@ -138,12 +142,11 @@ function MyZone() {
     const todayList = [...todayRaw].sort((a, b) => String(a.start_time || '').localeCompare(String(b.start_time || '')));
     if (todayList.length === 0) return null;
 
-    // 选取“当前或下一节课”，没有就返回第一节
     const now = new Date();
     const nowMin = now.getHours() * 60 + now.getMinutes();
-    const match = todayList.find((c) => {
-      const st = toMinutes(c.start_time);
-      const et = toMinutes(c.end_time);
+    const match = todayList.find((course) => {
+      const st = toMinutes(course.start_time);
+      const et = toMinutes(course.end_time);
       if (!Number.isFinite(st) || !Number.isFinite(et)) return false;
       return nowMin <= et;
     });
@@ -236,7 +239,7 @@ function MyZone() {
                 )}
                 {userLoading && !displayAvatar ? (
                   <div className="absolute inset-0 grid place-items-center text-[11px] font-medium text-slate-500">
-                    …
+                    ...
                   </div>
                 ) : null}
               </motion.button>
@@ -271,11 +274,7 @@ function MyZone() {
               {stats.map((s) => (
                 <motion.div key={s.key} variants={listItem}>
                   <motion.div {...tap}>
-                    <Link
-                      to={s.to}
-                      className="block rounded-2xl bg-white px-2 py-3 text-center"
-                      aria-label={s.label}
-                    >
+                    <Link to={s.to} className="block rounded-2xl bg-white px-2 py-3 text-center" aria-label={s.label}>
                       <div className="text-[20px] font-semibold text-slate-900 tabular-nums">
                         {Number(s.value) || 0}
                       </div>
@@ -292,16 +291,10 @@ function MyZone() {
               <h2 className="text-[15px] font-semibold text-slate-900">{t.currentCourse}</h2>
             </div>
 
-            <CurrentCourseCard
-              isLoggedIn={isLoggedIn}
-              course={currentCourse}
-              loading={scheduleTodayQuery.isFetching}
-              to="/myzone/schedule"
-            />
+            <CurrentCourseCard isLoggedIn={isLoggedIn} course={currentCourse} loading={scheduleTodayQuery.isFetching} to="/myzone/schedule" />
           </motion.section>
 
-          {/* 今日待办缩略卡片 */}
-          {isLoggedIn && <TodayTodoPreview />}
+          {isLoggedIn && <TodoPreview />}
 
           <motion.section
             variants={listItem}
@@ -340,31 +333,16 @@ function MyZone() {
           <motion.div variants={listItem} className="mt-5 flex gap-3">
             {isLoggedIn ? (
               <>
-                <motion.button
-                  type="button"
-                  onClick={goProfile}
-                  className="flex-1 rounded-2xl bg-slate-900 px-4 py-3 text-[13px] font-semibold text-white shadow-sm"
-                  {...tap}
-                >
+                <motion.button type="button" onClick={goProfile} className="flex-1 rounded-2xl bg-slate-900 px-4 py-3 text-[13px] font-semibold text-white shadow-sm" {...tap}>
                   {t.editProfile}
                 </motion.button>
-                <motion.button
-                  type="button"
-                  onClick={handleLogout}
-                  className="flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-[13px] font-semibold text-slate-700 ring-1 ring-slate-200"
-                  {...tap}
-                >
+                <motion.button type="button" onClick={handleLogout} className="flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-[13px] font-semibold text-slate-700 ring-1 ring-slate-200" {...tap}>
                   <LogOut className="h-4 w-4" />
                   {t.logOut}
                 </motion.button>
               </>
             ) : (
-              <motion.button
-                type="button"
-                onClick={goLogin}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 text-[13px] font-semibold text-white shadow-sm"
-                {...tap}
-              >
+              <motion.button type="button" onClick={goLogin} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 text-[13px] font-semibold text-white shadow-sm" {...tap}>
                 <LogIn className="h-4 w-4" />
                 {t.logIn}
               </motion.button>
@@ -376,31 +354,39 @@ function MyZone() {
   );
 }
 
-function TodayTodoPreview() {
+function TodoPreview() {
   const navigate = useNavigate();
-  const { isZh } = useLanguage();
+  const { lang } = useLanguage();
+  const isZh = lang !== 'en';
+
   const { data } = useQuery({
-    queryKey: ['todos', 'today'],
-    queryFn: getTodayTodos,
+    queryKey: ['todos', 'preview'],
+    queryFn: () => getTodos({ status: 'active', pageSize: 20 }),
     staleTime: 30 * 1000,
   });
-  const info = data?.data || data || {};
-  const topItems = info.topItems || [];
-  const active = info.active || 0;
+
+  const rawTodos = data?.data?.list || data?.list || data?.data || [];
+  const topItems = [...rawTodos]
+    .sort((a, b) => {
+      const timeDiff = getTodoSortValue(a) - getTodoSortValue(b);
+      if (timeDiff !== 0) return timeDiff;
+      if ((b.priority || 0) !== (a.priority || 0)) return (b.priority || 0) - (a.priority || 0);
+      return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+    })
+    .slice(0, 2);
+  const active = rawTodos.length;
 
   if (active === 0 && topItems.length === 0) {
     return (
       <motion.section className="mt-5 rounded-3xl bg-white p-4 shadow-sm" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
         <div className="flex items-center justify-between px-1">
-          <h2 className="text-[15px] font-semibold text-slate-900">
-            {isZh ? '今日待办' : 'Today\'s Todos'}
-          </h2>
+          <h2 className="text-[15px] font-semibold text-slate-900">Todo</h2>
           <button type="button" onClick={() => navigate('/myzone/todos')} className="text-[13px] text-blue-600 font-medium">
             {isZh ? '添加' : 'Add'}
           </button>
         </div>
         <p className="px-1 pt-3 text-[13px] text-slate-400">
-          {isZh ? '今天还没有待办事项' : 'No todos for today'}
+          {isZh ? '还没有待办事项' : 'No todos yet'}
         </p>
       </motion.section>
     );
@@ -408,26 +394,23 @@ function TodayTodoPreview() {
 
   return (
     <motion.section className="mt-5 rounded-3xl bg-white p-4 shadow-sm" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-      <div className="flex items-center justify-between px-1 mb-3">
-        <h2 className="text-[15px] font-semibold text-slate-900">
-          {isZh ? '今日待办' : 'Today\'s Todos'} ({active})
-        </h2>
-        <button type="button" onClick={() => navigate('/myzone/todos')} className="text-[13px] text-blue-600 font-medium">
+      <div className="mb-3 flex items-center justify-between px-1">
+        <h2 className="text-[15px] font-semibold text-slate-900">Todo ({active})</h2>
+        <button type="button" onClick={() => navigate('/myzone/todos')} className="text-[13px] font-medium text-blue-600">
           {isZh ? '查看全部' : 'View all'} →
         </button>
       </div>
       <div className="divide-y divide-slate-100">
         {topItems.map((item) => (
-          <div
-            key={item.id}
-            className="flex items-center gap-2 py-2 cursor-pointer"
-            onClick={() => navigate('/myzone/todos')}
-          >
+          <div key={item.id} className="flex cursor-pointer items-center gap-2 py-2" onClick={() => navigate('/myzone/todos')}>
             <div style={{ width: 4, height: 28, borderRadius: 2, background: item.priority >= 3 ? '#f44336' : item.priority >= 2 ? '#ff9800' : '#e0e0e0', flexShrink: 0 }} />
-            <div className="flex-1 min-w-0">
-              <p className="text-[13px] text-slate-700 truncate">{item.title}</p>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[13px] text-slate-700">{item.title}</p>
               {formatTodoDueDisplay(item.due_date, item.due_time) && (
-                <p className="text-[11px] text-slate-400">{formatTodoDueDisplay(item.due_date, item.due_time)}</p>
+                <p className="text-[11px] text-slate-400">
+                  {isZh ? '截止 ' : 'Due '}
+                  {formatTodoDueDisplay(item.due_date, item.due_time)}
+                </p>
               )}
             </div>
           </div>
@@ -446,12 +429,7 @@ function CurrentCourseCard({ isLoggedIn, course, loading, to }) {
   const timeLabel = st && et ? `${st}-${et}` : '';
 
   return (
-    <motion.div
-      className="rounded-3xl bg-white p-4 shadow-sm"
-      style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}
-      whileTap={{ scale: 0.97 }}
-      whileHover={{ scale: 1.01 }}
-    >
+    <motion.div className="rounded-3xl bg-white p-4 shadow-sm" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }} whileTap={{ scale: 0.97 }} whileHover={{ scale: 1.01 }}>
       <Link to={to} className="block">
         {loading ? (
           <div className="h-[96px] animate-pulse rounded-2xl bg-slate-50" />
@@ -459,17 +437,14 @@ function CurrentCourseCard({ isLoggedIn, course, loading, to }) {
           <div className="flex items-center justify-between rounded-2xl bg-[#F9FAFB] px-4 py-4 ring-1 ring-slate-100">
             <div>
               <div className="text-[14px] font-semibold text-slate-900">Schedule</div>
-              <div className="mt-1 text-[12px] font-medium text-slate-400">Log in to view today’s classes</div>
+              <div className="mt-1 text-[12px] font-medium text-slate-400">Log in to view today&apos;s classes</div>
             </div>
             <ChevronRight className="h-4 w-4 text-slate-300" />
           </div>
         ) : hasCourse ? (
           <div className="flex items-start justify-between rounded-2xl bg-[#F9FAFB] px-4 py-4 ring-1 ring-slate-100">
             <div className="flex min-w-0 items-start gap-3">
-              <span
-                className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl"
-                style={softIcon('rgba(59,130,246,0.12)', 'rgb(37,99,235)')}
-              >
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl" style={softIcon('rgba(59,130,246,0.12)', 'rgb(37,99,235)')}>
                 <CalendarDays className="h-5 w-5" />
               </span>
               <div className="min-w-0">
@@ -494,11 +469,7 @@ function CurrentCourseCard({ isLoggedIn, course, loading, to }) {
           </div>
         ) : (
           <div className="flex items-center gap-4 rounded-2xl bg-[#F9FAFB] px-4 py-4 ring-1 ring-slate-100">
-            <img
-              src="/break.png"
-              alt=""
-              className="h-28 w-28 shrink-0 rounded-2xl object-cover"
-            />
+            <img src="/break.png" alt="" className="h-28 w-28 shrink-0 rounded-2xl object-cover" />
             <div className="min-w-0">
               <div className="text-[14px] font-semibold text-slate-900">No classes today. Take a break!</div>
               <div className="mt-1 text-[12px] font-medium text-slate-400">Tap to open Schedule</div>
@@ -510,46 +481,9 @@ function CurrentCourseCard({ isLoggedIn, course, loading, to }) {
   );
 }
 
-function QuickCard({ to, title, sub, icon, iconStyle, asButton = false, onClick }) {
-  const content = (
-    <motion.div
-      className="w-[220px] rounded-3xl bg-white p-4 shadow-sm"
-      style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}
-      whileTap={{ scale: 0.97 }}
-    >
-      <div className="flex items-center justify-between">
-        <span className="grid h-10 w-10 place-items-center rounded-2xl" style={iconStyle}>
-          {icon}
-        </span>
-        <ChevronRight className="h-4 w-4 text-slate-300" />
-      </div>
-      <div className="mt-3 text-[14px] font-semibold text-slate-900">{title}</div>
-      <div className="mt-1 text-[12px] font-medium text-slate-400">{sub}</div>
-    </motion.div>
-  );
-
-  if (asButton) {
-    return (
-      <button type="button" onClick={onClick} className="text-left">
-        {content}
-      </button>
-    );
-  }
-
-  return (
-    <Link to={to} className="block">
-      {content}
-    </Link>
-  );
-}
-
-function UtilityTile({ to, title, icon, iconStyle, asButton = false, onClick }) {
+function UtilityTile({ to, title, icon, iconStyle }) {
   const card = (
-    <motion.div
-      className="flex items-center justify-between rounded-2xl bg-[#F9FAFB] px-3 py-3 ring-1 ring-slate-100"
-      whileTap={{ scale: 0.97 }}
-      whileHover={{ scale: 1.01 }}
-    >
+    <motion.div className="flex items-center justify-between rounded-2xl bg-[#F9FAFB] px-3 py-3 ring-1 ring-slate-100" whileTap={{ scale: 0.97 }} whileHover={{ scale: 1.01 }}>
       <div className="flex items-center gap-3">
         <span className="grid h-10 w-10 place-items-center rounded-2xl" style={iconStyle}>
           {icon}
@@ -559,14 +493,6 @@ function UtilityTile({ to, title, icon, iconStyle, asButton = false, onClick }) 
       <ChevronRight className="h-4 w-4 text-slate-300" />
     </motion.div>
   );
-
-  if (asButton) {
-    return (
-      <button type="button" onClick={onClick} className="text-left">
-        {card}
-      </button>
-    );
-  }
 
   return <Link to={to}>{card}</Link>;
 }
