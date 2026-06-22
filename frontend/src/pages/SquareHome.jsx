@@ -62,9 +62,6 @@ export default function SquareHome() {
     quick_stats: {},
   };
 
-  const latestTopicTitle = summary.hot_topics?.[0]?.title || '';
-  const latestCampusTitle = summary.campus_highlights?.[0]?.title || '';
-
   return (
     <RouteTransition className="square-home-page">
       <div className="square-home-inner">
@@ -96,11 +93,7 @@ export default function SquareHome() {
             </FadeInSection>
 
             <FadeInSection delay={0.1}>
-              <TodayCampusHero
-                quickStats={summary.quick_stats}
-                latestTopicTitle={latestTopicTitle}
-                latestCampusTitle={latestCampusTitle}
-              />
+              <TodayCampusHero quickStats={summary.quick_stats} />
             </FadeInSection>
           </>
         )}

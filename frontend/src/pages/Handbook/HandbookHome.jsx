@@ -2,10 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bookmark, CalendarDays, Compass, Eye, Heart, MapPinned, Search, Soup, Ticket, BookOpenText } from 'lucide-react';
+import { Bookmark, Eye, Heart, Search } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { getHandbookTabs, listCourseReviews, listHandbookArticles } from '../../api/handbook';
-import { listClubActivities } from '../../api/clubs';
 import { QK } from '../../query/queryKeys';
 import './Handbook.css';
 
@@ -17,19 +16,6 @@ function useQueryString() {
 function tabLabel(t, isZh) {
   if (!t) return '';
   return isZh ? (t.name_zh || t.name_en || t.slug) : (t.name_en || t.name_zh || t.slug);
-}
-
-function formatActivityTime(value, isZh) {
-  if (!value) return isZh ? '时间待定' : 'Time TBD';
-  const normalized = String(value).includes('T') ? String(value) : String(value).replace(' ', 'T');
-  const date = new Date(normalized);
-  if (Number.isNaN(date.getTime())) return String(value);
-  return date.toLocaleString(isZh ? 'zh-CN' : 'en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
 }
 
 function HandbookHome() {
@@ -50,20 +36,6 @@ function HandbookHome() {
     queryFn: getHandbookTabs,
     staleTime: 60 * 60 * 1000,
     select: (d) => (Array.isArray(d) ? d : []),
-  });
-
-  const reviewsQuery = useQuery({
-    queryKey: QK.courseReviews({ hub: true }),
-    queryFn: () => listCourseReviews({ page: 1, pageSize: 3 }),
-    staleTime: 60 * 1000,
-    select: (d) => (Array.isArray(d?.list) ? d.list : []),
-  });
-
-  const activitiesQuery = useQuery({
-    queryKey: QK.clubActivities({ hub: true, pageSize: 3 }),
-    queryFn: () => listClubActivities({ page: 1, pageSize: 3 }),
-    staleTime: 60 * 1000,
-    select: (d) => (Array.isArray(d?.list) ? d.list : []),
   });
 
   useEffect(() => {
@@ -110,133 +82,9 @@ function HandbookHome() {
   });
 
   const list = useMemo(() => infinite.data?.pages?.flatMap((p) => p.list) ?? [], [infinite.data]);
-  const quickLinks = [
-    {
-      key: 'map',
-      to: '/about/map',
-      icon: MapPinned,
-      title: isZh ? '先看校园地图' : 'Campus map',
-      description: isZh ? '快速熟悉教学楼、宿舍与常用地点。' : 'Find classrooms, dorms, and key campus spots fast.',
-    },
-    {
-      key: 'canteen',
-      to: '/eat',
-      icon: Soup,
-      title: isZh ? '食堂与踩点' : 'Canteen picks',
-      description: isZh ? '从热门档口、榜单到真实点评一次看完。' : 'Browse stalls, rankings, and real food reviews.',
-    },
-    {
-      key: 'clubs',
-      to: '/about/club',
-      icon: Ticket,
-      title: isZh ? '社团与活动' : 'Clubs and events',
-      description: isZh ? '找组织、看活动、认识同届同好。' : 'Join clubs, discover events, and meet your people.',
-    },
-    {
-      key: 'reviews',
-      to: '/about/freshman-guide/course-review',
-      icon: BookOpenText,
-      title: isZh ? '课程评价' : 'Course reviews',
-      description: isZh ? '选课前先看老师、难度与学长学姐建议。' : 'Check teaching style, workload, and student feedback first.',
-    },
-    {
-      key: 'schedule',
-      to: '/myzone/schedule',
-      icon: CalendarDays,
-      title: isZh ? '课表与节奏' : 'Schedule setup',
-      description: isZh ? '导入课表，把校园生活放进自己的节奏里。' : 'Import your timetable and settle into campus life.',
-    },
-    {
-      key: 'articles',
-      to: '/about/freshman-guide?tab=all',
-      icon: Compass,
-      title: isZh ? '攻略与经验' : 'Guides and tips',
-      description: isZh ? '从报到到生活攻略，按主题继续深挖。' : 'Keep exploring articles for check-in, study, and daily life.',
-    },
-  ];
 
   return (
     <div className="handbook-page">
-      <section className="handbook-hub">
-        <div className="handbook-hub-banner">
-          <div>
-            <div className="handbook-hub-eyebrow">Freshman Hub</div>
-            <h1 className="handbook-hub-title">{isZh ? '新生一页通关校园生活' : 'One page to start campus life'}</h1>
-            <p className="handbook-hub-copy">
-              {isZh
-                ? '把地图、食堂、社团、课程评价和攻略放在一个入口里，新生可以先快速建立方向，再深入阅读具体内容。'
-                : 'Map, canteen, clubs, course reviews, and guides live in one place so new students can orient fast and then dive deeper.'}
-            </p>
-          </div>
-          <div className="handbook-hub-pills" aria-label={isZh ? '新生高频任务' : 'High-frequency freshman tasks'}>
-            <span>{isZh ? '找教学楼' : 'Find buildings'}</span>
-            <span>{isZh ? '选课避坑' : 'Pick courses'}</span>
-            <span>{isZh ? '看活动' : 'Browse events'}</span>
-          </div>
-        </div>
-
-        <div className="handbook-hub-grid">
-          {quickLinks.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link key={item.key} to={item.to} className="handbook-hub-card">
-                <span className="handbook-hub-card-icon" aria-hidden>
-                  <Icon size={18} />
-                </span>
-                <div className="handbook-hub-card-title">{item.title}</div>
-                <div className="handbook-hub-card-desc">{item.description}</div>
-              </Link>
-            );
-          })}
-        </div>
-
-        <div className="handbook-hub-rails">
-          <section className="handbook-hub-rail">
-            <div className="handbook-hub-rail-head">
-              <div>
-                <div className="handbook-hub-rail-title">{isZh ? '近期热门活动' : 'Upcoming campus activities'}</div>
-                <div className="handbook-hub-rail-sub">{isZh ? '方便新生从兴趣切入校园社交。' : 'A quick way for freshmen to enter campus communities.'}</div>
-              </div>
-              <Link to="/about/club" className="handbook-hub-rail-link">{isZh ? '看更多' : 'More'}</Link>
-            </div>
-            <div className="handbook-hub-mini-list">
-              {activitiesQuery.data?.length ? activitiesQuery.data.map((item) => (
-                <Link key={item.id} to={`/about/club/activity/${item.id}`} className="handbook-hub-mini-card">
-                  <div className="handbook-hub-mini-kicker">{item.clubName || item.club_name || (isZh ? '社团活动' : 'Club activity')}</div>
-                  <div className="handbook-hub-mini-title">{item.title}</div>
-                  <div className="handbook-hub-mini-meta">{formatActivityTime(item.time || item.start_time, isZh)}</div>
-                </Link>
-              )) : (
-                <div className="handbook-hub-mini-empty">{activitiesQuery.isLoading ? (isZh ? '加载中…' : 'Loading…') : (isZh ? '暂时还没有活动推荐' : 'No activities yet')}</div>
-              )}
-            </div>
-          </section>
-
-          <section className="handbook-hub-rail">
-            <div className="handbook-hub-rail-head">
-              <div>
-                <div className="handbook-hub-rail-title">{isZh ? '先看课程评价' : 'Course reviews first'}</div>
-                <div className="handbook-hub-rail-sub">{isZh ? '帮助新生更快建立选课直觉。' : 'Build course intuition before enrollment starts.'}</div>
-              </div>
-              <Link to="/about/freshman-guide/course-review" className="handbook-hub-rail-link">{isZh ? '进入课程评价' : 'Open reviews'}</Link>
-            </div>
-            <div className="handbook-hub-mini-list">
-              {reviewsQuery.data?.length ? reviewsQuery.data.map((item) => (
-                <Link key={item.id} to={`/about/freshman-guide/course-review/${item.id}`} className="handbook-hub-mini-card">
-                  <div className="handbook-hub-mini-kicker">{item.teacher || (isZh ? '课程评价' : 'Course review')}</div>
-                  <div className="handbook-hub-mini-title">{item.courseName}</div>
-                  <div className="handbook-hub-mini-meta">
-                    {item?.stats?.avgRating == null ? (isZh ? '暂无均分' : 'No average yet') : `${Number(item.stats.avgRating).toFixed(1)} / 5.0`}
-                  </div>
-                </Link>
-              )) : (
-                <div className="handbook-hub-mini-empty">{reviewsQuery.isLoading ? (isZh ? '加载中…' : 'Loading…') : (isZh ? '暂时还没有课程评价' : 'No course reviews yet')}</div>
-              )}
-            </div>
-          </section>
-        </div>
-      </section>
-
       <div className="handbook-hero">
         <div className="handbook-hero-top">
           <div className="handbook-hero-title-wrap">

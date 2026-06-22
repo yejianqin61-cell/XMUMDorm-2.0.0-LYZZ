@@ -69,17 +69,27 @@
   border-radius: 22px;
 }
 
+.square-home-block {
+  padding: 18px;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.84) 52%, rgba(255, 255, 255, 0.74) 100%),
+    linear-gradient(180deg, rgba(244, 247, 251, 0.94), rgba(255, 255, 255, 0.88));
+  border: 1px solid rgba(255, 255, 255, 0.86);
+  box-shadow: 0 20px 42px rgba(15, 23, 42, 0.07);
+}
+
 .today-campus-panel {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
 }
 
 .today-campus-hero {
   display: flex;
   flex-direction: column;
   gap: 18px;
-  padding: calc(var(--safe-top, 0px) * 0.15 + 22px) 22px 22px;
+  padding: calc(var(--safe-top, 0px) * 0.1 + 18px) 18px 18px;
   border-radius: 28px;
   background:
     radial-gradient(circle at top left, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.62) 44%, rgba(255, 255, 255, 0.42) 100%),
@@ -111,14 +121,6 @@
   font-weight: 800;
   letter-spacing: -0.04em;
   color: #10233b;
-}
-
-.today-campus-hero__subtitle {
-  margin: 0;
-  max-width: 34rem;
-  font-size: 15px;
-  line-height: 1.7;
-  color: rgba(16, 35, 59, 0.74);
 }
 
 .today-campus-hero__chips {
@@ -225,44 +227,6 @@
   line-height: 1.4;
   font-weight: 700;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.85);
-}
-
-.today-campus-hero__briefs {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.today-campus-brief-card {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 0;
-  padding: 18px;
-  border-radius: var(--square-card-radius-sm);
-  background: var(--square-card-surface);
-  border: var(--square-card-border);
-  box-shadow: var(--square-card-shadow);
-  backdrop-filter: blur(10px);
-}
-
-.today-campus-brief-card__label {
-  font-size: 11px;
-  line-height: 1.4;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: rgba(16, 35, 59, 0.5);
-}
-
-.today-campus-brief-card__title {
-  font-size: 15px;
-  line-height: 1.6;
-  font-weight: 700;
-  color: #10233b;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
 .today-campus-quick-actions {
@@ -722,6 +686,10 @@
     gap: 24px;
   }
 
+  .square-home-block {
+    padding: 16px;
+  }
+
   .square-section-title {
     font-size: 18px;
   }
@@ -730,12 +698,7 @@
     font-size: 28px;
   }
 
-  .today-campus-hero__subtitle {
-    font-size: 14px;
-  }
-
-  .today-campus-hero__notice-links,
-  .today-campus-hero__briefs {
+  .today-campus-hero__notice-links {
     grid-template-columns: minmax(0, 1fr);
   }
 

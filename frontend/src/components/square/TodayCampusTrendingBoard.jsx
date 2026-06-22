@@ -5,11 +5,10 @@ export default function TodayCampusTrendingBoard({ topics = [] }) {
   if (!items.length) return null;
 
   return (
-    <section className="today-campus-panel">
+    <section className="today-campus-panel square-home-block">
       <div className="square-section-header square-section-header--stack">
         <div>
           <h2 className="square-section-title">热搜榜</h2>
-          <p className="square-section-subtitle">先看今天校园里最有讨论度的话题，再决定往哪条线深入。</p>
         </div>
         <Link to="/about/trending" className="square-section-more">
           查看全部 →
