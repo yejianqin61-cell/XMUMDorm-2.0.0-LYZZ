@@ -19,6 +19,9 @@ export default function MyCampusRecommendations({ summary }) {
           <h2 className="square-section-title">{title}</h2>
           <p className="square-section-subtitle">{subtitle}</p>
         </div>
+        <Link to="/posts/search" className="square-section-more">
+          查看更多 →
+        </Link>
       </div>
       {cards.length === 0 ? (
         <EmptyState

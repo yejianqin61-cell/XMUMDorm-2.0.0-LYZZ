@@ -6,6 +6,7 @@ import CanteenBannerCarousel from '../components/canteen/CanteenBannerCarousel';
 import HotTagsStrip from '../components/square/HotTagsStrip';
 import MyCampusRecommendations from '../components/square/MyCampusRecommendations';
 import TodayCampusHero from '../components/square/TodayCampusHero';
+import TodayCampusPreviewRail from '../components/square/TodayCampusPreviewRail';
 import TodayCampusQuickActions from '../components/square/TodayCampusQuickActions';
 import AppCard from '../components/ui/AppCard';
 import PageSkeleton from '../components/ui/PageSkeleton';
@@ -27,6 +28,33 @@ const EXPLORE_LINKS = [
   { to: '/publish', label: '发内容' },
   { to: '/about/map', label: '地图模式' },
 ];
+
+function buildPreviewItems(summary) {
+  const topics = (summary.hot_topics || []).slice(0, 2).map((topic) => ({
+    kind: 'topic',
+    id: topic.id,
+    to: `/about/trending/${topic.id}`,
+    badge: '热议',
+    title: topic.title,
+    meta: `${topic.post_count || 0} 条讨论`,
+  }));
+  const activities = (summary.hot_activities || []).slice(0, 2).map((activity) => ({
+    kind: 'activity',
+    id: activity.id,
+    to: `/about/club/activity/${activity.id}`,
+    badge: '活动',
+    title: activity.title,
+    meta: activity.club_name || activity.status_label || '社团活动',
+  }));
+
+  const merged = [];
+  const maxLength = Math.max(topics.length, activities.length);
+  for (let index = 0; index < maxLength; index += 1) {
+    if (topics[index]) merged.push(topics[index]);
+    if (activities[index]) merged.push(activities[index]);
+  }
+  return merged.slice(0, 4);
+}
 
 export default function SquareHome() {
   const summaryQuery = useQuery({
@@ -59,6 +87,7 @@ export default function SquareHome() {
     profile: {},
   };
   const hotTags = hotTagsQuery.data || personalizedSummary.hot_tags || [];
+  const previewItems = buildPreviewItems(summary);
 
   const latestTopicTitle = summary.hot_topics?.[0]?.title || '';
   const latestCampusTitle = summary.campus_highlights?.[0]?.title || '';
@@ -106,6 +135,10 @@ export default function SquareHome() {
             </FadeInSection>
 
             <FadeInSection delay={0.14}>
+              <TodayCampusPreviewRail items={previewItems} />
+            </FadeInSection>
+
+            <FadeInSection delay={0.16}>
               <Link to="/publish" className="square-home-publish-link">
                 <AppCard className="square-home-publish-card" interactive strong>
                   <div className="square-home-publish-card__row">
@@ -124,7 +157,7 @@ export default function SquareHome() {
               </Link>
             </FadeInSection>
 
-            <FadeInSection delay={0.18}>
+            <FadeInSection delay={0.2}>
               <section className="square-section square-home-explore">
                 <div className="square-section-header square-section-header--stack">
                   <div>

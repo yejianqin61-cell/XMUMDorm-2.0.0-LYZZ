@@ -416,10 +416,11 @@
 
 .square-hot-tags-strip {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   overflow-x: auto;
-  padding-bottom: 2px;
+  padding: 2px 2px 4px;
   scrollbar-width: none;
+  scroll-snap-type: x proximity;
 }
 
 .square-hot-tags-strip::-webkit-scrollbar {
@@ -436,6 +437,8 @@
   text-decoration: none;
   color: inherit;
   white-space: nowrap;
+  flex-shrink: 0;
+  scroll-snap-align: start;
   background: rgba(255, 255, 255, 0.92);
   border: var(--square-card-border);
   box-shadow: var(--square-card-shadow);
@@ -500,6 +503,84 @@
   color: var(--ui-accent);
   font-size: 22px;
   font-weight: 700;
+}
+
+.square-preview-rail {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 2px 2px 4px;
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
+}
+
+.square-preview-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.square-preview-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(250px, calc(100vw - 72px));
+  min-height: 148px;
+  padding: 18px;
+  border-radius: var(--square-card-radius);
+  border: var(--square-card-border);
+  background: var(--square-card-surface);
+  box-shadow: var(--square-card-shadow);
+  color: inherit;
+  text-decoration: none;
+  flex-shrink: 0;
+  scroll-snap-align: start;
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.square-preview-card:active {
+  transform: scale(0.98);
+}
+
+.square-preview-card__badge {
+  width: fit-content;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  line-height: 1.4;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.square-preview-card__badge--topic {
+  background: rgba(14, 165, 233, 0.12);
+  color: #0f6da0;
+}
+
+.square-preview-card__badge--activity {
+  background: rgba(16, 185, 129, 0.12);
+  color: #0d7c5a;
+}
+
+.square-preview-card__title {
+  margin: 0;
+  color: #10233b;
+  font-size: 16px;
+  line-height: 1.55;
+  font-weight: 700;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.square-preview-card__meta {
+  margin: auto 0 0;
+  color: rgba(16, 35, 59, 0.58);
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .square-home-explore {
