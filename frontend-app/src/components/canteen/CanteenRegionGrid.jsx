@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
 import { getCanteenStrings } from '../../i18n/canteenStrings';
 import { getRegions } from '@shared/api/canteen';
-import { QK } from '../../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 
 const REGION_ICONS = {
   D6: '/D6.png',

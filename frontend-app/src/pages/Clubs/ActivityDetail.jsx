@@ -6,8 +6,8 @@ import ReportButton from '../../components/ReportButton';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import ActivityRegisterBar from '../../components/clubs/ActivityRegisterBar';
-import { QK } from '../../query/queryKeys';
-import { queryClient } from '../../query/queryClient';
+import { QK } from '@shared/query/queryKeys';
+import { queryClient } from '@shared/query/queryClient';
 import { Toast } from '../../context/ToastContext';
 import {
   cancelClubActivityRegistration,

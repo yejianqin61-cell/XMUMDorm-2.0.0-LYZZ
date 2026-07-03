@@ -8,7 +8,7 @@ import SkeletonPost from '../components/SkeletonPost';
 import { getPostList, getPostTagsList } from '@shared/api/posts';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { API_BASE_URL } from '@shared/api/config';
-import { QK } from '../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import './TreeHole.css';
 import './PostTagFeed.css';
 

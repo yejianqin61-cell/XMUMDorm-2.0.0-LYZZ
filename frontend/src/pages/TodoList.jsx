@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getTodos, createTodo, updateTodo, toggleTodo, deleteTodo } from '@shared/api/todos';
-import { QK } from '../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import {
   localTodayDateStr,
   normalizeTodoDueDate,

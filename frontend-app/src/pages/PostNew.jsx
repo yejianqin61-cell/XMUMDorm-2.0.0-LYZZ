@@ -7,7 +7,7 @@ import { Toast } from '../context/ToastContext';
 import { useExpFeedback } from '../context/ExpFeedbackContext';
 import { createPost, getPostTagsList } from '@shared/api/posts';
 import { getApiErrorMessage } from '@shared/utils/apiError';
-import { QK } from '../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import { FOOD_SQUARE_TAG_SLUG } from '@shared/constants/canteen';
 import './PostNew.css';
 

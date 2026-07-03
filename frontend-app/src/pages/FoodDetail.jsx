@@ -20,7 +20,7 @@ import {
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { formatRatingLabel } from '@shared/constants/rating';
 import { DEFAULT_PRODUCT_IMAGE_PATH, productImageUrl } from '@shared/api/config';
-import { QK } from '../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import './FoodDetail.css';
 
 const STALE_PRODUCT_MS = 3 * 60 * 1000;

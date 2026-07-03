@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
 import { getCanteenStrings } from '../../i18n/canteenStrings';
 import { pickRandomMeal } from '@shared/api/canteen';
-import { QK } from '../../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import { productImageUrl } from '@shared/api/config';
 
 export default function CanteenPickMeal() {

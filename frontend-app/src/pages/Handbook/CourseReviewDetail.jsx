@@ -7,7 +7,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { createCourseReviewComment, deleteCourseReview, deleteCourseReviewComment, getCourseReviewDetail, listCourseReviewComments, rateCourseReview } from '@shared/api/handbook';
 import { useAuth } from '../../context/AuthContext';
 import { Toast } from '../../context/ToastContext';
-import { QK } from '../../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import './Handbook.css';
 
 function CourseReviewDetail() {

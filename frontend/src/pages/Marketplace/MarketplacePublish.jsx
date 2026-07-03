@@ -4,7 +4,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { Toast } from '../../context/ToastContext';
-import { QK } from '../../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import { getMarketplaceCategories, createMarketplaceItem, getMarketplaceItemDetail, updateMarketplaceItem } from '@shared/api/marketplace';
 import './Marketplace.css';
 

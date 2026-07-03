@@ -11,7 +11,7 @@ import { getApiErrorMessage } from '@shared/utils/apiError';
 import { findRegionByCode, normalizeAreaCodeParam } from '@shared/utils/regionCode';
 import { useLanguage } from '../context/LanguageContext';
 import { getCanteenAreaRankingStrings } from '../i18n/canteenAreaRanking';
-import { QK } from '../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import './MerchantList.css';
 
 const REGIONS_STALE_MS = 5 * 60 * 1000;

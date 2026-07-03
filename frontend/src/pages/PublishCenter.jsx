@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { Toast } from '../context/ToastContext';
 import { getMyOrganizations } from '@shared/api/organizations';
-import { QK } from '../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import RouteTransition from '../components/ui/RouteTransition';
 import FadeInSection from '../components/ui/FadeInSection';
 import AppCard from '../components/ui/AppCard';

@@ -16,7 +16,7 @@ import { getApiErrorMessage } from '@shared/utils/apiError';
 import { API_BASE_URL } from '@shared/api/config';
 import { saveScroll, takeScroll } from '@shared/utils/scrollCache';
 import { getRegions } from '@shared/api/canteen';
-import { QK } from '../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import './TreeHole.css';
 
 const SCROLL_CACHE_KEY = 'treehole';

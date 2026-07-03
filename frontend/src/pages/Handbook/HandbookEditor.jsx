@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLanguage } from '../../context/LanguageContext';
 import { Toast } from '../../context/ToastContext';
 import { getHandbookTabs, getHandbookTags, createHandbookArticle, uploadHandbookImage } from '@shared/api/handbook';
-import { QK } from '../../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import './Handbook.css';
 
 function HandbookEditor() {

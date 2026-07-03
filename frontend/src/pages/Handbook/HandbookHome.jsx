@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Bookmark, Eye, Heart, Search } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { getHandbookTabs, listCourseReviews, listHandbookArticles } from '@shared/api/handbook';
-import { QK } from '../../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import './Handbook.css';
 
 function useQueryString() {

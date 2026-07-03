@@ -12,7 +12,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { enterFullscreen } from '../utils/fullscreen';
 import { useAuth } from '../context/AuthContext';
 import { getUnreadAnnouncements, markNotificationRead, markNotificationsReadBatch } from '@shared/api/notifications';
-import { QK } from '../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import { BACKGROUND_IMAGES } from '../config/backgrounds';
 import './TopBar.css';
 import './TabBar.css';

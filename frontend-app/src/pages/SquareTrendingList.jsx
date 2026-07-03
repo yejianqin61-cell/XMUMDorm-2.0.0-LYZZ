@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getTrendingTopics, deleteTrendingTopic } from '@shared/api/square';
-import { QK } from '../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import './SquareHome.css';
 
 const rankDecor = {

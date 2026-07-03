@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '../../context/LanguageContext';
 import { listCourseReviews } from '@shared/api/handbook';
-import { QK } from '../../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import './Handbook.css';
 
 function CourseReviewPage() {

@@ -21,7 +21,7 @@ import {
   deleteSquareBanner,
 } from '@shared/api/square';
 import { productImageUrl } from '@shared/api/config';
-import { QK } from '../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import './SquareHome.css';
 
 export default function SquareOrgAdmin() {

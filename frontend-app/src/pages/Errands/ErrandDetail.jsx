@@ -5,8 +5,8 @@ import { ArrowLeft, Hand, MapPin, Phone, Trash2 } from 'lucide-react';
 import ReportButton from '../../components/ReportButton';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
-import { QK } from '../../query/queryKeys';
-import { queryClient } from '../../query/queryClient';
+import { QK } from '@shared/query/queryKeys';
+import { queryClient } from '@shared/query/queryClient';
 import { deleteErrand, getErrandDetail, takeErrand } from '@shared/api/errands';
 import './Errands.css';
 

@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { getMySavedHandbookArticles, listMyHandbookChecklists } from '@shared/api/handbook';
-import { QK } from '../../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import './Handbook.css';
 
 function HandbookCollections() {

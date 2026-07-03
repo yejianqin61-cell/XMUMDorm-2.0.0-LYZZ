@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { queryClient } from './query/queryClient';
+import { queryClient } from '@shared/query/queryClient';
 import { AuthProvider } from './context/AuthContext';
 import { ExpFeedbackProvider } from './context/ExpFeedbackContext';
 import { ToastProvider } from './context/ToastContext';

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getRegions } from '@shared/api/canteen';
-import { QK } from '../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import './StoreForm.css';
 
 const REGIONS_STALE_MS = 5 * 60 * 1000;

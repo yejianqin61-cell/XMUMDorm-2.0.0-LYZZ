@@ -18,7 +18,7 @@ import {
   toggleHandbookSave,
 } from '@shared/api/handbook';
 import { Bookmark, Eye, Heart, Share2 } from 'lucide-react';
-import { QK } from '../../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import './Handbook.css';
 
 function extractHeadings(md) {

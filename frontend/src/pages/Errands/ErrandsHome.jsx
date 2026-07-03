@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Plus, Package, ShoppingBag, Zap } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
-import { QK } from '../../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import { listErrands } from '@shared/api/errands';
 import ErrandCard from './ErrandCard';
 import './Errands.css';

@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { useLanguage } from '../context/LanguageContext';
 import { getTrendingTopicDetail, getTrendingPosts } from '@shared/api/square';
-import { QK } from '../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import { getUploadUrl } from '@shared/api/config';
 import { formatPostTime } from '@shared/utils/formatTime';
 import './SquareHome.css';

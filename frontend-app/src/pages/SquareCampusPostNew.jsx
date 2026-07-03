@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '../context/LanguageContext';
 import { getMyOrganizations } from '@shared/api/organizations';
 import { postCampusPost } from '@shared/api/square';
-import { QK } from '../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 
 export default function SquareCampusPostNew() {
   const { lang } = useLanguage();

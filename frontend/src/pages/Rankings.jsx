@@ -11,7 +11,7 @@ import {
   getRankingsNewHitProducts,
   getRankingsActiveUsers,
 } from '@shared/api/rankings';
-import { QK } from '../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import './Rankings.css';
 
 /** 五大榜单标识（与后端接口对应） */

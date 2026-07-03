@@ -6,7 +6,7 @@ import { Heart, MoreVertical } from 'lucide-react';
 import ReportButton from '../../components/ReportButton';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
-import { QK } from '../../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import {
   buyerSendMarketplaceMessage,
   deleteMarketplaceItem,
@@ -18,7 +18,7 @@ import {
   toggleMarketplaceWant,
   updateMarketplaceItemStatus,
 } from '@shared/api/marketplace';
-import { queryClient } from '../../query/queryClient';
+import { queryClient } from '@shared/query/queryClient';
 import { Toast } from '../../context/ToastContext';
 import ImagePreview from '../../components/ImagePreview';
 import './Marketplace.css';

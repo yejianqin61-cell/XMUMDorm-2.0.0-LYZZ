@@ -12,7 +12,7 @@ import {
 import { API_BASE_URL, getUploadUrl } from '@shared/api/config';
 import { Toast } from '../context/ToastContext';
 import { getApiErrorMessage } from '@shared/utils/apiError';
-import { QK } from '../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import PostDetailShell from '../components/PostDetailShell';
 
 function prefixAvatar(url) {

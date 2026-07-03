@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '../context/LanguageContext';
 import { getCanteenStrings } from '../i18n/canteenStrings';
 import { searchCanteen } from '@shared/api/canteen';
-import { QK } from '../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import { productImageUrl } from '@shared/api/config';
 import { formatPostTime } from '@shared/utils/formatTime';
 import './CanteenSearch.css';

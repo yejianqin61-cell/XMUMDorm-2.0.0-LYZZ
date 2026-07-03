@@ -14,7 +14,7 @@ import {
 } from '@shared/api/canteen';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { productImageUrl } from '@shared/api/config';
-import { QK } from '../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import './CanteenHome.css';
 
 const EMPTY_FORM = {

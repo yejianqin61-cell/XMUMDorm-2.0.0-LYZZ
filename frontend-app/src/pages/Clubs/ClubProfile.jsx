@@ -5,7 +5,7 @@ import { ExternalLink, MapPin, ArrowLeft, UserPlus, PlusCircle, Save, UserRoundP
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { Toast } from '../../context/ToastContext';
-import { QK } from '../../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import {
   addClubMember,
   deleteClubActivity,
@@ -16,7 +16,7 @@ import {
   updateClub,
   updateClubActivityStatus,
 } from '@shared/api/clubs';
-import { queryClient } from '../../query/queryClient';
+import { queryClient } from '@shared/query/queryClient';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import './Clubs.css';
 

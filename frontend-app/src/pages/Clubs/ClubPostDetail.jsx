@@ -5,7 +5,7 @@ import { ArrowLeft, Eye, Heart, MessageCircle, Trash2 } from 'lucide-react';
 import ReportButton from '../../components/ReportButton';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
-import { queryClient } from '../../query/queryClient';
+import { queryClient } from '@shared/query/queryClient';
 import { Toast } from '../../context/ToastContext';
 import { deleteClubPost, getClubPostDetail, toggleClubLike, trackClubView } from '@shared/api/clubs';
 import { getApiErrorMessage } from '@shared/utils/apiError';

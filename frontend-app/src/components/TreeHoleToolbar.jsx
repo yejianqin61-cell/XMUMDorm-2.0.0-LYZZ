@@ -8,7 +8,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { getPostTagsList } from '@shared/api/posts';
 import { getVisibleTags } from '@shared/api/tags';
 import { getUnreadSummary } from '@shared/api/notifications';
-import { QK } from '../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import TreeHoleTagPanel from './TreeHoleTagPanel';
 import './TreeHoleToolbar.css';
 

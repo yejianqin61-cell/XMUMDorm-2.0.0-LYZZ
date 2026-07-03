@@ -7,7 +7,7 @@ import EmptyState from '../components/EmptyState';
 import { getShop, getShopHotProducts } from '@shared/api/canteen';
 import { getUploadUrl, productImageUrl } from '@shared/api/config';
 import { getApiErrorMessage } from '@shared/utils/apiError';
-import { QK } from '../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import './FoodList.css';
 
 const STALE_MS = 3 * 60 * 1000;

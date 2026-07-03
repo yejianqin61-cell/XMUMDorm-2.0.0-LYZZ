@@ -5,7 +5,7 @@ import { Bookmark, GraduationCap } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { getMyCourseReviews, getMySavedHandbookArticles } from '@shared/api/handbook';
-import { QK } from '../../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import './Handbook.css';
 
 function HandbookMe() {

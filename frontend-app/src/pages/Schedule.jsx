@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { Toast } from '../context/ToastContext';
 import { commitScheduleImport, getScheduleWeek, previewScheduleImport } from '@shared/api/schedule';
 import { getApiErrorMessage } from '@shared/utils/apiError';
-import { QK } from '../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import { readPersistedScheduleWeek, writePersistedScheduleWeek } from '@shared/utils/schedulePersist';
 import {
   getPushVapidPublicKey,

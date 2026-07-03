@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { getCanteenStrings } from '../../i18n/canteenStrings';
 import { getFoodArticles } from '@shared/api/canteen';
-import { QK } from '../../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import { FOOD_SQUARE_TAG_SLUG } from '@shared/constants/canteen';
 import { getUploadUrl } from '@shared/api/config';
 import { formatPostTime } from '@shared/utils/formatTime';

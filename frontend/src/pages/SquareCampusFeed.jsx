@@ -6,7 +6,7 @@ import { getUploadUrl } from '@shared/api/config';
 import ErrorState from '../components/ui/ErrorState';
 import PageSkeleton from '../components/ui/PageSkeleton';
 import RouteTransition from '../components/ui/RouteTransition';
-import { QK } from '../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import { formatPostTime } from '@shared/utils/formatTime';
 import './SquareHome.css';
 

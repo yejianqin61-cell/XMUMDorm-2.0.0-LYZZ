@@ -5,7 +5,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { getCanteenStrings } from '../../i18n/canteenStrings';
 import { getCanteenBanners } from '@shared/api/canteen';
-import { QK } from '../../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import { productImageUrl } from '@shared/api/config';
 import './CanteenBannerCarousel.css';
 

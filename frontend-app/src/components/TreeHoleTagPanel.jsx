@@ -6,7 +6,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { Toast } from '../context/ToastContext';
 import { getVisibleTags, setTagVisibility } from '@shared/api/tags';
 import { getApiErrorMessage } from '@shared/utils/apiError';
-import { QK } from '../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import { X, Plus } from 'lucide-react';
 
 function applyVisibilityToggle(data, tagId, visible) {

@@ -5,7 +5,7 @@ import { Filter, Search, UserCircle } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { getMarketplaceCategories, listMarketplaceItems } from '@shared/api/marketplace';
-import { QK } from '../../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import MarketplaceItemCard from './MarketplaceItemCard';
 import './Marketplace.css';
 

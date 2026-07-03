@@ -10,7 +10,7 @@ import { AREA_LABELS } from '../components/AreaCard';
 import { findRegionByCode, normalizeAreaCodeParam } from '@shared/utils/regionCode';
 import { useLanguage } from '../context/LanguageContext';
 import { getCanteenAreaRankingStrings } from '../i18n/canteenAreaRanking';
-import { QK } from '../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import './Rankings.css';
 import './AreaProductRanking.css';
 

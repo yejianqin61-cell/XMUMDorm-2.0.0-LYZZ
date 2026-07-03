@@ -13,7 +13,7 @@ import { API_BASE_URL } from '@shared/api/config';
 import { Toast } from '../context/ToastContext';
 import { useExpFeedback } from '../context/ExpFeedbackContext';
 import { getApiErrorMessage } from '@shared/utils/apiError';
-import { QK } from '../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import PostDetailShell from '../components/PostDetailShell';
 
 function prefixAvatar(url) {

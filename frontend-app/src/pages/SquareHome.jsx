@@ -10,7 +10,7 @@ import PageSkeleton from '../components/ui/PageSkeleton';
 import ErrorState from '../components/ui/ErrorState';
 import FadeInSection from '../components/ui/FadeInSection';
 import RouteTransition from '../components/ui/RouteTransition';
-import { QK } from '../query/queryKeys';
+import { QK } from '@shared/query/queryKeys';
 import './SquareHome.css';
 
 const PRIMARY_ACTIONS = [
