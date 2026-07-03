@@ -11,7 +11,7 @@ import {
 } from '@shared/api/square';
 import { API_BASE_URL, getUploadUrl } from '@shared/api/config';
 import { Toast } from '../context/ToastContext';
-import { getApiErrorMessage } from '../utils/apiError';
+import { getApiErrorMessage } from '@shared/utils/apiError';
 import { QK } from '../query/queryKeys';
 import PostDetailShell from '../components/PostDetailShell';
 

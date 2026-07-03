@@ -17,7 +17,7 @@ import {
   updateClubActivityStatus,
 } from '@shared/api/clubs';
 import { queryClient } from '../../query/queryClient';
-import { getApiErrorMessage } from '../../utils/apiError';
+import { getApiErrorMessage } from '@shared/utils/apiError';
 import './Clubs.css';
 
 function ClubProfile() {

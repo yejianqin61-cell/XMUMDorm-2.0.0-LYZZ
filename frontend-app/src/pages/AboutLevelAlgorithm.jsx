@@ -1,6 +1,6 @@
 import Card from '../components/Card';
 import { useLanguage } from '../context/LanguageContext';
-import { EXP_RULES, getLevelRows } from '../constants/levelConfig';
+import { EXP_RULES, getLevelRows } from '@shared/constants/levelConfig';
 import './AboutAlgorithm.css';
 
 function ExpRulesTable({ isZh }) {

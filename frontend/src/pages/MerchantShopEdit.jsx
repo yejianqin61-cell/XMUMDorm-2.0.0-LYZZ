@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Toast } from '../context/ToastContext';
 import { getShopMe, updateShop } from '@shared/api/canteen';
 import { getUploadUrl } from '@shared/api/config';
-import { getApiErrorMessage } from '../utils/apiError';
+import { getApiErrorMessage } from '@shared/utils/apiError';
 import './MerchantShopEdit.css';
 
 /** 店铺编辑：logo、名称、营业时间 */

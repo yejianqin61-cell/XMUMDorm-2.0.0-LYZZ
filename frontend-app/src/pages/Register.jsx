@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { getApiErrorMessage } from '../utils/apiError';
+import { getApiErrorMessage } from '@shared/utils/apiError';
 import { sendVerificationCode, register as apiRegister } from '@shared/api/auth';
 import AuthPageShell from '../components/auth/AuthPageShell';
 import MascotHero from '../components/auth/MascotHero';

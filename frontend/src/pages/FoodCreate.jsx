@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import FoodForm from '../components/FoodForm';
 import { Toast } from '../context/ToastContext';
 import { getShopMe, createProduct } from '@shared/api/canteen';
-import { getApiErrorMessage } from '../utils/apiError';
+import { getApiErrorMessage } from '@shared/utils/apiError';
 import './FoodCreate.css';
 
 /** 菜品发布页：商家端，getShopMe 取分类，createProduct 提交，成功后跳转菜品管理 */

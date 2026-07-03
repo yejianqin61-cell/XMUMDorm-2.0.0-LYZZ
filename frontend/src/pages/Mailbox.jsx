@@ -13,7 +13,7 @@ import {
   getUnreadSummary,
   markNotificationRead,
 } from '@shared/api/notifications';
-import { getApiErrorMessage } from '../utils/apiError';
+import { getApiErrorMessage } from '@shared/utils/apiError';
 import './Mailbox.css';
 
 function formatTime(createdAt) {

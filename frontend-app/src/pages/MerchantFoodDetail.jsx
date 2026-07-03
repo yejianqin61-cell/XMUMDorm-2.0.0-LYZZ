@@ -5,7 +5,7 @@ import FoodForm from '../components/FoodForm';
 import EmptyState from '../components/EmptyState';
 import { Toast } from '../context/ToastContext';
 import { getProduct, getCategories, updateProduct, deleteProduct } from '@shared/api/canteen';
-import { getApiErrorMessage } from '../utils/apiError';
+import { getApiErrorMessage } from '@shared/utils/apiError';
 import { productImageUrl } from '@shared/api/config';
 import './MerchantFoodDetail.css';
 

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Toast } from '../context/ToastContext';
 import EmptyState from '../components/EmptyState';
 import { getProduct, postProductComment } from '@shared/api/canteen';
-import { getApiErrorMessage } from '../utils/apiError';
+import { getApiErrorMessage } from '@shared/utils/apiError';
 import { useAuth } from '../context/AuthContext';
 import './FoodReviewPublish.css';
 

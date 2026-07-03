@@ -22,8 +22,8 @@ import EmptyState from '../components/EmptyState';
 import ImagePreview from '../components/ImagePreview';
 import { StackedCardCarousel } from '../components/StackedCardCarousel';
 import LikeBurst from '../components/LikeBurst';
-import { formatPostTime } from '../utils/formatTime';
-import { getApiErrorMessage } from '../utils/apiError';
+import { formatPostTime } from '@shared/utils/formatTime';
+import { getApiErrorMessage } from '@shared/utils/apiError';
 import { QK } from '../query/queryKeys';
 import './PostDetail.css';
 

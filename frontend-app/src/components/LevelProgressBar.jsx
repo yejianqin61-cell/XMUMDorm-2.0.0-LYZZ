@@ -1,4 +1,4 @@
-import { getBadgeForLevel } from '../constants/levelConfig';
+import { getBadgeForLevel } from '@shared/constants/levelConfig';
 
 export default function LevelProgressBar({ level, levelProgress, isZh = true }) {
   if (!level || !levelProgress) return null;

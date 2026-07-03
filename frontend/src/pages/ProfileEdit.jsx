@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { updateAvatar, updateProfileInfo } from '@shared/api/users';
-import { getApiErrorMessage } from '../utils/apiError';
+import { getApiErrorMessage } from '@shared/utils/apiError';
 import './ProfileEdit.css';
 
 function ProfileEdit() {

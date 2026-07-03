@@ -6,7 +6,7 @@ import SkeletonFood from '../components/SkeletonFood';
 import EmptyState from '../components/EmptyState';
 import { getShop, getShopHotProducts } from '@shared/api/canteen';
 import { getUploadUrl, productImageUrl } from '@shared/api/config';
-import { getApiErrorMessage } from '../utils/apiError';
+import { getApiErrorMessage } from '@shared/utils/apiError';
 import { QK } from '../query/queryKeys';
 import './FoodList.css';
 

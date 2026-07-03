@@ -7,7 +7,7 @@ import ErrorState from '../components/ui/ErrorState';
 import PageSkeleton from '../components/ui/PageSkeleton';
 import RouteTransition from '../components/ui/RouteTransition';
 import { QK } from '../query/queryKeys';
-import { formatPostTime } from '../utils/formatTime';
+import { formatPostTime } from '@shared/utils/formatTime';
 import './SquareHome.css';
 
 const FEED_TABS = {

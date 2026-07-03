@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { API_BASE_URL } from '@shared/api/config';
-import { formatPostTime } from '../utils/formatTime';
+import { formatPostTime } from '@shared/utils/formatTime';
 import { toggleLike } from '@shared/api/posts';
 import { useExpFeedback } from '../context/ExpFeedbackContext';
 import UserLevelBadge from './UserLevelBadge';

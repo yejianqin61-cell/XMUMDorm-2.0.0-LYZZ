@@ -9,7 +9,7 @@ import {
   normalizeTodoDueDate,
   normalizeTodoDueTime,
   formatTodoDueDisplay,
-} from '../utils/formatTodoDue';
+} from '@shared/utils/formatTodoDue';
 import { motion, AnimatePresence } from 'framer-motion';
 import './TodoList.css';
 

@@ -6,7 +6,7 @@ import { SendHorizonal, PenLine } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '@shared/api/config';
 import { Toast } from '../../context/ToastContext';
-import { getApiErrorMessage } from '../../utils/apiError';
+import { getApiErrorMessage } from '@shared/utils/apiError';
 import {
   getClubActivityComments,
   getClubPostComments,

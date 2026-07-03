@@ -18,7 +18,7 @@ import {
   trackClubView,
 } from '@shared/api/clubs';
 import { createTodo } from '@shared/api/todos';
-import { getApiErrorMessage } from '../../utils/apiError';
+import { getApiErrorMessage } from '@shared/utils/apiError';
 import { API_BASE_URL } from '@shared/api/config';
 import ImagePreview from '../../components/ImagePreview';
 import { StackedCardCarousel } from '../../components/StackedCardCarousel';

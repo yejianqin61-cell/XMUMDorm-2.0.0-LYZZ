@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import StoreForm from '../components/StoreForm';
 import { Toast } from '../context/ToastContext';
 import { createShop } from '@shared/api/canteen';
-import { getApiErrorMessage } from '../utils/apiError';
+import { getApiErrorMessage } from '@shared/utils/apiError';
 import './StoreCreate.css';
 
 /** 店铺创建页：商家端，调用 createShop API，成功后跳转商家管理 */

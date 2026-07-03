@@ -17,8 +17,8 @@ import {
   addFavoriteProduct,
   removeFavoriteProduct,
 } from '@shared/api/canteen';
-import { getApiErrorMessage } from '../utils/apiError';
-import { formatRatingLabel } from '../constants/rating';
+import { getApiErrorMessage } from '@shared/utils/apiError';
+import { formatRatingLabel } from '@shared/constants/rating';
 import { DEFAULT_PRODUCT_IMAGE_PATH, productImageUrl } from '@shared/api/config';
 import { QK } from '../query/queryKeys';
 import './FoodDetail.css';

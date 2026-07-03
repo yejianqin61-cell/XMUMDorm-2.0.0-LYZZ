@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useExpFeedback } from '../context/ExpFeedbackContext';
 import { Toast } from '../context/ToastContext';
-import { getApiErrorMessage } from '../utils/apiError';
+import { getApiErrorMessage } from '@shared/utils/apiError';
 import AuthPageShell from '../components/auth/AuthPageShell';
 import AuthCardBrandHeader from '../components/auth/AuthCardBrandHeader';
 import MascotHero from '../components/auth/MascotHero';

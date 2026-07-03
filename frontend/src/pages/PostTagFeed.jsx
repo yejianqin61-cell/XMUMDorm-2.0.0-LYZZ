@@ -6,7 +6,7 @@ import { useLanguage } from '../context/LanguageContext';
 import PostCard from '../components/PostCard';
 import SkeletonPost from '../components/SkeletonPost';
 import { getPostList, getPostTagsList } from '@shared/api/posts';
-import { getApiErrorMessage } from '../utils/apiError';
+import { getApiErrorMessage } from '@shared/utils/apiError';
 import { API_BASE_URL } from '@shared/api/config';
 import { QK } from '../query/queryKeys';
 import './TreeHole.css';

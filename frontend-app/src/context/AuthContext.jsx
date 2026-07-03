@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { API_BASE_URL } from '@shared/api/config';
 import { getMe } from '@shared/api/users';
-import { getApiErrorMessage, apiFailureFromResponse } from '../utils/apiError';
+import { getApiErrorMessage, apiFailureFromResponse } from '@shared/utils/apiError';
 
 const STORAGE_TOKEN = 'token';
 const STORAGE_USER = 'user';

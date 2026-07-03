@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getMyProductReviews } from '@shared/api/canteen';
-import { getApiErrorMessage } from '../utils/apiError';
+import { getApiErrorMessage } from '@shared/utils/apiError';
 import ReviewCard from '../components/ReviewCard';
 import EmptyState from '../components/EmptyState';
 import './MyReviews.css';

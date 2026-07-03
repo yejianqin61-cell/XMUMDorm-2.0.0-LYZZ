@@ -4,7 +4,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { getTrendingTopicDetail, getTrendingPosts } from '@shared/api/square';
 import { QK } from '../query/queryKeys';
 import { getUploadUrl } from '@shared/api/config';
-import { formatPostTime } from '../utils/formatTime';
+import { formatPostTime } from '@shared/utils/formatTime';
 import './SquareHome.css';
 
 function getHeatTone(postCount, isEn) {

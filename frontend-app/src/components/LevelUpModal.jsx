@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { getBadgeForLevel } from '../constants/levelConfig';
+import { getBadgeForLevel } from '@shared/constants/levelConfig';
 import './LevelUpModal.css';
 
 export default function LevelUpModal({ open, level, isZh = true, onClose }) {

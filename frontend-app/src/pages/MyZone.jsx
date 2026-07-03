@@ -29,7 +29,7 @@ import {
   formatTodoDueDisplay,
   normalizeTodoDueDate,
   normalizeTodoDueTime,
-} from '../utils/formatTodoDue';
+} from '@shared/utils/formatTodoDue';
 import UserLevelBadge from '../components/UserLevelBadge';
 import LevelProgressBar from '../components/LevelProgressBar';
 

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { formatPostTime } from '../../utils/formatTime';
+import { formatPostTime } from '@shared/utils/formatTime';
 import MediaCard from '../ui/MediaCard';
 import EmptyState from '../ui/EmptyState';
 

@@ -4,7 +4,7 @@ import FoodCard from '../components/FoodCard';
 import SkeletonFood from '../components/SkeletonFood';
 import EmptyState from '../components/EmptyState';
 import { Toast } from '../context/ToastContext';
-import { getApiErrorMessage } from '../utils/apiError';
+import { getApiErrorMessage } from '@shared/utils/apiError';
 import { getShopMe, getProducts, deleteProduct, createCategory } from '@shared/api/canteen';
 import { productImageUrl } from '@shared/api/config';
 import './FoodManage.css';

@@ -8,7 +8,7 @@ import { Toast } from '../../context/ToastContext';
 import { QK } from '../../query/queryKeys';
 import { createClubPost, getClubProfile } from '@shared/api/clubs';
 import { queryClient } from '../../query/queryClient';
-import { getApiErrorMessage } from '../../utils/apiError';
+import { getApiErrorMessage } from '@shared/utils/apiError';
 import ImagePreview from '../../components/ImagePreview';
 import { StackedCardCarousel } from '../../components/StackedCardCarousel';
 import '../PostDetail.css';

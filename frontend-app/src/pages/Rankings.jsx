@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Card from '../components/Card';
 import EmptyState from '../components/EmptyState';
-import { getApiErrorMessage } from '../utils/apiError';
+import { getApiErrorMessage } from '@shared/utils/apiError';
 import {
   getRankingsHotProducts,
   getRankingsBusyShops,

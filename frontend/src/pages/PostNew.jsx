@@ -6,9 +6,9 @@ import { useLanguage } from '../context/LanguageContext';
 import { Toast } from '../context/ToastContext';
 import { useExpFeedback } from '../context/ExpFeedbackContext';
 import { createPost, getPostTagsList } from '@shared/api/posts';
-import { getApiErrorMessage } from '../utils/apiError';
+import { getApiErrorMessage } from '@shared/utils/apiError';
 import { QK } from '../query/queryKeys';
-import { FOOD_SQUARE_TAG_SLUG } from '../constants/canteen';
+import { FOOD_SQUARE_TAG_SLUG } from '@shared/constants/canteen';
 import './PostNew.css';
 
 const POST_TAGS_STALE_MS = 15 * 60 * 1000;

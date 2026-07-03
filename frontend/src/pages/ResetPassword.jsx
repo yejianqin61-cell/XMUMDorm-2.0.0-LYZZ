@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { sendResetCode, resetPassword } from '@shared/api/auth';
-import { getApiErrorMessage } from '../utils/apiError';
+import { getApiErrorMessage } from '@shared/utils/apiError';
 import AuthPageShell from '../components/auth/AuthPageShell';
 import MascotHero from '../components/auth/MascotHero';
 import LoginCard from '../components/auth/LoginCard';

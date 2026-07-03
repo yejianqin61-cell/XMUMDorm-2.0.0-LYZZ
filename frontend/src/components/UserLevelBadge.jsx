@@ -1,4 +1,4 @@
-import { getBadgeForLevel } from '../constants/levelConfig';
+import { getBadgeForLevel } from '@shared/constants/levelConfig';
 import './UserLevelBadge.css';
 
 /**

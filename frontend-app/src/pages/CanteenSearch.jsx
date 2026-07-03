@@ -6,7 +6,7 @@ import { getCanteenStrings } from '../i18n/canteenStrings';
 import { searchCanteen } from '@shared/api/canteen';
 import { QK } from '../query/queryKeys';
 import { productImageUrl } from '@shared/api/config';
-import { formatPostTime } from '../utils/formatTime';
+import { formatPostTime } from '@shared/utils/formatTime';
 import './CanteenSearch.css';
 
 export default function CanteenSearch() {

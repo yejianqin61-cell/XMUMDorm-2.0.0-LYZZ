@@ -9,7 +9,7 @@ import EmptyState from './EmptyState';
 import ImagePreview from './ImagePreview';
 import { StackedCardCarousel } from './StackedCardCarousel';
 import LikeBurst from './LikeBurst';
-import { formatPostTime } from '../utils/formatTime';
+import { formatPostTime } from '@shared/utils/formatTime';
 import UserLevelBadge from './UserLevelBadge';
 import '../pages/PostDetail.css';
 

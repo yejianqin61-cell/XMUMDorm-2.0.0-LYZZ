@@ -9,7 +9,7 @@ import CategorySection from '../components/CategorySection';
 import SkeletonFood from '../components/SkeletonFood';
 import EmptyState from '../components/EmptyState';
 import { getShop, getCategories, getProducts } from '@shared/api/canteen';
-import { getApiErrorMessage } from '../utils/apiError';
+import { getApiErrorMessage } from '@shared/utils/apiError';
 import { getUploadUrl, productImageUrl } from '@shared/api/config';
 import { QK } from '../query/queryKeys';
 import './FoodList.css';

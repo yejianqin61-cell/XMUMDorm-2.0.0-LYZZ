@@ -4,7 +4,7 @@ import { getProfile } from '@shared/api/users';
 import PostCard from '../components/PostCard';
 import EmptyState from '../components/EmptyState';
 import { API_BASE_URL } from '@shared/api/config';
-import { getApiErrorMessage } from '../utils/apiError';
+import { getApiErrorMessage } from '@shared/utils/apiError';
 import './MyPosts.css';
 
 /** 我的帖子列表：从 GET /api/users/:id/profile 获取当前用户的帖子 */

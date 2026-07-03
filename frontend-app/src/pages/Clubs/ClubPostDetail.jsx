@@ -8,7 +8,7 @@ import { useAuth } from '../../context/AuthContext';
 import { queryClient } from '../../query/queryClient';
 import { Toast } from '../../context/ToastContext';
 import { deleteClubPost, getClubPostDetail, toggleClubLike, trackClubView } from '@shared/api/clubs';
-import { getApiErrorMessage } from '../../utils/apiError';
+import { getApiErrorMessage } from '@shared/utils/apiError';
 import { API_BASE_URL } from '@shared/api/config';
 import ImagePreview from '../../components/ImagePreview';
 import { StackedCardCarousel } from '../../components/StackedCardCarousel';
