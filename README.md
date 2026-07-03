@@ -1,5 +1,8 @@
 # XMUMDorm（厦马小筑 / Jack Dorm）
-## www.xmumdorm.com   .apk is ready.  
+## www.xmumdorm.com   .apk is ready.  、
+<br>
+这两天处于项目动荡期，因为web的前端正在和app的前端分化演进，所以web的前端会一天一个样儿
+<br>
 ### please open it on your smartphone
 
 > 厦门大学马来西亚分校（XMUM）校园社交与生活一站式平台 · All-in-One Campus Platform
