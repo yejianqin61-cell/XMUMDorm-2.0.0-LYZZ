@@ -1,0 +1,20 @@
+.store-create-page {
+  min-height: 100%;
+  padding: 12px 16px 24px;
+  background: transparent;
+}
+
+.store-create-error {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: var(--wx-red, #ee0a24);
+  background: rgba(238, 10, 36, 0.08);
+  border-radius: 8px;
+}
+
+.store-create-loading {
+  margin-top: 12px;
+  font-size: 14px;
+  color: var(--wx-text-secondary);
+}

@@ -1,0 +1,330 @@
+/* 食堂 Eat：地图页（背景图 cover + 热区按钮） */
+
+.canteen-area-page {
+  min-height: 100%;
+  height: 100%;
+  position: relative;
+  padding: 0;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  background: var(--post-ios-bg-grouped, #f2f2f7);
+  font-family: var(--post-ios-font, inherit);
+}
+
+.canteen-map {
+  position: relative;
+  width: 100%;
+  /* 背景图拉满整屏，TabBar 叠在上面（不再减去 tab 高度） */
+  height: calc(100svh - var(--safe-top, 0px) - var(--safe-bottom, 0px));
+  min-height: 0;
+  border-radius: 0;
+  overflow: hidden;
+  box-shadow: none;
+  background: transparent;
+}
+
+.canteen-map-bg {
+  position: absolute;
+  inset: 0;
+}
+
+.canteen-map-bgimg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  user-select: none;
+  pointer-events: none;
+  transform: translateZ(0);
+}
+
+.canteen-map-bg-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(2, 6, 23, 0.08), rgba(2, 6, 23, 0.02) 30%, rgba(2, 6, 23, 0.06));
+  pointer-events: none;
+}
+
+.sky-container {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 38%;
+  z-index: 1; /* 背景之上、建筑贴图之下 */
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.cloud {
+  position: absolute;
+  left: -12%;
+  width: 180px;
+  height: auto;
+  opacity: 0.6;
+  transform: translateX(-10%);
+  animation-name: drift;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-fill-mode: both;
+  pointer-events: none;
+  filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.4));
+  will-change: transform;
+}
+
+@keyframes drift {
+  0% {
+    transform: translateX(-10%);
+  }
+  100% {
+    transform: translateX(110vw);
+  }
+}
+
+.cloud-fast {
+  opacity: 0.8;
+  width: 220px;
+  animation-duration: 25s;
+  transform: scale(1.2);
+}
+
+.cloud-slow {
+  opacity: 0.5;
+  width: 170px;
+  animation-duration: 45s;
+  transform: scale(0.8);
+}
+
+.cloud-distant {
+  opacity: 0.3;
+  width: 140px;
+  animation-duration: 80s;
+  transform: scale(0.5);
+  filter: blur(2px) drop-shadow(0 0 15px rgba(255, 255, 255, 0.35));
+}
+
+/* 多行：每朵云不同 top + delay，避免同步 */
+.cloud-r1-a { top: 8%;  animation-delay: -41s; }
+.cloud-r1-b { top: 14%; animation-delay: -18s; }
+.cloud-r1-c { top: 10%; animation-delay: -6s; }
+
+.cloud-r2-a { top: 22%; animation-delay: -63s; opacity: 0.26; }
+.cloud-r2-b { top: 26%; animation-delay: -27s; opacity: 0.45; }
+.cloud-r2-c { top: 20%; animation-delay: -11s; opacity: 0.72; }
+
+.cloud-r3-a { top: 34%; animation-delay: -77s; opacity: 0.22; filter: blur(2.4px) drop-shadow(0 0 15px rgba(255, 255, 255, 0.32)); }
+.cloud-r3-b { top: 30%; animation-delay: -35s; opacity: 0.40; }
+
+.canteen-sticker {
+  position: absolute;
+  z-index: 2;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: default;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
+  text-decoration: none;
+  transform: translate3d(var(--sticker-tx, 0px), 0, 0);
+  outline: none;
+}
+
+.canteen-sticker--editable {
+  cursor: grab;
+}
+
+.canteen-sticker--editable:active {
+  cursor: grabbing;
+}
+
+.canteen-sticker--link {
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.canteen-sticker--link,
+.canteen-sticker--editable {
+  transition: transform 120ms ease, filter 140ms ease, opacity 140ms ease;
+}
+
+@media (hover: hover) {
+  .canteen-sticker--link:hover {
+    filter: brightness(1.04) drop-shadow(0 14px 26px rgba(2, 6, 23, 0.26));
+  }
+}
+
+.canteen-sticker--link:active {
+  transform: translate3d(var(--sticker-tx, 0px), 0, 0) scale(0.955);
+  filter: brightness(1.06) drop-shadow(0 22px 40px rgba(2, 6, 23, 0.40));
+}
+
+.canteen-sticker--link::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 14px;
+  background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 55%),
+    radial-gradient(circle at 70% 80%, rgba(56, 189, 248, 0.22), rgba(56, 189, 248, 0) 55%);
+  opacity: 0;
+  transform: scale(0.98);
+  transition: opacity 120ms ease, transform 120ms ease;
+  pointer-events: none;
+}
+
+.canteen-sticker--link:active::after {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.canteen-sticker--link:focus-visible::after {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.canteen-sticker--link:focus-visible .canteen-sticker-img {
+  outline: 2px solid rgba(56, 189, 248, 0.85);
+  outline-offset: 3px;
+  border-radius: 10px;
+}
+
+.canteen-sticker--decor {
+  pointer-events: none;
+}
+
+.canteen-sticker--editable:active {
+  transform: translate3d(var(--sticker-tx, 0px), 0, 0) scale(0.985);
+  filter: brightness(1.02) drop-shadow(0 14px 26px rgba(2, 6, 23, 0.28));
+}
+
+.canteen-sticker--selected .canteen-sticker-img {
+  outline: 2px solid rgba(14, 165, 233, 0.75);
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+
+.canteen-sticker-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  user-select: none;
+  pointer-events: none;
+  filter: drop-shadow(0 12px 24px rgba(2, 6, 23, 0.22));
+}
+
+.canteen-sticker--link:active .canteen-sticker-img {
+  filter: drop-shadow(0 26px 48px rgba(2, 6, 23, 0.42));
+}
+
+/* 手机端（无 hover）加强点击反馈 */
+@media (hover: none) and (pointer: coarse) {
+  .canteen-sticker--link:active {
+    transform: translate3d(var(--sticker-tx, 0px), 0, 0) scale(0.94);
+  }
+
+  .canteen-sticker--link:active::after {
+    opacity: 1;
+  }
+}
+
+.canteen-sticker-label {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  color: rgba(255, 255, 255, 0.96);
+  font-family: ui-serif, "Playfair Display", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.78)) drop-shadow(0 14px 26px rgba(2, 6, 23, 0.28));
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.canteen-sticker-label-text {
+  position: relative;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(2, 6, 23, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* Hover/active：文字轻微上浮 + 更亮 */
+@media (hover: hover) {
+  .canteen-sticker--link:hover .canteen-sticker-label {
+    transform: translate(-50%, calc(-50% - 2px));
+    filter: brightness(1.12) drop-shadow(0 0 8px rgba(255, 255, 255, 0.86)) drop-shadow(0 18px 30px rgba(2, 6, 23, 0.30));
+  }
+}
+
+.canteen-sticker--link:active .canteen-sticker-label {
+  transform: translate(-50%, calc(-50% - 1px));
+  filter: brightness(1.18) drop-shadow(0 0 9px rgba(255, 255, 255, 0.92)) drop-shadow(0 22px 38px rgba(2, 6, 23, 0.36));
+}
+
+.canteen-map--edit .canteen-map-bg::after {
+  /* legacy selector left intentionally blank */
+}
+
+.canteen-map--edit .canteen-map-bg-overlay {
+  background: linear-gradient(to bottom, rgba(2, 6, 23, 0.20), rgba(2, 6, 23, 0.08) 30%, rgba(2, 6, 23, 0.14));
+}
+
+.canteen-map-editor {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: 10px;
+  z-index: 10;
+  border-radius: 16px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.84);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 18px 55px rgba(2, 6, 23, 0.22);
+}
+
+.canteen-map-editor-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: rgba(11, 17, 34, 0.92);
+}
+
+.canteen-map-editor-sub {
+  margin-top: 4px;
+  font-size: 12px;
+  color: rgba(11, 17, 34, 0.62);
+}
+
+.canteen-map-editor-actions {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+}
+
+.canteen-map-editor-btn {
+  flex: 1;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(14, 165, 233, 0.18);
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.92), rgba(99, 102, 241, 0.90));
+  color: rgba(255, 255, 255, 0.96);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.canteen-map-editor-btn-ghost {
+  background: rgba(2, 6, 23, 0.05);
+  color: rgba(11, 17, 34, 0.78);
+  border-color: rgba(255, 255, 255, 0.28);
+}

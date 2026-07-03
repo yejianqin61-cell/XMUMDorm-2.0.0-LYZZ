@@ -1,0 +1,254 @@
+/* 帖子卡片：iOS 分组内白底 cell 风格（圆角、轻阴影、SF 字阶） */
+.post-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--post-ios-card, #fff);
+  border-radius: var(--post-ios-radius-md, 12px);
+  margin-bottom: 0;
+  box-shadow: var(--post-ios-shadow-card, 0 1px 2px rgba(0, 0, 0, 0.04));
+  min-height: 120px;
+  border: 0.5px solid var(--post-ios-separator, rgba(60, 60, 67, 0.12));
+  overflow: hidden;
+  padding: 14px 14px 0;
+  font-family: var(--post-ios-font, inherit);
+  -webkit-font-smoothing: antialiased;
+}
+
+.post-card--waterfall {
+  /* 瀑布流中更紧凑：由内容决定高度 */
+  min-height: 0;
+}
+
+.post-card--waterfall-image {
+  padding: 0;
+}
+
+.post-card--waterfall-image .post-card-body {
+  padding: 0;
+}
+
+.post-card-cover {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: var(--post-ios-fill, rgba(118, 118, 128, 0.12));
+  overflow: hidden;
+}
+
+.post-card-cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.post-card-title {
+  margin: 10px 14px 10px;
+  font-family: var(--post-ios-font, inherit);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  color: var(--post-ios-label, rgba(0, 0, 0, 0.88));
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.post-card--waterfall-image .post-card-footer {
+  padding: 6px 14px 10px;
+  border-top: 0.5px solid var(--post-ios-separator, rgba(60, 60, 67, 0.12));
+}
+
+.post-card-body {
+  display: block;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0 0 6px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.post-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.post-card-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 980px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--post-ios-accent, #007aff);
+  background: var(--post-ios-accent-subtle, rgba(0, 122, 255, 0.12));
+  border: none;
+}
+
+.post-card-tag--link {
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.12s ease;
+}
+
+.post-card-tag--link:active {
+  opacity: 0.55;
+}
+
+.post-card-content {
+  margin: 0 0 10px;
+  font-family: var(--post-ios-font, inherit);
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+  color: var(--post-ios-label, rgba(0, 0, 0, 0.88));
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.post-card-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 10px;
+}
+
+.post-card-image-wrap {
+  display: block;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.post-card-image {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: var(--post-ios-radius-sm, 10px);
+  background: var(--post-ios-fill, rgba(118, 118, 128, 0.12));
+  display: block;
+}
+
+.post-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--post-ios-font, inherit);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
+}
+
+.post-card-time {
+  margin-right: 4px;
+}
+
+.post-card-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.post-card-footer {
+  flex: 0 0 auto;
+  max-height: 40px;
+  min-height: 32px;
+  padding: 4px 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-top: 0.5px solid var(--post-ios-separator, rgba(60, 60, 67, 0.12));
+  background: transparent;
+  box-sizing: border-box;
+}
+
+.post-card-footer-author {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.post-card-avatar-wrap {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 0.5px solid var(--post-ios-separator, rgba(60, 60, 67, 0.12));
+}
+
+.post-card-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.post-card-avatar-default {
+  object-fit: contain;
+  padding: 3px;
+  background: var(--post-ios-fill, rgba(118, 118, 128, 0.12));
+}
+
+.post-card-username {
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--post-ios-label, rgba(0, 0, 0, 0.88));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.post-card-like-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 52px;
+  min-height: 32px;
+  padding: 0 10px;
+  border: none;
+  border-radius: var(--post-ios-radius-sm, 10px);
+  background: var(--post-ios-fill, rgba(118, 118, 128, 0.12));
+  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
+  font-family: var(--post-ios-font, inherit);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.post-card-like-btn:active {
+  transform: scale(0.96);
+  background: var(--post-ios-fill-pressed, rgba(118, 118, 128, 0.18));
+}
+
+.post-card-like-btn--active {
+  color: var(--post-ios-red, #ff3b30);
+  background: rgba(255, 59, 48, 0.12);
+}
+
+.post-card-like-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.post-card-like-count {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}

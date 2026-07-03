@@ -3,7 +3,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'com.dorm.app',
   appName: 'Dorm',
-  webDir: 'frontend/dist',
+  webDir: 'frontend-app/dist',
 
   ios: {
     contentInset: 'always',

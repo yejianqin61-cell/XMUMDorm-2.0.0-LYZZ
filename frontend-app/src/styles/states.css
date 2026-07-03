@@ -1,0 +1,66 @@
+/**
+ * 全站统一的 loading / error / 空状态 样式
+ * 各页面的 loading/error/empty 元素可同时加上对应 state-* class 以保持视觉一致
+ */
+.state-loading,
+.state-error,
+.state-empty {
+  padding: 24px 16px;
+  font-size: 14px;
+  text-align: center;
+  line-height: 1.5;
+  color: var(--wx-text-secondary);
+}
+
+.state-loading {
+  position: relative;
+  padding-top: 160px;
+}
+
+.state-loading::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 26px;
+  transform: translateX(-50%);
+  width: 110px;
+  height: 110px;
+  background: url("/gif/vsgif_com_dogecoin-meme_.3422573.gif") center / contain no-repeat;
+}
+
+.state-error {
+  color: var(--wx-red, #ee0a24);
+}
+
+.state-empty {
+  color: var(--wx-text-secondary);
+}
+
+/* 行内/区块错误（如表单下方） */
+.state-inline-error {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--wx-red, #ee0a24);
+  background: rgba(238, 10, 36, 0.08);
+  border-radius: 8px;
+}
+
+/* 可复用的按压反馈（移动端风格） */
+.pressable {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  transition: transform 80ms ease-out, box-shadow 80ms ease-out !important;
+}
+
+.pressable:active {
+  transform: scale(var(--pressable-scale, 0.96));
+  box-shadow: var(--pressable-shadow-active);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pressable {
+    transition: none !important;
+  }
+}

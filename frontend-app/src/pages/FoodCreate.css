@@ -1,0 +1,28 @@
+.food-create-page {
+  min-height: 100%;
+  padding: 12px 16px 24px;
+  background: transparent;
+}
+
+.food-create-loading,
+.food-create-error {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--wx-text-secondary);
+}
+
+.food-create-error {
+  color: var(--wx-red, #ee0a24);
+}
+
+.food-create-back {
+  display: block;
+  margin-top: 12px;
+  padding: 10px 24px;
+  font-size: 15px;
+  color: var(--wx-green);
+  background: transparent;
+  border: 1px solid var(--wx-green);
+  border-radius: 8px;
+  cursor: pointer;
+}

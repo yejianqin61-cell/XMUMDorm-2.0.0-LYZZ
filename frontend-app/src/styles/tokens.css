@@ -1,0 +1,20 @@
+:root {
+  --ui-surface: rgba(255, 255, 255, 0.9);
+  --ui-surface-strong: rgba(255, 255, 255, 0.96);
+  --ui-surface-muted: rgba(255, 255, 255, 0.78);
+  --ui-border-soft: rgba(15, 23, 42, 0.06);
+  --ui-border-strong: rgba(15, 23, 42, 0.12);
+  --ui-shadow-soft: 0 10px 28px rgba(15, 23, 42, 0.06);
+  --ui-shadow-strong: 0 20px 40px rgba(15, 23, 42, 0.08);
+  --ui-radius-lg: 24px;
+  --ui-radius-md: 20px;
+  --ui-radius-sm: 16px;
+  --ui-text-primary: var(--post-ios-label, #10233b);
+  --ui-text-secondary: var(--post-ios-secondary-label, rgba(16, 35, 59, 0.66));
+  --ui-text-tertiary: var(--post-ios-tertiary-label, rgba(16, 35, 59, 0.48));
+  --ui-accent: var(--post-ios-accent, #1a73e8);
+  --ui-accent-soft: rgba(26, 115, 232, 0.1);
+  --ui-danger: var(--wx-red, #dc2626);
+  --ui-danger-soft: rgba(220, 38, 38, 0.08);
+  --ui-success: #0f9d58;
+}

@@ -1,0 +1,35 @@
+.myreviews-page {
+  padding: 12px 16px 24px;
+  min-height: 100%;
+  background: transparent;
+}
+
+.myreviews-intro {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--wx-text-secondary);
+}
+
+.myreviews-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.myreviews-list li {
+  margin: 0;
+}
+
+.myreviews-loading,
+.myreviews-error,
+.myreviews-empty {
+  text-align: center;
+  padding: 24px 16px;
+  margin: 0;
+  font-size: 14px;
+  color: var(--wx-text-secondary);
+}
+
+.myreviews-error {
+  color: var(--wx-red, #ee0a24);
+}

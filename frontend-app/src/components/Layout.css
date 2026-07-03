@@ -1,0 +1,246 @@
+.app-layout {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: calc(var(--tabbar-height, 72px) + var(--safe-bottom));
+  /* 兜底：填充底部预留区（避免加载态/骨架屏时底部露出 body 深色） */
+  background: var(--post-ios-bg-grouped, #f2f2f7);
+}
+
+/* 无顶栏时：主区从刘海下开始，背景图贴顶（仍保留底部 Tab 与安全区） */
+.app-layout--no-topbar .app-main {
+  padding-top: var(--safe-top, 0px);
+}
+
+.app-layout--no-topbar .app-main-bg {
+  top: var(--safe-top, 0px);
+}
+
+.app-main {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  /* 统一全站页面底色：与树洞一致（避免 Square 等页面透出深色背景显灰黑） */
+  background: var(--post-ios-bg-grouped, #f2f2f7);
+}
+
+/* 根 Tab 页：使用常驻 Tab stack，避免切换时重挂载闪屏 */
+.app-layout--tabstack {
+  /* 给子元素的 100% 高度一个明确参照，避免滚动容器高度算成 0 */
+  position: fixed;
+  inset: 0;
+  height: 100svh;
+  width: 100%;
+  padding-bottom: 0;
+}
+
+.app-layout--tabstack .app-main {
+  overflow: hidden;
+}
+
+.app-layout--tabstack .app-main-inner {
+  height: 100%;
+}
+
+.tab-stack-wrap {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+
+.tab-stack-track {
+  display: flex;
+  width: 400%;
+  height: 100%;
+  will-change: transform;
+  transition: transform 360ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.tab-stack-pane {
+  width: 25%;
+  flex-shrink: 0;
+  height: 100%;
+  background: var(--post-ios-bg-grouped, #f2f2f7);
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: none;
+  position: relative;
+}
+
+.tab-stack-pane[data-active="false"] {
+  /* 隐藏非激活 pane，避免内部 fixed 元素（如树洞 + 号）穿透到其它 Tab */
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* MyZone 自己管理内部滚动，避免双滚动与露白 */
+.tab-stack-pane--myzone {
+  overflow: hidden;
+}
+
+/* Eat / Square / MyZone：禁用纵向滚动（避免“还能往下拉”的橡皮筋感） */
+.tab-stack-pane--no-scroll {
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+}
+
+/* 全站统一背景图：与树洞页一致，仅覆盖顶栏与底栏之间 */
+.app-main-bg {
+  position: fixed;
+  top: calc(44px + var(--safe-top, 0px));
+  bottom: calc(var(--tabbar-height, 72px) + var(--safe-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 430px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: 0;
+}
+
+.app-main-inner {
+  position: relative;
+  z-index: 1;
+  min-height: 100%;
+}
+
+/* ---------- 公告弹窗 ---------- */
+.app-ann-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.app-ann-modal {
+  width: 100%;
+  max-width: 360px;
+  max-height: 80vh;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  border-radius: 18px;
+  box-shadow: 0 18px 60px rgba(2, 6, 23, 0.26);
+  padding: 16px 16px 12px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-ann-title {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: rgba(11, 17, 34, 0.92);
+}
+
+.app-ann-list {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.app-ann-item {
+  padding: 10px 8px 8px;
+  border-radius: 10px;
+  background: rgba(2, 6, 23, 0.04);
+  margin-bottom: 8px;
+}
+
+.app-ann-item-title {
+  margin: 0 0 4px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: rgba(11, 17, 34, 0.92);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.app-ann-item-meta {
+  margin: 0 0 6px;
+  font-size: 11px;
+  color: rgba(11, 17, 34, 0.52);
+}
+
+.app-ann-know-btn,
+.app-ann-know-all-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+}
+
+.app-ann-know-btn {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 1), rgba(6, 182, 212, 1) 45%, rgba(99, 102, 241, 1));
+  color: #fff;
+}
+
+.app-ann-know-all-btn {
+  margin-top: 6px;
+  align-self: flex-end;
+  background: rgba(2, 6, 23, 0.06);
+  color: rgba(11, 17, 34, 0.78);
+  font-weight: 500;
+}
+
+@media (hover: hover) {
+  .app-ann-know-btn:hover {
+    filter: brightness(1.06);
+  }
+}
+
+@media (hover: hover) {
+  .app-ann-know-all-btn:hover {
+    background: rgba(0, 0, 0, 0.08);
+  }
+}
+
+/* ---------- Tab 滑动过渡（当前页滑出，新页滑入，微信风格缓动）---------- */
+.app-slide-wrap {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.app-slide-track {
+  display: flex;
+  width: 200%;
+  height: 100%;
+}
+
+.app-slide-pane {
+  width: 50%;
+  flex-shrink: 0;
+  height: 100%;
+  overflow: auto;
+}
+
+.app-slide-wrap.app-slide-forward .app-slide-track {
+  transform: translateX(0);
+}
+.app-slide-wrap.app-slide-forward.app-slide-end .app-slide-track {
+  transform: translateX(-50%);
+  transition: transform 280ms cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.app-slide-wrap.app-slide-back .app-slide-track {
+  transform: translateX(-50%);
+}
+.app-slide-wrap.app-slide-back.app-slide-end .app-slide-track {
+  transform: translateX(0);
+  transition: transform 280ms cubic-bezier(0.25, 0.1, 0.25, 1);
+}

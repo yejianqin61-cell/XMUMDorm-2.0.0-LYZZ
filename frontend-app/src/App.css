@@ -1,0 +1,103 @@
+/* 占位页样式：与树洞一致使用透明底+半白卡片 */
+.page-placeholder {
+  padding: 24px 16px;
+  margin: 16px;
+  text-align: center;
+  color: var(--wx-text);
+  font-size: 15px;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.page-placeholder p {
+  margin: 0 0 8px;
+}
+
+.page-hint {
+  font-size: 13px;
+  color: var(--wx-text-secondary);
+  opacity: 0.9;
+}
+
+.splash-screen {
+  position: fixed;
+  inset: 0;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  opacity: 1;
+  transition: opacity 300ms ease-out;
+}
+
+.splash-screen--fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.splash-screen-video {
+  max-width: 70vw;
+  max-height: 70vh;
+  border-radius: 12px;
+}
+
+.install-hint-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 998;
+  background: rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 16px 24px;
+}
+
+.install-hint-card {
+  width: 100%;
+  max-width: 420px;
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 16px;
+  padding: 16px 16px 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+.install-hint-title {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--wx-text, #111);
+}
+
+.install-hint-text {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--wx-text-secondary, #666);
+}
+
+.install-hint-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.install-hint-btn {
+  padding: 8px 14px;
+  font-size: 13px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+}
+
+.install-hint-btn-secondary {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--wx-text-secondary, #666);
+}
+
+.install-hint-btn-primary {
+  background: var(--wx-green, #07c160);
+  color: #fff;
+}
+

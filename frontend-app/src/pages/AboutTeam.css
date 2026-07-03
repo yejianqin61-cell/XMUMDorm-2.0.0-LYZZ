@@ -1,0 +1,140 @@
+.about-team-page {
+  min-height: 100%;
+  padding: 12px 16px 24px;
+  background: transparent;
+}
+
+.about-team-card {
+  padding: 18px 16px;
+}
+
+.about-team-section + .about-team-section {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.about-team-title {
+  margin: 0 0 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--wx-text);
+}
+
+.about-team-list {
+  margin: 0;
+}
+
+.about-team-intro {
+  margin-top: 8px;
+  line-height: 1.5;
+}
+
+.about-team-member-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.about-team-member-list > li + li {
+  margin-top: 14px;
+}
+
+.about-team-role {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: var(--wx-text-secondary);
+  font-weight: 500;
+}
+
+/* 分组标题（创始人、宣发团队、美术顾问、Dorm 3.0 等） */
+.about-team-section-role {
+  margin: 0 0 12px;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  color: var(--wx-text, #111);
+}
+
+.about-team-person-spaced {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.about-team-school {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--wx-text-secondary, #888);
+}
+
+.about-team-name {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--wx-text);
+}
+
+.about-team-subtitle {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--wx-text);
+}
+
+.about-team-tags {
+  margin: 0;
+  font-size: 13px;
+  color: var(--wx-text-secondary);
+}
+
+/* 特别鸣谢页：一人一卡 */
+.about-thanks-intro-card {
+  margin-bottom: 16px;
+}
+
+.about-thanks-intro {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--wx-text);
+}
+
+.about-thanks-page-title {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--wx-text);
+  padding: 0 4px;
+}
+
+.about-thanks-no-order {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--wx-text-secondary);
+}
+
+.about-thanks-cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.about-thanks-cards li {
+  margin: 0;
+}
+
+.about-thanks-en {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--wx-text-secondary);
+}

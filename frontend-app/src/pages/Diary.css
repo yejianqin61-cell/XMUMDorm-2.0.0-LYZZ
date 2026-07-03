@@ -1,0 +1,521 @@
+.diary-page {
+  min-height: 100%;
+  padding: 12px 12px 18px;
+  position: relative;
+  overflow: hidden;
+}
+
+.diary-header {
+  position: relative;
+  z-index: 2;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.diary-date-hero-title {
+  font-size: 26px;
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: rgba(15, 23, 42, 0.92);
+  font-family: ui-serif, "Playfair Display", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+}
+
+.diary-date-hero-sub {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(100, 116, 139, 0.82);
+}
+
+.diary-cal-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  box-shadow: 0 22px 60px rgba(2, 6, 23, 0.16);
+  color: rgba(15, 23, 42, 0.86);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.diary-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.diary-today-btn {
+  height: 56px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  box-shadow: 0 22px 60px rgba(2, 6, 23, 0.14);
+  color: rgba(15, 23, 42, 0.86);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.diary-today-btn:active {
+  transform: scale(0.98);
+}
+
+.diary-bokeh {
+  position: absolute;
+  inset: -40px;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(80px 80px at 18% 22%, rgba(59, 130, 246, 0.18), transparent 60%),
+    radial-gradient(120px 120px at 70% 18%, rgba(74, 222, 128, 0.16), transparent 62%),
+    radial-gradient(160px 160px at 30% 78%, rgba(236, 72, 153, 0.10), transparent 60%),
+    radial-gradient(140px 140px at 85% 72%, rgba(168, 85, 247, 0.10), transparent 62%);
+  filter: blur(14px);
+  opacity: 0.9;
+  animation: diaryBokeh 18s ease-in-out infinite;
+}
+
+@keyframes diaryBokeh {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(-10px, 8px, 0) scale(1.03); }
+  100% { transform: translate3d(0, 0, 0) scale(1); }
+}
+
+.diaryLiquidCapsule { display: none; }
+
+.diary-main {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.diary-bubbles {
+  position: relative;
+  height: 100px;
+  margin: 6px 10px 0px;
+}
+
+.diary-bubble {
+  position: absolute;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 999px;
+  padding: 10px 10px;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: 0 18px 60px rgba(2, 6, 23, 0.16);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  animation: diaryFloat 6.5s ease-in-out infinite;
+}
+
+.diary-bubble.empty {
+  opacity: 0.75;
+}
+
+.diary-bubble-hint {
+  font-size: 8px;
+  font-weight: 800;
+  color: rgba(100, 116, 139, 0.9);
+  max-width: 92%;
+  line-height: 1.15;
+  text-align: center;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  overflow: hidden;
+}
+
+.diary-bubble-year {
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: -0.02em;
+  color: rgba(15, 23, 42, 0.88);
+  max-width: 90%;
+  line-height: 1.1;
+  text-align: center;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  overflow: hidden;
+}
+
+@keyframes diaryFloat {
+  0% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -8px, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+/* Organic cluster + different sizes (60~80) */
+.diary-bubble--1 { left: 8%; top: 16px; width: 76px; height: 76px; background: linear-gradient(135deg, rgba(251, 113, 133, 0.26), rgba(255, 255, 255, 0.38)); }
+.diary-bubble--2 { left: 26%; top: 52px; width: 62px; height: 62px; background: linear-gradient(135deg, rgba(168, 85, 247, 0.22), rgba(255, 255, 255, 0.38)); animation-delay: -1.4s; }
+.diary-bubble--3 { left: 46%; top: 18px; width: 80px; height: 80px; background: linear-gradient(135deg, rgba(74, 222, 128, 0.20), rgba(255, 255, 255, 0.38)); animation-delay: -2.2s; }
+.diary-bubble--4 { left: 64%; top: 56px; width: 68px; height: 68px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.20), rgba(255, 255, 255, 0.38)); animation-delay: -0.7s; }
+.diary-bubble--5 { left: 78%; top: 22px; width: 72px; height: 72px; background: linear-gradient(135deg, rgba(251, 146, 60, 0.20), rgba(255, 255, 255, 0.38)); animation-delay: -3.0s; }
+
+.diary-editor {
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.50);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 22px 70px rgba(2, 6, 23, 0.14);
+  overflow: hidden;
+}
+
+.diary-editor-top {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 12px 12px 8px;
+}
+
+.diary-save {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(120deg, rgba(74, 222, 128, 0.90), rgba(59, 130, 246, 0.90));
+  box-shadow: 0 18px 60px rgba(59, 130, 246, 0.28);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.diary-save:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.diary-save .is-spinning {
+  animation: diarySpin 0.9s linear infinite;
+}
+
+@keyframes diarySpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.diary-canvas {
+  padding: 6px 12px 12px;
+  position: relative;
+  border-left: 2px solid rgba(239, 68, 68, 0.2);
+  background-color: #fdfcf0;
+  background-image: repeating-linear-gradient(
+    transparent,
+    transparent 31px,
+    rgba(0, 0, 0, 0.05) 31px,
+    rgba(0, 0, 0, 0.05) 32px
+  );
+  background-attachment: local;
+}
+
+.diary-textarea {
+  width: 100%;
+  min-height: 380px;
+  border: none;
+  outline: none;
+  resize: vertical;
+  background: transparent;
+  font-size: 16px;
+  line-height: 32px;
+  color: rgba(15, 23, 42, 0.92);
+  font-family: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  letter-spacing: 0.01em;
+}
+
+.diary-canvas {
+  padding-left: 10px;
+}
+
+.diary-textarea::placeholder {
+  color: rgba(100, 116, 139, 0.85);
+}
+
+.diary-canvas-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.diary-counter {
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(100, 116, 139, 0.9);
+  background: rgba(255, 255, 255, 0.55);
+  padding: 6px 10px;
+  border-radius: 999px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.diary-mood {
+  display: inline-flex;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.diary-mood-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 120ms ease, background 120ms ease;
+  font-size: 16px;
+}
+
+.diary-mood-btn:active {
+  transform: scale(0.96);
+}
+
+.diary-mood-btn.active {
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.diary-soft-hint {
+  padding: 0 12px 12px;
+  font-size: 12px;
+  color: rgba(100, 116, 139, 0.9);
+}
+
+@media (min-width: 900px) {
+  .diary-main {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+}
+
+.diary-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.45);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+.diary-overlay-card {
+  width: min(680px, 100%);
+  max-height: min(78vh, 820px);
+  overflow: auto;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.60);
+  backdrop-filter: blur(22px) saturate(180%);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 30px 90px rgba(2, 6, 23, 0.28);
+}
+
+.diary-overlay-head {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 12px 10px;
+  background: rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.diary-overlay-title {
+  font-size: 14px;
+  font-weight: 950;
+  letter-spacing: -0.02em;
+  color: rgba(15, 23, 42, 0.88);
+}
+
+.diary-overlay-close {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.55);
+  color: rgba(15, 23, 42, 0.78);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.diary-overlay-body {
+  padding: 14px 14px 18px;
+  white-space: pre-wrap;
+  line-height: 1.75;
+  font-size: 15px;
+  color: rgba(15, 23, 42, 0.88);
+  font-family: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+}
+
+.diary-cal {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background: rgba(2, 6, 23, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  padding: 14px;
+}
+
+.diary-cal-burst {
+  position: absolute;
+  border-radius: 999px;
+  /* 移动端避免 backdrop-filter 动画导致频闪/掉帧：只做 transform 扩散 */
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.60);
+  box-shadow: 0 30px 90px rgba(2, 6, 23, 0.22);
+  filter: blur(0.5px);
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+.diary-cal-sheet {
+  flex: 1;
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.58);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 30px 90px rgba(2, 6, 23, 0.35);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.diary-cal-top {
+  display: grid;
+  grid-template-columns: 44px 1fr 44px 44px;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.diary-cal-title {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 950;
+  letter-spacing: -0.02em;
+  color: rgba(15, 23, 42, 0.88);
+}
+
+.diary-cal-nav,
+.diary-cal-close {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(255, 255, 255, 0.55);
+  color: rgba(15, 23, 42, 0.78);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.diary-cal-grid {
+  padding: 12px;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+  overflow: auto;
+}
+
+.diary-cal-weekday {
+  font-size: 11px;
+  font-weight: 900;
+  color: rgba(100, 116, 139, 0.9);
+  text-align: center;
+  padding: 4px 0;
+}
+
+.diary-cal-cell {
+  aspect-ratio: 1 / 1;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.40);
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.diary-cal-cell--pad {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.diary-cal-daynum {
+  font-size: 13px;
+  font-weight: 900;
+  color: rgba(15, 23, 42, 0.82);
+}
+
+.diary-cal-cell.active {
+  outline: 2px solid rgba(59, 130, 246, 0.55);
+}
+
+/* Contribution-graph-ish levels */
+.diary-cal-cell--lv1 { background: rgba(250, 204, 21, 0.18); } /* lemon */
+.diary-cal-cell--lv2 { background: rgba(250, 204, 21, 0.28); }
+.diary-cal-cell--lv3 { background: rgba(250, 204, 21, 0.40); }
+.diary-cal-cell--lv4 { background: rgba(250, 204, 21, 0.52); }
+
+@media (pointer: coarse) {
+  /* 移动端进一步稳：减轻大面积 blur/滤镜层重绘 */
+  .diary-cal-sheet {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+

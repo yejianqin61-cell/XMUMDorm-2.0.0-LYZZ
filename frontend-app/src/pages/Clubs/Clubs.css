@@ -1,0 +1,2085 @@
+.club-page {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 12px 12px calc(var(--tabbar-height) + var(--safe-bottom) + 24px);
+}
+
+/* 活动/帖子详情：子路由在 Layout 的 Outlet 下由 .app-main（overflow:auto）整体滚动，勿再限高+overflow:hidden 锁死 */
+.club-page.club-page--floating-comments {
+  display: block;
+  max-width: 860px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 12px calc(var(--tabbar-height, 72px) + var(--safe-bottom, 0px) + 96px);
+}
+
+.club-battle-page {
+  max-width: none;
+}
+
+/* 百团列表：占满底栏之上可视区，左栏全高锚定、右栏单独滚动 */
+.club-page.club-battle-page {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  max-width: none;
+  height: calc(100svh - var(--tabbar-height, 72px) - var(--safe-bottom, 0px) - var(--safe-top, 0px));
+  min-height: calc(100svh - var(--tabbar-height, 72px) - var(--safe-bottom, 0px) - var(--safe-top, 0px));
+  max-height: calc(100svh - var(--tabbar-height, 72px) - var(--safe-bottom, 0px) - var(--safe-top, 0px));
+  overflow: hidden;
+}
+
+.club-battle-shell {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
+  gap: 0;
+}
+
+.club-battle-sidebar {
+  flex: 0 0 100px;
+  align-self: stretch;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 8px 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  background: #f7f8fa;
+  border: none;
+  border-right: 1px solid #f3f4f6;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* My clubs (horizontal row) */
+.club-my-row {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 6px 2px 12px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+.club-my-row::-webkit-scrollbar { display: none; }
+
+.club-detail-utility-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.club-detail-utility-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  background: rgba(255, 255, 255, 0.92);
+  color: rgba(15, 23, 42, 0.82);
+  font-size: 12px;
+  font-weight: 800;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+}
+
+.club-detail-utility-btn:disabled {
+  opacity: 0.6;
+}
+
+.club-my-row--full {
+  flex-direction: column;
+  overflow-x: visible;
+}
+
+.club-my-card {
+  flex: 0 0 auto;
+  width: 160px;
+  border-radius: 18px;
+  padding: 12px;
+  background: rgba(255,255,255,0.88);
+  border: 1px solid rgba(0,0,0,0.06);
+  box-shadow: 0 8px 26px rgba(0,0,0,0.04);
+  text-decoration: none;
+  color: inherit;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+}
+
+.club-my-row--full .club-my-card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+}
+
+.club-my-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 999px;
+  overflow: hidden;
+  outline: 2px solid rgba(255,255,255,0.95);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+  background: rgba(0,0,0,0.04);
+  flex: 0 0 auto;
+}
+.club-my-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.club-my-main {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 6px;
+}
+
+.club-my-name {
+  font-weight: 950;
+  font-size: 13px;
+  color: rgba(17,24,39,0.92);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.club-my-meta {
+  font-size: 11px;
+  color: rgba(17,24,39,0.42);
+  font-weight: 800;
+}
+
+.club-battle-cat {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 9px 10px 9px 14px;
+  border-radius: 0;
+  font-weight: 900;
+  font-size: 12px;
+  color: rgba(17,24,39,0.62);
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.club-battle-cat.is-active {
+  color: rgba(11, 61, 145, 0.95);
+  font-weight: 950;
+  background: rgba(59,130,246,0.05);
+}
+
+.club-battle-cat.is-active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-radius: 0;
+  background: rgba(37, 99, 235, 0.95);
+  box-shadow: none;
+}
+
+.club-battle-grid-area {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  background: #fff;
+  padding: 10px 12px 14px;
+  box-sizing: border-box;
+}
+
+.club-battle-grid-top {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 0 0 10px;
+  flex-shrink: 0;
+}
+
+.club-battle-grid-title {
+  font-weight: 950;
+  font-size: 17px;
+  color: rgba(17,24,39,0.88);
+  letter-spacing: -0.02em;
+  text-align: left;
+}
+
+.club-battle-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid #f3f4f6;
+  background: #fff;
+  box-shadow: none;
+}
+
+.club-battle-search-input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font-size: 13px;
+}
+
+.club-battle-grid-area > .state-loading,
+.club-battle-grid-area > .state-error,
+.club-battle-grid-area > .state-empty {
+  flex-shrink: 0;
+}
+
+.club-battle-grid-area > .state-loading {
+  padding: 56px 12px 12px;
+}
+
+.club-battle-grid-area > .state-loading::before {
+  top: 8px;
+  width: 72px;
+  height: 72px;
+}
+
+.club-battle-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  align-content: start;
+}
+
+.club-battle-item {
+  box-sizing: border-box;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  padding: 12px 10px 10px;
+  border-radius: 16px;
+  text-decoration: none;
+  color: inherit;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 8px 26px rgba(15, 23, 42, 0.06);
+  min-width: 0;
+}
+
+.club-battle-logo {
+  width: 76%;
+  max-width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  flex-shrink: 0;
+  flex-grow: 0;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(0,0,0,0.04);
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
+  outline: none;
+}
+
+.club-battle-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.club-battle-logo-ph {
+  width: 100%;
+  height: 100%;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.85), rgba(255,255,255,0) 55%),
+    linear-gradient(135deg, rgba(56,189,248,0.20), rgba(167,139,250,0.18));
+}
+
+.club-battle-name {
+  font-weight: 850;
+  font-size: 13px;
+  line-height: 1.25;
+  color: rgba(17,24,39,0.92);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  text-align: center;
+  margin-top: 2px;
+}
+
+.club-battle-stat {
+  font-size: 11px;
+  line-height: 1.2;
+  color: rgba(17,24,39,0.45);
+  font-weight: 700;
+  text-align: center;
+}
+
+/* 不做“横向 sidebar”响应式：始终左侧竖栏 + 右侧两列 */
+
+.club-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0 10px;
+}
+
+.club-title {
+  font-size: 20px;
+  font-weight: 950;
+  letter-spacing: -0.02em;
+}
+
+.club-admin-create {
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: rgba(255,255,255,0.85);
+  color: rgba(0,0,0,0.75);
+  text-decoration: none;
+  font-weight: 950;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.04);
+}
+
+.club-top-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+/* Admin forms */
+.club-admin-form {
+  display: grid;
+  gap: 12px;
+}
+
+.club-field {
+  display: grid;
+  gap: 6px;
+}
+
+.club-label {
+  font-weight: 950;
+  color: rgba(0,0,0,0.72);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.club-input,
+.club-textarea {
+  width: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 14px;
+  padding: 10px 12px;
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.9);
+  box-sizing: border-box;
+}
+
+.club-textarea {
+  resize: vertical;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.club-grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.club-admin-submit {
+  border: 0;
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: #111827;
+  color: #fff;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+@media (max-width: 520px) {
+  .club-grid2 { grid-template-columns: 1fr; }
+}
+/* =========================
+ * Feature grid (top)
+ * ========================= */
+.club-feature-grid {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.club-feature {
+  flex: 1;
+  aspect-ratio: 1/1;
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid rgba(255,255,255,0.22);
+}
+
+.club-feature--purple {
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.26), rgba(232, 121, 249, 0.18));
+}
+
+.club-feature--blue {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.22), rgba(59, 130, 246, 0.18));
+}
+
+.club-feature-left {
+  min-width: 0;
+  z-index: 2;
+}
+
+.club-feature-title {
+  font-weight: 950;
+  font-size: 16px;
+  color: rgba(17,24,39,0.92);
+  letter-spacing: -0.02em;
+}
+
+.club-feature-sub {
+  margin-top: 6px;
+  font-size: 12px;
+  color: rgba(17,24,39,0.58);
+  font-weight: 800;
+}
+
+/* Abstract “3D icon” via CSS (no external assets) */
+.club-feature-art {
+  width: 58%;
+  height: 58%;
+  position: absolute;
+  right: -10%;
+  bottom: -10%;
+  border-radius: 26px;
+  transform: rotate(-10deg);
+  filter: drop-shadow(0 18px 30px rgba(0,0,0,0.10));
+  opacity: 0.95;
+}
+
+.club-feature-art--mega {
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.95), rgba(255,255,255,0) 58%),
+    linear-gradient(135deg, rgba(139,92,246,0.55), rgba(236,72,153,0.38));
+}
+
+.club-feature-art--badge {
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.95), rgba(255,255,255,0) 58%),
+    linear-gradient(135deg, rgba(56,189,248,0.55), rgba(59,130,246,0.38));
+}
+
+.club-feature::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(closest-side at 20% 15%, rgba(255,255,255,0.45), rgba(255,255,255,0) 55%);
+  pointer-events: none;
+}
+
+/* =========================
+ * Content filter (middle)
+ * ========================= */
+.club-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0 10px;
+}
+.club-filter-bar .club-filter {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.club-lifecycle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  gap: 6px;
+  padding: 2px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.06);
+}
+.club-lifecycle-pill {
+  border: 0;
+  cursor: pointer;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-weight: 850;
+  font-size: 12px;
+  color: rgba(17, 24, 39, 0.55);
+  background: transparent;
+}
+.club-lifecycle-pill.is-active {
+  background: #fff;
+  color: rgba(11, 61, 145, 0.95);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.club-filter {
+  display: flex;
+  gap: 18px;
+  overflow-x: auto;
+  padding: 4px 2px 10px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+.club-filter::-webkit-scrollbar { display: none; }
+
+.club-filter-tab {
+  flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  padding: 8px 2px;
+  font-weight: 950;
+  font-size: 14px;
+  color: rgba(17,24,39,0.48);
+  position: relative;
+  cursor: pointer;
+}
+
+.club-filter-tab.is-active {
+  color: rgba(11, 61, 145, 0.95);
+}
+
+.club-filter-tab.is-active::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 0px;
+  width: 10px;
+  height: 10px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.95), rgba(56,189,248,0.85) 45%, rgba(59,130,246,0.75));
+  box-shadow: 0 0 18px rgba(59,130,246,0.20);
+}
+
+/* =========================
+ * Feed (bottom) — horizontal list cards
+ * ========================= */
+.club-feed-list {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 18px;
+  border: 1px solid rgba(0,0,0,0.06);
+  overflow: hidden;
+}
+
+.club-hcard {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  text-decoration: none;
+  color: inherit;
+  background: #fff;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+.club-hcard:last-child { border-bottom: 0; }
+
+.club-hcard-img {
+  width: 100px;
+  height: 100px;
+  border-radius: 16px;
+  overflow: hidden;
+  flex: 0 0 auto;
+  background: rgba(0,0,0,0.04);
+  position: relative;
+}
+.club-hcard-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.club-hcard-img-ph {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.85), rgba(255,255,255,0) 55%),
+    linear-gradient(135deg, rgba(56,189,248,0.20), rgba(167,139,250,0.18));
+}
+
+.club-hcard-body {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 6px;
+}
+
+.club-hcard-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.club-hcard-tag {
+  flex: 0 0 auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 950;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(17,24,39,0.06);
+  color: rgba(17,24,39,0.72);
+}
+.club-hcard-tag.is-activity {
+  background: rgba(59,130,246,0.10);
+  color: rgba(29,78,216,0.95);
+}
+.club-hcard-tag.is-post {
+  background: rgba(16,185,129,0.10);
+  color: rgba(4,120,87,0.95);
+}
+
+.club-hcard-title {
+  font-weight: 950;
+  font-size: 14px;
+  color: #111827;
+  line-height: 1.25;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.club-hcard-meta {
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(0,0,0,0.48);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.club-hcard-desc {
+  font-size: 12px;
+  color: rgba(0,0,0,0.62);
+  line-height: 1.35;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.club-hcard-stats {
+  display: flex;
+  gap: 14px;
+  color: rgba(0,0,0,0.55);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.club-hcard-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.club-list {
+  display: grid;
+  gap: 10px;
+}
+
+.club-feed {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 18px;
+  background: #fff;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.05);
+  border: 1px solid rgba(0,0,0,0.06);
+}
+
+.club-feed-cover {
+  width: 96px;
+  height: 96px;
+  border-radius: 14px;
+  object-fit: cover;
+  background: rgba(0,0,0,0.04);
+}
+
+.club-feed-body {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.club-feed-type {
+  font-size: 11px;
+  font-weight: 950;
+  color: rgba(0,0,0,0.45);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.club-feed-title {
+  font-size: 15px;
+  font-weight: 950;
+  color: #111827;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
+}
+
+.club-feed-sub {
+  font-size: 12px;
+  color: rgba(0,0,0,0.55);
+  overflow-wrap: anywhere;
+}
+
+.club-feed-stats {
+  display: flex;
+  gap: 14px;
+  color: rgba(0,0,0,0.55);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.club-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 420px) {
+  .club-feature-grid {
+    gap: 10px;
+  }
+  .club-feature {
+    padding: 14px;
+  }
+}
+
+.club-card {
+  padding: 12px;
+  border-radius: 18px;
+  background: #fff;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.05);
+  border: 1px solid rgba(0,0,0,0.06);
+}
+
+.club-card-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.club-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  object-fit: cover;
+  background: rgba(0,0,0,0.04);
+  flex: 0 0 auto;
+}
+.club-avatar--ph {
+  background: rgba(0,0,0,0.06);
+}
+
+.club-card-main {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 4px;
+}
+
+.club-card-name {
+  font-weight: 950;
+  color: #111827;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.club-card-desc {
+  font-size: 12px;
+  color: rgba(0,0,0,0.55);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.club-followers {
+  font-weight: 950;
+  color: rgba(0,0,0,0.55);
+  font-size: 12px;
+}
+
+.club-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(0,0,0,0.06);
+  background: rgba(255,255,255,0.85);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.04);
+  margin-bottom: 12px;
+}
+.club-search-input {
+  flex: 1;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+}
+
+.club-profile-top {
+  display: grid;
+  grid-template-columns: 44px 1fr 60px;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0 10px;
+}
+
+.club-back {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: #fff;
+  cursor: pointer;
+}
+
+.club-profile-title {
+  font-size: 16px;
+  font-weight: 950;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.club-profile-link {
+  text-decoration: none;
+  color: rgba(0,0,0,0.6);
+  font-weight: 900;
+  text-align: right;
+}
+
+.club-profile-card {
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 18px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.05);
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.club-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(17,24,39,0.06);
+  color: rgba(17,24,39,0.72);
+  font-weight: 950;
+  font-size: 12px;
+  width: fit-content;
+}
+
+.club-admin-panel {
+  margin-top: 6px;
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(255,255,255,0.78);
+}
+
+.club-admin-panel .club-admin-h {
+  font-weight: 950;
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: rgba(17,24,39,0.88);
+}
+
+.club-admin-toolbar {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.club-admin-toolbtn {
+  border: 1px solid rgba(0,0,0,0.08);
+  background: rgba(255,255,255,0.92);
+  border-radius: 12px;
+  padding: 10px 6px;
+  font-weight: 800;
+  font-size: 12px;
+  line-height: 1.2;
+  cursor: pointer;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: rgba(17,24,39,0.78);
+  min-height: 64px;
+  box-sizing: border-box;
+}
+
+.club-admin-toolbtn.is-on {
+  border-color: rgba(59, 130, 246, 0.42);
+  background: rgba(59, 130, 246, 0.08);
+  color: rgba(30, 64, 175, 0.95);
+}
+
+a.club-admin-toolbtn--link {
+  text-decoration: none;
+  color: inherit;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+/* 发布活动页 */
+.publish-activity-page .publish-activity-hint {
+  padding: 12px 4px;
+  font-size: 14px;
+  color: rgba(17, 24, 39, 0.65);
+  line-height: 1.5;
+}
+
+.publish-activity-club {
+  font-weight: 950;
+  font-size: 16px;
+  margin-bottom: 12px;
+  color: rgba(17, 24, 39, 0.9);
+}
+
+.publish-activity-form {
+  margin-top: 4px;
+}
+
+.publish-activity-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.publish-activity-thumb {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.publish-activity-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.publish-activity-thumb-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.publish-activity-add-img {
+  width: 88px;
+  height: 88px;
+  border-radius: 12px;
+  border: 1px dashed rgba(59, 130, 246, 0.45);
+  background: rgba(59, 130, 246, 0.06);
+  color: rgba(37, 99, 235, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.publish-activity-file-input {
+  display: none;
+}
+
+.publish-activity-preview-block {
+  margin-top: 8px;
+}
+
+.publish-activity-preview-block .post-detail-media {
+  margin-top: 8px;
+}
+
+.club-admin-panel-body {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0,0,0,0.06);
+}
+
+.club-admin-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.club-admin-h {
+  font-weight: 950;
+}
+
+.club-admin-toggle {
+  border: 1px solid rgba(0,0,0,0.08);
+  background: rgba(255,255,255,0.9);
+  border-radius: 999px;
+  padding: 8px 10px;
+  font-weight: 950;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.club-admin-subh {
+  margin-top: 10px;
+  font-weight: 950;
+  font-size: 13px;
+  color: rgba(0,0,0,0.72);
+}
+
+.club-admin-subh--first {
+  margin-top: 0;
+}
+
+.club-admin-member-row {
+  display: grid;
+  grid-template-columns: 1fr 110px 92px;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.club-input--sm {
+  padding: 10px 10px;
+}
+
+.club-admin-mini {
+  border: 1px solid rgba(0,0,0,0.08);
+  background: rgba(17,24,39,0.06);
+  border-radius: 14px;
+  padding: 10px 10px;
+  font-weight: 950;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.club-admin-search-list {
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.club-admin-search-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,0.06);
+  background: rgba(255,255,255,0.86);
+}
+
+.club-admin-search-name {
+  font-weight: 950;
+  color: rgba(17,24,39,0.88);
+}
+
+.club-admin-search-email {
+  font-size: 12px;
+  color: rgba(0,0,0,0.5);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.club-admin-activity {
+  margin: 10px 0 12px;
+  border: 1px dashed rgba(0,0,0,0.10);
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(0,0,0,0.02);
+}
+
+.club-admin-activity-row {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+@media (max-width: 520px) {
+  .club-admin-member-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.club-profile-head {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.club-profile-avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 18px;
+  object-fit: cover;
+  background: rgba(0,0,0,0.04);
+}
+
+.club-profile-head-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.club-follow-btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: rgba(255,255,255,0.85);
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.club-follow-btn.is-on {
+  background: rgba(17,24,39,0.08);
+  border-color: rgba(17,24,39,0.16);
+  color: rgba(17,24,39,0.9);
+}
+
+.club-profile-name {
+  font-weight: 950;
+  font-size: 18px;
+  color: #111827;
+}
+
+.club-profile-followers {
+  margin-top: 2px;
+  font-size: 12px;
+  color: rgba(0,0,0,0.55);
+  font-weight: 900;
+}
+
+.club-profile-desc {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  color: rgba(0,0,0,0.75);
+  line-height: 1.55;
+  background: rgba(0,0,0,0.02);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.club-join {
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 14px;
+  padding: 12px;
+  background: rgba(255,255,255,0.8);
+}
+.club-join-title {
+  font-weight: 950;
+  margin-bottom: 6px;
+}
+.club-join-row {
+  color: rgba(0,0,0,0.75);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.club-join-link {
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: rgba(17,24,39,0.06);
+  color: rgba(0,0,0,0.75);
+  text-decoration: none;
+  font-weight: 950;
+}
+
+.club-section {
+  margin-top: 12px;
+}
+
+.club-section--members {
+  margin-top: 12px;
+}
+
+.club-members-preview {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 12px 10px 12px;
+  box-sizing: border-box;
+}
+
+.club-members-preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 0 4px;
+}
+
+.club-members-preview-title {
+  font-weight: 950;
+  font-size: 15px;
+  color: rgba(17, 24, 39, 0.9);
+}
+
+.club-members-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  background: rgba(17, 24, 39, 0.08);
+  color: rgba(17, 24, 39, 0.65);
+}
+
+.club-members-preview .club-mini-list {
+  margin-top: 0;
+}
+
+.club-members-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-weight: 950;
+  font-size: 14px;
+  text-decoration: none;
+  color: rgba(37, 99, 235, 0.95);
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.22);
+}
+
+.club-members-page-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.club-members-page-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  object-fit: cover;
+  background: rgba(0, 0, 0, 0.04);
+  flex-shrink: 0;
+}
+
+.club-members-page-name {
+  font-weight: 950;
+  font-size: 16px;
+  color: rgba(17, 24, 39, 0.92);
+}
+
+.club-members-page-meta {
+  margin-top: 4px;
+  font-size: 13px;
+  color: rgba(17, 24, 39, 0.5);
+  font-weight: 700;
+}
+
+.club-mini-list--members-page {
+  margin-top: 4px;
+}
+
+.club-section-h {
+  font-weight: 950;
+  margin: 6px 2px 10px;
+}
+.club-mini-empty {
+  color: rgba(0,0,0,0.5);
+  font-size: 13px;
+  padding: 10px 2px;
+}
+.club-mini-list {
+  display: grid;
+  gap: 10px;
+}
+.club-mini-card {
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 16px;
+  padding: 12px;
+}
+.club-mini-card--row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+a.club-mini-card-main {
+  flex: 1;
+  min-width: 0;
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+a.club-mini-card--link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  box-sizing: border-box;
+}
+.club-mini-title {
+  font-weight: 950;
+  color: #111827;
+  overflow-wrap: anywhere;
+}
+.club-mini-sub {
+  margin-top: 6px;
+  font-size: 12px;
+  color: rgba(0,0,0,0.55);
+}
+.club-mini-link {
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  font-weight: 950;
+  color: rgba(17,24,39,0.8);
+}
+
+.club-detail-hero-wrap {
+  display: block;
+  width: 100%;
+  padding: 0;
+  margin: 0 0 10px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 18px;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.club-detail-carousel-wrap {
+  margin-bottom: 10px;
+  padding: 0 4px;
+}
+
+.club-detail-hero {
+  width: 100%;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+  border-radius: 18px;
+  display: block;
+  border: 1px solid rgba(0,0,0,0.06);
+  background: rgba(0,0,0,0.04);
+}
+
+.club-detail-desc {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  color: rgba(0,0,0,0.76);
+  line-height: 1.55;
+}
+
+.club-detail-meta {
+  margin-top: 8px;
+  display: grid;
+  gap: 6px;
+  color: rgba(0,0,0,0.55);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.club-detail-loc {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.activity-register-bar {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: linear-gradient(135deg, rgba(26, 115, 232, 0.08), rgba(255, 255, 255, 0.96));
+}
+
+.activity-register-bar__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.activity-register-bar__count {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.activity-register-bar__count-value {
+  color: rgba(15, 23, 42, 0.96);
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.activity-register-bar__count-label,
+.activity-register-bar__deadline {
+  color: rgba(15, 23, 42, 0.62);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.activity-register-bar__button {
+  flex-shrink: 0;
+  min-width: 124px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.activity-register-bar__button.is-primary {
+  background: linear-gradient(180deg, #0f7aea, #0557b1);
+  color: #fff;
+  box-shadow: 0 12px 26px rgba(5, 87, 177, 0.26);
+}
+
+.activity-register-bar__button.is-secondary {
+  background: rgba(255, 255, 255, 0.92);
+  color: rgba(15, 23, 42, 0.82);
+  border-color: rgba(15, 23, 42, 0.12);
+}
+
+.activity-register-bar__button:disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.club-detail-actions {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.club-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 800;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  background: rgba(254, 242, 242, 0.96);
+  color: rgba(185, 28, 28, 0.95);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.club-delete-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.club-delete-btn--compact {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.club-delete-btn--icon-only {
+  padding: 8px;
+  border-radius: 12px;
+}
+
+.club-like-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: rgba(255,255,255,0.8);
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.club-like-btn.is-on {
+  background: rgba(239,68,68,0.10);
+  border-color: rgba(239,68,68,0.18);
+  color: rgba(153,27,27,0.95);
+}
+
+.club-like-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(0,0,0,0.55);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+@media (max-width: 640px) {
+  .activity-register-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .activity-register-bar__button {
+    width: 100%;
+  }
+}
+
+.club-img-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.club-img-grid-cell {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  text-align: left;
+}
+
+.club-img {
+  width: 100%;
+  aspect-ratio: 1/1;
+  object-fit: cover;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,0.06);
+  background: rgba(0,0,0,0.04);
+}
+
+.club-wrap {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+@media (max-width: 520px) {
+  .club-img-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ---------- 社团活动 / 日常帖 评论 ---------- */
+.club-comments {
+  margin-top: 16px;
+  padding: 14px 14px 8px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.04);
+}
+
+/* 浮动输入模式（无 fillVertical 时保留底部留白） */
+.club-comments--floating:not(.club-comments-container) {
+  margin-top: 16px;
+  margin-bottom: 0;
+  padding: 14px 14px calc(72px + env(safe-area-inset-bottom, 0px));
+  border-radius: 18px;
+}
+
+/* 活动/帖子详情：评论白盒随内容增高，整页与主内容一起在 .app-main 内滚动 */
+.club-page--floating-comments .club-comments-container {
+  flex: 0 0 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+  margin-top: 12px;
+  margin-bottom: 0;
+  padding: 14px 14px 0;
+  border-radius: 18px 18px 24px 24px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.06);
+}
+
+.club-page--floating-comments .club-comments-container > .club-comments-title,
+.club-page--floating-comments .club-comments-container > .club-comments-error {
+  flex-shrink: 0;
+}
+
+/* 0 条评论时：白盒底部略加高，避免 FAB 压住空态文案（整页由 .app-main 滚动，不宜过大） */
+.club-page--floating-comments .club-comments-container:has(.club-comments-empty--fill) {
+  padding-bottom: 120px;
+}
+
+.club-comments-list--flush {
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.club-page--floating-comments .club-comments-list--stretch {
+  flex: 0 0 auto;
+  min-height: 0;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.club-page--floating-comments .club-comments-list--stretch .club-comments-item {
+  flex: 0 0 auto;
+}
+
+.club-page--floating-comments .club-comments-list--stretch .club-comments-empty--fill {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px 72px;
+  text-align: center;
+  min-height: 140px;
+}
+
+.club-page--floating-comments .club-comments-loading--fill {
+  flex: 0 0 auto;
+  min-height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px 64px;
+}
+
+.club-comments-title {
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 950;
+  line-height: 1.25;
+  color: #111827;
+  overflow-wrap: anywhere;
+}
+
+.club-comments-error {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: rgba(185, 28, 28, 0.95);
+}
+
+.club-comments-loading {
+  padding: 12px 0;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.club-comments-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.club-comments-empty {
+  list-style: none;
+  margin: 0;
+  padding: 10px 2px 0;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.club-comments-item {
+  list-style: none;
+}
+
+.club-comments-thread {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.club-comments-thread--reply {
+  margin-top: 10px;
+  padding-left: 8px;
+  border-left: 2px solid rgba(0, 0, 0, 0.06);
+}
+
+.club-comments-avatar {
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.club-comments-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.club-comments-avatar img.is-default {
+  padding: 6px;
+  object-fit: contain;
+  opacity: 0.85;
+}
+
+.club-comments-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.club-comments-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.club-comments-name {
+  font-size: 13px;
+  font-weight: 900;
+  color: rgba(17, 24, 39, 0.88);
+}
+
+.club-comments-reply,
+.club-comments-delete {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(59, 130, 246, 0.95);
+  cursor: pointer;
+}
+
+.club-comments-delete {
+  color: rgba(107, 114, 128, 0.95);
+}
+
+.club-comments-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: rgba(17, 24, 39, 0.88);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.club-comments-replies {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.club-comments-replying {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 10px 12px 6px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(59, 130, 246, 0.08);
+  font-size: 12px;
+  color: rgba(30, 64, 175, 0.95);
+}
+
+.club-comments-replying-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.club-comments-replying-cancel {
+  flex: 0 0 auto;
+  border: none;
+  background: none;
+  font-weight: 800;
+  cursor: pointer;
+  color: rgba(37, 99, 235, 0.95);
+}
+
+.club-comments-replying--sheet {
+  margin: 0 0 12px;
+}
+
+/* ---------- 活动详情：FAB + 底部抽屉评论 ---------- */
+.club-comment-fab {
+  position: fixed;
+  right: 20px;
+  /* 贴在 Tab 栏上沿之上；0 评论时由 --club-fab-empty-lift 再上移 25px（JS 写入 html） */
+  bottom: calc(10px + var(--tabbar-height, 72px) + var(--safe-bottom, 0px) + 12px + var(--club-fab-empty-lift, 0px));
+  z-index: 1200;
+  width: 56px;
+  height: 56px;
+  border: none;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  background: linear-gradient(135deg, #2563eb 0%, #06b6d4 55%, #3b82f6 100%);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+.club-comment-fab:active {
+  transform: scale(0.94);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+@keyframes club-fab-ring {
+  0% {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 0 rgba(37, 99, 235, 0.45);
+  }
+  70% {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 14px rgba(37, 99, 235, 0);
+  }
+  100% {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 0 rgba(37, 99, 235, 0);
+  }
+}
+
+.club-comment-fab.is-pulse {
+  animation: club-fab-ring 0.38s ease-out 1;
+}
+
+.club-comment-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1290;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  background: rgba(15, 23, 42, 0.38);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.club-comment-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1300;
+  max-width: 860px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding: 10px 14px 0;
+  border-radius: 20px 20px 0 0;
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: none;
+  box-shadow: 0 -12px 40px rgba(15, 23, 42, 0.12);
+  animation: club-sheet-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes club-sheet-in {
+  from {
+    transform: translateY(110%);
+    opacity: 0.85;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.club-comment-sheet-handle {
+  width: 40px;
+  height: 4px;
+  margin: 4px auto 12px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.club-comment-sheet-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.club-comment-sheet-textarea {
+  flex: 1;
+  min-width: 0;
+  min-height: 96px;
+  max-height: 40vh;
+  resize: vertical;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  font-size: 15px;
+  line-height: 1.45;
+  font-family: inherit;
+  outline: none;
+  background: #fff;
+  color: rgba(17, 24, 39, 0.92);
+}
+
+.club-comment-sheet-textarea:focus {
+  border-color: rgba(37, 99, 235, 0.55);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+}
+
+.club-comment-sheet-send {
+  flex: 0 0 auto;
+  align-self: stretch;
+  min-height: 44px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 900;
+  font-size: 15px;
+  cursor: pointer;
+  color: #fff;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+}
+
+.club-comment-sheet-send:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.club-comments-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 4px;
+  padding: 8px 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.club-comments-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  outline: none;
+}
+
+.club-comments-send {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: none;
+  background: rgba(17, 24, 39, 0.92);
+  color: #fff;
+  cursor: pointer;
+}
+
+.club-comments-send:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+

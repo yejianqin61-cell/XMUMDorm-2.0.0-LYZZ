@@ -1,0 +1,698 @@
+/* V3.0 食堂工具型首页 */
+.canteen-home-page {
+  min-height: 100%;
+  padding: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: var(--post-ios-bg-grouped, #f2f2f7);
+}
+
+.canteen-home-inner {
+  padding: 12px 16px;
+  padding-bottom: calc(var(--tabbar-height, 72px) + var(--safe-bottom, 0px) + 24px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ====== 通用区块 ====== */
+.canteen-section {
+  margin-top: 8px;
+}
+
+.canteen-section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.canteen-section-title {
+  margin: 0 0 10px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--post-ios-label);
+  letter-spacing: -0.02em;
+}
+
+.canteen-section-more {
+  font-size: 13px;
+  color: var(--post-ios-accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* ====== 搜索栏 ====== */
+.canteen-search-bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 4px 0 8px;
+}
+
+.canteen-search-bar-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--post-ios-card);
+  border-radius: var(--post-ios-radius-md);
+  padding: 10px 14px;
+  box-shadow: var(--post-ios-shadow-card);
+  border: 1px solid var(--post-ios-separator);
+}
+
+.canteen-search-bar-icon {
+  color: var(--post-ios-tertiary-label);
+  flex-shrink: 0;
+}
+
+.canteen-search-bar-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--post-ios-label);
+  background: transparent;
+}
+.canteen-search-bar-input::placeholder {
+  color: var(--post-ios-tertiary-label);
+}
+.canteen-search-bar-input::-webkit-search-decoration,
+.canteen-search-bar-input::-webkit-search-cancel-button {
+  display: none;
+}
+
+/* ====== 轮播管理（管理员） ====== */
+.canteen-banner-admin-page .canteen-home-inner {
+  padding-bottom: 32px;
+}
+.canteen-banner-admin-hint {
+  font-size: 13px;
+  color: var(--post-ios-secondary-label);
+  margin: 0 0 12px;
+  line-height: 1.45;
+}
+.canteen-muted {
+  color: var(--post-ios-tertiary-label);
+  font-size: 13px;
+}
+.canteen-error {
+  color: var(--post-ios-red);
+  font-size: 13px;
+}
+.canteen-banner-admin-list {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.canteen-banner-admin-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: var(--post-ios-radius-lg);
+  background: var(--post-ios-secondary-bg);
+  box-shadow: var(--post-ios-shadow-card);
+}
+.canteen-banner-admin-thumb {
+  width: 72px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+  background: var(--post-ios-fill);
+}
+.canteen-banner-admin-item-body {
+  flex: 1;
+  min-width: 0;
+}
+.canteen-banner-admin-item-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--post-ios-label);
+}
+.canteen-banner-admin-inactive {
+  margin-left: 6px;
+  font-size: 10px;
+  color: var(--post-ios-red);
+  border: 1px solid var(--post-ios-red);
+  border-radius: 4px;
+  padding: 0 4px;
+}
+.canteen-banner-admin-item-sub,
+.canteen-banner-admin-item-meta {
+  font-size: 12px;
+  color: var(--post-ios-secondary-label);
+  margin-top: 2px;
+}
+.canteen-banner-admin-item-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.canteen-banner-admin-item-actions button {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--post-ios-separator);
+  background: var(--post-ios-bg);
+  color: var(--post-ios-accent);
+  cursor: pointer;
+}
+.canteen-banner-admin-del {
+  color: var(--post-ios-red) !important;
+}
+.canteen-banner-admin-add {
+  width: 100%;
+  margin-bottom: 16px;
+  padding: 10px;
+  border-radius: var(--post-ios-radius-lg);
+  border: 1px dashed var(--post-ios-separator);
+  background: transparent;
+  color: var(--post-ios-accent);
+  font-weight: 600;
+  cursor: pointer;
+}
+.canteen-banner-admin-form {
+  padding: 14px;
+  border-radius: var(--post-ios-radius-lg);
+  background: var(--post-ios-secondary-bg);
+  box-shadow: var(--post-ios-shadow-card);
+}
+.canteen-banner-admin-form-title {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 700;
+}
+.canteen-banner-admin-preview {
+  width: 100%;
+  max-height: 140px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  background: var(--post-ios-fill);
+}
+.canteen-banner-admin-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--post-ios-secondary-label);
+  margin-bottom: 10px;
+}
+.canteen-banner-admin-label input,
+.canteen-banner-admin-label select {
+  font-size: 14px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--post-ios-separator);
+  background: var(--post-ios-bg);
+  color: var(--post-ios-label);
+}
+.canteen-banner-admin-check {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+.canteen-banner-admin-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+.canteen-banner-admin-save {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 10px;
+  background: var(--post-ios-accent);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+.canteen-banner-admin-save:disabled {
+  opacity: 0.6;
+}
+.canteen-banner-admin-cancel {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--post-ios-separator);
+  background: var(--post-ios-bg);
+  color: var(--post-ios-label);
+  cursor: pointer;
+}
+
+@keyframes canteen-shimmer {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ====== 区域宫格 ====== */
+.canteen-region-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.canteen-region-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 4px 10px;
+  border-radius: var(--post-ios-radius-md);
+  background: var(--post-ios-card);
+  box-shadow: var(--post-ios-shadow-card);
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 140ms ease;
+}
+.canteen-region-item:active {
+  transform: scale(0.94);
+}
+
+.canteen-region-skeleton {
+  height: 80px;
+  background: var(--post-ios-fill);
+  animation: canteen-shimmer 1.5s infinite;
+}
+
+.canteen-region-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--post-ios-fill);
+}
+
+.canteen-region-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.canteen-region-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--post-ios-label);
+}
+
+/* ====== 排行榜 ====== */
+.canteen-rank-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 8px;
+  background: var(--post-ios-fill);
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.canteen-rank-tab {
+  flex: 1;
+  text-align: center;
+  padding: 7px 0;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: var(--post-ios-secondary-label);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+.canteen-rank-tab--active {
+  background: var(--post-ios-card);
+  color: var(--post-ios-label);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.canteen-rank-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.canteen-rank-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--post-ios-separator);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.canteen-rank-item:last-child {
+  border-bottom: none;
+}
+.canteen-rank-item:active {
+  opacity: 0.7;
+}
+
+.canteen-rank-badge {
+  font-size: 13px;
+  font-weight: 800;
+  width: 22px;
+  text-align: center;
+  color: var(--post-ios-secondary-label);
+}
+.canteen-rank-badge--1 { color: #f59e0b; }
+.canteen-rank-badge--2 { color: #94a3b8; }
+.canteen-rank-badge--3 { color: #b45309; }
+
+.canteen-rank-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--post-ios-fill);
+  flex-shrink: 0;
+}
+
+.canteen-rank-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.canteen-rank-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.canteen-rank-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--post-ios-label);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.canteen-rank-meta {
+  font-size: 12px;
+  color: var(--post-ios-secondary-label);
+  margin-top: 1px;
+}
+
+/* ====== 今天吃什么 ====== */
+.canteen-pick-init {
+  text-align: center;
+  padding: 16px;
+  background: var(--post-ios-card);
+  border-radius: var(--post-ios-radius-md);
+  box-shadow: var(--post-ios-shadow-card);
+}
+
+.canteen-pick-text {
+  font-size: 15px;
+  color: var(--post-ios-secondary-label);
+  margin: 0 0 12px;
+}
+
+.canteen-pick-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 28px;
+  border-radius: 999px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 140ms ease;
+}
+.canteen-pick-btn:active {
+  transform: scale(0.95);
+}
+
+.canteen-pick-loading {
+  text-align: center;
+  padding: 24px;
+  background: var(--post-ios-card);
+  border-radius: var(--post-ios-radius-md);
+}
+.canteen-pick-dice {
+  font-size: 36px;
+  animation: canteen-dice-roll 0.6s ease infinite;
+  display: block;
+}
+@keyframes canteen-dice-roll {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(12deg) scale(1.1); }
+}
+
+.canteen-pick-result {
+  text-align: center;
+}
+
+.canteen-pick-card {
+  border-radius: var(--post-ios-radius-md);
+  overflow: hidden;
+  background: var(--post-ios-card);
+  box-shadow: var(--post-ios-shadow-card);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.canteen-pick-card:active {
+  opacity: 0.85;
+}
+
+.canteen-pick-img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  display: block;
+  background: var(--post-ios-fill);
+}
+
+.canteen-pick-info {
+  padding: 10px 14px;
+  text-align: left;
+}
+
+.canteen-pick-name {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--post-ios-label);
+}
+
+.canteen-pick-shop {
+  display: block;
+  font-size: 12px;
+  color: var(--post-ios-secondary-label);
+  margin-top: 2px;
+}
+
+.canteen-pick-score {
+  display: block;
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.canteen-pick-reroll {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 8px 20px;
+  border-radius: 999px;
+  border: 1px solid var(--post-ios-separator);
+  background: var(--post-ios-card);
+  color: var(--post-ios-label);
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+}
+.canteen-pick-reroll:active {
+  background: var(--post-ios-fill);
+}
+
+/* ====== 吃货广场 ====== */
+.canteen-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.canteen-section-head .canteen-section-title {
+  margin: 0;
+}
+
+.canteen-food-compose-btn {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.canteen-food-compose-btn:active {
+  opacity: 0.88;
+}
+
+.canteen-food-hint {
+  margin: 0 0 10px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--post-ios-secondary-label);
+}
+
+.canteen-pick-empty {
+  text-align: center;
+  padding: 16px;
+  background: var(--post-ios-card);
+  border-radius: var(--post-ios-radius-md);
+  color: var(--post-ios-secondary-label);
+  font-size: 14px;
+}
+
+.canteen-pick-empty p {
+  margin: 0 0 10px;
+}
+
+.canteen-food-empty {
+  text-align: center;
+  padding: 20px;
+  background: var(--post-ios-card);
+  border-radius: var(--post-ios-radius-md);
+  color: var(--post-ios-secondary-label);
+}
+.canteen-food-empty p {
+  margin: 0 0 10px;
+  font-size: 14px;
+}
+.canteen-food-write-btn {
+  display: inline-block;
+  padding: 8px 16px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.canteen-food-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.canteen-food-item {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  border-radius: var(--post-ios-radius-md);
+  background: var(--post-ios-card);
+  box-shadow: var(--post-ios-shadow-card);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.canteen-food-item:active {
+  opacity: 0.8;
+}
+
+.canteen-food-cover {
+  width: 72px;
+  height: 72px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--post-ios-fill);
+}
+
+.canteen-food-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.canteen-food-excerpt {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--post-ios-label);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.canteen-food-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--post-ios-tertiary-label);
+}
+
+.canteen-food-author {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.canteen-food-avatar {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.canteen-food-stats {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.canteen-food-more {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid var(--post-ios-separator);
+  border-radius: var(--post-ios-radius-md);
+  background: var(--post-ios-card);
+  color: var(--post-ios-secondary-label);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+}
+.canteen-food-more:active {
+  background: var(--post-ios-fill);
+}
+
+/* ====== 底部 ====== */
+.canteen-home-footer {
+  text-align: center;
+  padding: 8px 0;
+}
+
+.canteen-home-map-link {
+  font-size: 13px;
+  color: var(--post-ios-tertiary-label);
+  text-decoration: none;
+}

@@ -1,0 +1,243 @@
+/* 发帖页：与树洞 / 详情同一 iOS 视觉体系 */
+
+.postnew-page {
+  padding: 12px 12px 24px;
+  min-height: 100%;
+  background: var(--post-ios-bg-grouped, #f2f2f7);
+  font-family: var(--post-ios-font, inherit);
+  -webkit-font-smoothing: antialiased;
+}
+
+.postnew-error {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  font-size: 15px;
+  line-height: 1.35;
+  color: var(--post-ios-red, #ff3b30);
+  background: rgba(255, 59, 48, 0.08);
+  border-radius: var(--post-ios-radius-sm, 10px);
+}
+
+.postnew-anonymous-hint {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  font-size: 15px;
+  line-height: 1.4;
+  letter-spacing: -0.02em;
+  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
+  border-radius: var(--post-ios-radius-md, 12px);
+  border-left: 4px solid var(--post-ios-accent, #007aff);
+  background: var(--post-ios-card, #fff);
+  box-shadow: var(--post-ios-shadow-card, 0 1px 2px rgba(0, 0, 0, 0.04));
+  border: 0.5px solid var(--post-ios-separator, rgba(60, 60, 67, 0.12));
+  border-left-width: 4px;
+}
+
+.postnew-form {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  background: var(--post-ios-card, #fff);
+  border-radius: var(--post-ios-radius-md, 12px);
+  padding: 18px 16px 20px;
+  box-shadow: var(--post-ios-shadow-card, 0 1px 2px rgba(0, 0, 0, 0.04));
+  border: 0.5px solid var(--post-ios-separator, rgba(60, 60, 67, 0.12));
+}
+
+.postnew-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.postnew-label {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
+  text-transform: none;
+}
+
+.postnew-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border: none;
+  border-radius: var(--post-ios-radius-sm, 10px);
+  font-size: 17px;
+  font-family: var(--post-ios-font, inherit);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  background: var(--post-ios-fill, rgba(118, 118, 128, 0.12));
+  color: var(--post-ios-label, rgba(0, 0, 0, 0.88));
+}
+
+.postnew-input::placeholder {
+  color: var(--post-ios-tertiary-label, rgba(60, 60, 67, 0.36));
+}
+
+.postnew-input:focus {
+  outline: none;
+  background: var(--post-ios-fill-pressed, rgba(118, 118, 128, 0.18));
+}
+
+.postnew-textarea {
+  width: 100%;
+  min-height: 140px;
+  padding: 12px 14px;
+  border: none;
+  border-radius: var(--post-ios-radius-sm, 10px);
+  font-size: 17px;
+  font-family: var(--post-ios-font, inherit);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+  resize: vertical;
+  background: var(--post-ios-fill, rgba(118, 118, 128, 0.12));
+  color: var(--post-ios-label, rgba(0, 0, 0, 0.88));
+}
+
+.postnew-textarea::placeholder {
+  color: var(--post-ios-tertiary-label, rgba(60, 60, 67, 0.36));
+}
+
+.postnew-textarea:focus {
+  outline: none;
+  background: var(--post-ios-fill-pressed, rgba(118, 118, 128, 0.18));
+}
+
+.postnew-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.postnew-image-wrap {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  border-radius: var(--post-ios-radius-sm, 10px);
+  overflow: hidden;
+  background: var(--post-ios-fill, rgba(118, 118, 128, 0.12));
+}
+
+.postnew-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.postnew-image-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+.postnew-image-add {
+  width: 96px;
+  height: 96px;
+  border: none;
+  border-radius: var(--post-ios-radius-sm, 10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: var(--post-ios-fill, rgba(118, 118, 128, 0.12));
+  transition: background 0.15s ease;
+}
+
+@media (hover: hover) {
+  .postnew-image-add:hover {
+    background: var(--post-ios-fill-pressed, rgba(118, 118, 128, 0.18));
+  }
+}
+
+.postnew-file-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+}
+
+.postnew-image-add-inner {
+  font-size: 32px;
+  font-weight: 300;
+  color: var(--post-ios-tertiary-label, rgba(60, 60, 67, 0.36));
+}
+
+@media (hover: hover) {
+  .postnew-image-add:hover .postnew-image-add-inner {
+    color: var(--post-ios-accent, #007aff);
+  }
+}
+
+.postnew-submit {
+  width: 100%;
+  padding: 14px 16px;
+  border: none;
+  border-radius: var(--post-ios-radius-sm, 10px);
+  background: var(--post-ios-accent, #007aff);
+  color: #fff;
+  font-family: var(--post-ios-font, inherit);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (hover: hover) {
+  .postnew-submit:hover:not(:disabled) {
+    filter: brightness(1.05);
+  }
+}
+
+.postnew-submit:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.postnew-tag-hint {
+  margin: 0 0 8px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
+}
+
+.postnew-tag-pool {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.postnew-tag-chip {
+  padding: 8px 14px;
+  border-radius: 980px;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  border: none;
+  background: var(--post-ios-fill, rgba(118, 118, 128, 0.12));
+  color: var(--post-ios-accent, #007aff);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.postnew-tag-chip--on {
+  background: var(--post-ios-accent-subtle, rgba(0, 122, 255, 0.22));
+  color: var(--post-ios-accent, #007aff);
+  box-shadow: inset 0 0 0 2px var(--post-ios-accent, #007aff);
+}

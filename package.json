@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
+    "dev:web": "cd frontend && npm run dev",
+    "dev:app": "cd frontend-app && npm run dev",
     "import-products": "node scripts/bulk-import-products.js",
     "migrate:all": "node scripts/run-migrations-all.js",
     "migrate:admin": "node scripts/apply-sql-file.js migrations/056_admin_system.sql && node scripts/apply-sql-file.js migrations/057_user_status.sql",
@@ -18,7 +20,8 @@
     "test:coverage": "jest --coverage",
     "test:watch": "jest --watch",
     "build:web": "cd frontend && npm run build",
-    "build:capacitor": "cd frontend && npx vite build --base=./ --mode capacitor",
+    "build:app": "cd frontend-app && npm run build",
+    "build:capacitor": "cd frontend-app && npx vite build --base=./ --mode capacitor",
     "cap:sync": "npx cap sync",
     "cap:open:ios": "npx cap open ios",
     "cap:open:android": "npx cap open android"

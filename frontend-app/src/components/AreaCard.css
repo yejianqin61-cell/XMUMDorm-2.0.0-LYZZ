@@ -1,0 +1,25 @@
+.area-card-wrap {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.area-card-wrap .area-card {
+  min-height: 64px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+
+.area-card-name {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--wx-text);
+  letter-spacing: 0.02em;
+}
+
+.area-card-hint {
+  font-size: 12px;
+  color: var(--wx-text-secondary);
+}
