@@ -31,7 +31,6 @@ import './styles/states.css';
 import './styles/tokens.css';
 import './styles/legacy-wx-bridge.css';
 import './styles/card.css';
-import './styles/state.css';
 
 function SplashScreen({ fadeOut, onReady }) {
   const videoRef = useRef(null);

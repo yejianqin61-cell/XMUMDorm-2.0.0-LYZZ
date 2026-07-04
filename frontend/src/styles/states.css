@@ -67,3 +67,178 @@
     transition: none !important;
   }
 }
+.ui-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-6);
+  text-align: center;
+  padding: var(--space-10) var(--space-8);
+}
+
+.ui-state__art {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 68px;
+  height: 68px;
+  border-radius: 22px;
+  background: var(--color-bg-surface-soft);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.ui-state__icon {
+  font-size: 30px;
+  line-height: 1;
+}
+
+.ui-state__eyebrow {
+  margin: 0;
+  font-size: var(--font-size-caption);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.ui-state__title {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.35;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.ui-state__description {
+  margin: 0;
+  max-width: 38ch;
+  font-size: 14px;
+  line-height: var(--line-height-reading);
+  color: var(--color-text-secondary);
+}
+
+.ui-state__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-4);
+  margin-top: var(--space-2);
+}
+
+.ui-state--empty .ui-state__art {
+  background: linear-gradient(180deg, var(--color-bg-brand-soft), rgba(255, 255, 255, 0.96));
+}
+
+.ui-state--error .ui-state__art {
+  background: linear-gradient(180deg, var(--color-bg-danger-soft), rgba(255, 255, 255, 0.96));
+}
+
+.ui-state--error .ui-state__icon {
+  color: var(--color-danger);
+}
+
+.ui-state--error .ui-state__eyebrow {
+  color: var(--color-danger);
+}
+
+.ui-page-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.ui-page-skeleton__item {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: var(--radius-xl);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.72),
+    rgba(255, 255, 255, 0.96),
+    rgba(255, 255, 255, 0.72)
+  );
+  background-size: 200% 100%;
+  animation: ui-skeleton-shimmer 1.4s var(--ease-standard) infinite;
+}
+
+.ui-page-skeleton__item--hero {
+  height: 176px;
+}
+
+.ui-page-skeleton__item--title {
+  width: min(280px, 72%);
+  height: 22px;
+  border-radius: var(--radius-sm);
+}
+
+.ui-page-skeleton__item--detail {
+  height: 124px;
+}
+
+.ui-page-skeleton__item--metric {
+  height: 96px;
+}
+
+.ui-page-skeleton__item--card {
+  height: 168px;
+}
+
+.ui-page-skeleton__item--field {
+  height: 54px;
+  border-radius: var(--radius-md);
+}
+
+.ui-page-skeleton__item--field-lg {
+  height: 112px;
+  border-radius: var(--radius-md);
+}
+
+.ui-page-skeleton__item--button {
+  height: 48px;
+  border-radius: var(--radius-pill);
+}
+
+.ui-page-skeleton__item--list {
+  height: 110px;
+}
+
+.ui-page-skeleton__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-5, 10px);
+}
+
+.ui-page-skeleton__stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5, 10px);
+}
+
+.ui-page-skeleton__stack--tight {
+  gap: var(--space-4);
+}
+
+.ui-page-skeleton__actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+@keyframes ui-skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .ui-page-skeleton__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ui-page-skeleton__actions {
+    grid-template-columns: 1fr;
+  }
+}
