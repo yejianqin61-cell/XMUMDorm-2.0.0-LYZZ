@@ -14,7 +14,7 @@ import { getPostList } from '@shared/api/posts';
 import { getSquareRecommendations } from '@shared/api/square';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { API_BASE_URL } from '@shared/api/config';
-import { saveScroll, takeScroll } from '@shared/utils/scrollCache';
+import { saveScroll, takeScroll } from '../utils/scrollCache';
 import { getRegions } from '@shared/api/canteen';
 import { QK } from '@shared/query/queryKeys';
 import './TreeHole.css';
