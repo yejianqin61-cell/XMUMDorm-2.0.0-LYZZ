@@ -5,11 +5,11 @@
 .state-loading,
 .state-error,
 .state-empty {
-  padding: 24px 16px;
-  font-size: 14px;
+  padding: var(--space-12) var(--space-8);
+  font-size: var(--font-size-body-md);
   text-align: center;
-  line-height: 1.5;
-  color: var(--wx-text-secondary);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-secondary);
 }
 
 .state-loading {
@@ -29,11 +29,11 @@
 }
 
 .state-error {
-  color: var(--wx-red, #ee0a24);
+  color: var(--color-danger);
 }
 
 .state-empty {
-  color: var(--wx-text-secondary);
+  color: var(--color-text-secondary);
 }
 
 /* 行内/区块错误（如表单下方） */
@@ -41,9 +41,10 @@
   margin: 0 0 12px;
   padding: 10px 12px;
   font-size: 13px;
-  color: var(--wx-red, #ee0a24);
-  background: rgba(238, 10, 36, 0.08);
-  border-radius: 8px;
+  color: var(--color-danger);
+  background: var(--color-bg-danger-soft);
+  border-radius: var(--radius-xs);
+  border: 1px solid rgba(243, 109, 109, 0.18);
 }
 
 /* 可复用的按压反馈（移动端风格） */
@@ -51,7 +52,9 @@
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   user-select: none;
-  transition: transform 80ms ease-out, box-shadow 80ms ease-out !important;
+  transition:
+    transform 80ms ease-out,
+    box-shadow 80ms ease-out !important;
 }
 
 .pressable:active {
