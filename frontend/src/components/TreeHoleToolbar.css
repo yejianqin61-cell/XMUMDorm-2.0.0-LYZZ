@@ -1,4 +1,41 @@
 /* TreeHole tag bar: hide scrollbars + edge masking */
+.treehole-toolbar {
+  position: relative;
+  z-index: 2;
+}
+
+.treehole-toolbar__top {
+  gap: 16px;
+}
+
+.treehole-toolbar__intro {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.treehole-toolbar__title {
+  margin: 0;
+  line-height: 1;
+}
+
+.treehole-toolbar__subtitle {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.treehole-toolbar__actions {
+  flex-shrink: 0;
+}
+
+.treehole-toolbar__tag-row {
+  min-width: 0;
+}
+
+.treehole-toolbar__tag-track {
+  min-width: 0;
+}
+
 .treehole-tag-scroll {
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE/Edge legacy */
@@ -141,4 +178,102 @@
     linear-gradient(135deg, #FF7675, #E84A5F);
   box-shadow: 0 10px 18px rgba(0, 0, 0, 0.16);
   animation: badge-bounce 1.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite;
+}
+
+.app-layout--desktop-shell .treehole-toolbar {
+  padding: 0 0 10px;
+}
+
+.app-layout--desktop-shell .treehole-toolbar__top {
+  align-items: flex-end;
+  padding: 24px 28px 18px;
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.76) 48%, rgba(255, 255, 255, 0.9) 100%),
+    linear-gradient(135deg, rgba(34, 211, 238, 0.12), rgba(16, 185, 129, 0.08));
+  border: 1px solid rgba(255, 255, 255, 0.88);
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.07);
+}
+
+.app-layout--desktop-shell .treehole-toolbar__intro {
+  gap: 8px;
+}
+
+.app-layout--desktop-shell .treehole-toolbar__title {
+  font-size: 42px;
+  letter-spacing: -0.05em;
+  color: #10233b;
+}
+
+.app-layout--desktop-shell .treehole-toolbar__subtitle {
+  max-width: 28rem;
+  font-size: 14px;
+  color: rgba(16, 35, 59, 0.56);
+}
+
+.app-layout--desktop-shell .treehole-toolbar__tag-row {
+  margin-top: 18px;
+  padding: 0 8px;
+  gap: 12px;
+}
+
+.app-layout--desktop-shell .treehole-toolbar__tag-track {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.05);
+}
+
+.app-layout--desktop-shell .treehole-tag-scroll {
+  gap: 22px;
+  min-height: 52px;
+  padding: 0 20px;
+  font-size: 14px;
+}
+
+.app-layout--desktop-shell .aura-bell {
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.1);
+}
+
+.site-web-shell--tablet .treehole-toolbar {
+  padding: 0 0 8px;
+}
+
+.site-web-shell--tablet .treehole-toolbar__top {
+  align-items: flex-end;
+  padding: 20px 22px 16px;
+  border-radius: 26px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.78) 46%, rgba(255, 255, 255, 0.9) 100%),
+    linear-gradient(135deg, rgba(34, 211, 238, 0.1), rgba(16, 185, 129, 0.07));
+  border: 1px solid rgba(255, 255, 255, 0.86);
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.06);
+}
+
+.site-web-shell--tablet .treehole-toolbar__title {
+  font-size: 34px;
+  letter-spacing: -0.045em;
+  color: #10233b;
+}
+
+.site-web-shell--tablet .treehole-toolbar__subtitle {
+  max-width: 24rem;
+  font-size: 13px;
+  color: rgba(16, 35, 59, 0.58);
+}
+
+.site-web-shell--tablet .treehole-toolbar__tag-row {
+  margin-top: 16px;
+  gap: 12px;
+}
+
+.site-web-shell--tablet .treehole-toolbar__tag-track {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+.site-web-shell--tablet .treehole-tag-scroll {
+  min-height: 48px;
+  padding: 0 16px;
 }

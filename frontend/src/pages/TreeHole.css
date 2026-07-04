@@ -608,6 +608,100 @@
   font-weight: 700;
 }
 
+.app-layout--desktop-shell .treehole-page,
+.site-web-shell--tablet .treehole-page {
+  min-height: auto;
+  background: transparent;
+}
+
+.app-layout--desktop-shell .treehole-content,
+.site-web-shell--tablet .treehole-content {
+  padding-bottom: 0;
+}
+
+.app-layout--desktop-shell .treehole-refreshing,
+.site-web-shell--tablet .treehole-refreshing {
+  top: 0;
+  margin: 0 0 14px;
+}
+
+.app-layout--desktop-shell .treehole-error {
+  margin: 0 0 18px;
+  border-radius: 20px;
+}
+
+.site-web-shell--tablet .treehole-error {
+  margin: 0 0 16px;
+  border-radius: 18px;
+}
+
+.app-layout--desktop-shell .treehole-content {
+  padding: 0;
+}
+
+.app-layout--desktop-shell .treehole-grid {
+  gap: 18px;
+  align-items: stretch;
+}
+
+.app-layout--desktop-shell .treehole-column {
+  gap: 18px;
+}
+
+.app-layout--desktop-shell .treehole-column-right {
+  padding-top: 48px;
+}
+
+.app-layout--desktop-shell .treehole-glass-card,
+.app-layout--desktop-shell .treehole-skel-card,
+.app-layout--desktop-shell .treehole-rhythm-card {
+  border-radius: 28px;
+  box-shadow: 0 22px 44px rgba(15, 23, 42, 0.08);
+}
+
+.app-layout--desktop-shell .treehole-glass-card--noimg {
+  padding: 16px 16px 14px;
+}
+
+.app-layout--desktop-shell .treehole-load-more {
+  margin-top: 20px;
+  min-height: 52px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.site-web-shell--tablet .treehole-content {
+  padding: 0;
+}
+
+.site-web-shell--tablet .treehole-grid {
+  gap: 16px;
+}
+
+.site-web-shell--tablet .treehole-column {
+  gap: 16px;
+}
+
+.site-web-shell--tablet .treehole-column-right {
+  padding-top: 36px;
+}
+
+.site-web-shell--tablet .treehole-glass-card,
+.site-web-shell--tablet .treehole-skel-card,
+.site-web-shell--tablet .treehole-rhythm-card {
+  border-radius: 26px;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.07);
+}
+
+.site-web-shell--tablet .treehole-glass-card--noimg {
+  padding: 14px 14px 12px;
+}
+
+.site-web-shell--tablet .treehole-load-more {
+  margin-top: 18px;
+  border-radius: 18px;
+}
+
 /* --------- Mobile stability: avoid iOS/WebView paint holes --------- */
 @media (pointer: coarse) {
   .treehole-page--mobile .treehole-grid {
