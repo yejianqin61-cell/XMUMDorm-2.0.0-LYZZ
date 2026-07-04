@@ -6,7 +6,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { getMarketplaceCategories, listMarketplaceItems } from '@shared/api/marketplace';
 import { QK } from '@shared/query/queryKeys';
-import MarketplaceItemCard from './MarketplaceItemCard';
+import MarketplaceItemCard from '../../components/marketplace/MarketplaceItemCard';
 import './Marketplace.css';
 
 function statusLabel(s, isZh) {

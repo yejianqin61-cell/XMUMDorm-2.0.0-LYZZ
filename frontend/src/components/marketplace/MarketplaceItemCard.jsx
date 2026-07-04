@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Clock3 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
-import './Marketplace.css';
+import '../../pages/Marketplace/Marketplace.css';
 
 function formatRelativeTime(createdAt, isZh) {
   if (!createdAt) return '';

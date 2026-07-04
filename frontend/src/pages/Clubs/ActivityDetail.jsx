@@ -22,7 +22,7 @@ import { getApiErrorMessage } from '@shared/utils/apiError';
 import { API_BASE_URL } from '@shared/api/config';
 import ImagePreview from '../../components/ImagePreview';
 import { StackedCardCarousel } from '../../components/StackedCardCarousel';
-import ClubCommentsSection from './ClubCommentsSection';
+import ClubCommentsSection from '../../components/clubs/ClubCommentsSection';
 import '../PostDetail.css';
 import './Clubs.css';
 

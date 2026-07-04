@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Clock3, MapPin, Tag } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
-import './Errands.css';
+import '../../pages/Errands/Errands.css';
 
 function formatDeadline(deadline) {
   if (!deadline) return '';
