@@ -1,9 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import Button from '../components/ui/Button';
+import Tag from '../components/ui/Tag';
 import Card from '../components/Card';
 import SkeletonCard from '../components/SkeletonCard';
 import EmptyState from '../components/EmptyState';
+import PageHeader from '../components/templates/PageHeader';
+import SectionHeader from '../components/templates/SectionHeader';
+import FilterBar from '../components/templates/FilterBar';
+import ListPageLayout from '../components/templates/ListPageLayout';
 import { AREA_LABELS } from '../components/AreaCard';
 import { getRegions, getShopsByRegion, getRegionTopProducts } from '@shared/api/canteen';
 import { getUploadUrl, DEFAULT_PRODUCT_IMAGE_PATH } from '@shared/api/config';
@@ -20,11 +26,10 @@ const TOP_LIMIT = 20;
 
 function extractEndTime(openingHours) {
   if (!openingHours) return null;
-  const s = String(openingHours);
-  // 匹配最常见的形态：09:00-19:00 / 09:00 ~ 19:00 / ... 19:00
-  const m = s.match(/(\d{1,2}:\d{2})\s*(?:-|~|—|–|至|到)\s*(\d{1,2}:\d{2})/);
-  if (m && m[2]) return m[2];
-  const last = s.match(/(\d{1,2}:\d{2})(?!.*\d{1,2}:\d{2})/);
+  const text = String(openingHours);
+  const range = text.match(/(\d{1,2}:\d{2})\s*(?:-|~|—|–|至|到)\s*(\d{1,2}:\d{2})/);
+  if (range && range[2]) return range[2];
+  const last = text.match(/(\d{1,2}:\d{2})(?!.*\d{1,2}:\d{2})/);
   return last ? last[1] : null;
 }
 
@@ -43,13 +48,11 @@ function TrophyIcon() {
           <stop offset="100%" stopColor="rgba(255,255,255,0.10)" />
         </linearGradient>
       </defs>
-      {/* cup */}
       <path
         d="M8 4h8v3c0 2.4-1.3 4.2-4 4.8V14h3v2H9v-2h3v-2.2C9.3 11.2 8 9.4 8 7V4z"
         fill="url(#trophyGold)"
         opacity="0.95"
       />
-      {/* handles */}
       <path
         d="M6.2 6.2H4.6c.1 2 1.2 3.3 3 3.8M17.8 6.2h1.6c-.1 2-1.2 3.3-3 3.8"
         fill="none"
@@ -58,7 +61,6 @@ function TrophyIcon() {
         strokeLinecap="round"
         opacity="0.9"
       />
-      {/* stem + base */}
       <path
         d="M10 18h4M9 20h6"
         stroke="url(#trophyGold)"
@@ -66,7 +68,6 @@ function TrophyIcon() {
         strokeLinecap="round"
         opacity="0.9"
       />
-      {/* glass highlight */}
       <path
         d="M9.1 5.4h2.1c-.2 2.9-1.2 4.6-2.2 5.3"
         fill="none"
@@ -79,9 +80,9 @@ function TrophyIcon() {
   );
 }
 
-/** 区域商家列表页：本区最夯商品 Top20 + 当前分区下的商家（API）；shops 等接口带缓存，再次进入同分区更快 */
-function MerchantList() {
+export default function MerchantList() {
   const { lang } = useLanguage();
+  const isEn = lang === 'en';
   const t = getCanteenAreaRankingStrings(lang, 50);
   const { area } = useParams();
   const code = normalizeAreaCodeParam(area ?? '');
@@ -95,14 +96,13 @@ function MerchantList() {
   } = useQuery({
     queryKey: QK.canteenRegions(),
     queryFn: getRegions,
-    select: (d) => (Array.isArray(d) ? d : []),
+    select: (data) => (Array.isArray(data) ? data : []),
     staleTime: REGIONS_STALE_MS,
     enabled: !!code,
   });
 
   const region = useMemo(() => findRegionByCode(regions, code), [regions, code]);
   const regionId = region?.id;
-
   const areaLabel = region?.name ?? AREA_LABELS[code] ?? code ?? '';
 
   const shopsQuery = useQuery({
@@ -121,56 +121,43 @@ function MerchantList() {
 
   const merchants = useMemo(() => {
     const list = Array.isArray(shopsQuery.data) ? shopsQuery.data : [];
-    return list.map((s) => ({
-      id: s.id,
-      name: s.name,
-      logo: s.logo ? getUploadUrl(s.logo) : undefined,
-      description: s.region_name ? `${s.region_name}` : undefined,
-      status: 'open',
-      openingHours: s.opening_hours ?? undefined,
+    return list.map((shop) => ({
+      id: shop.id,
+      name: shop.name,
+      openingHours: shop.opening_hours ?? undefined,
     }));
   }, [shopsQuery.data]);
 
   const hotProducts = useMemo(() => {
-    const hotRaw = Array.isArray(hotQuery.data) ? hotQuery.data : [];
-    return hotRaw.map((p) => {
-      const img0 = p.images?.[0]?.url;
+    const list = Array.isArray(hotQuery.data) ? hotQuery.data : [];
+    return list.map((product) => {
+      const cover = product.images?.[0]?.url;
       return {
-        id: p.id,
-        rank: p.rank,
-        name: p.name,
-        shopName: p.shop_name,
-        score: p.comprehensive_score,
-        price: p.price,
-        image: img0 ? getUploadUrl(img0) : DEFAULT_PRODUCT_IMAGE_PATH,
+        id: product.id,
+        name: product.name,
+        shopName: product.shop_name,
+        image: cover ? getUploadUrl(cover) : DEFAULT_PRODUCT_IMAGE_PATH,
       };
     });
   }, [hotQuery.data]);
 
-  const loading =
-    !code
-      ? false
-      : regionsPending ||
-        (!!regionId && (shopsQuery.isPending || hotQuery.isPending));
+  const loading = !code ? false : regionsPending || (!!regionId && (shopsQuery.isPending || hotQuery.isPending));
+  const error = !code
+    ? null
+    : regionsIsError
+      ? getApiErrorMessage(regionsError)
+      : shopsQuery.isError
+        ? getApiErrorMessage(shopsQuery.error)
+        : hotQuery.isError
+          ? getApiErrorMessage(hotQuery.error)
+          : null;
 
-  const error =
-    !code
-      ? null
-      : regionsIsError
-        ? getApiErrorMessage(regionsError)
-        : shopsQuery.isError
-          ? getApiErrorMessage(shopsQuery.error)
-          : hotQuery.isError
-            ? getApiErrorMessage(hotQuery.error)
-            : null;
-
-  // 入场动画：必须在所有 return 之前声明 hook（避免黑屏）
   useEffect(() => {
     setReady(false);
     if (!regionId) return undefined;
     if (loading || error) return undefined;
-    const id = window.setTimeout(() => setReady(true), 0);
-    return () => window.clearTimeout(id);
+    const timerId = window.setTimeout(() => setReady(true), 0);
+    return () => window.clearTimeout(timerId);
   }, [regionId, loading, error]);
 
   if (!code) {
@@ -187,15 +174,19 @@ function MerchantList() {
         <div className="merchant-list-hot-skeleton" aria-hidden>
           <div className="merchant-list-hot-skeleton-title skeleton skeleton-shimmer" />
           <div className="merchant-list-hot-skeleton-row">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="merchant-list-hot-skeleton-card skeleton skeleton-shimmer" />
+            {[1, 2, 3, 4].map((item) => (
+              <div key={item} className="merchant-list-hot-skeleton-card skeleton skeleton-shimmer" />
             ))}
           </div>
         </div>
-        <div className="skeleton-merchant-list-title skeleton skeleton-shimmer" style={{ width: 120, height: 22, borderRadius: 6, marginBottom: 16 }} aria-hidden />
+        <div
+          className="skeleton-merchant-list-title skeleton skeleton-shimmer"
+          style={{ width: 120, height: 22, borderRadius: 6, marginBottom: 16 }}
+          aria-hidden
+        />
         <ul className="merchant-list-list" aria-hidden>
-          {[1, 2, 3, 4].map((i) => (
-            <li key={i}>
+          {[1, 2, 3, 4].map((item) => (
+            <li key={item}>
               <SkeletonCard />
             </li>
           ))}
@@ -220,99 +211,180 @@ function MerchantList() {
     );
   }
 
+  const rankingLink = `/eat/${encodeURIComponent(area)}/ranking`;
+  const pageMeta = [
+    { key: 'zone', label: `${isEn ? 'Zone' : '分区'} · ${String(code || '').toUpperCase()}` },
+    { key: 'merchants', label: `${merchants.length} ${isEn ? 'merchants' : '家商户'}` },
+    { key: 'ranking', label: `${hotProducts.length} ${isEn ? 'ranked picks' : '个榜单推荐'}` },
+  ];
+
   return (
     <div className={`merchant-list-page ${ready ? 'merchant-list-page--ready' : ''}`}>
-      <Card as="section" className="merchant-list-ranking-card" aria-label={t.cardAria(areaLabel)}>
-        <div className="merchant-list-ranking-card-head">
-          <span className="merchant-list-ranking-icon" aria-hidden>
-            <TrophyIcon />
-          </span>
-          <div className="merchant-list-ranking-card-titles">
-            <h2 className="merchant-list-ranking-card-title">
-              {t.cardTitle}
-              <span className="merchant-list-ranking-card-title-alt">{t.cardTitleAlt}</span>
-            </h2>
-            <p className="merchant-list-ranking-card-zone">{areaLabel}</p>
-            <p className="merchant-list-ranking-card-rule">{t.cardRule}</p>
-          </div>
-        </div>
-
-        {hotProducts.length > 0 ? (
-          <>
-            <div className="merchant-hero" aria-label={t.cardTitle}>
-              {hotProducts[0] && (
-                <Link to={`/eat/food/${hotProducts[0].id}`} className="merchant-hero-top1 pressable">
-                  <img src={hotProducts[0].image} alt="" className="merchant-hero-top1-img" />
-                  <span className="merchant-hero-label">
-                    <span className="merchant-hero-badge merchant-hero-badge--1" aria-hidden>
-                      1
-                    </span>
-                    <span className="merchant-hero-label-main">
-                      <span className="merchant-hero-name">{hotProducts[0].name}</span>
-                      <span className="merchant-hero-meta">{hotProducts[0].shopName}</span>
-                    </span>
-                  </span>
-                </Link>
-              )}
-              <div className="merchant-hero-side" aria-hidden>
-                {[hotProducts[1], hotProducts[2]].filter(Boolean).map((p, i) => (
-                  <Link key={p.id} to={`/eat/food/${p.id}`} className="merchant-hero-orb pressable">
-                    <span className={`merchant-hero-badge merchant-hero-badge--${i + 2}`} aria-hidden>
-                      {i + 2}
-                    </span>
-                    <img src={p.image} alt="" className="merchant-hero-orb-img" />
-                    <span className="merchant-hero-orb-cap">
-                      <span className="merchant-hero-orb-name">{p.name}</span>
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            <Link to={`/eat/${encodeURIComponent(area)}/ranking`} className="merchant-hero-morelink pressable">
-              {t.fullListLink}
-              <span className="merchant-hero-arrow" aria-hidden />
-            </Link>
-          </>
-        ) : (
-          <div className="merchant-list-ranking-empty">
-            <p className="merchant-list-ranking-empty-text">{t.emptyRankingText}</p>
-            <Link
-              to={`/eat/${encodeURIComponent(area)}/ranking`}
-              className="merchant-hero-morelink merchant-hero-morelink--ghost pressable"
-            >
-              {t.emptyRankingLink}
-              <span className="merchant-hero-arrow" aria-hidden />
-            </Link>
-          </div>
+      <ListPageLayout
+        className="merchant-list-layout"
+        asideSticky
+        header={(
+          <PageHeader
+            eyebrow={isEn ? 'Campus Canteen Zone' : '校园食堂分区'}
+            title={areaLabel}
+            description={
+              isEn
+                ? 'Browse the merchants in this zone and keep the local top dishes within reach while you compare where to eat.'
+                : '查看这个分区里的商家，同时把本区热门单品榜单放在右侧，方便一边选店一边做决定。'
+            }
+            backTo="/eat"
+            backLabel={t.backToArea}
+            meta={pageMeta}
+            actions={(
+              <Button as={Link} to={rankingLink} size="sm">
+                {isEn ? 'Open leaderboard' : '查看完整榜单'}
+              </Button>
+            )}
+          />
         )}
-      </Card>
-
-      <p className="merchant-list-title merchant-list-title--merchants-section">{t.merchantsSection}</p>
-
-      {merchants.length === 0 ? (
-        <EmptyState title={t.emptyMerchantsTitle} description={t.emptyMerchantsDesc} />
-      ) : (
-        <ul className="merchant-list-list" aria-label={t.merchantsListAria(areaLabel)}>
-          {merchants.map((m, idx) => (
-            <li key={m.id} style={{ '--i': idx }}>
-              <Link to={`/eat/merchant/${m.id}`} className="merchant-min" aria-label={`进入商家 ${m.name}`}>
-                <span className="merchant-min-row">
-                  <span className="merchant-min-name">{m.name}</span>
-                  <span className="merchant-min-open" aria-label="营业中">
-                    <span className="merchant-min-dot" aria-hidden />
-                  </span>
+        filterBar={(
+          <FilterBar
+            filters={(
+              <>
+                <Tag tone="canteen" variant="soft">{areaLabel}</Tag>
+                <Tag tone="neutral" variant="outline">
+                  {isEn ? `${merchants.length} merchants live` : `${merchants.length} 家商户营业中`}
+                </Tag>
+                <Tag tone="neutral" variant="outline">
+                  {isEn ? `${hotProducts.length} ranked dishes` : `${hotProducts.length} 个榜单单品`}
+                </Tag>
+              </>
+            )}
+            actions={(
+              <>
+                <Button as={Link} to="/eat/map" variant="secondary" size="sm">
+                  {isEn ? 'Open map' : '查看分区地图'}
+                </Button>
+                <Button as={Link} to={rankingLink} variant="secondary" size="sm">
+                  {isEn ? 'Full Top 50' : '完整 Top 50'}
+                </Button>
+              </>
+            )}
+          />
+        )}
+        list={(
+          <section className="merchant-list-main">
+            <SectionHeader
+              title={t.merchantsSection}
+              description={
+                isEn
+                  ? 'A cleaner desktop list for the merchants in this zone, with opening hints kept readable at a glance.'
+                  : '用更适合桌面浏览的列表方式展示本区商家，保留清晰的营业提示和快速进入路径。'
+              }
+            />
+            {merchants.length === 0 ? (
+              <EmptyState title={t.emptyMerchantsTitle} description={t.emptyMerchantsDesc} />
+            ) : (
+              <ul className="merchant-list-list" aria-label={t.merchantsListAria(areaLabel)}>
+                {merchants.map((merchant, index) => (
+                  <li key={merchant.id} style={{ '--i': index }}>
+                    <Link
+                      to={`/eat/merchant/${merchant.id}`}
+                      className="merchant-min"
+                      aria-label={`${isEn ? 'Open merchant' : '进入商家'} ${merchant.name}`}
+                    >
+                      <span className="merchant-min-row">
+                        <span className="merchant-min-name">{merchant.name}</span>
+                        <span className="merchant-min-open" aria-label={isEn ? 'Open now' : '营业中'}>
+                          <span className="merchant-min-dot" aria-hidden />
+                        </span>
+                      </span>
+                      <span className="merchant-min-sub">
+                        {(code || '').toUpperCase()} · OPEN
+                        {extractEndTime(merchant.openingHours) ? ` UNTIL ${extractEndTime(merchant.openingHours)}` : ''}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
+        aside={(
+          <section className="merchant-list-aside-section">
+            <SectionHeader
+              title={isEn ? 'Zone leaderboard' : '分区榜单'}
+              description={
+                isEn
+                  ? 'Keep the top dishes visible while comparing merchants in the main list.'
+                  : '把本区热门单品固定在侧栏里，边看商家边参考大家最常点的菜。'
+              }
+              action={(
+                <Button as={Link} to={rankingLink} variant="tertiary" size="sm">
+                  {isEn ? 'See all' : '查看全部'}
+                </Button>
+              )}
+            />
+            <Card as="section" className="merchant-list-ranking-card" aria-label={t.cardAria(areaLabel)}>
+              <div className="merchant-list-ranking-card-head">
+                <span className="merchant-list-ranking-icon" aria-hidden>
+                  <TrophyIcon />
                 </span>
-                <span className="merchant-min-sub">
-                  {(code || '').toUpperCase()} · OPEN{extractEndTime(m.openingHours) ? ` UNTIL ${extractEndTime(m.openingHours)}` : ''}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+                <div className="merchant-list-ranking-card-titles">
+                  <h2 className="merchant-list-ranking-card-title">
+                    {t.cardTitle}
+                    <span className="merchant-list-ranking-card-title-alt">{t.cardTitleAlt}</span>
+                  </h2>
+                  <p className="merchant-list-ranking-card-zone">{areaLabel}</p>
+                  <p className="merchant-list-ranking-card-rule">{t.cardRule}</p>
+                </div>
+              </div>
+
+              {hotProducts.length > 0 ? (
+                <>
+                  <div className="merchant-hero" aria-label={t.cardTitle}>
+                    {hotProducts[0] ? (
+                      <Link to={`/eat/food/${hotProducts[0].id}`} className="merchant-hero-top1 pressable">
+                        <img src={hotProducts[0].image} alt="" className="merchant-hero-top1-img" />
+                        <span className="merchant-hero-label">
+                          <span className="merchant-hero-badge merchant-hero-badge--1" aria-hidden>
+                            1
+                          </span>
+                          <span className="merchant-hero-label-main">
+                            <span className="merchant-hero-name">{hotProducts[0].name}</span>
+                            <span className="merchant-hero-meta">{hotProducts[0].shopName}</span>
+                          </span>
+                        </span>
+                      </Link>
+                    ) : null}
+                    <div className="merchant-hero-side" aria-hidden>
+                      {[hotProducts[1], hotProducts[2]].filter(Boolean).map((product, index) => (
+                        <Link key={product.id} to={`/eat/food/${product.id}`} className="merchant-hero-orb pressable">
+                          <span className={`merchant-hero-badge merchant-hero-badge--${index + 2}`} aria-hidden>
+                            {index + 2}
+                          </span>
+                          <img src={product.image} alt="" className="merchant-hero-orb-img" />
+                          <span className="merchant-hero-orb-cap">
+                            <span className="merchant-hero-orb-name">{product.name}</span>
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+
+                  <Link to={rankingLink} className="merchant-hero-morelink pressable">
+                    {t.fullListLink}
+                    <span className="merchant-hero-arrow" aria-hidden />
+                  </Link>
+                </>
+              ) : (
+                <div className="merchant-list-ranking-empty">
+                  <p className="merchant-list-ranking-empty-text">{t.emptyRankingText}</p>
+                  <Link to={rankingLink} className="merchant-hero-morelink merchant-hero-morelink--ghost pressable">
+                    {t.emptyRankingLink}
+                    <span className="merchant-hero-arrow" aria-hidden />
+                  </Link>
+                </div>
+              )}
+            </Card>
+          </section>
+        )}
+      />
     </div>
   );
 }
-
-export default MerchantList;
