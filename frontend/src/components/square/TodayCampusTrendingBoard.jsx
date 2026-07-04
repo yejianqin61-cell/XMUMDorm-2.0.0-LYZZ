@@ -1,14 +1,14 @@
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
 
-export default function TodayCampusTrendingBoard({ topics = [] }) {
+export default function TodayCampusTrendingBoard({ topics = [], compact = false }) {
   const { lang } = useLanguage();
   const isEn = lang === 'en';
-  const items = topics.slice(0, 5);
+  const items = topics.slice(0, compact ? 3 : 5);
   if (!items.length) return null;
 
   return (
-    <section className="today-campus-panel square-home-block">
+    <section className={compact ? 'today-campus-panel today-campus-panel--compact' : 'today-campus-panel square-home-block'}>
       <div className="square-section-header square-section-header--stack">
         <div>
           <h2 className="square-section-title">{isEn ? 'Trending Board' : '热搜榜'}</h2>

@@ -21,7 +21,7 @@
   padding-bottom: calc(var(--tabbar-height, 72px) + var(--safe-bottom, 0px) + 24px);
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 22px;
 }
 
 .square-section {
@@ -107,6 +107,10 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.today-campus-panel--compact {
+  gap: 14px;
 }
 
 .today-campus-hero {
@@ -268,7 +272,7 @@
 .today-campus-quick-action {
   position: relative;
   overflow: hidden;
-  min-height: 178px;
+  min-height: 164px;
   border-radius: 24px;
   border: 1px solid rgba(255, 255, 255, 0.88);
   box-shadow: 0 18px 38px rgba(15, 23, 42, 0.07);
@@ -288,8 +292,8 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 178px;
-  padding: 18px;
+  min-height: 164px;
+  padding: 16px;
 }
 
 .today-campus-quick-action__pattern {
@@ -350,7 +354,7 @@
   max-width: 16ch;
   color: rgba(16, 35, 59, 0.62);
   font-size: 12px;
-  line-height: 1.65;
+  line-height: 1.55;
 }
 
 .today-campus-quick-action--club {
@@ -874,6 +878,152 @@
   height: 104px;
 }
 
+.square-home-explore {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.square-home-explore__topics {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.square-home-explore__topics::-webkit-scrollbar {
+  display: none;
+}
+
+.square-home-explore__topic {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  white-space: nowrap;
+  text-decoration: none;
+  color: #183153;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: inset 0 0 0 1px rgba(16, 35, 59, 0.06);
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 700;
+}
+
+.square-home-explore__links {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.square-home-explore__link {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 16px;
+  border-radius: 20px;
+  text-decoration: none;
+  color: #10233b;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.88)),
+    var(--square-card-surface);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.84);
+}
+
+.square-home-explore__link-kicker {
+  font-size: 11px;
+  line-height: 1.4;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: rgba(16, 35, 59, 0.5);
+}
+
+.square-home-explore__link-title {
+  font-size: 15px;
+  line-height: 1.45;
+  letter-spacing: -0.02em;
+}
+
+.square-recommend-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.square-recommend-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.square-recommend-card {
+  height: 100%;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.86) 60%, rgba(244, 247, 251, 0.92) 100%),
+    var(--square-card-surface);
+}
+
+.square-recommend-card .ui-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 188px;
+}
+
+.square-recommend-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.square-recommend-card__badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(16, 35, 59, 0.08);
+  color: #10233b;
+  font-size: 11px;
+  line-height: 1.4;
+  font-weight: 800;
+}
+
+.square-recommend-card__reason {
+  color: rgba(16, 35, 59, 0.46);
+  font-size: 11px;
+  line-height: 1.45;
+  font-weight: 700;
+}
+
+.square-recommend-card__title {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.4;
+  letter-spacing: -0.02em;
+  color: #10233b;
+}
+
+.square-recommend-card__subtitle {
+  margin: 0;
+  color: rgba(16, 35, 59, 0.64);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.square-recommend-card__meta {
+  margin: auto 0 0;
+  color: rgba(16, 35, 59, 0.5);
+  font-size: 12px;
+  line-height: 1.45;
+  font-weight: 700;
+}
+
 .square-campus-feed-page {
   gap: 20px;
 }
@@ -1153,7 +1303,7 @@
   padding: 0;
   padding-bottom: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+  grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
   gap: 24px;
   align-items: start;
 }
@@ -1165,17 +1315,22 @@
 }
 
 .app-layout--desktop-shell .square-home-slot--hero {
-  grid-column: 1;
-  grid-row: 2;
-}
-
-.app-layout--desktop-shell .square-home-slot--trending {
   grid-column: 2;
-  grid-row: 2 / span 2;
+  grid-row: 2;
 }
 
 .app-layout--desktop-shell .square-home-slot--actions {
   grid-column: 1;
+  grid-row: 2;
+}
+
+.app-layout--desktop-shell .square-home-slot--recommendations {
+  grid-column: 1;
+  grid-row: 3;
+}
+
+.app-layout--desktop-shell .square-home-slot--trending {
+  grid-column: 2;
   grid-row: 3;
 }
 
@@ -1210,7 +1365,7 @@
 
 .app-layout--desktop-shell .today-campus-quick-action,
 .app-layout--desktop-shell .today-campus-quick-action .ui-card__body {
-  min-height: 196px;
+  min-height: 176px;
 }
 
 .app-layout--desktop-shell .square-trending-board {
@@ -1231,6 +1386,11 @@
   max-height: 280px;
 }
 
+.app-layout--desktop-shell .square-home-explore__links,
+.app-layout--desktop-shell .square-recommend-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .site-web-shell--tablet .square-home-page {
   overflow: visible;
   background: transparent;
@@ -1249,4 +1409,11 @@
 
 .site-web-shell--tablet .today-campus-hero {
   padding: 20px;
+}
+
+@media (max-width: 900px) {
+  .square-home-explore__links,
+  .square-recommend-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

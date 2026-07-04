@@ -9,7 +9,11 @@ export default function TodayCampusQuickActions({ actions }) {
 
   return (
     <section className="today-campus-panel square-home-block">
-      <SectionHeader title={isEn ? 'Quick Access' : '快捷入口'} compact />
+      <SectionHeader
+        title={isEn ? 'Quick Access' : '快捷入口'}
+        description={isEn ? 'Jump straight to the four highest-frequency campus paths.' : '先进入四条最高频的校园主链路。'}
+        compact
+      />
       <div className="today-campus-quick-actions">
         {actions.map((action) => (
           <Link key={action.to} to={action.to} className="today-campus-quick-action-link">

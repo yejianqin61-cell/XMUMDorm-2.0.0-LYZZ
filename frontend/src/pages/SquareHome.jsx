@@ -1,11 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { BookOpenText, HandHelping, Shapes, Store } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { getSquareBanners, getSquareHomeSummary } from '@shared/api/square';
 import { useLanguage } from '../context/LanguageContext';
 import CanteenBannerCarousel from '../components/canteen/CanteenBannerCarousel';
 import TodayCampusHero from '../components/square/TodayCampusHero';
 import TodayCampusQuickActions from '../components/square/TodayCampusQuickActions';
 import TodayCampusTrendingBoard from '../components/square/TodayCampusTrendingBoard';
+import MyCampusRecommendations from '../components/square/MyCampusRecommendations';
 import PageSkeleton from '../components/ui/PageSkeleton';
 import ErrorState from '../components/ui/ErrorState';
 import FadeInSection from '../components/ui/FadeInSection';
@@ -56,6 +58,61 @@ const PRIMARY_ACTIONS = [
   },
 ];
 
+function formatMeta(item, fallback) {
+  const meta = [];
+  if (item.organization_name) meta.push(item.organization_name);
+  if (item.club_name) meta.push(item.club_name);
+  if (item.location) meta.push(item.location);
+  if (item.status_label) meta.push(item.status_label);
+  return meta.filter(Boolean).join(' · ') || fallback;
+}
+
+function buildRecommendationSummary(summary, isEn) {
+  const cards = [];
+
+  (summary.campus_highlights || []).slice(0, 1).forEach((item) => {
+    cards.push({
+      id: `campus-${item.id}`,
+      badge: isEn ? 'Campus' : '校园',
+      reason: isEn ? 'Latest official update' : '最新官方动态',
+      title: item.title,
+      subtitle: isEn ? 'Follow the latest school updates first.' : '先看学校里的重点更新。',
+      meta: formatMeta(item, isEn ? 'Campus bulletin' : '校园公告'),
+      href: `/about/campus/posts/${item.id}`,
+    });
+  });
+
+  (summary.hot_activities || []).slice(0, 1).forEach((item) => {
+    cards.push({
+      id: `activity-${item.id}`,
+      badge: isEn ? 'Event' : '活动',
+      reason: isEn ? 'Worth checking today' : '今天值得去看看',
+      title: item.title,
+      subtitle: item.summary || (isEn ? 'A campus event close to happening.' : '一条离你很近的校园活动线索。'),
+      meta: formatMeta(item, isEn ? 'Club activity' : '社团活动'),
+      href: '/about/club',
+    });
+  });
+
+  (summary.hot_treeholes || []).slice(0, Math.max(0, 2 - cards.length)).forEach((item) => {
+    cards.push({
+      id: `treehole-${item.id}`,
+      badge: isEn ? 'Discussion' : '讨论',
+      reason: isEn ? 'People are talking about it' : '现在很多人都在聊',
+      title: item.excerpt || (isEn ? 'Open the discussion' : '打开这条讨论'),
+      subtitle: isEn ? 'Catch the recent campus mood in one tap.' : '一键补上最近校园里的情绪与话题。',
+      meta: `${item.like_count || 0}${isEn ? ' likes' : ' 赞'} · ${item.comment_count || 0}${isEn ? ' comments' : ' 评论'}`,
+      href: `/posts/${item.id}`,
+    });
+  });
+
+  return {
+    is_personalized: false,
+    profile: {},
+    cards: cards.slice(0, 2),
+  };
+}
+
 export default function SquareHome() {
   const { lang } = useLanguage();
   const isEn = lang === 'en';
@@ -73,6 +130,8 @@ export default function SquareHome() {
     campus_highlights: [],
     quick_stats: {},
   };
+  const recommendationSummary = buildRecommendationSummary(summary, isEn);
+  const exploreTopics = (summary.hot_topics || []).slice(0, 3);
 
   return (
     <RouteTransition className="square-home-page">
@@ -96,16 +155,64 @@ export default function SquareHome() {
           />
         ) : (
           <>
-            <FadeInSection className="square-home-slot square-home-slot--trending" delay={0.03}>
-              <TodayCampusTrendingBoard topics={summary.hot_topics || []} />
-            </FadeInSection>
-
-            <FadeInSection className="square-home-slot square-home-slot--actions" delay={0.06}>
+            <FadeInSection className="square-home-slot square-home-slot--actions" delay={0.03}>
               <TodayCampusQuickActions actions={PRIMARY_ACTIONS} />
             </FadeInSection>
 
-            <FadeInSection className="square-home-slot square-home-slot--hero" delay={0.1}>
+            <FadeInSection className="square-home-slot square-home-slot--hero" delay={0.06}>
               <TodayCampusHero quickStats={summary.quick_stats} />
+            </FadeInSection>
+
+            <FadeInSection className="square-home-slot square-home-slot--recommendations" delay={0.1}>
+              <MyCampusRecommendations summary={recommendationSummary} />
+            </FadeInSection>
+
+            <FadeInSection className="square-home-slot square-home-slot--trending" delay={0.14}>
+              <div className="square-home-explore square-home-block">
+                <div className="square-section-header square-section-header--stack">
+                  <div>
+                    <h2 className="square-section-title">{isEn ? 'Keep Exploring' : '继续探索'}</h2>
+                    <p className="square-section-subtitle">
+                      {isEn
+                        ? 'Use lighter entry points to jump into trending topics, campus feeds, or publish flows.'
+                        : '用更轻量的入口继续进入热搜、校园动态和发布链路。'}
+                    </p>
+                  </div>
+                </div>
+
+                {exploreTopics.length ? (
+                  <div className="square-home-explore__topics" aria-label={isEn ? 'Hot topics' : '热门话题'}>
+                    {exploreTopics.map((topic) => (
+                      <Link key={topic.id} to={`/about/trending/${topic.id}`} className="square-home-explore__topic">
+                        #{topic.title}
+                      </Link>
+                    ))}
+                  </div>
+                ) : null}
+
+                <div className="square-home-explore__links">
+                  <Link to="/about/trending" className="square-home-explore__link">
+                    <span className="square-home-explore__link-kicker">{isEn ? 'Trending' : '热搜榜'}</span>
+                    <strong className="square-home-explore__link-title">
+                      {isEn ? 'See full discussions' : '查看完整讨论区'}
+                    </strong>
+                  </Link>
+                  <Link to="/about/campus" className="square-home-explore__link">
+                    <span className="square-home-explore__link-kicker">{isEn ? 'Campus feed' : '校园动态'}</span>
+                    <strong className="square-home-explore__link-title">
+                      {isEn ? 'Browse all official posts' : '浏览全部官方动态'}
+                    </strong>
+                  </Link>
+                  <Link to="/publish" className="square-home-explore__link">
+                    <span className="square-home-explore__link-kicker">{isEn ? 'Publish' : '发布入口'}</span>
+                    <strong className="square-home-explore__link-title">
+                      {isEn ? 'Share something new' : '去发布一条新内容'}
+                    </strong>
+                  </Link>
+                </div>
+
+                <TodayCampusTrendingBoard topics={summary.hot_topics || []} compact />
+              </div>
             </FadeInSection>
           </>
         )}
