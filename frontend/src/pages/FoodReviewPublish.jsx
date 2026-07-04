@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Toast } from '../context/ToastContext';
-import EmptyState from '../components/EmptyState';
+import EmptyState from '../components/ui/EmptyState';
 import { getProduct, postProductComment } from '@shared/api/canteen';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { useAuth } from '../context/AuthContext';

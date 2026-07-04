@@ -5,7 +5,7 @@ import Button from '../components/ui/Button';
 import Tag from '../components/ui/Tag';
 import Card from '../components/ui/Card';
 import FoodDetailView from '../components/FoodDetailView';
-import EmptyState from '../components/EmptyState';
+import EmptyState from '../components/ui/EmptyState';
 import ImagePreview from '../components/ImagePreview';
 import LikeBurst from '../components/LikeBurst';
 import PageHeader from '../components/templates/PageHeader';

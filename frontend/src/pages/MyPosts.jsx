@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getProfile } from '@shared/api/users';
 import PostCard from '../components/PostCard';
-import EmptyState from '../components/EmptyState';
+import EmptyState from '../components/ui/EmptyState';
 import { API_BASE_URL } from '@shared/api/config';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import './MyPosts.css';

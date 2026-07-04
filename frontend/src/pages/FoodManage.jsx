@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import FoodCard from '../components/FoodCard';
 import SkeletonFood from '../components/SkeletonFood';
-import EmptyState from '../components/EmptyState';
+import EmptyState from '../components/ui/EmptyState';
 import { Toast } from '../context/ToastContext';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { getShopMe, getProducts, deleteProduct, createCategory } from '@shared/api/canteen';

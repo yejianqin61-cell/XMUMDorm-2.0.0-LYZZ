@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import FoodDetailView from '../components/FoodDetailView';
 import FoodForm from '../components/FoodForm';
-import EmptyState from '../components/EmptyState';
+import EmptyState from '../components/ui/EmptyState';
 import ImagePreview from '../components/ImagePreview';
 import { Toast } from '../context/ToastContext';
 import { getProduct, getCategories, updateProduct, deleteProduct } from '@shared/api/canteen';

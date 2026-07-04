@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { getMyProductReviews } from '@shared/api/canteen';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import ReviewCard from '../components/ReviewCard';
-import EmptyState from '../components/EmptyState';
+import EmptyState from '../components/ui/EmptyState';
 import './MyReviews.css';
 
 /** 我的点评列表：展示当前用户对商品的一级点评，复用卡片样式，接 API */

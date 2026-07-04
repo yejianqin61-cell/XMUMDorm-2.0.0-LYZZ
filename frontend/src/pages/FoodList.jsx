@@ -7,7 +7,7 @@ import MerchantHeader from '../components/MerchantHeader';
 import CategorySidebar from '../components/CategorySidebar';
 import CategorySection from '../components/CategorySection';
 import SkeletonFood from '../components/SkeletonFood';
-import EmptyState from '../components/EmptyState';
+import EmptyState from '../components/ui/EmptyState';
 import { getShop, getCategories, getProducts } from '@shared/api/canteen';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { getUploadUrl, productImageUrl } from '@shared/api/config';

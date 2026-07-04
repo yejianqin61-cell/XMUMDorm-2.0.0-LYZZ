@@ -21,7 +21,7 @@ import { API_BASE_URL } from '@shared/api/config';
 import { Toast } from '../context/ToastContext';
 import { useExpFeedback } from '../context/ExpFeedbackContext';
 import UserLevelBadge from '../components/UserLevelBadge';
-import EmptyState from '../components/EmptyState';
+import EmptyState from '../components/ui/EmptyState';
 import ImagePreview from '../components/ImagePreview';
 import { StackedCardCarousel } from '../components/StackedCardCarousel';
 import LikeBurst from '../components/LikeBurst';

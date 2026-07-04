@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQueries } from '@tanstack/react-query';
 import MerchantHeader from '../components/MerchantHeader';
 import SkeletonFood from '../components/SkeletonFood';
-import EmptyState from '../components/EmptyState';
+import EmptyState from '../components/ui/EmptyState';
 import { getShop, getShopHotProducts } from '@shared/api/canteen';
 import { getUploadUrl, productImageUrl } from '@shared/api/config';
 import { getApiErrorMessage } from '@shared/utils/apiError';

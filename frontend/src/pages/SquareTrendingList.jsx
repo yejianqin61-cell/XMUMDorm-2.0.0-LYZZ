@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import EmptyState from '../components/EmptyState';
+import EmptyState from '../components/ui/EmptyState';
 import Button from '../components/ui/Button';
 import Tag from '../components/ui/Tag';
 import FilterBar from '../components/templates/FilterBar';

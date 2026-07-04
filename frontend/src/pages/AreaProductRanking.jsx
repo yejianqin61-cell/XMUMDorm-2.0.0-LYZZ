@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import Card from '../components/ui/Card';
-import EmptyState from '../components/EmptyState';
+import EmptyState from '../components/ui/EmptyState';
 import { getRegions, getRegionTopProductsByCode } from '@shared/api/canteen';
 import { getUploadUrl, DEFAULT_PRODUCT_IMAGE_PATH } from '@shared/api/config';
 import { getApiErrorMessage } from '@shared/utils/apiError';
