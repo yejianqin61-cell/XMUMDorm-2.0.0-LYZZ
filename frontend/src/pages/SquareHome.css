@@ -8,6 +8,17 @@
   --square-card-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.9));
   --square-card-surface-soft: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(250, 252, 255, 0.88));
   --square-card-inset: inset 0 0 0 1px rgba(15, 23, 42, 0.045);
+  --square-gap-section: 28px;
+  --square-gap-block: 20px;
+  --square-gap-copy: 12px;
+  --square-title-page: 2.3rem;
+  --square-title-section: 1.32rem;
+  --square-title-card: 1.08rem;
+  --square-text-body: 0.9rem;
+  --square-text-meta: 0.76rem;
+  --square-leading-tight: 1.18;
+  --square-leading-body: 1.72;
+  --square-leading-meta: 1.5;
   min-height: 100%;
   padding: 0;
   overflow-y: auto;
@@ -24,7 +35,7 @@
   padding-bottom: calc(var(--tabbar-height, 72px) + var(--safe-bottom, 0px) + 24px);
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: var(--square-gap-section);
 }
 
 .square-section {
@@ -40,14 +51,14 @@
 
 .square-section-header--stack {
   align-items: flex-start;
-  gap: 10px;
+  gap: 12px;
 }
 
 .square-section-title {
   margin: 0;
-  font-size: 20px;
-  line-height: 1.2;
-  font-weight: 750;
+  font-size: var(--square-title-section);
+  line-height: 1.22;
+  font-weight: 780;
   letter-spacing: -0.02em;
   color: #10233b;
 }
@@ -55,14 +66,14 @@
 .square-section-subtitle {
   margin: 8px 0 0;
   max-width: 32rem;
-  color: rgba(16, 35, 59, 0.62);
-  font-size: 13px;
-  line-height: 1.65;
+  color: rgba(16, 35, 59, 0.54);
+  font-size: var(--square-text-body);
+  line-height: var(--square-leading-body);
 }
 
 .square-section-more {
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: var(--square-text-meta);
+  line-height: var(--square-leading-meta);
   color: var(--post-ios-accent);
   background: none;
   border: none;
@@ -72,12 +83,12 @@
 }
 
 .square-home-state {
-  padding: 18px 16px;
+  padding: 20px 18px;
   border-radius: 22px;
 }
 
 .square-home-block {
-  padding: 18px;
+  padding: 22px;
   border-radius: calc(var(--square-card-radius) + 4px);
   background:
     radial-gradient(circle at top left, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.84) 48%, rgba(246, 249, 252, 0.92) 100%),
@@ -89,27 +100,27 @@
 .square-trending-shell,
 .square-trending-detail-hero,
 .square-trending-discussion {
-  gap: 18px;
+  gap: var(--square-gap-block);
 }
 
 .square-trending-shell__head {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .square-trending-shell__meta,
 .square-trending-discussion__meta {
   margin: 0;
-  font-size: 13px;
-  line-height: 1.65;
-  color: rgba(16, 35, 59, 0.56);
+  font-size: var(--square-text-body);
+  line-height: var(--square-leading-body);
+  color: rgba(16, 35, 59, 0.54);
 }
 
 .today-campus-panel {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--square-gap-block);
 }
 
 .today-campus-panel--compact {
@@ -119,8 +130,8 @@
 .today-campus-hero {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding: calc(var(--safe-top, 0px) * 0.1 + 18px) 18px 18px;
+  gap: 22px;
+  padding: calc(var(--safe-top, 0px) * 0.1 + 22px) 22px 22px;
   border-radius: var(--square-card-radius);
   background:
     radial-gradient(circle at top left, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.62) 44%, rgba(255, 255, 255, 0.42) 100%),
@@ -133,11 +144,11 @@
 .today-campus-hero__content {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--square-gap-copy);
 }
 
 .today-campus-hero__eyebrow {
-  font-size: 11px;
+  font-size: var(--square-text-meta);
   line-height: 1.4;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -147,8 +158,8 @@
 
 .today-campus-hero__title {
   margin: 0;
-  font-size: 34px;
-  line-height: 0.98;
+  font-size: var(--square-title-page);
+  line-height: var(--square-leading-tight);
   font-weight: 800;
   letter-spacing: -0.04em;
   color: #10233b;
@@ -163,16 +174,16 @@
 .today-campus-hero__notice-links {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 14px;
 }
 
 .today-campus-hero__notice-link {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
-  padding: 18px;
+  padding: 20px;
   border-radius: var(--square-card-radius-sm);
   text-decoration: none;
   color: #10233b;
@@ -219,7 +230,7 @@
 .today-campus-hero__notice-kicker {
   position: relative;
   z-index: 1;
-  font-size: 11px;
+  font-size: var(--square-text-meta);
   line-height: 1.4;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -230,8 +241,8 @@
 .today-campus-hero__notice-title {
   position: relative;
   z-index: 1;
-  font-size: 18px;
-  line-height: 1.3;
+  font-size: var(--square-title-card);
+  line-height: 1.32;
   font-weight: 800;
   letter-spacing: -0.02em;
 }
@@ -240,9 +251,9 @@
   position: relative;
   z-index: 1;
   max-width: 18ch;
-  font-size: 12px;
-  line-height: 1.65;
-  color: rgba(16, 35, 59, 0.62);
+  font-size: var(--square-text-body);
+  line-height: var(--square-leading-body);
+  color: rgba(16, 35, 59, 0.56);
 }
 
 .today-campus-chip {
@@ -254,8 +265,8 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.78);
   color: #183153;
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: var(--square-text-meta);
+  line-height: var(--square-leading-meta);
   font-weight: 700;
   box-shadow: var(--square-card-inset);
 }
@@ -263,7 +274,7 @@
 .today-campus-quick-actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 14px;
 }
 
 .today-campus-quick-action-link {
@@ -296,7 +307,7 @@
   flex-direction: column;
   justify-content: space-between;
   min-height: 164px;
-  padding: 16px;
+  padding: 20px;
 }
 
 .today-campus-quick-action__pattern {
@@ -336,15 +347,15 @@
 .today-campus-quick-action__content {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   position: relative;
   z-index: 1;
 }
 
 .today-campus-quick-action__title {
   margin: 0;
-  font-size: 18px;
-  line-height: 1.3;
+  font-size: var(--square-title-card);
+  line-height: 1.32;
   font-weight: 800;
   letter-spacing: -0.02em;
   color: #10233b;
@@ -353,9 +364,9 @@
 .today-campus-quick-action__hint {
   margin: 0;
   max-width: 16ch;
-  color: rgba(16, 35, 59, 0.62);
-  font-size: 12px;
-  line-height: 1.55;
+  color: rgba(16, 35, 59, 0.54);
+  font-size: var(--square-text-body);
+  line-height: 1.62;
 }
 
 .today-campus-quick-action--club {
@@ -409,7 +420,7 @@
 .square-trending-board {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .square-trending-item {
@@ -417,7 +428,7 @@
   grid-template-columns: auto 1fr;
   gap: 14px;
   align-items: center;
-  padding: 16px 18px;
+  padding: 18px 20px;
   border-radius: var(--square-card-radius-sm);
   border: var(--square-card-border);
   background: var(--square-card-surface);
@@ -472,9 +483,9 @@
 .square-trending-item__title {
   margin: 0;
   color: #10233b;
-  font-size: 15px;
-  line-height: 1.45;
-  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1.52;
+  font-weight: 760;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -483,9 +494,9 @@
 
 .square-trending-item__meta {
   margin: 6px 0 0;
-  color: rgba(16, 35, 59, 0.52);
-  font-size: 12px;
-  line-height: 1.45;
+  color: rgba(16, 35, 59, 0.46);
+  font-size: var(--square-text-meta);
+  line-height: var(--square-leading-meta);
 }
 
 .square-trending-list--page {
@@ -886,7 +897,7 @@
 .square-home-explore {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
 }
 
 .square-home-explore__topics {
@@ -912,23 +923,23 @@
   color: #183153;
   background: rgba(255, 255, 255, 0.88);
   box-shadow: var(--square-card-inset);
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: var(--square-text-meta);
+  line-height: var(--square-leading-meta);
   font-weight: 700;
 }
 
 .square-home-explore__links {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 14px;
 }
 
 .square-home-explore__link {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
-  padding: 16px;
+  padding: 18px;
   border-radius: var(--square-card-radius-sm);
   text-decoration: none;
   color: #10233b;
@@ -944,7 +955,7 @@
 }
 
 .square-home-explore__link-kicker {
-  font-size: 11px;
+  font-size: var(--square-text-meta);
   line-height: 1.4;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -953,15 +964,15 @@
 }
 
 .square-home-explore__link-title {
-  font-size: 15px;
-  line-height: 1.45;
+  font-size: 0.98rem;
+  line-height: 1.5;
   letter-spacing: -0.02em;
 }
 
 .square-recommend-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 14px;
 }
 
 .square-recommend-link {
@@ -982,15 +993,16 @@
 .square-recommend-card .ui-card__body {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   min-height: 188px;
+  padding: 20px;
 }
 
 .square-recommend-card__top {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
 }
 
 .square-recommend-card__badge {
@@ -1007,32 +1019,32 @@
 }
 
 .square-recommend-card__reason {
-  color: rgba(16, 35, 59, 0.46);
-  font-size: 11px;
-  line-height: 1.45;
+  color: rgba(16, 35, 59, 0.42);
+  font-size: var(--square-text-meta);
+  line-height: var(--square-leading-meta);
   font-weight: 700;
 }
 
 .square-recommend-card__title {
   margin: 0;
-  font-size: 18px;
-  line-height: 1.4;
+  font-size: var(--square-title-card);
+  line-height: 1.34;
   letter-spacing: -0.02em;
   color: #10233b;
 }
 
 .square-recommend-card__subtitle {
   margin: 0;
-  color: rgba(16, 35, 59, 0.64);
-  font-size: 13px;
-  line-height: 1.65;
+  color: rgba(16, 35, 59, 0.56);
+  font-size: var(--square-text-body);
+  line-height: var(--square-leading-body);
 }
 
 .square-recommend-card__meta {
   margin: auto 0 0;
-  color: rgba(16, 35, 59, 0.5);
-  font-size: 12px;
-  line-height: 1.45;
+  color: rgba(16, 35, 59, 0.44);
+  font-size: var(--square-text-meta);
+  line-height: var(--square-leading-meta);
   font-weight: 700;
 }
 
@@ -1229,11 +1241,11 @@
   }
 
   .square-home-block {
-    padding: 16px;
+    padding: 18px;
   }
 
   .square-section-title {
-    font-size: 18px;
+    font-size: 1.18rem;
   }
 
   .square-trending-topic-card {
@@ -1276,7 +1288,7 @@
   }
 
   .today-campus-hero__title {
-    font-size: 28px;
+    font-size: 1.92rem;
   }
 
   .today-campus-hero__notice-links {
@@ -1289,11 +1301,11 @@
 
   .today-campus-quick-action .ui-card__body {
     min-height: 164px;
-    padding: 16px;
+    padding: 18px;
   }
 
   .square-campus-feed-hero__title {
-    font-size: 28px;
+    font-size: 1.92rem;
   }
 
   .square-campus-feed-card__body {
@@ -1316,7 +1328,7 @@
   padding-bottom: 0;
   display: grid;
   grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
-  gap: 24px;
+  gap: 28px;
   align-items: start;
 }
 
@@ -1348,22 +1360,22 @@
 
 .app-layout--desktop-shell .square-home-block {
   height: 100%;
-  padding: 24px;
+  padding: 26px;
   border-radius: calc(var(--square-card-radius) + 6px);
 }
 
 .app-layout--desktop-shell .today-campus-panel {
-  gap: 20px;
+  gap: 22px;
 }
 
 .app-layout--desktop-shell .today-campus-hero {
-  gap: 22px;
-  padding: 24px;
+  gap: 24px;
+  padding: 26px;
   min-height: 100%;
 }
 
 .app-layout--desktop-shell .today-campus-hero__title {
-  font-size: 42px;
+  font-size: 2.7rem;
 }
 
 .app-layout--desktop-shell .today-campus-hero__notice-links {
@@ -1372,7 +1384,7 @@
 
 .app-layout--desktop-shell .today-campus-quick-actions {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 18px;
 }
 
 .app-layout--desktop-shell .today-campus-quick-action,
@@ -1381,11 +1393,11 @@
 }
 
 .app-layout--desktop-shell .square-trending-board {
-  gap: 14px;
+  gap: 16px;
 }
 
 .app-layout--desktop-shell .square-trending-item {
-  padding: 18px 20px;
+  padding: 20px 22px;
 }
 
 .app-layout--desktop-shell .canteen-banner-wrap {
@@ -1411,16 +1423,16 @@
 .site-web-shell--tablet .square-home-inner {
   padding: 0;
   padding-bottom: 0;
-  gap: 20px;
+  gap: 24px;
 }
 
 .site-web-shell--tablet .square-home-block {
-  padding: 20px;
+  padding: 22px;
   border-radius: calc(var(--square-card-radius) + 2px);
 }
 
 .site-web-shell--tablet .today-campus-hero {
-  padding: 20px;
+  padding: 22px;
 }
 
 @media (max-width: 900px) {
