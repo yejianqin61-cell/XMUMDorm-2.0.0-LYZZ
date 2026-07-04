@@ -2,46 +2,56 @@ import { useEffect, useState } from 'react';
 import Layout from '../Layout';
 import SiteWebShell from './SiteWebShell';
 
-const DESKTOP_SHELL_QUERY = '(min-width: 1200px)';
+const TABLET_MIN_WIDTH = 768;
+const DESKTOP_MIN_WIDTH = 1024;
+const WIDE_MIN_WIDTH = 1440;
 
-function getDesktopShellMatch() {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-    return false;
+function getViewportBucket() {
+  if (typeof window === 'undefined') {
+    return 'mobile';
   }
 
-  return window.matchMedia(DESKTOP_SHELL_QUERY).matches;
+  const width = window.innerWidth || 0;
+
+  if (width >= WIDE_MIN_WIDTH) return 'wide';
+  if (width >= DESKTOP_MIN_WIDTH) return 'desktop';
+  if (width >= TABLET_MIN_WIDTH) return 'tablet';
+  return 'mobile';
 }
 
 export default function SiteShellRoute() {
-  const [isDesktopShell, setIsDesktopShell] = useState(getDesktopShellMatch);
+  const [viewportBucket, setViewportBucket] = useState(getViewportBucket);
 
   useEffect(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    if (typeof window === 'undefined') {
       return undefined;
     }
 
-    const mediaQuery = window.matchMedia(DESKTOP_SHELL_QUERY);
-    const handleChange = (event) => {
-      setIsDesktopShell(event.matches);
+    const handleResize = () => {
+      setViewportBucket(getViewportBucket());
     };
 
-    setIsDesktopShell(mediaQuery.matches);
-
-    if (typeof mediaQuery.addEventListener === 'function') {
-      mediaQuery.addEventListener('change', handleChange);
-      return () => mediaQuery.removeEventListener('change', handleChange);
-    }
-
-    mediaQuery.addListener(handleChange);
-    return () => mediaQuery.removeListener(handleChange);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  if (!isDesktopShell) {
+  if (viewportBucket === 'mobile') {
     return <Layout mode="mobile" />;
   }
 
+  const shellClassName = viewportBucket === 'tablet'
+    ? 'site-web-shell--tablet'
+    : viewportBucket === 'desktop'
+      ? 'site-web-shell--desktop'
+      : 'site-web-shell--wide';
+
   return (
-    <SiteWebShell contentClassName="site-web-shell__content--layout">
+    <SiteWebShell
+      className={shellClassName}
+      contentClassName="site-web-shell__content--layout"
+      showAside={viewportBucket !== 'tablet'}
+    >
       <Layout mode="desktop" />
     </SiteWebShell>
   );

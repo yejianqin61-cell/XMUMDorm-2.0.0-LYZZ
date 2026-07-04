@@ -6,6 +6,18 @@
   color: var(--color-text-primary);
 }
 
+.site-web-shell--wide .site-web-shell__body {
+  grid-template-columns: var(--layout-sidebar-width) minmax(0, 1fr) var(--layout-aside-width);
+}
+
+.site-web-shell--desktop .site-web-shell__body {
+  grid-template-columns: 240px minmax(0, 1fr) 288px;
+}
+
+.site-web-shell--tablet .site-web-shell__body {
+  grid-template-columns: 220px minmax(0, 1fr);
+}
+
 .site-web-shell__header {
   position: sticky;
   top: 0;
@@ -467,17 +479,58 @@
   line-height: var(--line-height-reading);
 }
 
-@media (max-width: 1439px) {
-  .site-web-shell__body {
-    grid-template-columns: 240px minmax(0, 1fr) 288px;
-  }
+.site-web-shell--desktop .site-web-shell__header-inner,
+.site-web-shell--desktop .site-web-shell__body {
+  width: min(calc(100% - var(--space-12)), 1320px);
+}
+
+.site-web-shell--tablet .site-web-shell__header {
+  padding: var(--space-6) var(--space-8);
+}
+
+.site-web-shell--tablet .site-web-shell__header-inner,
+.site-web-shell--tablet .site-web-shell__body {
+  width: calc(100% - var(--space-8) * 2);
+}
+
+.site-web-shell--tablet .site-web-shell__header-inner {
+  align-items: flex-start;
+  flex-direction: column;
+}
+
+.site-web-shell--tablet .site-web-shell__header-meta {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.site-web-shell--tablet .site-web-shell__profile-name,
+.site-web-shell--tablet .site-web-shell__nav-caption {
+  display: none;
+}
+
+.site-web-shell--tablet .site-web-shell__viewport-hero {
+  flex-direction: column;
+}
+
+.site-web-shell--tablet .site-web-shell__viewport-chips {
+  justify-content: flex-start;
+}
+
+.site-web-shell--tablet .site-web-shell__viewport-body,
+.site-web-shell--tablet .site-web-shell__viewport-hero {
+  padding: var(--space-10);
+}
+
+.site-web-shell--tablet .site-web-shell__panel--sidebar {
+  position: sticky;
+  top: calc(72px + var(--space-8));
+}
+
+.site-web-shell--tablet .site-web-shell__header-chip:not(.site-web-shell__header-chip--primary) {
+  display: none;
 }
 
 @media (max-width: 1199px) {
-  .site-web-shell__body {
-    grid-template-columns: 220px minmax(0, 1fr);
-  }
-
   .site-web-shell__aside {
     grid-column: 1 / -1;
   }
