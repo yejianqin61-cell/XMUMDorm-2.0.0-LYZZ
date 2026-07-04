@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { getDashboard } from '@shared/api/admin';
 import { useLanguage } from '../../context/LanguageContext';
+import Badge from '../../components/ui/Badge';
 
 const STAT_CARDS = [
   { key: 'totalUsers', icon: Users, label: '总用户', labelEn: 'Total Users', color: '#2563eb', bg: 'rgba(37,99,235,0.08)' },
@@ -223,15 +224,11 @@ function MiniStat({ label, value }) {
 
 function ReportStatusBadge({ status, isZh }) {
   const map = {
-    pending: { label: isZh ? '待处理' : 'Pending', className: 'bg-amber-50 text-amber-700' },
-    processing: { label: isZh ? '处理中' : 'Processing', className: 'bg-blue-50 text-blue-700' },
-    resolved: { label: isZh ? '已处理' : 'Resolved', className: 'bg-green-50 text-green-700' },
-    dismissed: { label: isZh ? '已驳回' : 'Dismissed', className: 'bg-slate-100 text-slate-500' },
+    pending: { label: isZh ? '待处理' : 'Pending', tone: 'pending' },
+    processing: { label: isZh ? '处理中' : 'Processing', tone: 'processing' },
+    resolved: { label: isZh ? '已处理' : 'Resolved', tone: 'resolved' },
+    dismissed: { label: isZh ? '已驳回' : 'Dismissed', tone: 'dismissed' },
   };
   const s = map[status] || map.pending;
-  return (
-    <span className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-medium ${s.className}`}>
-      {s.label}
-    </span>
-  );
+  return <Badge tone={s.tone} size="xs">{s.label}</Badge>;
 }

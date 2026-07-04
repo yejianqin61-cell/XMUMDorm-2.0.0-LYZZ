@@ -4,6 +4,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, ExternalLink, Loader2, AlertTriangle } from 'lucide-react';
 import { getAdminReports } from '@shared/api/admin';
 import { useLanguage } from '../../context/LanguageContext';
+import Badge from '../../components/ui/Badge';
+import Tag from '../../components/ui/Tag';
 
 const PAGE_SIZE = 20;
 
@@ -32,17 +34,13 @@ const TARGET_LABELS = {
 
 function ReportStatusBadge({ status, isZh }) {
   const map = {
-    pending: { label: isZh ? '待处理' : 'Pending', className: 'bg-amber-50 text-amber-700' },
-    processing: { label: isZh ? '处理中' : 'Processing', className: 'bg-blue-50 text-blue-700' },
-    resolved: { label: isZh ? '已处理' : 'Resolved', className: 'bg-green-50 text-green-700' },
-    dismissed: { label: isZh ? '已驳回' : 'Dismissed', className: 'bg-slate-100 text-slate-500' },
+    pending: { label: isZh ? '待处理' : 'Pending', tone: 'pending' },
+    processing: { label: isZh ? '处理中' : 'Processing', tone: 'processing' },
+    resolved: { label: isZh ? '已处理' : 'Resolved', tone: 'resolved' },
+    dismissed: { label: isZh ? '已驳回' : 'Dismissed', tone: 'dismissed' },
   };
   const s = map[status] || map.pending;
-  return (
-    <span className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-medium ${s.className}`}>
-      {s.label}
-    </span>
-  );
+  return <Badge tone={s.tone} size="xs">{s.label}</Badge>;
 }
 
 export default function ReportList() {
@@ -126,9 +124,9 @@ export default function ReportList() {
                 </div>
                 <div className="flex items-center gap-2 mt-1.5">
                   <span className="text-[12px] text-slate-400">{isZh ? (TARGET_LABELS[r.target_type] || r.target_type) : r.target_type}</span>
-                  <span className="inline-block rounded-full bg-amber-50 text-amber-700 px-2 py-0.5 text-[11px] font-medium">
+                  <Tag tone="canteen" variant="soft" size="sm">
                     {isZh ? (REASON_LABELS[r.reason] || r.reason) : r.reason}
-                  </span>
+                  </Tag>
                 </div>
               </Link>
             ))}

@@ -8,6 +8,7 @@ import { toggleLike } from '@shared/api/posts';
 import { useExpFeedback } from '../context/ExpFeedbackContext';
 import UserLevelBadge from './UserLevelBadge';
 import ImagePreview from './ImagePreview';
+import Tag from './ui/Tag';
 import './PostCard.css';
 
 /** 兼容 API 与 Mock：author 为对象时用 nickname/username、avatar（需补全 URL） */
@@ -111,14 +112,16 @@ function PostCard({ post, variant = 'list' }) {
                 <Link
                   key={t.key}
                   to={`/posts/tag/${encodeURIComponent(t.slug)}`}
-                  className="post-card-tag post-card-tag--link"
+                  className="post-card-tag-link"
                 >
-                  {t.label}
+                  <Tag as="span" tone="square" variant="soft" size="sm" interactive>
+                    {t.label}
+                  </Tag>
                 </Link>
               ) : (
-                <span key={t.key} className="post-card-tag">
+                <Tag key={t.key} tone="square" variant="soft" size="sm">
                   {t.label}
-                </span>
+                </Tag>
               )
             )}
           </div>

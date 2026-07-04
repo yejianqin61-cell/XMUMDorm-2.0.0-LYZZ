@@ -1,0 +1,87 @@
+.ui-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  max-width: 100%;
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  font-family: var(--font-family-ui);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.ui-badge--xs {
+  min-height: 22px;
+  padding: 0 8px;
+  font-size: 11px;
+}
+
+.ui-badge--sm {
+  min-height: 26px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.ui-badge--soft {
+  background: var(--color-bg-surface-soft);
+}
+
+.ui-badge--solid {
+  color: var(--color-text-on-brand);
+}
+
+.ui-badge--pending.ui-badge--soft {
+  background: rgba(255, 181, 71, 0.18);
+  color: #a55a00;
+}
+
+.ui-badge--processing.ui-badge--soft {
+  background: rgba(77, 167, 255, 0.18);
+  color: #236db5;
+}
+
+.ui-badge--resolved.ui-badge--soft {
+  background: rgba(57, 197, 141, 0.18);
+  color: #247d5c;
+}
+
+.ui-badge--dismissed.ui-badge--soft,
+.ui-badge--neutral.ui-badge--soft {
+  background: var(--color-bg-surface-soft);
+  color: var(--color-text-tertiary);
+}
+
+.ui-badge--accent.ui-badge--soft {
+  background: var(--color-brand-primary-soft);
+  color: var(--color-brand-primary);
+}
+
+.ui-badge--danger.ui-badge--soft {
+  background: var(--color-bg-danger-soft);
+  color: var(--color-danger);
+}
+
+.ui-badge--pending.ui-badge--solid {
+  background: var(--color-warning);
+}
+
+.ui-badge--processing.ui-badge--solid,
+.ui-badge--accent.ui-badge--solid {
+  background: var(--color-brand-primary);
+}
+
+.ui-badge--resolved.ui-badge--solid {
+  background: var(--color-success);
+}
+
+.ui-badge--dismissed.ui-badge--solid,
+.ui-badge--neutral.ui-badge--solid {
+  background: var(--color-slate-500);
+}
+
+.ui-badge--danger.ui-badge--solid {
+  background: var(--color-danger);
+}

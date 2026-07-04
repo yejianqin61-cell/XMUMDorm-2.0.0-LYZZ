@@ -1,0 +1,110 @@
+.ui-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  max-width: 100%;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-family-ui);
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  transition:
+    background var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    color var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-fast) var(--ease-standard);
+}
+
+.ui-tag--sm {
+  min-height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.ui-tag--md {
+  min-height: 34px;
+  padding: 0 12px;
+  font-size: var(--font-size-body-md);
+}
+
+.ui-tag--soft {
+  background: var(--color-brand-primary-soft);
+  color: var(--color-brand-primary);
+}
+
+.ui-tag--outline {
+  border-color: var(--color-border-default);
+  background: var(--color-bg-surface);
+  color: var(--color-text-secondary);
+}
+
+.ui-tag--solid {
+  background: var(--color-brand-primary);
+  color: var(--color-text-on-brand);
+}
+
+.ui-tag--default.ui-tag--soft {
+  background: var(--color-brand-primary-soft);
+  color: var(--color-brand-primary);
+}
+
+.ui-tag--square.ui-tag--soft {
+  background: rgba(77, 167, 255, 0.14);
+  color: var(--accent-square);
+}
+
+.ui-tag--canteen.ui-tag--soft {
+  background: rgba(255, 184, 108, 0.16);
+  color: #b86a12;
+}
+
+.ui-tag--club.ui-tag--soft {
+  background: rgba(255, 143, 177, 0.16);
+  color: #d4547d;
+}
+
+.ui-tag--marketplace.ui-tag--soft {
+  background: rgba(115, 217, 179, 0.18);
+  color: #268a63;
+}
+
+.ui-tag--neutral.ui-tag--soft {
+  background: var(--color-bg-surface-soft);
+  color: var(--color-text-secondary);
+}
+
+.ui-tag--interactive {
+  cursor: pointer;
+}
+
+.ui-tag--interactive:hover {
+  box-shadow: var(--shadow-soft);
+}
+
+.ui-tag--interactive.ui-tag--outline:hover {
+  border-color: var(--color-border-strong);
+  background: var(--color-bg-surface-soft);
+}
+
+.ui-tag--interactive.ui-tag--soft:hover {
+  filter: saturate(1.04);
+}
+
+.ui-tag--active {
+  border-color: rgba(77, 167, 255, 0.3);
+  box-shadow: inset 0 0 0 1px rgba(77, 167, 255, 0.18);
+}
+
+.ui-tag:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(77, 167, 255, 0.16);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-tag {
+    transition: none;
+  }
+}

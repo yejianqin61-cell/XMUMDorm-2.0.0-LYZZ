@@ -1,4 +1,5 @@
 import AppCard from '../ui/AppCard';
+import Badge from '../ui/Badge';
 
 function PublishEntryCard({
   icon,
@@ -21,7 +22,7 @@ function PublishEntryCard({
           <span className="publish-entry-card__icon" aria-hidden="true">
             {icon}
           </span>
-          {badge ? <span className="publish-entry-card__badge">{badge}</span> : null}
+          {badge ? <Badge tone="accent" size="xs">{badge}</Badge> : null}
         </div>
         <div className="publish-entry-card__body">
           <h3 className="publish-entry-card__title">{title}</h3>

@@ -76,27 +76,14 @@
   margin-bottom: 10px;
 }
 
-.post-card-tag {
+.post-card-tag-link {
   display: inline-flex;
-  align-items: center;
-  padding: 4px 10px;
-  border-radius: 980px;
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  color: var(--post-ios-accent, #007aff);
-  background: var(--post-ios-accent-subtle, rgba(0, 122, 255, 0.12));
-  border: none;
-}
-
-.post-card-tag--link {
   text-decoration: none;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: opacity 0.12s ease;
 }
 
-.post-card-tag--link:active {
+.post-card-tag-link:active {
   opacity: 0.55;
 }
 
