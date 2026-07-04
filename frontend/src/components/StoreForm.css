@@ -1,64 +1,54 @@
 .store-form {
-  background: rgba(255, 255, 255, 0.92);
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--space-10);
+  padding: var(--space-10);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-surface-strong);
+  box-shadow: var(--shadow-soft);
 }
 
-.store-form-field label {
-  display: block;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--wx-text);
-  margin-bottom: 8px;
+.store-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
 }
 
-.store-form-input,
-.store-form-select,
-.store-form-textarea {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid var(--wx-border);
-  border-radius: 8px;
-  font-size: 15px;
-  font-family: inherit;
-  background: #fff;
-}
-
-.store-form-input::placeholder,
-.store-form-textarea::placeholder {
-  color: var(--wx-text-secondary);
-}
-
-.store-form-textarea {
-  min-height: 80px;
-  resize: vertical;
+.store-form-upload-label {
+  padding-left: 2px;
+  font-family: var(--font-family-ui);
+  font-size: var(--font-size-body-md);
+  font-weight: 600;
+  line-height: var(--line-height-normal);
+  color: var(--color-text-secondary);
 }
 
 .store-form-logo-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-6);
 }
 
 .store-form-logo-wrap {
   flex-shrink: 0;
+  display: block;
   width: 72px;
   height: 72px;
-  border-radius: 12px;
   overflow: hidden;
-  border: 1px solid var(--wx-border);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-surface-soft);
   cursor: pointer;
-  display: block;
-  background: var(--wx-bar-bg);
+  transition:
+    border-color var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-fast) var(--ease-standard);
 }
 
 @media (hover: hover) {
   .store-form-logo-wrap:hover {
-    border-color: var(--wx-green);
+    border-color: var(--accent-canteen);
+    box-shadow: var(--shadow-soft);
   }
 }
 
@@ -76,69 +66,21 @@
 }
 
 .store-form-logo-placeholder {
-  width: 100%;
-  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  color: var(--wx-text-secondary);
+  font-size: var(--font-size-body-md);
+  color: var(--color-text-tertiary);
 }
 
 .store-form-logo-hint {
-  font-size: 13px;
-  color: var(--wx-text-secondary);
-}
-
-.store-form-message {
-  margin: 0;
-  font-size: 14px;
-  padding: 8px 0;
-}
-
-.store-form-message-success {
-  color: var(--wx-green);
-}
-
-.store-form-message-error {
-  color: #e64340;
+  font-size: var(--font-size-caption);
+  color: var(--color-text-tertiary);
 }
 
 .store-form-actions {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-top: 8px;
-}
-
-.store-form-btn {
-  padding: 12px 20px;
-  font-size: 16px;
-  font-weight: 500;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-}
-
-.store-form-btn-primary {
-  background: var(--wx-green);
-  color: #fff;
-}
-
-@media (hover: hover) {
-  .store-form-btn-primary:hover {
-    background: var(--wx-green-dark);
-  }
-}
-
-.store-form-btn-secondary {
-  background: transparent;
-  color: var(--wx-text-secondary);
-  border: 1px solid var(--wx-border);
-}
-
-@media (hover: hover) {
-  .store-form-btn-secondary:hover {
-    background: var(--wx-bar-bg);
-  }
+  gap: var(--space-6);
+  margin-top: var(--space-2);
 }

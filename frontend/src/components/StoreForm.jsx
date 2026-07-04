@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getRegions } from '@shared/api/canteen';
 import { QK } from '@shared/query/queryKeys';
+import { Toast } from '../context/ToastContext';
+import Button from './ui/Button';
+import Input from './ui/Input';
+import Select from './ui/Select';
+import Textarea from './ui/Textarea';
 import './StoreForm.css';
 
 const REGIONS_STALE_MS = 5 * 60 * 1000;
@@ -11,7 +16,7 @@ const REGIONS_STALE_MS = 5 * 60 * 1000;
  * @param {Object} [props.initialValues] 编辑时预填 { name, region_id, description, logo }
  * @param {Function} props.onSubmit(values) values: { name, region_id, description?, logoUrl? }
  * @param {Function} props.onCancel
- * @param {boolean} [props.loading] 提交中时为 true，按钮禁用并显示「提交中…」
+ * @param {boolean} [props.loading] 提交中时为 true，按钮禁用并显示“提交中…”
  */
 function StoreForm({ initialValues, onSubmit, onCancel, loading = false }) {
   const { data: regions = [] } = useQuery({
@@ -25,18 +30,12 @@ function StoreForm({ initialValues, onSubmit, onCancel, loading = false }) {
   const [regionId, setRegionId] = useState(initialValues?.region_id != null ? String(initialValues.region_id) : '');
   const [description, setDescription] = useState(initialValues?.description ?? '');
   const [logoUrl, setLogoUrl] = useState(initialValues?.logo ?? '');
-  const [message, setMessage] = useState({ type: '', text: '' });
 
   useEffect(() => {
     if (!regionId && regions.length > 0) {
       setRegionId(String(regions[0].id));
     }
   }, [regions, regionId]);
-
-  const showMsg = (text, type = 'success') => {
-    setMessage({ text, type });
-    setTimeout(() => setMessage({ type: '', text: '' }), 2000);
-  };
 
   const handleLogoChange = (e) => {
     const file = e.target.files?.[0];
@@ -49,13 +48,11 @@ function StoreForm({ initialValues, onSubmit, onCancel, loading = false }) {
     e.preventDefault();
     const nameTrim = name.trim();
     if (!nameTrim) {
-      setMessage({ text: '请输入店铺名称 Please enter store name', type: 'error' });
-      setTimeout(() => setMessage({ type: '', text: '' }), 2000);
+      Toast.error('请输入店铺名称 Please enter store name');
       return;
     }
     if (!regionId) {
-      setMessage({ text: '请选择分区 Please select area', type: 'error' });
-      setTimeout(() => setMessage({ type: '', text: '' }), 2000);
+      Toast.error('请选择分区 Please select area');
       return;
     }
     onSubmit({
@@ -64,39 +61,35 @@ function StoreForm({ initialValues, onSubmit, onCancel, loading = false }) {
       description: description.trim() || undefined,
       logoUrl: logoUrl || undefined,
     });
-    showMsg(initialValues ? '已保存 Saved' : '创建成功 Created');
+    Toast.success(initialValues ? '已保存 Saved' : '创建成功 Created');
   };
 
   return (
     <form className="store-form" onSubmit={handleSubmit}>
-      <div className="store-form-field">
-        <label htmlFor="store-form-name">店铺名称 Store Name *</label>
-        <input
-          id="store-form-name"
-          type="text"
-          placeholder="请输入店铺名称 Enter store name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="store-form-input"
-        />
-      </div>
+      <Input
+        id="store-form-name"
+        type="text"
+        label="店铺名称 Store Name"
+        required
+        placeholder="请输入店铺名称 Enter store name"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+      />
+
+      <Select
+        id="store-form-area"
+        label="分区 Area"
+        required
+        value={regionId}
+        onChange={(e) => setRegionId(e.target.value)}
+      >
+        {regions.map((r) => (
+          <option key={r.id} value={String(r.id)}>{r.name || r.code}</option>
+        ))}
+      </Select>
 
       <div className="store-form-field">
-        <label htmlFor="store-form-area">分区 Area *</label>
-        <select
-          id="store-form-area"
-          value={regionId}
-          onChange={(e) => setRegionId(e.target.value)}
-          className="store-form-select"
-        >
-          {regions.map((r) => (
-            <option key={r.id} value={String(r.id)}>{r.name || r.code}</option>
-          ))}
-        </select>
-      </div>
-
-      <div className="store-form-field">
-        <label>店铺 Logo（可选 optional）</label>
+        <label className="store-form-upload-label">店铺 Logo（可选 optional）</label>
         <div className="store-form-logo-row">
           <label className="store-form-logo-wrap">
             <input
@@ -115,31 +108,22 @@ function StoreForm({ initialValues, onSubmit, onCancel, loading = false }) {
         </div>
       </div>
 
-      <div className="store-form-field">
-        <label htmlFor="store-form-desc">简介 Description（可选 optional）</label>
-        <textarea
-          id="store-form-desc"
-          placeholder="店铺简介 Store description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          rows={3}
-          className="store-form-textarea"
-        />
-      </div>
-
-      {message.text && (
-        <p className={`store-form-message store-form-message-${message.type}`}>
-          {message.text}
-        </p>
-      )}
+      <Textarea
+        id="store-form-desc"
+        label="简介 Description（可选 optional）"
+        placeholder="店铺简介 Store description"
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        rows={3}
+      />
 
       <div className="store-form-actions">
-        <button type="submit" className="store-form-btn store-form-btn-primary" disabled={loading}>
+        <Button type="submit" variant="accent" size="lg" block disabled={loading} loading={loading}>
           {loading ? (initialValues ? '保存中…' : '提交中…') : (initialValues ? '保存 Save' : '创建 Create')}
-        </button>
-        <button type="button" className="store-form-btn store-form-btn-secondary" onClick={onCancel} disabled={loading}>
+        </Button>
+        <Button type="button" variant="secondary" size="lg" block onClick={onCancel} disabled={loading}>
           取消 Cancel
-        </button>
+        </Button>
       </div>
     </form>
   );

@@ -1,78 +1,65 @@
 .food-form {
-  background: rgba(255, 255, 255, 0.92);
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--space-10);
+  padding: var(--space-10);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-surface-strong);
+  box-shadow: var(--shadow-soft);
 }
 
-.food-form-field label {
-  display: block;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--wx-text);
-  margin-bottom: 8px;
+.food-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
 }
 
-.food-form-input,
-.food-form-textarea {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid var(--wx-border);
-  border-radius: 8px;
-  font-size: 15px;
-  font-family: inherit;
-  background: #fff;
-}
-
-.food-form-input::placeholder,
-.food-form-textarea::placeholder {
-  color: var(--wx-text-secondary);
-}
-
-.food-form-select {
-  cursor: pointer;
-  appearance: auto;
+.food-form-upload-label {
+  padding-left: 2px;
+  font-family: var(--font-family-ui);
+  font-size: var(--font-size-body-md);
+  font-weight: 600;
+  line-height: var(--line-height-normal);
+  color: var(--color-text-secondary);
 }
 
 .food-form-category-hint {
   margin: 0;
-  padding: 10px 12px;
-  font-size: 13px;
-  color: var(--wx-text-secondary);
-  background: rgba(7, 193, 96, 0.06);
-  border-radius: 8px;
-  border-left: 3px solid var(--wx-green);
-}
-
-.food-form-textarea {
-  min-height: 80px;
-  resize: vertical;
+  padding: var(--space-4) var(--space-6);
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-secondary);
+  background: var(--color-bg-success-soft);
+  border: 1px solid rgba(57, 197, 141, 0.12);
+  border-radius: var(--radius-sm);
 }
 
 .food-form-image-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-6);
 }
 
 .food-form-image-wrap {
   flex-shrink: 0;
+  display: block;
   width: 80px;
   height: 80px;
-  border-radius: 10px;
   overflow: hidden;
-  border: 1px solid var(--wx-border);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-surface-soft);
   cursor: pointer;
-  display: block;
-  background: var(--wx-bar-bg);
+  transition:
+    border-color var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-fast) var(--ease-standard);
 }
 
 @media (hover: hover) {
   .food-form-image-wrap:hover {
-    border-color: var(--wx-green);
+    border-color: var(--accent-canteen);
+    box-shadow: var(--shadow-soft);
   }
 }
 
@@ -90,69 +77,21 @@
 }
 
 .food-form-image-placeholder {
-  width: 100%;
-  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 28px;
-  color: var(--wx-text-secondary);
+  color: var(--color-text-tertiary);
 }
 
 .food-form-image-hint {
-  font-size: 13px;
-  color: var(--wx-text-secondary);
-}
-
-.food-form-message {
-  margin: 0;
-  font-size: 14px;
-  padding: 8px 0;
-}
-
-.food-form-message-success {
-  color: var(--wx-green);
-}
-
-.food-form-message-error {
-  color: #e64340;
+  font-size: var(--font-size-caption);
+  color: var(--color-text-tertiary);
 }
 
 .food-form-actions {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-top: 8px;
-}
-
-.food-form-btn {
-  padding: 12px 20px;
-  font-size: 16px;
-  font-weight: 500;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-}
-
-.food-form-btn-primary {
-  background: var(--wx-green);
-  color: #fff;
-}
-
-@media (hover: hover) {
-  .food-form-btn-primary:hover {
-    background: var(--wx-green-dark);
-  }
-}
-
-.food-form-btn-secondary {
-  background: transparent;
-  color: var(--wx-text-secondary);
-  border: 1px solid var(--wx-border);
-}
-
-@media (hover: hover) {
-  .food-form-btn-secondary:hover {
-    background: var(--wx-bar-bg);
-  }
+  gap: var(--space-6);
+  margin-top: var(--space-2);
 }

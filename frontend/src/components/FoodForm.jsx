@@ -1,5 +1,9 @@
 import { useState } from 'react';
 import { Toast } from '../context/ToastContext';
+import Button from './ui/Button';
+import Input from './ui/Input';
+import Select from './ui/Select';
+import Textarea from './ui/Textarea';
 import './FoodForm.css';
 
 /**
@@ -9,7 +13,7 @@ import './FoodForm.css';
  * @param {Object} [props.initialValues] 编辑时预填 { name, price, categoryId?, image, description }
  * @param {Function} props.onSubmit(values) values: { name, price?, categoryId?, imageUrl?, imageFile?, description }
  * @param {Function} props.onCancel
- * @param {boolean} [props.loading] 提交中时为 true，按钮禁用并显示「发布中…」/「保存中…」
+ * @param {boolean} [props.loading] 提交中时为 true，按钮禁用并显示“发布中…”/“保存中…”
  */
 function FoodForm({ categories = [], skipPrice = false, initialValues, onSubmit, onCancel, loading = false }) {
   const [name, setName] = useState(initialValues?.name ?? '');
@@ -67,56 +71,53 @@ function FoodForm({ categories = [], skipPrice = false, initialValues, onSubmit,
 
   return (
     <form className="food-form" onSubmit={handleSubmit}>
-      <div className="food-form-field">
-        <label htmlFor="food-form-name">菜品名称 Name *</label>
-        <input
-          id="food-form-name"
-          type="text"
-          placeholder="请输入菜品名称 Enter food name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="food-form-input"
-        />
-      </div>
+      <Input
+        id="food-form-name"
+        label="菜品名称 Name"
+        required
+        placeholder="请输入菜品名称 Enter food name"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+      />
 
       {!skipPrice && (
-        <div className="food-form-field">
-          <label htmlFor="food-form-price">价格 Price (RM) *</label>
-          <input
-            id="food-form-price"
-            type="number"
-            step="0.01"
-            min="0"
-            placeholder="0.00"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            className="food-form-input"
-          />
-        </div>
+        <Input
+          id="food-form-price"
+          type="number"
+          label="价格 Price (RM)"
+          required
+          step="0.01"
+          min="0"
+          placeholder="0.00"
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
+          prefix="RM"
+        />
       )}
 
       {(categories.length > 0 || categories) && (
         <div className="food-form-field">
-          <label htmlFor="food-form-category">菜品分类 Category *</label>
           {categories.length > 0 ? (
-            <select
+            <Select
               id="food-form-category"
+              label="菜品分类 Category"
+              required
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
-              className="food-form-input food-form-select"
+              className="food-form-select-field"
             >
               {categories.map((c) => (
                 <option key={c.id} value={String(c.id)}>{c.name}</option>
               ))}
-            </select>
+            </Select>
           ) : (
-            <p className="food-form-category-hint">暂无分类，请先在「管理店铺」页点击「新建分类」创建。No category yet. Create one in Manage Store.</p>
+            <p className="food-form-category-hint">暂无分类，请先在“管理店铺”页点击“新建分类”创建。No category yet. Create one in Manage Store.</p>
           )}
         </div>
       )}
 
       <div className="food-form-field">
-        <label>图片 Picture（可选 optional）</label>
+        <label className="food-form-upload-label">图片 Picture（可选 optional）</label>
         <div className="food-form-image-row">
           <label className="food-form-image-wrap">
             <input
@@ -135,25 +136,22 @@ function FoodForm({ categories = [], skipPrice = false, initialValues, onSubmit,
         </div>
       </div>
 
-      <div className="food-form-field">
-        <label htmlFor="food-form-desc">描述 Description（可选 optional）</label>
-        <textarea
-          id="food-form-desc"
-          placeholder="简要描述菜品 Brief description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          rows={3}
-          className="food-form-textarea"
-        />
-      </div>
+      <Textarea
+        id="food-form-desc"
+        label="描述 Description（可选 optional）"
+        placeholder="简要描述菜品 Brief description"
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        rows={3}
+      />
 
       <div className="food-form-actions">
-        <button type="submit" className="food-form-btn food-form-btn-primary" disabled={loading}>
+        <Button type="submit" variant="accent" size="lg" block disabled={loading} loading={loading}>
           {loading ? (initialValues ? '保存中…' : '发布中…') : (initialValues ? '保存 Save' : '发布 Publish')}
-        </button>
-        <button type="button" className="food-form-btn food-form-btn-secondary" onClick={onCancel} disabled={loading}>
+        </Button>
+        <Button type="button" variant="secondary" size="lg" block onClick={onCancel} disabled={loading}>
           取消 Cancel
-        </button>
+        </Button>
       </div>
     </form>
   );
