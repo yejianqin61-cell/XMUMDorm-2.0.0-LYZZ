@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import './Toast.css';
+import ToastStack from '../components/ui/Toast';
 
 const DURATION = 2500;
 
@@ -18,42 +18,57 @@ export const Toast = {
   error(message) {
     toastRef.current?.('error', message);
   },
+  info(message) {
+    toastRef.current?.('info', message);
+  },
 };
 
-function ToastContainer({ toast, onExited }) {
-  const { visible, message, type } = toast;
-  const timerRef = useRef(null);
+function ToastContainer({ toasts, onExited }) {
+  const timerRef = useRef(new Map());
 
   useEffect(() => {
-    if (!visible || !message) return;
-    timerRef.current = setTimeout(() => {
-      onExited?.();
-    }, DURATION);
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, [visible, message, onExited]);
+    toasts.forEach((toast) => {
+      if (timerRef.current.has(toast.id)) return;
+      const timer = setTimeout(() => {
+        onExited?.(toast.id);
+      }, DURATION);
+      timerRef.current.set(toast.id, timer);
+    });
+  }, [toasts, onExited]);
 
-  if (!visible || !message) return null;
+  useEffect(() => {
+    const activeIds = new Set(toasts.map((toast) => toast.id));
+    Array.from(timerRef.current.keys()).forEach((id) => {
+      if (activeIds.has(id)) return;
+      clearTimeout(timerRef.current.get(id));
+      timerRef.current.delete(id);
+    });
+  }, [toasts]);
 
-  return (
-    <div className="toast-wrap" role="alert" aria-live="polite">
-      <div className={`toast-toast toast-toast-${type}`}>
-        {message}
-      </div>
-    </div>
-  );
+  useEffect(() => () => {
+    timerRef.current.forEach((timer) => clearTimeout(timer));
+    timerRef.current.clear();
+  }, []);
+
+  return <ToastStack toasts={toasts} onDismiss={onExited} />;
 }
 
 export function ToastProvider({ children }) {
-  const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
+  const [toasts, setToasts] = useState([]);
 
   const show = useCallback((type, message) => {
-    setToast({ visible: true, message: String(message), type });
+    setToasts((prev) => [
+      ...prev,
+      {
+        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        message: String(message),
+        type,
+      },
+    ].slice(-3));
   }, []);
 
-  const hide = useCallback(() => {
-    setToast((t) => ({ ...t, visible: false }));
+  const hide = useCallback((id) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
 
   useEffect(() => {
@@ -66,7 +81,7 @@ export function ToastProvider({ children }) {
   return (
     <>
       {children}
-      <ToastContainer toast={toast} onExited={hide} />
+      <ToastContainer toasts={toasts} onExited={hide} />
     </>
   );
 }
