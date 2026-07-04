@@ -79,14 +79,28 @@ function MyReviews() {
 
   return (
     <div className="myreviews-page">
-      <p className="myreviews-intro">我发布的商品点评 My product reviews</p>
-      <ul className="myreviews-list" aria-label="我的点评列表">
-        {list.map((review) => (
-          <li key={review.id}>
-            <ReviewCard review={review} />
-          </li>
-        ))}
-      </ul>
+      <section className="myreviews-hero">
+        <div className="myreviews-hero__copy">
+          <p className="myreviews-hero__eyebrow">My Reviews</p>
+          <h1 className="myreviews-hero__title">我写过的商品点评</h1>
+          <p className="myreviews-hero__subtitle">把个人点评记录统一进“我的”链路桌面节奏里，方便继续浏览自己留下的评价内容。</p>
+        </div>
+        <div className="myreviews-hero__stat">
+          <span className="myreviews-hero__stat-value">{list.length}</span>
+          <span className="myreviews-hero__stat-label">Reviews</span>
+        </div>
+      </section>
+
+      <div className="myreviews-panel">
+        <p className="myreviews-intro">我发布的商品点评 My product reviews</p>
+        <ul className="myreviews-list" aria-label="我的点评列表">
+          {list.map((review) => (
+            <li key={review.id}>
+              <ReviewCard review={review} />
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }

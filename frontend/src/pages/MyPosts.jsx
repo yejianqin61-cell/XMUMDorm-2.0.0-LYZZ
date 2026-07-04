@@ -96,13 +96,29 @@ function MyPosts() {
   }
 
   return (
-    <ul className="myposts-list">
-      {list.map((post) => (
-        <li key={post.id}>
-          <PostCard post={post} />
-        </li>
-      ))}
-    </ul>
+    <div className="myposts-page">
+      <section className="myposts-hero">
+        <div className="myposts-hero__copy">
+          <p className="myposts-hero__eyebrow">My Posts</p>
+          <h1 className="myposts-hero__title">我发布过的树洞内容</h1>
+          <p className="myposts-hero__subtitle">把个人发布记录整理成一个稳定的桌面列表区，方便继续回看、管理和进入详情。</p>
+        </div>
+        <div className="myposts-hero__stat">
+          <span className="myposts-hero__stat-value">{list.length}</span>
+          <span className="myposts-hero__stat-label">Posts</span>
+        </div>
+      </section>
+
+      <div className="myposts-panel">
+        <ul className="myposts-list">
+          {list.map((post) => (
+            <li key={post.id}>
+              <PostCard post={post} />
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
   );
 }
 
