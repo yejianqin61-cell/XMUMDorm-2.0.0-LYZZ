@@ -30,6 +30,7 @@ import {
   normalizeTodoDueDate,
   normalizeTodoDueTime,
 } from '@shared/utils/formatTodoDue';
+import DashboardPageLayout from '../components/templates/DashboardPageLayout';
 import UserLevelBadge from '../components/UserLevelBadge';
 import LevelProgressBar from '../components/LevelProgressBar';
 
@@ -213,141 +214,174 @@ function MyZone() {
     ];
   }, [favoritesCountQuery.data, isLoggedIn, postsCountQuery.data, reviewsCountQuery.data, t.statsFavorites, t.statsPosts, t.statsReviews, userId]);
 
+  const summarySection = (
+    <motion.section
+      variants={listItem}
+      aria-label={isZh ? '个人信息' : 'Profile header'}
+      className="rounded-3xl bg-white p-5 shadow-sm"
+      style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}
+    >
+      <div className="flex items-start gap-5">
+        <motion.button
+          type="button"
+          onClick={isLoggedIn ? goProfile : goLogin}
+          className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full bg-slate-100"
+          style={{ boxShadow: '0 8px 26px rgba(15, 23, 42, 0.10)' }}
+          aria-label={isLoggedIn ? t.editProfile : t.logIn}
+          {...tap}
+        >
+          {displayAvatar ? (
+            <img src={displayAvatar} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <img src="/default-avatar.svg" alt="" className="h-full w-full object-cover opacity-90" />
+          )}
+          {userLoading && !displayAvatar ? (
+            <div className="absolute inset-0 grid place-items-center text-[11px] font-medium text-slate-500">
+              ...
+            </div>
+          ) : null}
+        </motion.button>
+
+        <div className="min-w-0 flex-1 pt-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="truncate text-[18px] font-semibold text-slate-900">
+              {isLoggedIn ? displayName : t.logIn}
+            </p>
+            {isLoggedIn && user?.level ? (
+              <UserLevelBadge level={user.level} badgeEmoji={user.badgeEmoji} size="md" isZh={isZh} />
+            ) : null}
+          </div>
+          <p className="mt-1 text-[13px] leading-relaxed text-slate-400">
+            {isLoggedIn ? t.bioLoggedIn : t.bioLoggedOut}
+          </p>
+          <LevelProgressBar level={user?.level} levelProgress={user?.levelProgress} isZh={isZh} />
+        </div>
+
+        <motion.button
+          type="button"
+          onClick={goSpace}
+          className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-3 py-2 text-[12px] font-medium text-slate-700 ring-1 ring-slate-200"
+          {...tap}
+        >
+          {isZh ? '空间' : 'Space'}
+          <ChevronRight className="h-4 w-4 text-slate-400" />
+        </motion.button>
+      </div>
+    </motion.section>
+  );
+
+  const statsSection = (
+    <motion.section variants={listItem} className="grid grid-cols-3 gap-2">
+      {stats.map((s) => (
+        <motion.div key={s.key} variants={listItem}>
+          <motion.div {...tap}>
+            <Link
+              to={s.to}
+              className="block rounded-3xl bg-white px-2 py-4 text-center shadow-sm"
+              style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}
+              aria-label={s.label}
+            >
+              <div className="text-[20px] font-semibold text-slate-900 tabular-nums">
+                {Number(s.value) || 0}
+              </div>
+              <div className="mt-0.5 text-[12px] font-medium text-slate-400">{s.label}</div>
+            </Link>
+          </motion.div>
+        </motion.div>
+      ))}
+    </motion.section>
+  );
+
+  const mainSection = (
+    <>
+      <motion.section variants={listItem}>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-[15px] font-semibold text-slate-900">{t.currentCourse}</h2>
+        </div>
+
+        <CurrentCourseCard
+          isLoggedIn={isLoggedIn}
+          course={currentCourse}
+          loading={scheduleTodayQuery.isFetching}
+          to="/myzone/schedule"
+        />
+      </motion.section>
+
+      {isLoggedIn ? <TodoPreview /> : null}
+    </>
+  );
+
+  const quickActionsSection = (
+    <motion.section
+      variants={listItem}
+      className="rounded-3xl bg-white p-4 shadow-sm"
+      style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}
+    >
+      <h2 className="px-1 pb-2 text-[15px] font-semibold text-slate-900">{t.utilities}</h2>
+      <div className="grid grid-cols-2 gap-2">
+        <UtilityTile to="/eat" title={t.canteen} icon={<UtensilsCrossed className="h-5 w-5" />} iconStyle={softIcon('rgba(59,130,246,0.12)', 'rgb(37,99,235)')} />
+        <UtilityTile to="/myzone/schedule" title={t.schedule} icon={<CalendarDays className="h-5 w-5" />} iconStyle={softIcon('rgba(34,197,94,0.12)', 'rgb(22,163,74)')} />
+        <UtilityTile to="/myzone/diary" title={t.diary} icon={<NotebookText className="h-5 w-5" />} iconStyle={softIcon('rgba(168,85,247,0.12)', 'rgb(147,51,234)')} />
+        <UtilityTile to="/myzone/todos" title={t.todo} icon={<Star className="h-5 w-5" />} iconStyle={softIcon('rgba(234,179,8,0.14)', 'rgb(202,138,4)')} />
+        {isLoggedIn && isMerchant ? (
+          <UtilityTile to="/merchant/manage" title={t.storeManage} icon={<Store className="h-5 w-5" />} iconStyle={softIcon('rgba(99,102,241,0.12)', 'rgb(79,70,229)')} />
+        ) : null}
+        {isLoggedIn && isAdmin ? (
+          <UtilityTile to="/myzone/admin" title={isZh ? '管理员后台' : 'Admin Panel'} icon={<Gauge className="h-5 w-5" />} iconStyle={softIcon('rgba(15,23,42,0.10)', 'rgb(15,23,42)')} />
+        ) : null}
+      </div>
+    </motion.section>
+  );
+
+  const secondarySection = (
+    <motion.section
+      variants={listItem}
+      className="rounded-3xl bg-white p-4 shadow-sm"
+      style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}
+    >
+      <h2 className="px-1 pb-2 text-[15px] font-semibold text-slate-900">{t.more}</h2>
+      <div className="divide-y divide-slate-100">
+        <MoreRow to="/about/profile" title={t.aboutProfile} icon={<Info className="h-5 w-5" />} iconStyle={softIcon('rgba(59,130,246,0.12)', 'rgb(37,99,235)')} />
+        <MoreRow to="/about/thanks" title={t.aboutThanks} icon={<Sparkles className="h-5 w-5" />} iconStyle={softIcon('rgba(244,63,94,0.12)', 'rgb(225,29,72)')} />
+        <MoreRow to="/about/disclaimer" title={t.aboutDisclaimer} icon={<ShieldAlert className="h-5 w-5" />} iconStyle={softIcon('rgba(234,179,8,0.14)', 'rgb(202,138,4)')} />
+        <MoreRow to="/about/contact" title={t.aboutContact} icon={<Mail className="h-5 w-5" />} iconStyle={softIcon('rgba(34,197,94,0.12)', 'rgb(22,163,74)')} />
+      </div>
+    </motion.section>
+  );
+
+  const footerSection = (
+    <motion.div variants={listItem} className="flex gap-3">
+      {isLoggedIn ? (
+        <>
+          <motion.button type="button" onClick={goProfile} className="flex-1 rounded-2xl bg-slate-900 px-4 py-3 text-[13px] font-semibold text-white shadow-sm" {...tap}>
+            {t.editProfile}
+          </motion.button>
+          <motion.button type="button" onClick={handleLogout} className="flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-[13px] font-semibold text-slate-700 ring-1 ring-slate-200" {...tap}>
+            <LogOut className="h-4 w-4" />
+            {t.logOut}
+          </motion.button>
+        </>
+      ) : (
+        <motion.button type="button" onClick={goLogin} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 text-[13px] font-semibold text-white shadow-sm" {...tap}>
+          <LogIn className="h-4 w-4" />
+          {t.logIn}
+        </motion.button>
+      )}
+    </motion.div>
+  );
+
   return (
     <div className="h-full w-full bg-[#F9FAFB]">
       <div className="h-full overflow-y-auto px-4 pb-[calc(var(--tabbar-height)+var(--safe-bottom)+24px)] pt-6">
         <motion.div variants={listContainer} initial="hidden" animate="show">
-          <motion.section
-            variants={listItem}
-            aria-label={isZh ? '个人信息' : 'Profile header'}
-            className="rounded-3xl bg-white p-5 shadow-sm"
-            style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}
-          >
-            <div className="flex items-start gap-5">
-              <motion.button
-                type="button"
-                onClick={isLoggedIn ? goProfile : goLogin}
-                className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full bg-slate-100"
-                style={{ boxShadow: '0 8px 26px rgba(15, 23, 42, 0.10)' }}
-                aria-label={isLoggedIn ? t.editProfile : t.logIn}
-                {...tap}
-              >
-                {displayAvatar ? (
-                  <img src={displayAvatar} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  <img src="/default-avatar.svg" alt="" className="h-full w-full object-cover opacity-90" />
-                )}
-                {userLoading && !displayAvatar ? (
-                  <div className="absolute inset-0 grid place-items-center text-[11px] font-medium text-slate-500">
-                    ...
-                  </div>
-                ) : null}
-              </motion.button>
-
-              <div className="min-w-0 flex-1 pt-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="truncate text-[18px] font-semibold text-slate-900">
-                    {isLoggedIn ? displayName : t.logIn}
-                  </p>
-                  {isLoggedIn && user?.level ? (
-                    <UserLevelBadge level={user.level} badgeEmoji={user.badgeEmoji} size="md" isZh={isZh} />
-                  ) : null}
-                </div>
-                <p className="mt-1 text-[13px] leading-relaxed text-slate-400">
-                  {isLoggedIn ? t.bioLoggedIn : t.bioLoggedOut}
-                </p>
-                <LevelProgressBar level={user?.level} levelProgress={user?.levelProgress} isZh={isZh} />
-              </div>
-
-              <motion.button
-                type="button"
-                onClick={goSpace}
-                className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-3 py-2 text-[12px] font-medium text-slate-700 ring-1 ring-slate-200"
-                {...tap}
-              >
-                {isZh ? '空间' : 'Space'}
-                <ChevronRight className="h-4 w-4 text-slate-400" />
-              </motion.button>
-            </div>
-
-            <div className="mt-5 grid grid-cols-3 gap-2">
-              {stats.map((s) => (
-                <motion.div key={s.key} variants={listItem}>
-                  <motion.div {...tap}>
-                    <Link to={s.to} className="block rounded-2xl bg-white px-2 py-3 text-center" aria-label={s.label}>
-                      <div className="text-[20px] font-semibold text-slate-900 tabular-nums">
-                        {Number(s.value) || 0}
-                      </div>
-                      <div className="mt-0.5 text-[12px] font-medium text-slate-400">{s.label}</div>
-                    </Link>
-                  </motion.div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.section>
-
-          <motion.section variants={listItem} className="mt-5">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-[15px] font-semibold text-slate-900">{t.currentCourse}</h2>
-            </div>
-
-            <CurrentCourseCard isLoggedIn={isLoggedIn} course={currentCourse} loading={scheduleTodayQuery.isFetching} to="/myzone/schedule" />
-          </motion.section>
-
-          {isLoggedIn && <TodoPreview />}
-
-          <motion.section
-            variants={listItem}
-            className="mt-5 rounded-3xl bg-white p-4 shadow-sm"
-            style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}
-          >
-            <h2 className="px-1 pb-2 text-[15px] font-semibold text-slate-900">{t.utilities}</h2>
-            <div className="grid grid-cols-2 gap-2">
-              <UtilityTile to="/eat" title={t.canteen} icon={<UtensilsCrossed className="h-5 w-5" />} iconStyle={softIcon('rgba(59,130,246,0.12)', 'rgb(37,99,235)')} />
-              <UtilityTile to="/myzone/schedule" title={t.schedule} icon={<CalendarDays className="h-5 w-5" />} iconStyle={softIcon('rgba(34,197,94,0.12)', 'rgb(22,163,74)')} />
-              <UtilityTile to="/myzone/diary" title={t.diary} icon={<NotebookText className="h-5 w-5" />} iconStyle={softIcon('rgba(168,85,247,0.12)', 'rgb(147,51,234)')} />
-              <UtilityTile to="/myzone/todos" title={t.todo} icon={<Star className="h-5 w-5" />} iconStyle={softIcon('rgba(234,179,8,0.14)', 'rgb(202,138,4)')} />
-              {isLoggedIn && isMerchant && (
-                <UtilityTile to="/merchant/manage" title={t.storeManage} icon={<Store className="h-5 w-5" />} iconStyle={softIcon('rgba(99,102,241,0.12)', 'rgb(79,70,229)')} />
-              )}
-              {isLoggedIn && isAdmin && (
-                <UtilityTile to="/myzone/admin" title={isZh ? '管理员后台' : 'Admin Panel'} icon={<Gauge className="h-5 w-5" />} iconStyle={softIcon('rgba(15,23,42,0.10)', 'rgb(15,23,42)')} />
-              )}
-            </div>
-          </motion.section>
-
-          <motion.section
-            variants={listItem}
-            className="mt-5 rounded-3xl bg-white p-4 shadow-sm"
-            style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}
-          >
-            <h2 className="px-1 pb-2 text-[15px] font-semibold text-slate-900">{t.more}</h2>
-            <div className="divide-y divide-slate-100">
-              <MoreRow to="/about/profile" title={t.aboutProfile} icon={<Info className="h-5 w-5" />} iconStyle={softIcon('rgba(59,130,246,0.12)', 'rgb(37,99,235)')} />
-              <MoreRow to="/about/thanks" title={t.aboutThanks} icon={<Sparkles className="h-5 w-5" />} iconStyle={softIcon('rgba(244,63,94,0.12)', 'rgb(225,29,72)')} />
-              <MoreRow to="/about/disclaimer" title={t.aboutDisclaimer} icon={<ShieldAlert className="h-5 w-5" />} iconStyle={softIcon('rgba(234,179,8,0.14)', 'rgb(202,138,4)')} />
-              <MoreRow to="/about/contact" title={t.aboutContact} icon={<Mail className="h-5 w-5" />} iconStyle={softIcon('rgba(34,197,94,0.12)', 'rgb(22,163,74)')} />
-            </div>
-          </motion.section>
-
-          <motion.div variants={listItem} className="mt-5 flex gap-3">
-            {isLoggedIn ? (
-              <>
-                <motion.button type="button" onClick={goProfile} className="flex-1 rounded-2xl bg-slate-900 px-4 py-3 text-[13px] font-semibold text-white shadow-sm" {...tap}>
-                  {t.editProfile}
-                </motion.button>
-                <motion.button type="button" onClick={handleLogout} className="flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-[13px] font-semibold text-slate-700 ring-1 ring-slate-200" {...tap}>
-                  <LogOut className="h-4 w-4" />
-                  {t.logOut}
-                </motion.button>
-              </>
-            ) : (
-              <motion.button type="button" onClick={goLogin} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 text-[13px] font-semibold text-white shadow-sm" {...tap}>
-                <LogIn className="h-4 w-4" />
-                {t.logIn}
-              </motion.button>
-            )}
-          </motion.div>
+          <DashboardPageLayout
+            summary={summarySection}
+            stats={statsSection}
+            quickActions={quickActionsSection}
+            main={mainSection}
+            secondary={secondarySection}
+            footer={footerSection}
+          />
         </motion.div>
       </div>
     </div>

@@ -22,6 +22,8 @@ import {
 } from '@shared/api/square';
 import { productImageUrl } from '@shared/api/config';
 import { QK } from '@shared/query/queryKeys';
+import AdminPageLayout from '../components/templates/AdminPageLayout';
+import PageHeader from '../components/templates/PageHeader';
 import './SquareHome.css';
 
 export default function SquareOrgAdmin() {
@@ -31,29 +33,39 @@ export default function SquareOrgAdmin() {
     if (t === 'trending' || t === 'banners') return t;
     return 'orgs';
   });
-  const queryClient = useQueryClient();
 
   return (
     <div className="square-home-page">
       <div className="square-home-inner">
-        <div className="square-campus-tabs" style={{ marginBottom: 12 }}>
-          {[
-            { key: 'orgs', label: '组织管理' },
-            { key: 'trending', label: '热搜管理' },
-            { key: 'banners', label: '广场轮播' },
-          ].map((t) => (
-            <button
-              key={t.key}
-              type="button"
-              className={`square-campus-tab${activeTab === t.key ? ' square-campus-tab--active' : ''}`}
-              onClick={() => setActiveTab(t.key)}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-
-        {activeTab === 'orgs' ? <OrgManager /> : activeTab === 'trending' ? <TrendingAdmin /> : <BannersAdmin />}
+        <AdminPageLayout
+          mode="dense"
+          header={(
+            <PageHeader
+              eyebrow="Square Admin"
+              title="广场后台"
+              description="统一承载组织、热搜和轮播等运营管理入口，后续后台页可继续接入同一模板结构。"
+            />
+          )}
+          toolbar={(
+            <div className="square-campus-tabs">
+              {[
+                { key: 'orgs', label: '组织管理' },
+                { key: 'trending', label: '热搜管理' },
+                { key: 'banners', label: '广场轮播' },
+              ].map((t) => (
+                <button
+                  key={t.key}
+                  type="button"
+                  className={`square-campus-tab${activeTab === t.key ? ' square-campus-tab--active' : ''}`}
+                  onClick={() => setActiveTab(t.key)}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          )}
+          content={activeTab === 'orgs' ? <OrgManager /> : activeTab === 'trending' ? <TrendingAdmin /> : <BannersAdmin />}
+        />
       </div>
     </div>
   );
@@ -217,7 +229,7 @@ function MemberManager({ org, onClose }) {
               <div>
                 <span style={{ fontSize: 13, fontWeight: 600 }}>{m.user?.nickname || m.user?.username}</span>
                 <span style={{ fontSize: 11, color: 'var(--post-ios-tertiary-label)', marginLeft: 6 }}>{m.user?.email}</span>
-                {m.title && <span style={{ fontSize: 11, color: 'var(--post-ios-secondary-label)', marginLeft: 6 }}>· {m.title}</span>}
+                {m.title ? <span style={{ fontSize: 11, color: 'var(--post-ios-secondary-label)', marginLeft: 6 }}>· {m.title}</span> : null}
               </div>
               <button type="button" className="square-section-more" style={{ color: 'var(--post-ios-red)' }} onClick={() => handleRemove(m.id)}>
                 移除
@@ -401,7 +413,7 @@ function BannerForm({ banner, onClose }) {
     <div style={{ marginTop: 12, padding: 12, borderRadius: 12, background: 'var(--post-ios-card)', boxShadow: 'var(--post-ios-shadow-card)' }}>
       <h4 style={{ margin: '0 0 10px', fontSize: 14 }}>{isEdit ? '编辑轮播' : '新建轮播'}</h4>
 
-      {previewUrl && <img src={previewUrl} alt="" style={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: 8, marginBottom: 10 }} />}
+      {previewUrl ? <img src={previewUrl} alt="" style={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: 8, marginBottom: 10 }} /> : null}
 
       <form onSubmit={handleSubmit}>
         <label style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>上传图片（jpg/png/webp/gif）</label>
@@ -442,10 +454,10 @@ function BannerForm({ banner, onClose }) {
             value={form.sort_order} onChange={(e) => setForm((f) => ({ ...f, sort_order: e.target.value }))} />
         </div>
 
-        {form.link_type !== 'none' && (
+        {form.link_type !== 'none' ? (
           <input className="canteen-search-input" style={{ width: '100%', boxSizing: 'border-box', marginBottom: 8 }} placeholder="跳转目标（ID/URL/code）" value={form.link_target}
             onChange={(e) => setForm((f) => ({ ...f, link_target: e.target.value }))} />
-        )}
+        ) : null}
 
         <label style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
           <input type="checkbox" checked={form.is_active} onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))} />
