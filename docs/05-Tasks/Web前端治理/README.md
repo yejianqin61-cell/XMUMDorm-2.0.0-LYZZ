@@ -78,3 +78,7 @@
 
 - 阶段性开发完成度公报
 - Step 4 Web 主壳 task 文档
+
+当前已完成：
+
+- `docs/09-Deploy/Step1-Step3阶段性开发完成度公报.md`
