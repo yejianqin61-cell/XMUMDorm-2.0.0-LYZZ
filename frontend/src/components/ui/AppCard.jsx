@@ -1,38 +1,30 @@
-function joinClassNames(...parts) {
-  return parts.filter(Boolean).join(' ');
-}
+import Card from './Card';
 
 export default function AppCard({
   as: Component = 'div',
   className = '',
   bodyClassName = '',
   tone = 'default',
+  strong = false,
+  muted = false,
   padding = 'md',
   interactive = false,
   children,
   ...rest
 }) {
+  const variant = strong ? 'strong' : muted ? 'muted' : tone;
+
   return (
-    <Component
-      className={joinClassNames(
-        'ui-card',
-        tone === 'strong' && 'ui-card--strong',
-        tone === 'muted' && 'ui-card--muted',
-        interactive && 'ui-card--interactive',
-        className
-      )}
+    <Card
+      as={Component}
+      className={className}
+      bodyClassName={bodyClassName}
+      variant={variant}
+      padding={padding}
+      interactive={interactive}
       {...rest}
     >
-      <div
-        className={joinClassNames(
-          'ui-card__body',
-          padding === 'sm' && 'ui-card__body--sm',
-          padding === 'lg' && 'ui-card__body--lg',
-          bodyClassName
-        )}
-      >
-        {children}
-      </div>
-    </Component>
+      {children}
+    </Card>
   );
 }
