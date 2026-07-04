@@ -9,6 +9,8 @@ import { QK } from '@shared/query/queryKeys';
 import RouteTransition from '../components/ui/RouteTransition';
 import FadeInSection from '../components/ui/FadeInSection';
 import AppCard from '../components/ui/AppCard';
+import PageHeader from '../components/templates/PageHeader';
+import SectionHeader from '../components/templates/SectionHeader';
 import PublishEntryCard from '../components/publish/PublishEntryCard';
 import PublishQuickActionSheet from '../components/publish/PublishQuickActionSheet';
 import './PublishCenter.css';
@@ -153,26 +155,27 @@ function PublishCenter() {
       <div className="publish-center-shell">
         <FadeInSection delay={0}>
           <AppCard className="publish-center-hero" strong>
-            <div className="publish-center-hero__eyebrow">
-              {isZh ? '统一发布入口' : 'Unified publish center'}
-            </div>
-            <h1 className="publish-center-hero__title">
-              {isZh ? '你想发什么？' : 'What do you want to publish?'}
-            </h1>
-            <p className="publish-center-hero__description">
-              {isZh
-                ? '把常用发布能力集中到一个页面里，减少来回找入口。'
-                : 'All common publishing actions live here, so you do not need to hunt for entry points.'}
-            </p>
+            <PageHeader
+              eyebrow={isZh ? '统一发布入口' : 'Unified publish center'}
+              title={isZh ? '你想发什么？' : 'What do you want to publish?'}
+              description={
+                isZh
+                  ? '把常用发布能力集中到一个页面里，减少来回找入口。'
+                  : 'All common publishing actions live here, so you do not need to hunt for entry points.'
+              }
+              meta={[
+                isZh ? '树洞 / 二手 / 跑腿 / 社团' : 'TreeHole / marketplace / errands / clubs',
+              ]}
+            />
           </AppCard>
         </FadeInSection>
 
         <FadeInSection delay={0.04}>
           <section className="publish-center-section">
-            <div className="publish-center-section__head">
-              <h2>{isZh ? '校园内容' : 'Campus content'}</h2>
-              <p>{isZh ? '面向所有用户开放的基础发布能力。' : 'Core publish actions available to all users.'}</p>
-            </div>
+            <SectionHeader
+              title={isZh ? '校园内容' : 'Campus content'}
+              description={isZh ? '面向所有用户开放的基础发布能力。' : 'Core publish actions available to all users.'}
+            />
             <div className="publish-center-grid">
               {primaryEntries.map((entry) => (
                 <PublishEntryCard key={entry.key} {...entry} />
@@ -183,18 +186,18 @@ function PublishCenter() {
 
         <FadeInSection delay={0.08}>
           <section className="publish-center-section">
-            <div className="publish-center-section__head">
-              <h2>{isZh ? '组织与活动' : 'Organizations and events'}</h2>
-              <p>
-                {hasClubPublishAccess
+            <SectionHeader
+              title={isZh ? '组织与活动' : 'Organizations and events'}
+              description={
+                hasClubPublishAccess
                   ? isZh
                     ? '系统会根据你的身份自动筛选可发布的社团入口。'
                     : 'Club entries are filtered automatically by your permissions.'
                   : isZh
                     ? '社团发布入口仅在你具备对应身份时显示。'
-                    : 'Club entries appear only when you have the required role.'}
-              </p>
-            </div>
+                    : 'Club entries appear only when you have the required role.'
+              }
+            />
             {orgQuery.isLoading && isLoggedIn ? (
               <div className="state-loading publish-center-state">Loading…</div>
             ) : orgQuery.isError && isLoggedIn ? (

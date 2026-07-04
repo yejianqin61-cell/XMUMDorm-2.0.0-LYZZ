@@ -20,45 +20,14 @@
   padding: 22px;
 }
 
-.publish-center-hero__eyebrow {
-  margin-bottom: 8px;
-  color: var(--ui-accent);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
-
-.publish-center-hero__title {
-  margin: 0;
-  color: var(--ui-text-primary);
-  font-size: 28px;
-  line-height: 1.2;
-}
-
-.publish-center-hero__description {
-  margin: 10px 0 0;
-  color: var(--ui-text-secondary);
-  font-size: 14px;
-  line-height: 1.7;
+.publish-center-hero .page-header__title {
+  font-family: var(--font-family-display);
 }
 
 .publish-center-section {
   display: flex;
   flex-direction: column;
   gap: 12px;
-}
-
-.publish-center-section__head h2 {
-  margin: 0;
-  color: var(--ui-text-primary);
-  font-size: 18px;
-}
-
-.publish-center-section__head p {
-  margin: 6px 0 0;
-  color: var(--ui-text-secondary);
-  font-size: 13px;
-  line-height: 1.6;
 }
 
 .publish-center-grid {
