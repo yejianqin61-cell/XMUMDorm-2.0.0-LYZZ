@@ -21,40 +21,47 @@ export default function AdminLayout() {
 
   return (
     <div className="admin-layout">
-      {/* 侧边栏 */}
       <AdminSidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         isZh={isZh}
       />
 
-      {/* 主内容区 */}
       <div className="admin-main">
-        {/* 顶栏 */}
         <header className="admin-topbar">
-          <button
-            type="button"
-            className="admin-topbar__menu-btn"
-            onClick={() => setSidebarOpen(true)}
-            aria-label={isZh ? '打开菜单' : 'Open menu'}
-          >
-            <Menu className="h-5 w-5" />
-          </button>
+          <div className="admin-topbar__context">
+            <div className="admin-topbar__actions">
+              <button
+                type="button"
+                className="admin-topbar__menu-btn"
+                onClick={() => setSidebarOpen(true)}
+                aria-label={isZh ? '打开菜单' : 'Open menu'}
+              >
+                <Menu className="h-5 w-5" />
+              </button>
 
-          <button
-            type="button"
-            className="admin-topbar__back-btn"
-            onClick={() => navigate('/myzone')}
-            aria-label={isZh ? '返回我的页面' : 'Back to My Zone'}
-          >
-            <ArrowLeft className="h-5 w-5" />
-            <span>{isZh ? '返回' : 'Back'}</span>
-          </button>
+              <button
+                type="button"
+                className="admin-topbar__back-btn"
+                onClick={() => navigate('/myzone')}
+                aria-label={isZh ? '返回我的页面' : 'Back to My Zone'}
+              >
+                <ArrowLeft className="h-5 w-5" />
+                <span>{isZh ? '返回' : 'Back'}</span>
+              </button>
+            </div>
+
+            <div className="admin-topbar__copy">
+              <p className="admin-topbar__eyebrow">{isZh ? '后台主壳' : 'Admin shell'}</p>
+              <h1 className="admin-topbar__title">{isZh ? '管理后台' : 'Admin workspace'}</h1>
+            </div>
+          </div>
         </header>
 
-        {/* 内容 */}
         <main className="admin-content">
-          <Outlet />
+          <div className="admin-content__inner">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>
