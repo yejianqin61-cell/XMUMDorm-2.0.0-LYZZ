@@ -1,10 +1,13 @@
 .square-home-page {
-  --square-card-radius: 22px;
-  --square-card-radius-sm: 18px;
-  --square-card-border: 1px solid rgba(255, 255, 255, 0.82);
-  --square-card-shadow: 0 14px 32px rgba(15, 23, 42, 0.06);
-  --square-card-shadow-hover: 0 18px 38px rgba(15, 23, 42, 0.09);
-  --square-card-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.88));
+  --square-card-radius: 24px;
+  --square-card-radius-sm: 20px;
+  --square-card-radius-xs: 18px;
+  --square-card-border: 1px solid rgba(255, 255, 255, 0.8);
+  --square-card-shadow: 0 16px 34px rgba(15, 23, 42, 0.065);
+  --square-card-shadow-hover: 0 20px 40px rgba(15, 23, 42, 0.085);
+  --square-card-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.9));
+  --square-card-surface-soft: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(250, 252, 255, 0.88));
+  --square-card-inset: inset 0 0 0 1px rgba(15, 23, 42, 0.045);
   min-height: 100%;
   padding: 0;
   overflow-y: auto;
@@ -75,12 +78,12 @@
 
 .square-home-block {
   padding: 18px;
-  border-radius: 28px;
+  border-radius: calc(var(--square-card-radius) + 4px);
   background:
-    radial-gradient(circle at top left, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.84) 52%, rgba(255, 255, 255, 0.74) 100%),
-    linear-gradient(180deg, rgba(244, 247, 251, 0.94), rgba(255, 255, 255, 0.88));
-  border: 1px solid rgba(255, 255, 255, 0.86);
-  box-shadow: 0 20px 42px rgba(15, 23, 42, 0.07);
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.84) 48%, rgba(246, 249, 252, 0.92) 100%),
+    var(--square-card-surface-soft);
+  border: var(--square-card-border);
+  box-shadow: var(--square-card-shadow);
 }
 
 .square-trending-shell,
@@ -118,12 +121,12 @@
   flex-direction: column;
   gap: 18px;
   padding: calc(var(--safe-top, 0px) * 0.1 + 18px) 18px 18px;
-  border-radius: 28px;
+  border-radius: var(--square-card-radius);
   background:
     radial-gradient(circle at top left, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.62) 44%, rgba(255, 255, 255, 0.42) 100%),
     linear-gradient(135deg, rgba(26, 115, 232, 0.18), rgba(52, 168, 83, 0.14));
-  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow: var(--square-card-shadow);
+  border: var(--square-card-border);
   backdrop-filter: blur(18px);
 }
 
@@ -173,8 +176,8 @@
   border-radius: var(--square-card-radius-sm);
   text-decoration: none;
   color: #10233b;
-  border: 1px solid rgba(255, 255, 255, 0.88);
-  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.06);
+  border: var(--square-card-border);
+  box-shadow: var(--square-card-shadow);
   overflow: hidden;
 }
 
@@ -191,7 +194,7 @@
 
 .today-campus-hero__notice-link--school {
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(239, 246, 255, 0.9)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(242, 247, 255, 0.92)),
     var(--square-card-surface);
 }
 
@@ -203,7 +206,7 @@
 
 .today-campus-hero__notice-link--college {
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(240, 253, 250, 0.92)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(244, 252, 249, 0.92)),
     var(--square-card-surface);
 }
 
@@ -254,7 +257,7 @@
   font-size: 12px;
   line-height: 1.4;
   font-weight: 700;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.85);
+  box-shadow: var(--square-card-inset);
 }
 
 .today-campus-quick-actions {
@@ -273,9 +276,9 @@
   position: relative;
   overflow: hidden;
   min-height: 164px;
-  border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.88);
-  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.07);
+  border-radius: var(--square-card-radius);
+  border: var(--square-card-border);
+  box-shadow: var(--square-card-shadow);
   transition: transform 140ms ease, box-shadow 140ms ease;
 }
 
@@ -327,9 +330,7 @@
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.88);
   color: rgba(16, 35, 59, 0.8);
-  box-shadow:
-    inset 0 0 0 1px rgba(15, 23, 42, 0.04),
-    0 8px 18px rgba(15, 23, 42, 0.04);
+  box-shadow: var(--square-card-inset);
 }
 
 .today-campus-quick-action__content {
@@ -359,7 +360,7 @@
 
 .today-campus-quick-action--club {
   background:
-    linear-gradient(140deg, rgba(255, 255, 255, 0.96), rgba(239, 246, 255, 0.92)),
+    linear-gradient(140deg, rgba(255, 255, 255, 0.96), rgba(245, 248, 255, 0.92)),
     var(--square-card-surface);
 }
 
@@ -371,7 +372,7 @@
 
 .today-campus-quick-action--guide {
   background:
-    linear-gradient(140deg, rgba(255, 255, 255, 0.96), rgba(245, 243, 255, 0.92)),
+    linear-gradient(140deg, rgba(255, 255, 255, 0.96), rgba(248, 246, 255, 0.92)),
     var(--square-card-surface);
 }
 
@@ -383,7 +384,7 @@
 
 .today-campus-quick-action--help {
   background:
-    linear-gradient(140deg, rgba(255, 255, 255, 0.96), rgba(236, 253, 245, 0.92)),
+    linear-gradient(140deg, rgba(255, 255, 255, 0.96), rgba(242, 253, 247, 0.92)),
     var(--square-card-surface);
 }
 
@@ -395,7 +396,7 @@
 
 .today-campus-quick-action--market {
   background:
-    linear-gradient(140deg, rgba(255, 255, 255, 0.96), rgba(255, 247, 237, 0.92)),
+    linear-gradient(140deg, rgba(255, 255, 255, 0.96), rgba(255, 249, 241, 0.92)),
     var(--square-card-surface);
 }
 
@@ -417,13 +418,17 @@
   gap: 14px;
   align-items: center;
   padding: 16px 18px;
-  border-radius: var(--square-card-radius);
+  border-radius: var(--square-card-radius-sm);
   border: var(--square-card-border);
   background: var(--square-card-surface);
   box-shadow: var(--square-card-shadow);
   color: inherit;
   text-decoration: none;
   transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.square-trending-item:hover {
+  box-shadow: var(--square-card-shadow-hover);
 }
 
 .square-trending-item:active {
@@ -906,7 +911,7 @@
   text-decoration: none;
   color: #183153;
   background: rgba(255, 255, 255, 0.88);
-  box-shadow: inset 0 0 0 1px rgba(16, 35, 59, 0.06);
+  box-shadow: var(--square-card-inset);
   font-size: 12px;
   line-height: 1.4;
   font-weight: 700;
@@ -924,13 +929,18 @@
   gap: 8px;
   min-width: 0;
   padding: 16px;
-  border-radius: 20px;
+  border-radius: var(--square-card-radius-sm);
   text-decoration: none;
   color: #10233b;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.88)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(249, 251, 253, 0.9)),
     var(--square-card-surface);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.84);
+  border: var(--square-card-border);
+  box-shadow: var(--square-card-shadow);
+}
+
+.square-home-explore__link:hover {
+  box-shadow: var(--square-card-shadow-hover);
 }
 
 .square-home-explore__link-kicker {
@@ -961,10 +971,12 @@
 
 .square-recommend-card {
   height: 100%;
-  border-radius: 22px;
+  border-radius: var(--square-card-radius);
   background:
-    radial-gradient(circle at top left, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.86) 60%, rgba(244, 247, 251, 0.92) 100%),
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.97), rgba(255, 255, 255, 0.86) 60%, rgba(246, 249, 252, 0.92) 100%),
     var(--square-card-surface);
+  box-shadow: var(--square-card-shadow);
+  border: var(--square-card-border);
 }
 
 .square-recommend-card .ui-card__body {
@@ -1033,12 +1045,12 @@
   flex-direction: column;
   gap: 14px;
   padding: 24px 22px;
-  border-radius: 28px;
+  border-radius: calc(var(--square-card-radius) + 4px);
   background:
     radial-gradient(circle at top left, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.7) 48%, rgba(255, 255, 255, 0.5) 100%),
     linear-gradient(140deg, rgba(26, 115, 232, 0.12), rgba(52, 168, 83, 0.08));
-  border: 1px solid rgba(255, 255, 255, 0.82);
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.07);
+  border: var(--square-card-border);
+  box-shadow: var(--square-card-shadow);
 }
 
 .square-campus-feed-hero__eyebrow {
@@ -1102,7 +1114,7 @@
   flex-direction: column;
   gap: 14px;
   padding: 18px;
-  border-radius: 22px;
+  border-radius: var(--square-card-radius);
   text-decoration: none;
   color: inherit;
   background: var(--square-card-surface);
@@ -1178,12 +1190,12 @@
 .square-campus-feed-more {
   min-height: 48px;
   border: 0;
-  border-radius: 18px;
+  border-radius: var(--square-card-radius-xs);
   background: rgba(255, 255, 255, 0.82);
   color: #10233b;
   font-size: 13px;
   font-weight: 700;
-  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.05);
+  box-shadow: var(--square-card-shadow);
 }
 
 .square-campus-feed-empty {
@@ -1337,7 +1349,7 @@
 .app-layout--desktop-shell .square-home-block {
   height: 100%;
   padding: 24px;
-  border-radius: 30px;
+  border-radius: calc(var(--square-card-radius) + 6px);
 }
 
 .app-layout--desktop-shell .today-campus-panel {
@@ -1404,7 +1416,7 @@
 
 .site-web-shell--tablet .square-home-block {
   padding: 20px;
-  border-radius: 26px;
+  border-radius: calc(var(--square-card-radius) + 2px);
 }
 
 .site-web-shell--tablet .today-campus-hero {
