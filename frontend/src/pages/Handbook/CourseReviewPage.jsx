@@ -1,6 +1,10 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import Button from '../../components/ui/Button';
+import Input from '../../components/ui/Input';
+import Tag from '../../components/ui/Tag';
+import FilterBar from '../../components/templates/FilterBar';
 import { useLanguage } from '../../context/LanguageContext';
 import { listCourseReviews } from '@shared/api/handbook';
 import { QK } from '@shared/query/queryKeys';
@@ -11,6 +15,7 @@ function CourseReviewPage() {
   const isZh = lang !== 'en';
   const [q, setQ] = useState('');
   const [tags, setTags] = useState([]);
+  const filterTags = ['MPU', 'GE', 'ME', 'required', 'final', 'no final'];
 
   const query = useQuery({
     queryKey: QK.courseReviews({ q, tags }),
@@ -32,49 +37,65 @@ function CourseReviewPage() {
       <div className="handbook-collections">
         <div className="handbook-collections-title">{isZh ? '课程测评' : 'Course reviews'}</div>
 
-        <div className="handbook-search">
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            className="handbook-search-input"
-            placeholder={isZh ? '搜索课程/老师…' : 'Search course/teacher…'}
-          />
-          <button type="button" className="handbook-search-go" onClick={() => query.refetch()}>
-            {isZh ? '搜索' : 'Go'}
-          </button>
-        </div>
-
-        <div className="handbook-filter-row">
-          <button
-            type="button"
-            className={`handbook-filter-chip ${tags.length === 0 ? 'is-on' : ''}`}
-            onClick={() => setTags([])}
-          >
-            {isZh ? '全部' : 'All'}
-          </button>
-          {['MPU', 'GE', 'ME', 'required', 'final', 'no final'].map((t) => {
-            const on = tags.includes(t);
-            return (
-              <button
-                key={t}
-                type="button"
-                className={`handbook-filter-chip ${on ? 'is-on' : ''}`}
-                onClick={() => {
-                  setTags((prev) => {
-                    const cur = Array.isArray(prev) ? prev : [];
-                    if (cur.includes(t)) return cur.filter((x) => x !== t);
-                    return [...cur, t];
-                  });
-                }}
+        <FilterBar
+          className="handbook-course-review-filter"
+          search={(
+            <div className="handbook-course-review-filter-search">
+              <Input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                size="sm"
+                compact
+                placeholder={isZh ? '搜索课程 / 老师 / 学期' : 'Search course / teacher / term'}
+              />
+              <Button size="sm" onClick={() => query.refetch()}>
+                {isZh ? '搜索' : 'Search'}
+              </Button>
+            </div>
+          )}
+          filters={(
+            <>
+              <Tag
+                as="button"
+                tone="neutral"
+                variant={tags.length === 0 ? 'soft' : 'outline'}
+                active={tags.length === 0}
+                interactive
+                onClick={() => setTags([])}
               >
-                {t}
-              </button>
-            );
-          })}
-          <button type="button" className="handbook-filter-refresh" onClick={() => query.refetch()}>
-            {isZh ? '筛选' : 'Filter'}
-          </button>
-        </div>
+                {isZh ? '全部' : 'All'}
+              </Tag>
+              {filterTags.map((tag) => {
+                const active = tags.includes(tag);
+
+                return (
+                  <Tag
+                    key={tag}
+                    as="button"
+                    tone="neutral"
+                    variant={active ? 'soft' : 'outline'}
+                    active={active}
+                    interactive
+                    onClick={() => {
+                      setTags((prev) => {
+                        const current = Array.isArray(prev) ? prev : [];
+                        if (current.includes(tag)) return current.filter((item) => item !== tag);
+                        return [...current, tag];
+                      });
+                    }}
+                  >
+                    {tag}
+                  </Tag>
+                );
+              })}
+            </>
+          )}
+          actions={(
+            <Button variant="secondary" size="sm" onClick={() => query.refetch()} loading={query.isFetching}>
+              {isZh ? '刷新结果' : 'Refresh'}
+            </Button>
+          )}
+        />
 
         <div className="handbook-mini-list">
           {list.map((r) => (

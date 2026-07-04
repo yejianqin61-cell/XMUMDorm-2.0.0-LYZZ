@@ -845,6 +845,28 @@
   font-weight: 950;
   margin-bottom: 12px;
 }
+.handbook-course-review-filter {
+  margin-bottom: 14px;
+}
+
+.handbook-course-review-filter-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.handbook-course-review-filter-search .ui-field {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .handbook-course-review-filter-search {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
 .handbook-section {
   margin-top: 14px;
 }
