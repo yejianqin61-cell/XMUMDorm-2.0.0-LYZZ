@@ -84,10 +84,23 @@ function PostTagFeed() {
 
   return (
     <div className="treehole-page post-tag-feed-page">
-      <p className="post-tag-feed-hint">
-        {isZh ? '话题 Topic：' : 'Topic：'}
-        <strong>{tagLabel || slug}</strong>
-      </p>
+      <header className="post-tag-feed-hero">
+        <div className="post-tag-feed-hero__copy">
+          <p className="post-tag-feed-hero__eyebrow">{isZh ? '标签内容流' : 'Tag Feed'}</p>
+          <h1 className="post-tag-feed-hero__title">
+            {isZh ? '沿着同一个话题继续往下看' : 'Follow one topic through the full feed'}
+          </h1>
+          <p className="post-tag-feed-hero__subtitle">
+            {isZh
+              ? '把同一标签下的讨论聚在一起，方便快速判断这个话题最近在发什么。'
+              : 'Group posts under one tag so the topic feels like one continuous thread.'}
+          </p>
+        </div>
+        <div className="post-tag-feed-hero__tag">
+          <span className="post-tag-feed-hero__tag-label">{isZh ? '当前标签' : 'Current tag'}</span>
+          <strong>{tagLabel || slug}</strong>
+        </div>
+      </header>
       {error && (
         <p className="treehole-error state-error" role="alert">
           {error}
@@ -110,6 +123,12 @@ function PostTagFeed() {
         </div>
       ) : (
         <div className="treehole-content">
+          <div className="post-tag-feed-results-head">
+            <p className="post-tag-feed-hint">
+              {isZh ? '话题 Topic：' : 'Topic：'}
+              <strong>{tagLabel || slug}</strong>
+            </p>
+          </div>
           {list.length === 0 && !loading && (
             <p className="post-tag-feed-empty">
               {isZh ? '该标签下暂无帖子。No posts under this tag yet.' : 'No posts under this tag yet.'}

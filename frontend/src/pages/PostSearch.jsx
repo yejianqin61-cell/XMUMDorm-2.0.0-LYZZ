@@ -74,10 +74,23 @@ function PostSearch() {
 
   return (
     <div className="treehole-page post-search-page">
-      <p className="post-search-hint">
-        {isZh ? '搜索 Search：' : 'Search：'}
-        <strong>{q || (isZh ? '（空）' : '(empty)')}</strong>
-      </p>
+      <header className="post-search-hero">
+        <div className="post-search-hero__copy">
+          <p className="post-search-hero__eyebrow">{isZh ? '树洞搜索' : 'TreeHole Search'}</p>
+          <h1 className="post-search-hero__title">
+            {isZh ? '按关键词继续找话题' : 'Search the conversation by keyword'}
+          </h1>
+          <p className="post-search-hero__subtitle">
+            {isZh
+              ? '把树洞里的讨论、吐槽和校园碎片收在一个结果流里，方便继续浏览。'
+              : 'Keep discussions, campus moments, and updates in one searchable stream.'}
+          </p>
+        </div>
+        <div className="post-search-hero__query">
+          <span className="post-search-hero__query-label">{isZh ? '当前关键词' : 'Current query'}</span>
+          <strong>{q || (isZh ? '（空）' : '(empty)')}</strong>
+        </div>
+      </header>
       {!q && (
         <p className="post-search-empty-msg">
           {isZh ? '请输入关键词后再搜索。Enter a keyword to search.' : 'Enter a keyword to search.'}
@@ -105,6 +118,12 @@ function PostSearch() {
         </div>
       ) : (
         <div className="treehole-content">
+          <div className="post-search-results-head">
+            <p className="post-search-hint">
+              {isZh ? '搜索 Search：' : 'Search：'}
+              <strong>{q || (isZh ? '（空）' : '(empty)')}</strong>
+            </p>
+          </div>
           {q && list.length === 0 && !loading && (
             <p className="post-search-no-result">
               {isZh ? '没有相关帖子。No matching posts.' : 'No matching posts.'}
