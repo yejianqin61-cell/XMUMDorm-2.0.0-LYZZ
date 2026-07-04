@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { BookOpenText, HandHelping, Shapes, Store } from 'lucide-react';
+import { BookOpenText, HandHelping, PenSquare, Shapes, Store } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getSquareBanners, getSquareHomeSummary } from '@shared/api/square';
 import { useLanguage } from '../context/LanguageContext';
@@ -21,7 +21,6 @@ const PRIMARY_ACTIONS = [
     labelEn: 'Club Plaza',
     to: '/about/club',
     icon: <Shapes size={18} strokeWidth={2} />,
-    emoji: '🎨',
     hint: '看社团、找活动、认识同好',
     hintEn: 'Discover clubs, activities, and like-minded people',
     tone: 'club',
@@ -31,7 +30,6 @@ const PRIMARY_ACTIONS = [
     labelEn: 'XMUM Guide',
     to: '/about/freshman-guide',
     icon: <BookOpenText size={18} strokeWidth={2} />,
-    emoji: '📚',
     hint: '攻略、课程与新生信息',
     hintEn: 'Guides, courses, and freshman essentials',
     tone: 'guide',
@@ -41,7 +39,6 @@ const PRIMARY_ACTIONS = [
     labelEn: 'Help Me',
     to: '/about/errands',
     icon: <HandHelping size={18} strokeWidth={2} />,
-    emoji: '🤝',
     hint: '跑腿求助，解决生活小事',
     hintEn: 'Get quick help with daily errands',
     tone: 'help',
@@ -51,7 +48,6 @@ const PRIMARY_ACTIONS = [
     labelEn: 'Marketplace',
     to: '/about/second-hand',
     icon: <Store size={18} strokeWidth={2} />,
-    emoji: '🪄',
     hint: '校园二手流通更快一点',
     hintEn: 'Move second-hand items faster on campus',
     tone: 'market',
@@ -228,10 +224,6 @@ export default function SquareHome() {
                     <span className="square-home-explore__link-kicker">{isEn ? 'Campus feed' : '校园动态'}</span>
                     <span className="square-home-explore__link-title">{isEn ? 'View all' : '查看全部'}</span>
                   </Link>
-                  <Link to="/publish" className="square-home-explore__link">
-                    <span className="square-home-explore__link-kicker">{isEn ? 'Publish' : '发布入口'}</span>
-                    <span className="square-home-explore__link-title">{isEn ? 'Open entry' : '进入发布'}</span>
-                  </Link>
                 </div>
 
                 <TodayCampusPreviewRail
@@ -246,6 +238,21 @@ export default function SquareHome() {
                   moreLabel={isEn ? 'View all' : '查看全部'}
                   ariaLabel={isEn ? 'Quick preview rail' : '轻浏览预览'}
                 />
+
+                <Link to="/publish" className="square-home-publish-entry">
+                  <span className="square-home-publish-entry__icon" aria-hidden="true">
+                    <PenSquare size={16} strokeWidth={2} />
+                  </span>
+                  <span className="square-home-publish-entry__body">
+                    <span className="square-home-publish-entry__title">{isEn ? 'Publish from one place' : '从统一入口发布内容'}</span>
+                    <span className="square-home-publish-entry__meta">
+                      {isEn
+                        ? 'Open the publish center without adding a floating button above the Tab bar.'
+                        : '保留发布入口，但不再额外悬浮压住底部导航。'}
+                    </span>
+                  </span>
+                  <span className="square-home-publish-entry__action">{isEn ? 'Open' : '进入'}</span>
+                </Link>
 
               </div>
             </FadeInSection>

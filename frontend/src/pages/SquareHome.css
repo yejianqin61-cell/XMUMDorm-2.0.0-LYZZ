@@ -334,9 +334,13 @@
   gap: 12px;
 }
 
-.today-campus-quick-action__emoji {
-  font-size: 28px;
-  line-height: 1;
+.today-campus-quick-action__tone {
+  width: 10px;
+  height: 10px;
+  margin-top: 4px;
+  border-radius: 999px;
+  background: rgba(16, 35, 59, 0.22);
+  box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.56);
 }
 
 .today-campus-quick-action__icon {
@@ -346,8 +350,8 @@
   width: 42px;
   height: 42px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.88);
-  color: rgba(16, 35, 59, 0.8);
+  background: rgba(255, 255, 255, 0.78);
+  color: rgba(16, 35, 59, 0.72);
   box-shadow: var(--square-card-inset);
 }
 
@@ -378,50 +382,66 @@
 
 .today-campus-quick-action--club {
   background:
-    linear-gradient(140deg, rgba(255, 255, 255, 0.96), rgba(245, 248, 255, 0.92)),
+    linear-gradient(140deg, rgba(255, 255, 255, 0.96), rgba(247, 249, 252, 0.92)),
     var(--square-card-surface);
+}
+
+.today-campus-quick-action--club .today-campus-quick-action__tone {
+  background: rgba(59, 130, 246, 0.48);
 }
 
 .today-campus-quick-action--club .today-campus-quick-action__pattern {
   background:
-    radial-gradient(circle at 30% 30%, rgba(59, 130, 246, 0.22), rgba(59, 130, 246, 0) 58%),
-    repeating-linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(59, 130, 246, 0.12) 10px, rgba(255, 255, 255, 0) 10px, rgba(255, 255, 255, 0) 20px);
+    radial-gradient(circle at 30% 30%, rgba(59, 130, 246, 0.14), rgba(59, 130, 246, 0) 58%),
+    repeating-linear-gradient(135deg, rgba(59, 130, 246, 0.07), rgba(59, 130, 246, 0.07) 10px, rgba(255, 255, 255, 0) 10px, rgba(255, 255, 255, 0) 20px);
 }
 
 .today-campus-quick-action--guide {
   background:
-    linear-gradient(140deg, rgba(255, 255, 255, 0.96), rgba(248, 246, 255, 0.92)),
+    linear-gradient(140deg, rgba(255, 255, 255, 0.96), rgba(248, 249, 252, 0.92)),
     var(--square-card-surface);
+}
+
+.today-campus-quick-action--guide .today-campus-quick-action__tone {
+  background: rgba(99, 102, 241, 0.44);
 }
 
 .today-campus-quick-action--guide .today-campus-quick-action__pattern {
   background:
-    radial-gradient(circle at 34% 34%, rgba(129, 140, 248, 0.22), rgba(129, 140, 248, 0) 58%),
-    repeating-linear-gradient(0deg, rgba(129, 140, 248, 0.11), rgba(129, 140, 248, 0.11) 8px, rgba(255, 255, 255, 0) 8px, rgba(255, 255, 255, 0) 16px);
+    radial-gradient(circle at 34% 34%, rgba(129, 140, 248, 0.14), rgba(129, 140, 248, 0) 58%),
+    repeating-linear-gradient(0deg, rgba(129, 140, 248, 0.07), rgba(129, 140, 248, 0.07) 8px, rgba(255, 255, 255, 0) 8px, rgba(255, 255, 255, 0) 16px);
 }
 
 .today-campus-quick-action--help {
   background:
-    linear-gradient(140deg, rgba(255, 255, 255, 0.96), rgba(242, 253, 247, 0.92)),
+    linear-gradient(140deg, rgba(255, 255, 255, 0.96), rgba(246, 250, 248, 0.92)),
     var(--square-card-surface);
+}
+
+.today-campus-quick-action--help .today-campus-quick-action__tone {
+  background: rgba(5, 150, 105, 0.42);
 }
 
 .today-campus-quick-action--help .today-campus-quick-action__pattern {
   background:
-    radial-gradient(circle at 34% 34%, rgba(16, 185, 129, 0.22), rgba(16, 185, 129, 0) 58%),
-    repeating-linear-gradient(45deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.1) 9px, rgba(255, 255, 255, 0) 9px, rgba(255, 255, 255, 0) 18px);
+    radial-gradient(circle at 34% 34%, rgba(16, 185, 129, 0.14), rgba(16, 185, 129, 0) 58%),
+    repeating-linear-gradient(45deg, rgba(16, 185, 129, 0.06), rgba(16, 185, 129, 0.06) 9px, rgba(255, 255, 255, 0) 9px, rgba(255, 255, 255, 0) 18px);
 }
 
 .today-campus-quick-action--market {
   background:
-    linear-gradient(140deg, rgba(255, 255, 255, 0.96), rgba(255, 249, 241, 0.92)),
+    linear-gradient(140deg, rgba(255, 255, 255, 0.96), rgba(250, 248, 245, 0.92)),
     var(--square-card-surface);
+}
+
+.today-campus-quick-action--market .today-campus-quick-action__tone {
+  background: rgba(234, 88, 12, 0.42);
 }
 
 .today-campus-quick-action--market .today-campus-quick-action__pattern {
   background:
-    radial-gradient(circle at 34% 34%, rgba(249, 115, 22, 0.22), rgba(249, 115, 22, 0) 58%),
-    repeating-linear-gradient(90deg, rgba(249, 115, 22, 0.1), rgba(249, 115, 22, 0.1) 8px, rgba(255, 255, 255, 0) 8px, rgba(255, 255, 255, 0) 16px);
+    radial-gradient(circle at 34% 34%, rgba(249, 115, 22, 0.14), rgba(249, 115, 22, 0) 58%),
+    repeating-linear-gradient(90deg, rgba(249, 115, 22, 0.06), rgba(249, 115, 22, 0.06) 8px, rgba(255, 255, 255, 0) 8px, rgba(255, 255, 255, 0) 16px);
 }
 
 .square-trending-board {
@@ -975,6 +995,67 @@
   color: rgba(16, 35, 59, 0.82);
 }
 
+.square-home-publish-entry {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 16px 18px;
+  border-radius: var(--square-card-radius-sm);
+  text-decoration: none;
+  color: #10233b;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(247, 250, 252, 0.9)),
+    var(--square-card-surface);
+  border: var(--square-card-border);
+  box-shadow: var(--square-card-shadow);
+}
+
+.square-home-publish-entry__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: rgba(16, 35, 59, 0.06);
+  color: rgba(16, 35, 59, 0.72);
+}
+
+.square-home-publish-entry__body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.square-home-publish-entry__title {
+  font-size: 0.96rem;
+  line-height: 1.45;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.square-home-publish-entry__meta {
+  color: rgba(16, 35, 59, 0.56);
+  font-size: var(--square-text-meta);
+  line-height: 1.5;
+}
+
+.square-home-publish-entry__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(16, 35, 59, 0.08);
+  color: rgba(16, 35, 59, 0.78);
+  font-size: var(--square-text-meta);
+  font-weight: 700;
+}
+
 .square-preview-rail {
   display: flex;
   gap: 14px;
@@ -1516,5 +1597,14 @@
 @media (max-width: 900px) {
   .square-recommend-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .square-home-publish-entry {
+    grid-template-columns: auto 1fr;
+  }
+
+  .square-home-publish-entry__action {
+    grid-column: 1 / -1;
+    justify-self: flex-start;
   }
 }

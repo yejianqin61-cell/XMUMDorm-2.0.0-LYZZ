@@ -20,9 +20,7 @@ export default function TodayCampusQuickActions({ actions }) {
             <AppCard className={`today-campus-quick-action today-campus-quick-action--${action.tone}`} interactive>
               <div className="today-campus-quick-action__pattern" aria-hidden="true" />
               <div className="today-campus-quick-action__top">
-                <span className="today-campus-quick-action__emoji" aria-hidden="true">
-                  {action.emoji}
-                </span>
+                <span className="today-campus-quick-action__tone" aria-hidden="true" />
                 <span className="today-campus-quick-action__icon" aria-hidden="true">
                   {action.icon}
                 </span>
