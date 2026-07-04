@@ -37,6 +37,16 @@
   z-index: 1;
 }
 
+.post-detail-layout {
+  gap: 22px;
+}
+
+.post-detail-page-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .post-detail-empty {
   text-align: center;
   color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
@@ -78,11 +88,17 @@
   background: rgba(255, 255, 255, 0.75);
   border-radius: 24px;
   padding: 18px;
-  margin-bottom: 12px;
   box-shadow: 0 18px 60px rgba(2, 6, 23, 0.10);
   border: 1px solid rgba(226, 232, 240, 0.9);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
+}
+
+.post-detail-reading-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 12px;
 }
 
 .post-detail-author {
@@ -240,6 +256,56 @@
   gap: 10px;
   align-items: center;
   padding-top: 4px;
+}
+
+.post-detail-action-card,
+.post-detail-aside-card {
+  border-radius: 24px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 14px 38px rgba(2, 6, 23, 0.08);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.post-detail-action-card__actions,
+.post-detail-aside-card__links {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.post-detail-aside-card__stats {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.post-detail-aside-card__stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(248, 250, 252, 0.86);
+  border: 1px solid rgba(226, 232, 240, 0.72);
+}
+
+.post-detail-aside-card__label {
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(51, 65, 85, 0.62);
+  font-weight: 700;
+}
+
+.post-detail-aside-card__stat strong {
+  font-size: 16px;
+  line-height: 1.35;
+  color: rgba(15, 23, 42, 0.9);
+  letter-spacing: -0.02em;
 }
 
 .post-detail-like-btn {
@@ -511,6 +577,12 @@
   color: rgba(30, 41, 59, 0.92);
   word-break: break-word;
   white-space: pre-wrap;
+}
+
+@media (max-width: 640px) {
+  .post-detail-page-header-actions {
+    width: 100%;
+  }
 }
 
 /* Floating bottom glass bar (comment composer) */

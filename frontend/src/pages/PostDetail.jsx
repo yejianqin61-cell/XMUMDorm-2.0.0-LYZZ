@@ -1,9 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Heart, MoreHorizontal, SendHorizonal, Smile } from 'lucide-react';
 import ReportButton from '../components/ReportButton';
+import Button from '../components/ui/Button';
+import Tag from '../components/ui/Tag';
+import Card from '../components/Card';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import {
@@ -22,6 +25,9 @@ import EmptyState from '../components/EmptyState';
 import ImagePreview from '../components/ImagePreview';
 import { StackedCardCarousel } from '../components/StackedCardCarousel';
 import LikeBurst from '../components/LikeBurst';
+import PageHeader from '../components/templates/PageHeader';
+import SectionHeader from '../components/templates/SectionHeader';
+import DetailPageLayout from '../components/templates/DetailPageLayout';
 import { formatPostTime } from '@shared/utils/formatTime';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { QK } from '@shared/query/queryKeys';
@@ -87,8 +93,7 @@ function PostDetail() {
     queryFn: () => getPostComments(postId),
     enabled: Number.isFinite(postId) && postId > 0,
     staleTime: 30 * 1000,
-    select: (list) =>
-      (Array.isArray(list) ? list : []).map(mapCommentTree),
+    select: (list) => (Array.isArray(list) ? list : []).map(mapCommentTree),
   });
 
   const post = detailQuery.data ?? null;
@@ -101,7 +106,6 @@ function PostDetail() {
   }, [post]);
 
   useEffect(() => {
-    // reset on post change
     setCarouselIndex(0);
     setCarouselDir(1);
   }, [postId]);
@@ -112,50 +116,57 @@ function PostDetail() {
       return true;
     }
     return false;
-  }, [isLoggedIn, navigate, id]);
+  }, [id, isLoggedIn, navigate]);
 
-  const handleLike = async (e) => {
+  const focusComposer = useCallback(() => {
+    try {
+      composerInputRef.current?.focus?.();
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const handleLike = async (event) => {
     if (requireLogin()) return;
-    likeBurstRef.current?.trigger(e);
-    // 乐观更新：先给用户即时反馈，再发请求；失败则回滚
+    likeBurstRef.current?.trigger(event);
     const prevLiked = liked;
     const prevCount = likeCount;
     const optimisticLiked = !prevLiked;
     setLiked(optimisticLiked);
-    setLikeCount((c) => (optimisticLiked ? c + 1 : Math.max(0, c - 1)));
+    setLikeCount((count) => (optimisticLiked ? count + 1 : Math.max(0, count - 1)));
 
-    // 同步写入详情缓存与列表缓存，避免返回上一页时状态跳回去
-    const patchPost = (p) => {
-      if (!p || p.id !== postId) return p;
+    const patchPost = (candidate) => {
+      if (!candidate || candidate.id !== postId) return candidate;
       return {
-        ...p,
+        ...candidate,
         user_liked: optimisticLiked,
-        like_count: optimisticLiked ? (Number(p.like_count || 0) + 1) : Math.max(0, Number(p.like_count || 0) - 1),
+        like_count: optimisticLiked ? Number(candidate.like_count || 0) + 1 : Math.max(0, Number(candidate.like_count || 0) - 1),
       };
     };
+
     queryClient.setQueryData(QK.postDetail(postId, tokenKey), (old) => patchPost(old));
     queryClient.setQueriesData(
       {
-        predicate: (q) => {
-          const key = q.queryKey || [];
+        predicate: (query) => {
+          const key = query.queryKey || [];
           return key[0] === 'posts' && key[1] === 'infinite' && key[2] === tokenKey;
         },
       },
       (old) => {
         if (!old || !old.pages || !Array.isArray(old.pages)) return old;
-        const nextPages = old.pages.map((pg) => {
-          const list = Array.isArray(pg.list) ? pg.list : [];
-          const nextList = list.map((it) => patchPost(it));
-          if (nextList === list) return pg;
-          return { ...pg, list: nextList };
-        });
-        return { ...old, pages: nextPages };
+        return {
+          ...old,
+          pages: old.pages.map((page) => {
+            const list = Array.isArray(page.list) ? page.list : [];
+            return { ...page, list: list.map((item) => patchPost(item)) };
+          }),
+        };
       }
     );
+
     try {
       const data = await toggleLike(postId);
       handleExpResponse(data);
-      // 以服务端返回为准（如果和乐观状态不一致，纠正一次）
       const finalLiked = data?.liked ?? optimisticLiked;
       if (finalLiked !== optimisticLiked) {
         const finalCount = finalLiked ? prevCount + 1 : Math.max(0, prevCount - 1);
@@ -166,8 +177,7 @@ function PostDetail() {
           return { ...old, user_liked: finalLiked, like_count: finalCount };
         });
       }
-    } catch (_) {
-      // 回滚
+    } catch {
       setLiked(prevLiked);
       setLikeCount(prevCount);
       queryClient.setQueryData(QK.postDetail(postId, tokenKey), (old) => {
@@ -176,29 +186,33 @@ function PostDetail() {
       });
       queryClient.setQueriesData(
         {
-          predicate: (q) => {
-            const key = q.queryKey || [];
+          predicate: (query) => {
+            const key = query.queryKey || [];
             return key[0] === 'posts' && key[1] === 'infinite' && key[2] === tokenKey;
           },
         },
         (old) => {
           if (!old || !old.pages || !Array.isArray(old.pages)) return old;
-          const nextPages = old.pages.map((pg) => {
-            const list = Array.isArray(pg.list) ? pg.list : [];
-            const nextList = list.map((it) => {
-              if (!it || it.id !== postId) return it;
-              return { ...it, user_liked: prevLiked, like_count: prevCount };
-            });
-            return { ...pg, list: nextList };
-          });
-          return { ...old, pages: nextPages };
+          return {
+            ...old,
+            pages: old.pages.map((page) => {
+              const list = Array.isArray(page.list) ? page.list : [];
+              return {
+                ...page,
+                list: list.map((item) => {
+                  if (!item || item.id !== postId) return item;
+                  return { ...item, user_liked: prevLiked, like_count: prevCount };
+                }),
+              };
+            }),
+          };
         }
       );
     }
   };
 
-  const handleSubmitComment = async (e) => {
-    e.preventDefault();
+  const handleSubmitComment = async (event) => {
+    event.preventDefault();
     if (requireLogin()) return;
     if (!newComment.trim()) return;
     const content = newComment.trim();
@@ -206,10 +220,8 @@ function PostDetail() {
 
     setSubmitLoading(true);
 
-    // ===== 乐观更新（一级 + 二级）=====
     const prevComments = queryClient.getQueryData(QK.postComments(postId));
     const prevDetail = queryClient.getQueryData(QK.postDetail(postId, tokenKey));
-
     const tempId = -Date.now();
     const nowIso = new Date().toISOString();
     const me = user
@@ -236,46 +248,47 @@ function PostDetail() {
     const bumpCommentCountInPostCaches = (delta) => {
       queryClient.setQueryData(QK.postDetail(postId, tokenKey), (old) => {
         if (!old || old.id !== postId) return old;
-        const next = Math.max(0, Number(old.comment_count || 0) + delta);
-        return { ...old, comment_count: next };
+        return { ...old, comment_count: Math.max(0, Number(old.comment_count || 0) + delta) };
       });
+
       queryClient.setQueriesData(
         {
-          predicate: (q) => {
-            const key = q.queryKey || [];
+          predicate: (query) => {
+            const key = query.queryKey || [];
             return key[0] === 'posts' && key[1] === 'infinite' && key[2] === tokenKey;
           },
         },
         (old) => {
           if (!old || !old.pages || !Array.isArray(old.pages)) return old;
-          const nextPages = old.pages.map((pg) => {
-            const list = Array.isArray(pg.list) ? pg.list : [];
-            const nextList = list.map((it) => {
-              if (!it || it.id !== postId) return it;
-              const next = Math.max(0, Number(it.comment_count || 0) + delta);
-              return { ...it, comment_count: next };
-            });
-            return { ...pg, list: nextList };
-          });
-          return { ...old, pages: nextPages };
+          return {
+            ...old,
+            pages: old.pages.map((page) => {
+              const list = Array.isArray(page.list) ? page.list : [];
+              return {
+                ...page,
+                list: list.map((item) => {
+                  if (!item || item.id !== postId) return item;
+                  return { ...item, comment_count: Math.max(0, Number(item.comment_count || 0) + delta) };
+                }),
+              };
+            }),
+          };
         }
       );
     };
 
-    // 先清空输入框/退出回复态，让 UI 立刻“提交成功感”
     setNewComment('');
     setReplyingTo(null);
 
-    // 写入评论树缓存
     queryClient.setQueryData(QK.postComments(postId), (old) => {
       const list = Array.isArray(old) ? [...old] : [];
       if (!parentId) {
         return [optimisticNode, ...list];
       }
-      return list.map((c) => {
-        if (!c || c.id !== parentId) return c;
-        const replies = Array.isArray(c.replies) ? c.replies : [];
-        return { ...c, replies: [...replies, { ...optimisticNode, replies: undefined }] };
+      return list.map((comment) => {
+        if (!comment || comment.id !== parentId) return comment;
+        const replies = Array.isArray(comment.replies) ? comment.replies : [];
+        return { ...comment, replies: [...replies, { ...optimisticNode, replies: undefined }] };
       });
     });
     bumpCommentCountInPostCaches(1);
@@ -286,52 +299,38 @@ function PostDetail() {
         parent_id: parentId ?? undefined,
       });
       handleExpResponse(created);
-
-      const normalized = created
-        ? mapCommentTree({
-            ...created,
-            replies: [],
-          })
-        : null;
+      const normalized = created ? mapCommentTree({ ...created, replies: [] }) : null;
 
       queryClient.setQueryData(QK.postComments(postId), (old) => {
         const list = Array.isArray(old) ? [...old] : [];
         if (!parentId) {
-          return list.map((c) => (c && c.id === tempId ? (normalized || c) : c));
+          return list.map((comment) => (comment && comment.id === tempId ? normalized || comment : comment));
         }
-        return list.map((c) => {
-          if (!c || c.id !== parentId) return c;
-          const replies = Array.isArray(c.replies) ? c.replies : [];
-          const nextReplies = replies.map((r) => (r && r.id === tempId ? (normalized || r) : r));
-          return { ...c, replies: nextReplies };
+        return list.map((comment) => {
+          if (!comment || comment.id !== parentId) return comment;
+          const replies = Array.isArray(comment.replies) ? comment.replies : [];
+          return {
+            ...comment,
+            replies: replies.map((reply) => (reply && reply.id === tempId ? normalized || reply : reply)),
+          };
         });
       });
 
       Toast.success('评论成功');
-    } catch (err) {
-      // 回滚：评论树 + comment_count
+    } catch (error) {
       queryClient.setQueryData(QK.postComments(postId), prevComments);
       queryClient.setQueryData(QK.postDetail(postId, tokenKey), prevDetail);
       bumpCommentCountInPostCaches(-1);
-      Toast.error(getApiErrorMessage(err));
+      Toast.error(getApiErrorMessage(error));
     } finally {
       setSubmitLoading(false);
     }
   };
 
-  const startReply = (c) => setReplyingTo({ id: c.id, content: c.content });
+  const startReply = (comment) => setReplyingTo({ id: comment.id, content: comment.content });
   const cancelReply = () => {
     setReplyingTo(null);
     setNewComment('');
-  };
-
-  // bottom composer: focus helper for mobile
-  const focusComposer = () => {
-    try {
-      composerInputRef.current?.focus?.();
-    } catch {
-      // ignore
-    }
   };
 
   const handleDeleteComment = async (commentId) => {
@@ -341,43 +340,42 @@ function PostDetail() {
       await deleteComment(postId, commentId);
       Toast.success('Deleted');
       await queryClient.invalidateQueries({ queryKey: QK.postComments(postId) });
-    } catch (err) {
-      Toast.error(getApiErrorMessage(err));
+    } catch (error) {
+      Toast.error(getApiErrorMessage(error));
     }
   };
 
-  const isAuthor =
-    post && (post.user_id === user?.id || post.author?.id === user?.id || isAdmin);
+  const isAuthor = post && (post.user_id === user?.id || post.author?.id === user?.id || isAdmin);
+
   const handleDeletePost = async () => {
     if (!window.confirm('Delete this post? This action cannot be undone.')) return;
     setDeleteLoading(true);
     try {
       await deletePost(postId);
       Toast.success('Deleted');
-      // 立刻从瀑布流缓存里移除该帖（避免回到首页还看到已删除的卡片）
       queryClient.setQueriesData(
         {
-          predicate: (q) => {
-            const key = q.queryKey || [];
+          predicate: (query) => {
+            const key = query.queryKey || [];
             return key[0] === 'posts' && key[1] === 'infinite' && key[2] === tokenKey;
           },
         },
         (old) => {
           if (!old || !old.pages || !Array.isArray(old.pages)) return old;
-          const nextPages = old.pages.map((pg) => {
-            const list = Array.isArray(pg.list) ? pg.list : [];
-            const nextList = list.filter((it) => !it || it.id !== postId);
-            if (nextList.length === list.length) return pg;
-            return { ...pg, list: nextList };
-          });
-          return { ...old, pages: nextPages };
+          return {
+            ...old,
+            pages: old.pages.map((page) => {
+              const list = Array.isArray(page.list) ? page.list : [];
+              return { ...page, list: list.filter((item) => !item || item.id !== postId) };
+            }),
+          };
         }
       );
       queryClient.removeQueries({ queryKey: QK.postDetail(postId, tokenKey) });
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       navigate('/', { replace: true });
-    } catch (err) {
-      Toast.error(getApiErrorMessage(err));
+    } catch (error) {
+      Toast.error(getApiErrorMessage(error));
     } finally {
       setDeleteLoading(false);
     }
@@ -389,7 +387,7 @@ function PostDetail() {
   if (loading) {
     return (
       <div className="post-detail-page">
-        <p className="post-detail-loading state-loading">Loading…</p>
+        <p className="post-detail-loading state-loading">Loading...</p>
       </div>
     );
   }
@@ -420,7 +418,7 @@ function PostDetail() {
 
   const author = post.author || {};
   const displayName = author.nickname ?? author.username ?? 'Anonymous';
-  const totalCommentCount = comments.reduce((sum, c) => sum + 1 + (c.replies?.length || 0), 0);
+  const totalCommentCount = comments.reduce((sum, comment) => sum + 1 + (comment.replies?.length || 0), 0);
   const heroUrl = post.images?.[0]?.url ? prefixImageUrl(post.images[0].url) : null;
   const imageUrls = Array.isArray(post.images) ? post.images.map((img) => prefixImageUrl(img.url)).filter(Boolean) : [];
 
@@ -428,13 +426,19 @@ function PostDetail() {
     if (post.type === 'announcement') {
       return [{ key: 'ann', slug: null, label: isEn ? 'Announcement' : '公告' }];
     }
-    const arr = Array.isArray(post.tags) ? post.tags : [];
-    return arr.map((t) => ({
-      key: t.id,
-      slug: t.slug,
-      label: isEn ? (t.name_en || t.name_zh || t.slug) : (t.name_zh || t.name_en || t.slug),
+    const tags = Array.isArray(post.tags) ? post.tags : [];
+    return tags.map((tag) => ({
+      key: tag.id,
+      slug: tag.slug,
+      label: isEn ? (tag.name_en || tag.name_zh || tag.slug) : (tag.name_zh || tag.name_en || tag.slug),
     }));
   })();
+
+  const pageMeta = [
+    { key: 'comments', label: isEn ? `${totalCommentCount} comments` : `${totalCommentCount} 条评论` },
+    { key: 'likes', label: isEn ? `${likeCount} likes` : `${likeCount} 个点赞` },
+    { key: 'type', label: post.type === 'announcement' ? (isEn ? 'Announcement' : '公告') : (isEn ? 'Community post' : '社区帖子') },
+  ];
 
   return (
     <div className="post-detail-page">
@@ -444,223 +448,347 @@ function PostDetail() {
           <div className="post-detail-atmo-fade" />
         </div>
       ) : null}
-      {commentsQuery.isError && (
+
+      {commentsQuery.isError ? (
         <p className="post-detail-error" role="alert">
           {getApiErrorMessage(commentsQuery.error)}
         </p>
-      )}
-      <article className="post-detail-card">
-        <div className="post-detail-author">
-          <button
-            type="button"
-            className="post-detail-avatar-wrap"
-            onClick={() => {
-              if (author.id) {
-                navigate(`/user/${author.id}`);
-              }
-            }}
-            aria-label={`查看 ${displayName} 的主页`}
-          >
-            {author.avatar ? (
-              <img src={author.avatar} alt="" className="post-detail-avatar" />
-            ) : (
-              <img src="/default-avatar.svg" alt="" className="post-detail-avatar post-detail-avatar-default" />
+      ) : null}
+
+      <DetailPageLayout
+        className="post-detail-layout"
+        asideSticky
+        header={(
+          <PageHeader
+            eyebrow={isEn ? 'Community Post' : '社区帖子'}
+            title={post.title || (isEn ? 'Post Detail' : '帖子详情')}
+            description={
+              isEn
+                ? 'Keep the reading flow, comment thread, and secondary actions separated into a clearer desktop detail rhythm.'
+                : '把正文阅读、评论互动和次级操作拆进更清晰的桌面详情节奏里，避免所有内容都挤在同一张卡片里。'
+            }
+            backTo="/"
+            backLabel={isEn ? 'Back to home' : '返回首页'}
+            meta={pageMeta}
+            actions={(
+              <div className="post-detail-page-header-actions">
+                <Button variant="secondary" size="sm" onClick={focusComposer}>
+                  {isEn ? 'Write comment' : '写评论'}
+                </Button>
+                {isAuthor ? (
+                  <Button variant="secondary" size="sm" onClick={handleDeletePost} disabled={deleteLoading}>
+                    {deleteLoading ? (isEn ? 'Deleting...' : '删除中...') : (isEn ? 'Delete post' : '删除帖子')}
+                  </Button>
+                ) : null}
+              </div>
             )}
-          </button>
-          <div className="post-detail-author-info">
-            <div className="post-detail-name-tags">
-              <span className="post-detail-username">{displayName}</span>
-              {author.level ? (
-                <UserLevelBadge level={author.level} badgeEmoji={author.badgeEmoji} size="sm" isZh={!isEn} />
-              ) : null}
-              {detailTags.length > 0 && (
-                <div className="post-detail-tags" aria-label={isEn ? 'Tags' : '标签'}>
-                  {detailTags.map((t) =>
-                    t.slug ? (
-                      <Link
-                        key={t.key}
-                        to={`/posts/tag/${encodeURIComponent(t.slug)}`}
-                        className="post-detail-tag"
-                      >
-                        {t.label}
-                      </Link>
-                    ) : (
-                      <span key={t.key} className="post-detail-tag post-detail-tag--static">
-                        {t.label}
-                      </span>
-                    )
-                  )}
-                </div>
-              )}
-            </div>
-            {post.created_at && (
-              <span className="post-detail-time" title={formatPostTime(post.created_at, true)}>
-                {formatPostTime(post.created_at)}
-              </span>
-            )}
-          </div>
-          {isAuthor && (
-            <button
-              type="button"
-              className="post-detail-more-btn"
-              onClick={handleDeletePost}
-              disabled={deleteLoading}
-              title={isEn ? 'More' : '更多'}
-              aria-label={isEn ? 'More' : '更多'}
-            >
-              <MoreHorizontal size={18} aria-hidden />
-            </button>
-          )}
-        </div>
-        <p className="post-detail-content">{post.content}</p>
-        {imageUrls.length > 0 && (
-          <div className="post-detail-media" aria-label="Post images">
-            {imageUrls.length === 1 ? (
-              <button
-                type="button"
-                className="post-detail-image-wrap"
-                onClick={() => setImagePreview({ open: true, index: 0 })}
-              >
-                <img src={imageUrls[0]} alt="" className="post-detail-image" />
-              </button>
-            ) : (
-              <StackedCardCarousel
-                urls={imageUrls}
-                index={carouselIndex}
-                onChangeIndex={(next, dir) => {
-                  setCarouselDir(dir);
-                  setCarouselIndex(next);
-                }}
-                onOpenPreview={(i) => setImagePreview({ open: true, index: i })}
-                dir={carouselDir}
-              />
-            )}
-          </div>
-        )}
-        {imagePreview.open && post.images?.length > 0 && (
-          <ImagePreview
-            urls={post.images.map((img) => prefixImageUrl(img.url))}
-            initialIndex={imagePreview.index}
-            onClose={() => setImagePreview({ open: false, index: 0 })}
           />
         )}
-        <div className="post-detail-actions">
-          <motion.button
-            type="button"
-            className={`post-detail-like-btn ${liked ? 'is-liked' : ''}`}
-            onClick={handleLike}
-            aria-pressed={liked}
-            whileTap={{ scale: 0.92 }}
-            transition={{ type: 'spring', stiffness: 700, damping: 28 }}
-          >
-            <Heart size={18} aria-hidden fill={liked ? 'currentColor' : 'none'} />
-            <span className="post-detail-like-count">{likeCount}</span>
-          </motion.button>
-          {!isAuthor && (
-            <ReportButton target_type="post" target_id={post.id} className="post-detail-report-btn" />
-          )}
-        </div>
-      </article>
-      <LikeBurst ref={likeBurstRef} />
+        content={(
+          <article className="post-detail-card">
+            <div className="post-detail-author">
+              <button
+                type="button"
+                className="post-detail-avatar-wrap"
+                onClick={() => {
+                  if (author.id) {
+                    navigate(`/user/${author.id}`);
+                  }
+                }}
+                aria-label={`查看 ${displayName} 的主页`}
+              >
+                {author.avatar ? (
+                  <img src={author.avatar} alt="" className="post-detail-avatar" />
+                ) : (
+                  <img src="/default-avatar.svg" alt="" className="post-detail-avatar post-detail-avatar-default" />
+                )}
+              </button>
 
-      <section className="post-detail-comments">
-        <h2 className="post-detail-comments-title">
-          {isEn ? `Comments (${totalCommentCount})` : `评论 Comments (${totalCommentCount})`}
-        </h2>
-        <ul className="post-detail-comment-list">
-          {comments.map((c) => (
-            <li key={c.id} className="post-detail-comment-wrap">
-              <div className="post-detail-thread">
-                <div className="post-detail-thread-avatar">
-                  {c.author?.avatar ? (
-                    <img src={c.author.avatar} alt="" />
-                  ) : (
-                    <img src="/default-avatar.svg" alt="" className="is-default" />
-                  )}
+              <div className="post-detail-author-info">
+                <div className="post-detail-name-tags">
+                  <span className="post-detail-username">{displayName}</span>
+                  {author.level ? (
+                    <UserLevelBadge level={author.level} badgeEmoji={author.badgeEmoji} size="sm" isZh={!isEn} />
+                  ) : null}
+                  {detailTags.length > 0 ? (
+                    <div className="post-detail-tags" aria-label={isEn ? 'Tags' : '标签'}>
+                      {detailTags.map((tag) =>
+                        tag.slug ? (
+                          <Link
+                            key={tag.key}
+                            to={`/posts/tag/${encodeURIComponent(tag.slug)}`}
+                            className="post-detail-tag"
+                          >
+                            {tag.label}
+                          </Link>
+                        ) : (
+                          <span key={tag.key} className="post-detail-tag post-detail-tag--static">
+                            {tag.label}
+                          </span>
+                        )
+                      )}
+                    </div>
+                  ) : null}
                 </div>
-                <div className="post-detail-thread-body">
-                  <div className="post-detail-thread-meta">
-                    <span className="post-detail-thread-name">
-                      {(c.author?.nickname ?? c.author?.username) || 'Anonymous'}
-                      {c.author?.level ? (
-                        <UserLevelBadge level={c.author.level} badgeEmoji={c.author.badgeEmoji} size="sm" isZh={!isEn} />
-                      ) : null}
-                    </span>
-                    <button type="button" className="post-detail-reply-btn" onClick={() => { startReply(c); focusComposer(); }}>
-                      {isEn ? 'Reply' : '回复'}
-                    </button>
-                    <ReportButton target_type="comment" target_id={c.id} className="post-detail-report-btn" iconOnly />
-                    {(c.user_id === user?.id || isAdmin) && (
-                      <button
-                        type="button"
-                        className="post-detail-comment-delete"
-                        onClick={() => handleDeleteComment(c.id)}
-                        title={isEn ? 'Delete' : '删除'}
-                        aria-label={isEn ? 'Delete' : '删除'}
-                      >
-                        ···
-                      </button>
-                    )}
+                {post.created_at ? (
+                  <span className="post-detail-time" title={formatPostTime(post.created_at, true)}>
+                    {formatPostTime(post.created_at)}
+                  </span>
+                ) : null}
+              </div>
+
+              {isAuthor ? (
+                <button
+                  type="button"
+                  className="post-detail-more-btn"
+                  onClick={handleDeletePost}
+                  disabled={deleteLoading}
+                  title={isEn ? 'More' : '更多'}
+                  aria-label={isEn ? 'More' : '更多'}
+                >
+                  <MoreHorizontal size={18} aria-hidden />
+                </button>
+              ) : null}
+            </div>
+
+            <div className="post-detail-reading-meta">
+              <Tag tone="neutral" variant="soft">{isEn ? 'Main reading column' : '正文主阅读列'}</Tag>
+              <Tag tone="neutral" variant="outline">
+                {post.type === 'announcement' ? (isEn ? 'Announcement mode' : '公告模式') : (isEn ? 'Community discussion' : '社区讨论')}
+              </Tag>
+            </div>
+
+            <p className="post-detail-content">{post.content}</p>
+
+            {imageUrls.length > 0 ? (
+              <div className="post-detail-media" aria-label="Post images">
+                {imageUrls.length === 1 ? (
+                  <button
+                    type="button"
+                    className="post-detail-image-wrap"
+                    onClick={() => setImagePreview({ open: true, index: 0 })}
+                  >
+                    <img src={imageUrls[0]} alt="" className="post-detail-image" />
+                  </button>
+                ) : (
+                  <StackedCardCarousel
+                    urls={imageUrls}
+                    index={carouselIndex}
+                    onChangeIndex={(next, dir) => {
+                      setCarouselDir(dir);
+                      setCarouselIndex(next);
+                    }}
+                    onOpenPreview={(index) => setImagePreview({ open: true, index })}
+                    dir={carouselDir}
+                  />
+                )}
+              </div>
+            ) : null}
+
+            {imagePreview.open && post.images?.length > 0 ? (
+              <ImagePreview
+                urls={post.images.map((img) => prefixImageUrl(img.url))}
+                initialIndex={imagePreview.index}
+                onClose={() => setImagePreview({ open: false, index: 0 })}
+              />
+            ) : null}
+
+            <div className="post-detail-actions">
+              <motion.button
+                type="button"
+                className={`post-detail-like-btn ${liked ? 'is-liked' : ''}`}
+                onClick={handleLike}
+                aria-pressed={liked}
+                whileTap={{ scale: 0.92 }}
+                transition={{ type: 'spring', stiffness: 700, damping: 28 }}
+              >
+                <Heart size={18} aria-hidden fill={liked ? 'currentColor' : 'none'} />
+                <span className="post-detail-like-count">{likeCount}</span>
+              </motion.button>
+              {!isAuthor ? (
+                <ReportButton target_type="post" target_id={post.id} className="post-detail-report-btn" />
+              ) : null}
+            </div>
+          </article>
+        )}
+        meta={(
+          <Card className="post-detail-action-card">
+            <SectionHeader
+              title={isEn ? 'Quick actions' : '快捷操作'}
+              description={
+                isEn
+                  ? 'Keep the likely next steps grouped below the main reading card.'
+                  : '把最可能继续发生的操作集中放在正文卡片下方，桌面阅读时路径更稳定。'
+              }
+            />
+            <div className="post-detail-action-card__actions">
+              <Button variant="secondary" size="sm" onClick={focusComposer}>
+                {isEn ? 'Comment now' : '立即评论'}
+              </Button>
+              <Button variant="secondary" size="sm" onClick={handleLike}>
+                {liked ? (isEn ? 'Liked' : '已点赞') : (isEn ? 'Like this post' : '点赞帖子')}
+              </Button>
+            </div>
+          </Card>
+        )}
+        comments={(
+          <section className="post-detail-comments">
+            <SectionHeader
+              title={isEn ? `Comments (${totalCommentCount})` : `评论 (${totalCommentCount})`}
+              description={
+                isEn
+                  ? 'The comment tree stays intact; only the page rhythm is being reorganized into the shared detail template.'
+                  : '评论树结构和交互逻辑保持不变，本次只把页面节奏整理进共享详情模板里。'
+              }
+            />
+            <ul className="post-detail-comment-list">
+              {comments.map((comment) => (
+                <li key={comment.id} className="post-detail-comment-wrap">
+                  <div className="post-detail-thread">
+                    <div className="post-detail-thread-avatar">
+                      {comment.author?.avatar ? (
+                        <img src={comment.author.avatar} alt="" />
+                      ) : (
+                        <img src="/default-avatar.svg" alt="" className="is-default" />
+                      )}
+                    </div>
+                    <div className="post-detail-thread-body">
+                      <div className="post-detail-thread-meta">
+                        <span className="post-detail-thread-name">
+                          {(comment.author?.nickname ?? comment.author?.username) || 'Anonymous'}
+                          {comment.author?.level ? (
+                            <UserLevelBadge level={comment.author.level} badgeEmoji={comment.author.badgeEmoji} size="sm" isZh={!isEn} />
+                          ) : null}
+                        </span>
+                        <button type="button" className="post-detail-reply-btn" onClick={() => { startReply(comment); focusComposer(); }}>
+                          {isEn ? 'Reply' : '回复'}
+                        </button>
+                        <ReportButton target_type="comment" target_id={comment.id} className="post-detail-report-btn" iconOnly />
+                        {comment.user_id === user?.id || isAdmin ? (
+                          <button
+                            type="button"
+                            className="post-detail-comment-delete"
+                            onClick={() => handleDeleteComment(comment.id)}
+                            title={isEn ? 'Delete' : '删除'}
+                            aria-label={isEn ? 'Delete' : '删除'}
+                          >
+                            ...
+                          </button>
+                        ) : null}
+                      </div>
+                      <p className="post-detail-thread-text">{comment.content}</p>
+                    </div>
                   </div>
-                  <p className="post-detail-thread-text">{c.content}</p>
+                  {comment.replies && comment.replies.length > 0 ? (
+                    <ul className="post-detail-reply-list">
+                      {comment.replies.map((reply) => (
+                        <li key={reply.id} className="post-detail-thread post-detail-thread--reply">
+                          <div className="post-detail-thread-avatar">
+                            {reply.author?.avatar ? (
+                              <img src={reply.author.avatar} alt="" />
+                            ) : (
+                              <img src="/default-avatar.svg" alt="" className="is-default" />
+                            )}
+                          </div>
+                          <div className="post-detail-thread-body">
+                            <div className="post-detail-thread-meta">
+                              <span className="post-detail-thread-name">
+                                {(reply.author?.nickname ?? reply.author?.username) || 'Anonymous'}
+                                {reply.author?.level ? (
+                                  <UserLevelBadge level={reply.author.level} badgeEmoji={reply.author.badgeEmoji} size="sm" isZh={!isEn} />
+                                ) : null}
+                              </span>
+                              <ReportButton target_type="comment" target_id={reply.id} className="post-detail-report-btn" iconOnly />
+                              {reply.user_id === user?.id || isAdmin ? (
+                                <button
+                                  type="button"
+                                  className="post-detail-comment-delete"
+                                  onClick={() => handleDeleteComment(reply.id)}
+                                  title={isEn ? 'Delete' : '删除'}
+                                  aria-label={isEn ? 'Delete' : '删除'}
+                                >
+                                  ...
+                                </button>
+                              ) : null}
+                            </div>
+                            <p className="post-detail-thread-text">{reply.content}</p>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+        aside={(
+          <>
+            <Card className="post-detail-aside-card">
+              <SectionHeader
+                title={isEn ? 'Post snapshot' : '帖子快照'}
+                description={
+                  isEn
+                    ? 'Keep the key numbers visible while the main column stays focused on reading.'
+                    : '把关键数字收进右侧，正文主列专注阅读与评论，不再把所有信息都堆进正文卡片。'
+                }
+                compact
+              />
+              <div className="post-detail-aside-card__stats">
+                <div className="post-detail-aside-card__stat">
+                  <span className="post-detail-aside-card__label">{isEn ? 'Likes' : '点赞'}</span>
+                  <strong>{likeCount}</strong>
+                </div>
+                <div className="post-detail-aside-card__stat">
+                  <span className="post-detail-aside-card__label">{isEn ? 'Comments' : '评论'}</span>
+                  <strong>{totalCommentCount}</strong>
+                </div>
+                <div className="post-detail-aside-card__stat">
+                  <span className="post-detail-aside-card__label">{isEn ? 'Author' : '作者'}</span>
+                  <strong>{displayName}</strong>
                 </div>
               </div>
-              {c.replies && c.replies.length > 0 && (
-                <ul className="post-detail-reply-list">
-                  {c.replies.map((r) => (
-                    <li key={r.id} className="post-detail-thread post-detail-thread--reply">
-                      <div className="post-detail-thread-avatar">
-                        {r.author?.avatar ? (
-                          <img src={r.author.avatar} alt="" />
-                        ) : (
-                          <img src="/default-avatar.svg" alt="" className="is-default" />
-                        )}
-                      </div>
-                      <div className="post-detail-thread-body">
-                        <div className="post-detail-thread-meta">
-                          <span className="post-detail-thread-name">
-                            {(r.author?.nickname ?? r.author?.username) || 'Anonymous'}
-                            {r.author?.level ? (
-                              <UserLevelBadge level={r.author.level} badgeEmoji={r.author.badgeEmoji} size="sm" isZh={!isEn} />
-                            ) : null}
-                          </span>
-                          <ReportButton target_type="comment" target_id={r.id} className="post-detail-report-btn" iconOnly />
-                          {(r.user_id === user?.id || isAdmin) && (
-                            <button
-                              type="button"
-                              className="post-detail-comment-delete"
-                              onClick={() => handleDeleteComment(r.id)}
-                              title={isEn ? 'Delete' : '删除'}
-                              aria-label={isEn ? 'Delete' : '删除'}
-                            >
-                              ···
-                            </button>
-                          )}
-                        </div>
-                        <p className="post-detail-thread-text">{r.content}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </li>
-          ))}
-        </ul>
-      </section>
+            </Card>
 
-      {replyingTo && (
+            <Card className="post-detail-aside-card">
+              <SectionHeader
+                title={isEn ? 'Next step' : '下一步'}
+                description={
+                  isEn
+                    ? 'Use the right rail for orientation and keep the next actions predictable on desktop.'
+                    : '右侧辅助栏负责承接下一步操作，让桌面阅读场景下的动作路径更稳定。'
+                }
+                compact
+              />
+              <div className="post-detail-aside-card__links">
+                <Button variant="secondary" size="sm" block onClick={focusComposer}>
+                  {isEn ? 'Join discussion' : '参与讨论'}
+                </Button>
+                {!isAuthor ? (
+                  <Button variant="secondary" size="sm" block onClick={handleLike}>
+                    {liked ? (isEn ? 'Liked already' : '已点赞过') : (isEn ? 'Support this post' : '支持这篇帖子')}
+                  </Button>
+                ) : null}
+              </div>
+            </Card>
+          </>
+        )}
+      />
+
+      <LikeBurst ref={likeBurstRef} />
+
+      {replyingTo ? (
         <div className="post-detail-replying-inline">
           <span>
             {isEn ? 'Reply:' : '回复:'} {replyingTo.content.slice(0, 20)}
-            {replyingTo.content.length > 20 ? '…' : ''}
+            {replyingTo.content.length > 20 ? '...' : ''}
           </span>
           <button type="button" onClick={cancelReply}>
             {isEn ? 'Cancel' : '取消'}
           </button>
         </div>
-      )}
+      ) : null}
 
-      {/* Floating bottom glass comment bar */}
       <form className="post-detail-bottom-bar" onSubmit={handleSubmitComment}>
         <button type="button" className="post-detail-bottom-emoji" aria-label="emoji">
           <Smile size={18} aria-hidden />
@@ -669,7 +797,7 @@ function PostDetail() {
           ref={composerInputRef}
           type="text"
           className="post-detail-bottom-input"
-          placeholder={replyingTo ? (isEn ? 'Reply…' : '回复…') : (isEn ? 'Add a comment…' : '添加评论…')}
+          placeholder={replyingTo ? (isEn ? 'Reply...' : '回复...') : (isEn ? 'Add a comment...' : '添加评论...')}
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           maxLength={500}
