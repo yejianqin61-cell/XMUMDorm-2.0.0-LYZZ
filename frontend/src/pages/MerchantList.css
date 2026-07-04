@@ -936,3 +936,28 @@
   }
 }
 
+.app-layout--desktop-shell .merchant-list-page,
+.site-web-shell--tablet .merchant-list-page {
+  min-height: auto;
+  padding: 0;
+  background: transparent;
+}
+
+.app-layout--desktop-shell .merchant-list-layout,
+.site-web-shell--tablet .merchant-list-layout {
+  max-width: none;
+}
+
+.app-layout--desktop-shell .merchant-list-main,
+.app-layout--desktop-shell .merchant-list-aside-section {
+  gap: 18px;
+}
+
+.app-layout--desktop-shell .merchant-list-ranking-card {
+  padding: 20px;
+}
+
+.site-web-shell--tablet .merchant-list-ranking-card {
+  padding: 16px;
+}
+
