@@ -3,7 +3,7 @@ import { BookOpenText, HandHelping, PenSquare, Shapes, Store } from 'lucide-reac
 import { Link } from 'react-router-dom';
 import { getSquareBanners, getSquareHomeSummary } from '@shared/api/square';
 import { useLanguage } from '../context/LanguageContext';
-import CanteenBannerCarousel from '../components/canteen/CanteenBannerCarousel';
+import CanteenBannerCarousel from '../features/canteen/CanteenBannerCarousel';
 import TodayCampusHero from '../components/square/TodayCampusHero';
 import TodayCampusPreviewRail from '../components/square/TodayCampusPreviewRail';
 import TodayCampusQuickActions from '../components/square/TodayCampusQuickActions';
