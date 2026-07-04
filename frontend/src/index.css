@@ -92,8 +92,8 @@ body {
   padding-right: var(--safe-right);
 }
 
-/* 桌面大屏：限制成「手机宽度」并居中，两侧灰底，像真机预览 */
-@media (min-width: 431px) {
+/* 手机-平板过渡区：限制成「手机宽度」并居中，两侧灰底，像真机预览 */
+@media (min-width: 431px) and (max-width: 767px) {
   body {
     background-color: #070a14;
   }
@@ -104,6 +104,20 @@ body {
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 30px 80px rgba(0, 0, 0, 0.45);
     border-radius: 24px;
     overflow: hidden;
+  }
+}
+
+/* 桌面端：解除手机模拟限制，让 SiteWebShell 三段式布局正常展开 */
+@media (min-width: 768px) {
+  body {
+    background-color: var(--color-bg-page);
+  }
+  #root {
+    max-width: none;
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: visible;
   }
 }
 
