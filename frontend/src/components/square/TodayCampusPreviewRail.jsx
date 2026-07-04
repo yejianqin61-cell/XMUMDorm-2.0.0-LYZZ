@@ -1,20 +1,27 @@
 import { Link } from 'react-router-dom';
 
-export default function TodayCampusPreviewRail({ items = [] }) {
+export default function TodayCampusPreviewRail({
+  items = [],
+  title = '轻浏览',
+  description = '把活动和热议压成横向预览，不再在首页平铺详情列表。',
+  moreTo = '/about/trending',
+  moreLabel = '查看更多',
+  ariaLabel = '轻浏览预览',
+}) {
   if (!items.length) return null;
 
   return (
     <section className="today-campus-panel">
       <div className="square-section-header square-section-header--stack">
         <div>
-          <h2 className="square-section-title">轻浏览</h2>
-          <p className="square-section-subtitle">把活动和热议压成横向预览，不再在首页平铺详情列表。</p>
+          <h2 className="square-section-title">{title}</h2>
+          <p className="square-section-subtitle">{description}</p>
         </div>
-        <Link to="/about/trending" className="square-section-more">
-          查看更多 →
+        <Link to={moreTo} className="square-section-more">
+          {moreLabel}
         </Link>
       </div>
-      <div className="square-preview-rail" role="list" aria-label="轻浏览预览">
+      <div className="square-preview-rail" role="list" aria-label={ariaLabel}>
         {items.map((item) => (
           <Link key={`${item.kind}-${item.id}`} to={item.to} className="square-preview-card" role="listitem">
             <span className={`square-preview-card__badge square-preview-card__badge--${item.kind}`}>

@@ -5,8 +5,8 @@ import { getSquareBanners, getSquareHomeSummary } from '@shared/api/square';
 import { useLanguage } from '../context/LanguageContext';
 import CanteenBannerCarousel from '../components/canteen/CanteenBannerCarousel';
 import TodayCampusHero from '../components/square/TodayCampusHero';
+import TodayCampusPreviewRail from '../components/square/TodayCampusPreviewRail';
 import TodayCampusQuickActions from '../components/square/TodayCampusQuickActions';
-import TodayCampusTrendingBoard from '../components/square/TodayCampusTrendingBoard';
 import MyCampusRecommendations from '../components/square/MyCampusRecommendations';
 import PageSkeleton from '../components/ui/PageSkeleton';
 import ErrorState from '../components/ui/ErrorState';
@@ -113,6 +113,34 @@ function buildRecommendationSummary(summary, isEn) {
   };
 }
 
+function buildPreviewRailItems(summary, isEn) {
+  const items = [];
+
+  (summary.hot_activities || []).slice(0, 1).forEach((item) => {
+    items.push({
+      id: item.id,
+      kind: 'activity',
+      badge: isEn ? 'Event' : '活动',
+      title: item.title,
+      meta: formatMeta(item, isEn ? 'Club activity' : '社团活动'),
+      to: `/about/club/activity/${item.id}`,
+    });
+  });
+
+  (summary.hot_treeholes || []).slice(0, 2).forEach((item) => {
+    items.push({
+      id: item.id,
+      kind: 'discussion',
+      badge: isEn ? 'Discussion' : '热议',
+      title: item.excerpt || (isEn ? 'Open the discussion' : '打开这条讨论'),
+      meta: `${item.like_count || 0}${isEn ? ' likes' : ' 赞'} · ${item.comment_count || 0}${isEn ? ' comments' : ' 评论'}`,
+      to: `/posts/${item.id}`,
+    });
+  });
+
+  return items.slice(0, 3);
+}
+
 export default function SquareHome() {
   const { lang } = useLanguage();
   const isEn = lang === 'en';
@@ -131,7 +159,8 @@ export default function SquareHome() {
     quick_stats: {},
   };
   const recommendationSummary = buildRecommendationSummary(summary, isEn);
-  const exploreTopics = (summary.hot_topics || []).slice(0, 3);
+  const previewRailItems = buildPreviewRailItems(summary, isEn);
+  const exploreTopics = (summary.hot_topics || []).slice(0, 6);
 
   return (
     <RouteTransition className="square-home-page">
@@ -174,8 +203,8 @@ export default function SquareHome() {
                     <h2 className="square-section-title">{isEn ? 'Keep Exploring' : '继续探索'}</h2>
                     <p className="square-section-subtitle">
                       {isEn
-                        ? 'Use lighter entry points to jump into trending topics, campus feeds, or publish flows.'
-                        : '用更轻量的入口继续进入热搜、校园动态和发布链路。'}
+                        ? 'Keep the homepage skimmable with horizontal tags, softer links, and compact previews.'
+                        : '用横向标签、低干扰入口和缩略预览，继续把首页保持在可快速扫读的节奏里。'}
                     </p>
                   </div>
                 </div>
@@ -193,25 +222,31 @@ export default function SquareHome() {
                 <div className="square-home-explore__links">
                   <Link to="/about/trending" className="square-home-explore__link">
                     <span className="square-home-explore__link-kicker">{isEn ? 'Trending' : '热搜榜'}</span>
-                    <strong className="square-home-explore__link-title">
-                      {isEn ? 'See full discussions' : '查看完整讨论区'}
-                    </strong>
+                    <span className="square-home-explore__link-title">{isEn ? 'View all' : '查看全部'}</span>
                   </Link>
                   <Link to="/about/campus" className="square-home-explore__link">
                     <span className="square-home-explore__link-kicker">{isEn ? 'Campus feed' : '校园动态'}</span>
-                    <strong className="square-home-explore__link-title">
-                      {isEn ? 'Browse all official posts' : '浏览全部官方动态'}
-                    </strong>
+                    <span className="square-home-explore__link-title">{isEn ? 'View all' : '查看全部'}</span>
                   </Link>
                   <Link to="/publish" className="square-home-explore__link">
                     <span className="square-home-explore__link-kicker">{isEn ? 'Publish' : '发布入口'}</span>
-                    <strong className="square-home-explore__link-title">
-                      {isEn ? 'Share something new' : '去发布一条新内容'}
-                    </strong>
+                    <span className="square-home-explore__link-title">{isEn ? 'Open entry' : '进入发布'}</span>
                   </Link>
                 </div>
 
-                <TodayCampusTrendingBoard topics={summary.hot_topics || []} compact />
+                <TodayCampusPreviewRail
+                  items={previewRailItems}
+                  title={isEn ? 'Quick Preview' : '轻浏览'}
+                  description={
+                    isEn
+                      ? 'Keep activities and hot discussions in a compact horizontal strip instead of full-height detail cards.'
+                      : '把活动和热议压成横向缩略带，不再在首页继续平铺大卡片详情。'
+                  }
+                  moreTo="/about/trending"
+                  moreLabel={isEn ? 'View all' : '查看全部'}
+                  ariaLabel={isEn ? 'Quick preview rail' : '轻浏览预览'}
+                />
+
               </div>
             </FadeInSection>
           </>
