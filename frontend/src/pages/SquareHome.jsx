@@ -86,7 +86,7 @@ export default function SquareHome() {
         </FadeInSection>
 
         {summaryQuery.isLoading ? (
-          <PageSkeleton hero metrics={3} items={2} className="square-home-skeleton" />
+          <PageSkeleton variant="dashboard" hero metrics={3} items={2} className="square-home-skeleton" />
         ) : summaryQuery.isError ? (
           <ErrorState
             className="square-home-state"

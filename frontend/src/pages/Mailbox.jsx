@@ -216,7 +216,7 @@ function Mailbox() {
   if (loading) {
     return (
       <RouteTransition className="mailbox-page">
-        <PageSkeleton items={4} />
+        <PageSkeleton variant="list" items={4} />
       </RouteTransition>
     );
   }
