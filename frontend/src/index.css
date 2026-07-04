@@ -1,12 +1,14 @@
 @import "tailwindcss";
 
 /* 全局主题：年轻、有活力、国际化（Inter + Noto Sans SC） */
+/* @deprecated — 以下变量由 tokens.css Legacy bridge 统一接管。
+   新代码请使用 --color-brand-primary, --color-text-primary 等 semantic token。 */
 :root {
-  --brand-1: #22c55e; /* green */
-  --brand-2: #06b6d4; /* cyan */
-  --brand-3: #6366f1; /* indigo */
+  --brand-1: #22c55e; /* green — @deprecated, bridged to tokens.css */
+  --brand-2: #06b6d4; /* cyan — @deprecated, bridged to tokens.css */
+  --brand-3: #6366f1; /* indigo — @deprecated, bridged to tokens.css */
 
-  --app-bg: #0b1020; /* deep slate */
+  --app-bg: #0b1020; /* deep slate — @deprecated, bridged to tokens.css */
   --app-surface: rgba(255, 255, 255, 0.78);
   --app-surface-strong: rgba(255, 255, 255, 0.92);
   --app-border: rgba(255, 255, 255, 0.24);
@@ -22,7 +24,7 @@
   --shadow-1: 0 10px 30px rgba(2, 6, 23, 0.12);
   --shadow-2: 0 18px 60px rgba(2, 6, 23, 0.22);
 
-  /* 主色：翠绿（你希望用绿色系） */
+  /* 主色：翠绿（你希望用绿色系） — @deprecated, bridged to tokens.css */
   --accent: #10b981; /* emerald */
   --accent-strong: #059669;
   --accent-soft: rgba(16, 185, 129, 0.16);
