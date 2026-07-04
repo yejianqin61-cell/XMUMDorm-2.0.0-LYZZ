@@ -7,7 +7,7 @@ import { ExpFeedbackProvider } from './context/ExpFeedbackContext';
 import { ToastProvider } from './context/ToastContext';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import AuthGuard from './components/AuthGuard';
-import Layout from './components/Layout';
+import SiteShellRoute from './components/shell/SiteShellRoute';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ResetPassword from './pages/ResetPassword';
@@ -87,7 +87,7 @@ function MainApp() {
                   path="/"
                   element={(
                     <AuthGuard>
-                      <Layout />
+                      <SiteShellRoute />
                     </AuthGuard>
                   )}
                 >

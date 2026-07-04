@@ -106,6 +106,14 @@
   min-height: calc(100dvh - 160px);
 }
 
+.site-web-shell__content--layout {
+  min-width: 0;
+}
+
+.site-web-shell__content--layout .app-layout {
+  height: 100%;
+}
+
 .site-web-shell__panel {
   padding: var(--space-12);
   border-radius: var(--radius-xl);

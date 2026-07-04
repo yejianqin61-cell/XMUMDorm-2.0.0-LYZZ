@@ -75,8 +75,13 @@ const TITLE_BY_PATH_EN = {
 /** 需要显示返回键的路径（含 /post/:id 详情页、帖子搜索/话题） */
 const SHOW_BACK_PATHS = ['/post/new', '/post/', '/posts/'];
 
+function renderDesktopRootRoute(pathname) {
+  const RootComponent = TAB_ROOT_COMPONENTS[pathname];
+  return RootComponent ? <RootComponent /> : null;
+}
+
 /** 整体布局：顶栏（标题+信箱）+ 内容区 + 底部 Tab；Tab 仅能通过底部点击切换；主 Tab 间切换带过渡动画 + 公告弹窗 */
-function Layout() {
+function Layout({ mode = 'mobile' }) {
   const location = useLocation();
   const navigate = useNavigate();
   const pathname = location.pathname;
@@ -85,6 +90,7 @@ function Layout() {
   const tokenKey = token ?? '';
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
+  const isDesktopShell = mode === 'desktop';
   // 只在用户第一次交互时尝试进入全屏
   const hasTriedFullscreenRef = useRef(false);
 
@@ -118,10 +124,11 @@ function Layout() {
   }, [activeTabIndex]);
 
   useEffect(() => {
+    if (isDesktopShell) return;
     if (pathname === '/' && location.key === 'default') {
       navigate('/about', { replace: true });
     }
-  }, [location.key, navigate, pathname]);
+  }, [isDesktopShell, location.key, navigate, pathname]);
   const isRootTabPage = useMemo(() => {
     // 只在四个根 Tab 页使用“常驻页面 + 滑块切换”，子路由仍交给 Outlet 渲染
     return pathname === '/' || pathname === '/eat' || pathname === '/about' || pathname === '/myzone';
@@ -160,6 +167,7 @@ function Layout() {
   };
 
   const handleFirstInteraction = () => {
+    if (isDesktopShell) return;
     if (hasTriedFullscreenRef.current) return;
     hasTriedFullscreenRef.current = true;
     enterFullscreen();
@@ -240,11 +248,41 @@ function Layout() {
       title = isZh ? '厦马小筑' : 'XMUM Dorm';
     }
   }
-  const showTreeHoleFab = pathname === '/' && activeTabIndex === 1;
+  const showTreeHoleFab = !isDesktopShell && pathname === '/' && activeTabIndex === 1;
+  const desktopRootRoute = isDesktopShell ? renderDesktopRootRoute(pathname) : null;
+  const routeContent = isDesktopShell
+    ? (desktopRootRoute || <Outlet />)
+    : (
+      isRootTabPage ? (
+        <div className="tab-stack-wrap" aria-label="Tab pages">
+          <div
+            className="tab-stack-track"
+            style={{
+              transform: `translateX(-${activeTabIndex * 25}%)`,
+            }}
+          >
+            <div className="tab-stack-pane" data-active={activeTabIndex === 0} aria-label="Square">
+              {mountedTabs.has(0) ? <SquareHome /> : null}
+            </div>
+            <div className="tab-stack-pane" data-active={activeTabIndex === 1} aria-label="TreeHole">
+              {mountedTabs.has(1) ? <TreeHole /> : null}
+            </div>
+            <div className="tab-stack-pane" data-active={activeTabIndex === 2} aria-label="Eat">
+              {mountedTabs.has(2) ? <CanteenHome /> : null}
+            </div>
+            <div className="tab-stack-pane tab-stack-pane--myzone" data-active={activeTabIndex === 3} aria-label="MyZone">
+              {mountedTabs.has(3) ? <MyZone /> : null}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <Outlet />
+      )
+    );
 
   return (
     <div
-      className={`app-layout app-layout--no-topbar${isRootTabPage ? ' app-layout--tabstack' : ''}`}
+      className={`app-layout app-layout--no-topbar${!isDesktopShell && isRootTabPage ? ' app-layout--tabstack' : ''}${isDesktopShell ? ' app-layout--desktop-shell' : ''}`}
       onClick={handleFirstInteraction}
     >
       <main className="app-main">
@@ -256,31 +294,7 @@ function Layout() {
           }}
         />
         <div className="app-main-inner">
-          {isRootTabPage ? (
-            <div className="tab-stack-wrap" aria-label="Tab pages">
-              <div
-                className="tab-stack-track"
-                style={{
-                  transform: `translateX(-${activeTabIndex * 25}%)`,
-                }}
-              >
-                <div className="tab-stack-pane" data-active={activeTabIndex === 0} aria-label="Square">
-                  {mountedTabs.has(0) ? <SquareHome /> : null}
-                </div>
-                <div className="tab-stack-pane" data-active={activeTabIndex === 1} aria-label="TreeHole">
-                  {mountedTabs.has(1) ? <TreeHole /> : null}
-                </div>
-                <div className="tab-stack-pane" data-active={activeTabIndex === 2} aria-label="Eat">
-                  {mountedTabs.has(2) ? <CanteenHome /> : null}
-                </div>
-                <div className="tab-stack-pane tab-stack-pane--myzone" data-active={activeTabIndex === 3} aria-label="MyZone">
-                  {mountedTabs.has(3) ? <MyZone /> : null}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <Outlet />
-          )}
+          {routeContent}
         </div>
       </main>
       {showTreeHoleFab && (
@@ -346,7 +360,7 @@ function Layout() {
           </div>
         </div>
       )}
-      <TabBar />
+      {!isDesktopShell ? <TabBar /> : null}
     </div>
   );
 }

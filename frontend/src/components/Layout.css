@@ -7,6 +7,25 @@
   background: var(--post-ios-bg-grouped, #f2f2f7);
 }
 
+.app-layout--desktop-shell {
+  min-height: 0;
+  padding-bottom: 0;
+  background: transparent;
+}
+
+.app-layout--desktop-shell .app-main {
+  overflow: visible;
+  background: transparent;
+}
+
+.app-layout--desktop-shell .app-main-bg {
+  display: none;
+}
+
+.app-layout--desktop-shell .app-main-inner {
+  min-height: 0;
+}
+
 /* 无顶栏时：主区从刘海下开始，背景图贴顶（仍保留底部 Tab 与安全区） */
 .app-layout--no-topbar .app-main {
   padding-top: var(--safe-top, 0px);
