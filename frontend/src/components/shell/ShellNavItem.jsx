@@ -21,6 +21,7 @@ export default function ShellNavItem({
         className,
       )}
       style={{ '--shell-nav-accent': accent || 'var(--color-brand-primary)' }}
+      aria-current={active ? 'page' : undefined}
     >
       <span className="site-web-shell__nav-swatch" aria-hidden="true" />
       <span className="site-web-shell__nav-copy">

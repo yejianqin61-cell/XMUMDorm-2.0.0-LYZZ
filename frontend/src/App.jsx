@@ -127,6 +127,8 @@ function InstallPrompt({ showInstallPrompt, manualGuide, onInstallLater, onInsta
   const isEn = lang === 'en';
 
   if (!showInstallPrompt) return null;
+  // Desktop: PWA install prompts are irrelevant
+  if (typeof window !== 'undefined' && window.innerWidth >= 768) return null;
 
   return (
     <div className="install-hint-backdrop" onClick={onInstallLater}>
@@ -188,6 +190,11 @@ function AppShell() {
   const startSplashTimers = useCallback(() => {
     if (startedRef.current) return;
     startedRef.current = true;
+    // Desktop: skip the mobile PWA splash video
+    if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+      setShowSplash(false);
+      return;
+    }
     timersRef.current.fade = setTimeout(() => setFadeOut(true), 1700);
     timersRef.current.hide = setTimeout(() => setShowSplash(false), 2000);
   }, []);

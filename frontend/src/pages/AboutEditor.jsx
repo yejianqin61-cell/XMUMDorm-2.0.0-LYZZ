@@ -1,5 +1,5 @@
 import Card from '../components/ui/Card';
-import './AboutTeam.css';
+import './AboutTeam.css'; /* Reuses AboutTeam layout classes — same card+heading pattern */
 
 /** 编者的话详情页（静态）：先中文后英文，含日期 2026/3/10 */
 function AboutEditor() {
