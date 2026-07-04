@@ -530,3 +530,43 @@
   margin-right: 4px;
   font-weight: 600;
 }
+
+.myzone-dashboard-page,
+.myzone-dashboard-scroll,
+.myzone-dashboard-shell,
+.myzone-dashboard-layout {
+  min-width: 0;
+}
+
+.app-layout--desktop-shell .myzone-dashboard-page,
+.site-web-shell--tablet .myzone-dashboard-page {
+  background: transparent;
+}
+
+.app-layout--desktop-shell .myzone-dashboard-scroll,
+.site-web-shell--tablet .myzone-dashboard-scroll {
+  height: auto;
+  overflow: visible;
+  padding: 0;
+}
+
+.app-layout--desktop-shell .myzone-dashboard-layout {
+  gap: 20px;
+}
+
+.app-layout--desktop-shell .myzone-dashboard-layout .dashboard-page-layout__content--with-secondary {
+  grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
+}
+
+.app-layout--desktop-shell .myzone-dashboard-layout .dashboard-page-layout__main,
+.app-layout--desktop-shell .myzone-dashboard-layout .dashboard-page-layout__secondary {
+  gap: 18px;
+}
+
+.app-layout--desktop-shell .myzone-dashboard-layout .dashboard-page-layout__footer {
+  max-width: 480px;
+}
+
+.site-web-shell--tablet .myzone-dashboard-layout {
+  gap: 18px;
+}

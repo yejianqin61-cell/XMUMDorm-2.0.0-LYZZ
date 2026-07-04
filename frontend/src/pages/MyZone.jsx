@@ -33,6 +33,7 @@ import {
 import DashboardPageLayout from '../components/templates/DashboardPageLayout';
 import UserLevelBadge from '../components/UserLevelBadge';
 import LevelProgressBar from '../components/LevelProgressBar';
+import './MyZone.css';
 
 function MyZoneStrings(isZh) {
   return {
@@ -371,10 +372,17 @@ function MyZone() {
   );
 
   return (
-    <div className="h-full w-full bg-[#F9FAFB]">
-      <div className="h-full overflow-y-auto px-4 pb-[calc(var(--tabbar-height)+var(--safe-bottom)+24px)] pt-6">
-        <motion.div variants={listContainer} initial="hidden" animate="show">
+    <div className="myzone-dashboard-page h-full w-full bg-[#F9FAFB]">
+      <div className="myzone-dashboard-scroll h-full overflow-y-auto px-4 pb-[calc(var(--tabbar-height)+var(--safe-bottom)+24px)] pt-6">
+        <motion.div
+          className="myzone-dashboard-shell"
+          variants={listContainer}
+          initial="hidden"
+          animate="show"
+        >
           <DashboardPageLayout
+            className="myzone-dashboard-layout"
+            contentClassName="myzone-dashboard-layout__content"
             summary={summarySection}
             stats={statsSection}
             quickActions={quickActionsSection}
