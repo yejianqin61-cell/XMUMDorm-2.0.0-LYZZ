@@ -4,7 +4,7 @@
   position: relative;
   padding: 14px 18px calc(var(--tabbar-height, 76px) + var(--safe-bottom, 0px) + 86px);
   min-height: 100%;
-  background: #fbfcfe;
+  background: var(--color-bg-page);
   font-family: var(--post-ios-font, inherit);
   -webkit-font-smoothing: antialiased;
 }

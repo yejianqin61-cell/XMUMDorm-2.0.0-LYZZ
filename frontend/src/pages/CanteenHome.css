@@ -42,7 +42,7 @@
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #9a5a13;
+  color: var(--color-canteen-text);
 }
 
 .canteen-home-hero__title {
@@ -50,7 +50,7 @@
   font-size: 30px;
   line-height: 1.02;
   letter-spacing: -0.045em;
-  color: #10233b;
+  color: var(--color-text-primary);
 }
 
 .canteen-home-hero__subtitle {
@@ -82,7 +82,7 @@
   font-size: 17px;
   font-weight: 800;
   line-height: 1.2;
-  color: #10233b;
+  color: var(--color-text-primary);
 }
 
 .canteen-home-hero__stat-label {
