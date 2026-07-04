@@ -15,6 +15,86 @@
   gap: 8px;
 }
 
+.canteen-home-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-bottom: 6px;
+  padding: 20px 18px;
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.72) 46%, rgba(255, 255, 255, 0.88) 100%),
+    linear-gradient(135deg, rgba(249, 115, 22, 0.12), rgba(250, 204, 21, 0.08), rgba(16, 185, 129, 0.08));
+  border: 1px solid rgba(255, 255, 255, 0.86);
+  box-shadow: 0 22px 44px rgba(15, 23, 42, 0.07);
+}
+
+.canteen-home-hero__intro {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.canteen-home-hero__eyebrow {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9a5a13;
+}
+
+.canteen-home-hero__title {
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.02;
+  letter-spacing: -0.045em;
+  color: #10233b;
+}
+
+.canteen-home-hero__subtitle {
+  margin: 0;
+  max-width: 38rem;
+  font-size: 13px;
+  line-height: 1.72;
+  color: rgba(16, 35, 59, 0.62);
+}
+
+.canteen-home-hero__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.canteen-home-hero__stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 78px;
+  padding: 14px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.88);
+}
+
+.canteen-home-hero__stat-value {
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.2;
+  color: #10233b;
+}
+
+.canteen-home-hero__stat-label {
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(16, 35, 59, 0.56);
+}
+
+.canteen-home-slot {
+  min-width: 0;
+}
+
 /* ====== 通用区块 ====== */
 .canteen-section {
   margin-top: 8px;
@@ -695,4 +775,177 @@
   font-size: 13px;
   color: var(--post-ios-tertiary-label);
   text-decoration: none;
+}
+
+.app-layout--desktop-shell .canteen-home-page,
+.site-web-shell--tablet .canteen-home-page {
+  overflow: visible;
+  background: transparent;
+}
+
+.app-layout--desktop-shell .canteen-home-inner {
+  padding: 0;
+  padding-bottom: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.app-layout--desktop-shell .canteen-home-hero,
+.app-layout--desktop-shell .canteen-home-slot--search,
+.app-layout--desktop-shell .canteen-home-footer {
+  grid-column: 1 / -1;
+}
+
+.app-layout--desktop-shell .canteen-home-hero {
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 0;
+  padding: 26px 28px;
+}
+
+.app-layout--desktop-shell .canteen-home-hero__title {
+  font-size: 42px;
+}
+
+.app-layout--desktop-shell .canteen-home-hero__stats {
+  flex-shrink: 0;
+  width: min(420px, 100%);
+}
+
+.app-layout--desktop-shell .canteen-home-slot--banner {
+  grid-column: 1;
+  grid-row: 3;
+}
+
+.app-layout--desktop-shell .canteen-home-slot--regions {
+  grid-column: 2;
+  grid-row: 3;
+}
+
+.app-layout--desktop-shell .canteen-home-slot--rankings {
+  grid-column: 2;
+  grid-row: 4 / span 2;
+}
+
+.app-layout--desktop-shell .canteen-home-slot--pick {
+  grid-column: 1;
+  grid-row: 4;
+}
+
+.app-layout--desktop-shell .canteen-home-slot--square {
+  grid-column: 1;
+  grid-row: 5;
+}
+
+.app-layout--desktop-shell .canteen-section {
+  margin-top: 0;
+  padding: 20px;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.84) 54%, rgba(255, 255, 255, 0.9) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.86);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+}
+
+.app-layout--desktop-shell .canteen-search-bar {
+  position: static;
+  padding: 0;
+}
+
+.app-layout--desktop-shell .canteen-search-bar-inner {
+  min-height: 58px;
+  border-radius: 24px;
+  padding: 0 18px;
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.06);
+}
+
+.app-layout--desktop-shell .canteen-region-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.app-layout--desktop-shell .canteen-region-item {
+  align-items: flex-start;
+  min-height: 96px;
+  padding: 14px 14px 12px;
+}
+
+.app-layout--desktop-shell .canteen-food-list {
+  gap: 12px;
+}
+
+.app-layout--desktop-shell .canteen-food-item {
+  padding: 12px;
+  border-radius: 18px;
+}
+
+.app-layout--desktop-shell .canteen-home-footer {
+  margin-top: 0;
+  padding: 0 0 6px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.site-web-shell--tablet .canteen-home-inner {
+  padding: 0;
+  padding-bottom: 0;
+  gap: 14px;
+}
+
+.site-web-shell--tablet .canteen-home-hero {
+  gap: 18px;
+  padding: 22px 22px;
+  border-radius: 26px;
+}
+
+.site-web-shell--tablet .canteen-home-hero__title {
+  font-size: 34px;
+}
+
+.site-web-shell--tablet .canteen-section {
+  margin-top: 0;
+  padding: 18px;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.86) 54%, rgba(255, 255, 255, 0.92) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.84);
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.05);
+}
+
+.site-web-shell--tablet .canteen-search-bar {
+  position: static;
+  padding: 0;
+}
+
+.site-web-shell--tablet .canteen-search-bar-inner {
+  min-height: 54px;
+  border-radius: 22px;
+}
+
+.site-web-shell--tablet .canteen-home-footer {
+  margin-top: 0;
+  padding: 0 0 6px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+@media (max-width: 640px) {
+  .canteen-home-hero {
+    padding: 18px 16px;
+    border-radius: 24px;
+  }
+
+  .canteen-home-hero__title {
+    font-size: 25px;
+  }
+
+  .canteen-home-hero__stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
