@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import FoodDetailView from '../components/FoodDetailView';
 import FoodForm from '../components/FoodForm';
 import EmptyState from '../components/EmptyState';
+import ImagePreview from '../components/ImagePreview';
 import { Toast } from '../context/ToastContext';
 import { getProduct, getCategories, updateProduct, deleteProduct } from '@shared/api/canteen';
 import { getApiErrorMessage } from '@shared/utils/apiError';
@@ -162,52 +163,101 @@ function MerchantFoodDetail() {
           loading={submitLoading}
         />
       ) : (
-        <>
-          <FoodDetailView
-            food={food}
-            onImageClick={food ? () => setImagePreviewOpen(true) : undefined}
-          />
-          {imagePreviewOpen && food && (
-            <ImagePreview
-              urls={[food.image]}
-              initialIndex={0}
-              onClose={() => setImagePreviewOpen(false)}
-            />
-          )}
-          <div className="merchant-food-detail-actions">
-            <button
-              type="button"
-              className="merchant-food-detail-btn"
-              onClick={() => navigate(`/eat/food/${food.id}/review`)}
-              disabled={submitLoading}
-            >
-              去点评 Review
-            </button>
-            <button
-              type="button"
-              className="merchant-food-detail-btn merchant-food-detail-btn-edit"
-              onClick={() => setIsEditing(true)}
-              disabled={submitLoading}
-            >
-              编辑 Edit
-            </button>
-            <button
-              type="button"
-              className="merchant-food-detail-btn merchant-food-detail-btn-delete"
-              onClick={handleDelete}
-              disabled={submitLoading}
-            >
-              删除 Delete
-            </button>
-            <button
-              type="button"
-              className="merchant-food-detail-btn merchant-food-detail-btn-back"
-              onClick={() => navigate(-1)}
-            >
-              返回管理 Back to Manage
-            </button>
+        <div className="merchant-food-detail-shell">
+          <section className="merchant-food-detail-hero">
+            <div className="merchant-food-detail-hero__copy">
+              <p className="merchant-food-detail-hero__eyebrow">Merchant Dish Detail</p>
+              <h1 className="merchant-food-detail-hero__title">{food.name}</h1>
+              <p className="merchant-food-detail-hero__subtitle">
+                {food.description || 'Review the dish presentation, confirm its info, and decide whether to edit, delete, or jump into user reviews.'}
+              </p>
+            </div>
+            <div className="merchant-food-detail-hero__stats">
+              <div className="merchant-food-detail-hero__stat">
+                <span className="merchant-food-detail-hero__stat-label">Price</span>
+                <strong>RM {typeof food.price === 'number' ? food.price.toFixed(2) : String(food.price ?? '-')}</strong>
+              </div>
+              <div className="merchant-food-detail-hero__stat">
+                <span className="merchant-food-detail-hero__stat-label">Score</span>
+                <strong>{food.comprehensiveScore != null ? ((Number(food.comprehensiveScore) / 10) * 5).toFixed(1) : 'N/A'}</strong>
+              </div>
+            </div>
+          </section>
+
+          <div className="merchant-food-detail-content">
+            <div className="merchant-food-detail-main">
+              <FoodDetailView
+                food={food}
+                onImageClick={food ? () => setImagePreviewOpen(true) : undefined}
+              />
+              {imagePreviewOpen && food ? (
+                <ImagePreview
+                  urls={[food.image]}
+                  initialIndex={0}
+                  onClose={() => setImagePreviewOpen(false)}
+                />
+              ) : null}
+            </div>
+
+            <aside className="merchant-food-detail-side">
+              <section className="merchant-food-detail-card">
+                <h2 className="merchant-food-detail-card__title">Quick Actions</h2>
+                <p className="merchant-food-detail-card__desc">Keep the most frequent management actions together for faster desktop review.</p>
+                <div className="merchant-food-detail-actions">
+                  <button
+                    type="button"
+                    className="merchant-food-detail-btn"
+                    onClick={() => navigate(`/eat/food/${food.id}/review`)}
+                    disabled={submitLoading}
+                  >
+                    去点评 Review
+                  </button>
+                  <button
+                    type="button"
+                    className="merchant-food-detail-btn merchant-food-detail-btn-edit"
+                    onClick={() => setIsEditing(true)}
+                    disabled={submitLoading}
+                  >
+                    编辑 Edit
+                  </button>
+                  <button
+                    type="button"
+                    className="merchant-food-detail-btn merchant-food-detail-btn-delete"
+                    onClick={handleDelete}
+                    disabled={submitLoading}
+                  >
+                    删除 Delete
+                  </button>
+                  <button
+                    type="button"
+                    className="merchant-food-detail-btn merchant-food-detail-btn-back"
+                    onClick={() => navigate(-1)}
+                  >
+                    返回管理 Back to Manage
+                  </button>
+                </div>
+              </section>
+
+              <section className="merchant-food-detail-card merchant-food-detail-card--soft">
+                <h2 className="merchant-food-detail-card__title">Info Snapshot</h2>
+                <div className="merchant-food-detail-info">
+                  <div className="merchant-food-detail-info__row">
+                    <span>Dish ID</span>
+                    <strong>{food.id}</strong>
+                  </div>
+                  <div className="merchant-food-detail-info__row">
+                    <span>Shop ID</span>
+                    <strong>{food.shop_id ?? '-'}</strong>
+                  </div>
+                  <div className="merchant-food-detail-info__row">
+                    <span>Category</span>
+                    <strong>{food.category_id ?? food.categoryId ?? '-'}</strong>
+                  </div>
+                </div>
+              </section>
+            </aside>
           </div>
-        </>
+        </div>
       )}
     </div>
   );
