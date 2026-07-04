@@ -77,7 +77,7 @@ export default function SquareHome() {
   return (
     <RouteTransition className="square-home-page">
       <div className="square-home-inner">
-        <FadeInSection delay={0}>
+        <FadeInSection className="square-home-slot square-home-slot--banner" delay={0}>
           <CanteenBannerCarousel
             fetchFn={getSquareBanners}
             queryKey={QK.squareBanners()}
@@ -89,22 +89,22 @@ export default function SquareHome() {
           <PageSkeleton variant="dashboard" hero metrics={3} items={2} className="square-home-skeleton" />
         ) : summaryQuery.isError ? (
           <ErrorState
-            className="square-home-state"
+            className="square-home-state square-home-slot square-home-slot--state"
             title={isEn ? 'Failed to load square summary' : '首页摘要加载失败'}
             description={isEn ? 'Pull down and try again.' : '请下拉刷新后重试。'}
             onActionClick={() => summaryQuery.refetch()}
           />
         ) : (
           <>
-            <FadeInSection delay={0.03}>
+            <FadeInSection className="square-home-slot square-home-slot--trending" delay={0.03}>
               <TodayCampusTrendingBoard topics={summary.hot_topics || []} />
             </FadeInSection>
 
-            <FadeInSection delay={0.06}>
+            <FadeInSection className="square-home-slot square-home-slot--actions" delay={0.06}>
               <TodayCampusQuickActions actions={PRIMARY_ACTIONS} />
             </FadeInSection>
 
-            <FadeInSection delay={0.1}>
+            <FadeInSection className="square-home-slot square-home-slot--hero" delay={0.1}>
               <TodayCampusHero quickStats={summary.quick_stats} />
             </FadeInSection>
           </>
