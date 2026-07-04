@@ -58,17 +58,17 @@
 
 .ui-tag--canteen.ui-tag--soft {
   background: rgba(255, 184, 108, 0.16);
-  color: #b86a12;
+  color: var(--color-canteen-text);
 }
 
 .ui-tag--club.ui-tag--soft {
   background: rgba(255, 143, 177, 0.16);
-  color: #d4547d;
+  color: var(--color-club-text);
 }
 
 .ui-tag--marketplace.ui-tag--soft {
   background: rgba(115, 217, 179, 0.18);
-  color: #268a63;
+  color: var(--color-marketplace-text);
 }
 
 .ui-tag--neutral.ui-tag--soft {

@@ -61,7 +61,7 @@
 }
 
 .ui-button--primary {
-  background: linear-gradient(135deg, var(--color-brand-primary), #78c5ff);
+  background: linear-gradient(135deg, var(--color-brand-primary), color-mix(in srgb, var(--color-brand-primary) 70%, white));
   color: var(--color-text-on-brand);
   box-shadow: var(--shadow-soft);
 }

@@ -35,17 +35,17 @@
 
 .ui-badge--pending.ui-badge--soft {
   background: rgba(255, 181, 71, 0.18);
-  color: #a55a00;
+  color: var(--color-warning-text);
 }
 
 .ui-badge--processing.ui-badge--soft {
   background: rgba(77, 167, 255, 0.18);
-  color: #236db5;
+  color: var(--color-brand-text);
 }
 
 .ui-badge--resolved.ui-badge--soft {
   background: rgba(57, 197, 141, 0.18);
-  color: #247d5c;
+  color: var(--color-success-text);
 }
 
 .ui-badge--dismissed.ui-badge--soft,

@@ -63,6 +63,14 @@
   --accent-marketplace: var(--color-mint-400);
   --accent-admin: #5f7a99;
 
+  /* Module accent text (darker variants for Tag/Badge soft tones) */
+  --color-canteen-text: #b86a12;
+  --color-club-text: #d4547d;
+  --color-marketplace-text: #268a63;
+  --color-warning-text: #a55a00;
+  --color-brand-text: #236db5;
+  --color-success-text: #247d5c;
+
   /* Typography */
   --font-family-display: "Source Han Serif SC", "Noto Serif SC", "Songti SC", serif;
   --font-family-body: "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
