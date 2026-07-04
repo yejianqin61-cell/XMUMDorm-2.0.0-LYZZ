@@ -61,11 +61,11 @@ export default function SiteHeader({ children = null, className = '' }) {
                   {isZh ? '管理后台' : 'Admin'}
                 </Link>
               ) : null}
-              <Link to="/myzone" className="site-web-shell__profile-entry">
+              <Link to="/myzone" className="site-web-shell__profile-entry" aria-label={isZh ? '个人中心' : 'My Zone'}>
                 {displayAvatar ? (
                   <img className="site-web-shell__profile-avatar" src={displayAvatar} alt={displayName} />
                 ) : (
-                  <span className="site-web-shell__profile-avatar site-web-shell__profile-avatar--fallback" aria-hidden="true">
+                  <span className="site-web-shell__profile-avatar site-web-shell__profile-avatar--fallback" role="img" aria-label={displayName}>
                     {avatarInitial}
                   </span>
                 )}

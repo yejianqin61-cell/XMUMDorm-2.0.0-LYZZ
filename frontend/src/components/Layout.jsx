@@ -14,6 +14,7 @@ import { useAuth } from '../context/AuthContext';
 import { getUnreadAnnouncements, markNotificationRead, markNotificationsReadBatch } from '@shared/api/notifications';
 import { QK } from '@shared/query/queryKeys';
 import { BACKGROUND_IMAGES } from '../config/backgrounds';
+import { resolvePageTitle } from '../config/pageTitles';
 import './TopBar.css';
 import './TabBar.css';
 import './Layout.css';
@@ -28,49 +29,6 @@ const TAB_ROOT_COMPONENTS = {
   '/myzone': MyZone,
 };
 
-const TITLE_BY_PATH_ZH = {
-  '/': '厦马小筑',
-  '/eat': '食堂',
-  '/about': '广场',
-  '/myzone': '我的',
-  '/mailbox': '信箱',
-  '/post/new': '发布帖子',
-  '/myzone/posts': '我的帖子',
-  '/myzone/reviews': '我的点评',
-  '/myzone/profile': '修改资料',
-  '/about/algorithm': '评分算法说明',
-  '/about/level-algorithm': '等级算法说明',
-  '/about/profile': '关于我们',
-  '/about/campus': '今日校园',
-  '/myzone/schedule': '课程表',
-  '/myzone/diary': '多年日记本',
-  '/eat/search': '搜索',
-  '/eat/map': '食堂地图',
-  '/eat/banners': '轮播管理',
-  '/about/trending': '热搜榜',
-};
-
-const TITLE_BY_PATH_EN = {
-  '/': 'XMUM Dorm',
-  '/eat': 'Canteen',
-  '/about': 'Square',
-  '/myzone': 'My Zone',
-  '/mailbox': 'Mailbox',
-  '/post/new': 'Post',
-  '/myzone/posts': 'My Posts',
-  '/myzone/reviews': 'My Reviews',
-  '/myzone/profile': 'Profile',
-  '/about/algorithm': 'Scoring Algorithm',
-  '/about/level-algorithm': 'Level System',
-  '/about/profile': 'About us',
-  '/about/campus': 'Campus Updates',
-  '/myzone/schedule': 'Schedule',
-  '/myzone/diary': 'Diary',
-  '/eat/search': 'Search',
-  '/eat/map': 'Canteen Map',
-  '/eat/banners': 'Carousel',
-  '/about/trending': 'Trending',
-};
 
 /** 需要显示返回键的路径（含 /post/:id 详情页、帖子搜索/话题） */
 const SHOW_BACK_PATHS = ['/post/new', '/post/', '/posts/'];
@@ -173,81 +131,7 @@ function Layout({ mode = 'mobile' }) {
     enterFullscreen();
   };
 
-  const TITLE_BY_PATH = isZh ? TITLE_BY_PATH_ZH : TITLE_BY_PATH_EN;
-  let title = TITLE_BY_PATH[pathname];
-  if (!title) {
-    if (pathname.startsWith('/eat/food/') && pathname.endsWith('/review')) {
-      title = isZh ? '发布点评' : 'Publish Review';
-    } else if (pathname === '/eat/rankings') {
-      title = isZh ? '排行榜' : 'Rankings';
-    } else if (/\/eat\/[^/]+\/ranking\/?$/.test(pathname)) {
-      const seg = pathname.split('/')[2];
-      const code = seg ? decodeURIComponent(seg) : '';
-      title = isZh ? `${code || '分区'} 商品榜` : `${code || 'Area'} · Top foods`;
-    } else if (
-      pathname.startsWith('/eat/') &&
-      !pathname.startsWith('/eat/merchant') &&
-      !pathname.startsWith('/eat/food') &&
-      pathname !== '/eat/rankings'
-    ) {
-      // 分区商家页 /eat/D6 …：中文仅分区代码；英文附带 Merchants，与下方 Top foods 卡片呼应
-      const seg = pathname.split('/')[2];
-      const codeLabel = seg ? decodeURIComponent(seg) : '';
-      title = codeLabel ? (isZh ? codeLabel : `${codeLabel} · Merchants`) : (isZh ? '食堂' : 'Canteen');
-    } else if (pathname.startsWith('/eat')) {
-      title = isZh ? '食堂' : 'Canteen';
-    } else if (pathname.startsWith('/mailbox')) {
-      title = isZh ? '信箱' : 'Mailbox';
-    } else if (pathname === '/post/new') {
-      title = isZh ? '发布帖子' : 'Post';
-    } else if (pathname.startsWith('/posts/search')) {
-      title = isZh ? '搜索帖子' : 'Search posts';
-    } else if (pathname.startsWith('/posts/tag/')) {
-      title = isZh ? '话题帖子' : 'Posts by tag';
-    } else if (pathname.startsWith('/post/')) {
-      title = isZh ? '帖子详情' : 'Post';
-    } else if (pathname === '/myzone/posts') {
-      title = isZh ? '我的帖子' : 'My Posts';
-    } else if (pathname === '/myzone/reviews') {
-      title = isZh ? '我的点评' : 'My Reviews';
-    } else if (pathname === '/myzone/profile') {
-      title = isZh ? '修改资料' : 'Profile';
-    } else if (pathname === '/merchant/create') {
-      title = isZh ? '店铺创建' : 'Create Store';
-    } else if (pathname === '/merchant/manage') {
-      title = isZh ? '菜品管理' : 'Manage Food';
-    } else if (pathname === '/merchant/food/new') {
-      title = isZh ? '菜品发布' : 'Publish Food';
-    } else if (pathname.startsWith('/merchant/food/')) {
-      title = isZh ? '菜品详情' : 'Food Detail';
-    } else if (pathname.startsWith('/merchant/')) {
-      title = isZh ? '商家' : 'Merchant';
-    } else if (pathname === '/about/thanks') {
-      title = isZh ? '特别鸣谢' : 'Special Thanks';
-    } else if (pathname === '/about/team') {
-      title = isZh ? '团队介绍' : 'Team';
-    } else if (pathname === '/about/editor-note') {
-      title = isZh ? '编者的话' : "Editor's Note";
-    } else if (pathname === '/about/algorithm') {
-      title = isZh ? '评分算法说明' : 'Scoring Algorithm';
-    } else if (pathname === '/about/level-algorithm') {
-      title = isZh ? '等级算法说明' : 'Level System';
-    } else if (pathname.startsWith('/about/trending/') && pathname.endsWith('/new')) {
-      title = isZh ? '参与讨论' : 'Join Discussion';
-    } else if (pathname.startsWith('/about/trending/')) {
-      title = isZh ? '热搜详情' : 'Trending';
-    } else if (pathname === '/about/campus/new') {
-      title = isZh ? '发布校园通知' : 'Campus Post';
-    } else if (pathname.startsWith('/about/campus/')) {
-      title = isZh ? '校园通知' : 'Campus Notice';
-    } else if (pathname === '/about/admin/orgs') {
-      title = isZh ? '组织管理' : 'Org Admin';
-    } else if (pathname === '/about/map') {
-      title = isZh ? '广场地图' : 'Square Map';
-    } else {
-      title = isZh ? '厦马小筑' : 'XMUM Dorm';
-    }
-  }
+  const title = resolvePageTitle(pathname, isZh);
   const showTreeHoleFab = !isDesktopShell && pathname === '/' && activeTabIndex === 1;
   const desktopRootRoute = isDesktopShell ? renderDesktopRootRoute(pathname) : null;
   const routeContent = isDesktopShell
