@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import Card from './Card';
+import Card from './ui/Card';
 import './Card.css';
 import './MerchantCard.css';
 import { DEFAULT_PRODUCT_IMAGE_PATH, DEFAULT_SHOP_LOGO_PATH } from '@shared/api/config';
