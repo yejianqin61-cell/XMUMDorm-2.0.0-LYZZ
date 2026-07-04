@@ -1,0 +1,61 @@
+.form-page-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.form-page-layout__header,
+.form-page-layout__content-grid,
+.form-page-layout__main,
+.form-page-layout__notice,
+.form-page-layout__sections,
+.form-page-layout__aside,
+.form-page-layout__actions {
+  min-width: 0;
+}
+
+.form-page-layout__content-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.form-page-layout__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.form-page-layout__sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.form-page-layout__aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.form-page-layout__aside--sticky {
+  position: sticky;
+  top: calc(var(--space-5) + env(safe-area-inset-top, 0px));
+}
+
+.form-page-layout__actions {
+  position: sticky;
+  bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
+  z-index: 6;
+}
+
+@media (max-width: 1080px) {
+  .form-page-layout__content-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .form-page-layout__aside--sticky {
+    position: static;
+  }
+}

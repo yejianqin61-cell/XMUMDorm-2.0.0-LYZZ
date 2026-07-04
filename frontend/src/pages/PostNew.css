@@ -8,6 +8,25 @@
   -webkit-font-smoothing: antialiased;
 }
 
+.postnew-layout {
+  max-width: 1360px;
+  margin: 0 auto;
+}
+
+.postnew-notice-card,
+.postnew-form-card,
+.postnew-aside-card {
+  border-radius: 24px;
+}
+
+.postnew-notice-card .ui-card__body,
+.postnew-form-card .ui-card__body,
+.postnew-aside-card .ui-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
 .postnew-error {
   margin: 0 0 12px;
   padding: 10px 12px;
@@ -37,11 +56,6 @@
   display: flex;
   flex-direction: column;
   gap: 22px;
-  background: var(--post-ios-card, #fff);
-  border-radius: var(--post-ios-radius-md, 12px);
-  padding: 18px 16px 20px;
-  box-shadow: var(--post-ios-shadow-card, 0 1px 2px rgba(0, 0, 0, 0.04));
-  border: 0.5px solid var(--post-ios-separator, rgba(60, 60, 67, 0.12));
 }
 
 .postnew-section {
@@ -240,4 +254,90 @@
   background: var(--post-ios-accent-subtle, rgba(0, 122, 255, 0.22));
   color: var(--post-ios-accent, #007aff);
   box-shadow: inset 0 0 0 2px var(--post-ios-accent, #007aff);
+}
+
+.postnew-tag-chip-ui {
+  border-radius: 999px;
+}
+
+.postnew-inline-submit {
+  display: none;
+}
+
+.postnew-aside-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.postnew-aside-check {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(60, 60, 67, 0.08);
+  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
+}
+
+.postnew-aside-check:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.postnew-aside-check strong {
+  color: var(--post-ios-label, rgba(0, 0, 0, 0.88));
+  font-size: 13px;
+}
+
+.postnew-aside-links {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.postnew-actionbar {
+  display: flex;
+  justify-content: center;
+}
+
+.postnew-actionbar__inner {
+  width: min(720px, calc(100vw - 32px));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(60, 60, 67, 0.08);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 18px 60px rgba(2, 6, 23, 0.12);
+}
+
+@media (max-width: 1080px) {
+  .postnew-layout {
+    max-width: 980px;
+  }
+}
+
+@media (max-width: 768px) {
+  .postnew-page {
+    padding: 12px 10px 24px;
+  }
+
+  .postnew-notice-card,
+  .postnew-form-card,
+  .postnew-aside-card {
+    border-radius: 20px;
+  }
+
+  .postnew-inline-submit {
+    display: block;
+  }
+
+  .postnew-actionbar {
+    display: none;
+  }
 }
