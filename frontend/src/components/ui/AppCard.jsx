@@ -1,5 +1,9 @@
 import Card from './Card';
 
+/**
+ * AppCard — thin tone→variant adapter over Card.
+ * @deprecated Use `<Card variant="muted">` directly. AppCard will be removed in a future cleanup.
+ */
 export default function AppCard({
   as: Component = 'div',
   className = '',

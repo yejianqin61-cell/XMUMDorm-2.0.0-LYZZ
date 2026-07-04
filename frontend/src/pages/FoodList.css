@@ -260,3 +260,22 @@
 .food-shop-hot-reviews {
   opacity: 0.9;
 }
+
+/* Desktop: remove mobile chrome height assumptions */
+@media (min-width: 768px) {
+  .food-list-page {
+    height: auto;
+    min-height: 60vh;
+    background: var(--color-bg-page);
+  }
+
+  .food-list-layout {
+    max-width: var(--layout-max-width);
+    margin: 0 auto;
+  }
+
+  .food-shop-hot-entry-btn {
+    /* Use brand token instead of hardcoded XMU blue */
+    background: linear-gradient(135deg, var(--color-brand-primary), color-mix(in srgb, var(--color-brand-primary) 80%, white));
+  }
+}

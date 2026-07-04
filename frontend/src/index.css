@@ -121,6 +121,15 @@ body {
     box-shadow: none;
     overflow: visible;
   }
+
+  /* Neutralise mobile tab-bar spacing on desktop */
+  :root {
+    --tabbar-height: 0px;
+    --safe-bottom: 0px;
+    --safe-top: 0px;
+    --safe-pb: 24px;
+    --safe-pt: 12px;
+  }
 }
 
 #root {
