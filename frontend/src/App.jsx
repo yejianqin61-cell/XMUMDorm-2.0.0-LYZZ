@@ -29,6 +29,7 @@ import { layoutRoutes } from './routes/layoutRoutes';
 import './App.css';
 import './styles/states.css';
 import './styles/tokens.css';
+import './styles/legacy-wx-bridge.css';
 import './styles/card.css';
 import './styles/state.css';
 

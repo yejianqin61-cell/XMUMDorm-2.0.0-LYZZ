@@ -1,0 +1,21 @@
+/**
+ * Legacy --wx-* CSS variable bridge
+ *
+ * 20+ old component/page CSS files reference --wx-* variables that were never
+ * defined anywhere, relying entirely on fallback values.  This file maps them
+ * to the tokens.css semantic token system so that theme changes propagate.
+ *
+ * @deprecated — New code should use tokens.css semantic tokens directly.
+ *   Imported in App.jsx after tokens.css to ensure the cascade order is correct.
+ */
+
+:root {
+  --wx-green: var(--color-brand-primary);
+  --wx-text: var(--color-text-primary);
+  --wx-text-secondary: var(--color-text-secondary);
+  --wx-text-tertiary: var(--color-text-tertiary);
+  --wx-bar-bg: var(--color-bg-surface-muted);
+  --wx-border: var(--color-border-default);
+  --wx-bg-secondary: var(--color-bg-page);
+  --wx-red: var(--color-danger);
+}
