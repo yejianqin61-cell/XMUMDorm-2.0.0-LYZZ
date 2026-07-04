@@ -1,6 +1,6 @@
 import { forwardRef } from 'react';
 import FoodCard from './FoodCard';
-import EmptyState from './EmptyState';
+import EmptyState from './ui/EmptyState';
 import './CategorySection.css';
 
 /**

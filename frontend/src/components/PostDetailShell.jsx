@@ -5,7 +5,7 @@ import { Heart, SendHorizonal, Smile } from 'lucide-react';
 import ReportButton from './ReportButton';
 import { useLanguage } from '../context/LanguageContext';
 import { API_BASE_URL } from '@shared/api/config';
-import EmptyState from './EmptyState';
+import EmptyState from './ui/EmptyState';
 import ImagePreview from './ImagePreview';
 import { StackedCardCarousel } from './StackedCardCarousel';
 import LikeBurst from './LikeBurst';
