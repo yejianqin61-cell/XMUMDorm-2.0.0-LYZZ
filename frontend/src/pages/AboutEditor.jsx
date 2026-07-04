@@ -1,4 +1,4 @@
-import Card from '../components/Card';
+import Card from '../components/ui/Card';
 import './AboutTeam.css';
 
 /** 编者的话详情页（静态）：先中文后英文，含日期 2026/3/10 */

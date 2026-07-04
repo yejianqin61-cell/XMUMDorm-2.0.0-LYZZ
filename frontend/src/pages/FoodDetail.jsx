@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Button from '../components/ui/Button';
 import Tag from '../components/ui/Tag';
-import Card from '../components/Card';
+import Card from '../components/ui/Card';
 import FoodDetailView from '../components/FoodDetailView';
 import EmptyState from '../components/EmptyState';
 import ImagePreview from '../components/ImagePreview';

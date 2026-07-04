@@ -6,7 +6,7 @@ import { Heart, MoreHorizontal, SendHorizonal, Smile } from 'lucide-react';
 import ReportButton from '../components/ReportButton';
 import Button from '../components/ui/Button';
 import Tag from '../components/ui/Tag';
-import Card from '../components/Card';
+import Card from '../components/ui/Card';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import {

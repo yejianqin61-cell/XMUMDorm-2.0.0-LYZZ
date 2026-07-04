@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import Button from '../components/ui/Button';
 import Tag from '../components/ui/Tag';
-import Card from '../components/Card';
+import Card from '../components/ui/Card';
 import SkeletonCard from '../components/SkeletonCard';
 import EmptyState from '../components/EmptyState';
 import PageHeader from '../components/templates/PageHeader';

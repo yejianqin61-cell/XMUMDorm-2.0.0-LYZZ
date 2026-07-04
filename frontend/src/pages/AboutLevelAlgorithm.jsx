@@ -1,4 +1,4 @@
-import Card from '../components/Card';
+import Card from '../components/ui/Card';
 import { useLanguage } from '../context/LanguageContext';
 import { EXP_RULES, getLevelRows } from '@shared/constants/levelConfig';
 import './AboutAlgorithm.css';
