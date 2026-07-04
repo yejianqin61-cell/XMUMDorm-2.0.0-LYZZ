@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
 import { Heart, MessageCircle } from 'lucide-react';
 import TreeHoleToolbar from '../components/TreeHoleToolbar';
-import SkeletonPost from '../components/SkeletonPost';
+import PageSkeleton from '../components/ui/PageSkeleton';
 import InterestRecommendationBlock from '../components/square/InterestRecommendationBlock';
 import RelatedCampusTopicsBlock from '../components/square/RelatedCampusTopicsBlock';
 import ErrorState from '../components/ui/ErrorState';
@@ -544,12 +544,12 @@ function TreeHole() {
           <div className="treehole-grid">
             <div className="treehole-column">
               {[1, 2, 3].map((i) => (
-                <SkeletonPost key={i} />
+                <PageSkeleton variant="list" key={i} />
               ))}
             </div>
             <div className="treehole-column treehole-column-right">
               {[1, 2, 3].map((i) => (
-                <SkeletonPost key={i} />
+                <PageSkeleton variant="list" key={i} />
               ))}
             </div>
           </div>

@@ -6,7 +6,7 @@ import { Search } from 'lucide-react';
 import MerchantHeader from '../components/MerchantHeader';
 import CategorySidebar from '../components/CategorySidebar';
 import CategorySection from '../components/CategorySection';
-import SkeletonFood from '../components/SkeletonFood';
+import PageSkeleton from '../components/ui/PageSkeleton';
 import EmptyState from '../components/ui/EmptyState';
 import { getShop, getCategories, getProducts } from '@shared/api/canteen';
 import { getApiErrorMessage } from '@shared/utils/apiError';
@@ -252,7 +252,7 @@ function FoodList() {
             <ul className="category-section-list" aria-hidden>
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <li key={i}>
-                  <SkeletonFood />
+                  <PageSkeleton variant="card" />
                 </li>
               ))}
             </ul>

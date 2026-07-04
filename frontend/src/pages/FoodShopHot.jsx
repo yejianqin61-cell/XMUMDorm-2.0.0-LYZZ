@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQueries } from '@tanstack/react-query';
 import MerchantHeader from '../components/MerchantHeader';
-import SkeletonFood from '../components/SkeletonFood';
+import PageSkeleton from '../components/ui/PageSkeleton';
 import EmptyState from '../components/ui/EmptyState';
 import { getShop, getShopHotProducts } from '@shared/api/canteen';
 import { getUploadUrl, productImageUrl } from '@shared/api/config';
@@ -95,7 +95,7 @@ function FoodShopHot() {
             <ul className="category-section-list" aria-hidden>
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <li key={i}>
-                  <SkeletonFood />
+                  <PageSkeleton variant="card" />
                 </li>
               ))}
             </ul>

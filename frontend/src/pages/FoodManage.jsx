@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import FoodCard from '../components/FoodCard';
-import SkeletonFood from '../components/SkeletonFood';
+import PageSkeleton from '../components/ui/PageSkeleton';
 import EmptyState from '../components/ui/EmptyState';
 import { Toast } from '../context/ToastContext';
 import { getApiErrorMessage } from '@shared/utils/apiError';
@@ -104,7 +104,7 @@ function FoodManage() {
         <ul className="food-manage-list" aria-hidden>
           {[1, 2, 3, 4, 5].map((i) => (
             <li key={i}>
-              <SkeletonFood />
+              <PageSkeleton variant="card" />
             </li>
           ))}
         </ul>

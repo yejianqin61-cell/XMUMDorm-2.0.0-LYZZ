@@ -3,7 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import PostCard from '../components/PostCard';
-import SkeletonPost from '../components/SkeletonPost';
+import PageSkeleton from '../components/ui/PageSkeleton';
 import { getPostList } from '@shared/api/posts';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { API_BASE_URL } from '@shared/api/config';
@@ -106,12 +106,12 @@ function PostSearch() {
           <div className="treehole-grid">
             <div className="treehole-column">
               {[1, 2, 3].map((i) => (
-                <SkeletonPost key={i} />
+                <PageSkeleton variant="list" key={i} />
               ))}
             </div>
             <div className="treehole-column treehole-column-right">
               {[1, 2, 3].map((i) => (
-                <SkeletonPost key={i} />
+                <PageSkeleton variant="list" key={i} />
               ))}
             </div>
           </div>

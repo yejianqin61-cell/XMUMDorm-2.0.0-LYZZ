@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import Button from '../components/ui/Button';
 import Tag from '../components/ui/Tag';
 import Card from '../components/ui/Card';
-import SkeletonCard from '../components/SkeletonCard';
+import PageSkeleton from '../components/ui/PageSkeleton';
 import EmptyState from '../components/ui/EmptyState';
 import PageHeader from '../components/templates/PageHeader';
 import SectionHeader from '../components/templates/SectionHeader';
@@ -187,7 +187,7 @@ export default function MerchantList() {
         <ul className="merchant-list-list" aria-hidden>
           {[1, 2, 3, 4].map((item) => (
             <li key={item}>
-              <SkeletonCard />
+              <PageSkeleton variant="card" />
             </li>
           ))}
         </ul>
