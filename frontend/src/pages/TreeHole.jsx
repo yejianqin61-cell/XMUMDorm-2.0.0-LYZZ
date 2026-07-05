@@ -13,6 +13,7 @@ import ErrorState from '../components/ui/ErrorState';
 import RouteTransition from '../components/ui/RouteTransition';
 import ListPageLayout from '../components/templates/ListPageLayout';
 import PageHeader from '../components/templates/PageHeader';
+import { useShellAside } from '../context/ShellAsideContext';
 import { getPostList } from '@shared/api/posts';
 import { getSquareRecommendations } from '@shared/api/square';
 import { getApiErrorMessage } from '@shared/utils/apiError';
@@ -209,6 +210,7 @@ function TreeHole() {
   const { token } = useAuth();
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
+  const { setAsideContent } = useShellAside();
   const tokenKey = token ?? 'guest';
   const prefetchRef = useRef(false);
   const scrollRestoredRef = useRef(false);
@@ -522,22 +524,37 @@ function TreeHole() {
 
   const gridScrollTop = Math.max(0, scrollTop - (gridTop || 0));
 
-  // Desktop aside: recommendation blocks moved from inline to right sidebar
-  const treeholeAside = isWide ? (
-    <div className="treehole-aside-stack">
-      {recommendationData.interest_posts?.length ? (
-        <InterestRecommendationBlock items={recommendationData.interest_posts.slice(0, 3)} />
-      ) : null}
-      {(recommendationData.campus_topics?.length || recommendationData.fallback_topics?.length) ? (
-        <RelatedCampusTopicsBlock
-          items={(recommendationData.campus_topics?.length
-            ? recommendationData.campus_topics
-            : recommendationData.fallback_topics
-          ).slice(0, 3)}
-        />
-      ) : null}
-    </div>
-  ) : null;
+  // Desktop: inject recommendation blocks into global SiteShell aside
+  useEffect(() => {
+    if (!isWide) {
+      setAsideContent(null);
+      return;
+    }
+
+    const hasInterest = recommendationData.interest_posts?.length;
+    const campusItems = recommendationData.campus_topics?.length
+      ? recommendationData.campus_topics
+      : recommendationData.fallback_topics;
+    const hasCampus = campusItems?.length;
+
+    if (!hasInterest && !hasCampus) {
+      setAsideContent(null);
+      return;
+    }
+
+    setAsideContent(
+      <div className="treehole-aside-stack">
+        {hasInterest ? (
+          <InterestRecommendationBlock items={recommendationData.interest_posts.slice(0, 3)} />
+        ) : null}
+        {hasCampus ? (
+          <RelatedCampusTopicsBlock items={campusItems.slice(0, 3)} />
+        ) : null}
+      </div>
+    );
+
+    return () => setAsideContent(null);
+  }, [isWide, recommendationData.interest_posts, recommendationData.campus_topics, recommendationData.fallback_topics, setAsideContent]);
 
   const treeholeList = (
     <>
@@ -600,8 +617,6 @@ function TreeHole() {
         header={<PageHeader title={isZh ? '树洞' : 'TreeHole'} />}
         filterBar={<TreeHoleToolbar selectedSlug={selectedTagSlug} onSelectTagSlug={handleSelectTag} />}
         list={treeholeList}
-        aside={treeholeAside}
-        asideSticky
       />
       {debug ? (
         <div className="treehole-debug" role="status" aria-live="polite">

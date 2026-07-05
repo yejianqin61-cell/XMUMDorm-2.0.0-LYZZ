@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Layout from '../Layout';
 import SiteWebShell from './SiteWebShell';
+import { ShellAsideProvider } from '../../context/ShellAsideContext';
 
 const TABLET_MIN_WIDTH = 768;
 const DESKTOP_MIN_WIDTH = 1024;
@@ -37,7 +38,11 @@ export default function SiteShellRoute() {
   }, []);
 
   if (viewportBucket === 'mobile') {
-    return <Layout mode="mobile" />;
+    return (
+      <ShellAsideProvider>
+        <Layout mode="mobile" />
+      </ShellAsideProvider>
+    );
   }
 
   const shellClassName = viewportBucket === 'tablet'
@@ -47,12 +52,14 @@ export default function SiteShellRoute() {
       : 'site-web-shell--wide';
 
   return (
-    <SiteWebShell
-      className={shellClassName}
-      contentClassName="site-web-shell__content--layout"
-      showAside={viewportBucket !== 'tablet'}
-    >
-      <Layout mode="desktop" />
-    </SiteWebShell>
+    <ShellAsideProvider>
+      <SiteWebShell
+        className={shellClassName}
+        contentClassName="site-web-shell__content--layout"
+        showAside={viewportBucket !== 'tablet'}
+      >
+        <Layout mode="desktop" />
+      </SiteWebShell>
+    </ShellAsideProvider>
   );
 }

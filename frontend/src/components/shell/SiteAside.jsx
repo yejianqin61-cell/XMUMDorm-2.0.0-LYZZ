@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
+import { useShellAside } from '../../context/ShellAsideContext';
 import { getSiteShellMeta } from './siteShellMeta';
 
 function joinClassNames(...parts) {
@@ -13,11 +14,12 @@ export default function SiteAside({ children = null, className = '' }) {
   const { isAdmin } = useAuth();
   const isZh = lang !== 'en';
   const meta = getSiteShellMeta(location.pathname, { isZh, isAdmin });
+  const { asideContent } = useShellAside();
 
   return (
     <aside className={joinClassNames('site-web-shell__aside', className)}>
       <div className="site-web-shell__panel site-web-shell__panel--aside">
-        {children || (
+        {asideContent || children || (
           <>
             <div className="site-web-shell__panel-head">
               <p className="site-web-shell__panel-eyebrow">Secondary Aside</p>
