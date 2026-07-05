@@ -754,3 +754,25 @@
 }
 }
 
+/* Desktop breathing room: wider gaps, no mobile tight padding */
+@media (min-width: 1080px) {
+  .treehole-page--light {
+    padding: 0;
+  }
+
+  .treehole-grid {
+    gap: var(--space-10);
+  }
+
+  .treehole-column {
+    gap: var(--space-10);
+  }
+}
+
+/* Aside recommendation stack */
+.treehole-aside-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+

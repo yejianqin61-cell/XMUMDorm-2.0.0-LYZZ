@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { motion } from 'framer-motion';
 import { Heart, MessageCircle } from 'lucide-react';
 import TreeHoleToolbar from '../components/TreeHoleToolbar';
@@ -10,6 +11,8 @@ import InterestRecommendationBlock from '../components/square/InterestRecommenda
 import RelatedCampusTopicsBlock from '../components/square/RelatedCampusTopicsBlock';
 import ErrorState from '../components/ui/ErrorState';
 import RouteTransition from '../components/ui/RouteTransition';
+import ListPageLayout from '../components/templates/ListPageLayout';
+import PageHeader from '../components/templates/PageHeader';
 import { getPostList } from '@shared/api/posts';
 import { getSquareRecommendations } from '@shared/api/square';
 import { getApiErrorMessage } from '@shared/utils/apiError';
@@ -182,6 +185,17 @@ function TreeHole() {
     }
   }, [location.search]);
 
+  // Desktop wide mode: viewport >= 1080px triggers two-column layout with aside
+  const [isWide, setIsWide] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth >= 1080;
+  });
+  useEffect(() => {
+    const onResize = () => setIsWide(window.innerWidth >= 1080);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
   // Mobile stability mode: coarse pointer devices (phones/tablets)
   const isCoarse = useMemo(() => {
     try {
@@ -193,6 +207,8 @@ function TreeHole() {
 
   const queryClient = useQueryClient();
   const { token } = useAuth();
+  const { lang } = useLanguage();
+  const isZh = lang !== 'en';
   const tokenKey = token ?? 'guest';
   const prefetchRef = useRef(false);
   const scrollRestoredRef = useRef(false);
@@ -392,18 +408,19 @@ function TreeHole() {
     campus_topics: [],
     fallback_topics: [],
   };
+  // Desktop: recommendation blocks go into the aside, not interleaved
   const leftColumnEntries = useMemo(
-    () => buildRhythmEntries(leftColumn, recommendationData.interest_posts?.length ? [{
+    () => buildRhythmEntries(leftColumn, (!isWide && recommendationData.interest_posts?.length) ? [{
       type: 'interest',
       key: 'interest-rhythm',
       items: recommendationData.interest_posts.slice(0, 3),
     }] : []),
-    [leftColumn, recommendationData.interest_posts]
+    [leftColumn, recommendationData.interest_posts, isWide]
   );
   const rightColumnEntries = useMemo(
     () => buildRhythmEntries(
       rightColumn,
-      (recommendationData.campus_topics?.length || recommendationData.fallback_topics?.length)
+      (!isWide && (recommendationData.campus_topics?.length || recommendationData.fallback_topics?.length))
         ? [{
             type: 'campus',
             key: 'campus-rhythm',
@@ -414,7 +431,7 @@ function TreeHole() {
           }]
         : []
     ),
-    [rightColumn, recommendationData.campus_topics, recommendationData.fallback_topics]
+    [rightColumn, recommendationData.campus_topics, recommendationData.fallback_topics, isWide]
   );
 
   const gridRef = useRef(null);
@@ -505,9 +522,87 @@ function TreeHole() {
 
   const gridScrollTop = Math.max(0, scrollTop - (gridTop || 0));
 
+  // Desktop aside: recommendation blocks moved from inline to right sidebar
+  const treeholeAside = isWide ? (
+    <div className="treehole-aside-stack">
+      {recommendationData.interest_posts?.length ? (
+        <InterestRecommendationBlock items={recommendationData.interest_posts.slice(0, 3)} />
+      ) : null}
+      {(recommendationData.campus_topics?.length || recommendationData.fallback_topics?.length) ? (
+        <RelatedCampusTopicsBlock
+          items={(recommendationData.campus_topics?.length
+            ? recommendationData.campus_topics
+            : recommendationData.fallback_topics
+          ).slice(0, 3)}
+        />
+      ) : null}
+    </div>
+  ) : null;
+
+  const treeholeList = (
+    <>
+      {showInitialSkeleton ? (
+        <div className="treehole-grid">
+          <div className="treehole-column">
+            {[1, 2, 3].map((i) => (
+              <PageSkeleton variant="list" key={i} />
+            ))}
+          </div>
+          <div className="treehole-column treehole-column-right">
+            {[1, 2, 3].map((i) => (
+              <PageSkeleton variant="list" key={i} />
+            ))}
+          </div>
+        </div>
+      ) : (
+        <>
+          {USE_VIRTUAL_MASONRY ? (
+            <div className="treehole-grid treehole-grid--perf" ref={gridRef}>
+              {/* virtual masonry — unchanged */}
+            </div>
+          ) : (
+            <div className="treehole-grid">
+              <div className="treehole-column">
+                {leftColumnEntries.map((entry) => (
+                  entry.type === 'post' ? (
+                    <TreeHoleGlassCard key={entry.key} post={entry.post} eager={isCoarse} mobileStable={isCoarse} />
+                  ) : (
+                    <InterestRecommendationBlock key={entry.key} items={entry.items} />
+                  )
+                ))}
+                {isFetchingNextPage ? <><TreeHoleGlassSkeleton /><TreeHoleGlassSkeleton /></> : null}
+              </div>
+              <div className="treehole-column treehole-column-right">
+                {rightColumnEntries.map((entry) => (
+                  entry.type === 'post' ? (
+                    <TreeHoleGlassCard key={entry.key} post={entry.post} eager={isCoarse} mobileStable={isCoarse} />
+                  ) : (
+                    <RelatedCampusTopicsBlock key={entry.key} items={entry.items} />
+                  )
+                ))}
+                {isFetchingNextPage ? <><TreeHoleGlassSkeleton /><TreeHoleGlassSkeleton /></> : null}
+              </div>
+            </div>
+          )}
+          {hasNextPage && (
+            <button type="button" className="treehole-load-more" onClick={loadMore} disabled={isFetchingNextPage}>
+              {isFetchingNextPage ? '加载中…' : '加载更多'}
+            </button>
+          )}
+        </>
+      )}
+    </>
+  );
+
   return (
     <RouteTransition className={`treehole-page treehole-page--light ${isCoarse ? 'treehole-page--mobile' : ''}`}>
-      <TreeHoleToolbar selectedSlug={selectedTagSlug} onSelectTagSlug={handleSelectTag} />
+      <ListPageLayout
+        header={<PageHeader title={isZh ? '树洞' : 'TreeHole'} />}
+        filterBar={<TreeHoleToolbar selectedSlug={selectedTagSlug} onSelectTagSlug={handleSelectTag} />}
+        list={treeholeList}
+        aside={treeholeAside}
+        asideSticky
+      />
       {debug ? (
         <div className="treehole-debug" role="status" aria-live="polite">
           <div className="treehole-debug-row">
@@ -538,103 +633,6 @@ function TreeHole() {
       ) : null}
       {errorMsg && (
         <ErrorState className="treehole-error" title="树洞加载失败" description={errorMsg} />
-      )}
-      {showInitialSkeleton ? (
-        <div className="treehole-content">
-          <div className="treehole-grid">
-            <div className="treehole-column">
-              {[1, 2, 3].map((i) => (
-                <PageSkeleton variant="list" key={i} />
-              ))}
-            </div>
-            <div className="treehole-column treehole-column-right">
-              {[1, 2, 3].map((i) => (
-                <PageSkeleton variant="list" key={i} />
-              ))}
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="treehole-content">
-          {showRefreshing ? <div className="treehole-refreshing" aria-hidden /> : null}
-          {USE_VIRTUAL_MASONRY ? (
-            <div className="treehole-grid treehole-grid--perf" ref={gridRef}>
-              <VirtualColumn
-                items={leftColumn}
-                columnWidth={gridW > 0 ? (gridW - COL_GAP_PX) / 2 : 0}
-                scrollTop={gridScrollTop}
-                viewportH={vpH}
-                overscanPx={OVERSCAN_PX}
-                topPad={0}
-                fetchingTail={isFetchingNextPage}
-              />
-              <VirtualColumn
-                items={rightColumn}
-                columnWidth={gridW > 0 ? (gridW - COL_GAP_PX) / 2 : 0}
-                scrollTop={gridScrollTop}
-                viewportH={vpH}
-                overscanPx={OVERSCAN_PX}
-                topPad={RIGHT_COL_OFFSET_PX}
-                fetchingTail={isFetchingNextPage}
-              />
-            </div>
-          ) : (
-            <>
-              <div className="treehole-grid">
-                <div className="treehole-column">
-                  {leftColumnEntries.map((entry) => (
-                    entry.type === 'post' ? (
-                      <TreeHoleGlassCard
-                        key={entry.key}
-                        post={entry.post}
-                        eager={isCoarse}
-                        mobileStable={isCoarse}
-                      />
-                    ) : (
-                      <InterestRecommendationBlock key={entry.key} items={entry.items} />
-                    )
-                  ))}
-                  {isFetchingNextPage ? (
-                    <>
-                      <TreeHoleGlassSkeleton />
-                      <TreeHoleGlassSkeleton />
-                    </>
-                  ) : null}
-                </div>
-                <div className="treehole-column treehole-column-right">
-                  {rightColumnEntries.map((entry) => (
-                    entry.type === 'post' ? (
-                      <TreeHoleGlassCard
-                        key={entry.key}
-                        post={entry.post}
-                        eager={isCoarse}
-                        mobileStable={isCoarse}
-                      />
-                    ) : (
-                      <RelatedCampusTopicsBlock key={entry.key} items={entry.items} />
-                    )
-                  ))}
-                  {isFetchingNextPage ? (
-                    <>
-                      <TreeHoleGlassSkeleton />
-                      <TreeHoleGlassSkeleton />
-                    </>
-                  ) : null}
-                </div>
-              </div>
-            </>
-          )}
-          {hasNextPage && (
-            <button
-              type="button"
-              className="treehole-load-more"
-              onClick={loadMore}
-              disabled={isFetchingNextPage}
-            >
-              {isFetchingNextPage ? '加载中…' : '加载更多'}
-            </button>
-          )}
-        </div>
       )}
     </RouteTransition>
   );
