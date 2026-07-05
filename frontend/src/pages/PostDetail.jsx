@@ -615,11 +615,7 @@ function PostDetail() {
           <Card className="post-detail-action-card">
             <SectionHeader
               title={isEn ? 'Quick actions' : '快捷操作'}
-              description={
-                isEn
-                  ? 'Keep the likely next steps grouped below the main reading card.'
-                  : '把最可能继续发生的操作集中放在正文卡片下方，桌面阅读时路径更稳定。'
-              }
+              description={null}
             />
             <div className="post-detail-action-card__actions">
               <Button variant="secondary" size="sm" onClick={focusComposer}>
@@ -635,11 +631,7 @@ function PostDetail() {
           <section className="post-detail-comments">
             <SectionHeader
               title={isEn ? `Comments (${totalCommentCount})` : `评论 (${totalCommentCount})`}
-              description={
-                isEn
-                  ? 'The comment tree stays intact; only the page rhythm is being reorganized into the shared detail template.'
-                  : '评论树结构和交互逻辑保持不变，本次只把页面节奏整理进共享详情模板里。'
-              }
+              description={null}
             />
             <ul className="post-detail-comment-list">
               {comments.map((comment) => (

@@ -39,6 +39,13 @@
   top: calc(var(--space-5) + env(safe-area-inset-top, 0px));
 }
 
+/* Desktop: constrain main column for comfortable reading width */
+@media (min-width: 1080px) {
+  .detail-page-layout__main {
+    max-width: 780px;
+  }
+}
+
 @media (max-width: 1080px) {
   .detail-page-layout__content-grid {
     grid-template-columns: minmax(0, 1fr);
