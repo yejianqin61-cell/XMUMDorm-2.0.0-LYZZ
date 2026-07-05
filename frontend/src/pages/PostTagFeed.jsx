@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import PostCard from '../components/PostCard';
 import PageSkeleton from '../components/ui/PageSkeleton';
+import ListPageLayout from '../components/templates/ListPageLayout';
 import { getPostList, getPostTagsList } from '@shared/api/posts';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { API_BASE_URL } from '@shared/api/config';
@@ -83,7 +84,10 @@ function PostTagFeed() {
   const rightColumn = list.filter((_, i) => i % 2 === 1);
 
   return (
-    <div className="treehole-page post-tag-feed-page">
+    <ListPageLayout
+      header={null}
+      list={
+        <div className="treehole-page post-tag-feed-page">
       <header className="post-tag-feed-hero">
         <div className="post-tag-feed-hero__copy">
           <p className="post-tag-feed-hero__eyebrow">{isZh ? '标签内容流' : 'Tag Feed'}</p>
@@ -157,6 +161,8 @@ function PostTagFeed() {
         {isZh ? '返回树洞首页 Back to Tree Hole' : 'Back to Tree Hole'}
       </Link>
     </div>
+      }
+    />
   );
 }
 
