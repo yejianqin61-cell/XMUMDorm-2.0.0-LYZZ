@@ -11,7 +11,6 @@ import FadeInSection from '../components/ui/FadeInSection';
 import RouteTransition from '../components/ui/RouteTransition';
 import './CanteenHome.css';
 
-/** V3.0 食堂工具型首页 */
 export default function CanteenHome() {
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
@@ -22,15 +21,8 @@ export default function CanteenHome() {
       <div className="canteen-home-inner">
         <section className="canteen-home-hero">
           <div className="canteen-home-hero__intro">
-            <p className="canteen-home-hero__eyebrow">{isZh ? '校园食堂门户' : 'Campus Canteen Portal'}</p>
-            <h1 className="canteen-home-hero__title">
-              {isZh ? '把吃什么、去哪吃、最近吃什么都放在首页' : 'Keep search, picks, and rankings on one home portal'}
-            </h1>
-            <p className="canteen-home-hero__subtitle">
-              {isZh
-                ? '围绕食堂入口、推荐内容、热度榜单和美食内容流，收成一个更像网页首页的浏览节奏。'
-                : 'Bring canteen entry points, quick picks, rankings, and food posts into one clearer portal rhythm.'}
-            </p>
+            <p className="canteen-home-hero__eyebrow">{isZh ? '校园食堂' : 'Campus Canteen'}</p>
+            <h1 className="canteen-home-hero__title">{isZh ? '食堂' : 'Canteen'}</h1>
           </div>
           <div className="canteen-home-hero__stats" aria-label={isZh ? '首页能力摘要' : 'Portal highlights'}>
             <div className="canteen-home-hero__stat">
@@ -48,40 +40,45 @@ export default function CanteenHome() {
           </div>
         </section>
 
-        <div className="canteen-home-slot canteen-home-slot--search">
-          <FadeInSection delay={0}>
-            <CanteenSearchBar />
-          </FadeInSection>
-        </div>
-        <div className="canteen-home-slot canteen-home-slot--banner">
-          <FadeInSection delay={0.03}>
-            <CanteenBannerCarousel />
-          </FadeInSection>
-        </div>
-        <div className="canteen-home-slot canteen-home-slot--regions">
-          <FadeInSection delay={0.06}>
-            <CanteenRegionGrid />
-          </FadeInSection>
-        </div>
-        <div className="canteen-home-slot canteen-home-slot--rankings">
-          <FadeInSection delay={0.09}>
-            <CanteenHomeRankings />
-          </FadeInSection>
-        </div>
-        <div className="canteen-home-slot canteen-home-slot--pick">
-          <FadeInSection delay={0.12}>
-            <CanteenPickMeal />
-          </FadeInSection>
-        </div>
-        <div className="canteen-home-slot canteen-home-slot--square">
-          <FadeInSection delay={0.15}>
-            <CanteenFoodSquare />
-          </FadeInSection>
-        </div>
-        <div className="canteen-section canteen-home-footer">
-          <Link to="/eat/map" className="canteen-home-map-link">
-            {t.mapMode}
-          </Link>
+        <div className="canteen-home-body">
+          <main className="canteen-home-main">
+            <FadeInSection delay={0}>
+              <CanteenSearchBar />
+            </FadeInSection>
+            <FadeInSection delay={0.04}>
+              <CanteenBannerCarousel />
+            </FadeInSection>
+            <FadeInSection delay={0.08}>
+              <CanteenRegionGrid />
+            </FadeInSection>
+            <FadeInSection delay={0.12}>
+              <CanteenHomeRankings />
+            </FadeInSection>
+            <FadeInSection delay={0.16}>
+              <CanteenPickMeal />
+            </FadeInSection>
+            <FadeInSection delay={0.20}>
+              <CanteenFoodSquare />
+            </FadeInSection>
+          </main>
+
+          <aside className="canteen-home-aside">
+            <div className="canteen-home-aside-card">
+              <h3 className="canteen-home-aside__title">{isZh ? '快捷入口' : 'Quick Links'}</h3>
+              <Link to="/eat/rankings" className="canteen-home-aside-link">
+                {isZh ? '排行榜' : 'Rankings'}
+              </Link>
+              <Link to="/eat/map" className="canteen-home-aside-link">
+                {isZh ? '食堂地图' : 'Canteen Map'}
+              </Link>
+              <Link to="/eat/search" className="canteen-home-aside-link">
+                {isZh ? '搜索' : 'Search'}
+              </Link>
+              <Link to="/merchant/manage" className="canteen-home-aside-link">
+                {isZh ? '菜品管理' : 'Manage Food'}
+              </Link>
+            </div>
+          </aside>
         </div>
       </div>
     </RouteTransition>
