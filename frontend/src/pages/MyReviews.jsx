@@ -83,7 +83,7 @@ function MyReviews() {
         <div className="myreviews-hero__copy">
           <p className="myreviews-hero__eyebrow">My Reviews</p>
           <h1 className="myreviews-hero__title">我写过的商品点评</h1>
-          <p className="myreviews-hero__subtitle">把个人点评记录统一进“我的”链路桌面节奏里，方便继续浏览自己留下的评价内容。</p>
+          <p className="myreviews-hero__subtitle">{isZh ? '你的所有点评记录' : 'All reviews you have written'}</p>
         </div>
         <div className="myreviews-hero__stat">
           <span className="myreviews-hero__stat-value">{list.length}</span>

@@ -101,7 +101,7 @@ function MyPosts() {
         <div className="myposts-hero__copy">
           <p className="myposts-hero__eyebrow">My Posts</p>
           <h1 className="myposts-hero__title">我发布过的树洞内容</h1>
-          <p className="myposts-hero__subtitle">把个人发布记录整理成一个稳定的桌面列表区，方便继续回看、管理和进入详情。</p>
+          <p className="myposts-hero__subtitle">{isZh ? '你发布的所有帖子' : 'All posts you have published'}</p>
         </div>
         <div className="myposts-hero__stat">
           <span className="myposts-hero__stat-value">{list.length}</span>
