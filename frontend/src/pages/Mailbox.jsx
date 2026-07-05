@@ -237,13 +237,8 @@ function Mailbox() {
         <div className="mailbox-hero__copy">
           <p className="mailbox-hero__eyebrow">{isZh ? '我的工作台消息' : 'Workbench Mailbox'}</p>
           <h1 className="mailbox-hero__title">
-            {isZh ? '把互动、交易和系统提醒收进一个收件箱' : 'Keep social, transaction, and system updates in one inbox'}
+            {isZh ? '信箱' : 'Mailbox'}
           </h1>
-          <p className="mailbox-hero__subtitle">
-            {isZh
-              ? '让个人工作台之后的消息页在桌面主壳下保持连续节奏，快速筛选、阅读和清空。'
-              : 'Keep the personal workbench flow continuous on desktop with clearer filtering and reading.'}
-          </p>
         </div>
         <div className="mailbox-hero__stats" aria-label={isZh ? '未读概览' : 'Unread summary'}>
           <div className="mailbox-hero__stat">
