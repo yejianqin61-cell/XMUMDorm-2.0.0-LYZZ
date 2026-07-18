@@ -1075,3 +1075,21 @@
   min-height: 0;
   padding: 12px 4px 10px;
 }
+
+/* The home page owns one full-width flow inside the global middle column. */
+.canteen-home-page,
+.canteen-home-inner {
+  width: 100%;
+  min-width: 0;
+}
+
+.canteen-home-inner {
+  display: flex !important;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.canteen-home-inner > * {
+  width: 100%;
+  min-width: 0;
+}
