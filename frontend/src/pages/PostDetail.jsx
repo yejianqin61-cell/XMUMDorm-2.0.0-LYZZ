@@ -65,6 +65,7 @@ function PostDetail() {
   const [submitLoading, setSubmitLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState({ open: false, index: 0 });
+  const [ownerMenuOpen, setOwnerMenuOpen] = useState(false);
   const likeBurstRef = useRef(null);
   const composerInputRef = useRef(null);
   const commentsRef = useRef(null);
@@ -498,16 +499,31 @@ function PostDetail() {
               </div>
 
               {isAuthor ? (
-                <button
-                  type="button"
-                  className="post-detail-more-btn"
-                  onClick={handleDeletePost}
-                  disabled={deleteLoading}
-                  title={isEn ? 'More' : '更多'}
-                  aria-label={isEn ? 'More' : '更多'}
-                >
-                  <MoreHorizontal size={18} aria-hidden />
-                </button>
+                <div className="post-detail-owner-actions">
+                  <button
+                    type="button"
+                    className="post-detail-more-btn"
+                    onClick={() => setOwnerMenuOpen((open) => !open)}
+                    disabled={deleteLoading}
+                    title={isEn ? 'More' : '更多'}
+                    aria-label={isEn ? 'More' : '更多'}
+                    aria-expanded={ownerMenuOpen}
+                  >
+                    <MoreHorizontal size={18} aria-hidden />
+                  </button>
+                  {ownerMenuOpen ? (
+                    <button
+                      type="button"
+                      className="post-detail-delete-btn"
+                      onClick={() => {
+                        setOwnerMenuOpen(false);
+                        handleDeletePost();
+                      }}
+                    >
+                      {isEn ? 'Delete post' : '删除帖子'}
+                    </button>
+                  ) : null}
+                </div>
               ) : null}
             </div>
 

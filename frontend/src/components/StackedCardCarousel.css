@@ -97,6 +97,8 @@
   border-color: var(--color-border-default);
   background: var(--color-bg-surface-strong);
   box-shadow: 0 2px 8px rgba(32, 48, 74, 0.12);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .post-detail-carousel-count {

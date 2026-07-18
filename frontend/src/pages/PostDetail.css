@@ -255,6 +255,30 @@
   letter-spacing: -0.01em;
 }
 
+.post-detail-owner-actions {
+  position: relative;
+  margin-left: auto;
+}
+
+.post-detail-owner-actions .post-detail-more-btn {
+  margin-left: 0;
+}
+
+.post-detail-delete-btn {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 2;
+  min-width: max-content;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 6px;
+  background: var(--color-bg-surface);
+  box-shadow: 0 4px 12px rgba(32, 48, 74, 0.14);
+  color: var(--color-danger);
+  cursor: pointer;
+}
+
 .post-detail-comment-count {
   display: inline-flex;
   align-items: center;
@@ -384,11 +408,23 @@
   cursor: pointer;
   font-size: 12px;
   font-weight: 500;
+  opacity: 0;
 }
 
 @media (hover: hover) {
-  .post-detail-reply-btn:hover {
-    opacity: 0.65;
+  .post-detail-thread:hover .post-detail-reply-btn {
+    opacity: 1;
+  }
+}
+
+.post-detail-thread:focus-within .post-detail-reply-btn,
+.post-detail-reply-btn:focus-visible {
+  opacity: 1;
+}
+
+@media (pointer: coarse) {
+  .post-detail-reply-btn {
+    opacity: 1;
   }
 }
 
