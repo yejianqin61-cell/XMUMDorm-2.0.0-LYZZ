@@ -152,7 +152,6 @@ export default function SquareHome() {
     hot_activities: [],
     hot_treeholes: [],
     campus_highlights: [],
-    quick_stats: {},
   };
   const recommendationSummary = buildRecommendationSummary(summary, isEn);
   const previewRailItems = buildPreviewRailItems(summary, isEn);
@@ -185,7 +184,7 @@ export default function SquareHome() {
             </FadeInSection>
 
             <FadeInSection className="square-home-slot square-home-slot--hero" delay={0.06}>
-              <TodayCampusHero quickStats={summary.quick_stats} />
+              <TodayCampusHero />
             </FadeInSection>
 
             <FadeInSection className="square-home-slot square-home-slot--recommendations" delay={0.1}>

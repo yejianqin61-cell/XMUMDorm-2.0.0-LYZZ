@@ -40,27 +40,16 @@ const NOTICE_LINKS = {
   ],
 };
 
-export default function TodayCampusHero({ quickStats = {} }) {
+export default function TodayCampusHero() {
   const { lang } = useLanguage();
   const isEn = lang === 'en';
-  const unreadNotifications = quickStats.unread_notifications || 0;
-  const eventsToday = quickStats.events_today || 0;
   const links = isEn ? NOTICE_LINKS.en : NOTICE_LINKS.zh;
 
   return (
-    <section className="today-campus-panel square-home-block">
+    <section className="today-campus-panel">
       <div className="today-campus-hero">
         <div className="today-campus-hero__content">
-          <span className="today-campus-hero__eyebrow">Today on Campus</span>
-          <h1 className="today-campus-hero__title">{isEn ? 'Campus Today' : '今日校园'}</h1>
-          <div className="today-campus-hero__chips" aria-label={isEn ? 'Home summary' : '首页摘要'}>
-            <span className="today-campus-chip">
-              {isEn ? 'Events today' : '今日活动'} {eventsToday > 99 ? '99+' : eventsToday}
-            </span>
-            <span className="today-campus-chip">
-              {isEn ? 'Unread notices' : '未读通知'} {unreadNotifications > 99 ? '99+' : unreadNotifications}
-            </span>
-          </div>
+          <h2 className="today-campus-hero__title">{isEn ? 'Campus Notices' : '校园通知'}</h2>
         </div>
         <div className="today-campus-hero__notice-links" aria-label={isEn ? 'Campus notice entries' : '校园公告入口'}>
           {links.map((item) => (
@@ -71,7 +60,6 @@ export default function TodayCampusHero({ quickStats = {} }) {
             >
               <span className="today-campus-hero__notice-kicker">{item.kicker}</span>
               <strong className="today-campus-hero__notice-title">{item.title}</strong>
-              <span className="today-campus-hero__notice-description">{item.description}</span>
             </Link>
           ))}
         </div>
