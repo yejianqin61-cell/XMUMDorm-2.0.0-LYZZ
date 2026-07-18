@@ -55,6 +55,7 @@ export function getSiteShellMeta(pathname, { isZh, isAdmin }) {
 
   if (pathname.startsWith('/eat')) {
     return {
+      showHero: false,
       eyebrow: 'Canteen Discovery',
       title: isZh ? '食堂浏览主区' : 'Canteen viewport',
       description: isZh
