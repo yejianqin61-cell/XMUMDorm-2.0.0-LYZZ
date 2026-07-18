@@ -1482,36 +1482,7 @@
 .app-layout--desktop-shell .square-home-inner {
   padding: 0;
   padding-bottom: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
-  gap: 28px;
-  align-items: start;
-}
-
-.app-layout--desktop-shell .square-home-slot--banner,
-.app-layout--desktop-shell .square-home-slot--state,
-.app-layout--desktop-shell .square-home-skeleton {
-  grid-column: 1 / -1;
-}
-
-.app-layout--desktop-shell .square-home-slot--hero {
-  grid-column: 2;
-  grid-row: 2;
-}
-
-.app-layout--desktop-shell .square-home-slot--actions {
-  grid-column: 1;
-  grid-row: 2;
-}
-
-.app-layout--desktop-shell .square-home-slot--recommendations {
-  grid-column: 1;
-  grid-row: 3;
-}
-
-.app-layout--desktop-shell .square-home-slot--trending {
-  grid-column: 2;
-  grid-row: 3;
+  gap: 24px;
 }
 
 .app-layout--desktop-shell .square-home-block {

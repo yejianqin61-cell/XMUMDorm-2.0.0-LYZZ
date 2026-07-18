@@ -195,6 +195,7 @@ export function getSiteShellMeta(pathname, { isZh, isAdmin }) {
 
   if (pathname.startsWith('/about')) {
     return {
+      showHero: false,
       eyebrow: 'Campus Square',
       title: isZh ? '广场内容主区' : 'Square viewport',
       description: isZh
