@@ -194,7 +194,7 @@
 
 /* Media block */
 .post-detail-media {
-  margin: 12px 0 16px;
+  margin: 16px 0 20px;
 }
 
 .post-detail-image-wrap {
@@ -203,7 +203,7 @@
   background: none;
   cursor: pointer;
   display: block;
-  border-radius: 8px;
+  border-radius: 24px;
   overflow: hidden;
   margin: 0;
   -webkit-tap-highlight-color: transparent;
@@ -211,10 +211,11 @@
 
 .post-detail-image {
   width: 100%;
-  max-height: 420px;
+  max-height: min(680px, 72vh);
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: 24px;
   background: var(--color-bg-surface-soft);
+  box-shadow: 0 18px 50px rgba(2, 6, 23, 0.18);
 }
 
 /* 叠卡轮播样式见 components/StackedCardCarousel.css */

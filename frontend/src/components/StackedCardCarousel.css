@@ -86,11 +86,11 @@
 
 .post-detail-carousel--flat .post-detail-carousel-stack,
 .post-detail-carousel--flat .post-detail-carousel-card {
-  border-radius: 8px;
+  border-radius: 24px;
 }
 
 .post-detail-carousel--flat .post-detail-carousel-card--front {
-  box-shadow: none;
+  box-shadow: 0 18px 50px rgba(2, 6, 23, 0.18);
 }
 
 .post-detail-carousel--flat .post-detail-carousel-arrow {
