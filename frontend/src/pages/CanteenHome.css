@@ -953,8 +953,6 @@
 /* Desktop: two-column portal layout with breathing room */
 @media (min-width: 1080px) {
   .canteen-home-inner {
-    max-width: var(--layout-max-width);
-    margin: 0 auto;
     padding: var(--space-12);
     padding-bottom: var(--space-12);
     gap: var(--space-12);
@@ -1050,6 +1048,9 @@
 
 .app-layout--desktop-shell .canteen-home-inner,
 .site-web-shell--tablet .canteen-home-inner {
+  width: 100%;
+  max-width: none;
+  margin: 0;
   display: flex;
   flex-direction: column;
   gap: 28px;

@@ -1,7 +1,7 @@
 .food-detail-page { min-height: 100%; padding: 12px 16px 36px; background: var(--post-ios-bg-grouped, #f2f2f7); }
 .food-detail-layout .detail-page-layout__content-grid--with-aside { grid-template-columns: minmax(0, 1fr); }
 .food-detail-layout .detail-page-layout__aside { display: none; }
-.food-detail-layout .detail-page-layout__main { max-width: 780px; }
+.food-detail-layout .detail-page-layout__main { width: 100%; max-width: none; }
 .food-detail-layout .food-detail-price-badge { display: none; }
 .food-detail-summary-card, .food-detail-action-card { padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
 .food-detail-summary-card__header, .food-detail-action-card .section-header, .food-detail-action-card .food-detail-floatbtn:first-child, .food-detail-reviews .section-header__description, .food-detail-wave { display: none; }
@@ -35,7 +35,7 @@
 .food-detail-empty-illus, .food-detail-empty-sub { display: none; }
 .food-detail-empty-title { margin-bottom: 10px; font-size: 14px; }
 .food-detail-empty-cta, .food-detail-back-btn { border: 0; background: transparent; color: var(--post-ios-accent); cursor: pointer; font: inherit; font-weight: 600; }
-.food-detail-form { position: static; max-width: 780px; margin: 20px 0 0; padding: 12px 0; border-top: 1px solid var(--post-ios-separator); background: transparent; box-shadow: none; }
+.food-detail-form { position: static; width: 100%; max-width: none; margin: 20px 0 0; padding: 12px 0; border-top: 1px solid var(--post-ios-separator); background: transparent; box-shadow: none; }
 .food-detail-replying, .food-detail-form-row { display: flex; gap: 8px; align-items: center; }
 .food-detail-replying { justify-content: space-between; margin-bottom: 8px; color: var(--post-ios-secondary-label); font-size: 13px; }
 .food-detail-replying button, .food-detail-send { border: 0; background: transparent; color: var(--post-ios-accent); cursor: pointer; font: inherit; font-weight: 600; }
