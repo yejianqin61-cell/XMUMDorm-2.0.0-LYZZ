@@ -211,8 +211,9 @@
 
 .post-detail-image {
   width: 100%;
-  max-height: min(680px, 72vh);
-  object-fit: cover;
+  height: auto;
+  max-height: none;
+  object-fit: contain;
   border-radius: 24px;
   background: var(--color-bg-surface-soft);
   box-shadow: 0 18px 50px rgba(2, 6, 23, 0.18);
