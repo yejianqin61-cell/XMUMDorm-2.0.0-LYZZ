@@ -18,20 +18,22 @@ export default function ShellContent({ children = null, className = '' }) {
     <main className={joinClassNames('site-web-shell__content', className)}>
       <div className="site-web-shell__content-inner">
         <div className="site-web-shell__viewport">
-          <div className="site-web-shell__viewport-hero">
-            <div className="site-web-shell__viewport-copy">
-              <p className="site-web-shell__panel-eyebrow">{meta.eyebrow}</p>
-              <h1 className="site-web-shell__content-title">{meta.title}</h1>
-              <p className="site-web-shell__content-description">{meta.description}</p>
-            </div>
-            {Array.isArray(meta.chips) && meta.chips.length > 0 ? (
-              <div className="site-web-shell__viewport-chips">
-                {meta.chips.map((chip) => (
-                  <span key={chip} className="site-web-shell__viewport-chip">{chip}</span>
-                ))}
+          {meta.showHero !== false ? (
+            <div className="site-web-shell__viewport-hero">
+              <div className="site-web-shell__viewport-copy">
+                <p className="site-web-shell__panel-eyebrow">{meta.eyebrow}</p>
+                <h1 className="site-web-shell__content-title">{meta.title}</h1>
+                <p className="site-web-shell__content-description">{meta.description}</p>
               </div>
-            ) : null}
-          </div>
+              {Array.isArray(meta.chips) && meta.chips.length > 0 ? (
+                <div className="site-web-shell__viewport-chips">
+                  {meta.chips.map((chip) => (
+                    <span key={chip} className="site-web-shell__viewport-chip">{chip}</span>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
           <div className="site-web-shell__viewport-body">
             {children || (
               <div className="site-web-shell__panel site-web-shell__panel--content">

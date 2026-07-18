@@ -25,6 +25,7 @@ export function getSiteShellMeta(pathname, { isZh, isAdmin }) {
 
   if (pathname === '/' || pathname.startsWith('/post') || pathname.startsWith('/posts')) {
     return {
+      showHero: false,
       eyebrow: 'TreeHole Feed',
       title: isZh ? '树洞内容主区' : 'TreeHole viewport',
       description: isZh
