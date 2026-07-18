@@ -9,7 +9,7 @@ import { FOOD_SQUARE_TAG_SLUG } from '@shared/constants/canteen';
 import { getUploadUrl } from '@shared/api/config';
 import { formatPostTime } from '@shared/utils/formatTime';
 
-export default function CanteenFoodSquare() {
+export default function CanteenFoodSquare({ title, limit = 10, showHint = true }) {
   const navigate = useNavigate();
   const { isLoggedIn } = useAuth();
   const { lang } = useLanguage();
@@ -24,8 +24,8 @@ export default function CanteenFoodSquare() {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: QK.canteenFoodArticles(1, 10),
-    queryFn: ({ pageParam = 1 }) => getFoodArticles({ page: pageParam, pageSize: 10 }),
+    queryKey: QK.canteenFoodArticles(1, limit),
+    queryFn: ({ pageParam = 1 }) => getFoodArticles({ page: pageParam, pageSize: limit }),
     getNextPageParam: (lastPage) => {
       if (lastPage?.hasMore && lastPage?.page) return lastPage.page + 1;
       return undefined;
@@ -50,7 +50,7 @@ export default function CanteenFoodSquare() {
 
   const header = (
     <div className="canteen-section-head">
-      <h3 className="canteen-section-title">{t.foodSquareTitle}</h3>
+      <h3 className="canteen-section-title">{title || t.foodSquareTitle}</h3>
       <button type="button" className="canteen-food-compose-btn pressable" onClick={goWrite}>
         {t.foodSquareCompose}
       </button>
@@ -78,7 +78,7 @@ export default function CanteenFoodSquare() {
   return (
     <div className="canteen-section">
       {header}
-      <p className="canteen-food-hint">{t.foodSquareHint}</p>
+      {showHint && <p className="canteen-food-hint">{t.foodSquareHint}</p>}
       {allItems.length === 0 ? (
         <div className="canteen-food-empty">
           <p>{t.foodSquareEmpty}</p>
@@ -117,7 +117,7 @@ export default function CanteenFoodSquare() {
               </div>
             ))}
           </div>
-          {hasNextPage && (
+          {limit === 10 && hasNextPage && (
             <button
               type="button"
               className="canteen-food-more pressable"

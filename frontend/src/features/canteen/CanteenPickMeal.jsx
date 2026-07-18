@@ -7,7 +7,7 @@ import { pickRandomMeal } from '@shared/api/canteen';
 import { QK } from '@shared/query/queryKeys';
 import { productImageUrl } from '@shared/api/config';
 
-export default function CanteenPickMeal() {
+export default function CanteenPickMeal({ compact = false }) {
   const navigate = useNavigate();
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
@@ -33,14 +33,13 @@ export default function CanteenPickMeal() {
 
   const loading = active && (isLoading || isFetching) && !meal;
 
-  return (
-    <div className="canteen-section">
-      <h3 className="canteen-section-title">{t.pickTitle}</h3>
+  const content = (
+    <>
       {!active ? (
-        <div className="canteen-pick-init">
-          <p className="canteen-pick-text">{t.pickPrompt}</p>
-          <button type="button" className="canteen-pick-btn pressable" onClick={handlePick}>
-            {t.pickBtn}
+        <div className={compact ? 'canteen-pick-compact-init' : 'canteen-pick-init'}>
+          {!compact && <p className="canteen-pick-text">{t.pickPrompt}</p>}
+          <button type="button" className={compact ? 'canteen-pick-compact-btn pressable' : 'canteen-pick-btn pressable'} onClick={handlePick}>
+            {compact ? '换一个' : t.pickBtn}
           </button>
         </div>
       ) : loading ? (
@@ -83,6 +82,17 @@ export default function CanteenPickMeal() {
           </button>
         </div>
       )}
+    </>
+  );
+
+  if (compact) {
+    return <div className="canteen-pick-compact">{content}</div>;
+  }
+
+  return (
+    <div className="canteen-section">
+      <h3 className="canteen-section-title">{t.pickTitle}</h3>
+      {content}
     </div>
   );
 }

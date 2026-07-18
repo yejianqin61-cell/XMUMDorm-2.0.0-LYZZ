@@ -1021,3 +1021,56 @@
   background: var(--color-bg-surface-soft);
   color: var(--color-text-primary);
 }
+
+/* Home is a single reading flow inside the site shell. */
+.canteen-pick-compact {
+  margin-top: 12px;
+}
+
+.canteen-pick-compact-init {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.canteen-pick-compact-btn {
+  border: 0;
+  background: transparent;
+  color: var(--post-ios-accent);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.canteen-pick-compact .canteen-pick-loading,
+.canteen-pick-compact .canteen-pick-empty,
+.canteen-pick-compact .state-error {
+  margin-top: 12px;
+}
+
+.app-layout--desktop-shell .canteen-home-inner,
+.site-web-shell--tablet .canteen-home-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.app-layout--desktop-shell .canteen-section,
+.site-web-shell--tablet .canteen-section {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.app-layout--desktop-shell .canteen-region-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.app-layout--desktop-shell .canteen-region-item {
+  align-items: center;
+  min-height: 0;
+  padding: 12px 4px 10px;
+}

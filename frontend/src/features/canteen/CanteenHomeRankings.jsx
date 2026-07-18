@@ -10,7 +10,7 @@ import {
 } from '@shared/api/rankings';
 import { productImageUrl } from '@shared/api/config';
 
-export default function CanteenHomeRankings() {
+export default function CanteenHomeRankings({ title, showTabs = true, footer }) {
   const navigate = useNavigate();
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
@@ -76,12 +76,12 @@ export default function CanteenHomeRankings() {
   return (
     <div className="canteen-section">
       <div className="canteen-section-header">
-        <h3 className="canteen-section-title">{t.rankingsTitle}</h3>
+      <h3 className="canteen-section-title">{title || t.rankingsTitle}</h3>
         <button type="button" className="canteen-section-more" onClick={() => navigate('/eat/rankings')}>
           {t.rankingsViewAll}
         </button>
       </div>
-      <div className="canteen-rank-tabs">
+      {showTabs && <div className="canteen-rank-tabs">
         {TABS.map((tabItem, i) => (
           <button
             key={tabItem.key}
@@ -92,7 +92,7 @@ export default function CanteenHomeRankings() {
             {tabItem.label}
           </button>
         ))}
-      </div>
+      </div>}
       <div className="canteen-rank-list">
         {isLoading ? (
           <div className="state-loading" style={{ paddingTop: 60 }} />
@@ -104,6 +104,7 @@ export default function CanteenHomeRankings() {
           items.slice(0, 5).map(renderItem)
         )}
       </div>
+      {footer}
     </div>
   );
 }

@@ -78,15 +78,7 @@ export default function CanteenBannerCarousel({
     resetAutoplay();
   };
 
-  if (isLoading) {
-    return (
-      <div className="canteen-banner-wrap">
-        <div className="canteen-banner-skeleton" />
-      </div>
-    );
-  }
-
-  if (isError || len === 0) return null;
+  if (isLoading || isError || len === 0) return null;
 
   const b = banners[idx];
 
