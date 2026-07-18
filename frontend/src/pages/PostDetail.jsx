@@ -592,6 +592,38 @@ function PostDetail() {
         comments={(
           <section className="post-detail-comments" ref={commentsRef}>
             <h2 className="post-detail-comments-title">{isEn ? 'Comments' : '评论'}</h2>
+            {replyingTo ? (
+              <div className="post-detail-replying-inline">
+                <span>
+                  {isEn ? 'Reply:' : '回复:'} {replyingTo.content.slice(0, 20)}
+                  {replyingTo.content.length > 20 ? '...' : ''}
+                </span>
+                <button type="button" onClick={cancelReply}>
+                  {isEn ? 'Cancel' : '取消'}
+                </button>
+              </div>
+            ) : null}
+            <form className="post-detail-bottom-bar" onSubmit={handleSubmitComment}>
+              <input
+                ref={composerInputRef}
+                type="text"
+                className="post-detail-bottom-input"
+                placeholder={replyingTo ? (isEn ? 'Reply...' : '回复...') : (isEn ? 'Add a comment...' : '添加评论...')}
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                maxLength={500}
+              />
+              <motion.button
+                type="submit"
+                className="post-detail-bottom-send"
+                disabled={!newComment.trim() || submitLoading}
+                whileTap={{ scale: 0.92 }}
+                transition={{ type: 'spring', stiffness: 700, damping: 28 }}
+                aria-label={isEn ? 'Send' : '发送'}
+              >
+                <SendHorizonal size={18} aria-hidden />
+              </motion.button>
+            </form>
             <ul className="post-detail-comment-list">
               {comments.map((comment) => (
                 <li key={comment.id} className="post-detail-comment-wrap">
@@ -676,40 +708,6 @@ function PostDetail() {
       />
 
       <LikeBurst ref={likeBurstRef} />
-
-      {replyingTo ? (
-        <div className="post-detail-replying-inline">
-          <span>
-            {isEn ? 'Reply:' : '回复:'} {replyingTo.content.slice(0, 20)}
-            {replyingTo.content.length > 20 ? '...' : ''}
-          </span>
-          <button type="button" onClick={cancelReply}>
-            {isEn ? 'Cancel' : '取消'}
-          </button>
-        </div>
-      ) : null}
-
-      <form className="post-detail-bottom-bar" onSubmit={handleSubmitComment}>
-        <input
-          ref={composerInputRef}
-          type="text"
-          className="post-detail-bottom-input"
-          placeholder={replyingTo ? (isEn ? 'Reply...' : '回复...') : (isEn ? 'Add a comment...' : '添加评论...')}
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-          maxLength={500}
-        />
-        <motion.button
-          type="submit"
-          className="post-detail-bottom-send"
-          disabled={!newComment.trim() || submitLoading}
-          whileTap={{ scale: 0.92 }}
-          transition={{ type: 'spring', stiffness: 700, damping: 28 }}
-          aria-label={isEn ? 'Send' : '发送'}
-        >
-          <SendHorizonal size={18} aria-hidden />
-        </motion.button>
-      </form>
     </div>
   );
 }

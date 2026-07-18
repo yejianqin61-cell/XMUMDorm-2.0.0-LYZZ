@@ -1,7 +1,7 @@
 /* 帖子详情：与树洞列表同一套 iOS 分组背景 + 白卡片 + 系统蓝/灰字阶 */
 
 .post-detail-page {
-  padding: 14px 18px calc(var(--tabbar-height, 76px) + var(--safe-bottom, 0px) + 86px);
+  padding: 14px 18px var(--space-12);
   min-height: 100%;
   background: var(--color-bg-page);
   font-family: var(--font-family-body);
@@ -326,13 +326,8 @@
 /* removed header composer; now using floating bottom bar */
 
 .post-detail-replying-inline {
-  position: fixed;
-  left: 50%;
-  bottom: calc(var(--tabbar-height, 76px) + var(--safe-bottom, 0px) + 72px);
-  z-index: 91;
-  width: min(520px, calc(100% - 24px));
+  margin-top: 10px;
   padding: 8px 12px;
-  transform: translateX(-50%);
   border: 1px solid var(--color-border-default);
   border-radius: 6px;
   background: var(--color-bg-surface);
@@ -498,12 +493,10 @@
 }
 
 .post-detail-bottom-bar {
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: calc(var(--tabbar-height, 76px) + var(--safe-bottom, 0px) + 12px);
-  width: calc(100% - 24px);
-  max-width: 520px;
+  position: sticky;
+  top: calc(80px + var(--space-4));
+  width: 100%;
+  margin: 10px 0 0;
   height: 52px;
   display: flex;
   align-items: center;
