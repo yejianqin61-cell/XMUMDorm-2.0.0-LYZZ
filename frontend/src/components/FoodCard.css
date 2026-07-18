@@ -1,140 +1,114 @@
 .food-card-wrap {
   display: block;
-  text-decoration: none;
   color: inherit;
+  text-decoration: none;
 }
 
 .food-card {
   display: flex;
-  align-items: center;
-  gap: 14px;
-  min-height: 88px;
-  border-radius: 20px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: none;
 }
 
 .food-card-image-wrap {
-  flex-shrink: 0;
-  width: 80px;
-  height: 80px;
-  border-radius: 20px;
-  overflow: hidden;
-  border: none;
-  background: rgba(255, 255, 255, 0.7);
-}
-
-.food-card-image-wrap-clickable {
-  padding: 0;
-  border: none;
-  background: rgba(255, 255, 255, 0.7);
-  cursor: pointer;
   display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: var(--post-ios-fill);
+  cursor: pointer;
 }
 
 .food-card-image {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.food-card-image-default {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--wx-text-secondary);
-  object-fit: none;
-}
-
 .food-card-body {
+  display: flex;
   flex: 1;
+  flex-direction: column;
   min-width: 0;
+  padding: 0 12px 12px;
 }
 
 .food-card-name {
-  font-size: 16px;
-  font-weight: 800;
-  color: #1e293b;
-  display: block;
-  margin-bottom: 4px;
-  /* 允许菜品名称自动换行，显示完整内容 */
-  white-space: normal;
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--post-ios-label);
+  font-size: 15px;
+  font-weight: 650;
   line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.food-card-merchant,
+.food-card-desc {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 4px 0 0;
+  color: var(--post-ios-secondary-label);
+  font-size: 12px;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .food-card-price-row {
   display: flex;
+  gap: 8px;
   align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 2px;
+  margin-top: auto;
+  padding-top: 10px;
 }
 
 .food-card-price {
-  font-size: 15px;
-  font-weight: 600;
-  color: #0b3d91; /* Deep Sea Blue */
+  color: var(--post-ios-accent);
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .food-card-rating {
-  font-size: 14px;
-  font-weight: 500;
-  color: #fa8c16;
-}
-
-.food-card-desc {
-  margin: 0;
+  color: #c77800;
   font-size: 12px;
-  color: var(--wx-text-secondary);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  font-weight: 600;
 }
 
-/* 商家端操作按钮 */
 .food-card-actions {
   display: flex;
-  gap: 12px;
-  margin-top: 10px;
   flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
 }
 
 .food-card-action {
-  font-size: 13px;
-  padding: 4px 10px;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  text-decoration: none;
+  padding: 4px 8px;
+  border-radius: 5px;
   background: transparent;
-  color: inherit;
-  font-family: inherit;
-}
-
-.food-card-action-edit {
-  color: var(--wx-green);
-  border: 1px solid var(--wx-green);
-}
-
-@media (hover: hover) {
-  .food-card-action-edit:hover {
-    background: rgba(7, 193, 96, 0.08);
-  }
+  border: 1px solid currentColor;
+  color: var(--post-ios-accent);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  text-decoration: none;
 }
 
 .food-card-action-delete {
-  color: #e64340;
-  border: 1px solid #e64340;
-}
-
-@media (hover: hover) {
-  .food-card-action-delete:hover {
-    background: rgba(230, 67, 64, 0.08);
-  }
+  color: var(--post-ios-red);
 }
 
 .food-card-wrap-merchant {
-  cursor: default;
+  height: 100%;
 }

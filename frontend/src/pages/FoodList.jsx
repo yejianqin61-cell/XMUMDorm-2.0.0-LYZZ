@@ -95,6 +95,7 @@ function FoodList() {
     const foodList = products.map((p) => ({
       id: p.id,
       name: p.name,
+      merchantName: shop.name,
       description: p.description ?? undefined,
       price: p.price,
       image: firstImage(p),
