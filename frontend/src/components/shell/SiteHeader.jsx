@@ -19,7 +19,6 @@ export default function SiteHeader({ children = null, className = '' }) {
         {children || (
           <>
             <Link to="/about" className="site-web-shell__brand">
-              <span className="site-web-shell__brand-mark" aria-hidden="true">XM</span>
               <div className="site-web-shell__brand-copy">
                 <strong>XMUMDorm</strong>
                 <span>{isZh ? '校园生活主站' : 'Campus Web Portal'}</span>
@@ -43,9 +42,6 @@ export default function SiteHeader({ children = null, className = '' }) {
                   EN
                 </button>
               </div>
-              <Link to="/posts/search" className="site-web-shell__header-chip">
-                {isZh ? '搜索内容' : 'Search'}
-              </Link>
               <Link to="/publish" className="site-web-shell__header-chip site-web-shell__header-chip--primary">
                 {isZh ? '发布中心' : 'Publish'}
               </Link>

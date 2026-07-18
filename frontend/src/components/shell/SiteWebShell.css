@@ -49,21 +49,6 @@
   text-decoration: none;
 }
 
-.site-web-shell__brand-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--color-brand-primary), var(--accent-treehole));
-  color: var(--color-text-on-brand);
-  font-size: var(--font-size-body-md);
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  box-shadow: var(--shadow-soft);
-}
-
 .site-web-shell__brand-copy {
   display: flex;
   flex-direction: column;
