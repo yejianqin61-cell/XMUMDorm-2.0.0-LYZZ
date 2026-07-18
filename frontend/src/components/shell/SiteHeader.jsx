@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { Languages, Mail, PenLine, Shield } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 
@@ -25,36 +26,43 @@ export default function SiteHeader({ children = null, className = '' }) {
               </div>
             </Link>
             <div className="site-web-shell__header-meta">
-              <div className="site-web-shell__lang-switch" role="group" aria-label={isZh ? '语言切换' : 'Language switch'}>
-                <button
-                  type="button"
-                  className={joinClassNames('site-web-shell__lang-btn', isZh && 'site-web-shell__lang-btn--active')}
-                  onClick={() => setLang('zh')}
-                >
-                  中
-                </button>
-                <span className="site-web-shell__lang-sep">/</span>
-                <button
-                  type="button"
-                  className={joinClassNames('site-web-shell__lang-btn', !isZh && 'site-web-shell__lang-btn--active')}
-                  onClick={() => setLang('en')}
-                >
-                  EN
-                </button>
+              <div className="site-web-shell__header-action site-web-shell__lang-switch" role="group" aria-label={isZh ? '语言切换' : 'Language switch'}>
+                <Languages size={20} strokeWidth={2} aria-hidden="true" />
+                <span className="site-web-shell__header-action-label">
+                  <button
+                    type="button"
+                    className={joinClassNames('site-web-shell__lang-btn', isZh && 'site-web-shell__lang-btn--active')}
+                    onClick={() => setLang('zh')}
+                  >
+                    中
+                  </button>
+                  <span className="site-web-shell__lang-sep">/</span>
+                  <button
+                    type="button"
+                    className={joinClassNames('site-web-shell__lang-btn', !isZh && 'site-web-shell__lang-btn--active')}
+                    onClick={() => setLang('en')}
+                  >
+                    EN
+                  </button>
+                </span>
               </div>
-              <Link to="/publish" className="site-web-shell__header-chip site-web-shell__header-chip--primary">
-                {isZh ? '发布中心' : 'Publish'}
+              <Link to="/publish" className="site-web-shell__header-action" title={isZh ? '发布中心' : 'Publish'}>
+                <PenLine size={20} strokeWidth={2} aria-hidden="true" />
+                <span className="site-web-shell__header-action-label">{isZh ? '发布' : 'Publish'}</span>
               </Link>
               <button
                 type="button"
-                className="site-web-shell__header-chip"
+                className="site-web-shell__header-action"
                 onClick={() => navigate('/mailbox')}
+                title={isZh ? '信箱' : 'Mailbox'}
               >
-                {isZh ? '信箱' : 'Mailbox'}
+                <Mail size={20} strokeWidth={2} aria-hidden="true" />
+                <span className="site-web-shell__header-action-label">{isZh ? '信箱' : 'Mailbox'}</span>
               </button>
               {isAdmin ? (
-                <Link to="/myzone/admin" className="site-web-shell__header-chip">
-                  {isZh ? '管理后台' : 'Admin'}
+                <Link to="/myzone/admin" className="site-web-shell__header-action" title={isZh ? '管理后台' : 'Admin'}>
+                  <Shield size={20} strokeWidth={2} aria-hidden="true" />
+                  <span className="site-web-shell__header-action-label">{isZh ? '后台' : 'Admin'}</span>
                 </Link>
               ) : null}
               <Link to="/myzone" className="site-web-shell__profile-entry" aria-label={isZh ? '个人中心' : 'My Zone'}>
