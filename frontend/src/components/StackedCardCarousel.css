@@ -83,3 +83,24 @@
   height: 6px;
   background: rgba(0, 91, 172, 0.95);
 }
+
+.post-detail-carousel--flat .post-detail-carousel-stack,
+.post-detail-carousel--flat .post-detail-carousel-card {
+  border-radius: 8px;
+}
+
+.post-detail-carousel--flat .post-detail-carousel-card--front {
+  box-shadow: none;
+}
+
+.post-detail-carousel--flat .post-detail-carousel-arrow {
+  border-color: var(--color-border-default);
+  background: var(--color-bg-surface-strong);
+  box-shadow: 0 2px 8px rgba(32, 48, 74, 0.12);
+}
+
+.post-detail-carousel-count {
+  color: var(--color-text-tertiary);
+  font-size: 13px;
+  line-height: 1.4;
+}

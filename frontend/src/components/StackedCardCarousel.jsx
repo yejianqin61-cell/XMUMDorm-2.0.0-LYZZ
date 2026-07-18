@@ -10,7 +10,7 @@ function mod(n, m) {
  * 多图叠卡轮播（与帖子详情一致）：左右箭头、点阵、拖拽切图。
  * @param {string[]} urls
  */
-export function StackedCardCarousel({ urls, index, onChangeIndex, onOpenPreview, dir }) {
+export function StackedCardCarousel({ urls, index, onChangeIndex, onOpenPreview, dir, flat = false }) {
   const n = Array.isArray(urls) ? urls.length : 0;
   if (!n) return null;
 
@@ -20,7 +20,7 @@ export function StackedCardCarousel({ urls, index, onChangeIndex, onOpenPreview,
     { scale: 0.88, x: 30, y: -30, opacity: 0.3, blur: 8, rotate: -4 },
   ];
 
-  const count = Math.min(3, n);
+  const count = flat ? 1 : Math.min(3, n);
   const ids = Array.from({ length: count }, (_, i) => mod(index + i, n));
 
   const go = (delta) => {
@@ -32,7 +32,7 @@ export function StackedCardCarousel({ urls, index, onChangeIndex, onOpenPreview,
   const frontId = ids[0];
 
   return (
-    <div className="post-detail-carousel" aria-label="Image carousel">
+    <div className={`post-detail-carousel ${flat ? 'post-detail-carousel--flat' : ''}`} aria-label="Image carousel">
       <div className="post-detail-carousel-stack">
         {ids.slice(1).reverse().map((id, revIdx) => {
           const pos = ids.length - (revIdx + 1);
@@ -100,7 +100,9 @@ export function StackedCardCarousel({ urls, index, onChangeIndex, onOpenPreview,
       </div>
 
       <div className="post-detail-carousel-dots" aria-label="Pagination">
-        {urls.map((_, i) => (
+        {flat ? (
+          <span className="post-detail-carousel-count">{index + 1} / {n}</span>
+        ) : urls.map((_, i) => (
           <button
             key={`dot-${i}`}
             type="button"

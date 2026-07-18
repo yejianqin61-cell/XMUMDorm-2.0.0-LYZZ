@@ -2,11 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { Heart, MoreHorizontal, SendHorizonal, Smile } from 'lucide-react';
+import { ArrowLeft, Heart, MessageCircle, MoreHorizontal, SendHorizonal } from 'lucide-react';
 import ReportButton from '../components/ReportButton';
-import Button from '../components/ui/Button';
-import Tag from '../components/ui/Tag';
-import Card from '../components/ui/Card';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import {
@@ -25,8 +22,6 @@ import EmptyState from '../components/ui/EmptyState';
 import ImagePreview from '../components/ImagePreview';
 import { StackedCardCarousel } from '../components/StackedCardCarousel';
 import LikeBurst from '../components/LikeBurst';
-import PageHeader from '../components/templates/PageHeader';
-import SectionHeader from '../components/templates/SectionHeader';
 import DetailPageLayout from '../components/templates/DetailPageLayout';
 import { formatPostTime } from '@shared/utils/formatTime';
 import { getApiErrorMessage } from '@shared/utils/apiError';
@@ -72,6 +67,7 @@ function PostDetail() {
   const [imagePreview, setImagePreview] = useState({ open: false, index: 0 });
   const likeBurstRef = useRef(null);
   const composerInputRef = useRef(null);
+  const commentsRef = useRef(null);
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [carouselDir, setCarouselDir] = useState(1);
 
@@ -419,7 +415,6 @@ function PostDetail() {
   const author = post.author || {};
   const displayName = author.nickname ?? author.username ?? 'Anonymous';
   const totalCommentCount = comments.reduce((sum, comment) => sum + 1 + (comment.replies?.length || 0), 0);
-  const heroUrl = post.images?.[0]?.url ? prefixImageUrl(post.images[0].url) : null;
   const imageUrls = Array.isArray(post.images) ? post.images.map((img) => prefixImageUrl(img.url)).filter(Boolean) : [];
 
   const detailTags = (() => {
@@ -434,21 +429,8 @@ function PostDetail() {
     }));
   })();
 
-  const pageMeta = [
-    { key: 'comments', label: isEn ? `${totalCommentCount} comments` : `${totalCommentCount} 条评论` },
-    { key: 'likes', label: isEn ? `${likeCount} likes` : `${likeCount} 个点赞` },
-    { key: 'type', label: post.type === 'announcement' ? (isEn ? 'Announcement' : '公告') : (isEn ? 'Community post' : '社区帖子') },
-  ];
-
   return (
     <div className="post-detail-page">
-      {heroUrl ? (
-        <div className="post-detail-atmo" aria-hidden="true">
-          <div className="post-detail-atmo-img" style={{ backgroundImage: `url('${heroUrl}')` }} />
-          <div className="post-detail-atmo-fade" />
-        </div>
-      ) : null}
-
       {commentsQuery.isError ? (
         <p className="post-detail-error" role="alert">
           {getApiErrorMessage(commentsQuery.error)}
@@ -457,32 +439,10 @@ function PostDetail() {
 
       <DetailPageLayout
         className="post-detail-layout"
-        asideSticky
         header={(
-          <PageHeader
-            eyebrow={isEn ? 'Community Post' : '社区帖子'}
-            title={post.title || (isEn ? 'Post Detail' : '帖子详情')}
-            description={
-              isEn
-                ? 'Keep the reading flow, comment thread, and secondary actions separated into a clearer desktop detail rhythm.'
-                : '把正文阅读、评论互动和次级操作拆进更清晰的桌面详情节奏里，避免所有内容都挤在同一张卡片里。'
-            }
-            backTo="/"
-            backLabel={isEn ? 'Back to home' : '返回首页'}
-            meta={pageMeta}
-            actions={(
-              <div className="post-detail-page-header-actions">
-                <Button variant="secondary" size="sm" onClick={focusComposer}>
-                  {isEn ? 'Write comment' : '写评论'}
-                </Button>
-                {isAuthor ? (
-                  <Button variant="secondary" size="sm" onClick={handleDeletePost} disabled={deleteLoading}>
-                    {deleteLoading ? (isEn ? 'Deleting...' : '删除中...') : (isEn ? 'Delete post' : '删除帖子')}
-                  </Button>
-                ) : null}
-              </div>
-            )}
-          />
+          <Link to="/" className="post-detail-back" aria-label={isEn ? 'Back to home' : '返回首页'} title={isEn ? 'Back to home' : '返回首页'}>
+            <ArrowLeft size={18} aria-hidden />
+          </Link>
         )}
         content={(
           <article className="post-detail-card">
@@ -551,13 +511,6 @@ function PostDetail() {
               ) : null}
             </div>
 
-            <div className="post-detail-reading-meta">
-              <Tag tone="neutral" variant="soft">{isEn ? 'Main reading column' : '正文主阅读列'}</Tag>
-              <Tag tone="neutral" variant="outline">
-                {post.type === 'announcement' ? (isEn ? 'Announcement mode' : '公告模式') : (isEn ? 'Community discussion' : '社区讨论')}
-              </Tag>
-            </div>
-
             <p className="post-detail-content">{post.content}</p>
 
             {imageUrls.length > 0 ? (
@@ -572,6 +525,7 @@ function PostDetail() {
                   </button>
                 ) : (
                   <StackedCardCarousel
+                    flat
                     urls={imageUrls}
                     index={carouselIndex}
                     onChangeIndex={(next, dir) => {
@@ -605,34 +559,23 @@ function PostDetail() {
                 <Heart size={18} aria-hidden fill={liked ? 'currentColor' : 'none'} />
                 <span className="post-detail-like-count">{likeCount}</span>
               </motion.button>
+              <button
+                type="button"
+                className="post-detail-comment-count"
+                onClick={() => commentsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              >
+                <MessageCircle size={18} aria-hidden />
+                <span>{totalCommentCount}</span>
+              </button>
               {!isAuthor ? (
                 <ReportButton target_type="post" target_id={post.id} className="post-detail-report-btn" />
               ) : null}
             </div>
           </article>
         )}
-        meta={(
-          <Card className="post-detail-action-card">
-            <SectionHeader
-              title={isEn ? 'Quick actions' : '快捷操作'}
-              description={null}
-            />
-            <div className="post-detail-action-card__actions">
-              <Button variant="secondary" size="sm" onClick={focusComposer}>
-                {isEn ? 'Comment now' : '立即评论'}
-              </Button>
-              <Button variant="secondary" size="sm" onClick={handleLike}>
-                {liked ? (isEn ? 'Liked' : '已点赞') : (isEn ? 'Like this post' : '点赞帖子')}
-              </Button>
-            </div>
-          </Card>
-        )}
         comments={(
-          <section className="post-detail-comments">
-            <SectionHeader
-              title={isEn ? `Comments (${totalCommentCount})` : `评论 (${totalCommentCount})`}
-              description={null}
-            />
+          <section className="post-detail-comments" ref={commentsRef}>
+            <h2 className="post-detail-comments-title">{isEn ? 'Comments' : '评论'}</h2>
             <ul className="post-detail-comment-list">
               {comments.map((comment) => (
                 <li key={comment.id} className="post-detail-comment-wrap">
@@ -714,57 +657,6 @@ function PostDetail() {
             </ul>
           </section>
         )}
-        aside={(
-          <>
-            <Card className="post-detail-aside-card">
-              <SectionHeader
-                title={isEn ? 'Post snapshot' : '帖子快照'}
-                description={
-                  isEn
-                    ? 'Keep the key numbers visible while the main column stays focused on reading.'
-                    : '把关键数字收进右侧，正文主列专注阅读与评论，不再把所有信息都堆进正文卡片。'
-                }
-                compact
-              />
-              <div className="post-detail-aside-card__stats">
-                <div className="post-detail-aside-card__stat">
-                  <span className="post-detail-aside-card__label">{isEn ? 'Likes' : '点赞'}</span>
-                  <strong>{likeCount}</strong>
-                </div>
-                <div className="post-detail-aside-card__stat">
-                  <span className="post-detail-aside-card__label">{isEn ? 'Comments' : '评论'}</span>
-                  <strong>{totalCommentCount}</strong>
-                </div>
-                <div className="post-detail-aside-card__stat">
-                  <span className="post-detail-aside-card__label">{isEn ? 'Author' : '作者'}</span>
-                  <strong>{displayName}</strong>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="post-detail-aside-card">
-              <SectionHeader
-                title={isEn ? 'Next step' : '下一步'}
-                description={
-                  isEn
-                    ? 'Use the right rail for orientation and keep the next actions predictable on desktop.'
-                    : '右侧辅助栏负责承接下一步操作，让桌面阅读场景下的动作路径更稳定。'
-                }
-                compact
-              />
-              <div className="post-detail-aside-card__links">
-                <Button variant="secondary" size="sm" block onClick={focusComposer}>
-                  {isEn ? 'Join discussion' : '参与讨论'}
-                </Button>
-                {!isAuthor ? (
-                  <Button variant="secondary" size="sm" block onClick={handleLike}>
-                    {liked ? (isEn ? 'Liked already' : '已点赞过') : (isEn ? 'Support this post' : '支持这篇帖子')}
-                  </Button>
-                ) : null}
-              </div>
-            </Card>
-          </>
-        )}
       />
 
       <LikeBurst ref={likeBurstRef} />
@@ -782,9 +674,6 @@ function PostDetail() {
       ) : null}
 
       <form className="post-detail-bottom-bar" onSubmit={handleSubmitComment}>
-        <button type="button" className="post-detail-bottom-emoji" aria-label="emoji">
-          <Smile size={18} aria-hidden />
-        </button>
         <input
           ref={composerInputRef}
           type="text"
