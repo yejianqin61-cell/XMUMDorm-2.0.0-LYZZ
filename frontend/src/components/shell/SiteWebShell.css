@@ -19,10 +19,8 @@
 }
 
 .site-web-shell__header {
-  position: sticky;
-  top: 0;
-  z-index: var(--z-header);
-  min-height: 104px;
+  position: static;
+  min-height: 120px;
   padding: var(--space-6) var(--layout-page-padding);
   background:
     linear-gradient(0deg, rgba(13, 35, 49, 0.58), rgba(13, 35, 49, 0.12)),
@@ -479,7 +477,7 @@
 
 .site-web-shell--tablet .site-web-shell__header {
   padding: var(--space-6) var(--space-8);
-  min-height: 88px;
+  min-height: 96px;
 }
 
 .site-web-shell--tablet .site-web-shell__header-inner,
@@ -507,7 +505,7 @@
 
 .site-web-shell--tablet .site-web-shell__panel--sidebar {
   position: sticky;
-  top: calc(72px + var(--space-8));
+  top: var(--space-8);
 }
 
 @media (max-width: 1199px) {
@@ -530,7 +528,7 @@
 
 @media (max-width: 767px) {
   .site-web-shell__header {
-    min-height: 72px;
+    min-height: 80px;
     padding: var(--space-4) var(--space-8);
   }
 
