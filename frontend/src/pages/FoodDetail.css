@@ -2,6 +2,7 @@
 .food-detail-layout .detail-page-layout__content-grid--with-aside { grid-template-columns: minmax(0, 1fr); }
 .food-detail-layout .detail-page-layout__aside { display: none; }
 .food-detail-layout .detail-page-layout__main { max-width: 780px; }
+.food-detail-layout .food-detail-price-badge { display: none; }
 .food-detail-summary-card, .food-detail-action-card { padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
 .food-detail-summary-card__header, .food-detail-action-card .section-header, .food-detail-action-card .food-detail-floatbtn:first-child, .food-detail-reviews .section-header__description, .food-detail-wave { display: none; }
 .food-detail-summary-card__body { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; }
