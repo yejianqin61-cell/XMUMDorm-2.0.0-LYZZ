@@ -79,6 +79,7 @@ export default function FoodDetail() {
         price: data.price,
         image: firstImage,
         comprehensiveScore: data.comprehensive_score != null ? Number(data.comprehensive_score) : null,
+        shopName: data.shop_name ?? undefined,
       };
     },
   });
@@ -241,7 +242,6 @@ export default function FoodDetail() {
     <div className="food-detail-page">
       <DetailPageLayout
         className="food-detail-layout"
-        asideSticky
         header={(
           <PageHeader
             eyebrow="Campus Canteen"
@@ -249,7 +249,7 @@ export default function FoodDetail() {
             description={food.description || 'See the dish first, then decide from price, score and recent student reviews.'}
             backTo={food.shop_id ? `/eat/merchant/${food.shop_id}` : '/eat'}
             backLabel="Back"
-            meta={metaItems}
+            meta={[]}
             actions={(
               <>
                 <Button variant="secondary" size="sm" onClick={handleReview}>
@@ -317,6 +317,11 @@ export default function FoodDetail() {
                 {ratingDisplay != null ? `综合展示 ${ratingDisplay} / 5` : '还没有足够评分'}
               </p>
               {food.description ? <p className="food-detail-summary-card__desc">{food.description}</p> : null}
+              {food.shop_id ? (
+                <Link to={`/eat/merchant/${food.shop_id}`} className="food-detail-shop-link">
+                  {food.shopName || '查看商家'}
+                </Link>
+              ) : null}
             </div>
           </Card>
         )}
