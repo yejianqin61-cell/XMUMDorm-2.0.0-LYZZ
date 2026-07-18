@@ -12,6 +12,10 @@
   gap: var(--space-4);
 }
 
+.post-detail-layout .detail-page-layout__main {
+  max-width: none;
+}
+
 .post-detail-empty {
   text-align: center;
   color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));

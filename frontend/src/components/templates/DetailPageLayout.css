@@ -17,9 +17,13 @@
 
 .detail-page-layout__content-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-6);
   align-items: start;
+}
+
+.detail-page-layout__content-grid--with-aside {
+  grid-template-columns: minmax(0, 1fr) 320px;
 }
 
 .detail-page-layout__main {
@@ -47,7 +51,7 @@
 }
 
 @media (max-width: 1080px) {
-  .detail-page-layout__content-grid {
+  .detail-page-layout__content-grid--with-aside {
     grid-template-columns: minmax(0, 1fr);
   }
 
