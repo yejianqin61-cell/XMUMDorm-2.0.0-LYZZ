@@ -20,6 +20,8 @@
 
 .site-web-shell__header {
   position: static;
+  display: flex;
+  align-items: center;
   min-height: 120px;
   padding: var(--space-6) var(--layout-page-padding);
   background:
@@ -56,19 +58,13 @@
 }
 
 .site-web-shell__brand-copy strong {
-  font-size: var(--font-size-body-lg);
+  font-size: 28px;
   line-height: var(--line-height-tight);
-}
-
-.site-web-shell__brand-copy span {
-  color: rgba(255, 255, 255, 0.82);
-  font-size: var(--font-size-caption);
-  line-height: var(--line-height-normal);
 }
 
 .site-web-shell__header-meta {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--space-6);
   flex-wrap: wrap;
   justify-content: flex-end;
@@ -555,7 +551,6 @@
     gap: var(--space-4);
   }
 
-  .site-web-shell__brand-copy span,
   .site-web-shell__header-action-label,
   .site-web-shell__lang-switch .site-web-shell__header-action-label {
     display: none;

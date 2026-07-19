@@ -21,8 +21,7 @@ export default function SiteHeader({ children = null, className = '' }) {
           <>
             <Link to="/about" className="site-web-shell__brand">
               <div className="site-web-shell__brand-copy">
-                <strong>XMUMDorm</strong>
-                <span>{isZh ? '校园生活主站' : 'Campus Web Portal'}</span>
+                <strong>Dorm</strong>
               </div>
             </Link>
             <div className="site-web-shell__header-meta">
