@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion as Motion } from 'framer-motion';
 import { getApiErrorMessage } from '@shared/utils/apiError';
+import { useLanguage } from '../context/LanguageContext';
 import { sendVerificationCode, register as apiRegister } from '@shared/api/auth';
 import AuthPageShell from '../components/auth/AuthPageShell';
 import MascotHero from '../components/auth/MascotHero';
@@ -26,6 +27,7 @@ function Register() {
   const [codeCountdown, setCodeCountdown] = useState(0);
 
   const navigate = useNavigate();
+  const { isZh } = useLanguage();
 
   const showMsg = (text, type = 'error') => {
     setMessage({ text, type });
@@ -39,26 +41,26 @@ function Register() {
       const em = email.trim();
       const un = username.trim();
       if (!em || !un || !password) {
-        showMsg('Please fill in email, username and password', 'error');
+        showMsg(isZh ? '请填写邮箱、用户名和密码' : 'Enter your email, username, and password', 'error');
         return;
       }
       if (!em.endsWith('@xmu.edu.my')) {
-        showMsg('Email must be @xmu.edu.my', 'error');
+        showMsg(isZh ? '邮箱须以 @xmu.edu.my 结尾' : 'Email must end in @xmu.edu.my', 'error');
         return;
       }
       if (password.length < 6) {
-        showMsg('Password must be at least 6 characters', 'error');
+        showMsg(isZh ? '密码至少需要 6 位' : 'Password must be at least 6 characters', 'error');
         return;
       }
     } else {
       const un = username.trim();
       const code = inviteCode.trim();
       if (!un || !password || !code) {
-        showMsg('Please fill in username, password and invite code', 'error');
+        showMsg(isZh ? '请填写用户名、密码和邀请码' : 'Enter your username, password, and invite code', 'error');
         return;
       }
       if (password.length < 6) {
-        showMsg('Password must be at least 6 characters', 'error');
+        showMsg(isZh ? '密码至少需要 6 位' : 'Password must be at least 6 characters', 'error');
         return;
       }
     }
@@ -86,7 +88,7 @@ function Register() {
       if (result.success) {
         if (result.token) localStorage.setItem('token', result.token);
         if (result.data) localStorage.setItem('user', JSON.stringify(result.data));
-        showMsg('Register success, redirecting…', 'success');
+        showMsg(isZh ? '注册成功，正在跳转…' : 'Registration successful. Redirecting…', 'success');
         setTimeout(() => navigate('/', { replace: true }), 500);
       } else {
         showMsg(result.message || getApiErrorMessage({}), 'error');
@@ -103,7 +105,7 @@ function Register() {
 
   return (
     <AuthPageShell dense>
-      <motion.div
+      <Motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
@@ -115,7 +117,7 @@ function Register() {
             <div
               className="relative mb-4 flex w-full gap-0 rounded-full bg-slate-100 p-1"
               role="tablist"
-              aria-label="Select account type"
+              aria-label={isZh ? '选择账号类型' : 'Select account type'}
             >
               <motion.div
                 layoutId="register-role-pill"
@@ -131,7 +133,7 @@ function Register() {
                 className={`${tabBase} ${role === ROLE_STUDENT ? 'text-slate-900' : 'text-slate-500 hover:text-slate-800'}`}
                 onClick={() => setRole(ROLE_STUDENT)}
               >
-                Student
+                {isZh ? '学生' : 'Student'}
               </button>
               <button
                 type="button"
@@ -140,7 +142,7 @@ function Register() {
                 className={`${tabBase} ${role === ROLE_MERCHANT ? 'text-slate-900' : 'text-slate-500 hover:text-slate-800'}`}
                 onClick={() => setRole(ROLE_MERCHANT)}
               >
-                Merchant
+                {isZh ? '商家' : 'Merchant'}
               </button>
             </div>
 
@@ -149,13 +151,13 @@ function Register() {
             <>
               <div className="space-y-1.5">
                 <label htmlFor="reg-email" className="block pl-0.5 text-xs font-medium tracking-wide text-slate-700">
-                  School email
+                  {isZh ? '学校邮箱' : 'School email'}
                 </label>
                 <div className="relative">
                   <input
                     id="reg-email"
                     type="text"
-                    placeholder="yourname"
+                    placeholder={isZh ? '输入邮箱前缀' : 'Enter your email prefix'}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     autoComplete="email"
@@ -168,13 +170,13 @@ function Register() {
                     </span>
                   )}
                 </div>
-                <p className="pl-0.5 text-[11px] font-medium text-slate-400">Use your campus email ending with @xmu.edu.my</p>
+                <p className="pl-0.5 text-[11px] font-medium text-slate-400">{isZh ? '请使用以 @xmu.edu.my 结尾的校园邮箱' : 'Use your campus email ending with @xmu.edu.my'}</p>
               </div>
               <InputField
                 id="reg-username"
-                label="Username"
+                label={isZh ? '用户名' : 'Username'}
                 type="text"
-                placeholder="Enter your username"
+                placeholder={isZh ? '输入用户名' : 'Enter your username'}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 autoComplete="username"
@@ -182,9 +184,9 @@ function Register() {
               />
               <InputField
                 id="reg-pwd"
-                label="Password (≥ 6)"
+                label={isZh ? '密码（至少 6 位）' : 'Password (min. 6 characters)'}
                 type="password"
-                placeholder="At least 6 characters"
+                placeholder={isZh ? '至少 6 位' : 'At least 6 characters'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="new-password"
@@ -195,13 +197,13 @@ function Register() {
                   htmlFor="reg-code"
                   className="block pl-0.5 text-xs font-medium tracking-wide text-slate-700"
                 >
-                  Verification code
+                  {isZh ? '验证码' : 'Verification code'}
                 </label>
                 <div className="relative">
                   <input
                     id="reg-code"
                     type="text"
-                    placeholder="Enter the code"
+                    placeholder={isZh ? '输入验证码' : 'Enter the code'}
                     value={verificationCode}
                     onChange={(e) => setVerificationCode(e.target.value)}
                     disabled={loading}
@@ -213,18 +215,18 @@ function Register() {
                     onClick={async () => {
                       const em = email.trim();
                       if (!em) {
-                        showMsg('Please fill in email first', 'error');
+                        showMsg(isZh ? '请先填写邮箱' : 'Enter your email first', 'error');
                         return;
                       }
                       if (!em.endsWith('@xmu.edu.my')) {
-                        showMsg('Email must be @xmu.edu.my', 'error');
+                        showMsg(isZh ? '邮箱须以 @xmu.edu.my 结尾' : 'Email must end in @xmu.edu.my', 'error');
                         return;
                       }
                       try {
                         setSendingCode(true);
                         const res = await sendVerificationCode(em);
                         if (res.success) {
-                          showMsg(res.message || 'Code sent', 'success');
+                          showMsg(res.message || (isZh ? '验证码已发送' : 'Code sent'), 'success');
                           setCodeCountdown(60);
                           const timer = setInterval(() => {
                             setCodeCountdown((prev) => {
@@ -236,7 +238,7 @@ function Register() {
                             });
                           }, 1000);
                         } else {
-                          showMsg(res.message || 'Failed to send code', 'error');
+                          showMsg(res.message || (isZh ? '验证码发送失败' : 'Failed to send code'), 'error');
                         }
                       } catch (err) {
                         showMsg(getApiErrorMessage(err), 'error');
@@ -246,7 +248,7 @@ function Register() {
                     }}
                     className="absolute inset-y-0 right-2 my-2 rounded-lg px-2 text-[12px] font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-45"
                   >
-                    {codeCountdown > 0 ? `${codeCountdown}s` : sendingCode ? '…' : 'Send'}
+                    {codeCountdown > 0 ? `${codeCountdown}s` : sendingCode ? '…' : (isZh ? '发送' : 'Send')}
                   </button>
                 </div>
               </div>
@@ -254,13 +256,13 @@ function Register() {
           ) : (
             <>
               <p className="rounded-xl bg-slate-50 px-3 py-2 text-[12px] font-medium text-slate-600 ring-1 ring-slate-200">
-                Merchant sign-up requires an invite code.
+                {isZh ? '商家注册需要邀请码。' : 'Merchant registration requires an invite code.'}
               </p>
               <InputField
                 id="reg-merchant-username"
-                label="Username"
+                label={isZh ? '用户名' : 'Username'}
                 type="text"
-                placeholder="Enter your username"
+                placeholder={isZh ? '输入用户名' : 'Enter your username'}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 autoComplete="username"
@@ -268,9 +270,9 @@ function Register() {
               />
               <InputField
                 id="reg-merchant-pwd"
-                label="Password (≥ 6)"
+                label={isZh ? '密码（至少 6 位）' : 'Password (min. 6 characters)'}
                 type="password"
-                placeholder="At least 6 characters"
+                placeholder={isZh ? '至少 6 位' : 'At least 6 characters'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="new-password"
@@ -278,9 +280,9 @@ function Register() {
               />
               <InputField
                 id="reg-invite"
-                label="Invite code"
+                label={isZh ? '邀请码' : 'Invite code'}
                 type="text"
-                placeholder="Enter invite code"
+                placeholder={isZh ? '输入邀请码' : 'Enter invite code'}
                 value={inviteCode}
                 onChange={(e) => setInviteCode(e.target.value)}
                 autoComplete="off"
@@ -309,17 +311,17 @@ function Register() {
               disabled={loading}
               className="!py-3 !text-[15px]"
             >
-              {loading ? 'Registering…' : 'Register'}
+              {loading ? (isZh ? '注册中…' : 'Registering…') : (isZh ? '注册' : 'Register')}
             </Button>
           </div>
         </form>
           </LoginCard>
         </div>
-      </motion.div>
+      </Motion.div>
 
-      <nav className="mt-3 shrink-0 flex w-full max-w-4xl flex-col px-0.5 pb-1" aria-label="Back to login">
+      <nav className="mt-3 shrink-0 flex w-full max-w-4xl flex-col px-0.5 pb-1" aria-label={isZh ? '返回登录' : 'Back to login'}>
         <Button as={Link} variant="skip" to="/login" className="!py-2 !text-[13px]">
-          Back to Login
+          {isZh ? '返回登录' : 'Back to login'}
         </Button>
       </nav>
     </AuthPageShell>

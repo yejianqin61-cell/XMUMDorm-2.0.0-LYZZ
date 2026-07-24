@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { sendResetCode, resetPassword } from '@shared/api/auth';
 import { getApiErrorMessage } from '@shared/utils/apiError';
+import { useLanguage } from '../context/LanguageContext';
 import AuthPageShell from '../components/auth/AuthPageShell';
 import MascotHero from '../components/auth/MascotHero';
 import LoginCard from '../components/auth/LoginCard';
@@ -19,6 +20,7 @@ function ResetPassword() {
   const [codeCountdown, setCodeCountdown] = useState(0);
 
   const navigate = useNavigate();
+  const { isZh } = useLanguage();
 
   const showMsg = (text, type = 'error') => {
     setMessage({ text, type });
@@ -28,18 +30,18 @@ function ResetPassword() {
   const handleSendCode = async () => {
     const em = email.trim();
     if (!em) {
-      showMsg('Please fill in email first', 'error');
+      showMsg(isZh ? '请先填写邮箱' : 'Enter your email first', 'error');
       return;
     }
     if (!em.endsWith('@xmu.edu.my')) {
-      showMsg('Email must be @xmu.edu.my', 'error');
+      showMsg(isZh ? '邮箱须以 @xmu.edu.my 结尾' : 'Email must end in @xmu.edu.my', 'error');
       return;
     }
     try {
       setSendingCode(true);
       const res = await sendResetCode(em);
       if (res.success) {
-        showMsg(res.message || 'Code sent', 'success');
+        showMsg(res.message || (isZh ? '验证码已发送' : 'Code sent'), 'success');
         setCodeCountdown(60);
         const timer = setInterval(() => {
           setCodeCountdown((prev) => {
@@ -51,7 +53,7 @@ function ResetPassword() {
           });
         }, 1000);
       } else {
-        showMsg(res.message || 'Failed to send code', 'error');
+        showMsg(res.message || (isZh ? '验证码发送失败' : 'Failed to send code'), 'error');
       }
     } catch (err) {
       showMsg(getApiErrorMessage(err), 'error');
@@ -64,15 +66,15 @@ function ResetPassword() {
     e.preventDefault();
     const em = email.trim();
     if (!em || !code.trim() || !newPassword) {
-      showMsg('Please fill in email, code and new password', 'error');
+      showMsg(isZh ? '请填写邮箱、验证码和新密码' : 'Enter your email, code, and new password', 'error');
       return;
     }
     if (!em.endsWith('@xmu.edu.my')) {
-      showMsg('Email must be @xmu.edu.my', 'error');
+      showMsg(isZh ? '邮箱须以 @xmu.edu.my 结尾' : 'Email must end in @xmu.edu.my', 'error');
       return;
     }
     if (newPassword.length < 6) {
-      showMsg('Password must be at least 6 characters', 'error');
+      showMsg(isZh ? '密码至少需要 6 位' : 'Password must be at least 6 characters', 'error');
       return;
     }
     setLoading(true);
@@ -84,10 +86,10 @@ function ResetPassword() {
         new_password: newPassword,
       });
       if (res.success) {
-        showMsg(res.message || 'Password reset success', 'success');
+        showMsg(res.message || (isZh ? '密码已重置' : 'Password reset successful'), 'success');
         setTimeout(() => navigate('/login', { replace: true }), 800);
       } else {
-        showMsg(res.message || 'Password reset failed', 'error');
+        showMsg(res.message || (isZh ? '密码重置失败' : 'Password reset failed'), 'error');
       }
     } catch (err) {
       showMsg(getApiErrorMessage(err), 'error');
@@ -105,9 +107,9 @@ function ResetPassword() {
           <form className="flex flex-1 flex-col space-y-4" onSubmit={handleSubmit}>
             <InputField
               id="reset-email"
-              label="School email (@xmu.edu.my)"
+              label={isZh ? '学校邮箱（@xmu.edu.my）' : 'School email (@xmu.edu.my)'}
               type="email"
-              placeholder="Enter your email"
+              placeholder={isZh ? '输入邮箱' : 'Enter your email'}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
@@ -120,13 +122,13 @@ function ResetPassword() {
                 htmlFor="reset-code"
                 className="block pl-0.5 text-[10px] font-semibold leading-tight text-zinc-800/80"
               >
-                Verification code
+                {isZh ? '验证码' : 'Verification code'}
               </label>
               <div className="flex gap-1.5">
                 <input
                   id="reset-code"
                   type="text"
-                  placeholder="Enter the code"
+                  placeholder={isZh ? '输入验证码' : 'Enter the code'}
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                   disabled={loading}
@@ -140,16 +142,16 @@ function ResetPassword() {
                   onClick={handleSendCode}
                   className="shrink-0 rounded-full border border-white/50 bg-gradient-to-r from-sky-500 to-cyan-400 px-2 py-1.5 text-[10px] font-bold text-zinc-900 shadow-md disabled:opacity-45 sm:px-2.5 sm:text-xs"
                 >
-                  {codeCountdown > 0 ? `${codeCountdown}s` : sendingCode ? '…' : 'Send'}
+                  {codeCountdown > 0 ? `${codeCountdown}s` : sendingCode ? '…' : (isZh ? '发送' : 'Send')}
                 </button>
               </div>
             </div>
 
             <InputField
               id="reset-pwd"
-              label="New password (≥ 6)"
+              label={isZh ? '新密码（至少 6 位）' : 'New password (min. 6 characters)'}
               type="password"
-              placeholder="Enter new password"
+              placeholder={isZh ? '输入新密码' : 'Enter your new password'}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               autoComplete="new-password"
@@ -177,7 +179,7 @@ function ResetPassword() {
                 disabled={loading}
                 className="!py-3 !text-sm font-bold sm:!py-3.5"
               >
-                {loading ? 'Submitting…' : 'Confirm'}
+                {loading ? (isZh ? '提交中…' : 'Submitting…') : (isZh ? '确认' : 'Confirm')}
               </Button>
             </div>
           </form>
@@ -185,9 +187,9 @@ function ResetPassword() {
         </div>
       </div>
 
-      <nav className="mt-1 flex w-full max-w-4xl flex-col px-0.5 pb-1" aria-label="Back to login">
+      <nav className="mt-1 flex w-full max-w-4xl flex-col px-0.5 pb-1" aria-label={isZh ? '返回登录' : 'Back to login'}>
         <Button as={Link} variant="ghost" to="/login" className="!py-2 !text-xs">
-          Back to Login
+          {isZh ? '返回登录' : 'Back to login'}
         </Button>
       </nav>
     </AuthPageShell>

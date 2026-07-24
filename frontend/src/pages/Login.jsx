@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion as Motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useExpFeedback } from '../context/ExpFeedbackContext';
+import { useLanguage } from '../context/LanguageContext';
 import { Toast } from '../context/ToastContext';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import AuthPageShell from '../components/auth/AuthPageShell';
@@ -19,6 +20,7 @@ function Login() {
   const [loading, setLoading] = useState(false);
 
   const { login, skipLogin } = useAuth();
+  const { isZh } = useLanguage();
   const { handleExpResponse } = useExpFeedback();
   const navigate = useNavigate();
   const location = useLocation();
@@ -28,7 +30,7 @@ function Login() {
     e.preventDefault();
     const sid = studentIdOrEmail.trim();
     if (!sid || !password) {
-      Toast.error('请填写邮箱/用户名和密码 Please fill in email / username and password');
+      Toast.error(isZh ? '请填写邮箱或用户名和密码' : 'Enter your email or username and password');
       return;
     }
     setLoading(true);
@@ -36,7 +38,7 @@ function Login() {
       const result = await login(sid, password);
       if (result.success) {
         if (result.exp) handleExpResponse({ __exp: result.exp });
-        Toast.success('登录成功，正在跳转… Login success, redirecting…');
+        Toast.success(isZh ? '登录成功，正在跳转…' : 'Login successful. Redirecting…');
         setTimeout(() => navigate(from, { replace: true }), 500);
       } else {
         Toast.error(result.message);
@@ -55,7 +57,7 @@ function Login() {
 
   return (
     <AuthPageShell>
-      <motion.div
+      <Motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
@@ -67,9 +69,9 @@ function Login() {
           <form className="mt-0 space-y-4" onSubmit={handleSubmit}>
           <InputField
             id="login-account"
-            label="School email"
+            label={isZh ? '学校邮箱或用户名' : 'School email or username'}
             type="text"
-            placeholder="enter your email"
+            placeholder={isZh ? '输入邮箱或用户名' : 'Enter your email or username'}
             value={studentIdOrEmail}
             onChange={(e) => setStudentIdOrEmail(e.target.value)}
             autoComplete="username"
@@ -77,9 +79,9 @@ function Login() {
           />
           <InputField
             id="login-pwd"
-            label="Password"
+            label={isZh ? '密码' : 'Password'}
             type="password"
-            placeholder="enter password"
+            placeholder={isZh ? '输入密码' : 'Enter your password'}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"
@@ -87,23 +89,23 @@ function Login() {
           />
           <div className="space-y-3 pt-1">
             <Button type="submit" variant="primary" disabled={loading}>
-              {loading ? '登录中…' : 'login'}
+              {loading ? (isZh ? '登录中…' : 'Logging in…') : (isZh ? '登录' : 'Log in')}
             </Button>
             <div className="flex items-center justify-between pt-1 text-[13px] font-medium text-slate-500">
               <Link to="/register" className="hover:text-slate-900">
-                Register
+                {isZh ? '注册' : 'Register'}
               </Link>
               <Link to="/reset-password" className="hover:text-slate-900">
-                Reset password
+                {isZh ? '重置密码' : 'Reset password'}
               </Link>
               <button type="button" onClick={handleSkip} className="hover:text-slate-900" disabled={loading}>
-                Skip
+                {isZh ? '暂不登录' : 'Skip'}
               </button>
             </div>
           </div>
         </form>
         </LoginCard>
-      </motion.div>
+      </Motion.div>
     </AuthPageShell>
   );
 }

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import Button from './Button';
+import { useLanguage } from '../../context/LanguageContext';
 import './Modal.css';
 
 const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
@@ -17,6 +18,7 @@ export default function Modal({
   closeOnBackdrop = true,
   closeOnEscape = true,
 }) {
+  const { isZh } = useLanguage();
   const dialogRef = useRef(null);
   const previousFocusRef = useRef(null);
 
@@ -77,7 +79,7 @@ export default function Modal({
         <button
           type="button"
           className="ui-modal__backdrop"
-          aria-label="Close modal"
+          aria-label={isZh ? '关闭弹窗' : 'Close modal'}
           onClick={onClose}
         />
       ) : (
@@ -97,7 +99,7 @@ export default function Modal({
               size="sm"
               className="ui-modal__close"
               onClick={onClose}
-              aria-label="Close modal"
+              aria-label={isZh ? '关闭弹窗' : 'Close modal'}
             >
               <X size={16} />
             </Button>

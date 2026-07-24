@@ -1,21 +1,23 @@
 import { X } from 'lucide-react';
 import Button from './Button';
+import { useLanguage } from '../../context/LanguageContext';
 import './Toast.css';
 
 const TITLE_MAP = {
-  success: 'Success',
-  error: 'Error',
-  info: 'Notice',
+  zh: { success: '成功', error: '错误', info: '提示' },
+  en: { success: 'Success', error: 'Error', info: 'Notice' },
 };
 
 export function ToastView({ toast, onDismiss }) {
   const { id, type = 'info', title, message } = toast;
+  const { isZh } = useLanguage();
+  const titles = isZh ? TITLE_MAP.zh : TITLE_MAP.en;
 
   return (
     <div className={`ui-toast ui-toast--${type}`} role="alert" aria-live="polite">
       <span className="ui-toast__marker" aria-hidden="true" />
       <div className="ui-toast__content">
-        <p className="ui-toast__title">{title || TITLE_MAP[type] || TITLE_MAP.info}</p>
+        <p className="ui-toast__title">{title || titles[type] || titles.info}</p>
         <p className="ui-toast__message">{message}</p>
       </div>
       <Button
@@ -24,7 +26,7 @@ export function ToastView({ toast, onDismiss }) {
         size="sm"
         className="ui-toast__dismiss"
         onClick={() => onDismiss?.(id)}
-        aria-label="Dismiss notification"
+        aria-label={isZh ? '关闭通知' : 'Dismiss notification'}
       >
         <X size={14} />
       </Button>
