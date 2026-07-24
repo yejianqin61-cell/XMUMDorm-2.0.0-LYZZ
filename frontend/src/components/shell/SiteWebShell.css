@@ -102,25 +102,7 @@
 }
 
 .site-web-shell__lang-switch {
-  color: rgba(255, 255, 255, 0.76);
-}
-
-.site-web-shell__lang-btn {
-  border: none;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-size: var(--font-size-caption);
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.site-web-shell__lang-btn--active {
   color: #fff;
-}
-
-.site-web-shell__lang-sep {
-  margin: 0 6px;
 }
 
 .site-web-shell__profile-entry {

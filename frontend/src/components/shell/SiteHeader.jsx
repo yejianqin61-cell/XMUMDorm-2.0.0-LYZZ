@@ -25,26 +25,16 @@ export default function SiteHeader({ children = null, className = '' }) {
               </div>
             </Link>
             <div className="site-web-shell__header-meta">
-              <div className="site-web-shell__header-action site-web-shell__lang-switch" role="group" aria-label={isZh ? '语言切换' : 'Language switch'}>
+              <button
+                type="button"
+                className="site-web-shell__header-action site-web-shell__lang-switch"
+                onClick={() => setLang(isZh ? 'en' : 'zh')}
+                aria-label={isZh ? '切换为英文' : 'Switch to Chinese'}
+                title={isZh ? '切换为英文' : 'Switch to Chinese'}
+              >
                 <Languages size={20} strokeWidth={2} aria-hidden="true" />
-                <span className="site-web-shell__header-action-label">
-                  <button
-                    type="button"
-                    className={joinClassNames('site-web-shell__lang-btn', isZh && 'site-web-shell__lang-btn--active')}
-                    onClick={() => setLang('zh')}
-                  >
-                    中
-                  </button>
-                  <span className="site-web-shell__lang-sep">/</span>
-                  <button
-                    type="button"
-                    className={joinClassNames('site-web-shell__lang-btn', !isZh && 'site-web-shell__lang-btn--active')}
-                    onClick={() => setLang('en')}
-                  >
-                    EN
-                  </button>
-                </span>
-              </div>
+                <span className="site-web-shell__header-action-label">{isZh ? 'EN' : '中'}</span>
+              </button>
               <Link to="/publish" className="site-web-shell__header-action" title={isZh ? '发布中心' : 'Publish'}>
                 <PenLine size={20} strokeWidth={2} aria-hidden="true" />
                 <span className="site-web-shell__header-action-label">{isZh ? '发布' : 'Publish'}</span>

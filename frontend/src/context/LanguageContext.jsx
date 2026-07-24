@@ -5,30 +5,33 @@ const LanguageContext = createContext({
   setLang: () => {},
 });
 
+function readInitialLanguage() {
+  if (typeof window === 'undefined') return 'zh';
+
+  try {
+    return window.localStorage.getItem('dorm-lang') === 'en' ? 'en' : 'zh';
+  } catch {
+    return 'zh';
+  }
+}
+
 export function LanguageProvider({ children }) {
-  const [lang, setLangState] = useState('zh');
+  const [lang, setLangState] = useState(readInitialLanguage);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+
+    document.documentElement.lang = lang === 'en' ? 'en' : 'zh-CN';
+
     try {
-      const stored = window.localStorage.getItem('dorm-lang');
-      if (stored === 'zh' || stored === 'en') {
-        setLangState(stored);
-      }
+      window.localStorage.setItem('dorm-lang', lang);
     } catch {
       // ignore
     }
-  }, []);
+  }, [lang]);
 
   const setLang = (next) => {
-    setLangState(next);
-    if (typeof window !== 'undefined') {
-      try {
-        window.localStorage.setItem('dorm-lang', next);
-      } catch {
-        // ignore
-      }
-    }
+    setLangState(next === 'en' ? 'en' : 'zh');
   };
 
   return (
