@@ -603,7 +603,7 @@ function TreeHole() {
           )}
           {hasNextPage && (
             <button type="button" className="treehole-load-more" onClick={loadMore} disabled={isFetchingNextPage}>
-              {isFetchingNextPage ? '加载中…' : '加载更多'}
+              {isFetchingNextPage ? (isZh ? '加载中…' : 'Loading…') : (isZh ? '加载更多' : 'Load more')}
             </button>
           )}
         </>
@@ -647,7 +647,7 @@ function TreeHole() {
         </div>
       ) : null}
       {errorMsg && (
-        <ErrorState className="treehole-error" title="树洞加载失败" description={errorMsg} />
+        <ErrorState className="treehole-error" title={isZh ? '树洞加载失败' : 'Failed to load TreeHole'} description={errorMsg} />
       )}
     </RouteTransition>
   );

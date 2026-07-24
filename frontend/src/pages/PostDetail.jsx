@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
+import { motion as Motion } from 'framer-motion';
 import { ArrowLeft, Heart, MessageCircle, MoreHorizontal, SendHorizonal } from 'lucide-react';
 import ReportButton from '../components/ReportButton';
 import { useAuth } from '../context/AuthContext';
@@ -313,7 +313,7 @@ function PostDetail() {
         });
       });
 
-      Toast.success('评论成功');
+      Toast.success(isEn ? 'Comment posted' : '评论成功');
     } catch (error) {
       queryClient.setQueryData(QK.postComments(postId), prevComments);
       queryClient.setQueryData(QK.postDetail(postId, tokenKey), prevDetail);
@@ -564,7 +564,7 @@ function PostDetail() {
             ) : null}
 
             <div className="post-detail-actions">
-              <motion.button
+<Motion.button
                 type="button"
                 className={`post-detail-like-btn ${liked ? 'is-liked' : ''}`}
                 onClick={handleLike}
@@ -574,7 +574,7 @@ function PostDetail() {
               >
                 <Heart size={18} aria-hidden fill={liked ? 'currentColor' : 'none'} />
                 <span className="post-detail-like-count">{likeCount}</span>
-              </motion.button>
+</Motion.button>
               <button
                 type="button"
                 className="post-detail-comment-count"

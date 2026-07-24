@@ -97,7 +97,7 @@ function PostSearch() {
       </header>
       {!q && (
         <p className="post-search-empty-msg">
-          {isZh ? '请输入关键词后再搜索。Enter a keyword to search.' : 'Enter a keyword to search.'}
+          {isZh ? '请输入关键词后再搜索。' : 'Enter a keyword to search.'}
         </p>
       )}
       {error && (
@@ -124,13 +124,13 @@ function PostSearch() {
         <div className="treehole-content">
           <div className="post-search-results-head">
             <p className="post-search-hint">
-              {isZh ? '搜索 Search：' : 'Search：'}
+              {isZh ? '搜索：' : 'Search:'}
               <strong>{q || (isZh ? '（空）' : '(empty)')}</strong>
             </p>
           </div>
           {q && list.length === 0 && !loading && (
             <p className="post-search-no-result">
-              {isZh ? '没有相关帖子。No matching posts.' : 'No matching posts.'}
+              {isZh ? '没有相关帖子。' : 'No matching posts.'}
             </p>
           )}
           <div className="treehole-grid">
@@ -153,7 +153,7 @@ function PostSearch() {
         </div>
       )}
       <Link to="/" className="post-search-back-home">
-        {isZh ? '返回树洞首页 Back to Tree Hole' : 'Back to Tree Hole'}
+        {isZh ? '返回树洞首页' : 'Back to TreeHole'}
       </Link>
     </div>
       }

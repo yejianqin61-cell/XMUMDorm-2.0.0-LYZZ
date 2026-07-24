@@ -117,7 +117,7 @@ export default function PostNew() {
 
       const created = await createPost(payload);
       handleExpResponse(created);
-      Toast.success(isAdmin ? '公告发布成功' : '发布成功');
+      Toast.success(isAdmin ? (isEn ? 'Announcement published' : '公告发布成功') : (isEn ? 'Post published' : '发布成功'));
 
       const createdTagSlugs = new Set((created?.tags || []).map((tag) => tag?.slug).filter(Boolean));
       const hasFoodSquareTag =
@@ -164,10 +164,10 @@ export default function PostNew() {
     }
   };
 
-  const pageTitle = isAdmin ? '发布公告' : '发布帖子';
+  const pageTitle = isAdmin ? (isEn ? 'Publish announcement' : '发布公告') : (isEn ? 'Publish post' : '发布帖子');
   const pageDescription = isAdmin
-    ? '把公告内容整理清楚，发布后会在用户登录时弹出提醒，并沉淀到邮箱。'
-    : '先把标题、内容、标签和图片整理好，再一次性发布，让内容和分发路径都更清晰。';
+    ? (isEn ? 'Publish an announcement to notify users and save it in their mailbox.' : '公告会在用户登录时弹出提醒，并同步保存到邮箱。')
+    : (isEn ? 'Add a title, content, tags, and images before publishing.' : '填写标题、内容、标签和图片后发布。');
 
   return (
     <div className="postnew-page">
@@ -176,27 +176,27 @@ export default function PostNew() {
         asideSticky
         header={(
           <PageHeader
-            eyebrow={isAdmin ? 'Announcement Desk' : 'Campus Square'}
+            eyebrow={isAdmin ? (isEn ? 'Announcements' : '公告') : (isEn ? 'Campus Square' : '校园广场')}
             title={pageTitle}
             description={pageDescription}
             backTo={preselectTagSlug === FOOD_SQUARE_TAG_SLUG ? '/eat' : '/'}
-            backLabel="Back"
+            backLabel={isEn ? 'Back' : '返回'}
             meta={[
-              { key: 'images', label: `${previewUrls.length}/3 Images` },
-              { key: 'tags', label: `${selectedTagIds.length}/3 Tags` },
+              { key: 'images', label: isEn ? `${previewUrls.length}/3 images` : `${previewUrls.length}/3 张图片` },
+              { key: 'tags', label: isEn ? `${selectedTagIds.length}/3 tags` : `${selectedTagIds.length}/3 个标签` },
             ]}
           />
         )}
         notice={(
           <Card className="postnew-notice-card" padding="lg">
             <SectionHeader
-              title={isAdmin ? '发布说明' : '发帖说明'}
+              title={isAdmin ? (isEn ? 'Announcement' : '发布说明') : (isEn ? 'Posting' : '发帖说明')}
               description={
                 isAdmin
-                  ? '公告会在用户登录时弹出提示，并同步进入邮箱长期保存。'
+                  ? (isEn ? 'Users will see this announcement when they log in, and it will be saved in their mailbox.' : '公告会在用户登录时弹出提示，并同步保存到邮箱。')
                   : preselectTagSlug === FOOD_SQUARE_TAG_SLUG
-                    ? '当前会同步发布到吃货广场，请保留相关标签，帖子仍然以匿名方式展示。'
-                    : '帖子会以匿名方式展示，收到点赞或评论时，邮箱中会收到提醒。'
+                    ? (isEn ? 'This post will also appear in Food Square and remain anonymous.' : '当前会同步发布到吃货广场，帖子仍会匿名展示。')
+                    : (isEn ? 'Posts are anonymous. Likes and comments will appear in your mailbox.' : '帖子会匿名展示；收到点赞或评论时，邮箱会收到提醒。')
               }
             />
           </Card>
@@ -205,8 +205,8 @@ export default function PostNew() {
           <>
             <Card className="postnew-form-card" padding="lg">
               <SectionHeader
-                title="内容信息"
-                description="先填写帖子主体内容，再决定图片和标签。"
+                title={isEn ? 'Content' : '内容信息'}
+                description={isEn ? 'Write the post, then add images and tags.' : '填写内容后，再添加图片和标签。'}
               />
               <form className="postnew-form" onSubmit={handleSubmit}>
                 {!isAdmin && allTags.length > 0 ? (
@@ -254,8 +254,8 @@ export default function PostNew() {
 
                 <div className="postnew-section">
                   <Textarea
-                    label={isAdmin ? '公告内容 Announcement' : '内容 Content'}
-                    placeholder={isAdmin ? '写下要通知全站的内容...' : '写点什么... Share something...'}
+                    label={isAdmin ? (isEn ? 'Announcement' : '公告内容') : (isEn ? 'Content' : '内容')}
+                    placeholder={isAdmin ? (isEn ? 'Write your announcement...' : '写下要通知全站的内容...') : (isEn ? 'Write something...' : '写点什么...')}
                     value={content}
                     onChange={(event) => setContent(event.target.value)}
                     rows={8}
@@ -263,7 +263,7 @@ export default function PostNew() {
                 </div>
 
                 <div className="postnew-section">
-                  <label className="postnew-label">图片 Pictures（最多 3 张 / up to 3）</label>
+                  <label className="postnew-label">{isEn ? 'Images (up to 3)' : '图片（最多 3 张）'}</label>
                   <div className="postnew-images">
                     {previewUrls.map((url, index) => (
                       <div key={url} className="postnew-image-wrap">
@@ -272,7 +272,7 @@ export default function PostNew() {
                           type="button"
                           className="postnew-image-remove"
                           onClick={() => removeImage(index)}
-                          aria-label="移除 Remove"
+                          aria-label={isEn ? 'Remove image' : '移除图片'}
                         >
                           ×
                         </button>
@@ -301,7 +301,7 @@ export default function PostNew() {
                     loading={loading}
                     disabled={!isAdmin && !title.trim() ? true : !content.trim()}
                   >
-                    {loading ? (isAdmin ? '发布公告中...' : '发布中...') : (isAdmin ? '发布公告' : '发布帖子')}
+                    {loading ? (isAdmin ? (isEn ? 'Publishing announcement…' : '发布公告中…') : (isEn ? 'Publishing…' : '发布中…')) : (isAdmin ? (isEn ? 'Publish announcement' : '发布公告') : (isEn ? 'Publish post' : '发布帖子'))}
                   </Button>
                 </div>
               </form>
@@ -312,36 +312,36 @@ export default function PostNew() {
           <>
             <Card className="postnew-aside-card" padding="lg">
               <SectionHeader
-                title="发布检查"
-                description="提交前快速确认这几个高频项。"
+                title={isEn ? 'Before publishing' : '发布检查'}
+                description={isEn ? 'Check these items before submitting.' : '提交前快速确认。'}
               />
               <div className="postnew-aside-checks">
                 <div className="postnew-aside-check">
-                  <span>标题</span>
-                  <strong>{isAdmin ? '可选' : `${title.trim().length > 0 ? '已填写' : '未填写'}`}</strong>
+                  <span>{isEn ? 'Title' : '标题'}</span>
+                  <strong>{isAdmin ? (isEn ? 'Optional' : '可选') : `${title.trim().length > 0 ? (isEn ? 'Ready' : '已填写') : (isEn ? 'Missing' : '未填写')}`}</strong>
                 </div>
                 <div className="postnew-aside-check">
-                  <span>内容</span>
-                  <strong>{content.trim().length > 0 ? '已填写' : '未填写'}</strong>
+                  <span>{isEn ? 'Content' : '内容'}</span>
+                  <strong>{content.trim().length > 0 ? (isEn ? 'Ready' : '已填写') : (isEn ? 'Missing' : '未填写')}</strong>
                 </div>
                 <div className="postnew-aside-check">
-                  <span>图片</span>
+                  <span>{isEn ? 'Images' : '图片'}</span>
                   <strong>{previewUrls.length}/3</strong>
                 </div>
                 <div className="postnew-aside-check">
-                  <span>标签</span>
+                  <span>{isEn ? 'Tags' : '标签'}</span>
                   <strong>{selectedTagIds.length}/3</strong>
                 </div>
               </div>
             </Card>
             <Card className="postnew-aside-card" padding="lg">
               <SectionHeader
-                title="发布后去向"
-                description="提前确认内容发布后的承接页面。"
+                title={isEn ? 'After publishing' : '发布后去向'}
+                description={isEn ? 'Return to the previous page.' : '发布后可返回上一入口。'}
               />
               <div className="postnew-aside-links">
                 <Button as="button" variant="secondary" size="sm" block onClick={() => navigate(preselectTagSlug === FOOD_SQUARE_TAG_SLUG ? '/eat' : '/')}>
-                  返回上一入口
+                  {isEn ? 'Back to previous page' : '返回上一入口'}
                 </Button>
               </div>
             </Card>
@@ -354,14 +354,14 @@ export default function PostNew() {
                 variant="secondary"
                 onClick={() => navigate(preselectTagSlug === FOOD_SQUARE_TAG_SLUG ? '/eat' : '/')}
               >
-                取消
+                {isEn ? 'Cancel' : '取消'}
               </Button>
               <Button
                 onClick={handleSubmit}
                 loading={loading}
                 disabled={!isAdmin && !title.trim() ? true : !content.trim()}
               >
-                {loading ? (isAdmin ? '发布公告中...' : '发布中...') : (isAdmin ? '发布公告' : '立即发布')}
+                {loading ? (isAdmin ? (isEn ? 'Publishing announcement…' : '发布公告中…') : (isEn ? 'Publishing…' : '发布中…')) : (isAdmin ? (isEn ? 'Publish announcement' : '发布公告') : (isEn ? 'Publish now' : '立即发布'))}
               </Button>
             </div>
           </div>

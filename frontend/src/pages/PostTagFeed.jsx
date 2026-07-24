@@ -129,13 +129,13 @@ function PostTagFeed() {
         <div className="treehole-content">
           <div className="post-tag-feed-results-head">
             <p className="post-tag-feed-hint">
-              {isZh ? '话题 Topic：' : 'Topic：'}
+              {isZh ? '话题：' : 'Topic:'}
               <strong>{tagLabel || slug}</strong>
             </p>
           </div>
           {list.length === 0 && !loading && (
             <p className="post-tag-feed-empty">
-              {isZh ? '该标签下暂无帖子。No posts under this tag yet.' : 'No posts under this tag yet.'}
+              {isZh ? '该标签下暂无帖子。' : 'No posts under this tag yet.'}
             </p>
           )}
           <div className="treehole-grid">
@@ -158,7 +158,7 @@ function PostTagFeed() {
         </div>
       )}
       <Link to="/" className="post-tag-feed-back">
-        {isZh ? '返回树洞首页 Back to Tree Hole' : 'Back to Tree Hole'}
+        {isZh ? '返回树洞首页' : 'Back to TreeHole'}
       </Link>
     </div>
       }

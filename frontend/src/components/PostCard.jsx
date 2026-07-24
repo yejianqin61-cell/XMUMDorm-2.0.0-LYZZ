@@ -12,18 +12,18 @@ import Tag from './ui/Tag';
 import './PostCard.css';
 
 /** 兼容 API 与 Mock：author 为对象时用 nickname/username、avatar（需补全 URL） */
-function useAuthor(post) {
+function useAuthor(post, isZh) {
   if (post.author && typeof post.author === 'object') {
     const a = post.author;
     const avatar = a.avatar ? (a.avatar.startsWith('http') ? a.avatar : `${API_BASE_URL}${a.avatar}`) : null;
     return {
-      username: a.nickname ?? a.username ?? '匿名',
+      username: a.nickname ?? a.username ?? (isZh ? '匿名' : 'Anonymous'),
       avatar,
       level: a.level,
       badgeEmoji: a.badgeEmoji,
     };
   }
-  return { username: '匿名', avatar: null, level: null };
+  return { username: isZh ? '匿名' : 'Anonymous', avatar: null, level: null };
 }
 
 function prefixImageUrl(url) {
@@ -60,11 +60,12 @@ function buildCardTags(post, lang) {
 function PostCard({ post, variant = 'list' }) {
   const { lang } = useLanguage();
   const { id, title, content, like_count, comment_count, likeCount, commentCount } = post;
-  const author = useAuthor(post);
+  const isZh = lang !== 'en';
+  const author = useAuthor(post, isZh);
   const initialLike = like_count ?? likeCount ?? 0;
   const commentNum = comment_count ?? commentCount ?? 0;
   const preview = (content || '').length > 50 ? (content || '').slice(0, 50) + '…' : (content || '');
-  const displayTitle = (title || '').trim() || preview || '无标题';
+  const displayTitle = (title || '').trim() || preview || (isZh ? '无标题' : 'Untitled');
   const timeStr = formatPostTime(post.created_at);
   const [imagePreview, setImagePreview] = useState({ open: false, index: 0 });
   const imageUrls = post.images?.length ? post.images.map((img) => prefixImageUrl(img.url)) : [];
@@ -76,7 +77,6 @@ function PostCard({ post, variant = 'list' }) {
   const { isLoggedIn } = useAuth();
   const { handleExpResponse } = useExpFeedback();
   const navigate = useNavigate();
-  const isZh = lang !== 'en';
   const [likeNum, setLikeNum] = useState(initialLike);
   const [liked, setLiked] = useState(!!post.user_liked);
 
@@ -97,7 +97,7 @@ function PostCard({ post, variant = 'list' }) {
       handleExpResponse(data);
       setLiked(data?.liked ?? !liked);
       setLikeNum((c) => (data?.liked ? c + 1 : Math.max(0, c - 1)));
-    } catch (_) {
+    } catch {
       /* 静默失败，避免打断浏览 */
     }
   };
@@ -106,7 +106,7 @@ function PostCard({ post, variant = 'list' }) {
     <>
       <div className={`post-card ${showWaterfall ? 'post-card--waterfall' : ''} ${showWaterfall && hasImages ? 'post-card--waterfall-image' : ''}`}>
         {!showWaterfall && (
-          <div className="post-card-tags" aria-label="标签 Tags">
+          <div className="post-card-tags" aria-label={isZh ? '标签' : 'Tags'}>
             {tags.map((t) =>
               t.slug ? (
                 <Link
@@ -126,7 +126,7 @@ function PostCard({ post, variant = 'list' }) {
             )}
           </div>
         )}
-        <Link to={`/post/${id}`} className="post-card-body" aria-label={`查看帖子 ${preview}`}>
+        <Link to={`/post/${id}`} className="post-card-body" aria-label={isZh ? `查看帖子 ${preview}` : `View post ${preview}`}>
           {showWaterfall && hasImages ? (
             <>
               <div className="post-card-cover" aria-hidden>
@@ -185,7 +185,7 @@ function PostCard({ post, variant = 'list' }) {
             </>
           )}
         </Link>
-        <div className="post-card-footer" aria-label="作者与点赞">
+        <div className="post-card-footer" aria-label={isZh ? '作者与点赞' : 'Author and likes'}>
           <div className="post-card-footer-author">
             <div className="post-card-avatar-wrap">
               {author.avatar ? (
@@ -204,7 +204,7 @@ function PostCard({ post, variant = 'list' }) {
             className={`post-card-like-btn ${liked ? 'post-card-like-btn--active' : ''}`}
             onClick={handleLikeClick}
             aria-pressed={liked}
-            aria-label={liked ? '取消点赞' : '点赞'}
+            aria-label={liked ? (isZh ? '取消点赞' : 'Unlike') : (isZh ? '点赞' : 'Like')}
           >
             <span className="post-card-like-icon" aria-hidden>
               {liked ? '♥' : '♡'}
