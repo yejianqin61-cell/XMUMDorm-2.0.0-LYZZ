@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import Card from './ui/Card';
+import { useLanguage } from '../context/LanguageContext';
 import './MerchantCard.css';
 import { DEFAULT_PRODUCT_IMAGE_PATH, DEFAULT_SHOP_LOGO_PATH } from '@shared/api/config';
 
@@ -16,6 +17,7 @@ import { DEFAULT_PRODUCT_IMAGE_PATH, DEFAULT_SHOP_LOGO_PATH } from '@shared/api/
  * @param {string} [merchant.openingHours]
  */
 function MerchantCard({ merchant }) {
+  const { isZh } = useLanguage();
   const { id, name, logo, description, rating, status, address, openingHours } = merchant;
   const isOpen = status === 'open';
 
@@ -23,7 +25,7 @@ function MerchantCard({ merchant }) {
     <Link
       to={`/eat/merchant/${id}`}
       className="merchant-card-wrap"
-      aria-label={`进入商家 ${name}`}
+      aria-label={isZh ? `进入商家 ${name}` : `Open merchant ${name}`}
     >
       <Card as="div" className="merchant-card">
         <div className="merchant-card-logo-wrap">
@@ -42,7 +44,7 @@ function MerchantCard({ merchant }) {
           <div className="merchant-card-row">
             <span className="merchant-card-name">{name}</span>
             <span className={`merchant-card-status merchant-card-status-${isOpen ? 'open' : 'closed'}`}>
-              {isOpen ? '营业中' : '已打烊'}
+              {isOpen ? (isZh ? '营业中' : 'Open') : (isZh ? '已打烊' : 'Closed')}
             </span>
           </div>
           {rating != null && (

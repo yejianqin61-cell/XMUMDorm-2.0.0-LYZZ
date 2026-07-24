@@ -1,7 +1,9 @@
 import { productImageUrl } from '@shared/api/config';
+import { useLanguage } from '../context/LanguageContext';
 import './FoodDetailView.css';
 
 function FoodDetailView({ food, onImageClick, canDelete, onDelete, showSummary = true }) {
+  const { isZh } = useLanguage();
   if (!food) return null;
 
   const { name, price, image, description, comprehensiveScore } = food;
@@ -10,7 +12,7 @@ function FoodDetailView({ food, onImageClick, canDelete, onDelete, showSummary =
   const displayImage = productImageUrl(image);
 
   return (
-    <article className="food-detail-view" aria-label={`菜品 ${name}`}>
+    <article className="food-detail-view" aria-label={isZh ? `菜品 ${name}` : `Dish ${name}`}>
       <div className="food-detail-hero">
         <div
           className={`food-detail-hero-image-wrap ${onImageClick ? 'food-detail-hero-image-wrap-clickable' : ''}`}
@@ -46,8 +48,8 @@ function FoodDetailView({ food, onImageClick, canDelete, onDelete, showSummary =
                 type="button"
                 className="food-detail-view-delete"
                 onClick={onDelete}
-                title="删除商品"
-                aria-label="删除商品"
+                title={isZh ? '删除菜品' : 'Delete dish'}
+                aria-label={isZh ? '删除菜品' : 'Delete dish'}
               >
                 🗑
               </button>
@@ -55,7 +57,7 @@ function FoodDetailView({ food, onImageClick, canDelete, onDelete, showSummary =
           </div>
           {ratingDisplay != null ? (
             <p className="food-detail-view-rating-row">
-              <span className="food-detail-view-rating" aria-label={`评分 ${ratingDisplay}`}>
+              <span className="food-detail-view-rating" aria-label={isZh ? `评分 ${ratingDisplay}` : `Rating ${ratingDisplay}`}>
                 ⭐ {ratingDisplay}
               </span>
             </p>

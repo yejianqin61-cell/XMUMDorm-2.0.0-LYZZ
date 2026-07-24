@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import Card from './ui/Card';
+import { useLanguage } from '../context/LanguageContext';
 import './AreaCard.css';
 
 /** 分区名称展示（用于 UI 显示，如 others -> Others） */
@@ -18,13 +19,14 @@ const AREA_LABELS = {
  * @param {string} [label] - 展示名称，不传则用 AREA_LABELS[area] ?? area
  */
 function AreaCard({ area, label: labelProp }) {
+  const { isZh } = useLanguage();
   const label = labelProp ?? AREA_LABELS[area] ?? area;
 
   return (
-    <Link to={`/eat/${encodeURIComponent(area)}`} className="area-card-wrap" aria-label={`进入分区 ${label}`}>
+    <Link to={`/eat/${encodeURIComponent(area)}`} className="area-card-wrap" aria-label={isZh ? `进入分区 ${label}` : `Open area ${label}`}>
       <Card as="div" className="area-card">
         <span className="area-card-name">{label}</span>
-        <span className="area-card-hint">点击进入 Tap to enter</span>
+        <span className="area-card-hint">{isZh ? '点击进入' : 'Open area'}</span>
       </Card>
     </Link>
   );
