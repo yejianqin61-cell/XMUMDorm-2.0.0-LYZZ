@@ -1,10 +1,21 @@
+import {
+  BookOpen,
+  Compass,
+  HandHeart,
+  MessageCircle,
+  ShoppingBag,
+  UserRound,
+  UsersRound,
+  UtensilsCrossed,
+} from 'lucide-react';
+
 export const SITE_PRIMARY_NAV_ITEMS = [
   {
     key: 'square',
     labelZh: '广场',
     labelEn: 'Square',
     to: '/about',
-    accent: 'var(--accent-square)',
+    icon: Compass,
     matchPrefixes: [
       '/about/map',
       '/about/thanks',
@@ -24,7 +35,7 @@ export const SITE_PRIMARY_NAV_ITEMS = [
     labelZh: '树洞',
     labelEn: 'TreeHole',
     to: '/',
-    accent: 'var(--accent-treehole)',
+    icon: MessageCircle,
     matchPrefixes: ['/post/', '/posts/', '/treehole'],
     exact: true,
   },
@@ -33,7 +44,7 @@ export const SITE_PRIMARY_NAV_ITEMS = [
     labelZh: '食堂',
     labelEn: 'Canteen',
     to: '/eat',
-    accent: 'var(--accent-canteen)',
+    icon: UtensilsCrossed,
     matchPrefixes: ['/eat'],
   },
   {
@@ -41,7 +52,7 @@ export const SITE_PRIMARY_NAV_ITEMS = [
     labelZh: '社团',
     labelEn: 'Clubs',
     to: '/about/club',
-    accent: 'var(--accent-club)',
+    icon: UsersRound,
     matchPrefixes: ['/about/club'],
   },
   {
@@ -49,7 +60,7 @@ export const SITE_PRIMARY_NAV_ITEMS = [
     labelZh: '二手',
     labelEn: 'Second Hand',
     to: '/about/second-hand',
-    accent: 'var(--accent-marketplace)',
+    icon: ShoppingBag,
     matchPrefixes: ['/about/second-hand'],
   },
   {
@@ -57,7 +68,7 @@ export const SITE_PRIMARY_NAV_ITEMS = [
     labelZh: '新生指南',
     labelEn: 'Guide',
     to: '/about/freshman-guide',
-    accent: 'var(--color-mint-400)',
+    icon: BookOpen,
     matchPrefixes: ['/about/freshman-guide'],
   },
   {
@@ -65,7 +76,7 @@ export const SITE_PRIMARY_NAV_ITEMS = [
     labelZh: '跑腿',
     labelEn: 'Errands',
     to: '/about/errands',
-    accent: 'var(--color-pink-400)',
+    icon: HandHeart,
     matchPrefixes: ['/about/errands'],
   },
   {
@@ -73,7 +84,7 @@ export const SITE_PRIMARY_NAV_ITEMS = [
     labelZh: '我的',
     labelEn: 'My Zone',
     to: '/myzone',
-    accent: 'var(--color-brand-primary)',
+    icon: UserRound,
     matchPrefixes: ['/myzone'],
   },
 ];

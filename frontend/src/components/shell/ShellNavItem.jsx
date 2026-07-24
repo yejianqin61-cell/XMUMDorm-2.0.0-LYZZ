@@ -6,11 +6,10 @@ function joinClassNames(...parts) {
 
 export default function ShellNavItem({
   label,
-  accent,
+  Icon,
   active = false,
   className = '',
   to = '',
-  caption = '',
 }) {
   return (
     <Link
@@ -20,14 +19,10 @@ export default function ShellNavItem({
         active && 'site-web-shell__nav-item--active',
         className,
       )}
-      style={{ '--shell-nav-accent': accent || 'var(--color-brand-primary)' }}
       aria-current={active ? 'page' : undefined}
     >
-      <span className="site-web-shell__nav-swatch" aria-hidden="true" />
-      <span className="site-web-shell__nav-copy">
-        <span className="site-web-shell__nav-label">{label}</span>
-        {caption ? <span className="site-web-shell__nav-caption">{caption}</span> : null}
-      </span>
+      {Icon ? <Icon className="site-web-shell__nav-icon" size={22} strokeWidth={active ? 2.5 : 2} aria-hidden="true" /> : null}
+      <span className="site-web-shell__nav-label">{label}</span>
     </Link>
   );
 }
