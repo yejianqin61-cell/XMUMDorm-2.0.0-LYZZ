@@ -9,9 +9,8 @@ function joinClassNames(...parts) {
 
 export default function ShellContent({ children = null, className = '' }) {
   const location = useLocation();
-  const { lang } = useLanguage();
+  const { isZh } = useLanguage();
   const { isAdmin } = useAuth();
-  const isZh = lang !== 'en';
   const meta = getSiteShellMeta(location.pathname, { isZh, isAdmin });
 
   return (
@@ -38,7 +37,7 @@ export default function ShellContent({ children = null, className = '' }) {
             {children || (
               <div className="site-web-shell__panel site-web-shell__panel--content">
                 <div className="site-web-shell__panel-head">
-                  <p className="site-web-shell__panel-eyebrow">Main Viewport</p>
+                  <p className="site-web-shell__panel-eyebrow">{isZh ? '主内容区' : 'Main viewport'}</p>
                   <h2 className="site-web-shell__panel-title">
                     {isZh ? '主内容容器占位' : 'Viewport placeholder'}
                   </h2>

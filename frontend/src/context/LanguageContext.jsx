@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 
 const LanguageContext = createContext({
   lang: 'zh',
+  isZh: true,
   setLang: () => {},
 });
 
@@ -17,6 +18,7 @@ function readInitialLanguage() {
 
 export function LanguageProvider({ children }) {
   const [lang, setLangState] = useState(readInitialLanguage);
+  const isZh = lang !== 'en';
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -35,7 +37,7 @@ export function LanguageProvider({ children }) {
   };
 
   return (
-    <LanguageContext.Provider value={{ lang, setLang }}>
+    <LanguageContext.Provider value={{ lang, isZh, setLang }}>
       {children}
     </LanguageContext.Provider>
   );

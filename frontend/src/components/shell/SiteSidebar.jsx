@@ -11,9 +11,8 @@ function joinClassNames(...parts) {
 
 export default function SiteSidebar({ children = null, className = '' }) {
   const location = useLocation();
-  const { lang } = useLanguage();
+  const { isZh } = useLanguage();
   const { isAdmin } = useAuth();
-  const isZh = lang !== 'en';
   const primaryItems = SITE_PRIMARY_NAV_ITEMS.map((item) => ({
     ...item,
     label: isZh ? item.labelZh : item.labelEn,
@@ -24,7 +23,7 @@ export default function SiteSidebar({ children = null, className = '' }) {
       <div className="site-web-shell__panel site-web-shell__panel--sidebar">
         {children || (
           <>
-            <nav className="site-web-shell__nav" aria-label="Site sections">
+            <nav className="site-web-shell__nav" aria-label={isZh ? '站点分区' : 'Site sections'}>
               {primaryItems.map((item) => (
                 <ShellNavItem
                   key={item.key}

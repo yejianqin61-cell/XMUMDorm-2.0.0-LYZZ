@@ -10,9 +10,8 @@ function joinClassNames(...parts) {
 
 export default function SiteAside({ children = null, className = '' }) {
   const location = useLocation();
-  const { lang } = useLanguage();
+  const { isZh } = useLanguage();
   const { isAdmin } = useAuth();
-  const isZh = lang !== 'en';
   const meta = getSiteShellMeta(location.pathname, { isZh, isAdmin });
   const { asideContent } = useShellAside();
 
@@ -22,7 +21,7 @@ export default function SiteAside({ children = null, className = '' }) {
         {asideContent || children || (
           <>
             <div className="site-web-shell__panel-head">
-              <p className="site-web-shell__panel-eyebrow">Secondary Aside</p>
+              <p className="site-web-shell__panel-eyebrow">{isZh ? '辅助信息' : 'Secondary aside'}</p>
               <h2 className="site-web-shell__panel-title">{isZh ? '辅助信息区' : 'Secondary aside'}</h2>
             </div>
             <div className="site-web-shell__aside-stack">
