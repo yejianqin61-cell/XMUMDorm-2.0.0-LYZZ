@@ -343,7 +343,7 @@ function HandbookArticleDetail() {
           </div>
 
           {toc.length > 0 ? (
-            <section className="handbook-toc" aria-label="Outline">
+            <section className="handbook-toc" aria-label={isZh ? '大纲' : 'Outline'}>
               <div className="handbook-toc-title">{isZh ? '大纲' : 'Outline'}</div>
               <div className="handbook-toc-list">
                 {toc.map((h) => (
