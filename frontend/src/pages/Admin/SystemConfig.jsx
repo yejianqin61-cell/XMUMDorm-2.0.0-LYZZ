@@ -13,6 +13,7 @@ const CONFIG_META = {
 const LEVEL_NAMES = { 1: 'Lv1 新生', 2: 'Lv2 探索者', 3: 'Lv3 贡献者', 4: 'Lv4 校园达人', 5: 'Lv5 资深成员', 6: 'Lv6 校园传奇' };
 const DAILY_CAP_LABELS = { login: '每日登录', like: '每日点赞', comment: '每日评论', post: '每日发帖', canteen_review: '每日食堂点评' };
 const REWARD_LABELS = { login: '登录奖励', like: '点赞奖励', comment: '评论奖励', post: '发帖奖励', canteen_review: '食堂点评奖励' };
+const ACTION_LABELS_EN = { login: 'Login', like: 'Like', comment: 'Comment', post: 'Post', canteen_review: 'Canteen review' };
 
 export default function SystemConfig() {
   const { lang } = useLanguage();
@@ -123,7 +124,7 @@ export default function SystemConfig() {
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5">
           {Object.entries(DAILY_CAP_LABELS).map(([key, label]) => (
             <div key={key} className="flex items-center gap-2">
-              <span className="text-[13px] text-slate-600 w-28">{isZh ? label : key}</span>
+              <span className="text-[13px] text-slate-600 w-28">{isZh ? label : ACTION_LABELS_EN[key]}</span>
               <input type="number" min="0" value={levelConfig.caps[key] ?? ''} onChange={(e) => updateCap(key, e.target.value)}
                 className="w-20 rounded-lg border border-slate-200 px-2 py-1.5 text-[13px] text-slate-900 text-center focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
@@ -134,7 +135,7 @@ export default function SystemConfig() {
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
           {Object.entries(REWARD_LABELS).map(([key, label]) => (
             <div key={key} className="flex items-center gap-2">
-              <span className="text-[13px] text-slate-600 w-28">{isZh ? label : key}</span>
+              <span className="text-[13px] text-slate-600 w-28">{isZh ? label : ACTION_LABELS_EN[key]}</span>
               <input type="number" min="0" value={levelConfig.rewards[key] ?? ''} onChange={(e) => updateReward(key, e.target.value)}
                 className="w-20 rounded-lg border border-slate-200 px-2 py-1.5 text-[13px] text-slate-900 text-center focus:outline-none focus:ring-2 focus:ring-blue-500" />
               <span className="text-[11px] text-slate-400">EXP</span>
