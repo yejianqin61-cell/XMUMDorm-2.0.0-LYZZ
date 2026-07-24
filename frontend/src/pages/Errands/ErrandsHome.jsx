@@ -40,7 +40,7 @@ function ErrandsHome() {
         </Link>
       </div>
 
-      <div className="err-tabs" role="tablist" aria-label="Errand tabs">
+      <div className="err-tabs" role="tablist" aria-label={isZh ? '跑腿分类' : 'Errand categories'}>
         {TABS.map((t) => {
           const Icon = t.icon;
           const active = tab === t.key;
@@ -79,7 +79,7 @@ function ErrandsHome() {
         })}
       </div>
 
-      {q.isLoading ? <div className="state-loading">加载中</div> : null}
+      {q.isLoading ? <div className="state-loading">{isZh ? '加载中…' : 'Loading…'}</div> : null}
       {q.isError ? <div className="state-error">{errorMsg}</div> : null}
       {!q.isLoading && !q.isError && list.length === 0 ? (
         <div className="state-empty err-empty">
@@ -104,4 +104,3 @@ function ErrandsHome() {
 }
 
 export default ErrandsHome;
-
