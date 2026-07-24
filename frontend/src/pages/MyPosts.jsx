@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { getProfile } from '@shared/api/users';
 import PostCard from '../components/PostCard';
 import EmptyState from '../components/ui/EmptyState';
@@ -10,6 +11,7 @@ import './MyPosts.css';
 /** 我的帖子列表：从 GET /api/users/:id/profile 获取当前用户的帖子 */
 function MyPosts() {
   const { user, isLoggedIn, refreshUser } = useAuth();
+  const { isZh } = useLanguage();
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -57,9 +59,9 @@ function MyPosts() {
     return (
       <div className="myposts-page">
         <EmptyState
-          title="请先登录"
-          description="登录后查看我的帖子。Please log in to view your posts."
-          actionLabel="去登录"
+          title={isZh ? '请先登录' : 'Login required'}
+          description={isZh ? '登录后查看我的帖子。' : 'Log in to view your posts.'}
+          actionLabel={isZh ? '去登录' : 'Log in'}
           actionTo="/login"
         />
       </div>
@@ -69,7 +71,7 @@ function MyPosts() {
   if (loading) {
     return (
       <div className="myposts-page">
-        <p className="myposts-loading state-loading">加载中…</p>
+        <p className="myposts-loading state-loading">{isZh ? '加载中…' : 'Loading…'}</p>
       </div>
     );
   }
@@ -86,9 +88,9 @@ function MyPosts() {
     return (
       <div className="myposts-page">
         <EmptyState
-          title="暂无帖子"
-          description="去发布第一条吧"
-          actionLabel="去发布第一条吧 →"
+          title={isZh ? '暂无帖子' : 'No posts yet'}
+          description={isZh ? '去发布第一条吧。' : 'Publish your first post.'}
+          actionLabel={isZh ? '发布第一条 →' : 'Publish your first post →'}
           actionTo="/post/new"
         />
       </div>
@@ -99,13 +101,13 @@ function MyPosts() {
     <div className="myposts-page">
       <section className="myposts-hero">
         <div className="myposts-hero__copy">
-          <p className="myposts-hero__eyebrow">My Posts</p>
-          <h1 className="myposts-hero__title">我发布过的树洞内容</h1>
+          <p className="myposts-hero__eyebrow">{isZh ? '我的帖子' : 'My posts'}</p>
+          <h1 className="myposts-hero__title">{isZh ? '我发布过的树洞内容' : 'Posts I have published'}</h1>
           <p className="myposts-hero__subtitle">{isZh ? '你发布的所有帖子' : 'All posts you have published'}</p>
         </div>
         <div className="myposts-hero__stat">
           <span className="myposts-hero__stat-value">{list.length}</span>
-          <span className="myposts-hero__stat-label">Posts</span>
+          <span className="myposts-hero__stat-label">{isZh ? '帖子' : 'Posts'}</span>
         </div>
       </section>
 
