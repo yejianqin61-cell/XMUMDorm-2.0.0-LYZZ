@@ -92,7 +92,7 @@ function TreeHoleToolbar({ selectedSlug = null, onSelectTagSlug }) {
 
   return (
     <div className="treehole-toolbar px-4 pt-5 pb-3">
-      <div className="treehole-toolbar__actions flex items-center justify-center">
+      <div className="treehole-toolbar__actions flex items-center justify-start">
         <div className="relative" ref={searchWrapRef}>
           <AnimatePresence initial={false} mode="wait">
             {searchOpen ? (
