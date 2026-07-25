@@ -2,13 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Button from '../components/ui/Button';
-import Card from '../components/ui/Card';
 import Input from '../components/ui/Input';
 import Textarea from '../components/ui/Textarea';
 import Tag from '../components/ui/Tag';
-import PageHeader from '../components/templates/PageHeader';
-import SectionHeader from '../components/templates/SectionHeader';
-import FormPageLayout from '../components/templates/FormPageLayout';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { Toast } from '../context/ToastContext';
@@ -165,208 +161,108 @@ export default function PostNew() {
   };
 
   const pageTitle = isAdmin ? (isEn ? 'Publish announcement' : '发布公告') : (isEn ? 'Publish post' : '发布帖子');
-  const pageDescription = isAdmin
-    ? (isEn ? 'Publish an announcement to notify users and save it in their mailbox.' : '公告会在用户登录时弹出提醒，并同步保存到邮箱。')
-    : (isEn ? 'Add a title, content, tags, and images before publishing.' : '填写标题、内容、标签和图片后发布。');
+  const backTo = preselectTagSlug === FOOD_SQUARE_TAG_SLUG ? '/eat' : '/';
 
   return (
     <div className="postnew-page">
-      <FormPageLayout
-        className="postnew-layout"
-        asideSticky
-        header={(
-          <PageHeader
-            eyebrow={isAdmin ? (isEn ? 'Announcements' : '公告') : (isEn ? 'Campus Square' : '校园广场')}
-            title={pageTitle}
-            description={pageDescription}
-            backTo={preselectTagSlug === FOOD_SQUARE_TAG_SLUG ? '/eat' : '/'}
-            backLabel={isEn ? 'Back' : '返回'}
-            meta={[
-              { key: 'images', label: isEn ? `${previewUrls.length}/3 images` : `${previewUrls.length}/3 张图片` },
-              { key: 'tags', label: isEn ? `${selectedTagIds.length}/3 tags` : `${selectedTagIds.length}/3 个标签` },
-            ]}
-          />
-        )}
-        notice={(
-          <Card className="postnew-notice-card" padding="lg">
-            <SectionHeader
-              title={isAdmin ? (isEn ? 'Announcement' : '发布说明') : (isEn ? 'Posting' : '发帖说明')}
-              description={
-                isAdmin
-                  ? (isEn ? 'Users will see this announcement when they log in, and it will be saved in their mailbox.' : '公告会在用户登录时弹出提示，并同步保存到邮箱。')
-                  : preselectTagSlug === FOOD_SQUARE_TAG_SLUG
-                    ? (isEn ? 'This post will also appear in Food Square and remain anonymous.' : '当前会同步发布到吃货广场，帖子仍会匿名展示。')
-                    : (isEn ? 'Posts are anonymous. Likes and comments will appear in your mailbox.' : '帖子会匿名展示；收到点赞或评论时，邮箱会收到提醒。')
-              }
+      <div className="postnew-editor">
+        <div className="postnew-editor__topbar">
+          <button type="button" className="postnew-back" onClick={() => navigate(backTo)}>
+            {isEn ? 'Back' : '返回'}
+          </button>
+          <h1>{pageTitle}</h1>
+        </div>
+
+        <form className="postnew-form" onSubmit={handleSubmit}>
+          {!isAdmin ? (
+            <Input
+              label={isEn ? 'Title' : '标题'}
+              placeholder={isEn ? 'Give your post a title...' : '给帖子起个标题...'}
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              maxLength={120}
+              required
             />
-          </Card>
-        )}
-        sections={(
-          <>
-            <Card className="postnew-form-card" padding="lg">
-              <SectionHeader
-                title={isEn ? 'Content' : '内容信息'}
-                description={isEn ? 'Write the post, then add images and tags.' : '填写内容后，再添加图片和标签。'}
-              />
-              <form className="postnew-form" onSubmit={handleSubmit}>
-                {!isAdmin && allTags.length > 0 ? (
-                  <div className="postnew-section">
-                    <label className="postnew-label">
-                      {isEn ? 'Tags (max 3)' : '标签（最多 3 个）'}
-                    </label>
-                    <p className="postnew-tag-hint">
-                      {isEn ? 'Tap to select. Only admins can create tags.' : '点击选择；仅管理员可创建标签。'}
-                    </p>
-                    <div className="postnew-tag-pool">
-                      {allTags.map((tag) => {
-                        const active = selectedTagIds.includes(tag.id);
-                        return (
-                          <Tag
-                            key={tag.id}
-                            as="button"
-                            tone="default"
-                            variant={active ? 'soft' : 'outline'}
-                            active={active}
-                            interactive
-                            className="postnew-tag-chip-ui"
-                            onClick={() => toggleTag(tag.id)}
-                          >
-                            {tagLabel(tag)}
-                          </Tag>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ) : null}
+          ) : null}
 
-                {!isAdmin ? (
-                  <div className="postnew-section">
-                    <Input
-                      label={isEn ? 'Title' : '标题'}
-                      placeholder={isEn ? 'Give your post a title...' : '给帖子起个标题...'}
-                      value={title}
-                      onChange={(event) => setTitle(event.target.value)}
-                      maxLength={120}
-                      required
+          <Textarea
+            label={isAdmin ? (isEn ? 'Announcement' : '公告内容') : (isEn ? 'Content' : '内容')}
+            placeholder={isAdmin ? (isEn ? 'Write your announcement...' : '写下要通知全站的内容...') : (isEn ? 'Write something...' : '写点什么...')}
+            value={content}
+            onChange={(event) => setContent(event.target.value)}
+            rows={10}
+          />
+
+          <div className="postnew-tools">
+            <div className="postnew-tool">
+              <span className="postnew-label">{isEn ? `Images ${previewUrls.length}/3` : `图片 ${previewUrls.length}/3`}</span>
+              <div className="postnew-images">
+                {previewUrls.map((url, index) => (
+                  <div key={url} className="postnew-image-wrap">
+                    <img src={url} alt="" className="postnew-image" />
+                    <button
+                      type="button"
+                      className="postnew-image-remove"
+                      onClick={() => removeImage(index)}
+                      aria-label={isEn ? 'Remove image' : '移除图片'}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                {previewUrls.length < 3 ? (
+                  <label className="postnew-image-add">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      multiple
+                      onChange={handleImageChange}
+                      className="postnew-file-input"
                     />
-                  </div>
+                    <span className="postnew-image-add-inner">+</span>
+                  </label>
                 ) : null}
-
-                <div className="postnew-section">
-                  <Textarea
-                    label={isAdmin ? (isEn ? 'Announcement' : '公告内容') : (isEn ? 'Content' : '内容')}
-                    placeholder={isAdmin ? (isEn ? 'Write your announcement...' : '写下要通知全站的内容...') : (isEn ? 'Write something...' : '写点什么...')}
-                    value={content}
-                    onChange={(event) => setContent(event.target.value)}
-                    rows={8}
-                  />
-                </div>
-
-                <div className="postnew-section">
-                  <label className="postnew-label">{isEn ? 'Images (up to 3)' : '图片（最多 3 张）'}</label>
-                  <div className="postnew-images">
-                    {previewUrls.map((url, index) => (
-                      <div key={url} className="postnew-image-wrap">
-                        <img src={url} alt="" className="postnew-image" />
-                        <button
-                          type="button"
-                          className="postnew-image-remove"
-                          onClick={() => removeImage(index)}
-                          aria-label={isEn ? 'Remove image' : '移除图片'}
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                    {previewUrls.length < 3 ? (
-                      <label className="postnew-image-add">
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept="image/jpeg,image/png,image/webp,image/gif"
-                          multiple
-                          onChange={handleImageChange}
-                          className="postnew-file-input"
-                        />
-                        <span className="postnew-image-add-inner">+</span>
-                      </label>
-                    ) : null}
-                  </div>
-                </div>
-
-                <div className="postnew-inline-submit">
-                  <Button
-                    type="submit"
-                    block
-                    loading={loading}
-                    disabled={!isAdmin && !title.trim() ? true : !content.trim()}
-                  >
-                    {loading ? (isAdmin ? (isEn ? 'Publishing announcement…' : '发布公告中…') : (isEn ? 'Publishing…' : '发布中…')) : (isAdmin ? (isEn ? 'Publish announcement' : '发布公告') : (isEn ? 'Publish post' : '发布帖子'))}
-                  </Button>
-                </div>
-              </form>
-            </Card>
-          </>
-        )}
-        aside={(
-          <>
-            <Card className="postnew-aside-card" padding="lg">
-              <SectionHeader
-                title={isEn ? 'Before publishing' : '发布检查'}
-                description={isEn ? 'Check these items before submitting.' : '提交前快速确认。'}
-              />
-              <div className="postnew-aside-checks">
-                <div className="postnew-aside-check">
-                  <span>{isEn ? 'Title' : '标题'}</span>
-                  <strong>{isAdmin ? (isEn ? 'Optional' : '可选') : `${title.trim().length > 0 ? (isEn ? 'Ready' : '已填写') : (isEn ? 'Missing' : '未填写')}`}</strong>
-                </div>
-                <div className="postnew-aside-check">
-                  <span>{isEn ? 'Content' : '内容'}</span>
-                  <strong>{content.trim().length > 0 ? (isEn ? 'Ready' : '已填写') : (isEn ? 'Missing' : '未填写')}</strong>
-                </div>
-                <div className="postnew-aside-check">
-                  <span>{isEn ? 'Images' : '图片'}</span>
-                  <strong>{previewUrls.length}/3</strong>
-                </div>
-                <div className="postnew-aside-check">
-                  <span>{isEn ? 'Tags' : '标签'}</span>
-                  <strong>{selectedTagIds.length}/3</strong>
-                </div>
               </div>
-            </Card>
-            <Card className="postnew-aside-card" padding="lg">
-              <SectionHeader
-                title={isEn ? 'After publishing' : '发布后去向'}
-                description={isEn ? 'Return to the previous page.' : '发布后可返回上一入口。'}
-              />
-              <div className="postnew-aside-links">
-                <Button as="button" variant="secondary" size="sm" block onClick={() => navigate(preselectTagSlug === FOOD_SQUARE_TAG_SLUG ? '/eat' : '/')}>
-                  {isEn ? 'Back to previous page' : '返回上一入口'}
-                </Button>
-              </div>
-            </Card>
-          </>
-        )}
-        actions={(
-          <div className="postnew-actionbar">
-            <div className="postnew-actionbar__inner">
-              <Button
-                variant="secondary"
-                onClick={() => navigate(preselectTagSlug === FOOD_SQUARE_TAG_SLUG ? '/eat' : '/')}
-              >
-                {isEn ? 'Cancel' : '取消'}
-              </Button>
-              <Button
-                onClick={handleSubmit}
-                loading={loading}
-                disabled={!isAdmin && !title.trim() ? true : !content.trim()}
-              >
-                {loading ? (isAdmin ? (isEn ? 'Publishing announcement…' : '发布公告中…') : (isEn ? 'Publishing…' : '发布中…')) : (isAdmin ? (isEn ? 'Publish announcement' : '发布公告') : (isEn ? 'Publish now' : '立即发布'))}
-              </Button>
             </div>
+
+            {!isAdmin && allTags.length > 0 ? (
+              <div className="postnew-tool">
+                <span className="postnew-label">{isEn ? `Tags ${selectedTagIds.length}/3` : `标签 ${selectedTagIds.length}/3`}</span>
+                <div className="postnew-tag-pool">
+                  {allTags.map((tag) => {
+                    const active = selectedTagIds.includes(tag.id);
+                    return (
+                      <Tag
+                        key={tag.id}
+                        as="button"
+                        tone="default"
+                        variant={active ? 'soft' : 'outline'}
+                        active={active}
+                        interactive
+                        className="postnew-tag-chip-ui"
+                        onClick={() => toggleTag(tag.id)}
+                      >
+                        {tagLabel(tag)}
+                      </Tag>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
           </div>
-        )}
-      />
+
+          <div className="postnew-submit-row">
+            <Button
+              type="submit"
+              loading={loading}
+              disabled={!isAdmin && !title.trim() ? true : !content.trim()}
+            >
+              {loading ? (isEn ? 'Publishing…' : '发布中…') : pageTitle}
+            </Button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
