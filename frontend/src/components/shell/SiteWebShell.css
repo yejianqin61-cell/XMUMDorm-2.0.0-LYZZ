@@ -213,11 +213,19 @@
   overflow: hidden;
 }
 
+.site-web-shell--desktop .site-web-shell__sidebar {
+  margin-top: calc(var(--space-4) - var(--space-12));
+}
+
 .site-web-shell--desktop .site-web-shell__content {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
+}
+
+.site-web-shell--desktop .site-web-shell__viewport-body {
+  padding-bottom: var(--space-4);
 }
 
 .site-web-shell__content-inner {
