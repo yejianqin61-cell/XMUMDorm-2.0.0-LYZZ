@@ -132,17 +132,7 @@ function TreeHoleToolbar({ selectedSlug = null, onSelectTagSlug }) {
 
   return (
     <div className="treehole-toolbar px-4 pt-5 pb-3">
-      <div className="treehole-toolbar__top flex items-start justify-between">
-        <div className="treehole-toolbar__intro min-w-0 flex-1 pr-3">
-          <div className="treehole-toolbar__title text-2xl font-bold tracking-tight text-slate-900 whitespace-nowrap">
-            {isZh ? '树洞广场' : 'TreeHole'}
-          </div>
-          <div className="treehole-toolbar__subtitle mt-1 text-[12px] font-medium text-slate-400">
-            {isZh ? '看看同学们正在聊什么' : 'Catch the campus pulse in one scroll'}
-          </div>
-        </div>
-
-        <div className="treehole-toolbar__actions flex items-center gap-2">
+      <div className="treehole-toolbar__actions flex items-center justify-end gap-2">
           {/* Search (left of language), click outside to close */}
           <div className="relative" ref={searchWrapRef}>
             <AnimatePresence initial={false} mode="wait">
@@ -257,11 +247,10 @@ function TreeHoleToolbar({ selectedSlug = null, onSelectTagSlug }) {
             <Bell size={18} aria-hidden />
             {totalUnread > 0 ? <span className="aura-badge">{totalUnread > 99 ? '99+' : String(totalUnread)}</span> : null}
           </button>
-        </div>
       </div>
 
       {/* Tag bar: airy typography + masked edges + extend button */}
-      <div className="treehole-toolbar__tag-row mt-7 flex items-center gap-3">
+      <div className="treehole-toolbar__tag-row mt-3 flex items-center gap-3">
         <div className="treehole-toolbar__tag-track relative flex-1 overflow-hidden treehole-tag-mask">
           <div className="treehole-tag-scroll flex items-center gap-6 overflow-x-auto whitespace-nowrap px-3 text-[14px]">
             <motion.button

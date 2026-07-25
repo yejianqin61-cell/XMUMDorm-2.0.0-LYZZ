@@ -4,26 +4,6 @@
   z-index: 2;
 }
 
-.treehole-toolbar__top {
-  gap: 16px;
-}
-
-.treehole-toolbar__intro {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.treehole-toolbar__title {
-  margin: 0;
-  line-height: 1;
-}
-
-.treehole-toolbar__subtitle {
-  margin: 0;
-  line-height: 1.5;
-}
-
 .treehole-toolbar__actions {
   flex-shrink: 0;
 }
@@ -184,33 +164,6 @@
   padding: 0 0 10px;
 }
 
-.app-layout--desktop-shell .treehole-toolbar__top {
-  align-items: flex-end;
-  padding: 24px 28px 18px;
-  border-radius: 30px;
-  background:
-    radial-gradient(circle at top left, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.76) 48%, rgba(255, 255, 255, 0.9) 100%),
-    linear-gradient(135deg, rgba(34, 211, 238, 0.12), rgba(16, 185, 129, 0.08));
-  border: 1px solid rgba(255, 255, 255, 0.88);
-  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.07);
-}
-
-.app-layout--desktop-shell .treehole-toolbar__intro {
-  gap: 8px;
-}
-
-.app-layout--desktop-shell .treehole-toolbar__title {
-  font-size: 42px;
-  letter-spacing: -0.05em;
-  color: #10233b;
-}
-
-.app-layout--desktop-shell .treehole-toolbar__subtitle {
-  max-width: 28rem;
-  font-size: 14px;
-  color: rgba(16, 35, 59, 0.56);
-}
-
 .app-layout--desktop-shell .treehole-toolbar__tag-row {
   margin-top: 18px;
   padding: 0 8px;
@@ -237,29 +190,6 @@
 
 .site-web-shell--tablet .treehole-toolbar {
   padding: 0 0 8px;
-}
-
-.site-web-shell--tablet .treehole-toolbar__top {
-  align-items: flex-end;
-  padding: 20px 22px 16px;
-  border-radius: 26px;
-  background:
-    radial-gradient(circle at top left, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.78) 46%, rgba(255, 255, 255, 0.9) 100%),
-    linear-gradient(135deg, rgba(34, 211, 238, 0.1), rgba(16, 185, 129, 0.07));
-  border: 1px solid rgba(255, 255, 255, 0.86);
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.06);
-}
-
-.site-web-shell--tablet .treehole-toolbar__title {
-  font-size: 34px;
-  letter-spacing: -0.045em;
-  color: #10233b;
-}
-
-.site-web-shell--tablet .treehole-toolbar__subtitle {
-  max-width: 24rem;
-  font-size: 13px;
-  color: rgba(16, 35, 59, 0.58);
 }
 
 .site-web-shell--tablet .treehole-toolbar__tag-row {
