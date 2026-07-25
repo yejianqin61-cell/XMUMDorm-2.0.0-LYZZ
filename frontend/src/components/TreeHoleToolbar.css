@@ -16,18 +16,39 @@
   align-items: center;
   gap: 10px;
   padding: 0 16px;
-  border: 1px solid rgba(191, 219, 254, 0.8);
+  border: 1px solid transparent;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.8);
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.84), rgba(255, 255, 255, 0.84)) padding-box,
+    linear-gradient(110deg, #9b6a21, #f7d878, #c58a2f, #fff0ad, #9b6a21) border-box;
+  background-size: 100% 100%, 260% 100%;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06), 0 0 0 rgba(210, 161, 58, 0);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  transition: border-color var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard);
+  animation: treehole-search-gilded-edge 2.8s ease-in-out infinite;
+  transition: box-shadow var(--motion-fast) var(--ease-standard);
 }
 
 .treehole-toolbar__search:focus-within {
-  border-color: rgba(96, 165, 250, 0.9);
-  box-shadow: 0 12px 28px rgba(59, 130, 246, 0.14);
+  box-shadow: 0 12px 28px rgba(180, 128, 36, 0.18), 0 0 0 3px rgba(247, 216, 120, 0.2);
+}
+
+@keyframes treehole-search-gilded-edge {
+  0%, 100% {
+    background-position: 0 0, 0 0;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06), 0 0 0 rgba(210, 161, 58, 0);
+  }
+
+  50% {
+    background-position: 0 0, 100% 0;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06), 0 0 12px rgba(210, 161, 58, 0.32);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .treehole-toolbar__search {
+    animation: none;
+  }
 }
 
 .treehole-toolbar__tag-row,

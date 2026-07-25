@@ -78,7 +78,7 @@ function TreeHoleToolbar({ selectedSlug = null, onSelectTagSlug }) {
           <input
             value={keyword}
             onChange={(event) => setKeyword(event.target.value)}
-            placeholder={isZh ? '搜索…' : 'Search…'}
+            aria-label={isZh ? '搜索帖子' : 'Search posts'}
             className="min-w-0 w-full bg-transparent text-[14px] text-slate-800 placeholder:text-slate-400 outline-none"
             type="search"
           />
