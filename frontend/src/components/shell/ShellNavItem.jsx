@@ -6,6 +6,7 @@ function joinClassNames(...parts) {
 
 export default function ShellNavItem({
   label,
+  hideLabel = false,
   Icon,
   active = false,
   className = '',
@@ -22,7 +23,7 @@ export default function ShellNavItem({
       aria-current={active ? 'page' : undefined}
     >
       {Icon ? <Icon className="site-web-shell__nav-icon" size={22} strokeWidth={active ? 2.5 : 2} aria-hidden="true" /> : null}
-      <span className="site-web-shell__nav-label">{label}</span>
+      {!hideLabel ? <span className="site-web-shell__nav-label">{label}</span> : null}
     </Link>
   );
 }

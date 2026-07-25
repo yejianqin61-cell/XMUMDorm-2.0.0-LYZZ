@@ -34,6 +34,7 @@ export const SITE_PRIMARY_NAV_ITEMS = [
     key: 'treehole',
     labelZh: '树洞',
     labelEn: 'TreeHole',
+    hideLabel: true,
     to: '/',
     icon: MessageCircle,
     matchPrefixes: ['/post/', '/posts/', '/treehole'],
