@@ -178,6 +178,23 @@
   min-width: 0;
 }
 
+@media (min-width: 1200px) {
+  /* Keep auxiliary columns in their grid tracks; the center remains the page scroll flow. */
+  .site-web-shell__sidebar,
+  .site-web-shell__aside {
+    position: sticky;
+    top: var(--space-12);
+    align-self: start;
+    max-height: calc(100dvh - var(--space-12) * 2);
+    overflow-y: auto;
+  }
+
+  .site-web-shell__panel--sidebar,
+  .site-web-shell__panel--aside {
+    position: static;
+  }
+}
+
 .personal-aside { border-left: 1px solid rgba(15, 23, 42, 0.08); padding-left: 20px; }
 .personal-aside__section { padding: 0 0 18px; margin-bottom: 18px; border-bottom: 1px solid rgba(15, 23, 42, 0.08); }
 .personal-aside__section:last-child { border-bottom: 0; }
