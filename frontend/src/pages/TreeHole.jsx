@@ -12,7 +12,6 @@ import RelatedCampusTopicsBlock from '../components/square/RelatedCampusTopicsBl
 import ErrorState from '../components/ui/ErrorState';
 import RouteTransition from '../components/ui/RouteTransition';
 import ListPageLayout from '../components/templates/ListPageLayout';
-import PageHeader from '../components/templates/PageHeader';
 import { useShellAside } from '../context/ShellAsideContext';
 import { getPostList } from '@shared/api/posts';
 import { getSquareRecommendations } from '@shared/api/square';
@@ -614,7 +613,6 @@ function TreeHole() {
   return (
     <RouteTransition className={`treehole-page treehole-page--light ${isCoarse ? 'treehole-page--mobile' : ''}`}>
       <ListPageLayout
-        header={<PageHeader title={isZh ? '树洞' : 'TreeHole'} />}
         filterBar={<TreeHoleToolbar selectedSlug={selectedTagSlug} onSelectTagSlug={handleSelectTag} />}
         list={treeholeList}
       />
