@@ -29,7 +29,6 @@ export default function SiteSidebar({ children = null, className = '' }) {
                   key={item.key}
                   to={item.to}
                   label={item.label}
-                  hideLabel={item.hideLabel}
                   Icon={item.icon}
                   active={isSiteNavActive(location.pathname, item)}
                 />
