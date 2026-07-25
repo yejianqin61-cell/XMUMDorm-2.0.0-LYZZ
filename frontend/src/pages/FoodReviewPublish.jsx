@@ -220,21 +220,14 @@ function FoodReviewPublish() {
             )}
           </div>
         </div>
-
-
-      </form>
-
-      <div className="food-review-publish-submitbar-fixed" role="group" aria-label="发布点评">
         <button
-          type="button"
+          type="submit"
           className="food-review-publish-submit"
           disabled={submitLoading}
-          onClick={handleSubmit}
         >
           <span className="food-review-publish-submit-title">{submitLoading ? '发布中…' : '发布点评'}</span>
-          <span className="food-review-publish-submit-sub">Publish review</span>
         </button>
-      </div>
+      </form>
     </div>
   );
 }
