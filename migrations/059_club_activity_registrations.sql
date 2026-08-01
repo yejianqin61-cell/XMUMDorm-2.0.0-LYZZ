@@ -1,5 +1,3 @@
-USE jack_campus;
-
 CREATE TABLE IF NOT EXISTS club_activity_registrations (
   id INT AUTO_INCREMENT PRIMARY KEY,
   activity_id INT NOT NULL COMMENT '社团活动 ID',
