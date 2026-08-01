@@ -646,8 +646,9 @@
 
 .square-home-page--timeline .today-campus-quick-actions {
   display: flex;
+  width: 100%;
+  min-width: 0;
   gap: 8px;
-  min-width: max-content;
   padding: 10px 0;
   overflow-x: auto;
   scrollbar-width: none;
@@ -658,6 +659,7 @@
 }
 
 .square-home-page--timeline .today-campus-quick-action-link {
+  flex: 0 0 auto;
   min-width: 86px;
   min-height: 44px;
   display: inline-flex;

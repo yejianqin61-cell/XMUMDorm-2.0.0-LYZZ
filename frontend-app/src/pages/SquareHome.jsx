@@ -46,7 +46,7 @@ export default function SquareHome() {
   const [tab, setTab] = useState(readStoredTab);
 
   const campusQuery = useQuery({
-    queryKey: QK.campusFeed('school', 'square-home'),
+    queryKey: QK.campusFeed('school', 1),
     queryFn: () => getCampusFeed({ tab: 'school', page: 1, pageSize: 8 }),
     enabled: tab === 'campus',
     staleTime: 30 * 1000,
@@ -70,6 +70,14 @@ export default function SquareHome() {
     }
   };
 
+  const handleTabKeyDown = (event) => {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    const nextTab = tab === 'campus' ? 'trending' : 'campus';
+    selectTab(nextTab);
+    document.getElementById(`square-tab-${nextTab}`)?.focus();
+  };
+
   const refresh = () => activeQuery.refetch();
 
   return (
@@ -87,10 +95,10 @@ export default function SquareHome() {
       </header>
 
       <div className="square-timeline-tabs" role="tablist" aria-label={isEn ? 'Square feeds' : '广场内容'}>
-        <button type="button" role="tab" aria-selected={tab === 'campus'} className={tab === 'campus' ? 'is-active' : ''} onClick={() => selectTab('campus')}>
+        <button id="square-tab-campus" type="button" role="tab" aria-selected={tab === 'campus'} aria-controls="square-tabpanel" tabIndex={tab === 'campus' ? 0 : -1} className={tab === 'campus' ? 'is-active' : ''} onClick={() => selectTab('campus')} onKeyDown={handleTabKeyDown}>
           {isEn ? 'Campus' : '校园'}
         </button>
-        <button type="button" role="tab" aria-selected={tab === 'trending'} className={tab === 'trending' ? 'is-active' : ''} onClick={() => selectTab('trending')}>
+        <button id="square-tab-trending" type="button" role="tab" aria-selected={tab === 'trending'} aria-controls="square-tabpanel" tabIndex={tab === 'trending' ? 0 : -1} className={tab === 'trending' ? 'is-active' : ''} onClick={() => selectTab('trending')} onKeyDown={handleTabKeyDown}>
           {isEn ? 'Trending' : '热搜'}
         </button>
       </div>
@@ -103,7 +111,7 @@ export default function SquareHome() {
         adminTo="/about/admin/orgs?tab=banners"
       />
 
-      <div className="square-timeline-content" role="tabpanel">
+      <div id="square-tabpanel" className="square-timeline-content" role="tabpanel" aria-labelledby={`square-tab-${tab}`}>
         {activeQuery.isLoading ? (
           <PageSkeleton items={4} className="square-home-skeleton" />
         ) : activeQuery.isError ? (
