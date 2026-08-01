@@ -176,11 +176,13 @@ export default function SquareHome() {
 
       <TodayCampusQuickActions actions={PRIMARY_ACTIONS} />
 
-      <CanteenBannerCarousel
-        fetchFn={getSquareBanners}
-        queryKey={QK.squareBanners()}
-        adminTo="/about/admin/orgs?tab=banners"
-      />
+      {tab === 'campus' ? (
+        <CanteenBannerCarousel
+          fetchFn={getSquareBanners}
+          queryKey={QK.squareBanners()}
+          adminTo="/about/admin/orgs?tab=banners"
+        />
+      ) : null}
 
       {tab === 'campus' ? (
         <div className="square-notice-tabs" role="tablist" aria-label={isEn ? 'Notice sources' : '通知来源'}>
