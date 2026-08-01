@@ -2,16 +2,18 @@ import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import { getMyOrganizations } from '@shared/api/organizations';
 import { postCampusPost } from '@shared/api/square';
 import { QK } from '@shared/query/queryKeys';
 
 export default function SquareCampusPostNew() {
   const { lang } = useLanguage();
+  const { isLoggedIn } = useAuth();
   const isEn = lang === 'en';
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const defaultTab = searchParams.get('tab') || 'school';
+  const defaultTab = searchParams.get('tab') === 'college' ? 'college' : 'school';
   const [tab, setTab] = useState(defaultTab);
   const [orgId, setOrgId] = useState('');
   const [title, setTitle] = useState('');
@@ -25,12 +27,13 @@ export default function SquareCampusPostNew() {
   const { data, isLoading } = useQuery({
     queryKey: QK.myOrganizations(),
     queryFn: getMyOrganizations,
+    enabled: isLoggedIn,
     staleTime: 60 * 1000,
   });
   const orgs = Array.isArray(data) ? data : data?.data || [];
 
   const allowedTypes = tab === 'college' ? ['College'] : ['SchoolDepartment', 'Official'];
-  const availableOrgs = orgs.filter((org) => allowedTypes.includes(org.type));
+  const availableOrgs = orgs.filter((org) => allowedTypes.includes(org.type) && Number(org.permission_level) >= 1);
 
   useEffect(() => {
     if (availableOrgs.length > 0 && !orgId) {
@@ -80,6 +83,24 @@ export default function SquareCampusPostNew() {
     { key: 'school', label: isEn ? 'School Bulletin' : '学校公告' },
     { key: 'college', label: isEn ? 'College Updates' : '学院通知' },
   ];
+
+  if (!isLoggedIn) {
+    return (
+      <div className="square-home-page">
+        <div className="square-home-inner">
+          <div className="square-section">
+            <h3 className="square-section-title">{isEn ? 'Publish campus notice' : '发布校园通知'}</h3>
+            <div className="state-empty">
+              <p>{isEn ? 'Sign in with an organization account to publish a notice.' : '请先登录，再使用组织身份发布通知。'}</p>
+              <button type="button" className="canteen-pick-btn pressable" onClick={() => navigate('/login', { state: { from: { pathname: `/about/campus/new?tab=${tab}` } } })}>
+                {isEn ? 'Sign in' : '去登录'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="square-home-page">
