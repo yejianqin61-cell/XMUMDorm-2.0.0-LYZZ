@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import AppCard from '../ui/AppCard';
 import { useLanguage } from '../../context/LanguageContext';
 
 export default function TodayCampusQuickActions({ actions }) {
@@ -7,33 +6,17 @@ export default function TodayCampusQuickActions({ actions }) {
   const isEn = lang === 'en';
 
   return (
-    <section className="today-campus-panel square-home-block">
-      <div className="square-section-header square-section-header--stack">
-        <div>
-          <h2 className="square-section-title">{isEn ? 'Quick Access' : '快捷入口'}</h2>
-        </div>
-      </div>
+    <nav className="today-campus-panel" aria-label={isEn ? 'Square shortcuts' : '广场快捷入口'}>
       <div className="today-campus-quick-actions">
         {actions.map((action) => (
           <Link key={action.to} to={action.to} className="today-campus-quick-action-link">
-            <AppCard className={`today-campus-quick-action today-campus-quick-action--${action.tone}`} interactive>
-              <div className="today-campus-quick-action__pattern" aria-hidden="true" />
-              <div className="today-campus-quick-action__top">
-                <span className="today-campus-quick-action__emoji" aria-hidden="true">
-                  {action.emoji}
-                </span>
-                <span className="today-campus-quick-action__icon" aria-hidden="true">
-                  {action.icon}
-                </span>
-              </div>
-              <div className="today-campus-quick-action__content">
-                <h3 className="today-campus-quick-action__title">{isEn ? action.labelEn || action.label : action.label}</h3>
-                <p className="today-campus-quick-action__hint">{isEn ? action.hintEn || action.hint : action.hint}</p>
-              </div>
-            </AppCard>
+            <span className="today-campus-quick-action__icon" aria-hidden="true">
+              {action.icon}
+            </span>
+            <span className="today-campus-quick-action__title">{isEn ? action.labelEn || action.label : action.label}</span>
           </Link>
         ))}
       </div>
-    </section>
+    </nav>
   );
 }

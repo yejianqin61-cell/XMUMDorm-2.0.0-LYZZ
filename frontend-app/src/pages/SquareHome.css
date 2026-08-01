@@ -632,6 +632,56 @@
   }
 }
 
+/* Task009-02: keep the four destinations visible without turning them into cards. */
+.square-home-page--timeline .today-campus-panel {
+  margin: 0;
+  border-bottom: 1px solid #eff3f4;
+}
+
+.square-home-page--timeline .today-campus-quick-actions {
+  display: flex;
+  gap: 8px;
+  min-width: max-content;
+  padding: 10px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.square-home-page--timeline .today-campus-quick-actions::-webkit-scrollbar {
+  display: none;
+}
+
+.square-home-page--timeline .today-campus-quick-action-link {
+  min-width: 86px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 10px;
+  border: 1px solid #eff3f4;
+  border-radius: 8px;
+  background: #fff;
+  color: #0f1419;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.square-home-page--timeline .today-campus-quick-action-link:active {
+  background: #f7f9f9;
+}
+
+.square-home-page--timeline .today-campus-quick-action__icon {
+  display: inline-flex;
+  color: #536471;
+}
+
+.square-home-page--timeline .today-campus-quick-action__title {
+  font-size: 13px;
+  line-height: 1.2;
+  font-weight: 650;
+}
+
 .square-trending-topic-card {
   position: relative;
   display: grid;

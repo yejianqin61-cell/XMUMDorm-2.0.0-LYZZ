@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, RefreshCw } from 'lucide-react';
+import { BookOpenText, HandHelping, Plus, RefreshCw, Shapes, Store } from 'lucide-react';
 import { getCampusFeed, getSquareBanners, getTrendingTopics } from '@shared/api/square';
 import { getUploadUrl } from '@shared/api/config';
 import { formatPostTime } from '@shared/utils/formatTime';
@@ -9,10 +9,18 @@ import { useLanguage } from '../context/LanguageContext';
 import ErrorState from '../components/ui/ErrorState';
 import PageSkeleton from '../components/ui/PageSkeleton';
 import CanteenBannerCarousel from '../components/canteen/CanteenBannerCarousel';
+import TodayCampusQuickActions from '../components/square/TodayCampusQuickActions';
 import { QK } from '@shared/query/queryKeys';
 import './SquareHome.css';
 
 const TAB_STORAGE_KEY = 'square-home-tab';
+
+const PRIMARY_ACTIONS = [
+  { label: '社团广场', labelEn: 'Clubs', to: '/about/club', icon: <Shapes size={19} strokeWidth={2} /> },
+  { label: '马校一站通', labelEn: 'XMUM Guide', to: '/about/freshman-guide', icon: <BookOpenText size={19} strokeWidth={2} /> },
+  { label: '帮帮我', labelEn: 'Help Me', to: '/about/errands', icon: <HandHelping size={19} strokeWidth={2} /> },
+  { label: '出物', labelEn: 'Marketplace', to: '/about/second-hand', icon: <Store size={19} strokeWidth={2} /> },
+];
 
 function readStoredTab() {
   try {
@@ -86,6 +94,8 @@ export default function SquareHome() {
           {isEn ? 'Trending' : '热搜'}
         </button>
       </div>
+
+      <TodayCampusQuickActions actions={PRIMARY_ACTIONS} />
 
       <CanteenBannerCarousel
         fetchFn={getSquareBanners}
