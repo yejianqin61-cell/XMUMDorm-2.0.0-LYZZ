@@ -60,7 +60,7 @@ function ErrandsHome() {
         })}
       </div>
 
-      <div className="err-status-row">
+      <div className="err-status-row" role="tablist" aria-label={isZh ? '任务状态' : 'Errand status'}>
         {[
           { key: 'open', zh: '进行中', en: 'Open' },
           { key: 'taken', zh: '已接单', en: 'Taken' },
@@ -72,6 +72,8 @@ function ErrandsHome() {
               type="button"
               className={`err-status-chip ${active ? 'is-active' : ''}`}
               onClick={() => setStatus(s.key)}
+              role="tab"
+              aria-selected={active}
             >
               {isZh ? s.zh : s.en}
             </button>
