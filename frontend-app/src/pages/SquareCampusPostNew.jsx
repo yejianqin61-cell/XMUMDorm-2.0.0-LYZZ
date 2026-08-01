@@ -32,7 +32,7 @@ export default function SquareCampusPostNew() {
   });
   const orgs = Array.isArray(data) ? data : data?.data || [];
 
-  const allowedTypes = tab === 'college' ? ['College'] : ['SchoolDepartment', 'Official'];
+  const allowedTypes = tab === 'college' ? ['College', 'Major'] : ['SchoolDepartment', 'Official'];
   const availableOrgs = orgs.filter((org) => allowedTypes.includes(org.type) && Number(org.permission_level) >= 1);
 
   useEffect(() => {
@@ -126,7 +126,7 @@ export default function SquareCampusPostNew() {
           ) : availableOrgs.length === 0 ? (
             <div className="state-empty">
               {tab === 'college'
-                ? (isEn ? 'You do not have permission to post as a college organization' : '你没有学院组织的发帖权限')
+                ? (isEn ? 'You do not have permission to post as a college or major organization' : '你没有学院或专业组织的发帖权限')
                 : (isEn ? 'You do not have permission to post as an official school organization' : '你没有学校官方组织的发帖权限')}
             </div>
           ) : (

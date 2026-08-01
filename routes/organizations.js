@@ -83,7 +83,7 @@ router.get('/', async (req, res) => {
 router.post('/', authenticateToken, async (req, res) => {
   if (!isAdmin(req)) return res.status(403).json({ status: -1, message: '仅管理员可创建组织' });
   try {
-    const type = ['SchoolDepartment', 'College', 'Official'].includes(req.body.type) ? req.body.type : null;
+    const type = ['SchoolDepartment', 'College', 'Major', 'Official'].includes(req.body.type) ? req.body.type : null;
     const name = cleanText(req.body.name);
     if (!type || !name) return res.status(200).json({ status: -1, message: '请填写组织类型和名称' });
     const description = cleanText(req.body.description);
@@ -113,13 +113,14 @@ router.patch('/:id', authenticateToken, async (req, res) => {
   try {
     const orgId = parseInt(req.params.id, 10);
     const name = cleanText(req.body.name);
-    const type = req.body.type;
+    const type = ['SchoolDepartment', 'College', 'Major', 'Official'].includes(req.body.type) ? req.body.type : null;
     const description = cleanText(req.body.description);
     const isActive = req.body.is_active != null ? (req.body.is_active ? 1 : 0) : undefined;
 
     const sets = [];
     const params = [];
     if (name) { sets.push('name = ?'); params.push(name); }
+    if (req.body.type !== undefined && !type) return res.status(400).json({ status: -1, message: '无效的组织类型' });
     if (type) { sets.push('type = ?'); params.push(type); }
     if (req.body.description !== undefined) { sets.push('description = ?'); params.push(description); }
     if (isActive !== undefined) { sets.push('is_active = ?'); params.push(isActive); }

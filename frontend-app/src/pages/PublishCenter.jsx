@@ -38,7 +38,7 @@ function PublishCenter() {
     [allOrganizations]
   );
   const noticeOrganizations = useMemo(
-    () => allOrganizations.filter((item) => ['SchoolDepartment', 'Official', 'College'].includes(item?.type) && Number(item?.permission_level) >= 1),
+    () => allOrganizations.filter((item) => ['SchoolDepartment', 'Official', 'College', 'Major'].includes(item?.type) && Number(item?.permission_level) >= 1),
     [allOrganizations]
   );
 
@@ -187,11 +187,11 @@ function PublishCenter() {
       key: 'college-notice',
       icon: '📣',
       title: isZh ? '发学院通知' : 'College notice',
-      description: isZh ? '使用学院组织身份发布学院通知。' : 'Publish with a college organization identity.',
-      meta: noticeOrganizations.some((org) => org.type === 'College')
+      description: isZh ? '使用学院或专业组织身份发布学院通知。' : 'Publish with a college or major organization identity.',
+      meta: noticeOrganizations.some((org) => ['College', 'Major'].includes(org.type))
         ? (isZh ? '已有可用发布身份' : 'Publishing identity available')
         : (isZh ? '仅授权组织可见' : 'Authorized organizations only'),
-      hidden: !noticeOrganizations.some((org) => org.type === 'College'),
+      hidden: !noticeOrganizations.some((org) => ['College', 'Major'].includes(org.type)),
       onClick: () => handleNoticeEntry('college'),
     },
   ].filter((item) => !item.hidden);

@@ -139,6 +139,7 @@ function OrgForm({ org, onClose }) {
         <select className="canteen-search-input" style={{ width: '100%', boxSizing: 'border-box', marginBottom: 8 }} value={type} onChange={(e) => setType(e.target.value)}>
           <option value="SchoolDepartment">学校部门 SchoolDepartment</option>
           <option value="College">学院 College</option>
+          <option value="Major">专业 Major</option>
           <option value="Official">官方号 Official</option>
         </select>
         <textarea className="canteen-search-input" style={{ width: '100%', minHeight: 60, resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: 8 }} placeholder="简介（可选）" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={500} />

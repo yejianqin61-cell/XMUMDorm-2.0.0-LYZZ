@@ -578,9 +578,9 @@ router.get('/campus-feed', async (req, res) => {
     const pageSize = Math.min(20, Math.max(1, parseInt(req.query.pageSize, 10) || 10));
     const offset = (page - 1) * pageSize;
 
-    // school tab 允许 SchoolDepartment 和 Official；college tab 仅 College
+    // school tab allows SchoolDepartment and Official; college tab allows College and Major.
     const orgTypeCondition = tab === 'college'
-      ? "AND o.type = 'College'"
+      ? "AND o.type IN ('College', 'Major')"
       : "AND o.type IN ('SchoolDepartment', 'Official')";
 
     const countRows = await query(
@@ -669,8 +669,8 @@ router.post('/campus-posts', authenticateToken, checkSanction, sensitiveWordFilt
     }
 
     // 校验组织类型与 tab 匹配
-    if (feedTab === 'college' && m.org_type !== 'College') {
-      return res.status(403).json({ status: -1, message: '学院通知仅限 College 类型组织发布' });
+    if (feedTab === 'college' && !['College', 'Major'].includes(m.org_type)) {
+      return res.status(403).json({ status: -1, message: '学院通知仅限 College/Major 类型组织发布' });
     }
     if (feedTab === 'school' && !['SchoolDepartment', 'Official'].includes(m.org_type)) {
       return res.status(403).json({ status: -1, message: '学校公告仅限 SchoolDepartment/Official 类型组织发布' });

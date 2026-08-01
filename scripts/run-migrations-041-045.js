@@ -1,5 +1,5 @@
 /**
- * 执行广场/组织系统增量迁移 041–045
+ * 执行广场/组织系统增量迁移 041–045、061
  *
  *   node scripts/run-migrations-041-045.js
  *
@@ -9,6 +9,7 @@
  *   043_trending_topics.sql
  *   044_trending_posts.sql
  *   045_campus_posts.sql
+ *   061_organization_major.sql
  *
  * 连接：.env 中 DATABASE_URL / MYSQL_URL / RAILWAY_MYSQL_URL（与 run-incremental-migrations.js 一致）
  * 已存在的表/列/索引会跳过（Duplicate / already exists）。
@@ -26,6 +27,7 @@ const MIGRATION_FILES = [
   '043_trending_topics.sql',
   '044_trending_posts.sql',
   '045_campus_posts.sql',
+  '061_organization_major.sql',
 ];
 
 require('dotenv').config({ path: path.join(ROOT, '.env') });
@@ -78,6 +80,7 @@ const TABLE_BY_FILE = {
   '043_trending_topics.sql': 'trending_topics',
   '044_trending_posts.sql': 'trending_posts',
   '045_campus_posts.sql': 'campus_posts',
+  '061_organization_major.sql': 'organizations',
 };
 
 async function run() {

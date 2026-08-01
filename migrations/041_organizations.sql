@@ -5,7 +5,7 @@ USE jack_campus;
 
 CREATE TABLE IF NOT EXISTS organizations (
   id INT AUTO_INCREMENT PRIMARY KEY COMMENT '组织ID',
-  type ENUM('SchoolDepartment','College','Official') NOT NULL COMMENT 'SchoolDepartment=学校部门, College=学院, Official=官方号',
+  type ENUM('SchoolDepartment','College','Major','Official') NOT NULL COMMENT 'SchoolDepartment=学校部门, College=学院, Major=专业, Official=官方号',
   name VARCHAR(100) NOT NULL COMMENT '组织名称',
   avatar VARCHAR(500) NULL COMMENT '头像 key 或 URL',
   description TEXT NULL COMMENT '简介',
