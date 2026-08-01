@@ -15,7 +15,9 @@ import { QK } from '@shared/query/queryKeys';
 import './SquareHome.css';
 
 const TAB_STORAGE_KEY = 'square-home-tab';
-const FEED_TABS = ['school', 'college', 'trending'];
+const NOTICE_TAB_STORAGE_KEY = 'square-notice-tab';
+const MAIN_TABS = ['campus', 'trending'];
+const NOTICE_TABS = ['school', 'college'];
 
 const PRIMARY_ACTIONS = [
   { label: '社团广场', labelEn: 'Clubs', to: '/about/club', icon: <Shapes size={19} strokeWidth={2} /> },
@@ -27,7 +29,16 @@ const PRIMARY_ACTIONS = [
 function readStoredTab() {
   try {
     const stored = localStorage.getItem(TAB_STORAGE_KEY);
-    return FEED_TABS.includes(stored) ? stored : 'school';
+    return MAIN_TABS.includes(stored) ? stored : 'campus';
+  } catch {
+    return 'campus';
+  }
+}
+
+function readStoredNoticeTab() {
+  try {
+    const stored = localStorage.getItem(NOTICE_TAB_STORAGE_KEY);
+    return NOTICE_TABS.includes(stored) ? stored : 'school';
   } catch {
     return 'school';
   }
@@ -49,13 +60,14 @@ export default function SquareHome() {
   const { isLoggedIn } = useAuth();
   const isEn = lang === 'en';
   const [tab, setTab] = useState(readStoredTab);
+  const [noticeTab, setNoticeTab] = useState(readStoredNoticeTab);
   const [likedCampus, setLikedCampus] = useState({});
   const [campusLikeCounts, setCampusLikeCounts] = useState({});
 
   const campusQuery = useQuery({
-    queryKey: QK.campusFeed(tab, 1),
-    queryFn: () => getCampusFeed({ tab, page: 1, pageSize: 8 }),
-    enabled: tab !== 'trending',
+    queryKey: QK.campusFeed(noticeTab, 1),
+    queryFn: () => getCampusFeed({ tab: noticeTab, page: 1, pageSize: 8 }),
+    enabled: tab === 'campus',
     staleTime: 30 * 1000,
   });
   const trendingQuery = useQuery({
@@ -77,13 +89,31 @@ export default function SquareHome() {
     }
   };
 
+  const selectNoticeTab = (nextTab) => {
+    setNoticeTab(nextTab);
+    try {
+      localStorage.setItem(NOTICE_TAB_STORAGE_KEY, nextTab);
+    } catch {
+      // Persisting the selected notice source is a convenience, never a render blocker.
+    }
+  };
+
   const handleTabKeyDown = (event) => {
     if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
     event.preventDefault();
-    const currentIndex = FEED_TABS.indexOf(tab);
-    const nextTab = FEED_TABS[(currentIndex + (event.key === 'ArrowRight' ? 1 : -1) + FEED_TABS.length) % FEED_TABS.length];
+    const currentIndex = MAIN_TABS.indexOf(tab);
+    const nextTab = MAIN_TABS[(currentIndex + (event.key === 'ArrowRight' ? 1 : -1) + MAIN_TABS.length) % MAIN_TABS.length];
     selectTab(nextTab);
     document.getElementById(`square-tab-${nextTab}`)?.focus();
+  };
+
+  const handleNoticeTabKeyDown = (event) => {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    const currentIndex = NOTICE_TABS.indexOf(noticeTab);
+    const nextTab = NOTICE_TABS[(currentIndex + (event.key === 'ArrowRight' ? 1 : -1) + NOTICE_TABS.length) % NOTICE_TABS.length];
+    selectNoticeTab(nextTab);
+    document.getElementById(`square-notice-tab-${nextTab}`)?.focus();
   };
 
   const refresh = () => {
@@ -92,7 +122,7 @@ export default function SquareHome() {
   };
 
   const handleNoticePublish = () => {
-    const targetTab = tab === 'college' ? 'college' : 'school';
+    const targetTab = noticeTab;
     if (!isLoggedIn) {
       navigate('/login', { state: { from: { pathname: `/about/campus/new?tab=${targetTab}` } } });
       return;
@@ -136,11 +166,8 @@ export default function SquareHome() {
       </header>
 
       <div className="square-timeline-tabs" role="tablist" aria-label={isEn ? 'Square feeds' : '广场内容'}>
-        <button id="square-tab-school" type="button" role="tab" aria-selected={tab === 'school'} aria-controls="square-tabpanel" tabIndex={tab === 'school' ? 0 : -1} className={tab === 'school' ? 'is-active' : ''} onClick={() => selectTab('school')} onKeyDown={handleTabKeyDown}>
-          {isEn ? 'School notices' : '学校通知'}
-        </button>
-        <button id="square-tab-college" type="button" role="tab" aria-selected={tab === 'college'} aria-controls="square-tabpanel" tabIndex={tab === 'college' ? 0 : -1} className={tab === 'college' ? 'is-active' : ''} onClick={() => selectTab('college')} onKeyDown={handleTabKeyDown}>
-          {isEn ? 'College notices' : '学院通知'}
+        <button id="square-tab-campus" type="button" role="tab" aria-selected={tab === 'campus'} aria-controls="square-tabpanel" tabIndex={tab === 'campus' ? 0 : -1} className={tab === 'campus' ? 'is-active' : ''} onClick={() => selectTab('campus')} onKeyDown={handleTabKeyDown}>
+          {isEn ? 'Campus today' : '校园今日'}
         </button>
         <button id="square-tab-trending" type="button" role="tab" aria-selected={tab === 'trending'} aria-controls="square-tabpanel" tabIndex={tab === 'trending' ? 0 : -1} className={tab === 'trending' ? 'is-active' : ''} onClick={() => selectTab('trending')} onKeyDown={handleTabKeyDown}>
           {isEn ? 'Trending' : '热搜'}
@@ -155,7 +182,18 @@ export default function SquareHome() {
         adminTo="/about/admin/orgs?tab=banners"
       />
 
-      <div id="square-tabpanel" className="square-timeline-content" role="tabpanel" aria-labelledby={`square-tab-${tab}`}>
+      {tab === 'campus' ? (
+        <div className="square-notice-tabs" role="tablist" aria-label={isEn ? 'Notice sources' : '通知来源'}>
+          <button id="square-notice-tab-school" type="button" role="tab" aria-selected={noticeTab === 'school'} aria-controls="square-tabpanel" tabIndex={noticeTab === 'school' ? 0 : -1} className={noticeTab === 'school' ? 'is-active' : ''} onClick={() => selectNoticeTab('school')} onKeyDown={handleNoticeTabKeyDown}>
+            {isEn ? 'School notices' : '学校通知'}
+          </button>
+          <button id="square-notice-tab-college" type="button" role="tab" aria-selected={noticeTab === 'college'} aria-controls="square-tabpanel" tabIndex={noticeTab === 'college' ? 0 : -1} className={noticeTab === 'college' ? 'is-active' : ''} onClick={() => selectNoticeTab('college')} onKeyDown={handleNoticeTabKeyDown}>
+            {isEn ? 'College notices' : '学院通知'}
+          </button>
+        </div>
+      ) : null}
+
+      <div id="square-tabpanel" className="square-timeline-content" role="tabpanel" aria-labelledby={tab === 'campus' ? `square-notice-tab-${noticeTab}` : 'square-tab-trending'}>
         {activeQuery.isLoading ? (
           <PageSkeleton items={4} className="square-home-skeleton" />
         ) : activeQuery.isError ? (
@@ -169,7 +207,7 @@ export default function SquareHome() {
           <div className="square-home-state square-home-state--empty">
             {isEn ? 'Nothing here yet' : '暂无内容'}
           </div>
-        ) : tab !== 'trending' ? (
+        ) : tab === 'campus' ? (
           <div className="square-campus-preview-list">
             {items.map((item) => {
               const image = item.images?.[0]?.url ? getUploadUrl(item.images[0].url) : null;

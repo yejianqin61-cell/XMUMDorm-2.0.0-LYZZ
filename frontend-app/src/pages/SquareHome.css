@@ -532,7 +532,7 @@
 
 .square-timeline-tabs {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   min-height: 48px;
   border-bottom: 1px solid #eff3f4;
 }
@@ -559,6 +559,39 @@
   right: 25%;
   bottom: -1px;
   height: 3px;
+  border-radius: 2px 2px 0 0;
+  background: var(--accent, #1d9bf0);
+}
+
+.square-notice-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  min-height: 44px;
+  border-bottom: 1px solid #eff3f4;
+}
+
+.square-notice-tabs button {
+  position: relative;
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  color: #536471;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.square-notice-tabs button.is-active {
+  color: #0f1419;
+}
+
+.square-notice-tabs button.is-active::after {
+  content: '';
+  position: absolute;
+  left: 25%;
+  right: 25%;
+  bottom: -1px;
+  height: 2px;
   border-radius: 2px 2px 0 0;
   background: var(--accent, #1d9bf0);
 }
