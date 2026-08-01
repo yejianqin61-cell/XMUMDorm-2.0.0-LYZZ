@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Card from './Card';
 import ImagePreview from './ImagePreview';
 import { productImageUrl } from '@shared/api/config';
@@ -16,6 +16,7 @@ import './FoodCard.css';
  * @param {Function} [onDelete] 商家端删除回调 (food) => void
  */
 function FoodCard({ food, mode = 'user', onDelete, canDelete = true }) {
+  const navigate = useNavigate();
   const { lang } = useLanguage();
   const isEn = lang === 'en';
   const { id, name, price, image, description, comprehensiveScore } = food;
@@ -78,7 +79,19 @@ function FoodCard({ food, mode = 'user', onDelete, canDelete = true }) {
 
   if (mode === 'merchant') {
     return (
-      <div className="food-card-wrap food-card-wrap-merchant">
+      <div
+        className="food-card-wrap food-card-wrap-merchant"
+        role="link"
+        tabIndex={0}
+        aria-label={isEn ? `View dish ${name}` : `查看菜品 ${name}`}
+        onClick={() => navigate(`/merchant/food/${id}`)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            navigate(`/merchant/food/${id}`);
+          }
+        }}
+      >
         <Card as="div" className="food-card">
           {content}
         </Card>

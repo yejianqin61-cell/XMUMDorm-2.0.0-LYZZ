@@ -136,5 +136,10 @@
 }
 
 .food-card-wrap-merchant {
-  cursor: default;
+  cursor: pointer;
+}
+
+.food-card-wrap-merchant:focus-visible {
+  outline: 2px solid var(--wx-green);
+  outline-offset: 2px;
 }
