@@ -22,12 +22,10 @@ export function getCanteenStrings(isZh) {
     pickReroll: isZh ? '🔄 再摇一次' : '🔄 Pick again',
     pickOverallScore: isZh ? '综合评分' : 'Overall',
     foodSquareTitle: isZh ? '吃货广场' : 'Food Square',
-    foodSquareCompose: isZh ? '发文章' : 'Post',
-    foodSquareHint: isZh
-      ? '在树洞发帖时带上「吃货广场」标签，会自动出现在这里'
-      : 'Posts tagged Food Square in TreeHole appear here automatically.',
+    foodSquareCompose: isZh ? '发布' : 'Post',
     foodSquareEmpty: isZh ? '还没有美食文章' : 'No food posts yet',
-    foodSquareWrite: isZh ? '写一篇美食测评 →' : 'Write a food post →',
+    foodSquareWrite: isZh ? '发布第一条' : 'Post first story',
+    foodSquareImage: isZh ? '美食帖子图片' : 'Food post image',
     loadMore: isZh ? '加载更多' : 'Load more',
     loading: isZh ? '加载中...' : 'Loading…',
     loadFailedShort: isZh ? '加载失败' : 'Failed to load',

@@ -586,6 +586,11 @@
 }
 
 /* ====== 吃货广场 ====== */
+.canteen-food-section {
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--post-ios-separator);
+}
+
 .canteen-section-head {
   display: flex;
   align-items: center;
@@ -600,26 +605,20 @@
 
 .canteen-food-compose-btn {
   flex-shrink: 0;
-  padding: 6px 14px;
-  border-radius: 999px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 4px;
   border: none;
-  background: var(--accent);
-  color: #fff;
+  background: transparent;
+  color: var(--post-ios-accent);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   font-family: inherit;
   cursor: pointer;
 }
 
 .canteen-food-compose-btn:active {
-  opacity: 0.88;
-}
-
-.canteen-food-hint {
-  margin: 0 0 10px;
-  font-size: 12px;
-  line-height: 1.4;
-  color: var(--post-ios-secondary-label);
+  opacity: 0.65;
 }
 
 .canteen-pick-empty {
@@ -636,10 +635,7 @@
 }
 
 .canteen-food-empty {
-  text-align: center;
-  padding: 20px;
-  background: var(--post-ios-card);
-  border-radius: var(--post-ios-radius-md);
+  padding: 16px 0;
   color: var(--post-ios-secondary-label);
 }
 .canteen-food-empty p {
@@ -647,12 +643,11 @@
   font-size: 14px;
 }
 .canteen-food-write-btn {
-  display: inline-block;
-  padding: 8px 16px;
-  border: 1px solid var(--accent);
-  border-radius: 999px;
+  min-height: 44px;
+  padding: 0;
+  border: none;
   background: transparent;
-  color: var(--accent);
+  color: var(--post-ios-accent);
   font-size: 13px;
   font-weight: 600;
   font-family: inherit;
@@ -662,93 +657,124 @@
 .canteen-food-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
 }
 
 .canteen-food-item {
-  display: flex;
-  gap: 10px;
-  padding: 10px;
-  border-radius: var(--post-ios-radius-md);
-  background: var(--post-ios-card);
-  box-shadow: var(--post-ios-shadow-card);
+  width: 100%;
+  display: block;
+  padding: 14px 0;
+  border: 0;
+  border-bottom: 1px solid var(--post-ios-separator);
+  background: transparent;
   cursor: pointer;
+  color: inherit;
+  font-family: inherit;
+  text-align: left;
   -webkit-tap-highlight-color: transparent;
 }
+.canteen-food-item:last-child {
+  border-bottom: 0;
+}
 .canteen-food-item:active {
-  opacity: 0.8;
+  opacity: 0.68;
+}
+.canteen-food-item:focus-visible,
+.canteen-food-compose-btn:focus-visible,
+.canteen-food-write-btn:focus-visible,
+.canteen-food-more:focus-visible {
+  outline: 2px solid var(--post-ios-accent);
+  outline-offset: 2px;
 }
 
 .canteen-food-cover {
-  width: 72px;
-  height: 72px;
-  border-radius: 8px;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  margin-top: 10px;
+  border-radius: 5px;
   object-fit: cover;
-  flex-shrink: 0;
+  display: block;
   background: var(--post-ios-fill);
 }
 
 .canteen-food-body {
-  flex: 1;
-  min-width: 0;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
 }
 
 .canteen-food-excerpt {
   margin: 0;
   font-size: 14px;
-  line-height: 1.45;
+  line-height: 1.5;
   color: var(--post-ios-label);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
-.canteen-food-meta {
+.canteen-food-author-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 11px;
-  color: var(--post-ios-tertiary-label);
+  min-width: 0;
+  gap: 6px;
+  margin-bottom: 8px;
 }
 
 .canteen-food-author {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--post-ios-label);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.canteen-food-time {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--post-ios-tertiary-label);
+}
+
+.canteen-food-time::before {
+  content: '·';
+  margin-right: 6px;
 }
 
 .canteen-food-avatar {
-  width: 16px;
-  height: 16px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   object-fit: cover;
 }
 
 .canteen-food-stats {
   display: flex;
-  gap: 6px;
-  margin-left: auto;
+  align-items: center;
+  gap: 16px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--post-ios-secondary-label);
+}
+
+.canteen-food-stats span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .canteen-food-more {
   display: block;
   width: 100%;
-  margin-top: 10px;
-  padding: 10px;
-  border: 1px solid var(--post-ios-separator);
-  border-radius: var(--post-ios-radius-md);
-  background: var(--post-ios-card);
-  color: var(--post-ios-secondary-label);
+  min-height: 44px;
+  margin-top: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--post-ios-accent);
   font-size: 13px;
+  font-weight: 600;
   font-family: inherit;
   cursor: pointer;
 }
 .canteen-food-more:active {
-  background: var(--post-ios-fill);
+  opacity: 0.65;
 }
 
 /* ====== 底部 ====== */
