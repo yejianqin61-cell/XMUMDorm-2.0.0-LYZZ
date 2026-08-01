@@ -31,30 +31,26 @@
 }
 
 .err-tabs {
-  display: flex;
-  gap: 8px;
-  overflow: auto;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  overflow: hidden;
   padding: 6px 0 10px;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  -webkit-overflow-scrolling: touch;
-}
-
-.err-tabs::-webkit-scrollbar {
-  display: none;
 }
 
 .err-tab {
-  flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 8px 12px;
+  min-width: 0;
+  padding: 8px 2px;
   border-radius: 999px;
   border: 1px solid rgba(0, 0, 0, 0.08);
   background: rgba(255, 255, 255, 0.7);
   color: rgba(0, 0, 0, 0.72);
   font-weight: 800;
+  font-size: 12px;
   cursor: pointer;
 }
 
