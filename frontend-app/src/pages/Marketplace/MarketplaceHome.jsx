@@ -155,7 +155,7 @@ function MarketplaceHome() {
             <button
               key={c.slug}
               type="button"
-              className={`mp-chip ${on ? 'is-on' : ''}`}
+              className={`mp-category-tab ${on ? 'is-on' : ''}`}
               onClick={() => setCategory(c.slug)}
             >
               {isZh ? c.name_zh : c.name_en}
@@ -168,7 +168,7 @@ function MarketplaceHome() {
         <div className="mp-filterbar-scroll">
           <button
             type="button"
-            className={`mp-chip ${status === 'all' ? 'is-on' : ''}`}
+            className={`mp-status-tab ${status === 'all' ? 'is-on' : ''}`}
             onClick={() => setStatus('all')}
           >
             {isZh ? '全部' : 'All'}
@@ -176,7 +176,7 @@ function MarketplaceHome() {
           {['on_sale', 'sold'].map((s) => {
             const on = status === s;
             return (
-              <button key={s} type="button" className={`mp-chip ${on ? 'is-on' : ''}`} onClick={() => setStatus(s)}>
+              <button key={s} type="button" className={`mp-status-tab ${on ? 'is-on' : ''}`} onClick={() => setStatus(s)}>
                 {statusLabel(s, isZh)}
               </button>
             );
@@ -184,7 +184,7 @@ function MarketplaceHome() {
 
           <button
             type="button"
-            className={`mp-chip mp-chip-icon ${drawerOpen ? 'is-on' : ''}`}
+            className={`mp-status-tab mp-status-tab--filter ${drawerOpen ? 'is-on' : ''}`}
             onClick={() => {
               if (!drawerOpen) {
                 setDraftPriceMin(priceMin);
