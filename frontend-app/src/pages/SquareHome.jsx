@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { BookOpenText, HandHelping, Heart, Megaphone, MessageCircle, MoreHorizontal, RefreshCw, Shapes, Store } from 'lucide-react';
+import { BookOpenText, HandHelping, Heart, Megaphone, MessageCircle, MoreHorizontal, RefreshCw, Settings2, Shapes, Store } from 'lucide-react';
 import { getCampusFeed, getSquareBanners, getTrendingTopics, likeCampusPost } from '@shared/api/square';
 import { getUploadUrl } from '@shared/api/config';
 import { formatPostTime } from '@shared/utils/formatTime';
@@ -57,7 +57,7 @@ export default function SquareHome() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { lang } = useLanguage();
-  const { isLoggedIn } = useAuth();
+  const { isAdmin, isLoggedIn } = useAuth();
   const isEn = lang === 'en';
   const [tab, setTab] = useState(readStoredTab);
   const [noticeTab, setNoticeTab] = useState(readStoredNoticeTab);
@@ -156,6 +156,11 @@ export default function SquareHome() {
       <header className="square-timeline-header">
         <h1>{isEn ? 'Square' : '广场'}</h1>
         <div className="square-timeline-header__actions">
+          {isAdmin ? (
+            <button type="button" className="square-icon-button" onClick={() => navigate('/about/admin/orgs?tab=orgs')} aria-label={isEn ? 'Manage organizations' : '组织管理'} title={isEn ? 'Manage organizations' : '组织管理'}>
+              <Settings2 size={19} aria-hidden="true" />
+            </button>
+          ) : null}
           <button type="button" className="square-icon-button" onClick={refresh} aria-label={isEn ? 'Refresh current feed' : '刷新当前信息流'} title={isEn ? 'Refresh current feed' : '刷新当前信息流'}>
             <RefreshCw size={19} aria-hidden="true" />
           </button>
