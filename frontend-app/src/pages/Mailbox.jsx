@@ -16,75 +16,79 @@ import {
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import './Mailbox.css';
 
-function formatTime(createdAt) {
+function formatTime(createdAt, isZh) {
   if (!createdAt) return '';
   const date = new Date(createdAt);
-  const now = new Date();
-  const diffMs = now - date;
+  const diffMs = Date.now() - date;
   const diffMin = Math.floor(diffMs / 60000);
   const diffHour = Math.floor(diffMs / 3600000);
   const diffDay = Math.floor(diffMs / 86400000);
-  if (diffMin < 1) return 'åˆšåˆš';
-  if (diffMin < 60) return `${diffMin} åˆ†é’Ÿå‰`;
-  if (diffHour < 24) return `${diffHour} å°æ—¶å‰`;
-  if (diffDay === 1) return 'æ˜¨å¤©';
-  if (diffDay < 7) return `${diffDay} å¤©å‰`;
-  return date.toLocaleDateString();
+  if (diffMin < 1) return isZh ? '刚刚' : 'Just now';
+  if (diffMin < 60) return isZh ? `${diffMin} 分钟前` : `${diffMin}m ago`;
+  if (diffHour < 24) return isZh ? `${diffHour} 小时前` : `${diffHour}h ago`;
+  if (diffDay === 1) return isZh ? '昨天' : 'Yesterday';
+  if (diffDay < 7) return isZh ? `${diffDay} 天前` : `${diffDay}d ago`;
+  return date.toLocaleDateString(isZh ? 'zh-CN' : 'en-US');
 }
 
-function displayName(u) {
-  if (!u) return 'Someone';
-  return (u.nickname || u.username || 'Someone').trim();
+function displayName(user) {
+  if (!user) return 'Someone';
+  return (user.nickname || user.username || 'Someone').trim();
 }
 
 function buildAffairsText({ isZh, latest }) {
   const title = latest?.extra?.targetTitle || latest?.target?.title || '';
-  const titlePart = title ? (isZh ? `ã€Š${title}ã€‹` : `"${title}"`) : (isZh ? 'è¯¥æ´»åŠ¨' : 'this activity');
+  const titlePart = title ? (isZh ? `《${title}》` : `"${title}"`) : (isZh ? '该活动' : 'this activity');
   if (latest?.type === 'activity_deadline_reminder') {
-    return isZh ? `${titlePart} çš„æŠ¥åå³å°†æˆªæ­¢ï¼Œè¯·åŠæ—¶å¤„ç†ã€‚` : `Registration for ${titlePart} is closing soon.`;
+    return isZh ? `${titlePart} 的报名即将截止，请及时处理。` : `Registration for ${titlePart} is closing soon.`;
   }
   if (latest?.type === 'activity_start_reminder') {
-    return isZh ? `${titlePart} å³å°†å¼€å§‹ï¼Œè¯·ç•™æ„æ´»åŠ¨å®‰æŽ’ã€‚` : `${titlePart} is starting soon.`;
+    return isZh ? `${titlePart} 即将开始，请留意活动安排。` : `${titlePart} is starting soon.`;
   }
-  return isZh ? `ä½ å·²æˆåŠŸæŠ¥å ${titlePart}ã€‚` : `You have successfully registered for ${titlePart}.`;
+  return isZh ? `你已成功报名 ${titlePart}。` : `You have successfully registered for ${titlePart}.`;
 }
 
 function buildMarketplaceText({ isZh, names, othersCount, contentTitle }) {
-  const a = names[0] || (isZh ? 'æœ‰äºº' : 'Someone');
-  const b = names[1] || '';
-  const others = othersCount > 0 ? othersCount : 0;
-  const join2 = b ? (isZh ? `${a}ã€${b}` : `${a}, ${b}`) : a;
-  const prefix = others > 0
-    ? (isZh ? `${join2} å’Œå¦å¤– ${others} äºº` : `${join2} and ${others} others`)
-    : join2;
-  const t = (contentTitle || '').trim();
-  const titlePart = t ? (isZh ? `ã€Š${t}ã€‹` : `"${t}"`) : (isZh ? 'è¯¥å•†å“' : 'the item');
-  return isZh ? `${prefix} åœ¨äºŒæ‰‹å¸‚åœºå°± ${titlePart} å‘æ¥æ–°æ¶ˆæ¯ã€‚` : `${prefix} sent a new message about ${titlePart}.`;
+  const firstName = names[0] || (isZh ? '有人' : 'Someone');
+  const secondName = names[1] || '';
+  const namesText = secondName ? (isZh ? `${firstName}、${secondName}` : `${firstName}, ${secondName}`) : firstName;
+  const prefix = othersCount > 0
+    ? (isZh ? `${namesText} 和另外 ${othersCount} 人` : `${namesText} and ${othersCount} others`)
+    : namesText;
+  const title = (contentTitle || '').trim();
+  const titlePart = title ? (isZh ? `《${title}》` : `"${title}"`) : (isZh ? '该商品' : 'the item');
+  return isZh ? `${prefix} 在二手市场就 ${titlePart} 发来新消息。` : `${prefix} sent a new message about ${titlePart}.`;
 }
 
 function buildAggregateText({ isZh, names, othersCount, likeCount, commentCount, isPost, contentTitle }) {
-  const a = names[0] || (isZh ? 'æœ‰äºº' : 'Someone');
-  const b = names[1] || '';
-  const others = othersCount > 0 ? othersCount : 0;
-  const join2 = b ? (isZh ? `${a}ã€${b}` : `${a}, ${b}`) : a;
-  const prefix = others > 0
-    ? (isZh ? `${join2} å’Œå¦å¤– ${others} äºº` : `${join2} and ${others} others`)
-    : join2;
+  const firstName = names[0] || (isZh ? '有人' : 'Someone');
+  const secondName = names[1] || '';
+  const namesText = secondName ? (isZh ? `${firstName}、${secondName}` : `${firstName}, ${secondName}`) : firstName;
+  const prefix = othersCount > 0
+    ? (isZh ? `${namesText} 和另外 ${othersCount} 人` : `${namesText} and ${othersCount} others`)
+    : namesText;
 
   if (!isPost) {
-    return isZh ? `${prefix} æ›´æ–°äº†ä¸€æ¡ç³»ç»Ÿæ¶ˆæ¯ã€‚` : `${prefix} triggered a system update.`;
+    return isZh ? `${prefix} 更新了一条系统消息。` : `${prefix} triggered a system update.`;
   }
 
-  const t = (contentTitle || '').trim();
-  const titlePart = t ? (isZh ? `ã€Š${t}ã€‹` : `"${t}"`) : (isZh ? 'ä½ çš„å¸–å­' : 'your post');
+  const title = (contentTitle || '').trim();
+  const titlePart = title ? (isZh ? `《${title}》` : `"${title}"`) : (isZh ? '你的帖子' : 'your post');
   if (likeCount > 0 && commentCount > 0) {
-    return isZh ? `${prefix} èµžäº†æˆ–è¯„è®ºäº†${titlePart}ã€‚` : `${prefix} liked or commented on ${titlePart}.`;
+    return isZh ? `${prefix} 赞了或评论了${titlePart}。` : `${prefix} liked or commented on ${titlePart}.`;
   }
   if (commentCount > 0) {
-    return isZh ? `${prefix} è¯„è®ºäº†${titlePart}ã€‚` : `${prefix} commented on ${titlePart}.`;
+    return isZh ? `${prefix} 评论了${titlePart}。` : `${prefix} commented on ${titlePart}.`;
   }
-  return isZh ? `${prefix} èµžäº†${titlePart}ã€‚` : `${prefix} liked ${titlePart}.`;
+  return isZh ? `${prefix} 赞了${titlePart}。` : `${prefix} liked ${titlePart}.`;
 }
+
+const CATEGORY_TABS = [
+  { key: 'all', label: '全部', labelEn: 'All' },
+  { key: 'interaction', label: '互动', labelEn: 'Interaction' },
+  { key: 'transaction', label: '事务', labelEn: 'Transaction' },
+  { key: 'system', label: '系统', labelEn: 'System' },
+];
 
 function Mailbox() {
   const { isLoggedIn } = useAuth();
@@ -96,30 +100,27 @@ function Mailbox() {
   const [error, setError] = useState(null);
   const [tab, setTab] = useState('all');
 
-  const CATEGORY_TABS = [
-    { key: 'all', label: 'å…¨éƒ¨', labelEn: 'All' },
-    { key: 'interaction', label: 'äº’åŠ¨', labelEn: 'Interaction' },
-    { key: 'transaction', label: 'äº‹åŠ¡', labelEn: 'Transaction' },
-    { key: 'system', label: 'ç³»ç»Ÿ', labelEn: 'System' },
-  ];
-
   useEffect(() => {
     if (!isLoggedIn) {
-      setData({ list: [], hasMore: false });
-      setLoading(false);
-      return;
+      const timeoutId = window.setTimeout(() => {
+        setData({ list: [], hasMore: false });
+        setLoading(false);
+      }, 0);
+      return () => window.clearTimeout(timeoutId);
     }
     let cancelled = false;
-    setLoading(true);
-    setError(null);
-
-    const opts = { page: 1, pageSize: 50 };
-    if (tab !== 'all') opts.category = tab;
-
-    Promise.all([getNotifications(opts), getUnreadSummary()])
-      .then(([res, summary]) => {
+    const options = { page: 1, pageSize: 50 };
+    if (tab !== 'all') options.category = tab;
+    Promise.resolve()
+      .then(() => {
+        if (cancelled) return null;
+        setLoading(true);
+        setError(null);
+        return Promise.all([getNotifications(options), getUnreadSummary()]);
+      })
+      .then(([result, summary]) => {
         if (cancelled) return;
-        setData({ list: res?.list ?? [], hasMore: !!res?.hasMore });
+        setData({ list: result?.list ?? [], hasMore: !!result?.hasMore });
         setUnreadCounts(summary?.byCategory || {});
       })
       .catch((err) => {
@@ -128,229 +129,108 @@ function Mailbox() {
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
-
     return () => { cancelled = true; };
   }, [isLoggedIn, tab]);
 
   const groups = useMemo(() => {
-    const list = Array.isArray(data?.list) ? data.list : [];
     const map = new Map();
-
-    for (const n of list) {
-      const t = n?.target || null;
-      const isAffair = ['activity_register_success', 'activity_start_reminder', 'activity_deadline_reminder'].includes(n.type);
-      const baseKey = t?.key || `unknown:${n.id}`;
+    for (const notification of Array.isArray(data?.list) ? data.list : []) {
+      const target = notification?.target || null;
+      const isAffair = ['activity_register_success', 'activity_start_reminder', 'activity_deadline_reminder'].includes(notification.type);
+      const baseKey = target?.key || `unknown:${notification.id}`;
       const key = isAffair ? `affair:${baseKey}` : baseKey;
-      const isPost = t && (t.type === 'post' || t.type === 'announcement');
       if (!map.has(key)) {
-        map.set(key, {
-          key,
-          isPost,
-          isAffair,
-          target: t,
-          items: [],
-        });
+        map.set(key, { key, isPost: target?.type === 'post' || target?.type === 'announcement', isAffair, target, items: [] });
       }
-      map.get(key).items.push(n);
+      map.get(key).items.push(notification);
     }
 
     return Array.from(map.values())
-      .map((g) => {
-        const sorted = [...g.items].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        const unreadCount = sorted.filter((x) => !x.is_read).length;
-        const likeCount = sorted.filter((x) => x.type === 'like' || x.type?.endsWith('_like')).length;
-        const commentCount = sorted.filter((x) => ['comment', 'handbook_comment', 'course_review_comment'].includes(x.type) || x.type?.endsWith('_comment')).length;
-        const latest = sorted[0] || null;
+      .map((group) => {
+        const sorted = [...group.items].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         const seen = new Set();
-        const users = [];
-        for (const it of sorted) {
-          const u = it.from_user;
-          const id = u?.id != null ? String(u.id) : null;
-          if (!id || seen.has(id)) continue;
+        const users = sorted.filter((item) => {
+          const id = item.from_user?.id != null ? String(item.from_user.id) : null;
+          if (!id || seen.has(id)) return false;
           seen.add(id);
-          users.push(u);
-        }
-        const topUsers = users.slice(0, 3);
-        const othersCount = Math.max(0, users.length - topUsers.length);
-        const names = topUsers.map(displayName);
-
+          return true;
+        }).map((item) => item.from_user);
+        const latest = sorted[0] || null;
         return {
-          ...g,
+          ...group,
           sorted,
           latest,
-          unreadCount,
-          likeCount,
-          commentCount,
-          topUsers,
-          othersCount,
-          names,
-          content_title: g.target?.title || latest?.post_title || latest?.extra?.targetTitle || null,
-          content_path: g.target?.path || (latest?.post_id ? `/post/${latest.post_id}` : '#'),
-          created_at: latest?.created_at,
+          unreadCount: sorted.filter((item) => !item.is_read).length,
+          likeCount: sorted.filter((item) => item.type === 'like' || item.type?.endsWith('_like')).length,
+          commentCount: sorted.filter((item) => ['comment', 'handbook_comment', 'course_review_comment'].includes(item.type) || item.type?.endsWith('_comment')).length,
+          topUsers: users.slice(0, 3),
+          othersCount: Math.max(0, users.length - 3),
+          names: users.slice(0, 3).map(displayName),
+          contentTitle: group.target?.title || latest?.post_title || latest?.extra?.targetTitle || null,
+          contentPath: group.target?.path || (latest?.post_id ? `/post/${latest.post_id}` : '#'),
+          createdAt: latest?.created_at,
           category: latest?.category || 'interaction',
         };
       })
-      .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-  }, [data?.list]);
+      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+  }, [data]);
 
-  const handleGroupClick = (g) => {
-    const unread = (g?.sorted || []).filter((x) => !x.is_read);
-    if (unread.length === 0) return;
-    Promise.allSettled(unread.map((x) => markNotificationRead(x.id))).catch(() => {});
+  const handleGroupClick = (group) => {
+    const unread = group.sorted.filter((item) => !item.is_read);
+    if (unread.length) Promise.allSettled(unread.map((item) => markNotificationRead(item.id))).catch(() => {});
   };
 
   if (!isLoggedIn) {
-    return (
-      <RouteTransition className="mailbox-page">
-        <EmptyState
-          title="è¯·å…ˆç™»å½•"
-          description="ç™»å½•åŽæŸ¥çœ‹ä¿¡ç®±ã€‚Please log in to view mailbox."
-          actionLabel="åŽ»ç™»å½•"
-          actionTo="/login"
-          icon="âœ‰"
-        />
-      </RouteTransition>
-    );
+    return <RouteTransition className="mailbox-page"><EmptyState title={isZh ? '请先登录' : 'Please log in'} description={isZh ? '登录后查看信箱。' : 'Please log in to view mailbox.'} actionLabel={isZh ? '去登录' : 'Log in'} actionTo="/login" icon="✉" /></RouteTransition>;
   }
-
-  if (loading) {
-    return (
-      <RouteTransition className="mailbox-page">
-        <PageSkeleton items={4} />
-      </RouteTransition>
-    );
-  }
-
-  if (error) {
-    return (
-      <RouteTransition className="mailbox-page">
-        <ErrorState title="ä¿¡ç®±åŠ è½½å¤±è´¥" description={error} onActionClick={() => window.location.reload()} />
-      </RouteTransition>
-    );
-  }
+  if (loading) return <RouteTransition className="mailbox-page"><PageSkeleton items={4} /></RouteTransition>;
+  if (error) return <RouteTransition className="mailbox-page"><ErrorState title={isZh ? '信箱加载失败' : 'Mailbox failed to load'} description={error} onActionClick={() => window.location.reload()} /></RouteTransition>;
 
   return (
     <RouteTransition className="mailbox-page">
       <div className="mailbox-topbar">
-        <div className="mailbox-tabs" role="tablist" aria-label="notification tabs" style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
-          {CATEGORY_TABS.map((mt) => {
-            const count = mt.key === 'all'
-              ? Object.values(unreadCounts).reduce((a, b) => a + b, 0)
-              : (unreadCounts[mt.key] || 0);
-            return (
-              <button
-                key={mt.key}
-                type="button"
-                className={`mailbox-tab ${tab === mt.key ? 'is-on' : ''}`}
-                onClick={() => setTab(mt.key)}
-                role="tab"
-                aria-selected={tab === mt.key}
-                style={{ position: 'relative', padding: '6px 12px', fontSize: 13 }}
-              >
-                {isZh ? mt.label : mt.labelEn}
-                {count > 0 ? (
-                  <span style={{ marginLeft: 4, background: tab === mt.key ? '#fff' : '#ef4444', color: tab === mt.key ? '#ef4444' : '#fff', borderRadius: 10, padding: '0 6px', fontSize: 11, fontWeight: 600 }}>
-                    {count}
-                  </span>
-                ) : null}
-              </button>
-            );
+        <div className="mailbox-tabs" role="tablist" aria-label={isZh ? '通知分类' : 'Notification categories'}>
+          {CATEGORY_TABS.map((item) => {
+            const count = item.key === 'all' ? Object.values(unreadCounts).reduce((sum, value) => sum + value, 0) : (unreadCounts[item.key] || 0);
+            return <button key={item.key} type="button" className={`mailbox-tab ${tab === item.key ? 'is-on' : ''}`} onClick={() => setTab(item.key)} role="tab" aria-selected={tab === item.key}>
+              {isZh ? item.label : item.labelEn}{count > 0 && <span className="mailbox-tab-count">{count}</span>}
+            </button>;
           })}
         </div>
-        <button
-          type="button"
-          className="mailbox-clear-btn"
-          onClick={async () => {
-            const tabLabel = isZh ? CATEGORY_TABS.find((t) => t.key === tab)?.label || tab : tab;
-            const ok = window.confirm(isZh ? `æ¸…ç©º${tabLabel}é€šçŸ¥ï¼Ÿ` : `Clear ${tabLabel} notifications?`);
-            if (!ok) return;
-            try {
-              if (tab === 'all') {
-                await clearNotifications('social');
-              } else {
-                await clearNotificationsByCategory(tab);
-              }
-              const [res, summary] = await Promise.all([
-                getNotifications({ page: 1, pageSize: 50, category: tab !== 'all' ? tab : undefined }),
-                getUnreadSummary(),
-              ]);
-              setData({ list: res?.list ?? [], hasMore: !!res?.hasMore });
-              setUnreadCounts(summary?.byCategory || {});
-            } catch (e) {
-              setError(getApiErrorMessage(e));
-            }
-          }}
-        >
-          {isZh ? 'æ¸…ç©º' : 'Clear'}
-        </button>
+        <button type="button" className="mailbox-clear-btn" onClick={async () => {
+          const tabLabel = isZh ? CATEGORY_TABS.find((item) => item.key === tab)?.label || tab : tab;
+          if (!window.confirm(isZh ? `清空${tabLabel}通知？` : `Clear ${tabLabel} notifications?`)) return;
+          try {
+            if (tab === 'all') await clearNotifications();
+            else await clearNotificationsByCategory(tab);
+            const options = { page: 1, pageSize: 50 };
+            if (tab !== 'all') options.category = tab;
+            const [result, summary] = await Promise.all([getNotifications(options), getUnreadSummary()]);
+            setData({ list: result?.list ?? [], hasMore: !!result?.hasMore });
+            setUnreadCounts(summary?.byCategory || {});
+          } catch (err) {
+            setError(getApiErrorMessage(err));
+          }
+        }}>{isZh ? '清空' : 'Clear'}</button>
       </div>
 
-      {groups.length === 0 ? (
-        <EmptyState title="æš‚æ— é€šçŸ¥" description="No notifications yet." icon="âœ‰" />
-      ) : (
+      {groups.length === 0 ? <EmptyState title={isZh ? '暂无通知' : 'No notifications'} description={isZh ? '新的消息会出现在这里。' : 'New notifications will appear here.'} icon="✉" /> : (
         <ul className="social-stream">
-          {groups.map((g, idx) => {
-            const isUnread = g.unreadCount > 0;
-            const title = g.content_title || '';
-            const linkTo = g.content_path || '#';
-            const isAnnouncement = (g.target && g.target.type === 'announcement') || g.latest?.type === 'announcement' || g.latest?.type === 'system_announcement';
-            const aggregateText = g.isAffair
-              ? buildAffairsText({ isZh, latest: g.latest })
-              : g.category === 'transaction'
-              ? buildMarketplaceText({ isZh, names: g.names, othersCount: g.othersCount, contentTitle: title })
-              : buildAggregateText({
-                  isZh,
-                  names: g.names,
-                  othersCount: g.othersCount,
-                  likeCount: g.likeCount,
-                  commentCount: g.commentCount,
-                  isPost: g.isPost,
-                  contentTitle: title,
-                });
-
-            return (
-              <li
-                key={g.key}
-                className={`social-card ${isUnread ? 'is-unread' : ''}`}
-                style={{ animationDelay: `${idx * 70}ms` }}
-              >
-                <Link to={linkTo} className="social-card-link" onClick={() => handleGroupClick(g)}>
-                  {isAnnouncement ? (
-                    <div className="mailbox-ann-only" aria-label={isZh ? 'å…¬å‘Šå†…å®¹' : 'Announcement content'}>
-                      {String(title || g.latest?.extra?.content || '').trim() || (isZh ? 'ï¼ˆå…¬å‘Šå†…å®¹ä¸ºç©ºï¼‰' : '(Empty announcement)')}
-                    </div>
-                  ) : (
-                    <>
-                      <div className="social-head">
-                        <div className="social-avatars" aria-label="actors">
-                          {g.topUsers.map((u, i) => (
-                            <span key={`${u?.id || i}`} className="social-avatar" style={{ zIndex: 10 - i }}>
-                              <img src={u?.avatar || '/default-avatar.svg'} alt="" />
-                            </span>
-                          ))}
-                          {g.othersCount > 0 ? <span className="social-others">+{g.othersCount}</span> : null}
-                        </div>
-                        <span className="social-time">{formatTime(g.created_at)}</span>
-                      </div>
-
-                      <div className="social-title" aria-label="title">
-                        {title || (isZh ? 'ï¼ˆæ— æ ‡é¢˜ï¼‰' : '(Untitled)')}
-                      </div>
-
-                      <div className="social-text" aria-label="text">
-                        {aggregateText}
-                      </div>
-
-                      {g.latest?.extra?.content ? (
-                        <div className="social-whisper" aria-label="latest comment">
-                          â€œ{String(g.latest.extra.content).trim()}â€
-                        </div>
-                      ) : null}
-                    </>
-                  )}
-                </Link>
-              </li>
-            );
+          {groups.map((group, index) => {
+            const isAnnouncement = group.target?.type === 'announcement' || group.latest?.type === 'announcement' || group.latest?.type === 'system_announcement';
+            const aggregateText = group.isAffair ? buildAffairsText({ isZh, latest: group.latest }) : group.category === 'transaction'
+              ? buildMarketplaceText({ isZh, names: group.names, othersCount: group.othersCount, contentTitle: group.contentTitle })
+              : buildAggregateText({ isZh, names: group.names, othersCount: group.othersCount, likeCount: group.likeCount, commentCount: group.commentCount, isPost: group.isPost, contentTitle: group.contentTitle });
+            return <li key={group.key} className={`social-card ${group.unreadCount > 0 ? 'is-unread' : ''}`} style={{ animationDelay: `${index * 70}ms` }}>
+              <Link to={group.contentPath} className="social-card-link" onClick={() => handleGroupClick(group)}>
+                {isAnnouncement ? <div className="mailbox-ann-only" aria-label={isZh ? '公告内容' : 'Announcement content'}>{String(group.contentTitle || group.latest?.extra?.content || '').trim() || (isZh ? '（公告内容为空）' : '(Empty announcement)')}</div> : <>
+                  <div className="social-head"><div className="social-avatars" aria-label={isZh ? '发送者' : 'Senders'}>{group.topUsers.map((user, userIndex) => <span key={`${user?.id || userIndex}`} className="social-avatar" style={{ zIndex: 10 - userIndex }}><img src={user?.avatar || '/default-avatar.svg'} alt="" /></span>)}{group.othersCount > 0 && <span className="social-others">+{group.othersCount}</span>}</div><span className="social-time">{formatTime(group.createdAt, isZh)}</span></div>
+                  <div className="social-title">{group.contentTitle || (isZh ? '（无标题）' : '(Untitled)')}</div>
+                  <div className="social-text">{aggregateText}</div>
+                  {group.latest?.extra?.content && <div className="social-whisper">“{String(group.latest.extra.content).trim()}”</div>}
+                </>}
+              </Link>
+            </li>;
           })}
         </ul>
       )}
