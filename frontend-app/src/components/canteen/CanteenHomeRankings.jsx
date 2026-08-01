@@ -1,6 +1,7 @@
 import { useId, useMemo, useRef, useState } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { Sparkles, Store, UtensilsCrossed } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { getCanteenStrings } from '../../i18n/canteenStrings';
 import {
@@ -17,9 +18,9 @@ export default function CanteenHomeRankings() {
   const t = getCanteenStrings(isZh);
   const tabs = useMemo(
     () => [
-      { key: 'products', label: t.tabProducts },
-      { key: 'shops', label: t.tabShops },
-      { key: 'new', label: t.tabNew },
+      { key: 'products', label: t.tabProducts, Icon: UtensilsCrossed },
+      { key: 'shops', label: t.tabShops, Icon: Store },
+      { key: 'new', label: t.tabNew, Icon: Sparkles },
     ],
     [t.tabProducts, t.tabShops, t.tabNew]
   );
@@ -134,6 +135,7 @@ export default function CanteenHomeRankings() {
             onClick={() => setTab(index)}
             onKeyDown={(event) => handleTabKeyDown(event, index)}
           >
+            <tabItem.Icon className="canteen-rank-tab-icon" size={16} strokeWidth={1.7} aria-hidden="true" />
             {tabItem.label}
           </button>
         ))}

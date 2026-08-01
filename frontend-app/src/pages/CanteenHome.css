@@ -365,6 +365,19 @@
   color: var(--post-ios-secondary-label);
   cursor: pointer;
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.canteen-rank-tab-icon {
+  color: #111;
+  flex: 0 0 auto;
+}
+
+.canteen-rank-tab:not(.canteen-rank-tab--active) .canteen-rank-tab-icon {
+  opacity: 0.58;
 }
 .canteen-rank-tab--active {
   color: var(--post-ios-label);
