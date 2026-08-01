@@ -657,20 +657,23 @@ router.post('/campus-posts', authenticateToken, checkSanction, sensitiveWordFilt
 
     // 校验用户是否为该组织成员
     const members = await query(
-      'SELECT om.permission_level, o.type FROM organization_memberships om JOIN organizations o ON om.organization_id = o.id WHERE om.organization_id = ? AND om.user_id = ? AND o.is_active = 1',
+      'SELECT om.permission_level, o.type AS org_type FROM organization_memberships om JOIN organizations o ON om.organization_id = o.id WHERE om.organization_id = ? AND om.user_id = ? AND o.is_active = 1',
       [organizationId, req.user.id]
     );
     if (!members || members.length === 0) {
-      return res.status(200).json({ status: -1, message: '你不在该组织中或无发帖权限' });
+      return res.status(403).json({ status: -1, message: '你不在该组织中或无发帖权限' });
     }
     const m = members[0];
+    if (Number(m.permission_level) < 1) {
+      return res.status(403).json({ status: -1, message: '当前组织身份没有通知发布权限' });
+    }
 
     // 校验组织类型与 tab 匹配
-    if (feedTab === 'college' && m.type !== 'College') {
-      return res.status(200).json({ status: -1, message: '学院通知仅限 College 类型组织发布' });
+    if (feedTab === 'college' && m.org_type !== 'College') {
+      return res.status(403).json({ status: -1, message: '学院通知仅限 College 类型组织发布' });
     }
-    if (feedTab === 'school' && !['SchoolDepartment', 'Official'].includes(m.type)) {
-      return res.status(200).json({ status: -1, message: '学校公告仅限 SchoolDepartment/Official 类型组织发布' });
+    if (feedTab === 'school' && !['SchoolDepartment', 'Official'].includes(m.org_type)) {
+      return res.status(403).json({ status: -1, message: '学校公告仅限 SchoolDepartment/Official 类型组织发布' });
     }
 
     const result = await query(
