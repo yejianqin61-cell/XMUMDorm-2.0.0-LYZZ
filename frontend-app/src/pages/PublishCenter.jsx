@@ -28,10 +28,19 @@ function PublishCenter() {
     staleTime: 60 * 1000,
   });
 
-  const organizations = useMemo(() => {
+  const allOrganizations = useMemo(() => {
     const raw = Array.isArray(orgQuery.data) ? orgQuery.data : orgQuery.data?.data || [];
-    return raw.filter((item) => item?.type === 'Club' || item?.type === 'StudentClub');
+    return raw;
   }, [orgQuery.data]);
+
+  const organizations = useMemo(
+    () => allOrganizations.filter((item) => item?.type === 'Club' || item?.type === 'StudentClub'),
+    [allOrganizations]
+  );
+  const noticeOrganizations = useMemo(
+    () => allOrganizations.filter((item) => ['SchoolDepartment', 'Official', 'College'].includes(item?.type) && Number(item?.permission_level) >= 1),
+    [allOrganizations]
+  );
 
   const hasClubPublishAccess = organizations.length > 0;
 
@@ -64,6 +73,18 @@ function PublishCenter() {
     setSheetState({ open: true, mode });
   };
 
+  const handleNoticeEntry = (mode) => {
+    if (!isLoggedIn) {
+      openLogin(`/about/campus/new?tab=${mode}`);
+      return;
+    }
+    if (noticeOrganizations.length === 0) {
+      Toast.error(isZh ? '你当前没有学校或学院通知发布权限' : 'No school or college notice permission');
+      return;
+    }
+    navigate(`/about/campus/new?tab=${mode}`);
+  };
+
   const sheetOptions = useMemo(
     () =>
       organizations.map((org) => ({
@@ -84,7 +105,9 @@ function PublishCenter() {
     if (entry === 'errand') goTo('/about/errands/new');
     if (entry === 'club-post') handleClubEntry('post');
     if (entry === 'club-activity') handleClubEntry('activity');
-  }, [searchParams, isLoggedIn, hasClubPublishAccess, orgQuery.isLoading]);
+    if (entry === 'school-notice') handleNoticeEntry('school');
+    if (entry === 'college-notice') handleNoticeEntry('college');
+  }, [searchParams, isLoggedIn, hasClubPublishAccess, noticeOrganizations.length, orgQuery.isLoading]);
 
   const primaryEntries = [
     {
@@ -148,6 +171,33 @@ function PublishCenter() {
     },
   ].filter((item) => !item.hidden);
 
+  const noticeEntries = [
+    {
+      key: 'school-notice',
+      icon: '📣',
+      title: isZh ? '发学校通知' : 'School notice',
+      description: isZh ? '使用学校部门或官方组织身份发布通知。' : 'Publish with a school department or official identity.',
+      meta: noticeOrganizations.some((org) => ['SchoolDepartment', 'Official'].includes(org.type))
+        ? (isZh ? '已有可用发布身份' : 'Publishing identity available')
+        : (isZh ? '仅授权组织可见' : 'Authorized organizations only'),
+      hidden: !noticeOrganizations.some((org) => ['SchoolDepartment', 'Official'].includes(org.type)),
+      onClick: () => handleNoticeEntry('school'),
+    },
+    {
+      key: 'college-notice',
+      icon: '📣',
+      title: isZh ? '发学院通知' : 'College notice',
+      description: isZh ? '使用学院组织身份发布学院通知。' : 'Publish with a college organization identity.',
+      meta: noticeOrganizations.some((org) => org.type === 'College')
+        ? (isZh ? '已有可用发布身份' : 'Publishing identity available')
+        : (isZh ? '仅授权组织可见' : 'Authorized organizations only'),
+      hidden: !noticeOrganizations.some((org) => org.type === 'College'),
+      onClick: () => handleNoticeEntry('college'),
+    },
+  ].filter((item) => !item.hidden);
+
+  const organizationEntries = [...noticeEntries, ...clubEntries];
+
   return (
     <RouteTransition className="publish-center-page">
       <div className="publish-center-shell">
@@ -184,15 +234,15 @@ function PublishCenter() {
         <FadeInSection delay={0.08}>
           <section className="publish-center-section">
             <div className="publish-center-section__head">
-              <h2>{isZh ? '组织与活动' : 'Organizations and events'}</h2>
+              <h2>{isZh ? '组织发布' : 'Organization publishing'}</h2>
               <p>
-                {hasClubPublishAccess
+                {organizationEntries.length > 0
                   ? isZh
-                    ? '系统会根据你的身份自动筛选可发布的社团入口。'
-                    : 'Club entries are filtered automatically by your permissions.'
+                    ? '系统会根据你的组织身份和发布权限显示可用入口。'
+                    : 'Available entries are filtered by your organization identities and permissions.'
                   : isZh
-                    ? '社团发布入口仅在你具备对应身份时显示。'
-                    : 'Club entries appear only when you have the required role.'}
+                    ? '组织通知和社团发布入口仅在你具备对应身份时显示。'
+                    : 'Organization and club entries appear only when you have the required role.'}
               </p>
             </div>
             {orgQuery.isLoading && isLoggedIn ? (
@@ -205,9 +255,9 @@ function PublishCenter() {
                     : 'Failed to load club identities. Please try again before opening club publishing.'}
                 </p>
               </AppCard>
-            ) : clubEntries.length > 0 ? (
+            ) : organizationEntries.length > 0 ? (
               <div className="publish-center-grid">
-                {clubEntries.map((entry) => (
+                {organizationEntries.map((entry) => (
                   <PublishEntryCard key={entry.key} {...entry} />
                 ))}
               </div>
@@ -215,8 +265,8 @@ function PublishCenter() {
               <AppCard className="publish-center-tip">
                 <p className="publish-center-tip__text">
                   {isZh
-                    ? '当前账号暂无社团发布权限。你仍然可以使用树洞、二手和跑腿发布。'
-                    : 'This account does not have club publishing permissions yet. TreeHole, marketplace, and errands are still available.'}
+                    ? '当前账号暂无组织发布权限。你仍然可以使用树洞、二手和跑腿发布。'
+                    : 'This account does not have organization publishing permissions yet. TreeHole, marketplace, and errands are still available.'}
                 </p>
               </AppCard>
             )}
