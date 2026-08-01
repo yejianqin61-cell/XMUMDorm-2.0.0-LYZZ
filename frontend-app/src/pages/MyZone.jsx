@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -9,6 +9,7 @@ import {
   MapPin,
   LogIn,
   LogOut,
+  Languages,
   NotebookText,
   Info,
   Mail,
@@ -35,6 +36,10 @@ import LevelProgressBar from '../components/LevelProgressBar';
 
 function MyZoneStrings(isZh) {
   return {
+    settings: isZh ? '设置' : 'Settings',
+    language: isZh ? '语言' : 'Language',
+    languageChinese: '中文',
+    languageEnglish: 'English',
     title: isZh ? '我的' : 'Profile',
     bioLoggedOut: isZh ? '登录后查看你的内容与工具入口。' : 'Log in to view your content and tools.',
     bioLoggedIn: isZh ? '欢迎回来，祝你今天也顺利。' : 'Welcome back. Have a great day.',
@@ -101,9 +106,10 @@ function getTodoSortValue(todo) {
 
 function MyZone() {
   const navigate = useNavigate();
-  const { lang } = useLanguage();
+  const { lang, setLang } = useLanguage();
   const isZh = lang !== 'en';
   const t = MyZoneStrings(isZh);
+  const [languageOpen, setLanguageOpen] = useState(false);
 
   const { isLoggedIn, isMerchant, isAdmin, displayName, displayAvatar, user, userLoading, logout } = useAuth();
   const userId = user?.id ? Number(user.id) : 0;
@@ -327,6 +333,32 @@ function MyZone() {
               <MoreRow to="/about/thanks" title={t.aboutThanks} icon={<Sparkles className="h-5 w-5" />} iconStyle={softIcon('rgba(244,63,94,0.12)', 'rgb(225,29,72)')} />
               <MoreRow to="/about/disclaimer" title={t.aboutDisclaimer} icon={<ShieldAlert className="h-5 w-5" />} iconStyle={softIcon('rgba(234,179,8,0.14)', 'rgb(202,138,4)')} />
               <MoreRow to="/about/contact" title={t.aboutContact} icon={<Mail className="h-5 w-5" />} iconStyle={softIcon('rgba(34,197,94,0.12)', 'rgb(22,163,74)')} />
+              <motion.div whileTap={{ scale: 0.97 }} whileHover={{ scale: 1.01 }}>
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-between px-2 py-3 text-left"
+                  onClick={() => setLanguageOpen((open) => !open)}
+                  aria-expanded={languageOpen}
+                >
+                  <span className="flex items-center gap-3">
+                    <span className="grid h-9 w-9 place-items-center rounded-2xl" style={softIcon('rgba(15,23,42,0.08)', 'rgb(51,65,85)')}>
+                      <Languages className="h-5 w-5" />
+                    </span>
+                    <span className="text-[13px] font-semibold text-slate-900">{t.settings}</span>
+                  </span>
+                  <span className="flex items-center gap-2 text-[12px] text-slate-400">
+                    {isZh ? t.languageChinese : t.languageEnglish}
+                    <ChevronRight className={`h-4 w-4 transition-transform ${languageOpen ? 'rotate-90' : ''}`} />
+                  </span>
+                </button>
+                {languageOpen ? (
+                  <div className="flex items-center gap-2 px-2 pb-3 pl-14" role="group" aria-label={t.language}>
+                    <button type="button" onClick={() => setLang('zh')} aria-pressed={lang === 'zh'} className={`px-1 text-[13px] ${lang === 'zh' ? 'font-semibold text-slate-900' : 'text-slate-400'}`}>{t.languageChinese}</button>
+                    <span className="text-slate-200" aria-hidden="true">/</span>
+                    <button type="button" onClick={() => setLang('en')} aria-pressed={lang === 'en'} className={`px-1 text-[13px] ${lang === 'en' ? 'font-semibold text-slate-900' : 'text-slate-400'}`}>{t.languageEnglish}</button>
+                  </div>
+                ) : null}
+              </motion.div>
             </div>
           </motion.section>
 
