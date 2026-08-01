@@ -1,6 +1,6 @@
 # Task009-05: App 广场真机验收与回归
 
-**Status:** ready-for-agent
+**Status:** in-progress (static checks complete; device verification pending)
 
 **Blocked by:** Task009-02 - App 广场四项功能入口重构; Task009-03 - App 校园与热搜内容行统一; Task009-04 - App 广场文案与视觉 Token 收敛
 
