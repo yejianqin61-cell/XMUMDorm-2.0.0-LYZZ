@@ -21,6 +21,11 @@ function isAdmin(req) {
   return req.user && req.user.role === 'admin';
 }
 
+function normalizePermissionLevel(value, fallback = 1) {
+  if (value === undefined || value === null || value === '') return fallback;
+  return Number(value) >= 1 ? 1 : 0;
+}
+
 // ---------- 当前用户所属组织 ----------
 router.get('/me', authenticateToken, async (req, res) => {
   try {
@@ -41,6 +46,7 @@ router.get('/me', authenticateToken, async (req, res) => {
       description: r.description || '',
       title: r.title || '',
       permission_level: r.permission_level,
+      can_post: Number(r.permission_level) >= 1,
     }));
     res.status(200).json({ status: 0, message: '获取成功', data: list });
   } catch (e) {
@@ -141,7 +147,7 @@ router.post('/:id/members', authenticateToken, async (req, res) => {
     const orgId = parseInt(req.params.id, 10);
     const email = (req.body.email || '').trim();
     const title = cleanText(req.body.title);
-    const permissionLevel = parseInt(req.body.permission_level, 10) || 1;
+    const permissionLevel = normalizePermissionLevel(req.body.permission_level);
 
     if (!email) return res.status(200).json({ status: -1, message: '请输入用户邮箱' });
 
@@ -184,7 +190,7 @@ router.patch('/:id/members/:mid', authenticateToken, async (req, res) => {
   try {
     const mid = parseInt(req.params.mid, 10);
     const title = cleanText(req.body.title);
-    const permissionLevel = parseInt(req.body.permission_level, 10);
+    const permissionLevel = normalizePermissionLevel(req.body.permission_level, 0);
 
     const sets = [];
     const params = [];

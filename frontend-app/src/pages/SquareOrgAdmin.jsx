@@ -7,13 +7,12 @@ import {
   updateOrganization,
   getOrganizationMembers,
   addOrganizationMember,
+  updateOrganizationMember,
   removeOrganizationMember,
-  searchUsersByEmail,
 } from '@shared/api/organizations';
 import {
   getTrendingTopics,
   createTrendingTopic,
-  updateTrendingTopic,
   deleteTrendingTopic,
   getSquareBanners,
   createSquareBannerForm,
@@ -31,8 +30,6 @@ export default function SquareOrgAdmin() {
     if (t === 'trending' || t === 'banners') return t;
     return 'orgs';
   });
-  const queryClient = useQueryClient();
-
   return (
     <div className="square-home-page">
       <div className="square-home-inner">
@@ -61,7 +58,6 @@ export default function SquareOrgAdmin() {
 
 // ========== 组织管理 ==========
 function OrgManager() {
-  const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: QK.organizationsList(''),
     queryFn: () => getOrganizations(),
@@ -168,6 +164,7 @@ function MemberManager({ org, onClose }) {
   const members = Array.isArray(data) ? data : data?.data || [];
   const [email, setEmail] = useState('');
   const [title, setTitle] = useState('');
+  const [permissionLevel, setPermissionLevel] = useState('1');
   const [adding, setAdding] = useState(false);
 
   const handleAdd = async (e) => {
@@ -175,12 +172,24 @@ function MemberManager({ org, onClose }) {
     if (!email.trim()) return;
     setAdding(true);
     try {
-      await addOrganizationMember(org.id, { email: email.trim(), title: title.trim(), permission_level: 1 });
+      await addOrganizationMember(org.id, { email: email.trim(), title: title.trim(), permission_level: Number(permissionLevel) });
       queryClient.invalidateQueries({ queryKey: QK.organizationMembers(org.id) });
       setEmail('');
       setTitle('');
-    } catch {}
+      setPermissionLevel('1');
+    } catch (error) {
+      console.error('添加组织成员失败', error);
+    }
     setAdding(false);
+  };
+
+  const handlePermissionChange = async (membershipId, value) => {
+    try {
+      await updateOrganizationMember(org.id, membershipId, { permission_level: Number(value) });
+      queryClient.invalidateQueries({ queryKey: QK.organizationMembers(org.id) });
+    } catch (error) {
+      console.error('更新组织成员权限失败', error);
+    }
   };
 
   const handleRemove = async (mid) => {
@@ -188,7 +197,9 @@ function MemberManager({ org, onClose }) {
     try {
       await removeOrganizationMember(org.id, mid);
       queryClient.invalidateQueries({ queryKey: QK.organizationMembers(org.id) });
-    } catch {}
+    } catch (error) {
+      console.error('移除组织成员失败', error);
+    }
   };
 
   return (
@@ -201,6 +212,10 @@ function MemberManager({ org, onClose }) {
       <form onSubmit={handleAdd} style={{ marginTop: 10 }}>
         <input className="canteen-search-input" style={{ width: '100%', boxSizing: 'border-box', marginBottom: 6 }} placeholder="用户邮箱" value={email} onChange={(e) => setEmail(e.target.value)} />
         <input className="canteen-search-input" style={{ width: '100%', boxSizing: 'border-box', marginBottom: 8 }} placeholder="职位（如 主管/Advisor）" value={title} onChange={(e) => setTitle(e.target.value)} />
+        <select className="canteen-search-input" style={{ width: '100%', boxSizing: 'border-box', marginBottom: 8 }} value={permissionLevel} onChange={(e) => setPermissionLevel(e.target.value)}>
+          <option value="1">可发布通知</option>
+          <option value="0">仅查看</option>
+        </select>
         <button type="submit" className="canteen-pick-btn pressable" style={{ fontSize: 13, padding: '6px 14px' }} disabled={adding}>
           {adding ? '添加中...' : '添加成员'}
         </button>
@@ -219,9 +234,21 @@ function MemberManager({ org, onClose }) {
                 <span style={{ fontSize: 11, color: 'var(--post-ios-tertiary-label)', marginLeft: 6 }}>{m.user?.email}</span>
                 {m.title && <span style={{ fontSize: 11, color: 'var(--post-ios-secondary-label)', marginLeft: 6 }}>· {m.title}</span>}
               </div>
-              <button type="button" className="square-section-more" style={{ color: 'var(--post-ios-red)' }} onClick={() => handleRemove(m.id)}>
-                移除
-              </button>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <select
+                  aria-label={`${m.user?.nickname || m.user?.username || '成员'}权限`}
+                  className="canteen-search-input"
+                  style={{ width: 92, padding: '4px 6px', fontSize: 11 }}
+                  value={String(m.permission_level ?? 0)}
+                  onChange={(e) => handlePermissionChange(m.id, e.target.value)}
+                >
+                  <option value="1">可发布</option>
+                  <option value="0">仅查看</option>
+                </select>
+                <button type="button" className="square-section-more" style={{ color: 'var(--post-ios-red)' }} onClick={() => handleRemove(m.id)}>
+                  移除
+                </button>
+              </div>
             </div>
           ))
         )}
@@ -394,7 +421,9 @@ function BannerForm({ banner, onClose }) {
       }
       queryClient.invalidateQueries({ queryKey: QK.squareBanners() });
       onClose();
-    } catch {} finally { setSaving(false); }
+    } catch (error) {
+      console.error('保存轮播失败', error);
+    } finally { setSaving(false); }
   };
 
   return (
