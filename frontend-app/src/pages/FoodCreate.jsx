@@ -4,11 +4,14 @@ import FoodForm from '../components/FoodForm';
 import { Toast } from '../context/ToastContext';
 import { getShopMe, getCategories, createProduct } from '@shared/api/canteen';
 import { getApiErrorMessage } from '@shared/utils/apiError';
+import { useLanguage } from '../context/LanguageContext';
 import './FoodCreate.css';
 
 /** 菜品发布页：商家端，getShopMe 取分类，createProduct 提交，成功后跳转菜品管理 */
 function FoodCreate() {
   const navigate = useNavigate();
+  const { lang } = useLanguage();
+  const isEn = lang === 'en';
   const [searchParams] = useSearchParams();
   const shopId = Number.parseInt(searchParams.get('shop') || '', 10);
   const [categories, setCategories] = useState([]);
@@ -33,7 +36,7 @@ function FoodCreate() {
   const handleSubmit = (values) => {
     const categoryId = values.categoryId != null ? values.categoryId : categories[0]?.id;
     if (!categoryId) {
-      Toast.error('请先创建分类或选择分类');
+      Toast.error(isEn ? 'Create or select a category first' : '请先创建分类或选择分类');
       return;
     }
     setError(null);
@@ -74,7 +77,7 @@ function FoodCreate() {
     return (
       <div className="food-create-page">
         <p className="food-create-error state-error">{error}</p>
-        <button type="button" className="food-create-back" onClick={() => navigate(-1)}>返回 Back</button>
+        <button type="button" className="food-create-back" onClick={() => navigate(-1)}>{isEn ? 'Back' : '返回'}</button>
       </div>
     );
   }

@@ -859,6 +859,7 @@ router.delete('/categories/:categoryId', authenticateToken, async (req, res) => 
   try {
     const categoryId = parseInt(req.params.categoryId, 10);
     if (!categoryId) return res.status(400).json({ status: -1, message: '分类 ID 无效' });
+    if (!isAdmin(req)) return res.status(403).json({ status: -1, message: '仅管理员可删除分类' });
     const categoryRows = await query('SELECT id FROM product_categories WHERE id = ? AND deleted_at IS NULL', [categoryId]);
     if (!categoryRows || categoryRows.length === 0) return res.status(404).json({ status: -1, message: '分类不存在或已删除' });
     await query('UPDATE products SET category_id = NULL WHERE category_id = ?', [categoryId]);

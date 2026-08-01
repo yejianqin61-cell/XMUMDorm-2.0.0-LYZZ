@@ -71,13 +71,13 @@
 }
 
 .merchant-food-detail-btn-edit {
-  background: var(--wx-green);
+  background: #111;
   color: #fff;
 }
 
 @media (hover: hover) {
   .merchant-food-detail-btn-edit:hover {
-    background: var(--wx-green-dark);
+    background: #000;
   }
 }
 

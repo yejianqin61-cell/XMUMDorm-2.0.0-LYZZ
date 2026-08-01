@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Card from './Card';
 import ImagePreview from './ImagePreview';
 import { productImageUrl } from '@shared/api/config';
+import { useLanguage } from '../context/LanguageContext';
 import './Card.css';
 import './FoodCard.css';
 
@@ -15,6 +16,8 @@ import './FoodCard.css';
  * @param {Function} [onDelete] 商家端删除回调 (food) => void
  */
 function FoodCard({ food, mode = 'user', onDelete, canDelete = true }) {
+  const { lang } = useLanguage();
+  const isEn = lang === 'en';
   const { id, name, price, image, description, comprehensiveScore } = food;
   const priceStr = typeof price === 'number' ? price.toFixed(2) : String(price ?? '—');
   /** 统一显示为 10 分制（与排行榜一致） */
@@ -53,7 +56,7 @@ function FoodCard({ food, mode = 'user', onDelete, canDelete = true }) {
         {mode === 'merchant' && (
           <div className="food-card-actions">
             <Link to={`/merchant/food/${id}`} className="food-card-action food-card-action-edit">
-              编辑 Edit
+              {isEn ? 'Edit' : '编辑'}
             </Link>
             {canDelete && <button
               type="button"
@@ -65,7 +68,7 @@ function FoodCard({ food, mode = 'user', onDelete, canDelete = true }) {
               }}
               aria-label={`删除 ${name}`}
             >
-              删除 Delete
+              {isEn ? 'Delete' : '删除'}
             </button>}
           </div>
         )}

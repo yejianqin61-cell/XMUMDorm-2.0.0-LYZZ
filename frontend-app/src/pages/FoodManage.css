@@ -24,14 +24,14 @@
   font-size: 15px;
   font-weight: 500;
   color: #fff;
-  background: var(--wx-green);
+  background: #111;
   border-radius: 8px;
   text-decoration: none;
 }
 
 @media (hover: hover) {
   .food-manage-add:hover {
-    background: var(--wx-green-dark);
+    background: #000;
   }
 }
 

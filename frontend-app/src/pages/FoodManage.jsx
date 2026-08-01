@@ -8,12 +8,15 @@ import { getApiErrorMessage } from '@shared/utils/apiError';
 import { getShopMe, getShop, getProducts, getCategories, deleteProduct, createCategory, updateCategory, deleteCategory } from '@shared/api/canteen';
 import { productImageUrl } from '@shared/api/config';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import './FoodManage.css';
 
 /** 商家端菜品管理：getShopMe + getProducts，支持删除，入口发布新菜品 */
 function FoodManage() {
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
+  const { lang } = useLanguage();
+  const isEn = lang === 'en';
   const [searchParams] = useSearchParams();
   const requestedShopId = Number.parseInt(searchParams.get('shop') || '', 10);
   const [shop, setShop] = useState(null);
@@ -82,7 +85,7 @@ function FoodManage() {
 
   const handleDelete = (food) => {
     if (!isAdmin) return;
-    if (!window.confirm(`确定删除 "${food.name}" 吗？ Delete this dish?`)) return;
+    if (!window.confirm(isEn ? `Delete "${food.name}"?` : `确定删除“${food.name}”吗？`)) return;
     deleteProduct(food.id)
       .then(() => {
         Toast.success('已删除');
@@ -109,7 +112,7 @@ function FoodManage() {
   };
 
   const handleEditCategory = async (category) => {
-    const name = window.prompt('分类名称 Category name', category.name);
+    const name = window.prompt(isEn ? 'Category name' : '分类名称', category.name);
     if (name == null || !name.trim()) return;
     try {
       await updateCategory(category.id, { name: name.trim(), sort_order: category.sort_order || 0 });
@@ -121,7 +124,7 @@ function FoodManage() {
   };
 
   const handleDeleteCategory = async (category) => {
-    if (!window.confirm(`删除分类“${category.name}”后，菜品将变为未分类。确定继续吗？`)) return;
+    if (!isAdmin || !window.confirm(isEn ? `Delete "${category.name}"? Its dishes will become uncategorized.` : `删除分类“${category.name}”后，菜品将变为未分类。确定继续吗？`)) return;
     try {
       await deleteCategory(category.id);
       Toast.success('分类已删除');
@@ -149,7 +152,7 @@ function FoodManage() {
     return (
       <div className="food-manage-page">
         <p className="food-manage-error state-error">{error}</p>
-        <button type="button" className="food-manage-back" onClick={() => navigate(-1)}>返回 Back</button>
+        <button type="button" className="food-manage-back" onClick={() => navigate(-1)}>{isEn ? 'Back' : '返回'}</button>
       </div>
     );
   }
@@ -158,9 +161,9 @@ function FoodManage() {
     return (
       <div className="food-manage-page">
         <EmptyState
-          title="您尚未创建店铺"
-          description="请先创建店铺。No shop yet. Create one first."
-          actionLabel="去创建 Go Create"
+          title={isEn ? 'No shop yet' : '您尚未创建店铺'}
+          description={isEn ? 'Create a shop first.' : '请先创建店铺。'}
+          actionLabel={isEn ? 'Create shop' : '去创建'}
           actionTo="/merchant/create"
         />
       </div>
@@ -173,17 +176,17 @@ function FoodManage() {
       {error && <p className="food-manage-error" role="alert">{error}</p>}
       <div className="food-manage-actions">
         <Link to={`/merchant/food/new?shop=${shop.id}`} className="food-manage-add">
-          发布菜品 Publish Food
+          {isEn ? 'Publish dish' : '发布菜品'}
         </Link>
         <Link to={`/merchant/shop/edit?shop=${shop.id}`} className="food-manage-edit-shop">
-          店铺编辑 Edit Shop
+          {isEn ? 'Edit shop' : '店铺编辑'}
         </Link>
         <button
           type="button"
           className="food-manage-add-category"
           onClick={() => setShowNewCategory((v) => !v)}
         >
-          新建分类 New Category
+          {isEn ? 'New category' : '新建分类'}
         </button>
       </div>
       {showNewCategory && (
@@ -191,38 +194,38 @@ function FoodManage() {
           <input
             type="text"
             className="food-manage-category-input"
-            placeholder="分类名称，如：主食、饮料 Category name"
+            placeholder={isEn ? 'Category name' : '分类名称，如：主食、饮料'}
             value={newCategoryName}
             onChange={(e) => setNewCategoryName(e.target.value)}
             disabled={categorySubmitting}
             autoFocus
           />
           <button type="submit" className="food-manage-category-btn" disabled={!newCategoryName.trim() || categorySubmitting}>
-            {categorySubmitting ? '创建中…' : '创建 Create'}
+            {categorySubmitting ? (isEn ? 'Creating…' : '创建中…') : (isEn ? 'Create' : '创建')}
           </button>
           <button type="button" className="food-manage-category-cancel" onClick={() => { setShowNewCategory(false); setNewCategoryName(''); }}>
-            取消 Cancel
+            {isEn ? 'Cancel' : '取消'}
           </button>
         </form>
       )}
 
-      <ul className="food-manage-categories" aria-label="分类管理">
+      <ul className="food-manage-categories" aria-label={isEn ? 'Category management' : '分类管理'}>
         {categories.map((category) => (
           <li key={category.id}>
             <span>{category.name}</span>
-            <button type="button" onClick={() => handleEditCategory(category)}>编辑</button>
-            <button type="button" onClick={() => handleDeleteCategory(category)}>删除</button>
+            <button type="button" onClick={() => handleEditCategory(category)}>{isEn ? 'Edit' : '编辑'}</button>
+            {isAdmin && <button type="button" onClick={() => handleDeleteCategory(category)}>{isEn ? 'Delete' : '删除'}</button>}
           </li>
         ))}
       </ul>
 
       {foods.length === 0 ? (
         <EmptyState
-          title="暂无菜品"
-          description="点击上方「发布菜品」发布第一个商品。No dishes yet. Publish one above."
+          title={isEn ? 'No dishes yet' : '暂无菜品'}
+          description={isEn ? 'Publish the first dish above.' : '点击上方「发布菜品」发布第一个菜品。'}
         />
       ) : (
-        <ul className="food-manage-list" aria-label="菜品列表">
+        <ul className="food-manage-list" aria-label={isEn ? 'Dish list' : '菜品列表'}>
           {foods.map((food) => (
             <li key={food.id}>
               <FoodCard food={food} mode="merchant" onDelete={handleDelete} canDelete={isAdmin} />

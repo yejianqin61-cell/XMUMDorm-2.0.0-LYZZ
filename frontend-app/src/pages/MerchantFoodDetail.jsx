@@ -8,6 +8,7 @@ import { getProduct, getCategories, updateProduct, deleteProduct } from '@shared
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { productImageUrl } from '@shared/api/config';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import './MerchantFoodDetail.css';
 
 /** 商家端菜品详情：getProduct + getCategories，编辑 updateProduct，删除 deleteProduct */
@@ -16,6 +17,8 @@ function MerchantFoodDetail() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { isAdmin } = useAuth();
+  const { lang } = useLanguage();
+  const isEn = lang === 'en';
   const [food, setFood] = useState(null);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -102,7 +105,7 @@ function MerchantFoodDetail() {
   };
 
   const handleDelete = () => {
-    if (!food || !window.confirm(`确定删除 "${food.name}" 吗？ Delete this dish?`)) return;
+    if (!food || !window.confirm(isEn ? `Delete "${food.name}"?` : `确定删除“${food.name}”吗？`)) return;
     deleteProduct(food.id)
       .then(() => {
         Toast.success('已删除');
@@ -192,7 +195,7 @@ function MerchantFoodDetail() {
               onClick={() => setIsEditing(true)}
               disabled={submitLoading}
             >
-              编辑 Edit
+              {isEn ? 'Edit' : '编辑'}
             </button>
             <button
               type="button"
@@ -200,14 +203,14 @@ function MerchantFoodDetail() {
               onClick={handleDelete}
               disabled={submitLoading}
             >
-              删除 Delete
+              {isEn ? 'Delete' : '删除'}
             </button>
             <button
               type="button"
               className="merchant-food-detail-btn merchant-food-detail-btn-back"
               onClick={() => navigate(-1)}
             >
-              返回管理 Back to Manage
+              {isEn ? 'Back to management' : '返回管理'}
             </button>
           </div>
         </>

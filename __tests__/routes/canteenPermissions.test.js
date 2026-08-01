@@ -86,14 +86,16 @@ describe('Canteen collaborative maintenance permissions', () => {
     expect(res.body.data.name).toBe('Updated dish');
   });
 
-  it('allows logged-in users to delete categories but not shops or products', async () => {
+  it('allows only admins to delete shops, categories, and products', async () => {
+    const categoryRes = await supertest(app()).delete('/api/canteen/categories/3');
+    expect(categoryRes.status).toBe(403);
+
     query
       .mockResolvedValueOnce([{ id: 3 }])
       .mockResolvedValueOnce({ affectedRows: 1 })
       .mockResolvedValueOnce({ affectedRows: 1 });
-    const categoryRes = await supertest(app()).delete('/api/canteen/categories/3');
-    expect(categoryRes.status).toBe(200);
-
+    const adminCategoryRes = await supertest(app()).delete('/api/canteen/categories/3').set('x-test-role', 'admin');
+    expect(adminCategoryRes.status).toBe(200);
     const shopRes = await supertest(app()).delete('/api/canteen/shops/3');
     const productRes = await supertest(app()).delete('/api/canteen/products/3');
     expect(shopRes.status).toBe(403);
