@@ -13,6 +13,7 @@ import { getApiErrorMessage } from '@shared/utils/apiError';
 import { getUploadUrl, productImageUrl } from '@shared/api/config';
 import { QK } from '@shared/query/queryKeys';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import './FoodList.css';
 
 const STALE_MS = 3 * 60 * 1000;
@@ -22,6 +23,8 @@ function FoodList() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isLoggedIn } = useAuth();
+  const { lang } = useLanguage();
+  const isEn = lang === 'en';
   const [search, setSearch] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [activeId, setActiveId] = useState(null);
@@ -250,7 +253,7 @@ function FoodList() {
   if (shopId === 0 && !loading) {
     return (
       <div className="food-list-page">
-        <EmptyState title="商家不存在" description="该商家可能已下架或不存在。" />
+        <EmptyState title={isEn ? 'Shop not found' : '商家不存在'} description={isEn ? 'This shop may have been removed or does not exist.' : '该商家可能已下架或不存在。'} />
       </div>
     );
   }
@@ -285,7 +288,7 @@ function FoodList() {
   if (!merchant) {
     return (
       <div className="food-list-page">
-        <EmptyState title="商家不存在" description="该商家可能已下架或不存在。" />
+        <EmptyState title={isEn ? 'Shop not found' : '商家不存在'} description={isEn ? 'This shop may have been removed or does not exist.' : '该商家可能已下架或不存在。'} />
       </div>
     );
   }
@@ -297,14 +300,14 @@ function FoodList() {
         <div className="food-shop-hot-entry">
           <div className="food-shop-hot-controls">
             <button type="button" className="food-shop-hot-entry-btn pressable" onClick={handleManageShop}>
-              维护菜单 · Manage
+              {isEn ? 'Manage menu' : '维护菜单'}
             </button>
             <button
               type="button"
               className="food-shop-hot-entry-btn pressable"
               onClick={handleGoHot}
             >
-              本店热门 · Top dishes
+              {isEn ? 'Top dishes' : '本店热门'}
             </button>
             <div className="food-shop-search-wrap">
               <input
@@ -312,14 +315,14 @@ function FoodList() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="food-shop-search-input"
-                placeholder="搜索本店菜品… Search dishes"
+                placeholder={isEn ? 'Search dishes' : '搜索本店菜品…'}
               />
             </div>
           </div>
         </div>
         <EmptyState
-          title="暂无商品"
-          description="商家还没发布商品。No dishes yet."
+          title={isEn ? 'No dishes yet' : '暂无商品'}
+          description={isEn ? 'This shop has not published any dishes.' : '商家还没发布商品。'}
         />
       </div>
     );
@@ -331,14 +334,14 @@ function FoodList() {
       <div className="food-shop-hot-entry">
         <div className="food-shop-hot-controls">
           <button type="button" className="food-shop-hot-entry-btn pressable" onClick={handleManageShop}>
-            维护菜单 · Manage
+            {isEn ? 'Manage menu' : '维护菜单'}
           </button>
           <button
             type="button"
             className="food-shop-hot-entry-btn pressable"
             onClick={handleGoHot}
           >
-            本店热门 · Top dishes
+            {isEn ? 'Top dishes' : '本店热门'}
           </button>
           <div className="food-shop-search-wrap">
             <div className="relative" ref={searchWrapRef}>
@@ -366,7 +369,7 @@ function FoodList() {
                         onKeyDown={(e) => {
                           if (e.key === 'Escape') setSearchOpen(false);
                         }}
-                        placeholder="搜索…"
+                        placeholder={isEn ? 'Search…' : '搜索…'}
                         className="min-w-0 w-full bg-transparent text-[14px] text-slate-800 placeholder:text-slate-400 outline-none"
                         type="search"
                       />
@@ -380,7 +383,7 @@ function FoodList() {
                     whileTap={{ scale: 0.98 }}
                     className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-blue-200/70 bg-white/70 text-blue-700 shadow-sm backdrop-blur-md"
                     style={{ borderWidth: '0.5px' }}
-                    aria-label="搜索"
+                    aria-label={isEn ? 'Search' : '搜索'}
                   >
                     <Search size={18} aria-hidden />
                   </motion.button>
@@ -401,8 +404,8 @@ function FoodList() {
           <div key={switchAnim} className="food-list-main-inner">
             {filteredGroups.length === 0 ? (
               <EmptyState
-                title="未找到相关菜品"
-                description="换个关键词试试，或清空搜索查看全部。"
+                title={isEn ? 'No dishes found' : '未找到相关菜品'}
+                description={isEn ? 'Try another keyword or clear the search.' : '换个关键词试试，或清空搜索查看全部。'}
               />
             ) : (
               filteredGroups.map((g) => (

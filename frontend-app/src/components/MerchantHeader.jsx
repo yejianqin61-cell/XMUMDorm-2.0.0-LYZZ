@@ -62,7 +62,7 @@ function MerchantHeader({ merchant }) {
   if (!merchant) return null;
 
   return (
-    <header className="merchant-header" aria-label={`商家 ${name}`}>
+    <header className="merchant-header" aria-label={isZh ? `商家 ${name}` : `Shop ${name}`}>
       <div className="merchant-header-logo-wrap">
         <img
           src={logo || DEFAULT_SHOP_LOGO_PATH}
@@ -78,7 +78,7 @@ function MerchantHeader({ merchant }) {
         <div className="merchant-header-row">
           <h1 className="merchant-header-name">{name}</h1>
           <span className={`merchant-header-status merchant-header-status-${isOpen ? 'open' : 'closed'}`}>
-            {isOpen ? '营业中' : '已打烊'}
+            {isOpen ? (isZh ? '营业中' : 'Open') : (isZh ? '已打烊' : 'Closed')}
           </span>
           <span ref={helpWrapRef} className="merchant-header-help-wrap">
             <button
@@ -131,7 +131,7 @@ function MerchantHeader({ merchant }) {
           </span>
         </div>
         {rating != null && (
-          <p className="merchant-header-rating">★ {Number(rating).toFixed(1)} 评分</p>
+          <p className="merchant-header-rating">★ {Number(rating).toFixed(1)} {isZh ? '评分' : 'score'}</p>
         )}
         {description && (
           <p className="merchant-header-desc">{description}</p>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Toast } from '../context/ToastContext';
+import { useLanguage } from '../context/LanguageContext';
 import './FoodForm.css';
 
 /**
@@ -12,6 +13,8 @@ import './FoodForm.css';
  * @param {boolean} [props.loading] 提交中时为 true，按钮禁用并显示「发布中…」/「保存中…」
  */
 function FoodForm({ categories = [], skipPrice = false, initialValues, onSubmit, onCancel, loading = false }) {
+  const { lang } = useLanguage();
+  const isEn = lang === 'en';
   const [name, setName] = useState(initialValues?.name ?? '');
   const [price, setPrice] = useState(
     initialValues?.price != null ? String(initialValues.price) : ''
@@ -35,7 +38,7 @@ function FoodForm({ categories = [], skipPrice = false, initialValues, onSubmit,
     e.preventDefault();
     const nameTrim = name.trim();
     if (!nameTrim) {
-      Toast.error('请输入菜品名称 Please enter food name');
+      Toast.error(isEn ? 'Please enter a dish name' : '请输入菜品名称');
       return;
     }
     const out = {
@@ -51,13 +54,13 @@ function FoodForm({ categories = [], skipPrice = false, initialValues, onSubmit,
       } else {
         const priceNum = parseFloat(price);
         if (Number.isNaN(priceNum) || priceNum < 0) {
-          Toast.error('请输入有效价格 Please enter a valid price');
+          Toast.error(isEn ? 'Please enter a valid price' : '请输入有效价格');
           return;
         }
         out.price = priceNum;
       }
       if (out.price === null && !initialValues) {
-        Toast.error('请输入有效价格 Please enter a valid price');
+        Toast.error(isEn ? 'Please enter a valid price' : '请输入有效价格');
         return;
       }
     }
@@ -68,11 +71,11 @@ function FoodForm({ categories = [], skipPrice = false, initialValues, onSubmit,
   return (
     <form className="food-form" onSubmit={handleSubmit}>
       <div className="food-form-field">
-        <label htmlFor="food-form-name">菜品名称 Name *</label>
+        <label htmlFor="food-form-name">{isEn ? 'Dish name *' : '菜品名称 *'}</label>
         <input
           id="food-form-name"
           type="text"
-          placeholder="请输入菜品名称 Enter food name"
+          placeholder={isEn ? 'Enter dish name' : '请输入菜品名称'}
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="food-form-input"
@@ -81,7 +84,7 @@ function FoodForm({ categories = [], skipPrice = false, initialValues, onSubmit,
 
       {!skipPrice && (
         <div className="food-form-field">
-          <label htmlFor="food-form-price">价格 Price (RM) *</label>
+          <label htmlFor="food-form-price">{isEn ? 'Price (RM) *' : '价格（RM）*'}</label>
           <input
             id="food-form-price"
             type="number"
@@ -97,7 +100,7 @@ function FoodForm({ categories = [], skipPrice = false, initialValues, onSubmit,
 
       {(categories.length > 0 || categories) && (
         <div className="food-form-field">
-          <label htmlFor="food-form-category">菜品分类 Category *</label>
+          <label htmlFor="food-form-category">{isEn ? 'Category *' : '菜品分类 *'}</label>
           {categories.length > 0 ? (
             <select
               id="food-form-category"
@@ -110,13 +113,13 @@ function FoodForm({ categories = [], skipPrice = false, initialValues, onSubmit,
               ))}
             </select>
           ) : (
-            <p className="food-form-category-hint">暂无分类，请先在「管理店铺」页点击「新建分类」创建。No category yet. Create one in Manage Store.</p>
+            <p className="food-form-category-hint">{isEn ? 'No category yet. Create one from the shop management page.' : '暂无分类，请先在「店铺管理」页创建分类。'}</p>
           )}
         </div>
       )}
 
       <div className="food-form-field">
-        <label>图片 Picture（可选 optional）</label>
+        <label>{isEn ? 'Image (optional)' : '图片（可选）'}</label>
         <div className="food-form-image-row">
           <label className="food-form-image-wrap">
             <input
@@ -131,15 +134,15 @@ function FoodForm({ categories = [], skipPrice = false, initialValues, onSubmit,
               <div className="food-form-image food-form-image-placeholder">+</div>
             )}
           </label>
-          <span className="food-form-image-hint">点击上传 Tap to upload</span>
+          <span className="food-form-image-hint">{isEn ? 'Tap to upload' : '点击上传'}</span>
         </div>
       </div>
 
       <div className="food-form-field">
-        <label htmlFor="food-form-desc">描述 Description（可选 optional）</label>
+        <label htmlFor="food-form-desc">{isEn ? 'Description (optional)' : '描述（可选）'}</label>
         <textarea
           id="food-form-desc"
-          placeholder="简要描述菜品 Brief description"
+          placeholder={isEn ? 'Brief description' : '简要描述菜品'}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
@@ -149,10 +152,10 @@ function FoodForm({ categories = [], skipPrice = false, initialValues, onSubmit,
 
       <div className="food-form-actions">
         <button type="submit" className="food-form-btn food-form-btn-primary" disabled={loading}>
-          {loading ? (initialValues ? '保存中…' : '发布中…') : (initialValues ? '保存 Save' : '发布 Publish')}
+          {loading ? (initialValues ? (isEn ? 'Saving…' : '保存中…') : (isEn ? 'Publishing…' : '发布中…')) : (initialValues ? (isEn ? 'Save' : '保存') : (isEn ? 'Publish' : '发布'))}
         </button>
         <button type="button" className="food-form-btn food-form-btn-secondary" onClick={onCancel} disabled={loading}>
-          取消 Cancel
+          {isEn ? 'Cancel' : '取消'}
         </button>
       </div>
     </form>

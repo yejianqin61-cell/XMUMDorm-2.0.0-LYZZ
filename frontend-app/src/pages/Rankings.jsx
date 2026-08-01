@@ -12,15 +12,16 @@ import {
   getRankingsActiveUsers,
 } from '@shared/api/rankings';
 import { QK } from '@shared/query/queryKeys';
+import { useLanguage } from '../context/LanguageContext';
 import './Rankings.css';
 
 /** 五大榜单标识（与后端接口对应） */
 export const RANKING_SECTIONS = [
-  { id: 'hot-products', title: 'Hot Products', titleEn: '最夯单品', desc: '上线至今综合评分 Top 5' },
-  { id: 'busy-shops', title: 'Busy Shops', titleEn: '门庭若市', desc: '当周点评量 Top 5' },
-  { id: 'top-shops', title: 'Top Shops', titleEn: '最夯商家', desc: '商家综合评分 Top 5' },
-  { id: 'new-hit-products', title: 'New Hits', titleEn: '爆款新品', desc: '上架 7 天内评分 Top 3' },
-  { id: 'active-users', title: 'Active Reviewers', titleEn: '点评达人', desc: '当周点评数 Top 5' },
+  { id: 'hot-products', zh: '最夯单品', en: 'Hot products', zhDesc: '上线至今综合评分前 5 名', enDesc: 'Top 5 by all-time score' },
+  { id: 'busy-shops', zh: '门庭若市', en: 'Busy shops', zhDesc: '本周点评量前 5 名', enDesc: 'Top 5 by weekly reviews' },
+  { id: 'top-shops', zh: '最夯商家', en: 'Top shops', zhDesc: '商家综合评分前 5 名', enDesc: 'Top 5 by overall score' },
+  { id: 'new-hit-products', zh: '爆款新品', en: 'New hits', zhDesc: '上架 7 天内评分前 3 名', enDesc: 'Top 3 new dishes by score' },
+  { id: 'active-users', zh: '点评达人', en: 'Active reviewers', zhDesc: '本周点评数前 5 名', enDesc: 'Top 5 by weekly reviews' },
 ];
 
 async function fetchAllRankings() {
@@ -49,6 +50,8 @@ function RankBadge({ rank }) {
 
 /** 排行榜主页：五大榜单；结果缓存，重复进入更快 */
 function Rankings() {
+  const { lang } = useLanguage();
+  const isEn = lang === 'en';
   const { data, isPending, error } = useQuery({
     queryKey: QK.rankingsAll(),
     queryFn: fetchAllRankings,
@@ -80,7 +83,7 @@ function Rankings() {
   if (isPending) {
     return (
       <div className="rankings-page">
-        <p className="rankings-loading state-loading">加载中…</p>
+        <p className="rankings-loading state-loading">{isEn ? 'Loading…' : '加载中…'}</p>
       </div>
     );
   }
@@ -97,9 +100,9 @@ function Rankings() {
     <div className="rankings-page rankings-animate">
       <p className="rankings-intro">
         <span className="rankings-intro-dot" aria-hidden />
-        每周一 0 点（东八区）更新 <span className="rankings-intro-en">Rankings update weekly</span>
+        {isEn ? 'Updates every Monday at 00:00 (UTC+8)' : '每周一 0 点（东八区）更新'}
       </p>
-      <ul className="rankings-list" aria-label="排行榜列表">
+      <ul className="rankings-list" aria-label={isEn ? 'Rankings' : '排行榜列表'}>
         {RANKING_SECTIONS.map((section) => {
           const list = data?.[section.id] || [];
           return (
@@ -107,14 +110,13 @@ function Rankings() {
               <Card as="div" className="rankings-section-card rankings-glass">
                 <div className="rankings-section-header">
                   <h2 className="rankings-section-title">
-                    {section.title}
-                    <span className="rankings-section-title-en">{section.titleEn}</span>
+                    {isEn ? section.en : section.zh}
                   </h2>
-                  <p className="rankings-section-desc">{section.desc}</p>
+                  <p className="rankings-section-desc">{isEn ? section.enDesc : section.zhDesc}</p>
                 </div>
                 <div className="rankings-section-content">
                   {list.length === 0 && (
-                    <EmptyState title="暂无数据" description="No data yet." />
+                    <EmptyState title={isEn ? 'No data yet' : '暂无数据'} description={isEn ? 'No ranking data is available.' : '暂无可用的榜单数据。'} />
                   )}
                   {section.id === 'hot-products' &&
                     list.length > 0 &&
@@ -181,7 +183,7 @@ function Rankings() {
                             />
                           </span>
                           <span className="rankings-heat-num">
-                            <span className="rankings-mono">{item.weekly_review_count}</span> 条点评
+                            <span className="rankings-mono">{item.weekly_review_count}</span> {isEn ? 'reviews' : '条点评'}
                           </span>
                         </span>
                       </div>
@@ -264,7 +266,7 @@ function Rankings() {
                       <div className="rankings-row-main">
                         <span className="rankings-name">{item.nickname || item.username}</span>
                         <span className="rankings-meta">
-                          当周 <span className="rankings-mono">{item.weekly_comment_count}</span> 条点评
+                          {isEn ? 'This week ' : '当周 '}<span className="rankings-mono">{item.weekly_comment_count}</span> {isEn ? 'reviews' : '条点评'}
                         </span>
                       </div>
                     </div>

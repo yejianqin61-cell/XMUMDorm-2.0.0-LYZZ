@@ -8,6 +8,7 @@ import { getShop, getShopHotProducts } from '@shared/api/canteen';
 import { getUploadUrl, productImageUrl } from '@shared/api/config';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { QK } from '@shared/query/queryKeys';
+import { useLanguage } from '../context/LanguageContext';
 import './FoodList.css';
 
 const STALE_MS = 3 * 60 * 1000;
@@ -16,6 +17,8 @@ const STALE_MS = 3 * 60 * 1000;
 function FoodShopHot() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { lang } = useLanguage();
+  const isEn = lang === 'en';
 
   const shopId = useMemo(() => {
     const n = id ? parseInt(id, 10) : 0;
@@ -81,7 +84,7 @@ function FoodShopHot() {
   if (shopId === 0 && !loading) {
     return (
       <div className="food-list-page">
-        <EmptyState title="商家不存在" description="该商家可能已下架或不存在。" />
+        <EmptyState title={isEn ? 'Shop not found' : '商家不存在'} description={isEn ? 'This shop may have been removed or does not exist.' : '该商家可能已下架或不存在。'} />
       </div>
     );
   }
@@ -116,7 +119,7 @@ function FoodShopHot() {
   if (!merchant) {
     return (
       <div className="food-list-page">
-        <EmptyState title="商家不存在" description="该商家可能已下架或不存在。" />
+        <EmptyState title={isEn ? 'Shop not found' : '商家不存在'} description={isEn ? 'This shop may have been removed or does not exist.' : '该商家可能已下架或不存在。'} />
       </div>
     );
   }
@@ -127,19 +130,19 @@ function FoodShopHot() {
       <div className="food-list-layout">
         <div className="food-list-main">
           <div className="food-shop-hot-header">
-            <h2 className="food-shop-hot-title">本店热门 Hot in this shop</h2>
+            <h2 className="food-shop-hot-title">{isEn ? 'Top dishes' : '本店热门'}</h2>
             <button
               type="button"
               className="food-shop-hot-back pressable"
               onClick={() => navigate(`/eat/merchant/${merchant.id}`)}
             >
-              返回全部 Return
+              {isEn ? 'Back to menu' : '返回全部'}
             </button>
           </div>
           {foods.length === 0 ? (
             <EmptyState
-              title="暂无热门菜品"
-              description="本店还没有足够点评的菜品，去多点几单试试吧。"
+              title={isEn ? 'No popular dishes yet' : '暂无热门菜品'}
+              description={isEn ? 'There are not enough reviews to rank dishes yet.' : '本店还没有足够点评的菜品，去多点几单试试吧。'}
             />
           ) : (
             <ul className="food-shop-hot-list">
@@ -166,12 +169,12 @@ function FoodShopHot() {
                     <div className="food-shop-hot-meta">
                       {f.comprehensiveScore != null && (
                         <span className="food-shop-hot-score">
-                          ★ {f.comprehensiveScore.toFixed(1)} 综合评分
+                          ★ {f.comprehensiveScore.toFixed(1)} {isEn ? 'overall' : '综合评分'}
                         </span>
                       )}
                       {f.reviewCount != null && (
                         <span className="food-shop-hot-reviews">
-                          {f.reviewCount} 条点评
+                          {f.reviewCount} {isEn ? 'reviews' : '条点评'}
                         </span>
                       )}
                     </div>

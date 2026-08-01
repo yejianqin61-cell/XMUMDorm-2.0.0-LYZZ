@@ -93,11 +93,11 @@ function MerchantFoodDetail() {
           price: updated?.price !== undefined ? updated.price : prev.price,
           image: firstImgUrl,
         }));
-        Toast.success('已保存');
+        Toast.success(isEn ? 'Saved' : '已保存');
         setIsEditing(false);
       })
       .catch((err) => {
-        Toast.error(err.message || '保存失败');
+        Toast.error(err.message || (isEn ? 'Save failed' : '保存失败'));
       })
       .finally(() => {
         setSubmitLoading(false);
@@ -108,7 +108,7 @@ function MerchantFoodDetail() {
     if (!food || !window.confirm(isEn ? `Delete "${food.name}"?` : `确定删除“${food.name}”吗？`)) return;
     deleteProduct(food.id)
       .then(() => {
-        Toast.success('已删除');
+        Toast.success(isEn ? 'Deleted' : '已删除');
         navigate(`/merchant/manage?shop=${food.shop_id || searchParams.get('shop') || ''}`, { replace: true });
       })
       .catch((err) => Toast.error(getApiErrorMessage(err)));
@@ -121,7 +121,7 @@ function MerchantFoodDetail() {
   if (loading) {
     return (
       <div className="merchant-food-detail-page">
-        <p className="merchant-food-detail-loading state-loading">加载中…</p>
+        <p className="merchant-food-detail-loading state-loading">{isEn ? 'Loading…' : '加载中…'}</p>
       </div>
     );
   }
@@ -131,7 +131,7 @@ function MerchantFoodDetail() {
       <div className="merchant-food-detail-page">
         <p className="merchant-food-detail-error state-error">{error}</p>
         <button type="button" className="merchant-food-detail-back" onClick={() => navigate(-1)}>
-          返回 Back
+          {isEn ? 'Back' : '返回'}
         </button>
       </div>
     );
@@ -141,9 +141,9 @@ function MerchantFoodDetail() {
     return (
       <div className="merchant-food-detail-page">
         <EmptyState
-          title="菜品不存在"
-          description="Food not found"
-          actionLabel="返回"
+          title={isEn ? 'Dish not found' : '菜品不存在'}
+          description={isEn ? 'This dish does not exist.' : '未找到该菜品。'}
+          actionLabel={isEn ? 'Back' : '返回'}
           onActionClick={() => navigate(-1)}
         />
       </div>
@@ -187,7 +187,7 @@ function MerchantFoodDetail() {
               onClick={() => navigate(`/eat/food/${food.id}/review`)}
               disabled={submitLoading}
             >
-              去点评 Review
+              {isEn ? 'Review' : '去点评'}
             </button>}
             <button
               type="button"

@@ -24,6 +24,7 @@ const LIST_STALE_MS = 10 * 60 * 1000;
  */
 function AreaProductRanking() {
   const { lang } = useLanguage();
+  const isEn = lang === 'en';
   const t = getCanteenAreaRankingStrings(lang, FULL_LIMIT);
   const { area } = useParams();
   const code = normalizeAreaCodeParam(area ?? '');
@@ -93,7 +94,7 @@ function AreaProductRanking() {
   if (!code) {
     return (
       <div className="area-ranking-page">
-        <EmptyState title="无效分区" description="请从分区商家列表进入榜单。" />
+        <EmptyState title={isEn ? 'Invalid area' : '无效分区'} description={isEn ? 'Open rankings from an area page.' : '请从分区商家列表进入榜单。'} />
       </div>
     );
   }

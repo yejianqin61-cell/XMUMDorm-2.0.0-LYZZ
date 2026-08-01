@@ -2,6 +2,7 @@ import { useState, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import FoodDetailView from '../components/FoodDetailView';
 import EmptyState from '../components/EmptyState';
 import ImagePreview from '../components/ImagePreview';
@@ -27,14 +28,14 @@ const STALE_PRODUCT_MS = 3 * 60 * 1000;
 const STALE_COMMENTS_MS = 2 * 60 * 1000;
 
 /** 将 API 点评树转为页面使用的结构（userName、images 为 url 数组） */
-function mapCommentsToReviews(list) {
+function mapCommentsToReviews(list, isEn) {
   return (list || []).map((r) => ({
     ...r,
-    userName: r.authorName ?? '匿名 Anonymous',
+    userName: r.authorName ?? (isEn ? 'Anonymous' : '匿名'),
     images: (r.images || []).map((i) => (typeof i === 'string' ? i : i?.url)).filter(Boolean),
     replies: (r.replies || []).map((rep) => ({
       ...rep,
-      userName: rep.authorName ?? '匿名 Anonymous',
+      userName: rep.authorName ?? (isEn ? 'Anonymous' : '匿名'),
     })),
   }));
 }
@@ -45,6 +46,8 @@ function FoodDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { isLoggedIn, user, isAdmin } = useAuth();
+  const { lang } = useLanguage();
+  const isEn = lang === 'en';
   const [replyingTo, setReplyingTo] = useState(null); // { id, userName }
   const [newReply, setNewReply] = useState('');
   const [submitLoading, setSubmitLoading] = useState(false);
@@ -84,7 +87,7 @@ function FoodDetail() {
     queryFn: () => getProductComments(productId),
     enabled: productId > 0,
     staleTime: STALE_COMMENTS_MS,
-    select: (list) => mapCommentsToReviews(list || []),
+    select: (list) => mapCommentsToReviews(list || [], isEn),
   });
 
   const favoriteQuery = useQuery({
@@ -131,9 +134,9 @@ function FoodDetail() {
     return (
       <div className="food-detail-page">
         <EmptyState
-          title="菜品不存在"
-          description="Food not found"
-          actionLabel="返回"
+          title={isEn ? 'Dish not found' : '菜品不存在'}
+          description={isEn ? 'This dish does not exist.' : '未找到该菜品。'}
+          actionLabel={isEn ? 'Back' : '返回'}
           onActionClick={() => navigate(-1)}
         />
       </div>
@@ -143,7 +146,7 @@ function FoodDetail() {
   if (foodLoading) {
     return (
       <div className="food-detail-page">
-        <p className="food-detail-loading state-loading">加载中…</p>
+        <p className="food-detail-loading state-loading">{isEn ? 'Loading…' : '加载中…'}</p>
       </div>
     );
   }
@@ -153,7 +156,7 @@ function FoodDetail() {
       <div className="food-detail-page">
         <p className="food-detail-error state-error">{foodError}</p>
         <button type="button" className="food-detail-back-btn" onClick={() => navigate(-1)}>
-          返回 Back
+          {isEn ? 'Back' : '返回'}
         </button>
       </div>
     );
@@ -163,9 +166,9 @@ function FoodDetail() {
     return (
       <div className="food-detail-page">
         <EmptyState
-          title="菜品不存在"
-          description="Food not found"
-          actionLabel="返回"
+          title={isEn ? 'Dish not found' : '菜品不存在'}
+          description={isEn ? 'This dish does not exist.' : '未找到该菜品。'}
+          actionLabel={isEn ? 'Back' : '返回'}
           onActionClick={() => navigate(-1)}
         />
       </div>
@@ -217,10 +220,10 @@ function FoodDetail() {
   const handleDeleteReview = async (commentId) => {
     if (requireLogin()) return;
     if (!productId) return;
-    if (!window.confirm('确定要删除这条点评/回复吗？删除后不可恢复。')) return;
+    if (!window.confirm(isEn ? 'Delete this review or reply? This cannot be undone.' : '确定要删除这条点评或回复吗？删除后不可恢复。')) return;
     try {
       await deleteProductComment(productId, commentId);
-      Toast.success('已删除');
+      Toast.success(isEn ? 'Deleted' : '已删除');
       queryClient.invalidateQueries({ queryKey: QK.canteenProductComments(productId) });
     } catch (err) {
       Toast.error(getApiErrorMessage(err));
@@ -237,7 +240,7 @@ function FoodDetail() {
         canDelete={isAdmin}
         onDelete={async () => {
           if (!isAdmin) return;
-          if (!food || !window.confirm(`确定删除 "${food.name}" 吗？删除后不可恢复。`)) return;
+          if (!food || !window.confirm(isEn ? `Delete "${food.name}"? This cannot be undone.` : `确定删除“${food.name}”吗？删除后不可恢复。`)) return;
           try {
             await deleteProduct(food.id);
             if (food.shop_id != null) {
@@ -249,7 +252,7 @@ function FoodDetail() {
               queryClient.invalidateQueries({ queryKey: ['canteen', 'shop'] });
             }
             queryClient.removeQueries({ queryKey: QK.canteenProduct(food.id) });
-            Toast.success('商品已删除');
+            Toast.success(isEn ? 'Dish deleted' : '商品已删除');
             navigate(-1);
           } catch (err) {
             Toast.error(getApiErrorMessage(err));
@@ -263,14 +266,14 @@ function FoodDetail() {
           onClose={() => setImagePreviewOpen(false)}
         />
       )}
-      <div className="food-detail-floatbar" role="group" aria-label="操作栏 Actions">
+      <div className="food-detail-floatbar" role="group" aria-label={isEn ? 'Actions' : '操作栏'}>
         <button
           type="button"
           className="food-detail-floatbtn"
           onClick={handleReview}
-          aria-label="去点评 Review"
+          aria-label={isEn ? 'Review' : '去点评'}
         >
-          去点评 <span className="food-detail-floatbtn-sub">Review</span>
+          {isEn ? 'Review' : '去点评'}
         </button>
         <button
           type="button"
@@ -283,43 +286,42 @@ function FoodDetail() {
               if (favorited) {
                 await removeFavoriteProduct(pid);
                 queryClient.setQueryData(QK.canteenProductFavorite(pid), false);
-                Toast.success('已取消收藏');
+                Toast.success(isEn ? 'Removed from favorites' : '已取消收藏');
               } else {
                 await addFavoriteProduct(pid);
                 queryClient.setQueryData(QK.canteenProductFavorite(pid), true);
-                Toast.success('已收藏');
+                Toast.success(isEn ? 'Added to favorites' : '已收藏');
               }
             } catch (err) {
               Toast.error(getApiErrorMessage(err));
             }
           }}
-          aria-label={favorited ? '取消收藏 Favorite' : '收藏 Favorite'}
+          aria-label={favorited ? (isEn ? 'Remove from favorites' : '取消收藏') : (isEn ? 'Add to favorites' : '收藏')}
           aria-pressed={favorited}
         >
           <span className="food-detail-fav-heart" aria-hidden>
             {favorited ? '♥' : '♡'}
           </span>
-          收藏 <span className="food-detail-floatbtn-sub">Favorite</span>
+          {isEn ? 'Favorite' : '收藏'}
         </button>
       </div>
 
-      <section className="food-detail-reviews" aria-label="点评列表">
-        <h2 className="food-detail-reviews-title">Reviews ({totalReviews})</h2>
+      <section className="food-detail-reviews" aria-label={isEn ? 'Reviews' : '点评列表'}>
+        <h2 className="food-detail-reviews-title">{isEn ? `Reviews (${totalReviews})` : `点评（${totalReviews}）`}</h2>
         <div className="food-detail-wave" aria-hidden />
         {reviewError && <p className="food-detail-reviews-error state-error">{reviewError}</p>}
         {reviewsLoading ? (
-          <p className="food-detail-reviews-loading state-loading">加载点评中…</p>
+          <p className="food-detail-reviews-loading state-loading">{isEn ? 'Loading reviews…' : '加载点评中…'}</p>
         ) : totalReviews === 0 ? (
-          <div className="food-detail-empty-reviews" aria-label="暂无点评">
+          <div className="food-detail-empty-reviews" aria-label={isEn ? 'No reviews' : '暂无点评'}>
             <svg className="food-detail-empty-illus" width="64" height="64" viewBox="0 0 64 64" aria-hidden="true">
               <path d="M16 34c0 10 8 18 16 18s16-8 16-18" fill="none" stroke="rgba(100,116,139,0.45)" strokeWidth="2.2" strokeLinecap="round"/>
               <path d="M14 34h36" fill="none" stroke="rgba(100,116,139,0.25)" strokeWidth="2.2" strokeLinecap="round"/>
               <path d="M26 20c-2 3-2 6 0 9M34 18c-2 3-2 6 0 9M42 20c-2 3-2 6 0 9" fill="none" stroke="rgba(100,116,139,0.35)" strokeWidth="2.2" strokeLinecap="round"/>
             </svg>
-            <div className="food-detail-empty-title">暂无点评</div>
-            <div className="food-detail-empty-sub">No reviews yet</div>
+            <div className="food-detail-empty-title">{isEn ? 'No reviews yet' : '暂无点评'}</div>
             <button type="button" className="food-detail-empty-cta pressable" onClick={handleReview}>
-              写下第一条点评 Write the first review
+              {isEn ? 'Write the first review' : '写下第一条点评'}
             </button>
           </div>
         ) : (
@@ -361,15 +363,15 @@ function FoodDetail() {
                     className="food-detail-review-reply-btn"
                     onClick={() => startReply(r)}
                   >
-                    回复 Reply
+                    {isEn ? 'Reply' : '回复'}
                   </button>
                   {(r.userId === user?.id || isAdmin) && (
                     <button
                       type="button"
                       className="food-detail-review-delete"
                       onClick={() => handleDeleteReview(r.id)}
-                      aria-label="删除点评"
-                      title="删除点评"
+                      aria-label={isEn ? 'Delete review' : '删除点评'}
+                      title={isEn ? 'Delete review' : '删除点评'}
                     >
                       <span aria-hidden>🗑</span>
                     </button>
@@ -388,7 +390,7 @@ function FoodDetail() {
                             className="food-detail-reply-delete"
                             onClick={() => handleDeleteReview(rep.id)}
                           >
-                            删除
+                            {isEn ? 'Delete' : '删除'}
                           </button>
                         )}
                       </li>
@@ -404,20 +406,20 @@ function FoodDetail() {
       {replyingTo && (
       <form className="food-detail-form" onSubmit={handleSubmitReply}>
         <div className="food-detail-replying">
-            <span>回复 Reply：{replyingTo.userName}</span>
-          <button type="button" onClick={cancelReply}>取消 Cancel</button>
+            <span>{isEn ? 'Reply to' : '回复'}：{replyingTo.userName}</span>
+          <button type="button" onClick={cancelReply}>{isEn ? 'Cancel' : '取消'}</button>
         </div>
         <div className="food-detail-form-row">
           <input
             type="text"
             className="food-detail-input"
-            placeholder="输入回复… Reply…"
+            placeholder={isEn ? 'Write a reply…' : '输入回复…'}
             value={newReply}
             onChange={(e) => setNewReply(e.target.value)}
             maxLength={500}
           />
           <button type="submit" className="food-detail-send" disabled={!newReply.trim() || submitLoading}>
-            {submitLoading ? '发送中…' : '发送 Send'}
+            {submitLoading ? (isEn ? 'Sending…' : '发送中…') : (isEn ? 'Send' : '发送')}
           </button>
         </div>
       </form>

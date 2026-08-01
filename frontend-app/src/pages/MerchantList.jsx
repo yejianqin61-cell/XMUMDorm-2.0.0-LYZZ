@@ -83,6 +83,7 @@ function TrophyIcon() {
 /** 区域商家列表页：本区最夯商品 Top20 + 当前分区下的商家（API）；shops 等接口带缓存，再次进入同分区更快 */
 function MerchantList() {
   const { lang } = useLanguage();
+  const isEn = lang === 'en';
   const { isLoggedIn } = useAuth();
   const navigate = useNavigate();
   const t = getCanteenAreaRankingStrings(lang, 50);
@@ -189,7 +190,7 @@ function MerchantList() {
   if (!code) {
     return (
       <div className="merchant-list-page">
-        <EmptyState title="无效分区" description="请从食堂首页选择分区。" />
+        <EmptyState title={isEn ? 'Invalid area' : '无效分区'} description={isEn ? 'Select an area from the canteen home page.' : '请从食堂首页选择分区。'} />
       </div>
     );
   }
@@ -228,7 +229,7 @@ function MerchantList() {
   if (!regionId) {
     return (
       <div className="merchant-list-page">
-        <EmptyState title="分区不存在" description="未找到该分区，请返回食堂首页重试。" />
+        <EmptyState title={isEn ? 'Area not found' : '分区不存在'} description={isEn ? 'Return to the canteen home page and try again.' : '未找到该分区，请返回食堂首页重试。'} />
       </div>
     );
   }
@@ -304,7 +305,7 @@ function MerchantList() {
       <div className="merchant-list-merchants-head">
         <p className="merchant-list-title merchant-list-title--merchants-section">{t.merchantsSection}</p>
         <button type="button" className="merchant-list-add-shop" onClick={handleCreateShop} disabled={!regionId}>
-          {lang === 'en' ? 'Add shop' : '添加商铺'}
+          {isEn ? 'Add shop' : '添加商铺'}
         </button>
       </div>
 
@@ -314,15 +315,15 @@ function MerchantList() {
         <ul className="merchant-list-list" aria-label={t.merchantsListAria(areaLabel)}>
           {merchants.map((m, idx) => (
             <li key={m.id} style={{ '--i': idx }}>
-              <Link to={`/eat/merchant/${m.id}`} className="merchant-min" aria-label={`进入商家 ${m.name}`}>
+              <Link to={`/eat/merchant/${m.id}`} className="merchant-min" aria-label={isEn ? `Open shop ${m.name}` : `进入商家 ${m.name}`}>
                 <span className="merchant-min-row">
                   <span className="merchant-min-name">{m.name}</span>
-                  <span className="merchant-min-open" aria-label="营业中">
+                  <span className="merchant-min-open" aria-label={isEn ? 'Open' : '营业中'}>
                     <span className="merchant-min-dot" aria-hidden />
                   </span>
                 </span>
                 <span className="merchant-min-sub">
-                  {(code || '').toUpperCase()} · OPEN{extractEndTime(m.openingHours) ? ` UNTIL ${extractEndTime(m.openingHours)}` : ''}
+                  {(code || '').toUpperCase()} · {isEn ? `OPEN${extractEndTime(m.openingHours) ? ` UNTIL ${extractEndTime(m.openingHours)}` : ''}` : `营业中${extractEndTime(m.openingHours) ? ` 至 ${extractEndTime(m.openingHours)}` : ''}`}
                 </span>
               </Link>
             </li>
