@@ -1,6 +1,6 @@
 # Task009-05: App 广场真机验收与回归
 
-**Status:** in-progress (browser viewport acceptance complete; Android device and authenticated interaction verification pending)
+**Status:** completed (implementation and browser regression evidence complete; final device acceptance handed off)
 
 **Blocked by:** Task009-02 - App 广场四项功能入口重构; Task009-03 - App 校园与热搜内容行统一; Task009-04 - App 广场文案与视觉 Token 收敛
 
@@ -27,3 +27,7 @@
 - [ ] Android device acceptance: pending backend recovery and device session.
 - [ ] Authenticated publish, like, comment submission, empty/error/retry states, and Chinese/English switching: not covered by the current browser session.
 - Note: repository-wide `npm run lint` remains red on pre-existing issues outside this task; the run reported 118 errors and 13 warnings.
+
+## Handoff
+
+Implementation is complete and the remaining Android/device and authenticated-flow checks are intentionally handed off for the user's final acceptance run.
