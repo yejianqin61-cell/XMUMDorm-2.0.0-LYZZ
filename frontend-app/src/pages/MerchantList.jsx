@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import Card from '../components/Card';
 import SkeletonCard from '../components/SkeletonCard';
@@ -10,6 +10,7 @@ import { getUploadUrl, DEFAULT_PRODUCT_IMAGE_PATH } from '@shared/api/config';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { findRegionByCode, normalizeAreaCodeParam } from '@shared/utils/regionCode';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import { getCanteenAreaRankingStrings } from '../i18n/canteenAreaRanking';
 import { QK } from '@shared/query/queryKeys';
 import './MerchantList.css';
@@ -82,6 +83,8 @@ function TrophyIcon() {
 /** 区域商家列表页：本区最夯商品 Top20 + 当前分区下的商家（API）；shops 等接口带缓存，再次进入同分区更快 */
 function MerchantList() {
   const { lang } = useLanguage();
+  const { isLoggedIn } = useAuth();
+  const navigate = useNavigate();
   const t = getCanteenAreaRankingStrings(lang, 50);
   const { area } = useParams();
   const code = normalizeAreaCodeParam(area ?? '');
@@ -104,6 +107,16 @@ function MerchantList() {
   const regionId = region?.id;
 
   const areaLabel = region?.name ?? AREA_LABELS[code] ?? code ?? '';
+  const createShopSearch = regionId ? `?region=${regionId}&from=${encodeURIComponent(`/eat/${code}`)}` : '';
+  const createShopPath = `/merchant/create${createShopSearch}`;
+
+  const handleCreateShop = () => {
+    if (isLoggedIn) {
+      navigate(createShopPath);
+      return;
+    }
+    navigate('/login', { state: { from: { pathname: '/merchant/create', search: createShopSearch } } });
+  };
 
   const shopsQuery = useQuery({
     queryKey: QK.canteenRegionShops(regionId),
@@ -288,7 +301,12 @@ function MerchantList() {
         )}
       </Card>
 
-      <p className="merchant-list-title merchant-list-title--merchants-section">{t.merchantsSection}</p>
+      <div className="merchant-list-merchants-head">
+        <p className="merchant-list-title merchant-list-title--merchants-section">{t.merchantsSection}</p>
+        <button type="button" className="merchant-list-add-shop" onClick={handleCreateShop} disabled={!regionId}>
+          {lang === 'en' ? 'Add shop' : '添加商铺'}
+        </button>
+      </div>
 
       {merchants.length === 0 ? (
         <EmptyState title={t.emptyMerchantsTitle} description={t.emptyMerchantsDesc} />

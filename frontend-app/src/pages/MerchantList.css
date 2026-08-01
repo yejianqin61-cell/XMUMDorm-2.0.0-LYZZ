@@ -524,6 +524,37 @@
   }
 }
 
+.merchant-list-merchants-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.merchant-list-merchants-head .merchant-list-title {
+  flex: 1;
+}
+
+.merchant-list-add-shop {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 0 2px;
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  border-radius: 0;
+  background: transparent;
+  color: #2563eb;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.merchant-list-add-shop:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .merchant-list-ranking-full-link--pill {
   border-radius: 999px;
 }
