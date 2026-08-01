@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import FoodDetailView from '../components/FoodDetailView';
 import FoodForm from '../components/FoodForm';
 import EmptyState from '../components/EmptyState';
@@ -7,12 +7,15 @@ import { Toast } from '../context/ToastContext';
 import { getProduct, getCategories, updateProduct, deleteProduct } from '@shared/api/canteen';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { productImageUrl } from '@shared/api/config';
+import { useAuth } from '../context/AuthContext';
 import './MerchantFoodDetail.css';
 
 /** 商家端菜品详情：getProduct + getCategories，编辑 updateProduct，删除 deleteProduct */
 function MerchantFoodDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { isAdmin } = useAuth();
   const [food, setFood] = useState(null);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -103,7 +106,7 @@ function MerchantFoodDetail() {
     deleteProduct(food.id)
       .then(() => {
         Toast.success('已删除');
-        navigate('/merchant/manage', { replace: true });
+        navigate(`/merchant/manage?shop=${food.shop_id || searchParams.get('shop') || ''}`, { replace: true });
       })
       .catch((err) => Toast.error(getApiErrorMessage(err)));
   };
@@ -175,14 +178,14 @@ function MerchantFoodDetail() {
             />
           )}
           <div className="merchant-food-detail-actions">
-            <button
+            {isAdmin && <button
               type="button"
               className="merchant-food-detail-btn"
               onClick={() => navigate(`/eat/food/${food.id}/review`)}
               disabled={submitLoading}
             >
               去点评 Review
-            </button>
+            </button>}
             <button
               type="button"
               className="merchant-food-detail-btn merchant-food-detail-btn-edit"

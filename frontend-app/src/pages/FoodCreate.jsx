@@ -1,21 +1,23 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import FoodForm from '../components/FoodForm';
 import { Toast } from '../context/ToastContext';
-import { getShopMe, createProduct } from '@shared/api/canteen';
+import { getShopMe, getCategories, createProduct } from '@shared/api/canteen';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import './FoodCreate.css';
 
 /** 菜品发布页：商家端，getShopMe 取分类，createProduct 提交，成功后跳转菜品管理 */
 function FoodCreate() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const shopId = Number.parseInt(searchParams.get('shop') || '', 10);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [submitLoading, setSubmitLoading] = useState(false);
 
   useEffect(() => {
-    getShopMe()
+    (Number.isFinite(shopId) && shopId > 0 ? getCategories(shopId).then((categories) => ({ categories })) : getShopMe())
       .then((data) => {
         const cats = data?.categories ?? [];
         setCategories(Array.isArray(cats) ? cats : []);
@@ -26,7 +28,7 @@ function FoodCreate() {
       .finally(() => {
         setLoading(false);
       });
-  }, []);
+  }, [shopId]);
 
   const handleSubmit = (values) => {
     const categoryId = values.categoryId != null ? values.categoryId : categories[0]?.id;
@@ -46,7 +48,7 @@ function FoodCreate() {
     })
       .then(() => {
         Toast.success('商品已创建');
-        navigate('/merchant/manage', { replace: true });
+        navigate(`/merchant/manage?shop=${shopId || ''}`, { replace: true });
       })
       .catch((err) => {
         Toast.error(getApiErrorMessage(err));

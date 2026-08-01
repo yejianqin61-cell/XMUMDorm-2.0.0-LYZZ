@@ -14,7 +14,7 @@ import './FoodCard.css';
  * @param {string} [mode] 'user' | 'merchant'
  * @param {Function} [onDelete] 商家端删除回调 (food) => void
  */
-function FoodCard({ food, mode = 'user', onDelete }) {
+function FoodCard({ food, mode = 'user', onDelete, canDelete = true }) {
   const { id, name, price, image, description, comprehensiveScore } = food;
   const priceStr = typeof price === 'number' ? price.toFixed(2) : String(price ?? '—');
   /** 统一显示为 10 分制（与排行榜一致） */
@@ -55,7 +55,7 @@ function FoodCard({ food, mode = 'user', onDelete }) {
             <Link to={`/merchant/food/${id}`} className="food-card-action food-card-action-edit">
               编辑 Edit
             </Link>
-            <button
+            {canDelete && <button
               type="button"
               className="food-card-action food-card-action-delete"
               onClick={(e) => {
@@ -66,7 +66,7 @@ function FoodCard({ food, mode = 'user', onDelete }) {
               aria-label={`删除 ${name}`}
             >
               删除 Delete
-            </button>
+            </button>}
           </div>
         )}
       </div>

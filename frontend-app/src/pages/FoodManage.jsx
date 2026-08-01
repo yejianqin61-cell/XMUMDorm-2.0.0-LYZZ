@@ -7,11 +7,13 @@ import { Toast } from '../context/ToastContext';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { getShopMe, getShop, getProducts, getCategories, deleteProduct, createCategory, updateCategory, deleteCategory } from '@shared/api/canteen';
 import { productImageUrl } from '@shared/api/config';
+import { useAuth } from '../context/AuthContext';
 import './FoodManage.css';
 
 /** 商家端菜品管理：getShopMe + getProducts，支持删除，入口发布新菜品 */
 function FoodManage() {
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
   const [searchParams] = useSearchParams();
   const requestedShopId = Number.parseInt(searchParams.get('shop') || '', 10);
   const [shop, setShop] = useState(null);
@@ -79,6 +81,7 @@ function FoodManage() {
   }, [load]);
 
   const handleDelete = (food) => {
+    if (!isAdmin) return;
     if (!window.confirm(`确定删除 "${food.name}" 吗？ Delete this dish?`)) return;
     deleteProduct(food.id)
       .then(() => {
@@ -222,7 +225,7 @@ function FoodManage() {
         <ul className="food-manage-list" aria-label="菜品列表">
           {foods.map((food) => (
             <li key={food.id}>
-              <FoodCard food={food} mode="merchant" onDelete={handleDelete} />
+              <FoodCard food={food} mode="merchant" onDelete={handleDelete} canDelete={isAdmin} />
             </li>
           ))}
         </ul>
