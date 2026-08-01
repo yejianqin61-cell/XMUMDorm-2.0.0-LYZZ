@@ -1,16 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import { Bell, Building2, MapPin, MoreHorizontal, UtensilsCrossed } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { getCanteenStrings } from '../../i18n/canteenStrings';
 import { getRegions } from '@shared/api/canteen';
 import { QK } from '@shared/query/queryKeys';
 
 const REGION_ICONS = {
-  D6: '/D6.png',
-  LY3: '/LY3.png',
-  B1: '/B1.png',
-  BELL: '/bell.png',
-  other: '/OTHERS.png',
+  D6: MapPin,
+  LY3: Building2,
+  B1: UtensilsCrossed,
+  BELL: Bell,
+  other: MoreHorizontal,
 };
 
 function regionLabel(r, t) {
@@ -58,22 +59,22 @@ export default function CanteenRegionGrid() {
       {header}
       <div className="canteen-region-grid">
         {regions.map((r) => (
-          <Link
-            key={r.id || r.code}
-            to={`/eat/${r.code}`}
-            className="canteen-region-item pressable"
-          >
-            <div className="canteen-region-icon-wrap">
-              <img
-                src={REGION_ICONS[r.code] || '/OTHERS.png'}
-                alt=""
-                className="canteen-region-icon"
-              />
-            </div>
-            <span className="canteen-region-name">{regionLabel(r, t)}</span>
-          </Link>
+          <RegionEntry key={r.id || r.code} region={r} label={regionLabel(r, t)} />
         ))}
       </div>
     </section>
+  );
+}
+
+function RegionEntry({ region, label }) {
+  const Icon = REGION_ICONS[region.code] || MoreHorizontal;
+
+  return (
+    <Link to={`/eat/${region.code}`} className="canteen-region-item pressable">
+      <span className="canteen-region-icon-wrap" aria-hidden="true">
+        <Icon className="canteen-region-icon" strokeWidth={1.7} />
+      </span>
+      <span className="canteen-region-name">{label}</span>
+    </Link>
   );
 }

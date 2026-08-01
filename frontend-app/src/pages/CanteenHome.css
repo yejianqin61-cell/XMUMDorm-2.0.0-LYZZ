@@ -260,24 +260,18 @@
 
 .canteen-region-grid {
   display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-}
-
-.canteen-region-grid::-webkit-scrollbar {
-  display: none;
+  justify-content: space-between;
+  gap: 4px;
 }
 
 .canteen-region-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  flex: 0 0 auto;
+  flex: 1 1 0;
   min-width: 0;
-  gap: 5px;
-  min-height: 76px;
+  gap: 7px;
+  min-height: 68px;
   padding: 0;
   text-decoration: none;
   -webkit-tap-highlight-color: transparent;
@@ -313,24 +307,25 @@
 }
 
 .canteen-region-icon-wrap {
-  width: 52px;
-  height: 52px;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid #111;
   border-radius: 50%;
-  overflow: hidden;
-  background: var(--post-ios-fill);
+  color: #111;
 }
 
 .canteen-region-icon {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  width: 20px;
+  height: 20px;
 }
 
 .canteen-region-name {
   width: max-content;
   max-width: none;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 16px;
   color: var(--post-ios-label);
   text-align: center;
