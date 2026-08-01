@@ -1,115 +1,142 @@
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { BookOpenText, HandHelping, Shapes, Store } from 'lucide-react';
-import { getSquareBanners, getSquareHomeSummary } from '@shared/api/square';
+import { Plus, RefreshCw } from 'lucide-react';
+import { getCampusFeed, getSquareBanners, getTrendingTopics } from '@shared/api/square';
+import { getUploadUrl } from '@shared/api/config';
+import { formatPostTime } from '@shared/utils/formatTime';
 import { useLanguage } from '../context/LanguageContext';
-import CanteenBannerCarousel from '../components/canteen/CanteenBannerCarousel';
-import TodayCampusHero from '../components/square/TodayCampusHero';
-import TodayCampusQuickActions from '../components/square/TodayCampusQuickActions';
-import TodayCampusTrendingBoard from '../components/square/TodayCampusTrendingBoard';
-import PageSkeleton from '../components/ui/PageSkeleton';
 import ErrorState from '../components/ui/ErrorState';
-import FadeInSection from '../components/ui/FadeInSection';
-import RouteTransition from '../components/ui/RouteTransition';
+import PageSkeleton from '../components/ui/PageSkeleton';
+import CanteenBannerCarousel from '../components/canteen/CanteenBannerCarousel';
 import { QK } from '@shared/query/queryKeys';
 import './SquareHome.css';
 
-const PRIMARY_ACTIONS = [
-  {
-    label: '社团广场',
-    labelEn: 'Club Plaza',
-    to: '/about/club',
-    icon: <Shapes size={18} strokeWidth={2} />,
-    emoji: '🎨',
-    hint: '看社团、找活动、认识同好',
-    hintEn: 'Discover clubs, activities, and like-minded people',
-    tone: 'club',
-  },
-  {
-    label: '马校一站通',
-    labelEn: 'XMUM Guide',
-    to: '/about/freshman-guide',
-    icon: <BookOpenText size={18} strokeWidth={2} />,
-    emoji: '📚',
-    hint: '攻略、课程与新生信息',
-    hintEn: 'Guides, courses, and freshman essentials',
-    tone: 'guide',
-  },
-  {
-    label: '帮帮我',
-    labelEn: 'Help Me',
-    to: '/about/errands',
-    icon: <HandHelping size={18} strokeWidth={2} />,
-    emoji: '🤝',
-    hint: '跑腿求助，解决生活小事',
-    hintEn: 'Get quick help with daily errands',
-    tone: 'help',
-  },
-  {
-    label: '出物',
-    labelEn: 'Marketplace',
-    to: '/about/second-hand',
-    icon: <Store size={18} strokeWidth={2} />,
-    emoji: '🪄',
-    hint: '校园二手流通更快一点',
-    hintEn: 'Move second-hand items faster on campus',
-    tone: 'market',
-  },
-];
+const TAB_STORAGE_KEY = 'square-home-tab';
+
+function readStoredTab() {
+  try {
+    return localStorage.getItem(TAB_STORAGE_KEY) === 'trending' ? 'trending' : 'campus';
+  } catch {
+    return 'campus';
+  }
+}
+
+function normalizeFeed(data) {
+  const payload = data?.data || data;
+  return Array.isArray(payload?.list) ? payload.list : [];
+}
+
+function normalizeTopics(data) {
+  return Array.isArray(data) ? data : data?.data || [];
+}
 
 export default function SquareHome() {
+  const navigate = useNavigate();
   const { lang } = useLanguage();
   const isEn = lang === 'en';
+  const [tab, setTab] = useState(readStoredTab);
 
-  const summaryQuery = useQuery({
-    queryKey: QK.squareHomeSummary(),
-    queryFn: getSquareHomeSummary,
+  const campusQuery = useQuery({
+    queryKey: QK.campusFeed('school', 'square-home'),
+    queryFn: () => getCampusFeed({ tab: 'school', page: 1, pageSize: 8 }),
+    enabled: tab === 'campus',
+    staleTime: 30 * 1000,
+  });
+  const trendingQuery = useQuery({
+    queryKey: QK.trendingTopics(),
+    queryFn: getTrendingTopics,
+    enabled: tab === 'trending',
     staleTime: 30 * 1000,
   });
 
-  const summary = summaryQuery.data || {
-    hot_topics: [],
-    hot_activities: [],
-    hot_treeholes: [],
-    campus_highlights: [],
-    quick_stats: {},
+  const activeQuery = tab === 'campus' ? campusQuery : trendingQuery;
+  const items = tab === 'campus' ? normalizeFeed(campusQuery.data) : normalizeTopics(trendingQuery.data);
+
+  const selectTab = (nextTab) => {
+    setTab(nextTab);
+    try {
+      localStorage.setItem(TAB_STORAGE_KEY, nextTab);
+    } catch {
+      // Persisting the selected feed is a convenience, never a render blocker.
+    }
   };
 
-  return (
-    <RouteTransition className="square-home-page">
-      <div className="square-home-inner">
-        <FadeInSection delay={0}>
-          <CanteenBannerCarousel
-            fetchFn={getSquareBanners}
-            queryKey={QK.squareBanners()}
-            adminTo="/about/admin/orgs?tab=banners"
-          />
-        </FadeInSection>
+  const refresh = () => activeQuery.refetch();
 
-        {summaryQuery.isLoading ? (
-          <PageSkeleton hero metrics={3} items={2} className="square-home-skeleton" />
-        ) : summaryQuery.isError ? (
+  return (
+    <section className="square-home-page square-home-page--timeline" aria-label={isEn ? 'Square' : '广场'}>
+      <header className="square-timeline-header">
+        <h1>{isEn ? 'Square' : '广场'}</h1>
+        <div className="square-timeline-header__actions">
+          <button type="button" className="square-icon-button" onClick={refresh} aria-label={isEn ? 'Refresh feed' : '刷新内容'}>
+            <RefreshCw size={19} aria-hidden="true" />
+          </button>
+          <button type="button" className="square-icon-button" onClick={() => navigate('/post/new')} aria-label={isEn ? 'Create post' : '发布内容'}>
+            <Plus size={21} aria-hidden="true" />
+          </button>
+        </div>
+      </header>
+
+      <div className="square-timeline-tabs" role="tablist" aria-label={isEn ? 'Square feeds' : '广场内容'}>
+        <button type="button" role="tab" aria-selected={tab === 'campus'} className={tab === 'campus' ? 'is-active' : ''} onClick={() => selectTab('campus')}>
+          {isEn ? 'Campus' : '校园'}
+        </button>
+        <button type="button" role="tab" aria-selected={tab === 'trending'} className={tab === 'trending' ? 'is-active' : ''} onClick={() => selectTab('trending')}>
+          {isEn ? 'Trending' : '热搜'}
+        </button>
+      </div>
+
+      <CanteenBannerCarousel
+        fetchFn={getSquareBanners}
+        queryKey={QK.squareBanners()}
+        adminTo="/about/admin/orgs?tab=banners"
+      />
+
+      <div className="square-timeline-content" role="tabpanel">
+        {activeQuery.isLoading ? (
+          <PageSkeleton items={4} className="square-home-skeleton" />
+        ) : activeQuery.isError ? (
           <ErrorState
             className="square-home-state"
-            title={isEn ? 'Failed to load square summary' : '首页摘要加载失败'}
-            description={isEn ? 'Pull down and try again.' : '请下拉刷新后重试。'}
-            onActionClick={() => summaryQuery.refetch()}
+            title={isEn ? 'Could not load content' : '加载失败'}
+            description={isEn ? 'Try again.' : '请重试。'}
+            onActionClick={refresh}
           />
+        ) : items.length === 0 ? (
+          <div className="square-home-state square-home-state--empty">
+            {isEn ? 'Nothing here yet' : '暂无内容'}
+          </div>
+        ) : tab === 'campus' ? (
+          <div className="square-campus-preview-list">
+            {items.map((item) => {
+              const image = item.images?.[0]?.url ? getUploadUrl(item.images[0].url) : null;
+              return (
+                <Link key={item.id} to={`/about/campus/${item.id}`} className="square-campus-preview-row">
+                  <div>
+                    <p className="square-content-meta">{item.organization?.name || (isEn ? 'Campus' : '校园')} · {formatPostTime(item.created_at, true)}</p>
+                    <h2>{item.title}</h2>
+                    {item.content ? <p className="square-content-excerpt">{item.content}</p> : null}
+                  </div>
+                  {image ? <img src={image} alt="" loading="lazy" /> : null}
+                </Link>
+              );
+            })}
+          </div>
         ) : (
-          <>
-            <FadeInSection delay={0.03}>
-              <TodayCampusTrendingBoard topics={summary.hot_topics || []} />
-            </FadeInSection>
-
-            <FadeInSection delay={0.06}>
-              <TodayCampusQuickActions actions={PRIMARY_ACTIONS} />
-            </FadeInSection>
-
-            <FadeInSection delay={0.1}>
-              <TodayCampusHero quickStats={summary.quick_stats} />
-            </FadeInSection>
-          </>
+          <div className="square-trending-preview-list">
+            {items.map((topic, index) => (
+              <Link key={topic.id} to={`/about/trending/${topic.id}`} className="square-trending-preview-row">
+                <span>{index + 1}</span>
+                <div>
+                  <h2>{topic.title}</h2>
+                  <p className="square-content-meta">{topic.post_count || 0} {isEn ? 'discussions' : '条讨论'}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
         )}
       </div>
-    </RouteTransition>
+    </section>
   );
 }
