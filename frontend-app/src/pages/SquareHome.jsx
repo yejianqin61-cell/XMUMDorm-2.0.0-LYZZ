@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { BookOpenText, HandHelping, Plus, RefreshCw, Shapes, Store } from 'lucide-react';
-import { getCampusFeed, getSquareBanners, getTrendingTopics } from '@shared/api/square';
+import { BookOpenText, HandHelping, Heart, MessageCircle, MoreHorizontal, Plus, RefreshCw, Shapes, Store } from 'lucide-react';
+import { getCampusFeed, getSquareBanners, getTrendingTopics, likeCampusPost } from '@shared/api/square';
 import { getUploadUrl } from '@shared/api/config';
 import { formatPostTime } from '@shared/utils/formatTime';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import ErrorState from '../components/ui/ErrorState';
 import PageSkeleton from '../components/ui/PageSkeleton';
 import CanteenBannerCarousel from '../components/canteen/CanteenBannerCarousel';
@@ -42,8 +43,11 @@ function normalizeTopics(data) {
 export default function SquareHome() {
   const navigate = useNavigate();
   const { lang } = useLanguage();
+  const { isLoggedIn } = useAuth();
   const isEn = lang === 'en';
   const [tab, setTab] = useState(readStoredTab);
+  const [likedCampus, setLikedCampus] = useState({});
+  const [campusLikeCounts, setCampusLikeCounts] = useState({});
 
   const campusQuery = useQuery({
     queryKey: QK.campusFeed('school', 1),
@@ -79,6 +83,27 @@ export default function SquareHome() {
   };
 
   const refresh = () => activeQuery.refetch();
+
+  const handleCampusLike = async (event, item) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!isLoggedIn) {
+      navigate('/login', { replace: true, state: { from: { pathname: `/about/campus/${item.id}` } } });
+      return;
+    }
+    try {
+      const result = await likeCampusPost(item.id);
+      const currentLiked = likedCampus[item.id] ?? item.user_liked ?? false;
+      const liked = result?.liked ?? !currentLiked;
+      setLikedCampus((current) => ({ ...current, [item.id]: liked }));
+      setCampusLikeCounts((current) => ({
+        ...current,
+        [item.id]: Math.max(0, (current[item.id] ?? item.like_count ?? 0) + (liked ? 1 : -1)),
+      }));
+    } catch {
+      // Like failure should not interrupt feed browsing.
+    }
+  };
 
   return (
     <section className="square-home-page square-home-page--timeline" aria-label={isEn ? 'Square' : '广场'}>
@@ -130,14 +155,31 @@ export default function SquareHome() {
             {items.map((item) => {
               const image = item.images?.[0]?.url ? getUploadUrl(item.images[0].url) : null;
               return (
-                  <Link key={item.id} to={`/about/campus/${item.id}`} className="square-feed-row square-feed-row--campus square-campus-preview-row">
-                  <div>
-                    <p className="square-content-meta">{item.organization?.name || (isEn ? 'Campus' : '校园')} · {formatPostTime(item.created_at, true)}</p>
-                    <h2>{item.title}</h2>
-                    {item.content ? <p className="square-content-excerpt">{item.content}</p> : null}
+                <article key={item.id} className="square-feed-row square-feed-row--campus square-campus-preview-row">
+                  <Link to={`/about/campus/${item.id}`} className="square-feed-row__main">
+                    <div>
+                      <p className="square-content-meta">
+                        {item.author?.nickname || item.author?.username || item.author?.name || item.organization?.name || (isEn ? 'Campus' : '校园')} · {formatPostTime(item.created_at, true)}
+                      </p>
+                      <h2>{item.title}</h2>
+                      {item.content ? <p className="square-content-excerpt">{item.content}</p> : null}
+                    </div>
+                    {image ? <img src={image} alt="" loading="lazy" /> : null}
+                  </Link>
+                  <div className="square-feed-row__actions" aria-label={isEn ? 'Post actions' : '内容操作'}>
+                    <button type="button" className={`square-feed-action${(likedCampus[item.id] ?? item.user_liked) ? ' is-active' : ''}`} onClick={(event) => handleCampusLike(event, item)} aria-label={(likedCampus[item.id] ?? item.user_liked) ? (isEn ? 'Unlike' : '取消点赞') : (isEn ? 'Like' : '点赞')} aria-pressed={(likedCampus[item.id] ?? item.user_liked) || false}>
+                      <Heart size={17} aria-hidden="true" fill={(likedCampus[item.id] ?? item.user_liked) ? 'currentColor' : 'none'} />
+                      <span>{campusLikeCounts[item.id] ?? item.like_count ?? 0}</span>
+                    </button>
+                    <Link to={`/about/campus/${item.id}`} className="square-feed-action" aria-label={isEn ? 'Open comments' : '查看评论'}>
+                      <MessageCircle size={17} aria-hidden="true" />
+                      <span>{item.comment_count ?? 0}</span>
+                    </Link>
+                    <button type="button" className="square-feed-action" onClick={() => navigate(`/about/campus/${item.id}`)} aria-label={isEn ? 'Open post' : '打开内容'}>
+                      <MoreHorizontal size={18} aria-hidden="true" />
+                    </button>
                   </div>
-                  {image ? <img src={image} alt="" loading="lazy" /> : null}
-                </Link>
+                </article>
               );
             })}
           </div>
