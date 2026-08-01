@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Toast } from '../context/ToastContext';
-import { getShopMe, updateShop } from '@shared/api/canteen';
+import { getShopMe, getShop, updateShop } from '@shared/api/canteen';
 import { getUploadUrl } from '@shared/api/config';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import './MerchantShopEdit.css';
@@ -9,6 +9,8 @@ import './MerchantShopEdit.css';
 /** 店铺编辑：logo、名称、营业时间 */
 function MerchantShopEdit() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const requestedShopId = Number.parseInt(searchParams.get('shop') || '', 10);
   const [shop, setShop] = useState(null);
   const [name, setName] = useState('');
   const [openingHours, setOpeningHours] = useState('');
@@ -19,7 +21,7 @@ function MerchantShopEdit() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    getShopMe()
+    (Number.isFinite(requestedShopId) && requestedShopId > 0 ? getShop(requestedShopId) : getShopMe())
       .then((data) => {
         setShop(data);
         setName(data?.name ?? '');
@@ -29,13 +31,13 @@ function MerchantShopEdit() {
       .catch((err) => {
         const isNoShop = err.status === 404 || (err.message && err.message.includes('尚未创建'));
         if (isNoShop) {
-          navigate('/merchant/create', { replace: true });
+          navigate('/eat', { replace: true });
           return;
         }
         setError(getApiErrorMessage(err));
       })
       .finally(() => setLoading(false));
-  }, [navigate]);
+  }, [navigate, requestedShopId]);
 
   const handleLogoChange = (e) => {
     const file = e.target.files?.[0];
@@ -61,7 +63,7 @@ function MerchantShopEdit() {
         logoFile: logoFile || undefined,
       });
       Toast.success('已保存');
-      navigate('/merchant/manage', { replace: true });
+      navigate(`/merchant/manage?shop=${shop.id}`, { replace: true });
     } catch (err) {
       Toast.error(getApiErrorMessage(err));
     } finally {

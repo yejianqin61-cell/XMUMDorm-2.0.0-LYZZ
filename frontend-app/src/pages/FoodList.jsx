@@ -12,6 +12,7 @@ import { getShop, getCategories, getProducts } from '@shared/api/canteen';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { getUploadUrl, productImageUrl } from '@shared/api/config';
 import { QK } from '@shared/query/queryKeys';
+import { useAuth } from '../context/AuthContext';
 import './FoodList.css';
 
 const STALE_MS = 3 * 60 * 1000;
@@ -20,6 +21,7 @@ const STALE_MS = 3 * 60 * 1000;
 function FoodList() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { isLoggedIn } = useAuth();
   const [search, setSearch] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [activeId, setActiveId] = useState(null);
@@ -197,6 +199,16 @@ function FoodList() {
     navigate(`/eat/merchant/${shopId}/hot`);
   };
 
+  const handleManageShop = () => {
+    if (!shopId) return;
+    const search = `?shop=${shopId}`;
+    if (!isLoggedIn) {
+      navigate('/login', { state: { from: { pathname: '/merchant/manage', search } } });
+      return;
+    }
+    navigate(`/merchant/manage${search}`);
+  };
+
   const filteredGroups = search.trim()
     ? (() => {
         const q = search.trim().toLowerCase();
@@ -284,6 +296,9 @@ function FoodList() {
         <MerchantHeader merchant={merchant} />
         <div className="food-shop-hot-entry">
           <div className="food-shop-hot-controls">
+            <button type="button" className="food-shop-hot-entry-btn pressable" onClick={handleManageShop}>
+              维护菜单 · Manage
+            </button>
             <button
               type="button"
               className="food-shop-hot-entry-btn pressable"
@@ -315,6 +330,9 @@ function FoodList() {
       <MerchantHeader merchant={merchant} />
       <div className="food-shop-hot-entry">
         <div className="food-shop-hot-controls">
+          <button type="button" className="food-shop-hot-entry-btn pressable" onClick={handleManageShop}>
+            维护菜单 · Manage
+          </button>
           <button
             type="button"
             className="food-shop-hot-entry-btn pressable"

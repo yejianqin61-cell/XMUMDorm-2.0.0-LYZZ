@@ -1,19 +1,22 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import FoodCard from '../components/FoodCard';
 import SkeletonFood from '../components/SkeletonFood';
 import EmptyState from '../components/EmptyState';
 import { Toast } from '../context/ToastContext';
 import { getApiErrorMessage } from '@shared/utils/apiError';
-import { getShopMe, getProducts, deleteProduct, createCategory } from '@shared/api/canteen';
+import { getShopMe, getShop, getProducts, getCategories, deleteProduct, createCategory, updateCategory, deleteCategory } from '@shared/api/canteen';
 import { productImageUrl } from '@shared/api/config';
 import './FoodManage.css';
 
 /** 商家端菜品管理：getShopMe + getProducts，支持删除，入口发布新菜品 */
 function FoodManage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const requestedShopId = Number.parseInt(searchParams.get('shop') || '', 10);
   const [shop, setShop] = useState(null);
   const [foods, setFoods] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showNewCategory, setShowNewCategory] = useState(false);
@@ -23,17 +26,20 @@ function FoodManage() {
   const load = useCallback(() => {
     setLoading(true);
     setError(null);
-    getShopMe()
+    const shopRequest = Number.isFinite(requestedShopId) && requestedShopId > 0 ? getShop(requestedShopId) : getShopMe();
+    shopRequest
       .then((data) => {
         setShop(data);
         if (!data?.id) {
           setFoods([]);
           return;
         }
-        return getProducts(data.id);
+        return Promise.all([getProducts(data.id), getCategories(data.id)]);
       })
-      .then((list) => {
-        if (list === undefined) return;
+      .then((result) => {
+        if (result === undefined) return;
+        const [list, categoryList] = result;
+        setCategories(Array.isArray(categoryList) ? categoryList : []);
         const arr = Array.isArray(list) ? list : [];
         setFoods(
           arr.map((p) => {
@@ -66,7 +72,7 @@ function FoodManage() {
       .finally(() => {
         setLoading(false);
       });
-  }, []);
+  }, [requestedShopId]);
 
   useEffect(() => {
     load();
@@ -93,9 +99,33 @@ function FoodManage() {
       .then(() => {
         setNewCategoryName('');
         setShowNewCategory(false);
+        load();
       })
       .catch((err) => Toast.error(getApiErrorMessage(err)))
       .finally(() => setCategorySubmitting(false));
+  };
+
+  const handleEditCategory = async (category) => {
+    const name = window.prompt('分类名称 Category name', category.name);
+    if (name == null || !name.trim()) return;
+    try {
+      await updateCategory(category.id, { name: name.trim(), sort_order: category.sort_order || 0 });
+      Toast.success('已保存');
+      load();
+    } catch (err) {
+      Toast.error(getApiErrorMessage(err));
+    }
+  };
+
+  const handleDeleteCategory = async (category) => {
+    if (!window.confirm(`删除分类“${category.name}”后，菜品将变为未分类。确定继续吗？`)) return;
+    try {
+      await deleteCategory(category.id);
+      Toast.success('分类已删除');
+      load();
+    } catch (err) {
+      Toast.error(getApiErrorMessage(err));
+    }
   };
 
   if (loading && !shop) {
@@ -139,10 +169,10 @@ function FoodManage() {
       <p className="food-manage-merchant">{shop.name}</p>
       {error && <p className="food-manage-error" role="alert">{error}</p>}
       <div className="food-manage-actions">
-        <Link to="/merchant/food/new" className="food-manage-add">
+        <Link to={`/merchant/food/new?shop=${shop.id}`} className="food-manage-add">
           发布菜品 Publish Food
         </Link>
-        <Link to="/merchant/shop/edit" className="food-manage-edit-shop">
+        <Link to={`/merchant/shop/edit?shop=${shop.id}`} className="food-manage-edit-shop">
           店铺编辑 Edit Shop
         </Link>
         <button
@@ -172,6 +202,16 @@ function FoodManage() {
           </button>
         </form>
       )}
+
+      <ul className="food-manage-categories" aria-label="分类管理">
+        {categories.map((category) => (
+          <li key={category.id}>
+            <span>{category.name}</span>
+            <button type="button" onClick={() => handleEditCategory(category)}>编辑</button>
+            <button type="button" onClick={() => handleDeleteCategory(category)}>删除</button>
+          </li>
+        ))}
+      </ul>
 
       {foods.length === 0 ? (
         <EmptyState

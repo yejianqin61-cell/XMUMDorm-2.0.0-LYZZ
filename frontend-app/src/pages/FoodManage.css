@@ -134,6 +134,33 @@
   padding: 0;
 }
 
+.food-manage-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.food-manage-categories li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--wx-border);
+}
+
+.food-manage-categories button {
+  padding: 2px 0;
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  border-radius: 0;
+  background: transparent;
+  color: var(--wx-green);
+  cursor: pointer;
+}
+
 .food-manage-list li {
   margin: 0;
 }
