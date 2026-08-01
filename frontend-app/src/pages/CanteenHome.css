@@ -348,32 +348,47 @@
 }
 
 /* ====== 排行榜 ====== */
+.canteen-rank-section {
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--post-ios-separator);
+}
+
 .canteen-rank-tabs {
   display: flex;
-  gap: 0;
-  margin-bottom: 8px;
-  background: var(--post-ios-fill);
-  border-radius: 8px;
-  padding: 3px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--post-ios-separator);
 }
 
 .canteen-rank-tab {
   flex: 1;
   text-align: center;
-  padding: 7px 0;
+  min-height: 44px;
+  padding: 0 4px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   border: none;
   background: transparent;
   color: var(--post-ios-secondary-label);
-  border-radius: 6px;
   cursor: pointer;
-  transition: all 180ms ease;
+  position: relative;
 }
 .canteen-rank-tab--active {
-  background: var(--post-ios-card);
   color: var(--post-ios-label);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  font-weight: 700;
+}
+.canteen-rank-tab--active::after {
+  content: '';
+  position: absolute;
+  right: 12px;
+  bottom: -1px;
+  left: 12px;
+  height: 2px;
+  background: var(--post-ios-accent);
+}
+.canteen-rank-tab:focus-visible,
+.canteen-rank-item:focus-visible {
+  outline: 2px solid var(--post-ios-accent);
+  outline-offset: -2px;
 }
 
 .canteen-rank-list {
@@ -382,12 +397,20 @@
 }
 
 .canteen-rank-item {
+  width: 100%;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 0;
+  min-height: 64px;
+  padding: 8px 0;
   border-bottom: 1px solid var(--post-ios-separator);
+  border-right: 0;
+  border-left: 0;
+  border-top: 0;
+  background: transparent;
   cursor: pointer;
+  font-family: inherit;
+  text-align: left;
   -webkit-tap-highlight-color: transparent;
 }
 .canteen-rank-item:last-child {
@@ -399,19 +422,17 @@
 
 .canteen-rank-badge {
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
   width: 22px;
   text-align: center;
   color: var(--post-ios-secondary-label);
+  font-variant-numeric: tabular-nums;
 }
-.canteen-rank-badge--1 { color: #f59e0b; }
-.canteen-rank-badge--2 { color: #94a3b8; }
-.canteen-rank-badge--3 { color: #b45309; }
 
 .canteen-rank-icon-wrap {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+  width: 44px;
+  height: 44px;
+  border-radius: 5px;
   overflow: hidden;
   background: var(--post-ios-fill);
   flex-shrink: 0;
@@ -432,7 +453,7 @@
 
 .canteen-rank-name {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--post-ios-label);
   white-space: nowrap;
   overflow: hidden;
