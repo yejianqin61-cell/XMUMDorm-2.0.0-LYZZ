@@ -481,8 +481,12 @@
 
 /* Task009-01: the app square starts as a feed, not a collection of panels. */
 .square-home-page--timeline {
+  --square-feed-border: #eff3f4;
+  --square-feed-text: #0f1419;
+  --square-feed-muted: #536471;
+  --square-feed-accent: #1d9bf0;
   background: #fff;
-  color: #0f1419;
+  color: var(--square-feed-text);
   overflow-y: auto;
   padding: 0 16px calc(var(--tabbar-height, 72px) + var(--safe-bottom, 0px) + 24px);
 }
@@ -570,6 +574,10 @@
   padding: 24px 16px;
   color: #536471;
   font-size: 14px;
+}
+
+.square-home-page--timeline .square-home-state {
+  border-radius: 0;
 }
 
 .square-feed-row {
@@ -678,6 +686,46 @@
   font-size: 13px;
   line-height: 1.2;
   font-weight: 650;
+}
+
+/* Task009-04: the retained carousel remains media, not a floating card. */
+.square-home-page--timeline .canteen-banner-wrap {
+  margin: 12px 0 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--square-feed-border);
+}
+
+.square-home-page--timeline .canteen-banner-card,
+.square-home-page--timeline .canteen-banner-skeleton {
+  border: 0;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.square-home-page--timeline .canteen-banner-nav,
+.square-home-page--timeline .canteen-banner-admin-link {
+  border-radius: 8px;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.square-home-page--timeline .canteen-banner-nav {
+  background: rgba(15, 20, 25, 0.72);
+}
+
+.square-home-page--timeline .canteen-banner-vignette-top,
+.square-home-page--timeline .canteen-banner-vignette-bottom {
+  display: none;
+}
+
+.square-home-page--timeline .canteen-banner-content {
+  padding: 10px 12px;
+  background: rgba(15, 20, 25, 0.72);
+}
+
+.square-home-page--timeline :focus-visible {
+  outline: 2px solid var(--square-feed-accent);
+  outline-offset: 2px;
 }
 
 .square-trending-topic-card {
