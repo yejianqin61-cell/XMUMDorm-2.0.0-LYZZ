@@ -572,8 +572,7 @@
   font-size: 14px;
 }
 
-.square-campus-preview-row,
-.square-trending-preview-row {
+.square-feed-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
@@ -583,18 +582,17 @@
   text-decoration: none;
 }
 
-.square-trending-preview-row {
+.square-feed-row--trending {
   grid-template-columns: 28px minmax(0, 1fr);
 }
 
-.square-trending-preview-row > span {
+.square-feed-row__rank {
   color: #536471;
   font-size: 14px;
   padding-top: 2px;
 }
 
-.square-campus-preview-row h2,
-.square-trending-preview-row h2 {
+.square-feed-row h2 {
   margin: 4px 0 0;
   font-size: 16px;
   line-height: 1.45;
@@ -617,7 +615,7 @@
   overflow: hidden;
 }
 
-.square-campus-preview-row img {
+.square-feed-row img {
   width: 76px;
   height: 76px;
   object-fit: cover;

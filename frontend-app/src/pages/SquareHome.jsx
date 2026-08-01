@@ -122,7 +122,7 @@ export default function SquareHome() {
             {items.map((item) => {
               const image = item.images?.[0]?.url ? getUploadUrl(item.images[0].url) : null;
               return (
-                <Link key={item.id} to={`/about/campus/${item.id}`} className="square-campus-preview-row">
+                  <Link key={item.id} to={`/about/campus/${item.id}`} className="square-feed-row square-feed-row--campus square-campus-preview-row">
                   <div>
                     <p className="square-content-meta">{item.organization?.name || (isEn ? 'Campus' : '校园')} · {formatPostTime(item.created_at, true)}</p>
                     <h2>{item.title}</h2>
@@ -136,8 +136,8 @@ export default function SquareHome() {
         ) : (
           <div className="square-trending-preview-list">
             {items.map((topic, index) => (
-              <Link key={topic.id} to={`/about/trending/${topic.id}`} className="square-trending-preview-row">
-                <span>{index + 1}</span>
+              <Link key={topic.id} to={`/about/trending/${topic.id}`} className="square-feed-row square-feed-row--trending square-trending-preview-row">
+                <span className="square-feed-row__rank">{index + 1}</span>
                 <div>
                   <h2>{topic.title}</h2>
                   <p className="square-content-meta">{topic.post_count || 0} {isEn ? 'discussions' : '条讨论'}</p>
