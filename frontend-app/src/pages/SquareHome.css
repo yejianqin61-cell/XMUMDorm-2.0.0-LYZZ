@@ -775,6 +775,58 @@
   outline-offset: 2px;
 }
 
+/* Keep the dedicated trending route on the same plain information rhythm. */
+.square-trending-list--page {
+  gap: 0;
+}
+
+.square-trending-topic-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 64px;
+  border-bottom: 1px solid #eff3f4;
+}
+
+.square-trending-topic-row__link {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 64px;
+  color: #0f1419;
+  text-decoration: none;
+}
+
+.square-trending-topic-row__rank {
+  width: 24px;
+  color: #536471;
+  font-size: 14px;
+  text-align: center;
+}
+
+.square-trending-topic-row__body {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.square-trending-topic-row__title {
+  overflow: hidden;
+  color: #0f1419;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.square-trending-topic-row .square-section-more {
+  min-width: 44px;
+  min-height: 44px;
+}
+
 .square-trending-topic-card {
   position: relative;
   display: grid;
