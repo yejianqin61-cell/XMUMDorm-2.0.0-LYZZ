@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Award, ChevronRight, Code2, FileText, Users } from 'lucide-react';
+import { Award, ChevronRight, Code2, FileText, HeartHandshake, Users } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 const listContainer = {
@@ -75,6 +75,13 @@ function AboutProfile() {
                 sub={isZh ? '经验、等级与徽章规则' : 'XP, levels & badges'}
                 icon={<Award className="h-5 w-5" />}
                 iconStyle={softIcon('rgba(16,185,129,0.14)', 'rgb(5,150,105)')}
+              />
+              <AboutRow
+                to="/about/thanks"
+                title={isZh ? '特别鸣谢' : 'Special Thanks'}
+                sub={isZh ? '感谢一路支持 Dorm 的朋友' : 'People who supported Dorm'}
+                icon={<HeartHandshake className="h-5 w-5" />}
+                iconStyle={softIcon('rgba(244,63,94,0.12)', 'rgb(225,29,72)')}
               />
             </div>
           </motion.section>
