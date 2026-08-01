@@ -4,7 +4,7 @@
   padding: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  background: var(--post-ios-bg-grouped, #f2f2f7);
+  background: var(--post-ios-bg, #fff);
 }
 
 .canteen-home-inner {
@@ -252,39 +252,69 @@
   50% { opacity: 0.5; }
 }
 
-/* ====== 区域宫格 ====== */
+/* ====== 食堂分区 ====== */
+.canteen-region-section {
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--post-ios-separator);
+}
+
 .canteen-region-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  display: flex;
   gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.canteen-region-grid::-webkit-scrollbar {
+  display: none;
 }
 
 .canteen-region-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 12px 4px 10px;
-  border-radius: var(--post-ios-radius-md);
-  background: var(--post-ios-card);
-  box-shadow: var(--post-ios-shadow-card);
+  flex: 1 0 56px;
+  min-width: 0;
+  gap: 5px;
+  min-height: 76px;
+  padding: 0;
   text-decoration: none;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 140ms ease;
-}
-.canteen-region-item:active {
-  transform: scale(0.94);
 }
 
 .canteen-region-skeleton {
-  height: 80px;
-  background: var(--post-ios-fill);
+  flex: 1 0 56px;
+  height: 76px;
+  position: relative;
   animation: canteen-shimmer 1.5s infinite;
 }
 
+.canteen-region-skeleton::before,
+.canteen-region-skeleton::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--post-ios-fill);
+}
+
+.canteen-region-skeleton::before {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+}
+
+.canteen-region-skeleton::after {
+  top: 60px;
+  width: 42px;
+  height: 10px;
+  border-radius: 2px;
+}
+
 .canteen-region-icon-wrap {
-  width: 44px;
-  height: 44px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   overflow: hidden;
   background: var(--post-ios-fill);
@@ -297,9 +327,24 @@
 }
 
 .canteen-region-name {
+  width: 100%;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
+  line-height: 16px;
   color: var(--post-ios-label);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.canteen-region-state {
+  margin: 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  color: var(--post-ios-secondary-label);
 }
 
 /* ====== 排行榜 ====== */

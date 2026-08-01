@@ -28,23 +28,34 @@ export default function CanteenRegionGrid() {
     staleTime: 10 * 60 * 1000,
   });
   const regions = data?.data || data || [];
+  const header = <h3 className="canteen-section-title">{t.regionSectionTitle}</h3>;
 
   if (isLoading) {
     return (
-      <div className="canteen-section">
-        <div className="canteen-region-grid">
+      <section className="canteen-section canteen-region-section" aria-busy="true">
+        {header}
+        <div className="canteen-region-grid" aria-label={t.regionSectionTitle}>
           {[1, 2, 3, 4, 5].map((i) => (
             <div key={i} className="canteen-region-item canteen-region-skeleton" />
           ))}
         </div>
-      </div>
+      </section>
     );
   }
-  if (isError || regions.length === 0) return null;
+  if (isError || regions.length === 0) {
+    return (
+      <section className="canteen-section canteen-region-section">
+        {header}
+        <p className="canteen-region-state" role={isError ? 'alert' : 'status'}>
+          {isError ? t.loadFailedShort : t.noData}
+        </p>
+      </section>
+    );
+  }
 
   return (
-    <div className="canteen-section">
-      <h3 className="canteen-section-title">{t.regionSectionTitle}</h3>
+    <section className="canteen-section canteen-region-section">
+      {header}
       <div className="canteen-region-grid">
         {regions.map((r) => (
           <Link
@@ -63,6 +74,6 @@ export default function CanteenRegionGrid() {
           </Link>
         ))}
       </div>
-    </div>
+    </section>
   );
 }
