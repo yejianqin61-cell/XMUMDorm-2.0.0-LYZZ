@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { BookOpenText, HandHelping, Heart, MessageCircle, MoreHorizontal, Plus, RefreshCw, Shapes, Store } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { BookOpenText, HandHelping, Heart, Megaphone, MessageCircle, MoreHorizontal, RefreshCw, Shapes, Store } from 'lucide-react';
 import { getCampusFeed, getSquareBanners, getTrendingTopics, likeCampusPost } from '@shared/api/square';
 import { getUploadUrl } from '@shared/api/config';
 import { formatPostTime } from '@shared/utils/formatTime';
@@ -15,6 +15,7 @@ import { QK } from '@shared/query/queryKeys';
 import './SquareHome.css';
 
 const TAB_STORAGE_KEY = 'square-home-tab';
+const FEED_TABS = ['school', 'college', 'trending'];
 
 const PRIMARY_ACTIONS = [
   { label: '社团广场', labelEn: 'Clubs', to: '/about/club', icon: <Shapes size={19} strokeWidth={2} /> },
@@ -25,9 +26,10 @@ const PRIMARY_ACTIONS = [
 
 function readStoredTab() {
   try {
-    return localStorage.getItem(TAB_STORAGE_KEY) === 'trending' ? 'trending' : 'campus';
+    const stored = localStorage.getItem(TAB_STORAGE_KEY);
+    return FEED_TABS.includes(stored) ? stored : 'school';
   } catch {
-    return 'campus';
+    return 'school';
   }
 }
 
@@ -42,6 +44,7 @@ function normalizeTopics(data) {
 
 export default function SquareHome() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { lang } = useLanguage();
   const { isLoggedIn } = useAuth();
   const isEn = lang === 'en';
@@ -50,9 +53,9 @@ export default function SquareHome() {
   const [campusLikeCounts, setCampusLikeCounts] = useState({});
 
   const campusQuery = useQuery({
-    queryKey: QK.campusFeed('school', 1),
-    queryFn: () => getCampusFeed({ tab: 'school', page: 1, pageSize: 8 }),
-    enabled: tab === 'campus',
+    queryKey: QK.campusFeed(tab, 1),
+    queryFn: () => getCampusFeed({ tab, page: 1, pageSize: 8 }),
+    enabled: tab !== 'trending',
     staleTime: 30 * 1000,
   });
   const trendingQuery = useQuery({
@@ -62,8 +65,8 @@ export default function SquareHome() {
     staleTime: 30 * 1000,
   });
 
-  const activeQuery = tab === 'campus' ? campusQuery : trendingQuery;
-  const items = tab === 'campus' ? normalizeFeed(campusQuery.data) : normalizeTopics(trendingQuery.data);
+  const activeQuery = tab === 'trending' ? trendingQuery : campusQuery;
+  const items = tab === 'trending' ? normalizeTopics(trendingQuery.data) : normalizeFeed(campusQuery.data);
 
   const selectTab = (nextTab) => {
     setTab(nextTab);
@@ -77,12 +80,25 @@ export default function SquareHome() {
   const handleTabKeyDown = (event) => {
     if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
     event.preventDefault();
-    const nextTab = tab === 'campus' ? 'trending' : 'campus';
+    const currentIndex = FEED_TABS.indexOf(tab);
+    const nextTab = FEED_TABS[(currentIndex + (event.key === 'ArrowRight' ? 1 : -1) + FEED_TABS.length) % FEED_TABS.length];
     selectTab(nextTab);
     document.getElementById(`square-tab-${nextTab}`)?.focus();
   };
 
-  const refresh = () => activeQuery.refetch();
+  const refresh = () => {
+    activeQuery.refetch();
+    queryClient.invalidateQueries({ queryKey: QK.squareBanners() });
+  };
+
+  const handleNoticePublish = () => {
+    const targetTab = tab === 'college' ? 'college' : 'school';
+    if (!isLoggedIn) {
+      navigate('/login', { state: { from: { pathname: `/about/campus/new?tab=${targetTab}` } } });
+      return;
+    }
+    navigate(`/about/campus/new?tab=${targetTab}`);
+  };
 
   const handleCampusLike = async (event, item) => {
     event.preventDefault();
@@ -110,18 +126,21 @@ export default function SquareHome() {
       <header className="square-timeline-header">
         <h1>{isEn ? 'Square' : '广场'}</h1>
         <div className="square-timeline-header__actions">
-          <button type="button" className="square-icon-button" onClick={refresh} aria-label={isEn ? 'Refresh feed' : '刷新内容'}>
+          <button type="button" className="square-icon-button" onClick={refresh} aria-label={isEn ? 'Refresh current feed' : '刷新当前信息流'} title={isEn ? 'Refresh current feed' : '刷新当前信息流'}>
             <RefreshCw size={19} aria-hidden="true" />
           </button>
-          <button type="button" className="square-icon-button" onClick={() => navigate('/post/new')} aria-label={isEn ? 'Create post' : '发布内容'}>
-            <Plus size={21} aria-hidden="true" />
+          <button type="button" className="square-icon-button" onClick={handleNoticePublish} aria-label={isEn ? 'Publish notice' : '发布通知'} title={isEn ? 'Publish notice' : '发布通知'}>
+            <Megaphone size={20} aria-hidden="true" />
           </button>
         </div>
       </header>
 
       <div className="square-timeline-tabs" role="tablist" aria-label={isEn ? 'Square feeds' : '广场内容'}>
-        <button id="square-tab-campus" type="button" role="tab" aria-selected={tab === 'campus'} aria-controls="square-tabpanel" tabIndex={tab === 'campus' ? 0 : -1} className={tab === 'campus' ? 'is-active' : ''} onClick={() => selectTab('campus')} onKeyDown={handleTabKeyDown}>
-          {isEn ? 'Campus' : '校园'}
+        <button id="square-tab-school" type="button" role="tab" aria-selected={tab === 'school'} aria-controls="square-tabpanel" tabIndex={tab === 'school' ? 0 : -1} className={tab === 'school' ? 'is-active' : ''} onClick={() => selectTab('school')} onKeyDown={handleTabKeyDown}>
+          {isEn ? 'School notices' : '学校通知'}
+        </button>
+        <button id="square-tab-college" type="button" role="tab" aria-selected={tab === 'college'} aria-controls="square-tabpanel" tabIndex={tab === 'college' ? 0 : -1} className={tab === 'college' ? 'is-active' : ''} onClick={() => selectTab('college')} onKeyDown={handleTabKeyDown}>
+          {isEn ? 'College notices' : '学院通知'}
         </button>
         <button id="square-tab-trending" type="button" role="tab" aria-selected={tab === 'trending'} aria-controls="square-tabpanel" tabIndex={tab === 'trending' ? 0 : -1} className={tab === 'trending' ? 'is-active' : ''} onClick={() => selectTab('trending')} onKeyDown={handleTabKeyDown}>
           {isEn ? 'Trending' : '热搜'}
@@ -150,7 +169,7 @@ export default function SquareHome() {
           <div className="square-home-state square-home-state--empty">
             {isEn ? 'Nothing here yet' : '暂无内容'}
           </div>
-        ) : tab === 'campus' ? (
+        ) : tab !== 'trending' ? (
           <div className="square-campus-preview-list">
             {items.map((item) => {
               const image = item.images?.[0]?.url ? getUploadUrl(item.images[0].url) : null;
