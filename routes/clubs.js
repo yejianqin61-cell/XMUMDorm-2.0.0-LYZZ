@@ -996,17 +996,22 @@ router.post('/:id/follow', authenticateToken, async (req, res, next) => {
 router.get('/me/clubs', authenticateToken, async (req, res, next) => {
   try {
     const userId = Number(req.user?.id);
+    const isSiteAdmin = req.user?.role === 'admin';
     const rows = await query(
-      `
-      SELECT c.*,
-        (SELECT COUNT(*) FROM club_follows f2 WHERE f2.club_id = c.id) AS followers
-      FROM club_members m
-      JOIN clubs c ON c.id = m.club_id
-      WHERE m.user_id = ?
-      ORDER BY (m.role='admin') DESC, m.created_at DESC, c.id DESC
-      LIMIT 200;
-      `,
-      [userId]
+      isSiteAdmin
+        ? `SELECT c.*, 'admin' AS member_role,
+                  (SELECT COUNT(*) FROM club_follows f2 WHERE f2.club_id = c.id) AS followers
+           FROM clubs c
+           ORDER BY c.id DESC
+           LIMIT 200`
+        : `SELECT c.*, m.role AS member_role,
+                  (SELECT COUNT(*) FROM club_follows f2 WHERE f2.club_id = c.id) AS followers
+           FROM club_members m
+           JOIN clubs c ON c.id = m.club_id
+           WHERE m.user_id = ?
+           ORDER BY (m.role='admin') DESC, m.created_at DESC, c.id DESC
+           LIMIT 200`,
+      isSiteAdmin ? [] : [userId]
     );
 
     res.json({
@@ -1018,6 +1023,7 @@ router.get('/me/clubs', authenticateToken, async (req, res, next) => {
           avatar: r.avatar ? assetUrl(r.avatar) : null,
           description: r.description || '',
           followers: Number(r.followers || 0),
+          role: r.member_role,
         })),
       },
     });

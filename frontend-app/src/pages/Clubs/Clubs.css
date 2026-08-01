@@ -376,6 +376,39 @@
   margin-bottom: 10px;
 }
 
+.club-publish-list {
+  display: grid;
+  gap: 1px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.club-publish-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 76px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.club-publish-row__identity,
+.club-publish-row__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.club-publish-row__identity {
+  min-width: 0;
+  font-weight: 700;
+}
+
+.club-publish-row__identity .club-my-avatar {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+}
+
 /* Admin forms */
 .club-admin-form {
   display: grid;

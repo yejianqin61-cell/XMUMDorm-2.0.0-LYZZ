@@ -38,6 +38,7 @@ const ClubMembersPage = lazy(() => import('../pages/Clubs/ClubMembersPage'));
 const ActivityDetail = lazy(() => import('../pages/Clubs/ActivityDetail'));
 const ClubPostDetail = lazy(() => import('../pages/Clubs/ClubPostDetail'));
 const PublishClubPost = lazy(() => import('../pages/Clubs/PublishClubPost'));
+const ClubPublish = lazy(() => import('../pages/Clubs/ClubPublish'));
 const ClubListPage = lazy(() => import('../pages/Clubs/ClubListPage'));
 const MyClubs = lazy(() => import('../pages/Clubs/MyClubs'));
 const PublishActivity = lazy(() => import('../pages/Clubs/PublishActivity'));
@@ -110,6 +111,7 @@ export const layoutRoutes = (
     <Route path="about/club" element={renderLazyRoute(SquareClub)} />
     <Route path="about/club/list" element={renderLazyRoute(ClubListPage)} />
     <Route path="about/club/my" element={renderLazyRoute(MyClubs)} />
+    <Route path="about/club/publish" element={renderLazyRoute(ClubPublish)} />
     <Route path="about/club/new" element={renderLazyRoute(CreateClub)} />
     <Route path="about/club/:id/members" element={renderLazyRoute(ClubMembersPage)} />
     <Route path="about/club/:id" element={renderLazyRoute(ClubProfile)} />
