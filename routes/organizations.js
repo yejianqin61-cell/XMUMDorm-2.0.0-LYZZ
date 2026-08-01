@@ -245,7 +245,8 @@ router.get('/users/search', authenticateToken, async (req, res) => {
 });
 
 // ---------- 获取组织成员列表 ----------
-router.get('/:id/members', async (req, res) => {
+router.get('/:id/members', authenticateToken, async (req, res) => {
+  if (!isAdmin(req)) return res.status(403).json({ status: -1, message: '仅管理员可查看成员列表' });
   try {
     const orgId = parseInt(req.params.id, 10);
     const rows = await query(
