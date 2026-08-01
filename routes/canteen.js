@@ -229,15 +229,6 @@ async function isShopOwner(shopId, userId) {
   return rows && rows.length > 0;
 }
 
-/** 校验当前用户是否为某分类所属店铺的店主 */
-async function isCategoryOwner(categoryId, userId) {
-  const rows = await query(
-    'SELECT s.id FROM product_categories c JOIN shops s ON c.shop_id = s.id WHERE c.id = ? AND s.user_id = ? AND s.deleted_at IS NULL AND c.deleted_at IS NULL',
-    [categoryId, userId]
-  );
-  return rows && rows.length > 0;
-}
-
 /** 校验当前用户是否为某商品所属店铺的店主 */
 async function isProductOwner(productId, userId) {
   const rows = await query(
@@ -268,18 +259,10 @@ router.get('/regions', async (req, res) => {
 // ============================================
 router.post('/shops', authenticateToken, async (req, res) => {
   try {
-    if (req.user.role !== 'merchant' && req.user.role !== 'admin') {
-      return res.status(403).json({ status: -1, message: '仅商家可创建店铺' });
-    }
     const name = (req.body.name || '').trim();
     const regionId = parseInt(req.body.region_id, 10);
     if (!name) return res.status(400).json({ status: -1, message: '店铺名称不能为空' });
     if (!regionId) return res.status(400).json({ status: -1, message: '请选择区域' });
-
-    const exist = await query('SELECT id FROM shops WHERE user_id = ? AND deleted_at IS NULL', [req.user.id]);
-    if (exist && exist.length > 0) {
-      return res.status(400).json({ status: -1, message: '您已创建过店铺，一个商家只能有一个店铺' });
-    }
 
     const region = await query('SELECT id FROM regions WHERE id = ?', [regionId]);
     if (!region || region.length === 0) {
@@ -739,13 +722,12 @@ router.patch('/shops/:shopId', authenticateToken, (req, res, next) => {
   try {
     const shopId = parseInt(req.params.shopId, 10);
     if (!shopId) return res.status(400).json({ status: -1, message: '店铺 ID 无效' });
-    const owner = await isShopOwner(shopId, req.user.id);
-    if (!owner) {
-      return res.status(403).json({ status: -1, message: '仅店主可修改店铺信息' });
-    }
     const name = (req.body && req.body.name !== undefined) ? String(req.body.name).trim() : '';
     const opening_hours = (req.body && req.body.opening_hours !== undefined) ? String(req.body.opening_hours).trim() || null : undefined;
     if (!name) return res.status(400).json({ status: -1, message: '店铺名称不能为空' });
+
+    const shopRows = await query('SELECT id FROM shops WHERE id = ? AND deleted_at IS NULL', [shopId]);
+    if (!shopRows || shopRows.length === 0) return res.status(404).json({ status: -1, message: '店铺不存在或已删除' });
 
     const updates = ['name = ?', 'updated_at = CURRENT_TIMESTAMP'];
     const params = [name];
@@ -801,11 +783,9 @@ router.delete('/shops/:shopId', authenticateToken, async (req, res) => {
   try {
     const shopId = parseInt(req.params.shopId, 10);
     if (!shopId) return res.status(400).json({ status: -1, message: '店铺 ID 无效' });
-    const owner = await isShopOwner(shopId, req.user.id);
-    const admin = isAdmin(req);
-    if (!owner && !admin) {
-      return res.status(403).json({ status: -1, message: '仅店主或管理员可删除店铺' });
-    }
+    if (!isAdmin(req)) return res.status(403).json({ status: -1, message: '仅管理员可删除店铺' });
+    const shopRows = await query('SELECT id FROM shops WHERE id = ? AND deleted_at IS NULL', [shopId]);
+    if (!shopRows || shopRows.length === 0) return res.status(404).json({ status: -1, message: '店铺不存在或已删除' });
     await query('UPDATE shops SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [shopId]);
     res.status(200).json({ status: 0, message: '已删除（逻辑删除）' });
   } catch (e) {
@@ -821,8 +801,8 @@ router.post('/shops/:shopId/categories', authenticateToken, async (req, res) => 
   try {
     const shopId = parseInt(req.params.shopId, 10);
     if (!shopId) return res.status(400).json({ status: -1, message: '店铺 ID 无效' });
-    const owner = await isShopOwner(shopId, req.user.id);
-    if (!owner) return res.status(403).json({ status: -1, message: '仅店主可创建分类' });
+    const shopRows = await query('SELECT id FROM shops WHERE id = ? AND deleted_at IS NULL', [shopId]);
+    if (!shopRows || shopRows.length === 0) return res.status(404).json({ status: -1, message: '店铺不存在或已删除' });
     const name = (req.body.name || '').trim();
     if (!name) return res.status(400).json({ status: -1, message: '分类名称不能为空' });
     const sortOrder = parseInt(req.body.sort_order, 10);
@@ -856,8 +836,6 @@ router.patch('/categories/:categoryId', authenticateToken, async (req, res) => {
   try {
     const categoryId = parseInt(req.params.categoryId, 10);
     if (!categoryId) return res.status(400).json({ status: -1, message: '分类 ID 无效' });
-    const owner = await isCategoryOwner(categoryId, req.user.id);
-    if (!owner) return res.status(403).json({ status: -1, message: '仅店主可编辑分类' });
     const name = (req.body.name || '').trim();
     if (!name) return res.status(400).json({ status: -1, message: '分类名称不能为空' });
     const sortOrder = parseInt(req.body.sort_order, 10);
@@ -881,8 +859,8 @@ router.delete('/categories/:categoryId', authenticateToken, async (req, res) => 
   try {
     const categoryId = parseInt(req.params.categoryId, 10);
     if (!categoryId) return res.status(400).json({ status: -1, message: '分类 ID 无效' });
-    const owner = await isCategoryOwner(categoryId, req.user.id);
-    if (!owner) return res.status(403).json({ status: -1, message: '仅店主可删除分类' });
+    const categoryRows = await query('SELECT id FROM product_categories WHERE id = ? AND deleted_at IS NULL', [categoryId]);
+    if (!categoryRows || categoryRows.length === 0) return res.status(404).json({ status: -1, message: '分类不存在或已删除' });
     await query('UPDATE products SET category_id = NULL WHERE category_id = ?', [categoryId]);
     await query('UPDATE product_categories SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?', [categoryId]);
     res.status(200).json({ status: 0, message: '已删除（逻辑删除），其下商品已设为未分类' });
@@ -921,8 +899,6 @@ router.post('/products', authenticateToken, sensitiveWordFilter, (req, res, next
       return res.status(400).json({ status: -1, message: '分类不存在或已删除' });
     }
     const shopId = catRows[0].shop_id;
-    const owner = await isShopOwner(shopId, req.user.id);
-    if (!owner) return res.status(403).json({ status: -1, message: '仅可在自己店铺下创建商品' });
 
     const priceInput = req.body.price;
     const priceNum = priceInput !== undefined && priceInput !== null && priceInput !== '' ? parseFloat(priceInput) : null;
@@ -1277,8 +1253,9 @@ router.patch('/products/:productId', authenticateToken, (req, res, next) => {
   try {
     const productId = parseInt(req.params.productId, 10);
     if (!productId) return res.status(400).json({ status: -1, message: '商品 ID 无效' });
-    const owner = await isProductOwner(productId, req.user.id);
-    if (!owner) return res.status(403).json({ status: -1, message: '仅店主可编辑商品' });
+    const productRows = await query('SELECT id, shop_id FROM products WHERE id = ? AND deleted_at IS NULL', [productId]);
+    if (!productRows || productRows.length === 0) return res.status(404).json({ status: -1, message: '商品不存在或已删除' });
+    const productShopId = productRows[0].shop_id;
 
     const name = (req.body.name || '').trim();
     const description = (req.body.description || '').trim();
@@ -1297,8 +1274,7 @@ router.patch('/products/:productId', authenticateToken, (req, res, next) => {
     if (rawCategoryId !== undefined) {
       if (categoryId != null && !isNaN(categoryId) && categoryId > 0) {
         const cat = await query('SELECT id, shop_id FROM product_categories WHERE id = ? AND deleted_at IS NULL', [categoryId]);
-        const prod = await query('SELECT shop_id FROM products WHERE id = ?', [productId]);
-        if (cat && cat.length > 0 && prod && prod[0].shop_id === cat[0].shop_id) {
+        if (cat && cat.length > 0 && productShopId === cat[0].shop_id) {
           updates.push('category_id = ?');
           params.push(categoryId);
         }
@@ -1346,9 +1322,9 @@ router.delete('/products/:productId', authenticateToken, async (req, res) => {
   try {
     const productId = parseInt(req.params.productId, 10);
     if (!productId) return res.status(400).json({ status: -1, message: '商品 ID 无效' });
-    const owner = await isProductOwner(productId, req.user.id);
-    const admin = isAdmin(req);
-    if (!owner && !admin) return res.status(403).json({ status: -1, message: '仅店主或管理员可删除商品' });
+    if (!isAdmin(req)) return res.status(403).json({ status: -1, message: '仅管理员可删除商品' });
+    const productRows = await query('SELECT id FROM products WHERE id = ? AND deleted_at IS NULL', [productId]);
+    if (!productRows || productRows.length === 0) return res.status(404).json({ status: -1, message: '商品不存在或已删除' });
     await query('UPDATE products SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [productId]);
     const ip = req.ip || req.headers['x-forwarded-for'] || req.connection?.remoteAddress || null;
     const ua = req.headers['user-agent'] || null;
@@ -1361,7 +1337,7 @@ router.delete('/products/:productId', authenticateToken, async (req, res) => {
     logAudit({
       userId: req.user.id,
       role: req.user.role,
-      action: admin ? 'ADMIN_PRODUCT_DELETE' : 'PRODUCT_DELETE',
+      action: 'ADMIN_PRODUCT_DELETE',
       targetType: 'product',
       targetId: productId,
       ip,
