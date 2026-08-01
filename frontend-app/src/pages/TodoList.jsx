@@ -31,6 +31,16 @@ function getTodoSortValue(todo) {
   return new Date(`${dueDate}T${dueTime || '23:59'}:00`).getTime();
 }
 
+function toggleTodoInCache(data, id) {
+  const toggleList = (list) => list.map((todo) => (
+    todo.id === id ? { ...todo, is_completed: !todo.is_completed } : todo
+  ));
+  if (Array.isArray(data?.data?.list)) return { ...data, data: { ...data.data, list: toggleList(data.data.list) } };
+  if (Array.isArray(data?.list)) return { ...data, list: toggleList(data.list) };
+  if (Array.isArray(data?.data)) return { ...data, data: toggleList(data.data) };
+  return data;
+}
+
 export default function TodoList() {
   const { isLoggedIn } = useAuth();
   const { lang } = useLanguage();
@@ -87,7 +97,16 @@ export default function TodoList() {
 
   const toggleMutation = useMutation({
     mutationFn: toggleTodo,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['todos'] }),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['todos', 'list'] });
+      const previous = queryClient.getQueriesData({ queryKey: ['todos', 'list'] });
+      queryClient.setQueriesData({ queryKey: ['todos', 'list'] }, (cached) => toggleTodoInCache(cached, id));
+      return { previous };
+    },
+    onError: (_error, _id, context) => {
+      context?.previous.forEach(([queryKey, cached]) => queryClient.setQueryData(queryKey, cached));
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['todos'] }),
   });
 
   const deleteMutation = useMutation({
