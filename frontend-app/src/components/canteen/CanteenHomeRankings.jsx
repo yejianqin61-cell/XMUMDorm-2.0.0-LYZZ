@@ -15,7 +15,7 @@ export default function CanteenHomeRankings() {
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
   const t = getCanteenStrings(isZh);
-  const TABS = useMemo(
+  const tabs = useMemo(
     () => [
       { key: 'products', label: t.tabProducts },
       { key: 'shops', label: t.tabShops },
@@ -34,33 +34,29 @@ export default function CanteenHomeRankings() {
     ],
   });
 
-  const query = results[tab];
-  const items = query.data?.data || query.data || [];
-  const isLoading = query.isLoading;
-  const isError = query.isError;
+  const renderItem = (item, index, rankingTab) => {
+    const score = Number(item.comprehensive_score);
+    const hasScore = Number.isFinite(score);
 
-  const renderItem = (item, i) => {
-    if (tab === 1) {
+    if (rankingTab === 1) {
       return (
-        <button key={item.shop_id || i} type="button" className="canteen-rank-item" onClick={() => navigate(`/eat/merchant/${item.shop_id}`)}>
-          <span className="canteen-rank-badge">{i + 1}</span>
+        <button key={item.shop_id || index} type="button" className="canteen-rank-item" onClick={() => navigate(`/eat/merchant/${item.shop_id}`)}>
+          <span className="canteen-rank-badge">{index + 1}</span>
           <div className="canteen-rank-icon-wrap">
-            <img src={item.logo_url ? productImageUrl(item.logo_url) : '/shops/default.jpg'} alt={item.shop_name} className="canteen-rank-thumb" />
+            <img src="/shops/default.jpg" alt={item.shop_name} className="canteen-rank-thumb" />
           </div>
           <div className="canteen-rank-body">
             <span className="canteen-rank-name">{item.shop_name}</span>
-            {item.comprehensive_score != null && (
-              <span className="canteen-rank-meta">
-                {t.rankScore} {Number(item.comprehensive_score).toFixed(1)}
-              </span>
-            )}
+            {item.region_name && <span className="canteen-rank-meta">{item.region_name}</span>}
+            {hasScore && <span className="canteen-rank-meta">{t.rankScore} {score.toFixed(1)}</span>}
           </div>
         </button>
       );
     }
+
     return (
-      <button key={item.product_id || item.product_name || i} type="button" className="canteen-rank-item" onClick={() => navigate(`/eat/food/${item.product_id}`)}>
-        <span className="canteen-rank-badge">{i + 1}</span>
+      <button key={item.product_id || item.product_name || index} type="button" className="canteen-rank-item" onClick={() => navigate(`/eat/food/${item.product_id}`)}>
+        <span className="canteen-rank-badge">{index + 1}</span>
         <div className="canteen-rank-icon-wrap">
           <img src={productImageUrl(item.cover_url || item.image_url)} alt={item.product_name || item.name} className="canteen-rank-thumb" />
         </div>
@@ -68,30 +64,51 @@ export default function CanteenHomeRankings() {
           <span className="canteen-rank-name">{item.product_name || item.name}</span>
           <span className="canteen-rank-meta">
             {item.shop_name || item.region_code || ''}
-            {item.comprehensive_score != null
-              ? ` · ${Number(item.comprehensive_score).toFixed(1)}${t.rankPoints}`
-              : ''}
+            {hasScore ? ` · ${score.toFixed(1)}${t.rankPoints}` : ''}
           </span>
         </div>
       </button>
     );
   };
 
-  const selectTab = (nextTab) => {
-    setTab(nextTab);
-  };
-
   const handleTabKeyDown = (event, index) => {
     let nextTab = index;
-    if (event.key === 'ArrowRight') nextTab = (index + 1) % TABS.length;
-    else if (event.key === 'ArrowLeft') nextTab = (index - 1 + TABS.length) % TABS.length;
+    if (event.key === 'ArrowRight') nextTab = (index + 1) % tabs.length;
+    else if (event.key === 'ArrowLeft') nextTab = (index - 1 + tabs.length) % tabs.length;
     else if (event.key === 'Home') nextTab = 0;
-    else if (event.key === 'End') nextTab = TABS.length - 1;
+    else if (event.key === 'End') nextTab = tabs.length - 1;
     else return;
 
     event.preventDefault();
-    selectTab(nextTab);
+    setTab(nextTab);
     tabRefs.current[nextTab]?.focus();
+  };
+
+  const renderPanel = (rankingTab) => {
+    const query = results[rankingTab];
+    const items = query.data?.data || query.data || [];
+    const tabItem = tabs[rankingTab];
+
+    return (
+      <div
+        key={tabItem.key}
+        id={`${tabId}-${tabItem.key}-panel`}
+        className="canteen-rank-list"
+        role="tabpanel"
+        aria-labelledby={`${tabId}-${tabItem.key}-tab`}
+        hidden={tab !== rankingTab}
+      >
+        {query.isLoading ? (
+          <div className="state-loading" style={{ paddingTop: 60 }} />
+        ) : query.isError ? (
+          <div className="state-error">{t.loadFailed}</div>
+        ) : items.length === 0 ? (
+          <div className="state-empty">{t.noData}</div>
+        ) : (
+          items.slice(0, 5).map((item, index) => renderItem(item, index, rankingTab))
+        )}
+      </div>
+    );
   };
 
   return (
@@ -103,40 +120,25 @@ export default function CanteenHomeRankings() {
         </button>
       </div>
       <div className="canteen-rank-tabs" role="tablist" aria-label={t.rankingsTitle}>
-        {TABS.map((tabItem, i) => (
+        {tabs.map((tabItem, index) => (
           <button
             key={tabItem.key}
             type="button"
             id={`${tabId}-${tabItem.key}-tab`}
-            ref={(node) => { tabRefs.current[i] = node; }}
+            ref={(node) => { tabRefs.current[index] = node; }}
             role="tab"
-            aria-selected={tab === i}
+            aria-selected={tab === index}
             aria-controls={`${tabId}-${tabItem.key}-panel`}
-            tabIndex={tab === i ? 0 : -1}
-            className={`canteen-rank-tab${tab === i ? ' canteen-rank-tab--active' : ''}`}
-            onClick={() => selectTab(i)}
-            onKeyDown={(event) => handleTabKeyDown(event, i)}
+            tabIndex={tab === index ? 0 : -1}
+            className={`canteen-rank-tab${tab === index ? ' canteen-rank-tab--active' : ''}`}
+            onClick={() => setTab(index)}
+            onKeyDown={(event) => handleTabKeyDown(event, index)}
           >
             {tabItem.label}
           </button>
         ))}
       </div>
-      <div
-        id={`${tabId}-${TABS[tab].key}-panel`}
-        className="canteen-rank-list"
-        role="tabpanel"
-        aria-labelledby={`${tabId}-${TABS[tab].key}-tab`}
-      >
-        {isLoading ? (
-          <div className="state-loading" style={{ paddingTop: 60 }} />
-        ) : isError ? (
-          <div className="state-error">{t.loadFailed}</div>
-        ) : items.length === 0 ? (
-          <div className="state-empty">{t.noData}</div>
-        ) : (
-          items.slice(0, 5).map(renderItem)
-        )}
-      </div>
+      {tabs.map((_, index) => renderPanel(index))}
     </section>
   );
 }

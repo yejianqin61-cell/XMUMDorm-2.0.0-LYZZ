@@ -66,7 +66,7 @@ export default function CanteenRegionGrid() {
             <div className="canteen-region-icon-wrap">
               <img
                 src={REGION_ICONS[r.code] || '/OTHERS.png'}
-                alt={regionLabel(r, t)}
+                alt=""
                 className="canteen-region-icon"
               />
             </div>

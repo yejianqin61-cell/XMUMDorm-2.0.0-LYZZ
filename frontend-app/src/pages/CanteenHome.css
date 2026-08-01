@@ -274,7 +274,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  flex: 1 0 56px;
+  flex: 0 0 auto;
   min-width: 0;
   gap: 5px;
   min-height: 76px;
@@ -327,15 +327,14 @@
 }
 
 .canteen-region-name {
-  width: 100%;
+  width: max-content;
+  max-width: none;
   font-size: 12px;
   font-weight: 500;
   line-height: 16px;
   color: var(--post-ios-label);
   text-align: center;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .canteen-region-state {
