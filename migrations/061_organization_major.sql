@@ -1,5 +1,4 @@
 -- Add Major as an organization type. Major notices are shown in the college feed.
-USE jack_campus;
 
 ALTER TABLE organizations
   MODIFY COLUMN type ENUM('SchoolDepartment', 'College', 'Major', 'Official') NOT NULL
