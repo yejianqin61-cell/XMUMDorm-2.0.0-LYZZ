@@ -1,7 +1,7 @@
 /**
  * 用户 API，与后端 /api/users 对应
  */
-import { get, patch, request } from './request';
+import { del, get, patch } from './request';
 
 export function getMe() {
   return get('/api/users/me');
@@ -34,4 +34,9 @@ export function updateAvatar(file) {
   const form = new FormData();
   form.append('avatar', file);
   return patch('/api/users/me/avatar', form);
+}
+
+/** 停用当前账号；账号数据按隐私政策的说明处理。 */
+export function deactivateMyAccount() {
+  return del('/api/users/me');
 }

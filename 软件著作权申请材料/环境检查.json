@@ -1,0 +1,23 @@
+{
+  "output_directory": "当前目录/软件著作权申请资料",
+  "capabilities": {
+    "markdown_drafts": true,
+    "application_txt": true,
+    "basic_docx": true,
+    "python_docx": true,
+    "pandoc_preview": false,
+    "docx_openxml_full": false,
+    "dotnet_sdk": true
+  },
+  "versions": {
+    "pandoc": "not found",
+    "dotnet": "8.0.423"
+  },
+  "final_docx_mode": "python-docx",
+  "recommendation": "完整 DOCX OpenXML 环境未就绪。可以继续使用兜底 DOCX 生成；如需更规范的 Word 结构和校验，请先安装 .NET SDK 并运行 vendor/docx-toolkit/scripts/setup.sh。",
+  "install_prompt": "是否安装完整 DOCX 环境？安装后文档生成和校验更规范；不安装也可以继续生成 Markdown、TXT 和基础 DOCX。",
+  "requires_user_input": true,
+  "confirmation_stage": "environment",
+  "next_action": "请选择：1) 安装完整 DOCX 环境；2) 使用基础 DOCX 兜底继续。回复选择后再进入项目分析。",
+  "docx_env_output": "w\u0000s\u0000l\u0000:\u0000 \u0000ÀhKm0R \u0000l\u0000o\u0000c\u0000a\u0000l\u0000h\u0000o\u0000s\u0000t\u0000 \u0000ãN\u0006tM‘n\fÿFO*g\\•ÏP0R \u0000W\u0000S\u0000L\u0000\u00020N\u0000A\u0000T\u0000 \u0000!j\u000f_\u000bN„v \u0000W\u0000S\u0000L\u0000 \u0000\nN/e\u0001c \u0000l\u0000o\u0000c\u0000a\u0000l\u0000h\u0000o\u0000s\u0000t\u0000 \u0000ãN\u0006t\u00020\n\u0000\n\u0000<3>WSL (11 - Relay) ERROR: CreateProcessCommon:818: execvpe(/bin/bash) failed: No such file or directory"
+}

@@ -23,7 +23,7 @@ React 把 App（以及 App 里的路由、Layout、页面）画进 div#root
 用户看到的是你的整站界面（登录页 / 树洞 / 发帖等）
 */
 
-// --- Capacitor Safe Area + JPush (minimal, defensive, cannot crash) ---
+// --- Capacitor Safe Area (minimal, defensive, cannot crash) ---
 setTimeout(function () {
   try {
     var C = window.Capacitor;
@@ -41,27 +41,5 @@ setTimeout(function () {
         }
       }).catch(function () {});
     }
-
-    // JPush (replaces FCM for all-platform push)
-    try {
-      var jp = window.plugins && window.plugins.jPushPlugin;
-      if (jp) {
-        jp.init();
-        jp.getRegistrationID(function (rid) {
-          console.log('[jpush] regId:', rid);
-          // POST rid → /api/push/register
-          fetch((window.__API_BASE_URL__ || '') + '/api/push/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token: rid, platform: C.getPlatform(), provider: 'jpush' }),
-          }).catch(function () {});
-        });
-        // Notification tapped → navigate
-        window.addEventListener('jpush.openNotification', function (e) {
-          var url = (e.detail && e.detail.extras && e.detail.extras.url);
-          if (url) window.location.href = url;
-        });
-      }
-    } catch (_) {}
   } catch (_) {}
 }, 500);

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Dorm</string>
-    <string name="title_activity_main">Dorm</string>
-    <string name="package_name">com.dorm.app</string>
-    <string name="custom_url_scheme">com.dorm.app</string>
+    <string name="app_name">厦马小筑</string>
+    <string name="title_activity_main">厦马小筑</string>
+    <string name="package_name">com.yejianqin.xmum.dorm</string>
+    <string name="custom_url_scheme">com.yejianqin.xmum.dorm</string>
 </resources>

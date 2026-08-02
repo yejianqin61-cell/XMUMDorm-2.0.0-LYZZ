@@ -16,12 +16,13 @@ import {
   ShieldAlert,
   Star,
   Store,
+  UserX,
   UtensilsCrossed,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { getProfile } from '@shared/api/users';
+import { deactivateMyAccount, getProfile } from '@shared/api/users';
 import { getMyFavorites, getMyProductReviews } from '@shared/api/canteen';
 import { getScheduleWeek } from '@shared/api/schedule';
 import { getTodos } from '@shared/api/todos';
@@ -59,6 +60,7 @@ function MyZoneStrings(isZh) {
     editProfile: isZh ? '编辑资料' : 'Edit profile',
     logOut: isZh ? '退出登录' : 'Log out',
     logIn: isZh ? '登录' : 'Log in',
+    deactivate: isZh ? '注销账号' : 'Deactivate account',
   };
 }
 
@@ -108,6 +110,7 @@ function MyZone() {
   const isZh = lang !== 'en';
   const t = MyZoneStrings(isZh);
   const [languageOpen, setLanguageOpen] = useState(false);
+  const [deactivating, setDeactivating] = useState(false);
 
   const { isLoggedIn, isMerchant, isAdmin, displayName, displayAvatar, user, userLoading, logout } = useAuth();
   const userId = user?.id ? Number(user.id) : 0;
@@ -124,6 +127,27 @@ function MyZone() {
   const handleLogout = () => {
     logout();
     navigate('/', { replace: true });
+  };
+  const handleDeactivate = async () => {
+    const firstConfirm = window.confirm(isZh
+      ? '注销后将立即退出登录，且无法再次登录此账号。是否继续？'
+      : 'You will be signed out immediately and cannot sign in to this account again. Continue?');
+    if (!firstConfirm) return;
+    const finalConfirm = window.confirm(isZh
+      ? '请再次确认：确定注销账号吗？'
+      : 'Please confirm again: deactivate this account?');
+    if (!finalConfirm) return;
+
+    setDeactivating(true);
+    try {
+      await deactivateMyAccount();
+      logout();
+      navigate('/', { replace: true });
+    } catch (error) {
+      window.alert(error?.message || (isZh ? '注销失败，请稍后重试' : 'Could not deactivate the account. Please try again later.'));
+    } finally {
+      setDeactivating(false);
+    }
   };
 
   const scheduleTodayQuery = useQuery({
@@ -356,6 +380,24 @@ function MyZone() {
                   </div>
                 ) : null}
               </motion.div>
+              {isLoggedIn ? (
+                <motion.div whileTap={{ scale: 0.97 }} whileHover={{ scale: 1.01 }}>
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-between px-2 py-3 text-left disabled:opacity-50"
+                    onClick={handleDeactivate}
+                    disabled={deactivating}
+                  >
+                    <span className="flex items-center gap-3">
+                      <span className="grid h-9 w-9 place-items-center rounded-2xl" style={softIcon('rgba(239,68,68,0.10)', 'rgb(220,38,38)')}>
+                        <UserX className="h-5 w-5" />
+                      </span>
+                      <span className="text-[13px] font-semibold text-red-600">{t.deactivate}</span>
+                    </span>
+                    <ChevronRight className="h-4 w-4 text-slate-400" />
+                  </button>
+                </motion.div>
+              ) : null}
             </div>
           </motion.section>
 

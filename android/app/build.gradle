@@ -8,7 +8,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.dorm.app"
+    namespace = "com.yejianqin.xmum.dorm"
     compileSdk = rootProject.ext.compileSdkVersion
 
     signingConfigs {
@@ -23,7 +23,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.dorm.app"
+        applicationId "com.yejianqin.xmum.dorm"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
@@ -72,5 +72,5 @@ try {
         apply plugin: 'com.google.gms.google-services'
     }
 } catch(Exception e) {
-    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+    logger.info("google-services.json not found, google-services plugin not applied")
 }

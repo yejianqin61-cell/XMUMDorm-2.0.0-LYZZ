@@ -1,0 +1,199 @@
+{
+  "software_name": "厦马小筑",
+  "product_positioning": "面向厦门大学马来西亚分校学生的校园生活与社区服务平台，提供移动端和网页端入口。",
+  "industry": "教育信息化与校园生活服务",
+  "target_users": [
+    "厦门大学马来西亚分校在校学生",
+    "校内社团、学院和学校组织的内容负责人",
+    "平台内容与用户管理员"
+  ],
+  "core_value": "将校内讨论、校园通知、食堂信息、社团活动、二手交易、跑腿和个人日程集中在同一校园账号下，减少学生在多个群组和渠道之间查找信息的成本。",
+  "business_features": [
+    "校园账号与个人资料",
+    "匿名社区与内容互动",
+    "校园广场与组织通知",
+    "食堂信息共建与评价",
+    "社团活动与成员协作",
+    "二手交易与跑腿服务",
+    "课程日程、待办与日记",
+    "站内通知、举报与后台治理"
+  ],
+  "business_feature_details": {
+    "校园账号与个人资料": "学生可注册、登录并维护昵称、头像和语言偏好；不同身份在同一账号体系下获得对应的发布或管理入口。",
+    "匿名社区与内容互动": "用户可浏览树洞信息流，按话题查看内容，发布匿名帖子、图片和评论，并对帖子进行点赞、收藏、举报或删除自己的内容。",
+    "校园广场与组织通知": "广场汇集校园今日、热搜、社团、二手和跑腿入口；学校组织、学院和社团负责人可在权限范围内发布通知或活动内容。",
+    "食堂信息共建与评价": "用户按食堂分区浏览商铺、菜品和排行，可新增商铺、菜品及分类信息并提交菜品评价；删除商铺、菜品和分类由管理员处理。",
+    "社团活动与成员协作": "学生可浏览社团、加入社团、阅读社团日常帖子和活动通知，并报名参与活动；社团负责人可维护社团内容和成员事项。",
+    "二手交易与跑腿服务": "用户可发布和筛选闲置商品、维护出售状态并联系交易对象，也可发布、承接和查看跑腿任务状态。",
+    "课程日程、待办与日记": "用户可以维护课程表、个人待办和日记，在个人空间查看自己的记录和内容；待办完成状态可即时更新。",
+    "站内通知、举报与后台治理": "系统为互动、活动和组织事务生成站内通知；用户可举报不当内容，管理员可处理举报、敏感词、用户状态、内容和审计记录。"
+  },
+  "operation_flow": [
+    "学生注册或登录校园账号，并按需要设置昵称、头像和语言。",
+    "学生从底部导航进入树洞、食堂、广场、社团或个人空间，浏览与自己相关的内容。",
+    "学生在对应模块完成发帖、评价、报名、交易发布、任务发布或个人记录维护。",
+    "系统将评论、活动报名、组织通知等结果写入站内信箱，用户可查看和处理未读通知。",
+    "发现违规内容时，用户提交举报；管理员在后台审核内容和用户状态并记录处理结果。"
+  ],
+  "application_purpose": "为厦门大学马来西亚分校学生提供统一的校园信息交流、生活服务和个人事务管理入口。",
+  "main_functions": "软件提供校园账号注册登录和个人资料维护，并以树洞、广场和社团模块承载校内内容浏览、匿名发帖、评论互动、组织通知和活动报名。食堂模块支持按分区查询商铺和菜品、浏览排行、维护菜品信息及发表评价；二手市场和跑腿模块支持发布、筛选、状态维护和事务跟进。课程表、待办和日记帮助用户记录个人日程。站内信箱集中展示互动和事务提醒，举报及管理员后台用于处理不当内容、敏感词、用户状态和审计记录。软件支持中文和英文显示，可通过网页端与 Android 移动端访问。",
+  "technical_characteristics": "采用 React 前端、Node.js 服务端和 MySQL 数据库组织校园业务数据；移动端使用 Capacitor 封装 Android 客户端，采用令牌认证、对象存储图片上传、站内通知与基于角色的管理权限控制。",
+  "software_technical_option": "APP/教育软件",
+  "software_category": "应用软件",
+  "manual_sections": [
+    {
+      "title": "相关文档",
+      "intent": "列出需求、模块设计和测试文档，便于理解软件覆盖的校园业务范围。",
+      "paragraphs": [],
+      "include_feature_overview": false,
+      "include_operation_modules": false,
+      "include_operation_flow": false
+    },
+    {
+      "title": "软件说明与功能特点",
+      "intent": "说明平台服务对象、校园生活场景和主要业务边界。",
+      "paragraphs": [],
+      "include_feature_overview": true,
+      "include_operation_modules": false,
+      "include_operation_flow": true
+    },
+    {
+      "title": "系统要求",
+      "intent": "说明用户使用网页端和 Android 客户端的基本条件。",
+      "paragraphs": [],
+      "include_feature_overview": false,
+      "include_operation_modules": false,
+      "include_operation_flow": false
+    },
+    {
+      "title": "主要页面与业务操作",
+      "intent": "按学生和管理员实际可见的页面、操作和反馈说明软件使用方法。",
+      "paragraphs": [],
+      "include_feature_overview": false,
+      "include_operation_modules": true,
+      "include_operation_flow": false
+    },
+    {
+      "title": "常见问题与术语",
+      "intent": "解释用户在登录、发布和通知等场景中可能遇到的问题。",
+      "paragraphs": [],
+      "include_feature_overview": false,
+      "include_operation_modules": false,
+      "include_operation_flow": false
+    }
+  ],
+  "manual_modules": [
+    {
+      "title": "账号登录与个人资料",
+      "evidence": ["frontend-app/src/pages/Login.jsx", "frontend-app/src/pages/ProfileEdit.jsx", "frontend-app/src/context/AuthContext.jsx", "shared/api/auth.js"],
+      "purpose": "让学生以校园账号进入平台，并维护自己在平台内显示的资料。",
+      "usage": "首次使用时完成注册或登录；需要调整头像、昵称或语言时进入个人资料页。",
+      "entry": "从启动页或个人空间的账户入口进入登录、注册和资料编辑页面。",
+      "visible_elements": ["账号与密码输入框", "登录或注册按钮", "昵称与头像编辑项", "语言选择项"],
+      "operation_steps": ["填写账号信息并提交登录或注册", "进入个人资料页修改允许编辑的资料", "保存后返回个人空间查看更新后的显示信息"],
+      "validation_rules": ["未登录用户不能进入需要身份的发布和个人事务页面", "资料输入不符合格式时显示相应提示"],
+      "feedback": ["登录成功后进入平台首页", "保存资料后个人空间和内容中的用户信息同步更新"],
+      "screenshot": "【截图预留：登录页和个人资料编辑页】"
+    },
+    {
+      "title": "树洞信息流与匿名发布",
+      "evidence": ["frontend-app/src/pages/TreeHole.jsx", "frontend-app/src/pages/PostNew.jsx", "frontend-app/src/pages/PostDetail.jsx", "routes/posts.js"],
+      "purpose": "供学生围绕校园生活发布和浏览匿名讨论内容。",
+      "usage": "学生想查看校园讨论、搜索话题或发表匿名想法时使用。",
+      "entry": "从底部导航进入树洞，点击发布入口创建新帖子，点击信息流条目查看详情。",
+      "visible_elements": ["信息流", "话题与搜索入口", "发布按钮", "文本输入区", "图片选择入口", "点赞和评论区"],
+      "operation_steps": ["浏览信息流或按话题筛选内容", "输入标题或正文并按需要添加图片", "发布后在详情页查看评论和互动", "对自己的内容进行编辑或删除，对不当内容进行举报"],
+      "validation_rules": ["发布和评论需要登录", "内容会经过敏感词及用户状态检查", "用户只能删除自己的内容"],
+      "feedback": ["发布成功后帖子进入相应信息流", "点赞、评论和举报操作显示结果提示并更新页面状态"],
+      "screenshot": "【截图预留：树洞信息流、发布页和帖子详情页】"
+    },
+    {
+      "title": "广场、热搜与校园通知",
+      "evidence": ["frontend-app/src/pages/SquareHome.jsx", "frontend-app/src/pages/SquareCampusFeed.jsx", "frontend-app/src/pages/SquareTrendingDetail.jsx", "frontend-app/src/pages/SquareCampusPostNew.jsx", "routes/organizations.js"],
+      "purpose": "集中展示校园通知、轮播信息、热搜讨论和跨模块服务入口。",
+      "usage": "学生想快速获取学校或学院通知、参与热搜讨论，或进入社团、二手和跑腿服务时使用。",
+      "entry": "从底部导航进入广场；校园今日页内通过学校通知和学院通知标签切换内容。",
+      "visible_elements": ["轮播图", "校园今日标签", "学校通知与学院通知标签", "热搜词条", "社团、二手和跑腿入口", "通知发布按钮"],
+      "operation_steps": ["浏览轮播和校园通知", "切换学校或学院通知查看对应信息流", "进入热搜详情参与讨论", "有组织权限的用户选择所属组织后发布通知"],
+      "validation_rules": ["校园通知发布仅向学校组织、学院或社团负责人开放", "普通用户可以浏览公开通知和热搜内容"],
+      "feedback": ["通知发布后进入对应组织信息流", "热搜讨论发布后显示在该话题详情中"],
+      "screenshot": "【截图预留：广场首页、校园今日标签和通知发布页】"
+    },
+    {
+      "title": "食堂分区、商铺和菜品",
+      "evidence": ["frontend-app/src/pages/CanteenHome.jsx", "frontend-app/src/pages/CanteenArea.jsx", "frontend-app/src/pages/FoodCreate.jsx", "frontend-app/src/pages/FoodDetail.jsx", "routes/canteen.js"],
+      "purpose": "帮助学生查询食堂分区、商铺、菜品和评价信息，并参与信息共建。",
+      "usage": "学生在用餐前查询商铺、菜品和排行，或发现缺失信息时补充商铺、菜品和分类。",
+      "entry": "从底部导航进入食堂首页，选择食堂分区后进入商铺页，点击商铺或菜品查看详情。",
+      "visible_elements": ["食堂分区", "商铺列表", "菜品列表", "分类", "新增商铺和菜品入口", "评价区", "排行入口"],
+      "operation_steps": ["选择食堂分区浏览商铺", "进入商铺查看菜品和分类", "按需要新增商铺、菜品或评价", "管理员在管理界面处理删除操作"],
+      "validation_rules": ["登录用户可以新增商铺、菜品和分类", "普通用户不能删除商铺、菜品和分类", "评价和上传内容需要满足输入规则"],
+      "feedback": ["新增内容成功后出现在相应列表", "评价提交后更新菜品评价信息", "管理员删除后内容不再公开显示"],
+      "screenshot": "【截图预留：食堂首页、商铺页、菜品详情和新增菜品页】"
+    },
+    {
+      "title": "社团与活动报名",
+      "evidence": ["frontend-app/src/pages/Clubs/ClubsHome.jsx", "frontend-app/src/pages/Clubs/ActivityDetail.jsx", "frontend-app/src/pages/Clubs/PublishActivity.jsx", "routes/clubs.js"],
+      "purpose": "供学生了解社团、查看社团动态并报名参加活动。",
+      "usage": "学生寻找社团或决定参加活动时使用；社团负责人维护社团日常内容和活动安排。",
+      "entry": "从广场或底部导航进入社团首页，选择社团和活动条目进入详情。",
+      "visible_elements": ["社团列表", "社团主页", "动态帖子", "活动通知", "报名按钮", "成员入口", "发布入口"],
+      "operation_steps": ["浏览或搜索社团", "进入社团查看动态和活动", "符合条件时填写活动报名信息", "负责人发布活动或日常帖子并查看报名情况"],
+      "validation_rules": ["活动报名需要登录且受报名状态限制", "社团发布入口只对具有社团权限的负责人开放"],
+      "feedback": ["报名成功后显示报名状态并生成事务通知", "发布成功后社团主页更新相应内容"],
+      "screenshot": "【截图预留：社团首页、活动详情和报名界面】"
+    },
+    {
+      "title": "二手交易与跑腿任务",
+      "evidence": ["frontend-app/src/pages/Marketplace/Marketplace.jsx", "frontend-app/src/pages/Marketplace/MarketplacePublish.jsx", "frontend-app/src/pages/Errands/Errands.jsx", "routes/marketplace.js", "routes/errands.js"],
+      "purpose": "为学生提供校内闲置物品流转和日常跑腿任务协作入口。",
+      "usage": "学生出售或购买闲置物品、发布临时跑腿需求或承接他人任务时使用。",
+      "entry": "从广场入口或底部导航进入二手市场和跑腿模块，点击发布按钮创建商品或任务。",
+      "visible_elements": ["分类标签", "商品或任务列表", "筛选项", "搜索入口", "发布按钮", "详情页", "状态操作"],
+      "operation_steps": ["选择分类或状态筛选内容", "进入详情查看商品或任务信息", "发布自己的商品或跑腿需求", "根据完成情况维护出售或承接状态"],
+      "validation_rules": ["发布需要登录", "用户只能维护自己的商品或任务", "状态变更受当前任务或商品状态限制"],
+      "feedback": ["发布成功后显示在列表中", "状态更新后列表标签和详情状态同步变化"],
+      "screenshot": "【截图预留：二手市场列表、商品发布页和跑腿任务页】"
+    },
+    {
+      "title": "课程表、待办与日记",
+      "evidence": ["frontend-app/src/pages/Schedule.jsx", "frontend-app/src/pages/TodoList.jsx", "frontend-app/src/pages/Diary.jsx", "routes/todos.js", "routes/diary.js"],
+      "purpose": "帮助学生记录课程安排、临时事项和个人日记。",
+      "usage": "学生需要查看一周课程、安排待办或记录校园生活时使用。",
+      "entry": "从个人空间进入课程表、待办或日记页面。",
+      "visible_elements": ["课程周视图", "待办列表", "新增待办按钮", "完成勾选项", "日记日历", "日记编辑区"],
+      "operation_steps": ["查看或维护课程安排", "新增待办并设置截止信息", "勾选完成的待办", "选择日期创建或修改日记"],
+      "validation_rules": ["个人课程、待办和日记仅对本人可见和维护", "待办标题和日期需符合输入限制"],
+      "feedback": ["待办完成状态立即更新并与服务器同步", "保存日记后在日历和对应日期中显示记录"],
+      "screenshot": "【截图预留：课程表、待办和日记页面】"
+    },
+    {
+      "title": "站内信箱、举报与后台管理",
+      "evidence": ["frontend-app/src/pages/Mailbox.jsx", "frontend-app/src/components/ReportButton.jsx", "frontend-app/src/pages/Admin/AdminDashboard.jsx", "routes/notifications.js", "routes/admin.js"],
+      "purpose": "让用户集中查看互动和事务提醒，并让管理员处理平台治理事项。",
+      "usage": "学生收到评论、活动或组织事务提醒时查看信箱；发现不当内容时举报；管理员审核内容和用户状态时使用后台。",
+      "entry": "从顶部通知入口或个人空间进入信箱；在内容详情中打开举报入口；管理员从个人空间进入后台。",
+      "visible_elements": ["通知分类标签", "未读状态", "清空入口", "举报原因选择", "后台数据概览", "用户和内容处理操作", "审计记录"],
+      "operation_steps": ["在信箱查看通知并进入关联内容", "选择原因提交举报", "管理员查看待处理举报并进行内容或用户处置", "管理员查看系统配置和审计记录"],
+      "validation_rules": ["通知仅向对应用户展示", "举报需要登录", "后台操作仅向管理员开放并记录处理行为"],
+      "feedback": ["通知阅读后未读数量更新", "举报提交后显示提交结果", "管理员处置后目标内容或用户状态发生变化"],
+      "screenshot": "【截图预留：站内信箱、举报入口和管理员后台】"
+    }
+  ],
+  "system_requirements": [
+    {"item": "移动端操作系统", "minimum": "Android 7.0 或更高版本", "recommended": "Android 12 或更高版本"},
+    {"item": "网页端浏览器", "minimum": "Chrome、Edge、Safari 或 Firefox 的近两年版本", "recommended": "最新版 Chrome 或 Edge"},
+    {"item": "网络条件", "minimum": "可访问互联网并使用 HTTPS", "recommended": "稳定的 Wi-Fi 或移动数据网络"}
+  ],
+  "faq": [
+    {"question": "为什么不能发布内容？", "answer": "请确认已经登录，且账号未处于禁言或停用状态；如仍无法发布，可检查提示信息后联系管理员。"},
+    {"question": "如何关闭或清理通知？", "answer": "可在站内信箱按分类查看和清空通知；系统通知权限可在手机系统设置中关闭。"},
+    {"question": "为什么不能删除食堂商铺、菜品或分类？", "answer": "食堂信息允许用户共同补充，但删除操作仅由管理员执行，以避免公共资料被误删。"}
+  ],
+  "glossary": [
+    {"term": "树洞", "definition": "用于匿名发布校园讨论内容的社区区域。"},
+    {"term": "校园通知", "definition": "由学校组织、学院或社团负责人发布的公开信息。"},
+    {"term": "组织负责人", "definition": "获得对应学校组织、学院或社团内容维护权限的用户。"},
+    {"term": "站内通知", "definition": "平台内展示的评论、活动和事务提醒。"}
+  ]
+}

@@ -1,0 +1,59 @@
+- generic [ref=f1e5]:
+  - main [ref=f1e6]:
+    - generic [ref=f1e887]:
+      - article [ref=f1e888]:
+        - generic [ref=f1e890]:
+          - generic [ref=f1e891]: Dorm_Official
+          - generic [ref=f1e892]: 官方认证
+        - generic [ref=f1e893]:
+          - button "查看 Ye Jianqin" [ref=f1e894] [cursor=pointer]
+          - generic [ref=f1e895]:
+            - generic [ref=f1e896]: Ye Jianqin
+            - generic "2026年5月18日 13:54" [ref=f1e898]: 5月18日 · 学校公告
+        - heading "Dorm 's post" [level=1] [ref=f1e899]
+        - paragraph [ref=f1e900]: 大概我们就是最不正经的官方了
+        - generic "帖子图片" [ref=f1e901]:
+          - generic "Image carousel" [ref=f1e902]:
+            - generic [ref=f1e903]:
+              - button [ref=f1e904] [cursor=pointer]
+              - button [ref=f1e905] [cursor=pointer]
+              - button [ref=f1e906] [cursor=pointer]
+              - button "Previous" [ref=f1e907] [cursor=pointer]
+              - button "Next" [ref=f1e910] [cursor=pointer]
+            - generic "Pagination" [ref=f1e913]:
+              - button "Go to 1" [ref=f1e914] [cursor=pointer]
+              - button "Go to 2" [ref=f1e915] [cursor=pointer]
+              - button "Go to 3" [ref=f1e916] [cursor=pointer]
+        - generic [ref=f1e917]:
+          - button "0" [ref=f1e918] [cursor=pointer]
+          - button "举报" [ref=f1e922] [cursor=pointer]
+      - generic [ref=f1e926]:
+        - heading "评论 (2)" [level=2] [ref=f1e927]
+        - list [ref=f1e928]:
+          - listitem [ref=f1e929]:
+            - generic [ref=f1e932]:
+              - generic [ref=f1e933]:
+                - generic [ref=f1e934]: Ye Jianqin
+                - button "回复" [ref=f1e935] [cursor=pointer]
+                - button "举报" [ref=f1e936] [cursor=pointer]
+              - paragraph [ref=f1e939]: 。。
+          - listitem [ref=f1e940]:
+            - generic [ref=f1e943]:
+              - generic [ref=f1e944]:
+                - generic [ref=f1e945]: Ye Jianqin
+                - button "回复" [ref=f1e946] [cursor=pointer]
+                - button "举报" [ref=f1e947] [cursor=pointer]
+              - paragraph [ref=f1e950]: 何意味？
+      - generic [ref=f1e951]:
+        - button "emoji" [ref=f1e952] [cursor=pointer]
+        - textbox "添加评论…" [ref=f1e956]
+        - button "发送" [disabled] [ref=f1e957]
+  - tablist "主导航" [ref=f1e116]:
+    - link "广场" [ref=f1e117] [cursor=pointer]:
+      - /url: /about
+    - link "树洞" [ref=f1e122] [cursor=pointer]:
+      - /url: /
+    - link "食堂" [ref=f1e127] [cursor=pointer]:
+      - /url: /eat
+    - link "我的" [ref=f1e133] [cursor=pointer]:
+      - /url: /myzone

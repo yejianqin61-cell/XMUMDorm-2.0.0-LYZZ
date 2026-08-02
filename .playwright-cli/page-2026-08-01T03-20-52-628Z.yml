@@ -1,0 +1,81 @@
+- generic [ref=f1e5]:
+  - main [ref=f1e6]:
+    - generic "Tab pages" [ref=f1e775]:
+      - generic "Square" [ref=f1e777]:
+        - region "广场" [ref=f1e778]:
+          - generic [ref=f1e779]:
+            - heading "广场" [level=1] [ref=f1e780]
+            - generic [ref=f1e781]:
+              - button "刷新内容" [active] [ref=f1e782] [cursor=pointer]
+              - button "发布内容" [ref=f1e788] [cursor=pointer]
+          - tablist "广场内容" [ref=f1e790]:
+            - tab "校园" [selected] [ref=f1e791] [cursor=pointer]
+            - tab "热搜" [ref=f1e792] [cursor=pointer]
+          - navigation "广场快捷入口" [ref=f1e793]:
+            - generic [ref=f1e794]:
+              - link "社团广场" [ref=f1e795] [cursor=pointer]:
+                - /url: /about/club
+              - link "马校一站通" [ref=f1e802] [cursor=pointer]:
+                - /url: /about/freshman-guide
+              - link "帮帮我" [ref=f1e807] [cursor=pointer]:
+                - /url: /about/errands
+              - link "出物" [ref=f1e814] [cursor=pointer]:
+                - /url: /about/second-hand
+          - generic [ref=f1e821]:
+            - generic [ref=f1e822]:
+              - button "上一张" [ref=f1e823] [cursor=pointer]:
+                - generic [ref=f1e824]: ‹
+              - button "下一张" [ref=f1e825] [cursor=pointer]:
+                - generic [ref=f1e826]: ›
+              - button "二手好物" [ref=f1e883] [cursor=pointer]:
+                - generic [ref=f1e829]:
+                  - generic [ref=f1e830]:
+                    - generic [ref=f1e831]: 二手好物
+                    - generic [ref=f1e884]: 广告
+                  - generic [ref=f1e885]: 逛出物广场，淘校园好物
+            - generic [ref=f1e833]:
+              - button "第 1 张" [ref=f1e834] [cursor=pointer]
+              - button "第 2 张" [ref=f1e835] [cursor=pointer]
+              - button "第 3 张" [ref=f1e836] [cursor=pointer]
+              - button "第 4 张" [ref=f1e837] [cursor=pointer]
+              - button "第 5 张" [ref=f1e838] [cursor=pointer]
+              - button "第 6 张" [ref=f1e839] [cursor=pointer]
+          - tabpanel "校园" [ref=f1e840]:
+            - generic [ref=f1e841]:
+              - article [ref=f1e842]:
+                - link [ref=f1e843] [cursor=pointer]:
+                  - /url: /about/campus/2
+                  - generic [ref=f1e844]:
+                    - paragraph [ref=f1e845]: Ye Jianqin · 2026年5月18日 13:54
+                    - heading "Dorm 's post" [level=2] [ref=f1e846]
+                    - paragraph [ref=f1e847]: 大概我们就是最不正经的官方了
+                - generic "内容操作" [ref=f1e848]:
+                  - button "点赞" [ref=f1e849] [cursor=pointer]:
+                    - generic [ref=f1e852]: "0"
+                  - link "查看评论" [ref=f1e853] [cursor=pointer]:
+                    - /url: /about/campus/2
+                    - generic [ref=f1e856]: "0"
+                  - button "打开内容" [ref=f1e857] [cursor=pointer]
+              - article [ref=f1e862]:
+                - link [ref=f1e863] [cursor=pointer]:
+                  - /url: /about/campus/1
+                  - generic [ref=f1e864]:
+                    - paragraph [ref=f1e865]: Ye Jianqin · 2026年5月18日 13:39
+                    - heading "Dorm_Official" [level=2] [ref=f1e866]
+                    - paragraph [ref=f1e867]: We are getting closer to our goal step by step. The app version on smartphone will come soon, Please Stay Tuned
+                - generic "内容操作" [ref=f1e868]:
+                  - button "点赞" [ref=f1e869] [cursor=pointer]:
+                    - generic [ref=f1e872]: "0"
+                  - link "查看评论" [ref=f1e873] [cursor=pointer]:
+                    - /url: /about/campus/1
+                    - generic [ref=f1e876]: "0"
+                  - button "打开内容" [ref=f1e877] [cursor=pointer]
+  - tablist "主导航" [ref=f1e116]:
+    - link "广场" [ref=f1e117] [cursor=pointer]:
+      - /url: /about
+    - link "树洞" [ref=f1e122] [cursor=pointer]:
+      - /url: /
+    - link "食堂" [ref=f1e127] [cursor=pointer]:
+      - /url: /eat
+    - link "我的" [ref=f1e133] [cursor=pointer]:
+      - /url: /myzone

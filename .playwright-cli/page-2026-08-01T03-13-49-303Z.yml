@@ -1,0 +1,95 @@
+- generic [ref=e25]:
+  - main [ref=e26]:
+    - generic "Tab pages" [ref=e29]:
+      - generic "TreeHole" [ref=e31]:
+        - generic [ref=e32]:
+          - generic [ref=e33]:
+            - generic [ref=e34]:
+              - generic [ref=e35]:
+                - generic [ref=e36]: XMUM Dorm
+                - generic [ref=e37]: Discover campus life
+              - generic [ref=e38]:
+                - button "搜索" [ref=e40] [cursor=pointer]
+                - button "切换语言" [ref=e45] [cursor=pointer]
+                - button "通知" [ref=e49] [cursor=pointer]
+            - generic [ref=e55]:
+              - button "热门" [ref=e56] [cursor=pointer]
+              - button "校园哈基米" [ref=e58] [cursor=pointer]
+              - button "神秘打卡点" [ref=e59] [cursor=pointer]
+              - button "今日吃啥" [ref=e60] [cursor=pointer]
+              - button "盛世美景" [ref=e61] [cursor=pointer]
+              - button "分享心情❤" [ref=e62] [cursor=pointer]
+              - button "搞怪瞬间" [ref=e63] [cursor=pointer]
+              - button "不爽吐槽" [ref=e64] [cursor=pointer]
+              - button "我雷个雷" [ref=e65] [cursor=pointer]
+              - button "避雷!" [ref=e66] [cursor=pointer]
+              - button "找跑腿" [ref=e67] [cursor=pointer]
+          - generic [ref=e68]:
+            - generic [ref=e69]:
+              - generic [ref=e70]:
+                - link "奶龙万变不离其宗" [ref=e72] [cursor=pointer]:
+                  - /url: /post/185
+                  - generic [ref=e75]: Ye Jianqin
+                  - generic [ref=e78]:
+                    - generic [ref=e79]: 奶龙万变不离其宗
+                    - generic [ref=e80]:
+                      - generic [ref=e81]: "1"
+                      - generic [ref=e85]: "0"
+                - link "轻松绷住" [ref=e90] [cursor=pointer]:
+                  - /url: /post/182
+                  - generic [ref=e93]: Ye Jianqin
+                  - generic [ref=e96]:
+                    - generic [ref=e97]: 轻松绷住
+                    - generic [ref=e98]:
+                      - generic [ref=e99]: "1"
+                      - generic [ref=e103]: "1"
+                - link "我们是冠军🥳" [ref=e108] [cursor=pointer]:
+                  - /url: /post/180
+                  - generic [ref=e111]: Kiyotaka
+                  - generic [ref=e114]:
+                    - generic [ref=e115]: 我们是冠军🥳
+                    - generic [ref=e116]:
+                      - generic [ref=e117]: "2"
+                      - generic [ref=e121]: "2"
+              - generic [ref=e147]:
+                - link "Ning Ma！" [ref=e149] [cursor=pointer]:
+                  - /url: /post/184
+                  - generic [ref=e152]: Ye Jianqin
+                  - generic [ref=e155]:
+                    - generic [ref=e156]: Ning Ma！
+                    - generic [ref=e157]:
+                      - generic [ref=e158]: "1"
+                      - generic [ref=e162]: "0"
+                - link "细节嗅探" [ref=e167] [cursor=pointer]:
+                  - /url: /post/181
+                  - generic [ref=e170]: Ye Jianqin
+                  - generic [ref=e173]:
+                    - generic [ref=e174]: 细节嗅探
+                    - generic [ref=e175]:
+                      - generic [ref=e176]: "0"
+                      - generic [ref=e180]: "2"
+                - generic [ref=e185]:
+                  - generic [ref=e186]: Campus Pulse
+                  - heading "和你校园身份更相关" [level=3] [ref=e187]
+                  - generic [ref=e188]:
+                    - link "不是这midterm怎么这么快呢 校园里正在升温" [ref=e189] [cursor=pointer]:
+                      - /url: /about/trending/2
+                      - generic [ref=e190]: 不是这midterm怎么这么快呢
+                      - generic [ref=e191]: 校园里正在升温
+                    - link "榴莲季节 校园里正在升温" [ref=e192] [cursor=pointer]:
+                      - /url: /about/trending/1
+                      - generic [ref=e193]: 榴莲季节
+                      - generic [ref=e194]: 校园里正在升温
+            - button "加载中…" [disabled] [ref=e217]
+  - button "回到顶端 Back to top" [ref=e218] [cursor=pointer]
+  - link "发布帖子 Post" [ref=e221] [cursor=pointer]:
+    - /url: /post/new
+  - tablist "主导航" [ref=e224]:
+    - link "广场" [ref=e225] [cursor=pointer]:
+      - /url: /about
+    - link "树洞" [ref=e230] [cursor=pointer]:
+      - /url: /
+    - link "食堂" [ref=e235] [cursor=pointer]:
+      - /url: /eat
+    - link "我的" [ref=e241] [cursor=pointer]:
+      - /url: /myzone

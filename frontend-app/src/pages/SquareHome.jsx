@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { BookOpenText, HandHelping, Heart, Megaphone, MessageCircle, MoreHorizontal, RefreshCw, Settings2, Shapes, Store } from 'lucide-react';
+import { BookOpenText, HandHelping, Heart, Megaphone, MessageCircle, MoreHorizontal, Plus, RefreshCw, Settings2, Shapes, Store } from 'lucide-react';
 import { getCampusFeed, getSquareBanners, getTrendingTopics, likeCampusPost } from '@shared/api/square';
 import { getUploadUrl } from '@shared/api/config';
 import { formatPostTime } from '@shared/utils/formatTime';
@@ -161,6 +161,11 @@ export default function SquareHome() {
               <Settings2 size={19} aria-hidden="true" />
             </button>
           ) : null}
+          {isAdmin && tab === 'trending' ? (
+            <button type="button" className="square-icon-button" onClick={() => navigate('/about/admin/orgs?tab=trending')} aria-label={isEn ? 'Create trending topic' : '创建热搜词条'} title={isEn ? 'Create trending topic' : '创建热搜词条'}>
+              <Plus size={21} aria-hidden="true" />
+            </button>
+          ) : null}
           <button type="button" className="square-icon-button" onClick={refresh} aria-label={isEn ? 'Refresh current feed' : '刷新当前信息流'} title={isEn ? 'Refresh current feed' : '刷新当前信息流'}>
             <RefreshCw size={19} aria-hidden="true" />
           </button>
@@ -254,7 +259,6 @@ export default function SquareHome() {
                 <span className="square-feed-row__rank">{index + 1}</span>
                 <div>
                   <h2>{topic.title}</h2>
-                  <p className="square-content-meta">{topic.post_count || 0} {isEn ? 'discussions' : '条讨论'}</p>
                 </div>
               </Link>
             ))}

@@ -1,0 +1,17 @@
+- generic [ref=f1e5]:
+  - main [ref=f1e6]:
+    - generic [ref=f1e1141]:
+      - heading "参与讨论" [level=3] [ref=f1e1142]
+      - generic [ref=f1e1143]:
+        - textbox "写下你的想法...（支持换行）" [active] [ref=f1e1144]
+        - button "添加图片/GIF (0/3)" [ref=f1e1145] [cursor=pointer]
+        - button "发布" [disabled] [ref=f1e1146] [cursor=pointer]
+  - tablist "主导航" [ref=f1e116]:
+    - link "广场" [ref=f1e117] [cursor=pointer]:
+      - /url: /about
+    - link "树洞" [ref=f1e122] [cursor=pointer]:
+      - /url: /
+    - link "食堂" [ref=f1e127] [cursor=pointer]:
+      - /url: /eat
+    - link "我的" [ref=f1e133] [cursor=pointer]:
+      - /url: /myzone

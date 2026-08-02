@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { postTrendingPost } from '@shared/api/square';
 import { useExpFeedback } from '../context/ExpFeedbackContext';
+import { ArrowLeft, ImagePlus, X } from 'lucide-react';
+import './SquareTrendingPostNew.css';
 
 export default function SquareTrendingPostNew() {
   const { id } = useParams();
@@ -35,6 +37,10 @@ export default function SquareTrendingPostNew() {
     setPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const goBack = () => {
+    navigate(`/about/trending/${id}`);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const text = content.trim();
@@ -53,15 +59,33 @@ export default function SquareTrendingPostNew() {
   };
 
   return (
-    <div className="square-home-page">
-      <div className="square-home-inner">
-        <div className="square-section">
-          <h3 className="square-section-title">{isEn ? 'Join Discussion' : '参与讨论'}</h3>
-          <form onSubmit={handleSubmit}>
+    <div className="trending-post-new-page">
+      <header className="trending-post-new-header">
+        <button
+          type="button"
+          className="trending-post-new-back pressable"
+          onClick={goBack}
+          aria-label={isEn ? 'Back to discussion' : '返回讨论'}
+          title={isEn ? 'Back to discussion' : '返回讨论'}
+        >
+          <ArrowLeft size={20} aria-hidden />
+        </button>
+        <h1>{isEn ? 'Join discussion' : '参与讨论'}</h1>
+        <button
+          type="submit"
+          form="trending-post-form"
+          className="trending-post-new-submit pressable"
+          disabled={submitting || !content.trim()}
+        >
+          {submitting ? (isEn ? 'Posting' : '发布中') : (isEn ? 'Post' : '发布')}
+        </button>
+      </header>
+
+      <main className="trending-post-new-composer">
+        <form id="trending-post-form" onSubmit={handleSubmit}>
             <textarea
-              className="canteen-search-input"
-              style={{ width: '100%', minHeight: 120, resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }}
-              placeholder={isEn ? 'Share your thoughts... (line breaks supported)' : '写下你的想法...（支持换行）'}
+              className="trending-post-new-textarea"
+              placeholder={isEn ? 'Share your thoughts' : '写下你的想法'}
               value={content}
               onChange={(e) => setContent(e.target.value)}
               maxLength={2000}
@@ -69,38 +93,21 @@ export default function SquareTrendingPostNew() {
             />
 
             {previews.length > 0 && (
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+              <div className="trending-post-new-previews">
                 {previews.map((url, index) => (
-                  <div key={url} style={{ position: 'relative', width: 80, height: 80, borderRadius: 8, overflow: 'hidden' }}>
-                    <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <div key={url} className="trending-post-new-preview">
+                    <img src={url} alt="" />
                     <button
                       type="button"
+                      className="trending-post-new-remove pressable"
                       onClick={() => removeFile(index)}
-                      style={{
-                        position: 'absolute', top: 2, right: 2,
-                        width: 20, height: 20, borderRadius: '50%',
-                        background: 'rgba(0,0,0,0.6)', color: '#fff',
-                        border: 'none', cursor: 'pointer', fontSize: 12, lineHeight: '20px',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}
                       aria-label={isEn ? 'Remove image' : '删除图片'}
                     >
-                      ×
+                      <X size={14} aria-hidden />
                     </button>
                   </div>
                 ))}
               </div>
-            )}
-
-            {files.length < 3 && (
-              <button
-                type="button"
-                className="canteen-food-compose-btn pressable"
-                style={{ marginTop: 8 }}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {isEn ? `Add image / GIF (${files.length}/3)` : `添加图片/GIF (${files.length}/3)`}
-              </button>
             )}
             <input
               ref={fileInputRef}
@@ -111,18 +118,23 @@ export default function SquareTrendingPostNew() {
               onChange={handleFileChange}
             />
 
-            {error && <p style={{ color: 'var(--post-ios-red)', fontSize: 13, margin: '8px 0' }}>{error}</p>}
-            <button
-              type="submit"
-              className="canteen-pick-btn pressable"
-              disabled={submitting || !content.trim()}
-              style={{ marginTop: 12, opacity: submitting ? 0.6 : 1 }}
-            >
-              {submitting ? (isEn ? 'Posting...' : '发布中...') : (isEn ? 'Post' : '发布')}
-            </button>
+            {error && <p className="trending-post-new-error">{error}</p>}
           </form>
-        </div>
-      </div>
+        </main>
+
+      <footer className="trending-post-new-tools">
+        <button
+          type="button"
+          className="trending-post-new-image-button pressable"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={files.length >= 3}
+          aria-label={isEn ? 'Add image or GIF' : '添加图片或 GIF'}
+          title={isEn ? 'Add image or GIF' : '添加图片或 GIF'}
+        >
+          <ImagePlus size={28} strokeWidth={1.8} aria-hidden />
+        </button>
+        <span className="trending-post-new-count">{content.length}/2000</span>
+      </footer>
     </div>
   );
 }

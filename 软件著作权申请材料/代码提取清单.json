@@ -1,0 +1,254 @@
+{
+  "software_name": "厦马小筑",
+  "version": "V1.0",
+  "project_root": "D:\\.pogget\\user_storage\\u_a02ec0\\d5cdb\\XMUMDorm-2.0.0-LYZZ",
+  "file_count": 23,
+  "material_line_count": 3496,
+  "source_line_count": 3766,
+  "selected_source_line_count": 3473,
+  "lines_per_page": 50,
+  "total_pages": 70,
+  "target_pages": 60,
+  "available_candidate_line_count": 144163,
+  "available_candidate_pages": 2884,
+  "supplement_status": "候选源码可达到前30页/后30页要求",
+  "mode": "front30_back30",
+  "selection_file": "软件著作权申请材料\\草稿\\代码文件选择.json",
+  "outputs": [
+    "代码-前30页.md",
+    "代码-后30页.md"
+  ],
+  "files": [
+    {
+      "path": "frontend-app/src/main.jsx",
+      "source_line_count": 81,
+      "blank_line_count": 5,
+      "selected_line_start": 1,
+      "selected_line_end": 81,
+      "selected_line_count": 76,
+      "material_line_start": 1,
+      "material_line_end": 77
+    },
+    {
+      "path": "frontend-app/src/routes/layoutRoutes.jsx",
+      "source_line_count": 174,
+      "blank_line_count": 3,
+      "selected_line_start": 1,
+      "selected_line_end": 174,
+      "selected_line_count": 171,
+      "material_line_start": 78,
+      "material_line_end": 249
+    },
+    {
+      "path": "frontend-app/src/pages/CanteenHome.jsx",
+      "source_line_count": 49,
+      "blank_line_count": 2,
+      "selected_line_start": 1,
+      "selected_line_end": 49,
+      "selected_line_count": 47,
+      "material_line_start": 250,
+      "material_line_end": 297
+    },
+    {
+      "path": "frontend-app/src/pages/Clubs/ClubsHome.jsx",
+      "source_line_count": 171,
+      "blank_line_count": 15,
+      "selected_line_start": 1,
+      "selected_line_end": 171,
+      "selected_line_count": 156,
+      "material_line_start": 298,
+      "material_line_end": 454
+    },
+    {
+      "path": "frontend-app/src/pages/Errands/ErrandsHome.jsx",
+      "source_line_count": 109,
+      "blank_line_count": 11,
+      "selected_line_start": 1,
+      "selected_line_end": 109,
+      "selected_line_count": 98,
+      "material_line_start": 455,
+      "material_line_end": 553
+    },
+    {
+      "path": "frontend-app/src/pages/Mailbox.jsx",
+      "source_line_count": 241,
+      "blank_line_count": 17,
+      "selected_line_start": 1,
+      "selected_line_end": 241,
+      "selected_line_count": 224,
+      "material_line_start": 554,
+      "material_line_end": 778
+    },
+    {
+      "path": "frontend-app/src/pages/Marketplace/MarketplaceHome.jsx",
+      "source_line_count": 292,
+      "blank_line_count": 21,
+      "selected_line_start": 1,
+      "selected_line_end": 292,
+      "selected_line_count": 271,
+      "material_line_start": 779,
+      "material_line_end": 1050
+    },
+    {
+      "path": "frontend-app/src/pages/SquareCampusFeed.jsx",
+      "source_line_count": 163,
+      "blank_line_count": 8,
+      "selected_line_start": 1,
+      "selected_line_end": 163,
+      "selected_line_count": 155,
+      "material_line_start": 1051,
+      "material_line_end": 1206
+    },
+    {
+      "path": "frontend-app/src/pages/SquareHome.jsx",
+      "source_line_count": 270,
+      "blank_line_count": 22,
+      "selected_line_start": 1,
+      "selected_line_end": 270,
+      "selected_line_count": 248,
+      "material_line_start": 1207,
+      "material_line_end": 1455
+    },
+    {
+      "path": "frontend-app/src/pages/TodoList.jsx",
+      "source_line_count": 350,
+      "blank_line_count": 25,
+      "selected_line_start": 1,
+      "selected_line_end": 350,
+      "selected_line_count": 325,
+      "material_line_start": 1456,
+      "material_line_end": 1781
+    },
+    {
+      "path": "shared/api/auth.js",
+      "source_line_count": 101,
+      "blank_line_count": 6,
+      "selected_line_start": 1,
+      "selected_line_end": 101,
+      "selected_line_count": 95,
+      "material_line_start": 1782,
+      "material_line_end": 1877
+    },
+    {
+      "path": "shared/api/notifications.js",
+      "source_line_count": 43,
+      "blank_line_count": 8,
+      "selected_line_start": 1,
+      "selected_line_end": 43,
+      "selected_line_count": 35,
+      "material_line_start": 1878,
+      "material_line_end": 1913
+    },
+    {
+      "path": "shared/api/request.js",
+      "source_line_count": 141,
+      "blank_line_count": 14,
+      "selected_line_start": 1,
+      "selected_line_end": 141,
+      "selected_line_count": 127,
+      "material_line_start": 1914,
+      "material_line_end": 2041
+    },
+    {
+      "path": "shared/api/square.js",
+      "source_line_count": 148,
+      "blank_line_count": 26,
+      "selected_line_start": 1,
+      "selected_line_end": 148,
+      "selected_line_count": 122,
+      "material_line_start": 2042,
+      "material_line_end": 2164
+    },
+    {
+      "path": "shared/api/todos.js",
+      "source_line_count": 32,
+      "blank_line_count": 6,
+      "selected_line_start": 1,
+      "selected_line_end": 32,
+      "selected_line_count": 26,
+      "material_line_start": 2165,
+      "material_line_end": 2191
+    },
+    {
+      "path": "frontend-app/src/components/canteen/CanteenBannerCarousel.jsx",
+      "source_line_count": 182,
+      "blank_line_count": 13,
+      "selected_line_start": 1,
+      "selected_line_end": 182,
+      "selected_line_count": 169,
+      "material_line_start": 2192,
+      "material_line_end": 2361
+    },
+    {
+      "path": "frontend-app/src/components/canteen/CanteenFoodSquare.jsx",
+      "source_line_count": 139,
+      "blank_line_count": 8,
+      "selected_line_start": 1,
+      "selected_line_end": 139,
+      "selected_line_count": 131,
+      "material_line_start": 2362,
+      "material_line_end": 2493
+    },
+    {
+      "path": "frontend-app/src/components/canteen/CanteenHomeRankings.jsx",
+      "source_line_count": 146,
+      "blank_line_count": 9,
+      "selected_line_start": 1,
+      "selected_line_end": 146,
+      "selected_line_count": 137,
+      "material_line_start": 2494,
+      "material_line_end": 2631
+    },
+    {
+      "path": "middleware/adminAuth.js",
+      "source_line_count": 41,
+      "blank_line_count": 6,
+      "selected_line_start": 1,
+      "selected_line_end": 41,
+      "selected_line_count": 35,
+      "material_line_start": 2632,
+      "material_line_end": 2667
+    },
+    {
+      "path": "middleware/auth.js",
+      "source_line_count": 52,
+      "blank_line_count": 10,
+      "selected_line_start": 1,
+      "selected_line_end": 52,
+      "selected_line_count": 42,
+      "material_line_start": 2668,
+      "material_line_end": 2710
+    },
+    {
+      "path": "routes/notifications.js",
+      "source_line_count": 336,
+      "blank_line_count": 15,
+      "selected_line_start": 1,
+      "selected_line_end": 336,
+      "selected_line_count": 321,
+      "material_line_start": 2711,
+      "material_line_end": 3032
+    },
+    {
+      "path": "routes/organizations.js",
+      "source_line_count": 282,
+      "blank_line_count": 21,
+      "selected_line_start": 1,
+      "selected_line_end": 282,
+      "selected_line_count": 261,
+      "material_line_start": 3033,
+      "material_line_end": 3294
+    },
+    {
+      "path": "routes/todos.js",
+      "source_line_count": 223,
+      "blank_line_count": 22,
+      "selected_line_start": 1,
+      "selected_line_end": 223,
+      "selected_line_count": 201,
+      "material_line_start": 3295,
+      "material_line_end": 3496
+    }
+  ],
+  "safe_software_filename": "厦马小筑"
+}

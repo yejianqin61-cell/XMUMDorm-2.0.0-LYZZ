@@ -1,0 +1,112 @@
+.square-admin-page,
+.canteen-banner-admin-page {
+  background: #fff;
+  color: #0f1419;
+}
+
+.square-admin-page .square-home-inner,
+.canteen-banner-admin-page .canteen-home-inner {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 16px;
+  gap: 0;
+}
+
+.square-admin-page .square-campus-tabs {
+  display: flex;
+  gap: 18px;
+  margin: 0 0 18px !important;
+  border-bottom: 1px solid #eff3f4;
+}
+
+.square-admin-page .square-campus-tab {
+  min-height: 40px;
+  padding: 0;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: #536471;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.square-admin-page .square-campus-tab--active {
+  border-bottom-color: #1d9bf0;
+  background: transparent;
+  color: #0f1419;
+}
+
+.square-admin-page .square-campus-list,
+.canteen-banner-admin-page .canteen-banner-admin-list {
+  margin: 0;
+  border-top: 1px solid #eff3f4;
+  border-radius: 0;
+  background: #fff;
+}
+
+.square-admin-page .square-campus-item,
+.canteen-banner-admin-page .canteen-banner-admin-item {
+  min-height: 58px;
+  padding: 10px 0;
+  border: 0;
+  border-bottom: 1px solid #eff3f4;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.square-admin-page .square-section-more,
+.canteen-banner-admin-page .canteen-banner-admin-item-actions button {
+  padding: 4px 6px;
+  border-radius: 4px;
+  color: #1d9bf0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.square-admin-page .square-section-more[style*="red"],
+.canteen-banner-admin-page .canteen-banner-admin-del {
+  color: #d92d20 !important;
+}
+
+.square-admin-page .canteen-search-input,
+.canteen-banner-admin-page input:not([type="checkbox"]),
+.canteen-banner-admin-page select,
+.canteen-banner-admin-page textarea {
+  border-radius: 4px;
+  border-color: #dce3e6;
+  box-shadow: none;
+}
+
+.square-admin-page .square-admin-form {
+  padding: 14px;
+  border: 1px solid #eff3f4;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: none;
+}
+
+.square-admin-page .square-admin-form h4 {
+  margin: 0 0 12px !important;
+  color: #0f1419;
+  font-size: 15px !important;
+}
+
+.canteen-banner-admin-page .canteen-banner-admin-hint {
+  display: none;
+}
+
+.canteen-banner-admin-page .canteen-banner-admin-add,
+.canteen-banner-admin-page .canteen-banner-admin-save {
+  border-radius: 4px;
+  background: #0f1419;
+  box-shadow: none;
+}
+
+.canteen-banner-admin-page .canteen-banner-admin-form {
+  border-radius: 6px;
+  border: 1px solid #eff3f4;
+  box-shadow: none;
+  background: #fff;
+}

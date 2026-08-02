@@ -1,0 +1,58 @@
+- generic [ref=f1e5]:
+  - main [ref=f1e6]:
+    - generic [ref=f1e1084]:
+      - generic [ref=f1e1086]:
+        - generic [ref=f1e1087]:
+          - generic [ref=f1e1088]:
+            - generic [ref=f1e1089]: 正在热议
+            - generic [ref=f1e1090]:
+              - generic [ref=f1e1091]: ✨
+              - generic [ref=f1e1092]: 持续发酵
+          - heading "不是这midterm怎么这么快呢" [level=3] [ref=f1e1093]
+          - paragraph [ref=f1e1094]: 于是我摊开双手
+          - generic [ref=f1e1095]:
+            - generic [ref=f1e1096]:
+              - generic [ref=f1e1097]: 💬
+              - generic [ref=f1e1098]: 3 条讨论
+            - generic [ref=f1e1099]:
+              - generic [ref=f1e1100]: ✨
+              - generic [ref=f1e1101]: 已经开始吸引更多关注
+        - button "参与讨论" [ref=f1e1102] [cursor=pointer]
+      - generic [ref=f1e1103]:
+        - generic [ref=f1e1105]:
+          - heading "讨论区" [level=3] [ref=f1e1106]
+          - paragraph [ref=f1e1107]: 按时间倒序展示，先看最新发言
+        - generic [ref=f1e1108]:
+          - generic [ref=f1e1111]:
+            - generic [ref=f1e1112]:
+              - generic [ref=f1e1113]: Ye Jianqin
+              - generic [ref=f1e1114]: 6月08日
+            - paragraph [ref=f1e1115]: 赌一把
+            - generic [ref=f1e1116]:
+              - generic [ref=f1e1117]: 👍 1
+              - generic [ref=f1e1118]: 💬 1
+          - generic [ref=f1e1121]:
+            - generic [ref=f1e1122]:
+              - generic [ref=f1e1123]: Ye Jianqin
+              - generic [ref=f1e1124]: 5月18日
+            - paragraph [ref=f1e1125]: 于是我摊开双手，允许一切流走
+            - generic [ref=f1e1126]:
+              - generic [ref=f1e1127]: 👍 1
+              - generic [ref=f1e1128]: 💬 0
+          - generic [ref=f1e1131]:
+            - generic [ref=f1e1132]:
+              - generic [ref=f1e1133]: admin1
+              - generic [ref=f1e1134]: 5月18日
+            - paragraph [ref=f1e1135]: 今天是5.18 距离高考还有18天 须知少时凌云志，曾许人间第一流 高考必胜
+            - generic [ref=f1e1136]:
+              - generic [ref=f1e1137]: 👍 0
+              - generic [ref=f1e1138]: 💬 1
+  - tablist "主导航" [ref=f1e116]:
+    - link "广场" [ref=f1e117] [cursor=pointer]:
+      - /url: /about
+    - link "树洞" [ref=f1e122] [cursor=pointer]:
+      - /url: /
+    - link "食堂" [ref=f1e127] [cursor=pointer]:
+      - /url: /eat
+    - link "我的" [ref=f1e133] [cursor=pointer]:
+      - /url: /myzone

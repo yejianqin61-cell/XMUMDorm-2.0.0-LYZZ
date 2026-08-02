@@ -1,0 +1,82 @@
+- generic [ref=f1e5]:
+  - main [ref=f1e6]:
+    - generic [ref=f1e213]:
+      - generic [ref=f1e214]: 社团广场
+      - link "去发布" [ref=f1e217] [cursor=pointer]:
+        - /url: /publish
+      - generic [ref=f1e218]:
+        - link "社团大全 发现你感兴趣的社团" [ref=f1e219] [cursor=pointer]:
+          - /url: /about/club/list
+          - generic [ref=f1e220]:
+            - generic [ref=f1e221]: 社团大全
+            - generic [ref=f1e222]: 发现你感兴趣的社团
+        - link "我的社团 关注、活动与日常" [ref=f1e224] [cursor=pointer]:
+          - /url: /about/club/my
+          - generic [ref=f1e225]:
+            - generic [ref=f1e226]: 我的社团
+            - generic [ref=f1e227]: 关注、活动与日常
+      - generic [ref=f1e229]:
+        - tablist "club category filter" [ref=f1e230]:
+          - tab "全部" [selected] [ref=f1e231] [cursor=pointer]
+          - tab "音乐" [ref=f1e232] [cursor=pointer]
+          - tab "科技" [ref=f1e233] [cursor=pointer]
+          - tab "文化" [ref=f1e234] [cursor=pointer]
+          - tab "运动" [ref=f1e235] [cursor=pointer]
+          - tab "艺术" [ref=f1e236] [cursor=pointer]
+        - group "活动状态筛选" [ref=f1e237]:
+          - button "进行中" [pressed] [ref=f1e238] [cursor=pointer]
+          - button "已结束" [ref=f1e239] [cursor=pointer]
+      - generic [ref=f1e240]:
+        - link "活动 try? 05-02 14:00 · DormCommittee TESTTEST 14 0" [ref=f1e241] [cursor=pointer]:
+          - /url: /about/club/activity/4
+          - generic [ref=f1e243]:
+            - generic [ref=f1e244]:
+              - generic [ref=f1e245]: 活动
+              - generic [ref=f1e246]: try?
+            - generic [ref=f1e247]: 05-02 14:00 · DormCommittee
+            - generic [ref=f1e248]: TESTTEST
+            - generic [ref=f1e249]:
+              - generic [ref=f1e250]: "14"
+              - generic [ref=f1e254]: "0"
+        - link "日常 TRY 05-02 13:59 · DormCommittee LET 'S TRY TRY TRY YOU HAVE TO TRY OH YEAH YEAH YEAH!! 8 0" [ref=f1e257] [cursor=pointer]:
+          - /url: /about/club/post/4
+          - generic [ref=f1e259]:
+            - generic [ref=f1e260]:
+              - generic [ref=f1e261]: 日常
+              - generic [ref=f1e262]: TRY
+            - generic [ref=f1e263]: 05-02 13:59 · DormCommittee
+            - generic [ref=f1e264]: LET 'S TRY TRY TRY YOU HAVE TO TRY OH YEAH YEAH YEAH!!
+            - generic [ref=f1e265]:
+              - generic [ref=f1e266]: "8"
+              - generic [ref=f1e270]: "0"
+        - link "日常 test 05-02 13:51 · DormCommittee test哈哈哈哈哈机密 9 0" [ref=f1e273] [cursor=pointer]:
+          - /url: /about/club/post/3
+          - generic [ref=f1e275]:
+            - generic [ref=f1e276]:
+              - generic [ref=f1e277]: 日常
+              - generic [ref=f1e278]: test
+            - generic [ref=f1e279]: 05-02 13:51 · DormCommittee
+            - generic [ref=f1e280]: test哈哈哈哈哈机密
+            - generic [ref=f1e281]:
+              - generic [ref=f1e282]: "9"
+              - generic [ref=f1e286]: "0"
+        - link "活动 DormCommittee! 05-01 16:50 · DormCommittee Today,club system starts to operate 10 1" [ref=f1e289] [cursor=pointer]:
+          - /url: /about/club/activity/3
+          - generic [ref=f1e292]:
+            - generic [ref=f1e293]:
+              - generic [ref=f1e294]: 活动
+              - generic [ref=f1e295]: DormCommittee!
+            - generic [ref=f1e296]: 05-01 16:50 · DormCommittee
+            - generic [ref=f1e297]: Today,club system starts to operate
+            - generic [ref=f1e298]:
+              - generic [ref=f1e299]: "10"
+              - generic [ref=f1e303]: "1"
+  - tablist "主导航" [ref=f1e116]:
+    - link "广场" [ref=f1e117] [cursor=pointer]:
+      - /url: /about
+    - link "树洞" [ref=f1e122] [cursor=pointer]:
+      - /url: /
+    - link "食堂" [ref=f1e127] [cursor=pointer]:
+      - /url: /eat
+    - link "我的" [ref=f1e133] [cursor=pointer]:
+      - /url: /myzone

@@ -3,6 +3,11 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App.jsx';
 import './registerServiceWorker';
+import { initCapacitor } from './utils/capacitor';
+
+// Native setup is intentionally defensive: web builds must remain independent
+// from Capacitor plugins while the app prepares safe-area handling.
+void initCapacitor();
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -23,7 +28,7 @@ React 把 App（以及 App 里的路由、Layout、页面）画进 div#root
 用户看到的是你的整站界面（登录页 / 树洞 / 发帖等）
 */
 
-// --- Capacitor Safe Area + JPush (minimal, defensive, cannot crash) ---
+// --- Capacitor Safe Area (minimal, defensive, cannot crash) ---
 setTimeout(function () {
   try {
     var C = window.Capacitor;
@@ -39,29 +44,11 @@ setTimeout(function () {
           document.documentElement.style.setProperty('--safe-top', px);
           document.documentElement.style.setProperty('--safe-pt', (info.height + 12) + 'px');
         }
-      }).catch(function () {});
+      }).catch(function () {
+        // Native status bar APIs are optional on some builds.
+      });
     }
-
-    // JPush (replaces FCM for all-platform push)
-    try {
-      var jp = window.plugins && window.plugins.jPushPlugin;
-      if (jp) {
-        jp.init();
-        jp.getRegistrationID(function (rid) {
-          console.log('[jpush] regId:', rid);
-          // POST rid → /api/push/register
-          fetch((window.__API_BASE_URL__ || '') + '/api/push/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token: rid, platform: C.getPlatform(), provider: 'jpush' }),
-          }).catch(function () {});
-        });
-        // Notification tapped → navigate
-        window.addEventListener('jpush.openNotification', function (e) {
-          var url = (e.detail && e.detail.extras && e.detail.extras.url);
-          if (url) window.location.href = url;
-        });
-      }
-    } catch (_) {}
-  } catch (_) {}
+  } catch {
+    // Native-only setup must never prevent the web app from rendering.
+  }
 }, 500);
