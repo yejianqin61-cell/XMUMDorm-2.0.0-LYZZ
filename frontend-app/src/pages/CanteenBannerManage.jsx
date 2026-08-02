@@ -16,6 +16,7 @@ import { getApiErrorMessage } from '@shared/utils/apiError';
 import { productImageUrl } from '@shared/api/config';
 import { QK } from '@shared/query/queryKeys';
 import './CanteenHome.css';
+import './AdminOperations.css';
 
 const EMPTY_FORM = {
   type: 'content',

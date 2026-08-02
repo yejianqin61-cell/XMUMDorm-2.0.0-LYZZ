@@ -535,12 +535,12 @@ router.post('/login', async (req, res) => {
     let users;
     if (hasEmail) {
       users = await query(
-        'SELECT id, student_id, username, email, password_hash, role FROM users WHERE email = ?',
+        'SELECT id, student_id, username, email, password_hash, role, status FROM users WHERE email = ?',
         [String(email).trim()]
       );
     } else {
       users = await query(
-        'SELECT id, student_id, username, email, password_hash, role FROM users WHERE username = ?',
+        'SELECT id, student_id, username, email, password_hash, role, status FROM users WHERE username = ?',
         [String(username).trim()]
       );
     }
@@ -554,6 +554,9 @@ router.post('/login', async (req, res) => {
     }
 
     const user = users[0];
+    if (user.status === 'deactivated') {
+      return res.status(403).json({ status: -1, message: '该账号已注销，无法登录。' });
+    }
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
 
     if (!isPasswordValid) {

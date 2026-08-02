@@ -1,0 +1,20 @@
+{
+  "rounds": [
+    {
+      "round": 1,
+      "action": "初稿生成",
+      "issues": []
+    },
+    {
+      "round": 2,
+      "action": "真实页面字段复核",
+      "issues": []
+    },
+    {
+      "round": 3,
+      "action": "制式模板和 AI 味复核",
+      "issues": []
+    }
+  ],
+  "module_count": 8
+}

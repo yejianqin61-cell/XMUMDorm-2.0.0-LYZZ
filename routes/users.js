@@ -390,6 +390,21 @@ router.get('/:id/profile', async (req, res) => {
   }
 });
 
+router.delete('/me', authenticateToken, async (req, res) => {
+  try {
+    const result = await query("UPDATE users SET status = 'deactivated' WHERE id = ? AND status <> 'deactivated'", [req.user.id]);
+    if (!result.affectedRows) {
+      return res.status(400).json({ status: -1, message: '账号已注销或不存在' });
+    }
+
+    simpleCache.delete(`users:me:v1:${req.user.id}`);
+    res.status(200).json({ status: 0, message: '账号已注销' });
+  } catch (e) {
+    console.error('注销账号错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
 router.patch('/me', authenticateToken, async (req, res) => {
   try {
     const rawName = (req.body && (req.body.nickname ?? req.body.username)) || '';

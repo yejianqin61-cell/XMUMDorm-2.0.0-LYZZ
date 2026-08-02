@@ -1,0 +1,61 @@
+- generic [ref=f1e5]:
+  - main [ref=f1e6]:
+    - generic [ref=f1e712]:
+      - generic [ref=f1e713]:
+        - generic [ref=f1e714]: 二手市场
+        - generic [ref=f1e715]:
+          - button "搜索" [ref=f1e717] [cursor=pointer]
+          - button "我的收藏" [ref=f1e721] [cursor=pointer]
+          - button "发布" [ref=f1e726] [cursor=pointer]
+      - generic "分类" [ref=f1e727]:
+        - button "全部" [ref=f1e728] [cursor=pointer]
+        - button "电子产品" [ref=f1e729] [cursor=pointer]
+        - button "交通出行" [ref=f1e730] [cursor=pointer]
+        - button "日用百货" [ref=f1e731] [cursor=pointer]
+        - button "书籍资料" [ref=f1e732] [cursor=pointer]
+        - button "其他" [ref=f1e733] [cursor=pointer]
+      - generic "筛选" [ref=f1e734]:
+        - generic [ref=f1e735]:
+          - button "全部" [ref=f1e736] [cursor=pointer]
+          - button "在售" [ref=f1e737] [cursor=pointer]
+          - button "已售出" [ref=f1e738] [cursor=pointer]
+          - button "高级筛选" [ref=f1e739] [cursor=pointer]: 筛选
+        - generic [ref=f1e742]:
+          - generic [ref=f1e743]:
+            - generic [ref=f1e744]: 价格区间
+            - generic [ref=f1e745]:
+              - textbox [ref=f1e746]:
+                - /placeholder: 最低价
+              - generic [ref=f1e747]: —
+              - textbox [ref=f1e748]:
+                - /placeholder: 最高价
+          - generic [ref=f1e749]:
+            - button [ref=f1e750] [cursor=pointer]: 清除
+            - button [ref=f1e751] [cursor=pointer]: 应用
+      - link "初音未来 自提 初音未来 04/30 校园用户 RM 500 48查看 Ye Jianqin LY8" [ref=f1e753] [cursor=pointer]:
+        - /url: /about/second-hand/item/1
+        - img "初音未来" [ref=f1e755]
+        - generic [ref=f1e756]:
+          - generic [ref=f1e757]:
+            - generic [ref=f1e758]: 自提
+            - generic "初音未来" [ref=f1e759]
+          - generic [ref=f1e760]:
+            - generic [ref=f1e761]: 04/30
+            - generic [ref=f1e765]: ·
+            - generic [ref=f1e766]: 校园用户
+          - generic [ref=f1e767]:
+            - generic [ref=f1e768]: RM 500
+            - generic [ref=f1e769]: 48查看
+          - generic [ref=f1e770]:
+            - generic [ref=f1e772]: Ye Jianqin
+            - generic [ref=f1e773]: ·
+            - generic [ref=f1e774]: LY8
+  - tablist "主导航" [ref=f1e116]:
+    - link "广场" [ref=f1e117] [cursor=pointer]:
+      - /url: /about
+    - link "树洞" [ref=f1e122] [cursor=pointer]:
+      - /url: /
+    - link "食堂" [ref=f1e127] [cursor=pointer]:
+      - /url: /eat
+    - link "我的" [ref=f1e133] [cursor=pointer]:
+      - /url: /myzone

@@ -1,0 +1,79 @@
+- generic [ref=f1e5]:
+  - main [ref=f1e6]:
+    - generic "Tab pages" [ref=f1e604]:
+      - generic "Square" [ref=f1e606]:
+        - region "广场" [ref=f1e607]:
+          - generic [ref=f1e608]:
+            - heading "广场" [level=1] [ref=f1e609]
+            - generic [ref=f1e610]:
+              - button "刷新内容" [ref=f1e611] [cursor=pointer]
+              - button "发布内容" [ref=f1e617] [cursor=pointer]
+          - tablist "广场内容" [ref=f1e619]:
+            - tab "校园" [selected] [ref=f1e620] [cursor=pointer]
+            - tab "热搜" [ref=f1e621] [cursor=pointer]
+          - navigation "广场快捷入口" [ref=f1e622]:
+            - generic [ref=f1e623]:
+              - link "社团广场" [ref=f1e624] [cursor=pointer]:
+                - /url: /about/club
+              - link "马校一站通" [ref=f1e631] [cursor=pointer]:
+                - /url: /about/freshman-guide
+              - link "帮帮我" [ref=f1e636] [cursor=pointer]:
+                - /url: /about/errands
+              - link "出物" [ref=f1e643] [cursor=pointer]:
+                - /url: /about/second-hand
+          - generic [ref=f1e650]:
+            - generic [ref=f1e651]:
+              - button "上一张" [ref=f1e652] [cursor=pointer]:
+                - generic [ref=f1e653]: ‹
+              - button "下一张" [ref=f1e654] [cursor=pointer]:
+                - generic [ref=f1e655]: ›
+              - button "新生指南" [ref=f1e656] [cursor=pointer]:
+                - generic [ref=f1e658]:
+                  - generic [ref=f1e659]: 新生指南
+                  - generic [ref=f1e661]: 有问必答
+            - generic [ref=f1e662]:
+              - button "第 1 张" [ref=f1e663] [cursor=pointer]
+              - button "第 2 张" [ref=f1e664] [cursor=pointer]
+              - button "第 3 张" [ref=f1e665] [cursor=pointer]
+              - button "第 4 张" [ref=f1e666] [cursor=pointer]
+              - button "第 5 张" [ref=f1e667] [cursor=pointer]
+              - button "第 6 张" [ref=f1e668] [cursor=pointer]
+          - tabpanel "校园" [ref=f1e669]:
+            - generic [ref=f1e670]:
+              - article [ref=f1e671]:
+                - link [ref=f1e672] [cursor=pointer]:
+                  - /url: /about/campus/2
+                  - generic [ref=f1e673]:
+                    - paragraph [ref=f1e674]: Ye Jianqin · 2026年5月18日 13:54
+                    - heading "Dorm 's post" [level=2] [ref=f1e675]
+                    - paragraph [ref=f1e676]: 大概我们就是最不正经的官方了
+                - generic "内容操作" [ref=f1e677]:
+                  - button "点赞" [ref=f1e678] [cursor=pointer]:
+                    - generic [ref=f1e681]: "0"
+                  - link "查看评论" [ref=f1e682] [cursor=pointer]:
+                    - /url: /about/campus/2
+                    - generic [ref=f1e685]: "0"
+                  - button "打开内容" [ref=f1e686] [cursor=pointer]
+              - article [ref=f1e691]:
+                - link [ref=f1e692] [cursor=pointer]:
+                  - /url: /about/campus/1
+                  - generic [ref=f1e693]:
+                    - paragraph [ref=f1e694]: Ye Jianqin · 2026年5月18日 13:39
+                    - heading "Dorm_Official" [level=2] [ref=f1e695]
+                    - paragraph [ref=f1e696]: We are getting closer to our goal step by step. The app version on smartphone will come soon, Please Stay Tuned
+                - generic "内容操作" [ref=f1e697]:
+                  - button "点赞" [ref=f1e698] [cursor=pointer]:
+                    - generic [ref=f1e701]: "0"
+                  - link "查看评论" [ref=f1e702] [cursor=pointer]:
+                    - /url: /about/campus/1
+                    - generic [ref=f1e705]: "0"
+                  - button "打开内容" [ref=f1e706] [cursor=pointer]
+  - tablist "主导航" [ref=f1e116]:
+    - link "广场" [ref=f1e117] [cursor=pointer]:
+      - /url: /about
+    - link "树洞" [ref=f1e122] [cursor=pointer]:
+      - /url: /
+    - link "食堂" [ref=f1e127] [cursor=pointer]:
+      - /url: /eat
+    - link "我的" [ref=f1e133] [cursor=pointer]:
+      - /url: /myzone

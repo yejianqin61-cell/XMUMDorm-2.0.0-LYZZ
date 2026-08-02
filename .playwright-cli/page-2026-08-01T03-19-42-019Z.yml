@@ -1,0 +1,26 @@
+- generic [ref=f1e5]:
+  - main [ref=f1e6]:
+    - generic [ref=f1e575]:
+      - generic [ref=f1e576]:
+        - generic [ref=f1e577]: 跑腿服务
+        - link "发布任务" [ref=f1e578] [cursor=pointer]:
+          - /url: /publish?entry=errand
+          - generic [ref=f1e580]: 发布
+      - tablist "Errand tabs" [ref=f1e581]:
+        - tab "全部" [selected] [ref=f1e582] [cursor=pointer]
+        - tab "代取" [ref=f1e584] [cursor=pointer]
+        - tab "代购" [ref=f1e590] [cursor=pointer]
+        - tab "紧急" [ref=f1e595] [cursor=pointer]
+      - generic [ref=f1e599]:
+        - button "进行中" [ref=f1e600] [cursor=pointer]
+        - button "已接单" [ref=f1e601] [cursor=pointer]
+      - generic [ref=f1e602]: 暂无任务
+  - tablist "主导航" [ref=f1e116]:
+    - link "广场" [ref=f1e117] [cursor=pointer]:
+      - /url: /about
+    - link "树洞" [ref=f1e122] [cursor=pointer]:
+      - /url: /
+    - link "食堂" [ref=f1e127] [cursor=pointer]:
+      - /url: /eat
+    - link "我的" [ref=f1e133] [cursor=pointer]:
+      - /url: /myzone

@@ -768,47 +768,96 @@
   font-weight: 650;
 }
 
-/* Task009-04: the retained carousel remains media, not a floating card. */
-.square-home-page--timeline .canteen-banner-wrap {
-  margin: 12px 0 0;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--square-feed-border);
-}
-
-.square-home-page--timeline .canteen-banner-card,
-.square-home-page--timeline .canteen-banner-skeleton {
-  border: 0;
-  border-radius: 8px;
-  box-shadow: none;
-}
-
-.square-home-page--timeline .canteen-banner-nav,
-.square-home-page--timeline .canteen-banner-admin-link {
-  border-radius: 8px;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-}
-
-.square-home-page--timeline .canteen-banner-nav {
-  background: rgba(15, 20, 25, 0.72);
-}
-
-.square-home-page--timeline .canteen-banner-vignette-top,
-.square-home-page--timeline .canteen-banner-vignette-bottom {
-  display: none;
-}
-
-.square-home-page--timeline .canteen-banner-content {
-  padding: 10px 12px;
-  background: rgba(15, 20, 25, 0.72);
-}
-
 .square-home-page--timeline :focus-visible {
   outline: 2px solid var(--square-feed-accent);
   outline-offset: 2px;
 }
 
 /* Keep the dedicated trending route on the same plain information rhythm. */
+.square-trending-detail-page .square-home-inner {
+  gap: 0;
+  padding: 0 0 calc(var(--tabbar-height, 72px) + var(--safe-bottom, 0px) + 16px);
+}
+
+.square-trending-detail-page .square-trending-detail-hero,
+.square-trending-detail-page .square-trending-discussion {
+  margin: 0;
+  padding: 16px;
+  border: 0;
+  border-bottom: 1px solid #eff3f4;
+  border-radius: 0;
+  box-shadow: none;
+  background: #fff;
+}
+
+.square-trending-detail-page .square-trending-topic-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.square-trending-detail-page .square-trending-topic-header-main {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 5px;
+}
+
+.square-trending-detail-page .square-trending-topic-title-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.square-trending-detail-page .square-trending-topic-icon {
+  flex: 0 0 auto;
+  font-size: 16px;
+}
+
+.square-trending-detail-page .square-trending-topic-title {
+  margin: 0;
+  overflow: hidden;
+  color: #0f1419;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.square-trending-detail-page .square-trending-topic-desc {
+  margin: 0;
+  overflow: hidden;
+  color: #536471;
+  font-size: 14px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.square-trending-detail-page .square-trending-join-btn {
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid #0f1419;
+  border-radius: 17px;
+  box-shadow: none;
+  background: #0f1419;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.square-trending-detail-page .square-trending-discussion-heading h2 {
+  margin: 0;
+  color: #0f1419;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
 .square-trending-list--page {
   gap: 0;
 }

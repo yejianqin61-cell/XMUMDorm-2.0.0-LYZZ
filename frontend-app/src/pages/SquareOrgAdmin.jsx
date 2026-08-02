@@ -22,6 +22,7 @@ import {
 import { productImageUrl } from '@shared/api/config';
 import { QK } from '@shared/query/queryKeys';
 import './SquareHome.css';
+import './AdminOperations.css';
 
 export default function SquareOrgAdmin() {
   const [searchParams] = useSearchParams();
@@ -31,7 +32,7 @@ export default function SquareOrgAdmin() {
     return 'orgs';
   });
   return (
-    <div className="square-home-page">
+    <div className="square-home-page square-admin-page">
       <div className="square-home-inner">
         <div className="square-campus-tabs" style={{ marginBottom: 12 }}>
           {[
@@ -132,7 +133,7 @@ function OrgForm({ org, onClose }) {
   };
 
   return (
-    <div style={{ marginTop: 12, padding: 12, borderRadius: 12, background: 'var(--post-ios-card)', boxShadow: 'var(--post-ios-shadow-card)' }}>
+    <div className="square-admin-form" style={{ marginTop: 12 }}>
       <h4 style={{ margin: '0 0 10px', fontSize: 14 }}>{org ? '编辑组织' : '新建组织'}</h4>
       <form onSubmit={handleSubmit}>
         <input className="canteen-search-input" style={{ width: '100%', boxSizing: 'border-box', marginBottom: 8 }} placeholder="组织名称" value={name} onChange={(e) => setName(e.target.value)} maxLength={100} required />
@@ -204,7 +205,7 @@ function MemberManager({ org, onClose }) {
   };
 
   return (
-    <div style={{ marginTop: 12, padding: 12, borderRadius: 12, background: 'var(--post-ios-card)', boxShadow: 'var(--post-ios-shadow-card)' }}>
+    <div className="square-admin-form" style={{ marginTop: 12 }}>
       <div className="square-section-header">
         <h4 style={{ margin: 0, fontSize: 14 }}>{org.name} · 成员 ({members.length})</h4>
         <button type="button" className="square-section-more" onClick={onClose}>关闭</button>
@@ -428,7 +429,7 @@ function BannerForm({ banner, onClose }) {
   };
 
   return (
-    <div style={{ marginTop: 12, padding: 12, borderRadius: 12, background: 'var(--post-ios-card)', boxShadow: 'var(--post-ios-shadow-card)' }}>
+    <div className="square-admin-form" style={{ marginTop: 12 }}>
       <h4 style={{ margin: '0 0 10px', fontSize: 14 }}>{isEdit ? '编辑轮播' : '新建轮播'}</h4>
 
       {previewUrl && <img src={previewUrl} alt="" style={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: 8, marginBottom: 10 }} />}
@@ -513,7 +514,7 @@ function TrendingForm({ onClose }) {
   };
 
   return (
-    <div style={{ marginTop: 12, padding: 12, borderRadius: 12, background: 'var(--post-ios-card)', boxShadow: 'var(--post-ios-shadow-card)' }}>
+    <div className="square-admin-form" style={{ marginTop: 12 }}>
       <h4 style={{ margin: '0 0 10px', fontSize: 14 }}>新建热搜话题</h4>
       <form onSubmit={handleSubmit}>
         <input className="canteen-search-input" style={{ width: '100%', boxSizing: 'border-box', marginBottom: 8 }} placeholder="话题标题" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={200} required />

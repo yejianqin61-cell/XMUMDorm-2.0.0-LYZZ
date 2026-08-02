@@ -1,0 +1,59 @@
+- generic [ref=f1e5]:
+  - main [ref=f1e6]:
+    - generic [ref=f1e416]:
+      - generic [ref=f1e417]:
+        - generic [ref=f1e418]:
+          - generic [ref=f1e419]:
+            - link "我的收藏" [ref=f1e420] [cursor=pointer]:
+              - /url: /about/freshman-guide/me
+            - generic [ref=f1e423]: 马校一站通
+          - button "搜索" [ref=f1e426] [cursor=pointer]
+        - generic [ref=f1e430]: 美食 · 游玩 · 榴莲 · 校内周边咨询 · 学法分享 · 课程测评
+        - generic [ref=f1e431]:
+          - link "投稿/发布" [ref=f1e432] [cursor=pointer]:
+            - /url: /about/freshman-guide/new
+          - link "新建课程评价" [ref=f1e433] [cursor=pointer]:
+            - /url: /about/freshman-guide/course-review/new
+      - generic [ref=f1e434]:
+        - link "全部" [ref=f1e435] [cursor=pointer]:
+          - /url: /about/freshman-guide?tab=all&q=
+        - link "美食" [ref=f1e436] [cursor=pointer]:
+          - /url: /about/freshman-guide?tab=food&q=
+        - link "新生指南" [ref=f1e437] [cursor=pointer]:
+          - /url: /about/freshman-guide?tab=freshman-guide&q=
+        - link "课程测评" [ref=f1e438] [cursor=pointer]:
+          - /url: /about/freshman-guide/course-review
+        - link "游玩" [ref=f1e439] [cursor=pointer]:
+          - /url: /about/freshman-guide?tab=explore&q=
+        - link "生活技巧" [ref=f1e440] [cursor=pointer]:
+          - /url: /about/freshman-guide?tab=life-tips&q=
+        - link "榴莲" [ref=f1e441] [cursor=pointer]:
+          - /url: /about/freshman-guide?tab=durian&q=
+        - link "避坑指南" [ref=f1e442] [cursor=pointer]:
+          - /url: /about/freshman-guide?tab=avoid-pit&q=
+        - link "校内周边咨询" [ref=f1e443] [cursor=pointer]:
+          - /url: /about/freshman-guide?tab=campus-guide&q=
+        - link "常见问题" [ref=f1e444] [cursor=pointer]:
+          - /url: /about/freshman-guide?tab=faq&q=
+        - link "学法分享" [ref=f1e445] [cursor=pointer]:
+          - /url: /about/freshman-guide?tab=study-tips&q=
+      - link "TEST test Ye Jianqin campus-guide 浏览量 点赞 收藏" [ref=f1e447] [cursor=pointer]:
+        - /url: /about/freshman-guide/a/1
+        - generic [ref=f1e448]:
+          - generic [ref=f1e449]: TEST
+          - generic [ref=f1e450]: test
+          - generic [ref=f1e451]:
+            - generic "Ye Jianqin" [ref=f1e452]
+            - generic [ref=f1e454]: campus-guide
+            - generic "浏览量" [ref=f1e455]: "22"
+            - generic "点赞" [ref=f1e459]: "1"
+            - generic "收藏" [ref=f1e462]: "1"
+  - tablist "主导航" [ref=f1e116]:
+    - link "广场" [ref=f1e117] [cursor=pointer]:
+      - /url: /about
+    - link "树洞" [ref=f1e122] [cursor=pointer]:
+      - /url: /
+    - link "食堂" [ref=f1e127] [cursor=pointer]:
+      - /url: /eat
+    - link "我的" [ref=f1e133] [cursor=pointer]:
+      - /url: /myzone

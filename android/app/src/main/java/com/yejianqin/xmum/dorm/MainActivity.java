@@ -1,4 +1,4 @@
-package com.dorm.app;
+package com.yejianqin.xmum.dorm;
 
 import com.getcapacitor.BridgeActivity;
 

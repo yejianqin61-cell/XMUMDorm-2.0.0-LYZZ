@@ -10,6 +10,7 @@ import SquareHome from '../pages/SquareHome';
 import MyZone from '../pages/MyZone';
 import { useLanguage } from '../context/LanguageContext';
 import { enterFullscreen } from '../utils/fullscreen';
+import { isNative } from '../utils/capacitor';
 import { useAuth } from '../context/AuthContext';
 import { getUnreadAnnouncements, markNotificationRead, markNotificationsReadBatch } from '@shared/api/notifications';
 import { QK } from '@shared/query/queryKeys';
@@ -160,6 +161,7 @@ function Layout() {
   };
 
   const handleFirstInteraction = () => {
+    if (isNative()) return;
     if (hasTriedFullscreenRef.current) return;
     hasTriedFullscreenRef.current = true;
     enterFullscreen();
