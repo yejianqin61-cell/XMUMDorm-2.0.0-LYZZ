@@ -15,6 +15,7 @@ import { useAuth } from '../context/AuthContext';
 import { getUnreadAnnouncements, markNotificationRead, markNotificationsReadBatch } from '@shared/api/notifications';
 import { QK } from '@shared/query/queryKeys';
 import { BACKGROUND_IMAGES } from '../config/backgrounds';
+import { Toast } from '../context/ToastContext';
 import './TopBar.css';
 import './TabBar.css';
 import './Layout.css';
@@ -143,6 +144,7 @@ function Layout() {
     } catch (err) {
       queryClient.setQueryData(key, previous);
       console.warn('[Layout] mark announcement read failed:', err);
+      Toast.error(isZh ? '确认公告失败，请重试' : 'Could not confirm announcement. Please try again.');
     }
   };
 
@@ -157,6 +159,7 @@ function Layout() {
     } catch (err) {
       queryClient.setQueryData(key, current);
       console.warn('[Layout] mark all announcements read failed:', err);
+      Toast.error(isZh ? '确认公告失败，请重试' : 'Could not confirm announcements. Please try again.');
     }
   };
 
@@ -317,21 +320,24 @@ function Layout() {
       {showAnnouncements && announcements.length > 0 && (
         <div className="app-ann-modal-backdrop" role="dialog" aria-modal="true" aria-label="全站公告 Site-wide announcements">
           <div className="app-ann-modal">
-            <h2 className="app-ann-title">全站公告 Site-wide Announcements</h2>
+            <h2 className="app-ann-title">{isZh ? '全站公告' : 'Site-wide announcements'}</h2>
             <div className="app-ann-list">
               {announcements.map((n) => (
                 <div key={n.id} className="app-ann-item">
-                  <p className="app-ann-item-title">{n.extra?.title || '公告 Announcement'}</p>
+                  <p className="app-ann-item-title">{n.target?.title || n.extra?.title || (isZh ? '公告' : 'Announcement')}</p>
                   <p className="app-ann-item-meta">
-                    {n.from_user?.nickname || n.from_user?.username || '管理员 Admin'} ·{' '}
+                    {n.from_user?.nickname || n.from_user?.username || (isZh ? '管理员' : 'Admin')} ·{' '}
                     {n.created_at ? new Date(n.created_at).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''}
+                  </p>
+                  <p className="app-ann-item-content">
+                    {String(n.extra?.content || '').trim() || (isZh ? '暂无公告正文。' : 'No announcement body.')}
                   </p>
                   <button
                     type="button"
                     className="app-ann-know-btn"
                     onClick={() => handleAnnouncementKnow(n.id)}
                   >
-                    知道了 Got it
+                    {isZh ? '知道了' : 'Got it'}
                   </button>
                 </div>
               ))}
@@ -342,7 +348,7 @@ function Layout() {
                 className="app-ann-know-all-btn"
                 onClick={handleAnnouncementKnowAll}
               >
-                全部知道了 Mark all as read
+                {isZh ? '全部知道了' : 'Mark all as read'}
               </button>
             )}
           </div>
