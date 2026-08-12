@@ -2,6 +2,13 @@
 
 .post-detail-page {
   position: relative;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+  /* Keep native vertical scrolling and let media controls consume horizontal drags. */
+  touch-action: manipulation;
   padding: 14px 18px calc(var(--tabbar-height, 76px) + var(--safe-bottom, 0px) + 86px);
   min-height: 100%;
   background: #fbfcfe;
@@ -210,6 +217,7 @@
 /* Media block */
 .post-detail-media {
   margin: 10px 0 14px;
+  min-width: 0;
 }
 
 .post-detail-image-wrap {
