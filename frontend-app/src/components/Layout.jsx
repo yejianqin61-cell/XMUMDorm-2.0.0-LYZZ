@@ -318,9 +318,9 @@ function Layout() {
         </>
       )}
       {showAnnouncements && announcements.length > 0 && (
-        <div className="app-ann-modal-backdrop" role="dialog" aria-modal="true" aria-label="全站公告 Site-wide announcements">
+        <div className="app-ann-modal-backdrop" role="dialog" aria-modal="true" aria-label={isZh ? '全站公告' : 'Announcement'}>
           <div className="app-ann-modal">
-            <h2 className="app-ann-title">{isZh ? '全站公告' : 'Site-wide announcements'}</h2>
+            <h2 className="app-ann-title">{isZh ? '全站公告' : 'Announcement'}</h2>
             <div className="app-ann-list">
               {announcements.map((n) => (
                 <div key={n.id} className="app-ann-item">
