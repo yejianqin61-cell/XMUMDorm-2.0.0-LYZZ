@@ -36,6 +36,15 @@ function displayName(user) {
   return (user.nickname || user.username || 'Someone').trim();
 }
 
+function getAnnouncementCopy(group, isZh) {
+  const latest = group?.latest || {};
+  const title = String(group?.contentTitle || latest.extra?.title || '').trim()
+    || (isZh ? '公告' : 'Announcement');
+  const body = String(latest.extra?.content || '').trim()
+    || (isZh ? '暂无公告正文。' : 'No announcement body.');
+  return { title, body };
+}
+
 function buildAffairsText({ isZh, latest }) {
   const title = latest?.extra?.targetTitle || latest?.target?.title || '';
   const titlePart = title ? (isZh ? `《${title}》` : `"${title}"`) : (isZh ? '该活动' : 'this activity');
@@ -218,12 +227,21 @@ function Mailbox() {
         <ul className="social-stream">
           {groups.map((group, index) => {
             const isAnnouncement = group.target?.type === 'announcement' || group.latest?.type === 'announcement' || group.latest?.type === 'system_announcement';
+            const announcementCopy = isAnnouncement ? getAnnouncementCopy(group, isZh) : null;
             const aggregateText = group.isAffair ? buildAffairsText({ isZh, latest: group.latest }) : group.category === 'transaction'
               ? buildMarketplaceText({ isZh, names: group.names, othersCount: group.othersCount, contentTitle: group.contentTitle })
               : buildAggregateText({ isZh, names: group.names, othersCount: group.othersCount, likeCount: group.likeCount, commentCount: group.commentCount, isPost: group.isPost, contentTitle: group.contentTitle });
             return <li key={group.key} className={`social-card ${group.unreadCount > 0 ? 'is-unread' : ''}`} style={{ animationDelay: `${index * 70}ms` }}>
               <Link to={group.contentPath} className="social-card-link" onClick={() => handleGroupClick(group)}>
-                {isAnnouncement ? <div className="mailbox-ann-only" aria-label={isZh ? '公告内容' : 'Announcement content'}>{String(group.contentTitle || group.latest?.extra?.content || '').trim() || (isZh ? '（公告内容为空）' : '(Empty announcement)')}</div> : <>
+                {isAnnouncement ? <div className="mailbox-announcement" aria-label={isZh ? '公告内容' : 'Announcement content'}>
+                  <div className="mailbox-announcement-head">
+                    <span className="mailbox-announcement-label">{isZh ? '公告' : 'Announcement'}</span>
+                    <span className="social-time">{formatTime(group.createdAt, isZh)}</span>
+                  </div>
+                  <div className="mailbox-announcement-title">{announcementCopy.title}</div>
+                  <div className="mailbox-announcement-body">{announcementCopy.body}</div>
+                  <div className="mailbox-announcement-meta">{displayName(group.latest?.from_user)}</div>
+                </div> : <>
                   <div className="social-head"><div className="social-avatars" aria-label={isZh ? '发送者' : 'Senders'}>{group.topUsers.map((user, userIndex) => <span key={`${user?.id || userIndex}`} className="social-avatar" style={{ zIndex: 10 - userIndex }}><img src={user?.avatar || '/default-avatar.svg'} alt="" /></span>)}{group.othersCount > 0 && <span className="social-others">+{group.othersCount}</span>}</div><span className="social-time">{formatTime(group.createdAt, isZh)}</span></div>
                   <div className="social-title">{group.contentTitle || (isZh ? '（无标题）' : '(Untitled)')}</div>
                   <div className="social-text">{aggregateText}</div>
