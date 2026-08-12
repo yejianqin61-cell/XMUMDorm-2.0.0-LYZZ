@@ -254,11 +254,11 @@ function ActivityDetail() {
     },
   });
 
-  if (q.isLoading) return <div className="state-loading">加载中</div>;
-  if (q.isError || !a) return <div className="state-error">{q.error?.message || (isZh ? '加载失败' : 'Failed')}</div>;
+  if (q.isLoading) return <div className="post-detail-page"><div className="state-loading">加载中</div></div>;
+  if (q.isError || !a) return <div className="post-detail-page"><div className="state-error">{q.error?.message || (isZh ? '加载失败' : 'Failed')}</div></div>;
 
   return (
-    <div className="club-page club-page--floating-comments">
+    <div className="post-detail-page club-page club-page--floating-comments">
       <div className="club-activity-detail-main">
         <div className="club-profile-top">
         <button type="button" className="club-back" onClick={() => nav(-1)} aria-label={isZh ? '返回' : 'Back'}>
