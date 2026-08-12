@@ -86,7 +86,7 @@ function PostNew() {
     e.preventDefault();
     const trimmedTitle = title.trim();
     const trimmed = content.trim();
-    if (!isAdmin && !trimmedTitle) {
+    if (!trimmedTitle) {
       Toast.error(isEn ? 'Title is required' : '请输入标题');
       return;
     }
@@ -97,7 +97,7 @@ function PostNew() {
     setLoading(true);
     try {
       const payload = {
-        title: isAdmin ? undefined : trimmedTitle,
+        title: trimmedTitle,
         content: trimmed,
         images: imageFiles.length ? imageFiles : undefined,
       };
@@ -192,7 +192,7 @@ function PostNew() {
             </div>
           </div>
         )}
-        {!isAdmin && (
+        {(
           <div className="postnew-section">
             <label className="postnew-label">{isEn ? 'Title 标题（required）' : '标题 Title（必填 / required）'}</label>
             <input
@@ -248,7 +248,7 @@ function PostNew() {
         <button
           type="submit"
           className="postnew-submit pressable"
-          disabled={loading || (!isAdmin && !title.trim()) || !content.trim()}
+          disabled={loading || !title.trim() || !content.trim()}
         >
           {loading ? (isAdmin ? '发布公告中…' : '发布中…') : (isAdmin ? '发布公告 Announcement' : '发布 Post')}
         </button>

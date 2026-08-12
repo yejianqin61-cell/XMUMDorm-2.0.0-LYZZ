@@ -297,11 +297,11 @@ router.post('/', authenticateToken, checkSanction, sensitiveWordFilter, (req, re
 
     // 公告：给全站用户各插入一条未读通知
     if (type === 'announcement') {
-      // 通知页仅展示公告内容：这里存一段更完整的内容片段（避免只有“标题”）
-      const extra = JSON.stringify({ content: content.slice(0, 600) });
+      // 保持弹窗、信箱与详情页使用同一份公告摘要契约。
+      const extra = JSON.stringify({ title: title || null, content: content.slice(0, 600) });
       await query(
         `INSERT INTO notifications (user_id, type, post_id, from_user_id, extra)
-         SELECT id, 'system_announcement', ?, ?, ? FROM users`,
+         SELECT id, 'system_announcement', ?, ?, ? FROM users WHERE status = 'active'`,
         [postId, req.user.id, extra]
       );
     }

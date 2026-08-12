@@ -563,11 +563,12 @@ router.post('/announcements', async (req, res) => {
       [adminId, title, content]
     );
     const postId = result.insertId;
+    const extra = JSON.stringify({ title: String(title).trim(), content: String(content).trim().slice(0, 600) });
 
     await query(
-      `INSERT INTO notifications (user_id, type, post_id, from_user_id)
-       SELECT u.id, 'system_announcement', ?, ? FROM users u WHERE u.status = 'active'`,
-      [postId, adminId]
+      `INSERT INTO notifications (user_id, type, post_id, from_user_id, extra)
+       SELECT u.id, 'system_announcement', ?, ?, ? FROM users u WHERE u.status = 'active'`,
+      [postId, adminId, extra]
     );
 
     logAudit({
