@@ -163,6 +163,16 @@ function Layout() {
     }
   };
 
+  const handleAnnouncementOpen = async (announcement) => {
+    const path = announcement?.target?.path;
+    if (!path || path === '#') {
+      Toast.error(isZh ? '公告详情暂不可用' : 'Announcement details are unavailable.');
+      return;
+    }
+    await handleAnnouncementKnow(announcement.id);
+    navigate(path);
+  };
+
   const handleFirstInteraction = () => {
     if (isNative()) return;
     if (hasTriedFullscreenRef.current) return;
@@ -332,13 +342,22 @@ function Layout() {
                   <p className="app-ann-item-content">
                     {String(n.extra?.content || '').trim() || (isZh ? '暂无公告正文。' : 'No announcement body.')}
                   </p>
-                  <button
-                    type="button"
-                    className="app-ann-know-btn"
-                    onClick={() => handleAnnouncementKnow(n.id)}
-                  >
-                    {isZh ? '知道了' : 'Got it'}
-                  </button>
+                  <div className="app-ann-actions">
+                    <button
+                      type="button"
+                      className="app-ann-detail-btn"
+                      onClick={() => handleAnnouncementOpen(n)}
+                    >
+                      {isZh ? '查看详情' : 'View details'}
+                    </button>
+                    <button
+                      type="button"
+                      className="app-ann-know-btn"
+                      onClick={() => handleAnnouncementKnow(n.id)}
+                    >
+                      {isZh ? '知道了' : 'Got it'}
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

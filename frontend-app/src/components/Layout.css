@@ -180,7 +180,8 @@
 }
 
 .app-ann-know-btn,
-.app-ann-know-all-btn {
+.app-ann-know-all-btn,
+.app-ann-detail-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -191,6 +192,19 @@
   font-size: 13px;
   font-weight: 500;
   font-family: inherit;
+}
+
+.app-ann-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.app-ann-detail-btn {
+  background: transparent;
+  border: 1px solid rgba(17, 24, 39, 0.3);
+  color: #111827;
 }
 
 .app-ann-know-btn {
