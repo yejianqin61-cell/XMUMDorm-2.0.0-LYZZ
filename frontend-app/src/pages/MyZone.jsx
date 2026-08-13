@@ -352,8 +352,6 @@ function MyZone() {
             <h2 className="px-1 pb-2 text-[15px] font-semibold text-slate-900">{t.more}</h2>
             <div className="divide-y divide-slate-100">
               <MoreRow to="/about/profile" title={t.aboutProfile} icon={<Info className="h-5 w-5" />} iconStyle={softIcon('rgba(59,130,246,0.12)', 'rgb(37,99,235)')} />
-              <MoreRow to="/about/disclaimer" title={t.aboutDisclaimer} icon={<ShieldAlert className="h-5 w-5" />} iconStyle={softIcon('rgba(234,179,8,0.14)', 'rgb(202,138,4)')} />
-              <MoreRow to="/about/contact" title={t.aboutContact} icon={<Mail className="h-5 w-5" />} iconStyle={softIcon('rgba(34,197,94,0.12)', 'rgb(22,163,74)')} />
               <motion.div whileTap={{ scale: 0.97 }} whileHover={{ scale: 1.01 }}>
                 <button
                   type="button"
