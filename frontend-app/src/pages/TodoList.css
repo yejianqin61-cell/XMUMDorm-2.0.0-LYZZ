@@ -54,17 +54,18 @@
 }
 
 .todolist-add-btn {
-  width: 100%;
-  padding: 14px 16px;
+  display: block;
+  width: calc(100% - 32px);
+  padding: 11px 16px;
+  margin: 0 16px 12px;
   border: 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
-  background: transparent;
-  color: var(--post-ios-system-blue, #007aff);
+  border-radius: 12px;
+  background: var(--post-ios-system-blue, #007aff);
+  color: #fff;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  margin-bottom: 0;
-  text-align: left;
+  text-align: center;
 }
 
 .todolist-form {
