@@ -184,8 +184,6 @@ export default function SquareHome() {
         </button>
       </div>
 
-      <TodayCampusQuickActions actions={PRIMARY_ACTIONS} />
-
       {tab === 'campus' ? (
         <CanteenBannerCarousel
           fetchFn={getSquareBanners}
@@ -193,6 +191,8 @@ export default function SquareHome() {
           adminTo="/about/admin/orgs?tab=banners"
         />
       ) : null}
+
+      <TodayCampusQuickActions actions={PRIMARY_ACTIONS} />
 
       {tab === 'campus' ? (
         <div className="square-notice-tabs" role="tablist" aria-label={isEn ? 'Notice sources' : '通知来源'}>
