@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { Toast } from '../context/ToastContext';
+import { getApiErrorMessage } from '@shared/utils/apiError';
 import { getTodos, createTodo, updateTodo, toggleTodo, deleteTodo } from '@shared/api/todos';
 import { QK } from '@shared/query/queryKeys';
 import {
@@ -84,7 +86,9 @@ export default function TodoList() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['todos'] });
       resetForm();
+      Toast.success(isZh ? '已创建' : 'Created');
     },
+    onError: (error) => Toast.error(getApiErrorMessage(error)),
   });
 
   const updateMutation = useMutation({
@@ -92,7 +96,9 @@ export default function TodoList() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['todos'] });
       resetForm();
+      Toast.success(isZh ? '已保存' : 'Saved');
     },
+    onError: (error) => Toast.error(getApiErrorMessage(error)),
   });
 
   const toggleMutation = useMutation({
@@ -105,6 +111,7 @@ export default function TodoList() {
     },
     onError: (_error, _id, context) => {
       context?.previous.forEach(([queryKey, cached]) => queryClient.setQueryData(queryKey, cached));
+      Toast.error(isZh ? '更新失败，已恢复原状态' : 'Update failed. Restored the previous state.');
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['todos'] }),
   });
@@ -269,7 +276,7 @@ export default function TodoList() {
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                <button type="submit" className="canteen-pick-btn pressable" disabled={!formTitle.trim()} style={{ flex: 1 }}>
+                <button type="submit" className="canteen-pick-btn pressable" disabled={!formTitle.trim() || createMutation.isPending || updateMutation.isPending} style={{ flex: 1 }}>
                   {editId ? (isZh ? '保存' : 'Save') : (isZh ? '创建' : 'Create')}
                 </button>
                 <button type="button" className="canteen-food-compose-btn pressable" onClick={resetForm}>

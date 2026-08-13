@@ -723,35 +723,28 @@
 }
 
 .square-home-page--timeline .today-campus-quick-actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   width: 100%;
   min-width: 0;
-  gap: 8px;
-  padding: 10px 0;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.square-home-page--timeline .today-campus-quick-actions::-webkit-scrollbar {
-  display: none;
+  gap: 0;
+  padding: 0;
 }
 
 .square-home-page--timeline .today-campus-quick-action-link {
-  flex: 0 0 auto;
-  min-width: 86px;
-  min-height: 44px;
-  display: inline-flex;
+  min-height: 64px;
+  display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 7px;
-  padding: 0 10px;
-  border: 1px solid #eff3f4;
-  border-radius: 8px;
-  background: #fff;
+  gap: 10px;
+  padding: 12px;
+  border: 0;
+  border-bottom: 1px solid #eff3f4;
   color: #0f1419;
   text-decoration: none;
-  white-space: nowrap;
+  min-width: 0;
 }
+
+.square-home-page--timeline .today-campus-quick-action-link:nth-child(odd) { border-right: 1px solid #eff3f4; }
 
 .square-home-page--timeline .today-campus-quick-action-link:active {
   background: #f7f9f9;
@@ -759,13 +752,16 @@
 
 .square-home-page--timeline .today-campus-quick-action__icon {
   display: inline-flex;
-  color: #536471;
+  flex: 0 0 auto;
+  color: #111;
+  stroke-width: 1.9;
 }
 
 .square-home-page--timeline .today-campus-quick-action__title {
   font-size: 13px;
-  line-height: 1.2;
+  line-height: 1.35;
   font-weight: 650;
+  overflow-wrap: anywhere;
 }
 
 .square-home-page--timeline :focus-visible {

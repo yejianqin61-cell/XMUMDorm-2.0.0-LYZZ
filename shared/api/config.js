@@ -3,10 +3,14 @@
  * - 开发环境：优先用空字符串，走同源请求，依赖 Vite 代理把 /api、/uploads 转到后端（手机用电脑 IP 访问时也生效）
  * - 若设置了 VITE_API_BASE_URL 则用该值（如生产或单独指定后端地址）
  */
-export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL !== undefined && import.meta.env.VITE_API_BASE_URL !== ''
-    ? import.meta.env.VITE_API_BASE_URL
-    : '';
+const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+const nativeApiBaseUrl = 'https://xmumdorm-200-lyzz-production.up.railway.app';
+const isNativeApp =
+  typeof window !== 'undefined' &&
+  window.Capacitor?.getPlatform?.() !== undefined &&
+  window.Capacitor.getPlatform() !== 'web';
+
+export const API_BASE_URL = configuredApiBaseUrl || (isNativeApp ? nativeApiBaseUrl : '');
 
 const rawProductDefault = import.meta.env.VITE_DEFAULT_PRODUCT_IMAGE_PATH;
 /** 商品默认图路径：frontend/public/products/ 下文件，不拼后端地址；可通过 VITE_DEFAULT_PRODUCT_IMAGE_PATH 覆盖 */

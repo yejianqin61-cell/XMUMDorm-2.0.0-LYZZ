@@ -66,7 +66,7 @@ async function attachNotificationExtra(rows) {
     try {
       if (item.post_id) {
         const isAnn = item.type === 'announcement' || item.type === 'system_announcement';
-        const title = item.post_title || (isAnn ? (item.extra && (item.extra.content || item.extra.title)) : null) || null;
+        const title = item.post_title || (isAnn ? (item.extra && item.extra.title) : null) || null;
         item.target = {
           type: isAnn ? 'announcement' : 'post',
           id: item.post_id,

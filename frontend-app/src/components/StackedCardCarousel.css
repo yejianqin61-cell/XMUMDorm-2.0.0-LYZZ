@@ -1,6 +1,7 @@
 /* 与帖子详情一致的多图叠卡轮播（由 PostDetail.css 抽出，供帖子/社团活动复用） */
 .post-detail-carousel {
   width: 100%;
+  touch-action: pan-x;
 }
 
 .post-detail-carousel-stack {

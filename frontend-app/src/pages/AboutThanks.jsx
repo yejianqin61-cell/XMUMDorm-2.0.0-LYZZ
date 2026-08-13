@@ -10,8 +10,8 @@ const THANKS_LIST = [
   },
 
   {
-    zh: '厦门大学马来西亚分校 李靖教授',
-    en: 'Xiamen University Malaysia Prof. Li Jing',
+    zh: '厦门大学马来西亚分校 李靖老师',
+    en: 'Xiamen University Malaysia Instructor Li Jing',
   },
   {
     zh: '黑马程序员 pink 刘晓强老师',
@@ -22,8 +22,8 @@ const THANKS_LIST = [
     en: 'Sichuan University Student Ye Yixiang',
   },
   {
-    zh: '中国科学院大学 郑贤教授',
-    en: 'University of Chinese Academy of Sciences Prof. Zheng Xian',
+    zh: '中国科学院大学 郑贤先生',
+    en: 'University of Chinese Academy of Sciences  Mr. Zheng Xian',
   },
   {
     zh: '福建省同安一中滨海校区 陈淑琦老师',
@@ -42,8 +42,8 @@ const THANKS_LIST = [
     en: 'Lai Xiujiao Clinic, Wuxian Town, Tong\'an District Dr. Cheng Xinzhao',
   },
   {
-    zh: '厦门大学马来西亚分校 Zhu Xiaofan教授',
-    en: 'Xiamen University Malaysia Prof. Zhu Xiaofan',
+    zh: '厦门大学马来西亚分校 Zhu Xiaofan老师',
+    en: 'Xiamen University Malaysia Instructor Zhu Xiaofan',
   },
   {
     zh: '厦门 涂宜晖女士',

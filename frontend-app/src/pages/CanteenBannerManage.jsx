@@ -39,6 +39,16 @@ function toLocalInputValue(iso) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+function getBannerStatus(b, isZh) {
+  if (!b.is_active) return isZh ? '未启用' : 'Inactive';
+  const now = Date.now();
+  const starts = b.starts_at ? new Date(b.starts_at).getTime() : NaN;
+  const ends = b.ends_at ? new Date(b.ends_at).getTime() : NaN;
+  if (Number.isFinite(starts) && starts > now) return isZh ? '待上线' : 'Scheduled';
+  if (Number.isFinite(ends) && ends < now) return isZh ? '已过期' : 'Expired';
+  return isZh ? '已上线' : 'Live';
+}
+
 function buildPayload(form) {
   return {
     type: form.type,
@@ -183,6 +193,9 @@ export default function CanteenBannerManage() {
           <p className="canteen-error">{t.loadFailed}</p>
         )}
 
+        {banners.length === 0 && !bannersQuery.isLoading && !bannersQuery.isError ? (
+          <p className="canteen-muted canteen-banner-admin-empty">{isZh ? '暂无轮播图，点击下方按钮创建。' : 'No carousel slides yet. Create the first one below.'}</p>
+        ) : null}
         <ul className="canteen-banner-admin-list">
           {banners.map((b) => (
             <li key={b.id} className="canteen-banner-admin-item">
@@ -194,9 +207,7 @@ export default function CanteenBannerManage() {
               <div className="canteen-banner-admin-item-body">
                 <div className="canteen-banner-admin-item-title">
                   {b.title}
-                  {!b.is_active && (
-                    <span className="canteen-banner-admin-inactive">{t.bannerInactive}</span>
-                  )}
+                  <span className={`canteen-banner-admin-status${b.is_active ? '' : ' canteen-banner-admin-inactive'}`}>{getBannerStatus(b, isZh)}</span>
                 </div>
                 {b.subtitle && (
                   <div className="canteen-banner-admin-item-sub">{b.subtitle}</div>

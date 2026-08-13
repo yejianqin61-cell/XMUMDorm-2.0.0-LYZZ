@@ -47,7 +47,7 @@ export function createPost(body) {
   const { title, content, type = 'normal', images, tagIds } = body || {};
   if (!content || !String(content).trim()) throw new Error('内容不能为空');
   const form = new FormData();
-  if (type !== 'announcement') {
+  if (title != null && String(title).trim()) {
     form.append('title', String(title || '').trim());
   }
   form.append('content', String(content).trim());

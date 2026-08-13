@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Award, ChevronRight, Code2, FileText, Users } from 'lucide-react';
+import { Award, ChevronRight, Code2, FileText, HeartHandshake, Mail, ShieldAlert, Users } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 const listContainer = {
@@ -76,6 +76,9 @@ function AboutProfile() {
                 icon={<Award className="h-5 w-5" />}
                 iconStyle={softIcon('rgba(16,185,129,0.14)', 'rgb(5,150,105)')}
               />
+              <AboutRow to="/about/thanks" title={isZh ? '特别鸣谢' : 'Special Thanks'} sub={isZh ? '感谢一路支持 Dorm 的朋友' : 'People who supported Dorm'} icon={<HeartHandshake className="h-5 w-5" />} iconStyle={softIcon('rgba(244,63,94,0.12)', 'rgb(225,29,72)')} />
+              <AboutRow to="/about/disclaimer" title={isZh ? '免责声明' : 'Disclaimer'} sub={isZh ? '平台内容与使用说明' : 'Platform and usage notes'} icon={<ShieldAlert className="h-5 w-5" />} iconStyle={softIcon('rgba(234,179,8,0.14)', 'rgb(202,138,4)')} />
+              <AboutRow to="/about/contact" title={isZh ? '联系我们' : 'Contact us'} sub={isZh ? '反馈、合作与内容处理' : 'Feedback, partnerships and reports'} icon={<Mail className="h-5 w-5" />} iconStyle={softIcon('rgba(34,197,94,0.12)', 'rgb(22,163,74)')} />
             </div>
           </motion.section>
         </motion.div>

@@ -60,6 +60,7 @@ const UserZone = lazy(() => import('../pages/UserZone'));
 const MyPosts = lazy(() => import('../pages/MyPosts'));
 const MyReviews = lazy(() => import('../pages/MyReviews'));
 const ProfileEdit = lazy(() => import('../pages/ProfileEdit'));
+const Settings = lazy(() => import('../pages/Settings'));
 const Mailbox = lazy(() => import('../pages/Mailbox'));
 const CanteenArea = lazy(() => import('../pages/CanteenArea'));
 const CanteenBannerManage = lazy(() => import('../pages/CanteenBannerManage'));
@@ -149,6 +150,7 @@ export const layoutRoutes = (
     <Route path="myzone/posts" element={renderLazyRoute(MyPosts)} />
     <Route path="myzone/reviews" element={renderLazyRoute(MyReviews)} />
     <Route path="myzone/profile" element={renderLazyRoute(ProfileEdit)} />
+    <Route path="myzone/settings" element={renderLazyRoute(Settings)} />
     <Route path="myzone/schedule" element={renderLazyRoute(Schedule)} />
     <Route path="myzone/todos" element={renderLazyRoute(TodoList)} />
     <Route path="myzone/diary" element={renderLazyRoute(Diary)} />

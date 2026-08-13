@@ -74,6 +74,7 @@ export const QK = {
   campusPostDetail: (id, tokenKey) => ['square', 'campusPost', id, tokenKey || '_guest'],
   campusPostComments: (id) => ['square', 'campusPost', id, 'comments'],
   squareBanners: () => ['square', 'banners'],
+  squareBannersAdmin: () => ['square', 'banners', 'admin'],
 
   todosList: (filters) => ['todos', 'list', filters],
   todosToday: () => ['todos', 'today'],
