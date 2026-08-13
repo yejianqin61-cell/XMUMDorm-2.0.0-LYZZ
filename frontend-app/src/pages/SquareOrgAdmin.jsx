@@ -14,7 +14,7 @@ import {
   getTrendingTopics,
   createTrendingTopic,
   deleteTrendingTopic,
-  getSquareBanners,
+  getSquareBannersAdmin,
   createSquareBannerForm,
   updateSquareBannerForm,
   deleteSquareBanner,
@@ -322,8 +322,8 @@ const EMPTY_BANNER = { type: 'content', title: '', subtitle: '', image_url: '', 
 function BannersAdmin() {
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({
-    queryKey: QK.squareBanners(),
-    queryFn: getSquareBanners,
+    queryKey: QK.squareBannersAdmin(),
+    queryFn: getSquareBannersAdmin,
     staleTime: 30 * 1000,
   });
   const banners = Array.isArray(data) ? data : data?.data || [];
@@ -332,7 +332,10 @@ function BannersAdmin() {
 
   const deleteMutation = useMutation({
     mutationFn: deleteSquareBanner,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QK.squareBanners() }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QK.squareBanners() });
+      queryClient.invalidateQueries({ queryKey: QK.squareBannersAdmin() });
+    },
   });
 
   return (
@@ -357,6 +360,7 @@ function BannersAdmin() {
                 <span style={{ fontSize: 14, fontWeight: 600 }}>{b.title}</span>
                 <span style={{ fontSize: 11, color: 'var(--post-ios-tertiary-label)', marginLeft: 8 }}>
                   {b.type === 'ad' ? '广告' : '内容'} · 排序 {b.sort_order || 0}
+                  {!b.is_active ? ' · 未上线' : ''}
                 </span>
               </div>
               <div style={{ display: 'flex', gap: 6 }}>
@@ -422,6 +426,7 @@ function BannerForm({ banner, onClose }) {
         await createSquareBannerForm(buildPayload(), imageFile || undefined);
       }
       queryClient.invalidateQueries({ queryKey: QK.squareBanners() });
+      queryClient.invalidateQueries({ queryKey: QK.squareBannersAdmin() });
       onClose();
     } catch (error) {
       console.error('保存轮播失败', error);

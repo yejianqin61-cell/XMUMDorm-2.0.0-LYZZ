@@ -111,6 +111,10 @@ export function getSquareBanners() {
   return get('/api/square/banners');
 }
 
+export function getSquareBannersAdmin() {
+  return get('/api/square/banners/admin');
+}
+
 export function createSquareBanner(body) {
   return post('/api/square/banners', body);
 }
