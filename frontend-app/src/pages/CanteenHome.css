@@ -144,6 +144,18 @@
   border-radius: 4px;
   padding: 0 4px;
 }
+.canteen-banner-admin-status {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 10px;
+  color: var(--post-ios-green, #248a3d);
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  padding: 0 4px;
+}
+.canteen-banner-admin-empty {
+  padding: 18px 0;
+}
 .canteen-banner-admin-item-sub,
 .canteen-banner-admin-item-meta {
   font-size: 12px;
