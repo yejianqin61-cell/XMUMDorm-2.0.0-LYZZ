@@ -8,21 +8,16 @@ import {
   Gauge,
   MapPin,
   LogIn,
-  LogOut,
-  Languages,
   NotebookText,
   Info,
-  Mail,
-  ShieldAlert,
   Star,
   Store,
-  UserX,
   UtensilsCrossed,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { deactivateMyAccount, getProfile } from '@shared/api/users';
+import { getProfile } from '@shared/api/users';
 import { getMyFavorites, getMyProductReviews } from '@shared/api/canteen';
 import { getScheduleWeek } from '@shared/api/schedule';
 import { getTodos } from '@shared/api/todos';
@@ -37,9 +32,6 @@ import LevelProgressBar from '../components/LevelProgressBar';
 function MyZoneStrings(isZh) {
   return {
     settings: isZh ? '设置' : 'Settings',
-    language: isZh ? '语言' : 'Language',
-    languageChinese: '中文',
-    languageEnglish: 'English',
     title: isZh ? '我的' : 'Profile',
     bioLoggedOut: isZh ? '登录后查看你的内容与工具入口。' : 'Log in to view your content and tools.',
     bioLoggedIn: isZh ? '欢迎回来，祝你今天也顺利。' : 'Welcome back. Have a great day.',
@@ -57,10 +49,7 @@ function MyZoneStrings(isZh) {
     aboutDisclaimer: isZh ? '免责声明' : 'Disclaimer',
     aboutContact: isZh ? '联系我们' : 'Contact us',
     storeManage: isZh ? '店铺管理' : 'Store management',
-    editProfile: isZh ? '编辑资料' : 'Edit profile',
-    logOut: isZh ? '退出登录' : 'Log out',
     logIn: isZh ? '登录' : 'Log in',
-    deactivate: isZh ? '注销账号' : 'Deactivate account',
   };
 }
 
@@ -106,11 +95,9 @@ function getTodoSortValue(todo) {
 
 function MyZone() {
   const navigate = useNavigate();
-  const { lang, setLang } = useLanguage();
+  const { lang } = useLanguage();
   const isZh = lang !== 'en';
   const t = MyZoneStrings(isZh);
-  const [languageOpen, setLanguageOpen] = useState(false);
-  const [deactivating, setDeactivating] = useState(false);
 
   const { isLoggedIn, isMerchant, isAdmin, displayName, displayAvatar, user, userLoading, logout } = useAuth();
   const userId = user?.id ? Number(user.id) : 0;
@@ -123,31 +110,6 @@ function MyZone() {
   const goSpace = () => {
     if (!isLoggedIn || !userId) return goLogin();
     navigate(`/user/${userId}`);
-  };
-  const handleLogout = () => {
-    logout();
-    navigate('/', { replace: true });
-  };
-  const handleDeactivate = async () => {
-    const firstConfirm = window.confirm(isZh
-      ? '注销后将立即退出登录，且无法再次登录此账号。是否继续？'
-      : 'You will be signed out immediately and cannot sign in to this account again. Continue?');
-    if (!firstConfirm) return;
-    const finalConfirm = window.confirm(isZh
-      ? '请再次确认：确定注销账号吗？'
-      : 'Please confirm again: deactivate this account?');
-    if (!finalConfirm) return;
-
-    setDeactivating(true);
-    try {
-      await deactivateMyAccount();
-      logout();
-      navigate('/', { replace: true });
-    } catch (error) {
-      window.alert(error?.message || (isZh ? '注销失败，请稍后重试' : 'Could not deactivate the account. Please try again later.'));
-    } finally {
-      setDeactivating(false);
-    }
   };
 
   const scheduleTodayQuery = useQuery({
@@ -257,7 +219,7 @@ function MyZone() {
                 onClick={isLoggedIn ? goProfile : goLogin}
                 className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full bg-slate-100"
                 style={{ boxShadow: '0 8px 26px rgba(15, 23, 42, 0.10)' }}
-                aria-label={isLoggedIn ? t.editProfile : t.logIn}
+                aria-label={isLoggedIn ? t.settings : t.logIn}
                 {...tap}
               >
                 {displayAvatar ? (
@@ -352,62 +314,14 @@ function MyZone() {
             <h2 className="px-1 pb-2 text-[15px] font-semibold text-slate-900">{t.more}</h2>
             <div className="divide-y divide-slate-100">
               <MoreRow to="/about/profile" title={t.aboutProfile} icon={<Info className="h-5 w-5" />} iconStyle={softIcon('rgba(59,130,246,0.12)', 'rgb(37,99,235)')} />
-              <motion.div whileTap={{ scale: 0.97 }} whileHover={{ scale: 1.01 }}>
-                <button
-                  type="button"
-                  className="flex w-full items-center justify-between px-2 py-3 text-left"
-                  onClick={() => setLanguageOpen((open) => !open)}
-                  aria-expanded={languageOpen}
-                >
-                  <span className="flex items-center gap-3">
-                    <span className="grid h-9 w-9 place-items-center rounded-2xl" style={softIcon('rgba(15,23,42,0.08)', 'rgb(51,65,85)')}>
-                      <Languages className="h-5 w-5" />
-                    </span>
-                    <span className="text-[13px] font-semibold text-slate-900">{t.settings}</span>
-                  </span>
-                  <span className="flex items-center gap-2 text-[12px] text-slate-400">
-                    {isZh ? t.languageChinese : t.languageEnglish}
-                    <ChevronRight className={`h-4 w-4 transition-transform ${languageOpen ? 'rotate-90' : ''}`} />
-                  </span>
-                </button>
-                {languageOpen ? (
-                  <div className="flex items-center gap-2 px-2 pb-3 pl-14" role="group" aria-label={t.language}>
-                    <button type="button" onClick={() => setLang('zh')} aria-pressed={lang === 'zh'} className={`px-1 text-[13px] ${lang === 'zh' ? 'font-semibold text-slate-900' : 'text-slate-400'}`}>{t.languageChinese}</button>
-                    <span className="text-slate-200" aria-hidden="true">/</span>
-                    <button type="button" onClick={() => setLang('en')} aria-pressed={lang === 'en'} className={`px-1 text-[13px] ${lang === 'en' ? 'font-semibold text-slate-900' : 'text-slate-400'}`}>{t.languageEnglish}</button>
-                  </div>
-                ) : null}
-              </motion.div>
-              {isLoggedIn ? (
-                <motion.div whileTap={{ scale: 0.97 }} whileHover={{ scale: 1.01 }}>
-                  <button
-                    type="button"
-                    className="flex w-full items-center justify-between px-2 py-3 text-left disabled:opacity-50"
-                    onClick={handleDeactivate}
-                    disabled={deactivating}
-                  >
-                    <span className="flex items-center gap-3">
-                      <span className="grid h-9 w-9 place-items-center rounded-2xl" style={softIcon('rgba(239,68,68,0.10)', 'rgb(220,38,38)')}>
-                        <UserX className="h-5 w-5" />
-                      </span>
-                      <span className="text-[13px] font-semibold text-red-600">{t.deactivate}</span>
-                    </span>
-                    <ChevronRight className="h-4 w-4 text-slate-400" />
-                  </button>
-                </motion.div>
-              ) : null}
             </div>
           </motion.section>
 
           <motion.div variants={listItem} className="mt-5 flex gap-3">
             {isLoggedIn ? (
               <>
-                <motion.button type="button" onClick={goProfile} className="flex-1 rounded-2xl bg-slate-900 px-4 py-3 text-[13px] font-semibold text-white shadow-sm" {...tap}>
-                  {t.editProfile}
-                </motion.button>
-                <motion.button type="button" onClick={handleLogout} className="flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-[13px] font-semibold text-slate-700 ring-1 ring-slate-200" {...tap}>
-                  <LogOut className="h-4 w-4" />
-                  {t.logOut}
+                <motion.button type="button" onClick={() => navigate('/myzone/settings')} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 text-[13px] font-semibold text-white shadow-sm" {...tap}>
+                  {t.settings}
                 </motion.button>
               </>
             ) : (
