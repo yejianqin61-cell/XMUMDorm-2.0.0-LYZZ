@@ -347,12 +347,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.78);
-  color: rgba(16, 35, 59, 0.72);
-  box-shadow: var(--square-card-inset);
+  width: 34px;
+  height: 34px;
+  border-radius: 0;
+  background: transparent;
+  color: #111;
+  box-shadow: none;
+  stroke-width: 1.9;
 }
 
 .today-campus-quick-action__content {
