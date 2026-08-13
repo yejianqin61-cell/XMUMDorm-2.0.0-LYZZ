@@ -53,6 +53,7 @@ const CourseReviewCreate = lazy(() => import('../pages/Handbook/CourseReviewCrea
 const Schedule = lazy(() => import('../pages/Schedule'));
 const Diary = lazy(() => import('../pages/Diary'));
 const TodoList = lazy(() => import('../pages/TodoList'));
+const Settings = lazy(() => import('../pages/Settings'));
 const Disclaimer = lazy(() => import('../pages/Disclaimer'));
 const ContactUs = lazy(() => import('../pages/ContactUs'));
 const UserZone = lazy(() => import('../pages/UserZone'));
@@ -149,6 +150,7 @@ export const layoutRoutes = (
     <Route path="myzone/profile" element={renderLazyRoute(ProfileEdit)} />
     <Route path="myzone/schedule" element={renderLazyRoute(Schedule)} />
     <Route path="myzone/todos" element={renderLazyRoute(TodoList)} />
+    <Route path="myzone/settings" element={renderLazyRoute(Settings)} />
     <Route path="myzone/diary" element={renderLazyRoute(Diary)} />
     <Route path="mailbox" element={renderLazyRoute(Mailbox)} />
     <Route path="eat" element={<CanteenHome />} />

@@ -344,8 +344,7 @@ function MyZone() {
       <div className="divide-y divide-slate-100">
         <MoreRow to="/about/profile" title={t.aboutProfile} icon={<Info className="h-5 w-5" />} iconStyle={softIcon('rgba(59,130,246,0.12)', 'rgb(37,99,235)')} />
         <MoreRow to="/about/thanks" title={t.aboutThanks} icon={<Sparkles className="h-5 w-5" />} iconStyle={softIcon('rgba(244,63,94,0.12)', 'rgb(225,29,72)')} />
-        <MoreRow to="/about/disclaimer" title={t.aboutDisclaimer} icon={<ShieldAlert className="h-5 w-5" />} iconStyle={softIcon('rgba(234,179,8,0.14)', 'rgb(202,138,4)')} />
-        <MoreRow to="/about/contact" title={t.aboutContact} icon={<Mail className="h-5 w-5" />} iconStyle={softIcon('rgba(34,197,94,0.12)', 'rgb(22,163,74)')} />
+        <MoreRow to="/myzone/settings" title={isZh ? '设置' : 'Settings'} icon={<Info className="h-5 w-5" />} iconStyle={softIcon('rgba(15,23,42,0.08)', 'rgb(51,65,85)')} />
       </div>
     </motion.section>
   );
@@ -354,13 +353,7 @@ function MyZone() {
     <motion.div variants={listItem} className="flex gap-3">
       {isLoggedIn ? (
         <>
-          <motion.button type="button" onClick={goProfile} className="flex-1 rounded-2xl bg-slate-900 px-4 py-3 text-[13px] font-semibold text-white shadow-sm" {...tap}>
-            {t.editProfile}
-          </motion.button>
-          <motion.button type="button" onClick={handleLogout} className="flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-[13px] font-semibold text-slate-700 ring-1 ring-slate-200" {...tap}>
-            <LogOut className="h-4 w-4" />
-            {t.logOut}
-          </motion.button>
+          <motion.button type="button" onClick={() => navigate('/myzone/settings')} className="flex-1 rounded-2xl bg-slate-900 px-4 py-3 text-[13px] font-semibold text-white shadow-sm" {...tap}>{isZh ? '设置' : 'Settings'}</motion.button>
         </>
       ) : (
         <motion.button type="button" onClick={goLogin} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 text-[13px] font-semibold text-white shadow-sm" {...tap}>
