@@ -2402,7 +2402,8 @@ router.get('/food-articles', async (req, res) => {
       `SELECT COUNT(*) AS total
        FROM posts p
        INNER JOIN post_tag_map ptm ON ptm.post_id = p.id AND ptm.tag_id = ?
-       WHERE p.deleted_at IS NULL AND p.hidden_by_admin = 0`,
+       WHERE p.deleted_at IS NULL AND p.hidden_by_admin = 0
+         AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)`,
       [tagId]
     );
     const total = (countRows && countRows[0]) ? countRows[0].total : 0;
@@ -2419,6 +2420,7 @@ router.get('/food-articles', async (req, res) => {
          INNER JOIN post_tag_map ptm ON ptm.post_id = p.id AND ptm.tag_id = ?
          JOIN users u ON p.user_id = u.id
          WHERE p.deleted_at IS NULL AND p.hidden_by_admin = 0
+           AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)
          ORDER BY p.created_at DESC
          LIMIT ${limitCount} OFFSET ${offset}`,
         [tagId]
@@ -2436,6 +2438,7 @@ router.get('/food-articles', async (req, res) => {
            INNER JOIN post_tag_map ptm ON ptm.post_id = p.id AND ptm.tag_id = ?
            JOIN users u ON p.user_id = u.id
            WHERE p.deleted_at IS NULL AND p.hidden_by_admin = 0
+             AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)
            ORDER BY p.created_at DESC
            LIMIT ${limitCount} OFFSET ${offset}`,
           [tagId]
