@@ -210,15 +210,25 @@ router.get('/:id/profile', async (req, res) => {
 
     const campusIdentity = normalizeCampusIdentity(u);
 
-    const posts = await query(
-      `SELECT p.id, p.content, p.type, p.created_at
-         FROM posts p
-        WHERE p.user_id = ? AND p.deleted_at IS NULL AND p.hidden_by_admin = 0
-          AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)
-        ORDER BY p.created_at DESC
-        LIMIT ${limitNum} OFFSET ${offsetNum}`,
-      [userId]
-    );
+    const [posts, statsRows] = await Promise.all([
+      query(
+        `SELECT p.id, p.content, p.type, p.created_at
+           FROM posts p
+          WHERE p.user_id = ? AND p.deleted_at IS NULL AND p.hidden_by_admin = 0
+            AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)
+          ORDER BY p.created_at DESC
+          LIMIT ${limitNum} OFFSET ${offsetNum}`,
+        [userId]
+      ),
+      query(
+        `SELECT
+          (SELECT COUNT(*) FROM posts p WHERE p.user_id = ? AND p.deleted_at IS NULL AND p.hidden_by_admin = 0 AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)) AS post_count,
+          (SELECT COUNT(*) FROM post_likes pl INNER JOIN posts p ON pl.post_id = p.id WHERE p.user_id = ? AND p.deleted_at IS NULL AND p.hidden_by_admin = 0 AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)) AS like_received_count,
+          (SELECT COUNT(*) FROM comments c INNER JOIN posts p ON c.post_id = p.id WHERE p.user_id = ? AND p.deleted_at IS NULL AND p.hidden_by_admin = 0 AND c.deleted_at IS NULL AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)) AS comment_received_count`,
+        [userId, userId, userId]
+      ),
+    ]);
+    const statsRow = statsRows?.[0];
     const postIds = (posts || []).map((p) => p.id);
 
     let images = [];
@@ -226,27 +236,29 @@ router.get('/:id/profile', async (req, res) => {
     let commentCounts = [];
     if (postIds.length > 0) {
       const placeholders = postIds.map(() => '?').join(',');
-      images = await query(
-        `SELECT post_id, file_path, sort_order
-           FROM post_images
-          WHERE post_id IN (${placeholders})
-          ORDER BY post_id, sort_order`,
-        postIds
-      );
-      likeCounts = await query(
-        `SELECT post_id, COUNT(*) AS cnt
-           FROM post_likes
-          WHERE post_id IN (${placeholders})
-          GROUP BY post_id`,
-        postIds
-      );
-      commentCounts = await query(
-        `SELECT post_id, COUNT(*) AS cnt
-           FROM comments
-          WHERE post_id IN (${placeholders}) AND deleted_at IS NULL
-          GROUP BY post_id`,
-        postIds
-      );
+      [images, likeCounts, commentCounts] = await Promise.all([
+        query(
+          `SELECT post_id, file_path, sort_order
+             FROM post_images
+            WHERE post_id IN (${placeholders})
+            ORDER BY post_id, sort_order`,
+          postIds
+        ),
+        query(
+          `SELECT post_id, COUNT(*) AS cnt
+             FROM post_likes
+            WHERE post_id IN (${placeholders})
+            GROUP BY post_id`,
+          postIds
+        ),
+        query(
+          `SELECT post_id, COUNT(*) AS cnt
+             FROM comments
+            WHERE post_id IN (${placeholders}) AND deleted_at IS NULL
+            GROUP BY post_id`,
+          postIds
+        ),
+      ]);
     }
 
     const imagesByPost = {};
@@ -269,14 +281,6 @@ router.get('/:id/profile', async (req, res) => {
       user_liked: false,
       images: (imagesByPost[p.id] || []).sort((a, b) => a.sort_order - b.sort_order),
     }));
-
-    const [statsRow] = await query(
-      `SELECT
-        (SELECT COUNT(*) FROM posts p WHERE p.user_id = ? AND p.deleted_at IS NULL AND p.hidden_by_admin = 0 AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)) AS post_count,
-        (SELECT COUNT(*) FROM post_likes pl INNER JOIN posts p ON pl.post_id = p.id WHERE p.user_id = ? AND p.deleted_at IS NULL AND p.hidden_by_admin = 0 AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)) AS like_received_count,
-        (SELECT COUNT(*) FROM comments c INNER JOIN posts p ON c.post_id = p.id WHERE p.user_id = ? AND p.deleted_at IS NULL AND p.hidden_by_admin = 0 AND c.deleted_at IS NULL AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)) AS comment_received_count`,
-      [userId, userId, userId]
-    );
 
     const data = {
       user: formatPublicProfileUser(u, campusIdentity),

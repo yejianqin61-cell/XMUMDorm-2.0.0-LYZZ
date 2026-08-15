@@ -303,17 +303,17 @@ describe('Users Routes', () => {
           },
         ])
         .mockResolvedValueOnce([{ id: 101, content: 'Public post', type: 'treehole', created_at: '2026-06-01 10:00:00' }])
+        .mockResolvedValueOnce([{ post_count: 31, comment_received_count: 2, like_received_count: 3 }])
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([{ post_count: 31, comment_received_count: 2, like_received_count: 3 }]);
+        .mockResolvedValueOnce([]);
 
       const res = await supertest(app()).get('/api/users/12/profile?page=1&pageSize=999');
 
       expect(res.status).toBe(200);
       expect(res.body.data).toMatchObject({ page: 1, pageSize: 30, hasMore: true });
       expect(query.mock.calls[1][0]).toContain('LIMIT 30 OFFSET 0');
-      const statsSql = query.mock.calls[5][0];
+      const statsSql = query.mock.calls[2][0];
       expect(statsSql).toContain('p.hidden_by_admin = 0');
       expect(statsSql).toContain('NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)');
     });
