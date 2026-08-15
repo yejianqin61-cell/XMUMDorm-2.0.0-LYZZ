@@ -99,14 +99,14 @@ export default function CanteenBannerManage() {
   const bannersQuery = useQuery({
     queryKey: bannerQueryKey,
     queryFn: isSquarePlacement ? getSquareBannersAdmin : getCanteenBannersAdmin,
-    enabled: isAdmin && !isSquarePlacement,
+    enabled: isAdmin,
     select: (d) => (Array.isArray(d) ? d : d?.data || []),
   });
 
   const regionsQuery = useQuery({
     queryKey: QK.canteenRegions(),
     queryFn: getRegions,
-    enabled: isAdmin,
+    enabled: isAdmin && !isSquarePlacement,
     select: (d) => (Array.isArray(d) ? d : d?.data || []),
   });
 
