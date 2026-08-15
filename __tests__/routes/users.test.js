@@ -157,6 +157,13 @@ describe('Users Routes', () => {
   });
 
   describe('GET /api/users/:id/profile', () => {
+    it.each(['7abc', '7.5', '-7', '0', '01', '9007199254740992'])('rejects malformed user id %s before querying', async (id) => {
+      const res = await supertest(app()).get(`/api/users/${id}/profile`);
+
+      expect(res.status).toBe(400);
+      expect(query).not.toHaveBeenCalled();
+    });
+
     it('returns cached profile payload keyed by viewer id', async () => {
       const cached = {
         user: { id: 12, nickname: 'Cached User' },

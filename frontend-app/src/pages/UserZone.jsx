@@ -50,6 +50,22 @@ function UserZoneStrings(isZh) {
   };
 }
 
+function parseProfileUserId(value) {
+  const text = String(value == null ? '' : value);
+  if (!/^[1-9]\d*$/.test(text)) return 0;
+  const userId = Number(text);
+  return Number.isSafeInteger(userId) ? userId : 0;
+}
+
+function profileErrorTitle(type, isZh) {
+  const labels = {
+    profile: isZh ? '资料加载失败' : 'Profile unavailable',
+    reviews: isZh ? '点评加载失败' : 'Reviews unavailable',
+    favorites: isZh ? '收藏加载失败' : 'Favorites unavailable',
+  };
+  return labels[type];
+}
+
 const pageWrap = {
   hidden: { opacity: 0, y: 10 },
   show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] } },
@@ -112,7 +128,7 @@ function UserZone() {
   const t = UserZoneStrings(isZh);
   const { user, isLoggedIn, logout } = useAuth();
 
-  const userId = id ? parseInt(id, 10) : 0;
+  const userId = parseProfileUserId(id);
   const isOwnProfile = Boolean(isLoggedIn && user && Number(user.id) === userId);
 
   const [profileUser, setProfileUser] = useState(null);
@@ -378,7 +394,7 @@ function UserZone() {
           </div>
 
           {error && (
-            <ErrorState className="mt-3" title="资料加载失败" description={error} />
+            <ErrorState className="mt-3" title={profileErrorTitle('profile', isZh)} />
           )}
 
           <CampusIdentityCard
@@ -478,7 +494,7 @@ function UserZone() {
                   {reviewsLoading ? (
                     <PageSkeleton items={2} />
                   ) : reviewsError ? (
-                    <ErrorState title="点评加载失败" description={reviewsError} />
+                    <ErrorState title={profileErrorTitle('reviews', isZh)} />
                   ) : reviews.length === 0 ? (
                     <EmptyIllustration title={t.reviewsEmptyTitle} description={t.reviewsEmptyDesc} actionLabel={t.eatNow} actionTo="/eat" />
                   ) : (
@@ -504,13 +520,13 @@ function UserZone() {
                   {favoritesLoading ? (
                     <PageSkeleton items={2} />
                   ) : favoritesError ? (
-                    <ErrorState title="收藏加载失败" description={favoritesError} />
+                    <ErrorState title={profileErrorTitle('favorites', isZh)} />
                   ) : favorites.length === 0 ? (
                     <EmptyIllustration title={t.favEmptyTitle} description={t.favEmptyDesc} actionLabel={t.eatNow} actionTo="/eat" />
                   ) : (
                     <div className="space-y-3">
                       {favorites.map((item) => (
-                        <FavoriteListItem key={item.product_id} item={item} />
+                        <FavoriteListItem key={item.product_id} item={item} locale={locale} />
                       ))}
                     </div>
                   )}
@@ -541,14 +557,14 @@ function CampusIdentityCard({ isZh, isOwnProfile, chips }) {
     <div className="mt-4 rounded-3xl bg-white/96 p-5 ring-1 ring-slate-200/70" style={{ boxShadow: '0 12px 36px rgba(15, 23, 42, 0.06)' }}>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-600/80">Campus Identity</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-600/80">{isZh ? '校园身份' : 'Campus identity'}</p>
           <h2 className="mt-2 text-[20px] font-semibold tracking-tight text-slate-900">
             {isZh ? '校园身份卡' : 'Campus Card'}
           </h2>
           <p className="mt-2 max-w-[42ch] text-[13px] leading-6 text-slate-500">
             {isOwnProfile
               ? (isZh ? '你可以在资料编辑里维护这些身份信息，并控制对外可见范围。' : 'You can edit these fields and control their visibility.')
-              : (isZh ? '这张卡片展示了对方愿意公开的校园身份与参与方向。' : 'This card shows the campus identity fields the user chose to share.')}
+              : (isZh ? '这张卡片展示了对方愿意公开的校园身份信息。' : 'This card shows the campus identity fields the user chose to share.')}
           </p>
         </div>
         {isOwnProfile ? (
@@ -618,7 +634,7 @@ function TimelinePostItem({ post, locale }) {
           <div className="mt-3 grid grid-cols-3 gap-2">
             {urls.slice(0, 9).map((u, idx) => (
               <div key={idx} className="overflow-hidden rounded-xl bg-slate-100">
-                <FadeImg src={u} alt="" className="aspect-square w-full object-cover" />
+              <FadeImg src={u} alt="" className="aspect-square w-full object-cover" locale={locale} />
               </div>
             ))}
           </div>
@@ -660,7 +676,7 @@ function TimelineReviewItem({ review, locale }) {
           </div>
           {imgUrl ? (
             <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-slate-100">
-              <FadeImg src={imgUrl} alt="" className="h-full w-full object-cover" />
+              <FadeImg src={imgUrl} alt="" className="h-full w-full object-cover" locale={locale} />
             </div>
           ) : null}
         </div>
@@ -672,7 +688,7 @@ function TimelineReviewItem({ review, locale }) {
   );
 }
 
-function FavoriteListItem({ item }) {
+function FavoriteListItem({ item, locale }) {
   const { product_id, product_name, shop_name, product_image } = item;
   const imgUrl = productImageUrl(typeof product_image === 'string' ? product_image : null);
   return (
@@ -691,14 +707,14 @@ function FavoriteListItem({ item }) {
           </div>
         </div>
         <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-slate-100">
-          {imgUrl ? <FadeImg src={imgUrl} alt="" className="h-full w-full object-cover" /> : null}
+          {imgUrl ? <FadeImg src={imgUrl} alt="" className="h-full w-full object-cover" locale={locale} /> : null}
         </div>
       </Link>
     </motion.div>
   );
 }
 
-function FadeImg({ src, alt, className }) {
+function FadeImg({ src, alt, className, locale }) {
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
   useEffect(() => {
@@ -721,7 +737,7 @@ function FadeImg({ src, alt, className }) {
       />
       {failed ? (
         <div className="absolute inset-0 grid place-items-center bg-slate-100 text-[11px] font-semibold text-slate-400">
-          image error
+          {locale === 'zh-CN' ? '图片无法显示' : 'Image unavailable'}
         </div>
       ) : null}
     </div>

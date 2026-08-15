@@ -43,6 +43,13 @@ function safeText(value) {
   return text || null;
 }
 
+function parsePositiveInteger(value) {
+  const text = String(value == null ? '' : value);
+  if (!/^[1-9]\d*$/.test(text)) return null;
+  const number = Number(text);
+  return Number.isSafeInteger(number) ? number : null;
+}
+
 function normalizeCampusIdentity(row, isSelf) {
   const showCollege = isSelf || rowTruthyLike(row.show_college == null ? 1 : row.show_college);
   const showGrade = isSelf || rowTruthyLike(row.show_grade == null ? 1 : row.show_grade);
@@ -177,7 +184,7 @@ router.get('/me/level', authenticateToken, async (req, res) => {
 
 router.get('/:id/profile', async (req, res) => {
   try {
-    const userId = parseInt(req.params.id, 10);
+    const userId = parsePositiveInteger(req.params.id);
     if (!userId) return res.status(400).json({ status: -1, message: 'ç”¨æˆ· ID æ— æ•ˆ' });
 
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
@@ -190,7 +197,7 @@ router.get('/:id/profile', async (req, res) => {
     }
 
     const viewer = parseOptionalUser(req);
-    const viewerId = viewer && viewer.id != null ? parseInt(viewer.id, 10) : 0;
+    const viewerId = parsePositiveInteger(viewer?.id) || 0;
     const isSelf = viewerId > 0 && viewerId === userId;
     const cacheKey = `user_profile_v5:${userId}:viewer:${viewerId || 0}:p:${page}:s:${pageSize}`;
     const cached = simpleCache.get(cacheKey);
