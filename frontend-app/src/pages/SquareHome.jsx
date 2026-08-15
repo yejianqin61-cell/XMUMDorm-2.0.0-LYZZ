@@ -189,6 +189,7 @@ export default function SquareHome() {
           fetchFn={getSquareBanners}
           queryKey={QK.squareBanners()}
           adminTo="/about/admin/orgs?tab=banners"
+          placementType="square"
         />
       ) : null}
 

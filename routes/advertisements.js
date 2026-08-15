@@ -72,6 +72,7 @@ function mapRow(row) {
     updated_at: row.updated_at,
     images: row.images || [],
     banner_count: Number(row.banner_count || 0),
+    click_count: Number(row.click_count || 0),
   };
 }
 
@@ -83,6 +84,21 @@ function sendDatabaseError(res, error) {
     });
   }
   return res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+}
+
+function clickMigrationError(error) {
+  return error && error.code === 'ER_NO_SUCH_TABLE'
+    && String(error.sqlMessage || error.message || '').includes('advertisement_clicks');
+}
+
+function sendClickDatabaseError(res, error) {
+  if (clickMigrationError(error)) {
+    return res.status(503).json({
+      status: -1,
+      message: '广告统计尚未初始化，请先执行 migrations/063_advertisement_clicks.sql',
+    });
+  }
+  return sendDatabaseError(res, error);
 }
 
 function withUpload(handler) {
@@ -163,6 +179,95 @@ router.get('/public/:postId', async (req, res) => {
   }
 });
 
+router.post('/public/:postId/click', async (req, res) => {
+  const postId = Number.parseInt(req.params.postId, 10);
+  const clickType = String(req.body?.click_type || 'banner').trim().toLowerCase();
+  const placementType = String(req.body?.placement_type || '').trim().toLowerCase();
+  const placementId = Number.parseInt(req.body?.placement_id, 10);
+  if (!Number.isInteger(postId) || postId <= 0) {
+    return res.status(400).json({ status: -1, message: '广告 ID 无效' });
+  }
+  if (!['banner', 'cta'].includes(clickType)) {
+    return res.status(400).json({ status: -1, message: '点击类型无效' });
+  }
+  if (placementType && !['canteen', 'square'].includes(placementType)) {
+    return res.status(400).json({ status: -1, message: '投放位类型无效' });
+  }
+  try {
+    const now = new Date();
+    const rows = await query(
+      `SELECT ap.post_id
+       FROM advertisement_posts ap
+       INNER JOIN posts p ON p.id = ap.post_id
+       WHERE ap.post_id = ?
+         AND ap.status = 'active'
+         AND p.deleted_at IS NULL
+         AND (
+           (? = 'canteen' AND EXISTS (
+             SELECT 1 FROM canteen_banners cb
+             WHERE cb.id = ?
+               AND cb.type = 'ad' AND cb.link_type = 'post'
+               AND cb.link_target = CAST(ap.post_id AS CHAR)
+               AND cb.is_active = 1
+               AND (cb.starts_at IS NULL OR cb.starts_at <= ?)
+               AND (cb.ends_at IS NULL OR cb.ends_at >= ?)
+           ))
+           OR (? = 'square' AND EXISTS (
+             SELECT 1 FROM square_banners sb
+             WHERE sb.id = ?
+               AND sb.type = 'ad' AND sb.link_type = 'post'
+               AND sb.link_target = CAST(ap.post_id AS CHAR)
+               AND sb.is_active = 1
+               AND (sb.starts_at IS NULL OR sb.starts_at <= ?)
+               AND (sb.ends_at IS NULL OR sb.ends_at >= ?)
+           ))
+           OR (? = '' AND (
+             EXISTS (
+               SELECT 1 FROM canteen_banners cb
+               WHERE cb.type = 'ad' AND cb.link_type = 'post'
+                 AND cb.link_target = CAST(ap.post_id AS CHAR)
+                 AND cb.is_active = 1
+                 AND (cb.starts_at IS NULL OR cb.starts_at <= ?)
+                 AND (cb.ends_at IS NULL OR cb.ends_at >= ?)
+             )
+             OR EXISTS (
+               SELECT 1 FROM square_banners sb
+               WHERE sb.type = 'ad' AND sb.link_type = 'post'
+                 AND sb.link_target = CAST(ap.post_id AS CHAR)
+                 AND sb.is_active = 1
+                 AND (sb.starts_at IS NULL OR sb.starts_at <= ?)
+                 AND (sb.ends_at IS NULL OR sb.ends_at >= ?)
+             )
+           ))
+         )
+       LIMIT 1`,
+      [
+        postId,
+        placementType, Number.isInteger(placementId) ? placementId : 0, now, now,
+        placementType, Number.isInteger(placementId) ? placementId : 0, now, now,
+        placementType, now, now, now, now,
+      ]
+    );
+    if (!rows.length) {
+      return res.status(410).json({
+        status: -1,
+        code: 'ADVERTISEMENT_UNAVAILABLE',
+        message: '广告已结束或暂不可用',
+      });
+    }
+    await query(
+      `INSERT INTO advertisement_clicks
+       (advertisement_post_id, placement_type, placement_id, click_type)
+       VALUES (?, ?, ?, ?)`,
+      [postId, placementType || null, Number.isInteger(placementId) ? placementId : null, clickType]
+    );
+    res.status(202).json({ status: 0, data: { recorded: true } });
+  } catch (error) {
+    console.error('广告点击记录失败:', error);
+    sendClickDatabaseError(res, error);
+  }
+});
+
 router.use(authenticateToken);
 router.use(requireAdmin);
 
@@ -173,9 +278,14 @@ router.get('/admin', async (req, res) => {
               ap.sponsor_name, ap.sponsor_logo, ap.cta_label, ap.cta_type,
               ap.cta_target, ap.created_by, ap.updated_by,
               ap.created_at, ap.updated_at,
-              (SELECT COUNT(*) FROM canteen_banners cb
-               WHERE cb.type = 'ad' AND cb.link_type = 'post'
-                 AND cb.link_target = CAST(ap.post_id AS CHAR)) AS banner_count
+              ((SELECT COUNT(*) FROM canteen_banners cb
+                WHERE cb.type = 'ad' AND cb.link_type = 'post'
+                  AND cb.link_target = CAST(ap.post_id AS CHAR))
+               + (SELECT COUNT(*) FROM square_banners sb
+                  WHERE sb.type = 'ad' AND sb.link_type = 'post'
+                    AND sb.link_target = CAST(ap.post_id AS CHAR))) AS banner_count,
+              (SELECT COUNT(*) FROM advertisement_clicks ac
+               WHERE ac.advertisement_post_id = ap.post_id) AS click_count
        FROM advertisement_posts ap
        INNER JOIN posts p ON p.id = ap.post_id
        ORDER BY ap.updated_at DESC, ap.post_id DESC`

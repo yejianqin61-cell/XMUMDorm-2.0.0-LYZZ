@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
 import { API_BASE_URL } from '@shared/api/config';
+import { recordAdvertisementClick } from '@shared/api/advertisements';
 import './AdvertisementDetailView.css';
 
 function absoluteAsset(url) {
@@ -38,6 +39,9 @@ export default function AdvertisementDetailView({
   const handleCta = async () => {
     const type = advertisement?.cta_type || 'none';
     const target = String(advertisement?.cta_target || '').trim();
+    if (advertisement?.id) {
+      recordAdvertisementClick(advertisement.id, { click_type: 'cta' }).catch(() => {});
+    }
     if (type === 'https' && /^https:\/\//i.test(target)) {
       if (Capacitor.isNativePlatform()) {
         await Browser.open({ url: target });

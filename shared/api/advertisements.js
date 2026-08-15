@@ -25,6 +25,10 @@ export function getAdvertisementPublic(postId) {
   return get(`/api/advertisements/public/${postId}`, { skipAuth: true });
 }
 
+export function recordAdvertisementClick(postId, payload = {}) {
+  return post(`/api/advertisements/public/${postId}/click`, payload, { skipAuth: true });
+}
+
 export function createAdvertisement(payload, images) {
   return request('/api/advertisements', {
     method: 'POST',

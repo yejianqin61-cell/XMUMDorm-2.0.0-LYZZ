@@ -54,6 +54,7 @@ function copy(isZh) {
     https: isZh ? 'HTTPS 外链' : 'HTTPS link',
     empty: isZh ? '还没有广告内容。' : 'No advertisements yet.',
     bannerCount: (n) => (isZh ? `已关联 ${n} 张轮播图` : `${n} carousel slide${n === 1 ? '' : 's'} linked`),
+    clickCount: (n) => (isZh ? `点击 ${n}` : `${n} click${n === 1 ? '' : 's'}`),
     updated: (value) => (isZh ? `更新于 ${value}` : `Updated ${value}`),
     previewTitle: isZh ? '广告预览' : 'Advertisement preview',
     confirmArchive: isZh ? '确定归档这条广告吗？归档后不会再对用户展示。' : 'Archive this ad? It will no longer be shown to users.',
@@ -185,6 +186,7 @@ export default function AdvertisementAdminPanel({ isZh = true, onError, onSucces
                 <h3>{ad.title}</h3>
                 <p>{ad.sponsor_name} · {statusLabel(ad.status, t)}</p>
                 <small>{t.bannerCount(ad.banner_count || 0)}</small>
+                <small>{t.clickCount(ad.click_count || 0)}</small>
                 {ad.updated_at && <small>{t.updated(new Date(ad.updated_at).toLocaleString(isZh ? 'zh-CN' : 'en-US'))}</small>}
               </div>
             </div>

@@ -65,6 +65,35 @@ describe('Advertisement Routes', () => {
     expect(response.body.code).toBe('ADVERTISEMENT_UNAVAILABLE');
   });
 
+  it('records a click only for a currently valid placement', async () => {
+    query
+      .mockResolvedValueOnce([{ post_id: 44 }])
+      .mockResolvedValueOnce({ insertId: 1 });
+
+    const response = await supertest(app())
+      .post('/api/advertisements/public/44/click')
+      .send({ placement_type: 'square', placement_id: 9, click_type: 'banner' });
+
+    expect(response.status).toBe(202);
+    expect(response.body.data).toEqual({ recorded: true });
+    expect(query.mock.calls[1][0]).toContain('INSERT INTO advertisement_clicks');
+  });
+
+  it('does not record invalid click types or unavailable campaigns', async () => {
+    const invalidType = await supertest(app())
+      .post('/api/advertisements/public/44/click')
+      .send({ click_type: 'impression' });
+    expect(invalidType.status).toBe(400);
+    expect(query).not.toHaveBeenCalled();
+
+    query.mockResolvedValueOnce([]);
+    const unavailable = await supertest(app())
+      .post('/api/advertisements/public/44/click')
+      .send({ click_type: 'cta' });
+    expect(unavailable.status).toBe(410);
+    expect(query).toHaveBeenCalledTimes(1);
+  });
+
   it('requires an administrator for the content library', async () => {
     const response = await supertest(app()).get('/api/advertisements/admin');
     expect(response.status).toBe(403);
