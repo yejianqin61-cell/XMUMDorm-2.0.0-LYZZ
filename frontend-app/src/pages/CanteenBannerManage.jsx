@@ -214,11 +214,6 @@ export default function CanteenBannerManage() {
   return (
     <div className="canteen-home-page canteen-banner-admin-page">
       <div className="canteen-home-inner">
-        <AdvertisementAdminPanel
-          isZh={isZh}
-          onError={(message) => Toast.error(message)}
-          onSuccess={(message) => Toast.success(message)}
-        />
         <h1 className="canteen-page-title">{placementLabel}</h1>
         <p className="canteen-banner-admin-hint">{t.bannerAdminHint}</p>
 
@@ -458,6 +453,12 @@ export default function CanteenBannerManage() {
             )}
           </div>
         </form>
+
+        <AdvertisementAdminPanel
+          isZh={isZh}
+          onError={(message) => Toast.error(message)}
+          onSuccess={(message) => Toast.success(message)}
+        />
       </div>
     </div>
   );
