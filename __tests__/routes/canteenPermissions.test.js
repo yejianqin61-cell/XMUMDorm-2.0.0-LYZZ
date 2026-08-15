@@ -117,4 +117,26 @@ describe('Canteen collaborative maintenance permissions', () => {
     const res = await supertest(app()).post('/api/canteen/shops').set('x-test-auth', 'none').send({ name: 'No auth', region_id: 1 });
     expect(res.status).toBe(401);
   });
+
+  it('paginates my reviews by review instead of image rows', async () => {
+    query
+      .mockResolvedValueOnce([
+        { id: 12, product_id: 5, product_name: 'Noodles', shop_id: 2, shop_name: 'Food Square', rating: '顶级', content: 'Great', created_at: '2026-08-16', product_image_path: 'products/noodles.jpg' },
+        { id: 11, product_id: 4, product_name: 'Rice', shop_id: 2, shop_name: 'Food Square', rating: '人上人', content: 'Nice', created_at: '2026-08-15', product_image_path: null },
+      ])
+      .mockResolvedValueOnce([
+        { comment_id: 12, file_path: 'comments/12-1.jpg', sort_order: 0 },
+        { comment_id: 12, file_path: 'comments/12-2.jpg', sort_order: 1 },
+      ]);
+
+    const res = await supertest(app()).get('/api/canteen/my-reviews?page=1&pageSize=1');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({ page: 1, pageSize: 1, hasMore: true });
+    expect(res.body.data.list).toHaveLength(1);
+    expect(res.body.data.list[0]).toMatchObject({ id: 12, product_id: 5 });
+    expect(res.body.data.list[0].images).toHaveLength(2);
+    expect(query.mock.calls[0][0]).not.toContain('LEFT JOIN product_comment_images');
+    expect(query.mock.calls[1][0]).toContain('WHERE comment_id IN (?)');
+  });
 });

@@ -20,6 +20,7 @@ const TAB_POSTS = 'posts';
 const TAB_REVIEWS = 'reviews';
 const TAB_FAVORITES = 'favorites';
 const PROFILE_PAGE_SIZE = 30;
+const REVIEW_PAGE_SIZE = 30;
 
 function prefixAvatar(url) {
   return url && !url.startsWith('http') ? `${API_BASE_URL}${url}` : url;
@@ -139,8 +140,12 @@ function UserZone() {
 
   const [activeTab, setActiveTab] = useState(TAB_POSTS);
   const [reviews, setReviews] = useState([]);
+  const [reviewPage, setReviewPage] = useState(1);
+  const [reviewsHasMore, setReviewsHasMore] = useState(false);
   const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewsLoadingMore, setReviewsLoadingMore] = useState(false);
   const [reviewsError, setReviewsError] = useState(null);
+  const [reviewsLoadMoreError, setReviewsLoadMoreError] = useState(null);
   const [favorites, setFavorites] = useState([]);
   const [favoritesLoading, setFavoritesLoading] = useState(false);
   const [favoritesError, setFavoritesError] = useState(null);
@@ -242,10 +247,17 @@ function UserZone() {
     let cancelled = false;
     setReviewsLoading(true);
     setReviewsError(null);
-    getMyProductReviews({ page: 1, pageSize: 50 })
+    setReviews([]);
+    setReviewPage(1);
+    setReviewsHasMore(false);
+    setReviewsLoadingMore(false);
+    setReviewsLoadMoreError(null);
+    getMyProductReviews({ page: 1, pageSize: REVIEW_PAGE_SIZE })
       .then((data) => {
         if (cancelled) return;
         setReviews(data?.list ?? []);
+        setReviewPage(Number(data?.page) || 1);
+        setReviewsHasMore(Boolean(data?.hasMore));
       })
       .catch((err) => {
         if (!cancelled) setReviewsError(getApiErrorMessage(err));
@@ -255,6 +267,22 @@ function UserZone() {
       });
     return () => { cancelled = true; };
   }, [isOwnProfile]);
+
+  const loadMoreReviews = async () => {
+    if (reviewsLoadingMore || !reviewsHasMore) return;
+    setReviewsLoadingMore(true);
+    setReviewsLoadMoreError(null);
+    try {
+      const data = await getMyProductReviews({ page: reviewPage + 1, pageSize: REVIEW_PAGE_SIZE });
+      setReviews((currentReviews) => appendUniquePosts(currentReviews, data?.list ?? []));
+      setReviewPage(Number(data?.page) || reviewPage + 1);
+      setReviewsHasMore(Boolean(data?.hasMore));
+    } catch (err) {
+      setReviewsLoadMoreError(getApiErrorMessage(err));
+    } finally {
+      setReviewsLoadingMore(false);
+    }
+  };
 
   // Pre-warm images to avoid "row-by-row refresh" while scrolling
   useEffect(() => {
@@ -494,13 +522,28 @@ function UserZone() {
                   ) : reviews.length === 0 ? (
                     <EmptyIllustration title={t.reviewsEmptyTitle} description={t.reviewsEmptyDesc} actionLabel={t.eatNow} actionTo="/eat" />
                   ) : (
-                    <Timeline
-                      items={reviews}
-                      locale={locale}
-                      renderItem={(review) => (
-                        <TimelineReviewItem key={review.id} review={review} locale={locale} />
+                    <>
+                      <Timeline
+                        items={reviews}
+                        locale={locale}
+                        renderItem={(review) => (
+                          <TimelineReviewItem key={review.id} review={review} locale={locale} />
+                        )}
+                      />
+                      {(reviewsHasMore || reviewsLoadMoreError) && (
+                        <div className="mt-5 flex flex-col items-center gap-2">
+                          {reviewsLoadMoreError ? <p className="text-[12px] text-rose-600">{t.loadMoreFailed}</p> : null}
+                          <button
+                            type="button"
+                            onClick={loadMoreReviews}
+                            disabled={reviewsLoadingMore}
+                            className="rounded-full border border-slate-300 bg-white px-4 py-2 text-[13px] font-semibold text-slate-700 disabled:opacity-50"
+                          >
+                            {reviewsLoadingMore ? t.loadingMore : reviewsLoadMoreError ? t.retry : t.loadMore}
+                          </button>
+                        </div>
                       )}
-                    />
+                    </>
                   )}
                 </motion.section>
               )}

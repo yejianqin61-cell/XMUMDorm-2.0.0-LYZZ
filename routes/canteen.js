@@ -1661,40 +1661,46 @@ router.get('/my-reviews', authenticateToken, async (req, res) => {
       `SELECT pc.id, pc.product_id, pc.rating, pc.content, pc.created_at,
         p.name AS product_name, p.shop_id,
         s.name AS shop_name,
-        (SELECT pi.file_path FROM product_images pi WHERE pi.product_id = pc.product_id ORDER BY pi.sort_order ASC LIMIT 1) AS product_image_path,
-        pci.file_path AS image_path, pci.sort_order AS image_sort
+        (SELECT pi.file_path FROM product_images pi WHERE pi.product_id = pc.product_id ORDER BY pi.sort_order ASC LIMIT 1) AS product_image_path
        FROM product_comments pc
        INNER JOIN products p ON p.id = pc.product_id AND p.deleted_at IS NULL
        INNER JOIN shops s ON s.id = p.shop_id AND s.deleted_at IS NULL
-       LEFT JOIN product_comment_images pci ON pci.comment_id = pc.id
        WHERE pc.user_id = ? AND pc.parent_id IS NULL AND pc.deleted_at IS NULL
        ORDER BY pc.created_at DESC
        LIMIT ${limitNum} OFFSET ${offsetNum}`,
       [req.user.id]
     );
-    const byId = {};
-    for (const r of rows || []) {
-      if (!byId[r.id]) {
-        byId[r.id] = {
-          id: r.id,
-          product_id: r.product_id,
-          product_name: r.product_name,
-          shop_id: r.shop_id,
-          shop_name: r.shop_name,
-          rating: r.rating,
-          content: r.content,
-          created_at: r.created_at,
-          product_image: assetUrl(r.product_image_path),
-          images: []
-        };
-      }
-      if (r.image_path) byId[r.id].images.push({ url: assetUrl(r.image_path), sort_order: r.image_sort });
-    }
-    const list = Object.values(byId).map((item) => {
-      item.images.sort((a, b) => a.sort_order - b.sort_order);
-      return item;
-    });
     const hasMore = (rows || []).length > pageSize;
+    const pageRows = (rows || []).slice(0, pageSize);
+    const reviewIds = pageRows.map((row) => row.id);
+    let imageRows = [];
+    if (reviewIds.length > 0) {
+      const placeholders = reviewIds.map(() => '?').join(',');
+      imageRows = await query(
+        `SELECT comment_id, file_path, sort_order
+           FROM product_comment_images
+          WHERE comment_id IN (${placeholders})
+          ORDER BY comment_id, sort_order`,
+        reviewIds
+      );
+    }
+    const imagesByReview = {};
+    for (const image of imageRows || []) {
+      if (!imagesByReview[image.comment_id]) imagesByReview[image.comment_id] = [];
+      imagesByReview[image.comment_id].push({ url: assetUrl(image.file_path), sort_order: image.sort_order });
+    }
+    const list = pageRows.map((row) => ({
+      id: row.id,
+      product_id: row.product_id,
+      product_name: row.product_name,
+      shop_id: row.shop_id,
+      shop_name: row.shop_name,
+      rating: row.rating,
+      content: row.content,
+      created_at: row.created_at,
+      product_image: assetUrl(row.product_image_path),
+      images: imagesByReview[row.id] || [],
+    }));
     res.status(200).json({ status: 0, message: '获取成功', data: { list, hasMore, page, pageSize } });
   } catch (e) {
     console.error('获取我的点评错误:', e);
