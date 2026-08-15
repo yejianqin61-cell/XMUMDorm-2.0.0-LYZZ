@@ -231,6 +231,20 @@ describe('Users Routes', () => {
           show_major: false,
         },
       });
+      expect(Object.keys(res.body.data.user).sort()).toEqual([
+        'avatar',
+        'badge',
+        'campus_identity',
+        'id',
+        'level',
+        'levelProgress',
+        'nickname',
+        'username',
+      ]);
+      expect(res.body.data.user).not.toHaveProperty('email');
+      expect(res.body.data.user).not.toHaveProperty('student_id');
+      expect(res.body.data.user).not.toHaveProperty('role');
+      expect(res.body.data.user).not.toHaveProperty('weekly_comment_count');
       expect(res.body.data.active_directions[0]).toMatchObject({ key: 'favorite', value: 4 });
     });
   });

@@ -64,6 +64,18 @@ function normalizeCampusIdentity(row, isSelf) {
   };
 }
 
+function formatPublicProfileUser(user, campusIdentity) {
+  return {
+    id: user.id,
+    username: user.username,
+    nickname: user.nickname,
+    avatar: user.avatar ? assetUrl(user.avatar) : DEFAULT_AVATAR,
+    campus_identity: campusIdentity,
+    ...formatAuthorLevel(user),
+    levelProgress: getExpProgress(user.exp != null ? user.exp : 0),
+  };
+}
+
 async function getUserBaseRow(userId) {
   try {
     const rows = await query(
@@ -359,18 +371,7 @@ router.get('/:id/profile', async (req, res) => {
     );
 
     const data = {
-      user: {
-        id: u.id,
-        username: u.username,
-        nickname: u.nickname,
-        email: u.email,
-        avatar: u.avatar ? assetUrl(u.avatar) : DEFAULT_AVATAR,
-        role: u.role,
-        weekly_comment_count: u.weekly_comment_count != null ? u.weekly_comment_count : 0,
-        campus_identity: campusIdentity,
-        ...formatAuthorLevel(u),
-        levelProgress: getExpProgress(u.exp != null ? u.exp : 0),
-      },
+      user: formatPublicProfileUser(u, campusIdentity),
       campus_identity: campusIdentity,
       active_directions: activeDirections,
       recent_participation: recentParticipation,
