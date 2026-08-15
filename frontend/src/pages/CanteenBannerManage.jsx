@@ -15,6 +15,7 @@ import {
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { productImageUrl } from '@shared/api/config';
 import { QK } from '@shared/query/queryKeys';
+import AdvertisementAdminPanel from '@shared/components/AdvertisementAdminPanel';
 import './CanteenHome.css';
 
 const EMPTY_FORM = {
@@ -185,6 +186,11 @@ export default function CanteenBannerManage() {
   return (
     <div className="canteen-home-page canteen-banner-admin-page">
       <div className="canteen-home-inner">
+        <AdvertisementAdminPanel
+          isZh={isZh}
+          onError={(message) => Toast.error(message)}
+          onSuccess={(message) => Toast.success(message)}
+        />
         <p className="canteen-banner-admin-hint">{t.bannerAdminHint}</p>
 
         {bannersQuery.isLoading && <p className="canteen-muted">{t.loading}</p>}

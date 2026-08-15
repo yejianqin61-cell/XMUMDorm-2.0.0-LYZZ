@@ -2109,6 +2109,18 @@ router.get('/banners', async (req, res) => {
          WHERE is_active = 1
            AND (starts_at IS NULL OR starts_at <= ?)
            AND (ends_at IS NULL OR ends_at >= ?)
+           AND (
+             type <> 'ad'
+             OR (
+               link_type = 'post'
+               AND EXISTS (
+                 SELECT 1
+                 FROM advertisement_posts ap
+                 WHERE ap.post_id = CAST(link_target AS UNSIGNED)
+                   AND ap.status = 'active'
+               )
+             )
+           )
          ORDER BY sort_order ASC, id ASC
          LIMIT 10`,
         [now, now]
