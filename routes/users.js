@@ -192,7 +192,7 @@ router.get('/:id/profile', async (req, res) => {
     const viewer = parseOptionalUser(req);
     const viewerId = viewer && viewer.id != null ? parseInt(viewer.id, 10) : 0;
     const isSelf = viewerId > 0 && viewerId === userId;
-    const cacheKey = `user_profile_v4:${userId}:viewer:${viewerId || 0}:p:${page}:s:${pageSize}`;
+    const cacheKey = `user_profile_v5:${userId}:viewer:${viewerId || 0}:p:${page}:s:${pageSize}`;
     const cached = simpleCache.get(cacheKey);
     if (cached) {
       return res.status(200).json({ status: 0, message: 'èŽ·å–æˆåŠŸ', data: cached });
@@ -267,9 +267,9 @@ router.get('/:id/profile', async (req, res) => {
 
     const [statsRow] = await query(
       `SELECT
-        (SELECT COUNT(*) FROM posts WHERE user_id = ? AND deleted_at IS NULL AND hidden_by_admin = 0) AS post_count,
-        (SELECT COUNT(*) FROM post_likes pl INNER JOIN posts p ON pl.post_id = p.id WHERE p.user_id = ? AND p.deleted_at IS NULL) AS like_received_count,
-        (SELECT COUNT(*) FROM comments c INNER JOIN posts p ON c.post_id = p.id WHERE p.user_id = ? AND p.deleted_at IS NULL AND c.deleted_at IS NULL) AS comment_received_count`,
+        (SELECT COUNT(*) FROM posts p WHERE p.user_id = ? AND p.deleted_at IS NULL AND p.hidden_by_admin = 0 AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)) AS post_count,
+        (SELECT COUNT(*) FROM post_likes pl INNER JOIN posts p ON pl.post_id = p.id WHERE p.user_id = ? AND p.deleted_at IS NULL AND p.hidden_by_admin = 0 AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)) AS like_received_count,
+        (SELECT COUNT(*) FROM comments c INNER JOIN posts p ON c.post_id = p.id WHERE p.user_id = ? AND p.deleted_at IS NULL AND p.hidden_by_admin = 0 AND c.deleted_at IS NULL AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)) AS comment_received_count`,
       [userId, userId, userId]
     );
 
@@ -284,7 +284,7 @@ router.get('/:id/profile', async (req, res) => {
       },
       page,
       pageSize,
-      hasMore: (posts || []).length === pageSize,
+      hasMore: offset + postList.length < Number((statsRow && statsRow.post_count) || 0),
     };
     simpleCache.set(cacheKey, data, Number(process.env.CACHE_USER_PROFILE_TTL_MS || 10 * 1000));
     res.status(200).json({ status: 0, message: 'èŽ·å–æˆåŠŸ', data });

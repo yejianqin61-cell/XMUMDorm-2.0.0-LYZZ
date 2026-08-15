@@ -18,6 +18,7 @@ import RouteTransition from '../components/ui/RouteTransition';
 const TAB_POSTS = 'posts';
 const TAB_REVIEWS = 'reviews';
 const TAB_FAVORITES = 'favorites';
+const PROFILE_PAGE_SIZE = 30;
 
 function prefixAvatar(url) {
   return url && !url.startsWith('http') ? `${API_BASE_URL}${url}` : url;
@@ -42,6 +43,10 @@ function UserZoneStrings(isZh) {
     favEmptyTitle: isZh ? '暂无收藏' : 'No favorites yet',
     favEmptyDesc: isZh ? '在食堂收藏喜欢的菜品。' : 'Favorite dishes in the canteen.',
     logOut: isZh ? '退出登录' : 'Log out',
+    loadMore: isZh ? '加载更多' : 'Load more',
+    loadingMore: isZh ? '加载中…' : 'Loading…',
+    loadMoreFailed: isZh ? '加载更多失败' : 'Could not load more posts',
+    retry: isZh ? '重试' : 'Retry',
   };
 }
 
@@ -114,6 +119,10 @@ function UserZone() {
   const [campusIdentity, setCampusIdentity] = useState(null);
   const [posts, setPosts] = useState([]);
   const [postCount, setPostCount] = useState(0);
+  const [postPage, setPostPage] = useState(1);
+  const [postsHasMore, setPostsHasMore] = useState(false);
+  const [postsLoadingMore, setPostsLoadingMore] = useState(false);
+  const [postsLoadMoreError, setPostsLoadMoreError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -152,7 +161,15 @@ function UserZone() {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    getProfile(userId, { page: 1, pageSize: 50 })
+    setProfileUser(null);
+    setCampusIdentity(null);
+    setPosts([]);
+    setPostCount(0);
+    setPostPage(1);
+    setPostsHasMore(false);
+    setPostsLoadingMore(false);
+    setPostsLoadMoreError(null);
+    getProfile(userId, { page: 1, pageSize: PROFILE_PAGE_SIZE })
       .then((profileData) => {
         if (cancelled) return;
         const u = profileData?.user || null;
@@ -171,6 +188,8 @@ function UserZone() {
         setPosts(postList);
         const cnt = profileData?.stats?.post_count;
         setPostCount(Number.isFinite(Number(cnt)) ? Number(cnt) : postList.length);
+        setPostPage(Number(profileData?.page) || 1);
+        setPostsHasMore(Boolean(profileData?.hasMore));
       })
       .catch((err) => {
         if (!cancelled) setError(getApiErrorMessage(err));
@@ -179,7 +198,36 @@ function UserZone() {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [userId, isZh]);
+  }, [userId]);
+
+  const loadMorePosts = async () => {
+    if (postsLoadingMore || !postsHasMore) return;
+    setPostsLoadingMore(true);
+    setPostsLoadMoreError(null);
+    try {
+      const profileData = await getProfile(userId, { page: postPage + 1, pageSize: PROFILE_PAGE_SIZE });
+      const u = profileData?.user || profileUser;
+      const nextPosts = (profileData?.posts ?? profileData?.postList ?? []).map((post) => ({
+        ...post,
+        author: u
+          ? {
+              ...u,
+              avatar: u.avatar && !u.avatar.startsWith('http') ? `${API_BASE_URL}${u.avatar}` : u.avatar,
+            }
+          : null,
+      }));
+      setPosts((currentPosts) => {
+        const knownIds = new Set(currentPosts.map((post) => post.id));
+        return [...currentPosts, ...nextPosts.filter((post) => !knownIds.has(post.id))];
+      });
+      setPostPage(Number(profileData?.page) || postPage + 1);
+      setPostsHasMore(Boolean(profileData?.hasMore));
+    } catch (err) {
+      setPostsLoadMoreError(getApiErrorMessage(err));
+    } finally {
+      setPostsLoadingMore(false);
+    }
+  };
 
   useEffect(() => {
     if (!isOwnProfile) return;
@@ -393,6 +441,7 @@ function UserZone() {
                       actionTo={isOwnProfile ? '/post/new' : '/'}
                     />
                   ) : (
+                    <>
                     <Timeline
                       items={posts}
                       locale={locale}
@@ -400,6 +449,20 @@ function UserZone() {
                         <TimelinePostItem key={post.id} post={post} locale={locale} />
                       )}
                     />
+                    {(postsHasMore || postsLoadMoreError) && (
+                      <div className="mt-5 flex flex-col items-center gap-2">
+                        {postsLoadMoreError ? <p className="text-[12px] text-rose-600">{t.loadMoreFailed}</p> : null}
+                        <button
+                          type="button"
+                          onClick={loadMorePosts}
+                          disabled={postsLoadingMore}
+                          className="rounded-full border border-slate-300 bg-white px-4 py-2 text-[13px] font-semibold text-slate-700 disabled:opacity-50"
+                        >
+                          {postsLoadingMore ? t.loadingMore : postsLoadMoreError ? t.retry : t.loadMore}
+                        </button>
+                      </div>
+                    )}
+                    </>
                   )}
                 </motion.section>
               )}
