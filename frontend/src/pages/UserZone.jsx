@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, MessageCircle, Star } from 'lucide-react';
@@ -285,14 +285,11 @@ function UserZone() {
   const reviewsCount = reviews.length;
   const favoritesCount = favorites.length;
   const locale = isZh ? 'zh-CN' : 'en-US';
-  const identityChips = useMemo(
-    () => [
-      campusIdentity?.college ? { key: 'college', label: isZh ? '学院' : 'College', value: campusIdentity.college } : null,
-      campusIdentity?.grade ? { key: 'grade', label: isZh ? '年级' : 'Grade', value: campusIdentity.grade } : null,
-      campusIdentity?.major ? { key: 'major', label: isZh ? '专业' : 'Major', value: campusIdentity.major } : null,
-    ].filter(Boolean),
-    [campusIdentity, isZh]
-  );
+  const identityChips = [
+    campusIdentity?.college ? { key: 'college', label: isZh ? '学院' : 'College', value: campusIdentity.college } : null,
+    campusIdentity?.grade ? { key: 'grade', label: isZh ? '年级' : 'Grade', value: campusIdentity.grade } : null,
+    campusIdentity?.major ? { key: 'major', label: isZh ? '专业' : 'Major', value: campusIdentity.major } : null,
+  ].filter(Boolean);
 
   return (
     <RouteTransition className="min-h-[100svh] w-full bg-[#F9FAFB]">
