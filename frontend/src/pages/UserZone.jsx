@@ -7,6 +7,7 @@ import { getMyProductReviews, getMyFavorites } from '@shared/api/canteen';
 import { API_BASE_URL, productImageUrl } from '@shared/api/config';
 import { formatRatingLabel } from '@shared/constants/rating';
 import { getApiErrorMessage } from '@shared/utils/apiError';
+import { appendUniquePosts, parsePositiveUserId } from '@shared/utils/profilePage';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import EmptyState from '../components/ui/EmptyState';
@@ -48,13 +49,6 @@ function UserZoneStrings(isZh) {
     loadMoreFailed: isZh ? '加载更多失败' : 'Could not load more posts',
     retry: isZh ? '重试' : 'Retry',
   };
-}
-
-function parseProfileUserId(value) {
-  const text = String(value == null ? '' : value);
-  if (!/^[1-9]\d*$/.test(text)) return 0;
-  const userId = Number(text);
-  return Number.isSafeInteger(userId) ? userId : 0;
 }
 
 function profileErrorTitle(type, isZh) {
@@ -128,7 +122,7 @@ function UserZone() {
   const t = UserZoneStrings(isZh);
   const { user, isLoggedIn, logout } = useAuth();
 
-  const userId = parseProfileUserId(id);
+  const userId = parsePositiveUserId(id);
   const isOwnProfile = Boolean(isLoggedIn && user && Number(user.id) === userId);
 
   const [profileUser, setProfileUser] = useState(null);
@@ -141,6 +135,7 @@ function UserZone() {
   const [postsLoadMoreError, setPostsLoadMoreError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [profileReloadKey, setProfileReloadKey] = useState(0);
 
   const [activeTab, setActiveTab] = useState(TAB_POSTS);
   const [reviews, setReviews] = useState([]);
@@ -214,7 +209,7 @@ function UserZone() {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [userId]);
+  }, [userId, profileReloadKey]);
 
   const loadMorePosts = async () => {
     if (postsLoadingMore || !postsHasMore) return;
@@ -232,10 +227,7 @@ function UserZone() {
             }
           : null,
       }));
-      setPosts((currentPosts) => {
-        const knownIds = new Set(currentPosts.map((post) => post.id));
-        return [...currentPosts, ...nextPosts.filter((post) => !knownIds.has(post.id))];
-      });
+      setPosts((currentPosts) => appendUniquePosts(currentPosts, nextPosts));
       setPostPage(Number(profileData?.page) || postPage + 1);
       setPostsHasMore(Boolean(profileData?.hasMore));
     } catch (err) {
@@ -335,7 +327,11 @@ function UserZone() {
   if (error && !profileUser) {
     return (
       <RouteTransition className="min-h-[100svh] bg-[#F9FAFB] px-4 pb-8 pt-6">
-        <ErrorState title={t.userNotFound} description={error} />
+        <ErrorState
+          title={profileErrorTitle('profile', isZh)}
+          onActionClick={() => setProfileReloadKey((key) => key + 1)}
+          actionLabel={t.retry}
+        />
       </RouteTransition>
     );
   }

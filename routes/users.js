@@ -50,10 +50,10 @@ function parsePositiveInteger(value) {
   return Number.isSafeInteger(number) ? number : null;
 }
 
-function normalizeCampusIdentity(row, isSelf) {
-  const showCollege = isSelf || rowTruthyLike(row.show_college == null ? 1 : row.show_college);
-  const showGrade = isSelf || rowTruthyLike(row.show_grade == null ? 1 : row.show_grade);
-  const showMajor = isSelf || rowTruthyLike(row.show_major == null ? 0 : row.show_major);
+function normalizeCampusIdentity(row) {
+  const showCollege = rowTruthyLike(row.show_college == null ? 1 : row.show_college);
+  const showGrade = rowTruthyLike(row.show_grade == null ? 1 : row.show_grade);
+  const showMajor = rowTruthyLike(row.show_major == null ? 0 : row.show_major);
   const college = safeText(row.college);
   const grade = safeText(row.grade);
   const major = safeText(row.major);
@@ -67,7 +67,6 @@ function normalizeCampusIdentity(row, isSelf) {
       show_grade: showGrade,
       show_major: showMajor,
     },
-    raw: isSelf ? { college, grade, major } : undefined,
   };
 }
 
@@ -142,7 +141,7 @@ router.get('/me', authenticateToken, async (req, res) => {
     }
 
     const u = rows[0];
-    const campusIdentity = normalizeCampusIdentity(u, true);
+    const campusIdentity = normalizeCampusIdentity(u);
     const data = {
       id: u.id,
       student_id: u.student_id,
@@ -153,9 +152,9 @@ router.get('/me', authenticateToken, async (req, res) => {
       avatar: u.avatar ? assetUrl(u.avatar) : DEFAULT_AVATAR,
       weekly_comment_count: u.weekly_comment_count != null ? u.weekly_comment_count : 0,
       created_at: u.created_at,
-      college: campusIdentity.raw?.college || null,
-      grade: campusIdentity.raw?.grade || null,
-      major: campusIdentity.raw?.major || null,
+      college: safeText(u.college),
+      grade: safeText(u.grade),
+      major: safeText(u.major),
       show_college: campusIdentity.visibility.show_college,
       show_grade: campusIdentity.visibility.show_grade,
       show_major: campusIdentity.visibility.show_major,
@@ -198,8 +197,7 @@ router.get('/:id/profile', async (req, res) => {
 
     const viewer = parseOptionalUser(req);
     const viewerId = parsePositiveInteger(viewer?.id) || 0;
-    const isSelf = viewerId > 0 && viewerId === userId;
-    const cacheKey = `user_profile_v5:${userId}:viewer:${viewerId || 0}:p:${page}:s:${pageSize}`;
+    const cacheKey = `user_profile_v6:${userId}:viewer:${viewerId || 0}:p:${page}:s:${pageSize}`;
     const cached = simpleCache.get(cacheKey);
     if (cached) {
       return res.status(200).json({ status: 0, message: 'èŽ·å–æˆåŠŸ', data: cached });
@@ -210,7 +208,7 @@ router.get('/:id/profile', async (req, res) => {
       return res.status(404).json({ status: -1, message: 'ç”¨æˆ·ä¸å­˜åœ¨' });
     }
 
-    const campusIdentity = normalizeCampusIdentity(u, isSelf);
+    const campusIdentity = normalizeCampusIdentity(u);
 
     const posts = await query(
       `SELECT p.id, p.content, p.type, p.created_at

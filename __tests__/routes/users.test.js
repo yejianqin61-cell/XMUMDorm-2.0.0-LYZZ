@@ -107,7 +107,7 @@ describe('Users Routes', () => {
         major: 'SE',
         show_college: true,
         show_grade: true,
-        show_major: true,
+        show_major: false,
       });
     });
   });
@@ -181,9 +181,44 @@ describe('Users Routes', () => {
         .set('Authorization', 'Bearer mock-token');
 
       expect(res.status).toBe(200);
-      expect(simpleCache.get).toHaveBeenCalledWith('user_profile_v5:12:viewer:12:p:1:s:10');
+      expect(simpleCache.get).toHaveBeenCalledWith('user_profile_v6:12:viewer:12:p:1:s:10');
       expect(query).not.toHaveBeenCalled();
       expect(res.body.data).toEqual(cached);
+    });
+
+    it('keeps hidden campus fields hidden when the profile owner requests the public profile', async () => {
+      simpleCache.get.mockReturnValueOnce(null);
+      query
+        .mockResolvedValueOnce([{
+          id: 12,
+          username: 'bob',
+          avatar: null,
+          nickname: 'Bob',
+          level: 2,
+          exp: 80,
+          badge: null,
+          college: 'Engineering',
+          grade: 'Year 3',
+          major: 'Robotics',
+          show_college: 0,
+          show_grade: 0,
+          show_major: 0,
+        }])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([{ post_count: 0, comment_received_count: 0, like_received_count: 0 }]);
+
+      const res = await supertest(app())
+        .get('/api/users/12/profile')
+        .set('Authorization', 'Bearer mock-token');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.campus_identity).toEqual({
+        college: null,
+        grade: null,
+        major: null,
+        visibility: { show_college: false, show_grade: false, show_major: false },
+      });
+      expect(res.body.data.user.campus_identity).not.toHaveProperty('raw');
     });
 
     it('hides private campus identity fields from public viewers', async () => {
