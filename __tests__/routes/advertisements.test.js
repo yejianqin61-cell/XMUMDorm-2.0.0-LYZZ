@@ -32,6 +32,39 @@ function app() {
 describe('Advertisement Routes', () => {
   beforeEach(() => query.mockReset());
 
+  it('serves a public advertisement only while a valid placement exists', async () => {
+    query
+      .mockResolvedValueOnce([{
+        post_id: 44,
+        title: 'Launch',
+        content: 'Body',
+        ad_status: 'active',
+        sponsor_name: 'Campus',
+        sponsor_logo: null,
+        cta_label: 'Open',
+        cta_type: 'internal',
+        cta_target: '/about',
+      }])
+      .mockResolvedValueOnce([{ post_id: 44, file_path: 'ad.jpg', sort_order: 0 }]);
+
+    const response = await supertest(app()).get('/api/advertisements/public/44');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.id).toBe(44);
+    expect(response.body.data.sponsor_name).toBe('Campus');
+    expect(response.body.data.images).toHaveLength(1);
+    expect(response.body.data).not.toHaveProperty('created_by');
+  });
+
+  it('returns a stable unavailable state after a placement expires or is withdrawn', async () => {
+    query.mockResolvedValueOnce([]);
+
+    const response = await supertest(app()).get('/api/advertisements/public/44');
+
+    expect(response.status).toBe(410);
+    expect(response.body.code).toBe('ADVERTISEMENT_UNAVAILABLE');
+  });
+
   it('requires an administrator for the content library', async () => {
     const response = await supertest(app()).get('/api/advertisements/admin');
     expect(response.status).toBe(403);

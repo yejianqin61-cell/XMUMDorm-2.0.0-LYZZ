@@ -36,6 +36,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.888.0",
     "@capacitor/android": "^8.4.0",
+    "@capacitor/browser": "^8.0.4",
     "@capacitor/camera": "^8.2.0",
     "@capacitor/core": "^8.4.0",
     "@capacitor/haptics": "^8.0.2",

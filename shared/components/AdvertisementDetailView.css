@@ -1,0 +1,89 @@
+.advertisement-detail-page {
+  min-height: 100%;
+  padding: 16px 16px 32px;
+  color: var(--post-ios-label, #111);
+}
+
+.advertisement-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  font-weight: 650;
+}
+
+.advertisement-detail-back,
+.advertisement-detail-page--state button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.advertisement-detail-card {
+  max-width: 680px;
+  margin: 16px auto 0;
+  padding: 20px 0 40px;
+}
+
+.advertisement-detail-sponsor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--post-ios-secondary-label, #6b7280);
+  font-size: 13px;
+}
+
+.advertisement-detail-sponsor img {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.advertisement-detail-card h1 {
+  margin: 18px 0 12px;
+  font-size: clamp(24px, 5vw, 36px);
+  line-height: 1.15;
+}
+
+.advertisement-detail-content {
+  white-space: pre-wrap;
+  line-height: 1.7;
+  font-size: 16px;
+}
+
+.advertisement-detail-images {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.advertisement-detail-images img {
+  display: block;
+  width: 100%;
+  max-height: 520px;
+  object-fit: contain;
+  background: #f4f4f5;
+}
+
+.advertisement-detail-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+  padding: 11px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: #111;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+}
+
+.advertisement-detail-page--state {
+  display: grid;
+  place-content: center;
+  gap: 16px;
+  text-align: center;
+}

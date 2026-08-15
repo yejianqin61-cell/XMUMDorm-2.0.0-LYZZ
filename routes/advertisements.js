@@ -99,6 +99,70 @@ function withUpload(handler) {
   };
 }
 
+/**
+ * Public access is deliberately narrower than admin preview:
+ * an advertisement is reachable only while an active, scheduled carousel
+ * placement still points at it.
+ */
+router.get('/public/:postId', async (req, res) => {
+  const postId = Number.parseInt(req.params.postId, 10);
+  if (!Number.isInteger(postId) || postId <= 0) {
+    return res.status(400).json({ status: -1, message: '广告 ID 无效' });
+  }
+  try {
+    const now = new Date();
+    const rows = await query(
+      `SELECT ap.post_id, p.title, p.content, ap.status AS ad_status,
+              ap.sponsor_name, ap.sponsor_logo, ap.cta_label, ap.cta_type,
+              ap.cta_target, ap.created_at, ap.updated_at
+       FROM advertisement_posts ap
+       INNER JOIN posts p ON p.id = ap.post_id
+       WHERE ap.post_id = ?
+         AND ap.status = 'active'
+         AND p.deleted_at IS NULL
+         AND (
+           EXISTS (
+             SELECT 1
+             FROM canteen_banners cb
+             WHERE cb.type = 'ad'
+               AND cb.link_type = 'post'
+               AND cb.link_target = CAST(ap.post_id AS CHAR)
+               AND cb.is_active = 1
+               AND (cb.starts_at IS NULL OR cb.starts_at <= ?)
+               AND (cb.ends_at IS NULL OR cb.ends_at >= ?)
+           )
+           OR EXISTS (
+             SELECT 1
+             FROM square_banners sb
+             WHERE sb.type = 'ad'
+               AND sb.link_type = 'post'
+               AND sb.link_target = CAST(ap.post_id AS CHAR)
+               AND sb.is_active = 1
+               AND (sb.starts_at IS NULL OR sb.starts_at <= ?)
+               AND (sb.ends_at IS NULL OR sb.ends_at >= ?)
+           )
+         )
+       LIMIT 1`,
+      [postId, now, now, now, now]
+    );
+    if (!rows.length) {
+      return res.status(410).json({
+        status: -1,
+        code: 'ADVERTISEMENT_UNAVAILABLE',
+        message: '广告已结束或暂不可用',
+      });
+    }
+    const [row] = await attachImages(rows);
+    const data = mapRow(row);
+    delete data.created_by;
+    delete data.updated_by;
+    res.json({ status: 0, data });
+  } catch (error) {
+    console.error('广告公开详情读取失败:', error);
+    sendDatabaseError(res, error);
+  }
+});
+
 router.use(authenticateToken);
 router.use(requireAdmin);
 

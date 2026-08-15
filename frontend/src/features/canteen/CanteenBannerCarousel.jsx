@@ -63,6 +63,10 @@ export default function CanteenBannerCarousel({
   }, [idx, len]);
 
   const handleClick = (b) => {
+    if (b.type === 'ad' && b.link_type === 'post' && b.link_target) {
+      navigate(`/advertisement/${b.link_target}`);
+      return;
+    }
     if (b.link_type === 'url' && b.link_target) {
       window.open(b.link_target, '_blank', 'noopener');
       return;
