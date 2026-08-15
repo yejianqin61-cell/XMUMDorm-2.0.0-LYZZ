@@ -28,7 +28,7 @@
   --accent-soft: rgba(16, 185, 129, 0.16);
 
   /* 底部 TabBar 可调高度（不含 safe-bottom） */
-  --tabbar-height: 58px;
+  --tabbar-height: 52px;
 
   /* --safe-top/bottom 优先用 JS 注入值（Android WebView 不支持 env()） */
   /* JS 未注入时降级到 env()；env() 也不支持时降级到 0px */
