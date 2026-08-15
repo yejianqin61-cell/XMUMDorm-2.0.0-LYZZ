@@ -948,6 +948,7 @@ router.get('/banners/admin', authenticateToken, async (req, res) => {
     const list = (rows || []).map((r) => ({
       ...r, subtitle: r.subtitle || '', link_target: r.link_target || '',
       image_url: assetUrl(r.image_url),
+      image_path: r.image_url,
     }));
     res.status(200).json({ status: 0, message: '获取成功', data: list });
   } catch (e) {
@@ -1004,9 +1005,9 @@ router.post('/banners', authenticateToken, (req, res, next) => {
     let imagePath = req.body && req.body.image_url != null ? String(req.body.image_url).trim() : '';
     if (!imagePath && !req.file) return res.status(400).json({ status: -1, message: '请上传图片或填写图片地址' });
     const result = await query(
-      `INSERT INTO square_banners (type, title, subtitle, image_url, link_type, link_target, sort_order, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [parsed.type, parsed.title, parsed.subtitle, imagePath, parsed.link_type, parsed.link_target, parsed.sort_order, parsed.is_active]
+      `INSERT INTO square_banners (type, title, subtitle, image_url, link_type, link_target, sort_order, starts_at, ends_at, is_active)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [parsed.type, parsed.title, parsed.subtitle, imagePath, parsed.link_type, parsed.link_target, parsed.sort_order, parsed.starts_at, parsed.ends_at, parsed.is_active]
     );
     const bannerId = result.insertId;
     if (req.file) {
@@ -1051,6 +1052,8 @@ router.patch('/banners/:id', authenticateToken, (req, res, next) => {
     sets.push('link_type = ?'); params.push(parsed.link_type);
     sets.push('link_target = ?'); params.push(parsed.link_target);
     sets.push('sort_order = ?'); params.push(parsed.sort_order);
+    sets.push('starts_at = ?'); params.push(parsed.starts_at);
+    sets.push('ends_at = ?'); params.push(parsed.ends_at);
     sets.push('is_active = ?'); params.push(parsed.is_active);
     if (req.file) {
       const key = await saveSquareBannerImage(req.file, bannerId);

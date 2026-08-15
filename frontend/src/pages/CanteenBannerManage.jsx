@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
@@ -12,6 +12,12 @@ import {
   deleteCanteenBanner,
   getRegions,
 } from '@shared/api/canteen';
+import {
+  getSquareBannersAdmin,
+  createSquareBannerForm,
+  updateSquareBannerForm,
+  deleteSquareBanner,
+} from '@shared/api/square';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { productImageUrl } from '@shared/api/config';
 import { QK } from '@shared/query/queryKeys';
@@ -47,6 +53,9 @@ function getBannerStatus(b, isZh) {
   const ends = b.ends_at ? new Date(b.ends_at).getTime() : NaN;
   if (Number.isFinite(starts) && starts > now) return isZh ? '待上线' : 'Scheduled';
   if (Number.isFinite(ends) && ends < now) return isZh ? '已过期' : 'Expired';
+  if (b.type === 'ad' && b.link_type === 'post' && b.advertisement_status !== 'active') {
+    return isZh ? '广告未投放' : 'Ad not active';
+  }
   return isZh ? '已上线' : 'Live';
 }
 
@@ -68,12 +77,18 @@ function buildPayload(form) {
 }
 
 export default function CanteenBannerManage() {
+  const [searchParams] = useSearchParams();
   const { isAdmin, isLoggedIn } = useAuth();
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
   const t = getCanteenStrings(isZh);
   const queryClient = useQueryClient();
   const fileRef = useRef(null);
+  const isSquarePlacement = searchParams.get('placement') === 'square';
+  const placementLabel = isSquarePlacement
+    ? (isZh ? '广场轮播管理' : 'Square carousel management')
+    : (isZh ? '食堂轮播管理' : 'Canteen carousel management');
+  const bannerQueryKey = isSquarePlacement ? QK.squareBannersAdmin() : QK.canteenBannersAdmin();
 
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -82,9 +97,9 @@ export default function CanteenBannerManage() {
   const [saving, setSaving] = useState(false);
 
   const bannersQuery = useQuery({
-    queryKey: QK.canteenBannersAdmin(),
-    queryFn: getCanteenBannersAdmin,
-    enabled: isAdmin,
+    queryKey: bannerQueryKey,
+    queryFn: isSquarePlacement ? getSquareBannersAdmin : getCanteenBannersAdmin,
+    enabled: isAdmin && !isSquarePlacement,
     select: (d) => (Array.isArray(d) ? d : d?.data || []),
   });
 
@@ -144,8 +159,8 @@ export default function CanteenBannerManage() {
   };
 
   const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: QK.canteenBanners() });
-    queryClient.invalidateQueries({ queryKey: QK.canteenBannersAdmin() });
+    queryClient.invalidateQueries({ queryKey: isSquarePlacement ? QK.squareBanners() : QK.canteenBanners() });
+    queryClient.invalidateQueries({ queryKey: bannerQueryKey });
   };
 
   const handleSubmit = async (e) => {
@@ -162,10 +177,14 @@ export default function CanteenBannerManage() {
     try {
       const payload = buildPayload(form);
       if (editingId) {
-        await updateCanteenBanner(editingId, payload, imageFile || undefined);
+        await (isSquarePlacement
+          ? updateSquareBannerForm(editingId, payload, imageFile || undefined)
+          : updateCanteenBanner(editingId, payload, imageFile || undefined));
         Toast.success(t.bannerSaved);
       } else {
-        await createCanteenBanner(payload, imageFile || undefined);
+        await (isSquarePlacement
+          ? createSquareBannerForm(payload, imageFile || undefined)
+          : createCanteenBanner(payload, imageFile || undefined));
         Toast.success(t.bannerCreated);
       }
       resetForm();
@@ -180,7 +199,7 @@ export default function CanteenBannerManage() {
   const handleDelete = async (id) => {
     if (!window.confirm(t.bannerDeleteConfirm)) return;
     try {
-      await deleteCanteenBanner(id);
+      await (isSquarePlacement ? deleteSquareBanner(id) : deleteCanteenBanner(id));
       Toast.success(t.bannerDeleted);
       if (editingId === id) resetForm();
       invalidate();
@@ -199,6 +218,7 @@ export default function CanteenBannerManage() {
           onError={(message) => Toast.error(message)}
           onSuccess={(message) => Toast.success(message)}
         />
+        <h1 className="canteen-page-title">{placementLabel}</h1>
         <p className="canteen-banner-admin-hint">{t.bannerAdminHint}</p>
 
         {bannersQuery.isLoading && <p className="canteen-muted">{t.loading}</p>}
