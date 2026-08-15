@@ -31,6 +31,7 @@ const { simpleCache } = require('../utils/simpleCache');
 const { grantExp } = require('../services/expService');
 const { attachExp } = require('../utils/expResponse');
 const { isQualityReview } = require('../utils/expEligibility');
+const { validateAdvertisementTarget } = require('../services/advertisementTarget');
 
 const RATING_ENUM = ['夯爆了', '顶级', '人上人', 'NPC', '拉完了'];
 
@@ -98,6 +99,9 @@ function mapBannerAdminRow(r) {
     is_active: !!r.is_active,
     starts_at: r.starts_at,
     ends_at: r.ends_at,
+    advertisement_id: r.advertisement_id || null,
+    advertisement_title: r.advertisement_title || '',
+    advertisement_status: r.advertisement_status || null,
   };
 }
 
@@ -2112,12 +2116,15 @@ router.get('/banners', async (req, res) => {
            AND (
              type <> 'ad'
              OR (
-               link_type = 'post'
-               AND EXISTS (
+               link_type = 'none'
+               OR (
+                 link_type = 'post'
+                 AND EXISTS (
                  SELECT 1
                  FROM advertisement_posts ap
                  WHERE ap.post_id = CAST(link_target AS UNSIGNED)
                    AND ap.status = 'active'
+                 )
                )
              )
            )
@@ -2149,10 +2156,16 @@ router.get('/banners/all', authenticateToken, async (req, res) => {
       return res.status(403).json({ status: -1, message: '仅管理员可操作' });
     }
     const rows = await query(
-      `SELECT id, type, title, subtitle, image_url, link_type, link_target,
-              sort_order, starts_at, ends_at, is_active
-       FROM canteen_banners
-       ORDER BY sort_order ASC, id ASC`
+      `SELECT cb.id, cb.type, cb.title, cb.subtitle, cb.image_url, cb.link_type, cb.link_target,
+              cb.sort_order, cb.starts_at, cb.ends_at, cb.is_active,
+              ap.post_id AS advertisement_id, p.title AS advertisement_title,
+              ap.status AS advertisement_status
+       FROM canteen_banners cb
+       LEFT JOIN advertisement_posts ap
+         ON cb.type = 'ad' AND cb.link_type = 'post'
+        AND ap.post_id = CAST(cb.link_target AS UNSIGNED)
+       LEFT JOIN posts p ON p.id = ap.post_id
+       ORDER BY cb.sort_order ASC, cb.id ASC`
     );
     const list = (rows || []).map(mapBannerAdminRow);
     res.status(200).json({ status: 0, message: '获取成功', data: list });
@@ -2177,6 +2190,13 @@ router.post('/banners', authenticateToken, (req, res, next) => {
     const parsed = parseBannerBody(req.body);
     if (!parsed.title) {
       return res.status(400).json({ status: -1, message: '标题不能为空' });
+    }
+    if (parsed.type === 'ad' && !['none', 'post'].includes(parsed.link_type)) {
+      return res.status(400).json({ status: -1, message: '广告轮播只能不跳转或跳转广告帖' });
+    }
+    if (parsed.type === 'ad' && parsed.link_type === 'post') {
+      const target = await validateAdvertisementTarget(parsed.link_target);
+      if (!target.ok) return res.status(400).json({ status: -1, message: target.message });
     }
     let imagePath = req.body && req.body.image_url != null ? String(req.body.image_url).trim() : '';
     if (!imagePath && !req.file) {
@@ -2252,6 +2272,13 @@ router.patch('/banners/:id', authenticateToken, (req, res, next) => {
     const parsed = parseBannerBody(req.body);
     if (!parsed.title) {
       return res.status(400).json({ status: -1, message: '标题不能为空' });
+    }
+    if (parsed.type === 'ad' && !['none', 'post'].includes(parsed.link_type)) {
+      return res.status(400).json({ status: -1, message: '广告轮播只能不跳转或跳转广告帖' });
+    }
+    if (parsed.type === 'ad' && parsed.link_type === 'post') {
+      const target = await validateAdvertisementTarget(parsed.link_target);
+      if (!target.ok) return res.status(400).json({ status: -1, message: target.message });
     }
     const updates = [
       'type = ?', 'title = ?', 'subtitle = ?', 'link_type = ?', 'link_target = ?',

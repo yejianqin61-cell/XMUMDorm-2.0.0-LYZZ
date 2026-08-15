@@ -21,6 +21,7 @@ const sanitizeHtml = require('sanitize-html');
 const { grantExp, revokeByRef, checkAndGrantPostPopularRewards } = require('../services/expService');
 const { attachExp } = require('../utils/expResponse');
 const { isPostContentEligible, isCommentEligible } = require('../utils/expEligibility');
+const { validateAdvertisementTarget } = require('../services/advertisementTarget');
 const { getSquareHomeSummary } = require('../services/squareHomeService');
 const {
   getSquarePersonalizedSummary,
@@ -896,6 +897,21 @@ router.get('/banners', async (req, res) => {
          WHERE is_active = 1
            AND (starts_at IS NULL OR starts_at <= ?)
            AND (ends_at IS NULL OR ends_at >= ?)
+           AND (
+             type <> 'ad'
+             OR (
+               link_type = 'none'
+               OR (
+                 link_type = 'post'
+                 AND EXISTS (
+                 SELECT 1
+                 FROM advertisement_posts ap
+                 WHERE ap.post_id = CAST(link_target AS UNSIGNED)
+                   AND ap.status = 'active'
+                 )
+               )
+             )
+           )
          ORDER BY sort_order ASC, id ASC
          LIMIT 10`,
         [now, now]
@@ -918,7 +934,16 @@ router.get('/banners/admin', authenticateToken, async (req, res) => {
   if (!isAdmin(req)) return res.status(403).json({ status: -1, message: '仅管理员' });
   try {
     const rows = await query(
-      'SELECT id, type, title, subtitle, image_url, link_type, link_target, sort_order, is_active FROM square_banners ORDER BY sort_order ASC, id ASC'
+      `SELECT sb.id, sb.type, sb.title, sb.subtitle, sb.image_url, sb.link_type, sb.link_target,
+              sb.sort_order, sb.is_active,
+              ap.post_id AS advertisement_id, p.title AS advertisement_title,
+              ap.status AS advertisement_status
+       FROM square_banners sb
+       LEFT JOIN advertisement_posts ap
+         ON sb.type = 'ad' AND sb.link_type = 'post'
+        AND ap.post_id = CAST(sb.link_target AS UNSIGNED)
+       LEFT JOIN posts p ON p.id = ap.post_id
+       ORDER BY sb.sort_order ASC, sb.id ASC`
     );
     const list = (rows || []).map((r) => ({
       ...r, subtitle: r.subtitle || '', link_target: r.link_target || '',
@@ -969,6 +994,13 @@ router.post('/banners', authenticateToken, (req, res, next) => {
   try {
     const parsed = parseBannerBody(req.body);
     if (!parsed.title) return res.status(400).json({ status: -1, message: '标题不能为空' });
+    if (parsed.type === 'ad' && !['none', 'post'].includes(parsed.link_type)) {
+      return res.status(400).json({ status: -1, message: '广告轮播只能不跳转或跳转广告帖' });
+    }
+    if (parsed.type === 'ad' && parsed.link_type === 'post') {
+      const target = await validateAdvertisementTarget(parsed.link_target);
+      if (!target.ok) return res.status(400).json({ status: -1, message: target.message });
+    }
     let imagePath = req.body && req.body.image_url != null ? String(req.body.image_url).trim() : '';
     if (!imagePath && !req.file) return res.status(400).json({ status: -1, message: '请上传图片或填写图片地址' });
     const result = await query(
@@ -1004,6 +1036,13 @@ router.patch('/banners/:id', authenticateToken, (req, res, next) => {
     if (!existing || !existing.length) return res.status(404).json({ status: -1, message: '轮播不存在' });
     const parsed = parseBannerBody(req.body);
     if (!parsed.title) return res.status(400).json({ status: -1, message: '标题不能为空' });
+    if (parsed.type === 'ad' && !['none', 'post'].includes(parsed.link_type)) {
+      return res.status(400).json({ status: -1, message: '广告轮播只能不跳转或跳转广告帖' });
+    }
+    if (parsed.type === 'ad' && parsed.link_type === 'post') {
+      const target = await validateAdvertisementTarget(parsed.link_target);
+      if (!target.ok) return res.status(400).json({ status: -1, message: target.message });
+    }
     const sets = [];
     const params = [];
     sets.push('type = ?'); params.push(parsed.type);
