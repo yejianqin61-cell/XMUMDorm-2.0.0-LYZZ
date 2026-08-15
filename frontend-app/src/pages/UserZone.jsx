@@ -112,8 +112,6 @@ function UserZone() {
 
   const [profileUser, setProfileUser] = useState(null);
   const [campusIdentity, setCampusIdentity] = useState(null);
-  const [activeDirections, setActiveDirections] = useState([]);
-  const [recentParticipation, setRecentParticipation] = useState([]);
   const [posts, setPosts] = useState([]);
   const [postCount, setPostCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -160,8 +158,6 @@ function UserZone() {
         const u = profileData?.user || null;
         setProfileUser(u ? { ...u, avatar: u.avatar ? prefixAvatar(u.avatar) : null } : null);
         setCampusIdentity(profileData?.campus_identity || u?.campus_identity || null);
-        setActiveDirections(Array.isArray(profileData?.active_directions) ? profileData.active_directions : []);
-        setRecentParticipation(Array.isArray(profileData?.recent_participation) ? profileData.recent_participation : []);
         const rawPosts = profileData?.posts ?? profileData?.postList ?? [];
         const postList = rawPosts.map((p) => ({
           ...p,
@@ -341,8 +337,6 @@ function UserZone() {
             isZh={isZh}
             isOwnProfile={isOwnProfile}
             chips={identityChips}
-            activeDirections={activeDirections}
-            recentParticipation={recentParticipation}
           />
 
           {/* Tabs */}
@@ -476,11 +470,9 @@ function StatMini({ value, label, dim = false }) {
   );
 }
 
-function CampusIdentityCard({ isZh, isOwnProfile, chips, activeDirections, recentParticipation }) {
+function CampusIdentityCard({ isZh, isOwnProfile, chips }) {
   const hasIdentity = chips.length > 0;
-  const hasDirections = activeDirections.length > 0;
-  const hasRecent = recentParticipation.length > 0;
-  if (!hasIdentity && !hasDirections && !hasRecent) return null;
+  if (!hasIdentity) return null;
 
   return (
     <div className="mt-4 rounded-3xl bg-white/96 p-5 ring-1 ring-slate-200/70" style={{ boxShadow: '0 12px 36px rgba(15, 23, 42, 0.06)' }}>
@@ -514,36 +506,6 @@ function CampusIdentityCard({ isZh, isOwnProfile, chips, activeDirections, recen
         </div>
       ) : null}
 
-      {hasDirections ? (
-        <div className="mt-5">
-          <div className="text-[12px] font-semibold text-slate-500">{isZh ? '活跃方向' : 'Active directions'}</div>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {activeDirections.map((item) => (
-              <div key={item.key} className="rounded-full bg-emerald-50 px-3 py-2 text-[12px] text-emerald-800 ring-1 ring-emerald-100">
-                <span className="font-semibold">{item.label}</span>
-                <span className="ml-2">{item.value}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      {hasRecent ? (
-        <div className="mt-5">
-          <div className="text-[12px] font-semibold text-slate-500">{isZh ? '最近参与' : 'Recent participation'}</div>
-          <div className="mt-3 space-y-3">
-            {recentParticipation.map((item) => (
-              <Link key={item.key} to={item.href} className="block rounded-2xl bg-slate-50 px-4 py-3 ring-1 ring-slate-200/70">
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-[12px] font-semibold text-slate-500">{item.label}</span>
-                  <span className="text-[11px] text-slate-400">{timeBadge(item.created_at, isZh ? 'zh-CN' : 'en-US')}</span>
-                </div>
-                <div className="mt-1 text-[14px] font-semibold leading-6 text-slate-900">{item.title}</div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }

@@ -161,8 +161,6 @@ describe('Users Routes', () => {
       const cached = {
         user: { id: 12, nickname: 'Cached User' },
         campus_identity: { college: 'FCSIT', grade: 'Year 2', major: null },
-        active_directions: [],
-        recent_participation: [],
         posts: [],
         stats: { post_count: 0, comment_received_count: 0, like_received_count: 0 },
         page: 1,
@@ -176,7 +174,7 @@ describe('Users Routes', () => {
         .set('Authorization', 'Bearer mock-token');
 
       expect(res.status).toBe(200);
-      expect(simpleCache.get).toHaveBeenCalledWith('user_profile_v3:12:viewer:12:p:1:s:10');
+      expect(simpleCache.get).toHaveBeenCalledWith('user_profile_v4:12:viewer:12:p:1:s:10');
       expect(query).not.toHaveBeenCalled();
       expect(res.body.data).toEqual(cached);
     });
@@ -206,13 +204,6 @@ describe('Users Routes', () => {
             show_major: 0,
           },
         ])
-        .mockResolvedValueOnce([{ total: 2 }])
-        .mockResolvedValueOnce([{ total: 1 }])
-        .mockResolvedValueOnce([{ total: 0 }])
-        .mockResolvedValueOnce([{ total: 4 }])
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([])
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([
           { post_count: 0, comment_received_count: 0, like_received_count: 0 },
@@ -245,7 +236,8 @@ describe('Users Routes', () => {
       expect(res.body.data.user).not.toHaveProperty('student_id');
       expect(res.body.data.user).not.toHaveProperty('role');
       expect(res.body.data.user).not.toHaveProperty('weekly_comment_count');
-      expect(res.body.data.active_directions[0]).toMatchObject({ key: 'favorite', value: 4 });
+      expect(res.body.data).not.toHaveProperty('active_directions');
+      expect(res.body.data).not.toHaveProperty('recent_participation');
     });
   });
 });

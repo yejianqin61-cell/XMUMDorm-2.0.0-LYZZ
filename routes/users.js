@@ -122,99 +122,6 @@ async function getUserBaseRow(userId) {
   }
 }
 
-async function getUserActiveDirections(userId) {
-  const [postRows, reviewRows, clubRows, favoriteRows] = await Promise.all([
-    query('SELECT COUNT(*) AS total FROM posts WHERE user_id = ? AND deleted_at IS NULL AND hidden_by_admin = 0 AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = posts.id)', [userId]).catch(() => [{ total: 0 }]),
-    query('SELECT COUNT(*) AS total FROM product_comments WHERE user_id = ? AND parent_id IS NULL AND deleted_at IS NULL', [userId]).catch(() => [{ total: 0 }]),
-    query(
-      `SELECT
-        (SELECT COUNT(*) FROM club_activity_registrations WHERE user_id = ? AND status = 'registered' AND cancelled_at IS NULL) +
-        (SELECT COUNT(*) FROM club_follows WHERE user_id = ?) +
-        (SELECT COUNT(*) FROM club_members WHERE user_id = ?) AS total`,
-      [userId, userId, userId]
-    ).catch(() => [{ total: 0 }]),
-    query('SELECT COUNT(*) AS total FROM favorite_products WHERE user_id = ?', [userId]).catch(() => [{ total: 0 }]),
-  ]);
-
-  return [
-    { key: 'treehole', label: '树洞表达', value: Number(postRows?.[0]?.total) || 0, hint: '发帖与互动记录' },
-    { key: 'canteen', label: '食堂点评', value: Number(reviewRows?.[0]?.total) || 0, hint: '菜品点评与口味偏好' },
-    { key: 'club', label: '社团参与', value: Number(clubRows?.[0]?.total) || 0, hint: '关注、报名与社团关系' },
-    { key: 'favorite', label: '收藏探索', value: Number(favoriteRows?.[0]?.total) || 0, hint: '长期保留的兴趣线索' },
-  ]
-    .filter((item) => item.value > 0)
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 3);
-}
-
-async function getUserRecentParticipation(userId) {
-  const [latestPost, latestReview, latestActivity] = await Promise.all([
-    query(
-      `SELECT id, content, created_at
-         FROM posts
-         WHERE user_id = ? AND deleted_at IS NULL AND hidden_by_admin = 0
-           AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = posts.id)
-        ORDER BY created_at DESC
-        LIMIT 1`,
-      [userId]
-    ).catch(() => []),
-    query(
-      `SELECT pc.id, pc.product_id, pc.created_at, p.name AS product_name
-         FROM product_comments pc
-         JOIN products p ON p.id = pc.product_id
-        WHERE pc.user_id = ? AND pc.parent_id IS NULL AND pc.deleted_at IS NULL
-        ORDER BY pc.created_at DESC
-        LIMIT 1`,
-      [userId]
-    ).catch(() => []),
-    query(
-      `SELECT r.id, r.activity_id, r.created_at, a.title
-         FROM club_activity_registrations r
-         JOIN club_activities a ON a.id = r.activity_id
-        WHERE r.user_id = ? AND r.status = 'registered' AND r.cancelled_at IS NULL
-        ORDER BY r.created_at DESC
-        LIMIT 1`,
-      [userId]
-    ).catch(() => []),
-  ]);
-
-  const items = [];
-  if (latestPost?.[0]) {
-    items.push({
-      key: `post-${latestPost[0].id}`,
-      type: 'treehole',
-      label: '最近发树洞',
-      title: String(latestPost[0].content || '').trim().slice(0, 42) || '一条新的树洞动态',
-      href: `/post/${latestPost[0].id}`,
-      created_at: latestPost[0].created_at,
-    });
-  }
-  if (latestReview?.[0]) {
-    items.push({
-      key: `review-${latestReview[0].id}`,
-      type: 'canteen',
-      label: '最近点评',
-      title: latestReview[0].product_name || '食堂点评',
-      href: `/eat/food/${latestReview[0].product_id}`,
-      created_at: latestReview[0].created_at,
-    });
-  }
-  if (latestActivity?.[0]) {
-    items.push({
-      key: `activity-${latestActivity[0].id}`,
-      type: 'club',
-      label: '最近参与活动',
-      title: latestActivity[0].title || '社团活动',
-      href: `/about/club/activity/${latestActivity[0].activity_id}`,
-      created_at: latestActivity[0].created_at,
-    });
-  }
-
-  return items
-    .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
-    .slice(0, 3);
-}
-
 router.get('/me', authenticateToken, async (req, res) => {
   try {
     const ttlMs = Number(process.env.CACHE_USER_ME_TTL_MS || 15 * 1000);
@@ -285,7 +192,7 @@ router.get('/:id/profile', async (req, res) => {
     const viewer = parseOptionalUser(req);
     const viewerId = viewer && viewer.id != null ? parseInt(viewer.id, 10) : 0;
     const isSelf = viewerId > 0 && viewerId === userId;
-    const cacheKey = `user_profile_v3:${userId}:viewer:${viewerId || 0}:p:${page}:s:${pageSize}`;
+    const cacheKey = `user_profile_v4:${userId}:viewer:${viewerId || 0}:p:${page}:s:${pageSize}`;
     const cached = simpleCache.get(cacheKey);
     if (cached) {
       return res.status(200).json({ status: 0, message: 'èŽ·å–æˆåŠŸ', data: cached });
@@ -296,10 +203,6 @@ router.get('/:id/profile', async (req, res) => {
       return res.status(404).json({ status: -1, message: 'ç”¨æˆ·ä¸å­˜åœ¨' });
     }
 
-    const [activeDirections, recentParticipation] = await Promise.all([
-      getUserActiveDirections(userId),
-      getUserRecentParticipation(userId),
-    ]);
     const campusIdentity = normalizeCampusIdentity(u, isSelf);
 
     const posts = await query(
@@ -373,8 +276,6 @@ router.get('/:id/profile', async (req, res) => {
     const data = {
       user: formatPublicProfileUser(u, campusIdentity),
       campus_identity: campusIdentity,
-      active_directions: activeDirections,
-      recent_participation: recentParticipation,
       posts: postList,
       stats: {
         post_count: Number((statsRow && statsRow.post_count) || 0),
