@@ -5,6 +5,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { getCanteenStrings } from '../../i18n/canteenStrings';
 import { getCanteenBanners } from '@shared/api/canteen';
+import { recordAdvertisementClick } from '@shared/api/advertisements';
 import { QK } from '@shared/query/queryKeys';
 import { productImageUrl } from '@shared/api/config';
 import './CanteenBannerCarousel.css';
@@ -22,6 +23,7 @@ export default function CanteenBannerCarousel({
   fetchFn = getCanteenBanners,
   queryKey = QK.canteenBanners(),
   adminTo = '/eat/banners',
+  placementType = 'canteen',
 }) {
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
@@ -63,6 +65,15 @@ export default function CanteenBannerCarousel({
   }, [idx, len]);
 
   const handleClick = (b) => {
+    if (b.type === 'ad' && b.link_type === 'post' && b.link_target) {
+      recordAdvertisementClick(b.link_target, {
+        placement_type: placementType,
+        placement_id: b.id,
+        click_type: 'banner',
+      }).catch(() => {});
+      navigate(`/advertisement/${b.link_target}`);
+      return;
+    }
     if (b.link_type === 'url' && b.link_target) {
       window.open(b.link_target, '_blank', 'noopener');
       return;

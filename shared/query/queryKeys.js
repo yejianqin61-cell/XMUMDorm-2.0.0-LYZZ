@@ -57,6 +57,8 @@ export const QK = {
   canteenBannersAdmin: () => ['canteen', 'banners', 'admin'],
   canteenPickRandom: (excludeId) => ['canteen', 'pickRandom', excludeId || 0],
   canteenFoodArticles: (page, pageSize) => ['canteen', 'foodArticles', page, pageSize],
+  advertisementsAdmin: () => ['advertisements', 'admin'],
+  advertisementDetail: (postId) => ['advertisements', 'public', postId],
 
   myOrganizations: () => ['organizations', 'me'],
   organizationsList: (type) => ['organizations', 'list', type || ''],

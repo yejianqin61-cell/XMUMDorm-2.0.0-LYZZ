@@ -47,6 +47,7 @@ const squareRoutes = require('./routes/square');
 const todosRoutes = require('./routes/todos');
 const adminRoutes = require('./routes/admin');
 const reportRoutes = require('./routes/reports');
+const advertisementRoutes = require('./routes/advertisements');
 
 // 8. 创建一个 Express 应用实例
 const app = express();
@@ -171,6 +172,7 @@ app.use('/api/square', squareRoutes);
 app.use('/api/todos', todosRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/advertisements', advertisementRoutes);
 
 // ============================================
 // 错误处理中间件

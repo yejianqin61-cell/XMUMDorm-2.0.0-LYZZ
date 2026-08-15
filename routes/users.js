@@ -112,7 +112,7 @@ async function getUserBaseRow(userId) {
 
 async function getUserActiveDirections(userId) {
   const [postRows, reviewRows, clubRows, favoriteRows] = await Promise.all([
-    query('SELECT COUNT(*) AS total FROM posts WHERE user_id = ? AND deleted_at IS NULL AND hidden_by_admin = 0', [userId]).catch(() => [{ total: 0 }]),
+    query('SELECT COUNT(*) AS total FROM posts WHERE user_id = ? AND deleted_at IS NULL AND hidden_by_admin = 0 AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = posts.id)', [userId]).catch(() => [{ total: 0 }]),
     query('SELECT COUNT(*) AS total FROM product_comments WHERE user_id = ? AND parent_id IS NULL AND deleted_at IS NULL', [userId]).catch(() => [{ total: 0 }]),
     query(
       `SELECT
@@ -140,7 +140,8 @@ async function getUserRecentParticipation(userId) {
     query(
       `SELECT id, content, created_at
          FROM posts
-        WHERE user_id = ? AND deleted_at IS NULL AND hidden_by_admin = 0
+         WHERE user_id = ? AND deleted_at IS NULL AND hidden_by_admin = 0
+           AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = posts.id)
         ORDER BY created_at DESC
         LIMIT 1`,
       [userId]
@@ -293,6 +294,7 @@ router.get('/:id/profile', async (req, res) => {
       `SELECT p.id, p.content, p.type, p.created_at
          FROM posts p
         WHERE p.user_id = ? AND p.deleted_at IS NULL AND p.hidden_by_admin = 0
+          AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)
         ORDER BY p.created_at DESC
         LIMIT ${limitNum} OFFSET ${offsetNum}`,
       [userId]

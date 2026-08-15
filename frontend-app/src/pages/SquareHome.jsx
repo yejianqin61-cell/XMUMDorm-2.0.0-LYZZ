@@ -20,10 +20,10 @@ const MAIN_TABS = ['campus', 'trending'];
 const NOTICE_TABS = ['school', 'college'];
 
 const PRIMARY_ACTIONS = [
-  { label: '社团广场', labelEn: 'Clubs', to: '/about/club', icon: <Shapes size={19} strokeWidth={2} /> },
-  { label: '马校一站通', labelEn: 'XMUM Guide', to: '/about/freshman-guide', icon: <BookOpenText size={19} strokeWidth={2} /> },
-  { label: '帮帮我', labelEn: 'Help Me', to: '/about/errands', icon: <HandHelping size={19} strokeWidth={2} /> },
-  { label: '出物', labelEn: 'Marketplace', to: '/about/second-hand', icon: <Store size={19} strokeWidth={2} /> },
+  { label: '社团广场', labelEn: 'Clubs', to: '/about/club', icon: <Shapes size={48} strokeWidth={2} /> },
+  { label: '马校一站通', labelEn: 'XMUM Guide', to: '/about/freshman-guide', icon: <BookOpenText size={48} strokeWidth={2} /> },
+  { label: '帮帮我', labelEn: 'Help Me', to: '/about/errands', icon: <HandHelping size={48} strokeWidth={2} /> },
+  { label: '出物', labelEn: 'Marketplace', to: '/about/second-hand', icon: <Store size={48} strokeWidth={2} /> },
 ];
 
 function readStoredTab() {
@@ -184,15 +184,16 @@ export default function SquareHome() {
         </button>
       </div>
 
-      <TodayCampusQuickActions actions={PRIMARY_ACTIONS} />
-
       {tab === 'campus' ? (
         <CanteenBannerCarousel
           fetchFn={getSquareBanners}
           queryKey={QK.squareBanners()}
           adminTo="/about/admin/orgs?tab=banners"
+          placementType="square"
         />
       ) : null}
+
+      <TodayCampusQuickActions actions={PRIMARY_ACTIONS} />
 
       {tab === 'campus' ? (
         <div className="square-notice-tabs" role="tablist" aria-label={isEn ? 'Notice sources' : '通知来源'}>

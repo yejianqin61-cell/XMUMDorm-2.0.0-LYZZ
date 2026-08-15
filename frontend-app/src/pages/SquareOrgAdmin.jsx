@@ -19,6 +19,7 @@ import {
   updateSquareBannerForm,
   deleteSquareBanner,
 } from '@shared/api/square';
+import { getAdvertisementsAdmin } from '@shared/api/advertisements';
 import { productImageUrl } from '@shared/api/config';
 import { QK } from '@shared/query/queryKeys';
 import './SquareHome.css';
@@ -327,6 +328,12 @@ function BannersAdmin() {
     staleTime: 30 * 1000,
   });
   const banners = Array.isArray(data) ? data : data?.data || [];
+  const { data: advertisementsData } = useQuery({
+    queryKey: QK.advertisementsAdmin(),
+    queryFn: getAdvertisementsAdmin,
+    staleTime: 30 * 1000,
+  });
+  const advertisements = Array.isArray(advertisementsData) ? advertisementsData : [];
   const [showForm, setShowForm] = useState(false);
   const [editBanner, setEditBanner] = useState(null);
 
@@ -360,6 +367,7 @@ function BannersAdmin() {
                 <span style={{ fontSize: 14, fontWeight: 600 }}>{b.title}</span>
                 <span style={{ fontSize: 11, color: 'var(--post-ios-tertiary-label)', marginLeft: 8 }}>
                   {b.type === 'ad' ? '广告' : '内容'} · 排序 {b.sort_order || 0}
+                  {b.type === 'ad' && b.advertisement_title ? ` · ${b.advertisement_title}` : ''}
                   {!b.is_active ? ' · 未上线' : ''}
                 </span>
               </div>
@@ -373,12 +381,16 @@ function BannersAdmin() {
         </div>
       )}
 
-      {showForm && <BannerForm banner={editBanner} onClose={() => { setShowForm(false); setEditBanner(null); }} />}
+      {showForm && <BannerForm
+        banner={editBanner}
+        advertisements={advertisements}
+        onClose={() => { setShowForm(false); setEditBanner(null); }}
+      />}
     </div>
   );
 }
 
-function BannerForm({ banner, onClose }) {
+function BannerForm({ banner, advertisements = [], onClose }) {
   const queryClient = useQueryClient();
   const fileRef = useRef(null);
   const isEdit = !!banner;
@@ -453,7 +465,12 @@ function BannerForm({ banner, onClose }) {
         />
 
         <select className="canteen-search-input" style={{ width: '100%', boxSizing: 'border-box', marginBottom: 8 }} value={form.type}
-          onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}>
+          onChange={(e) => setForm((f) => ({
+            ...f,
+            type: e.target.value,
+            link_type: e.target.value === 'ad' ? 'none' : f.link_type,
+            link_target: e.target.value === 'ad' ? '' : f.link_target,
+          }))}>
           <option value="content">内容推荐</option>
           <option value="ad">广告</option>
         </select>
@@ -468,17 +485,31 @@ function BannerForm({ banner, onClose }) {
           <select className="canteen-search-input" style={{ flex: 1, boxSizing: 'border-box' }} value={form.link_type}
             onChange={(e) => setForm((f) => ({ ...f, link_type: e.target.value, link_target: '' }))}>
             <option value="none">无跳转</option>
-            <option value="url">URL</option>
-            <option value="product">商品</option>
-            <option value="shop">店铺</option>
-            <option value="post">帖子</option>
-            <option value="region">区域</option>
+            {form.type === 'ad' ? (
+              <option value="post">广告帖</option>
+            ) : (
+              <>
+                <option value="url">URL</option>
+                <option value="product">商品</option>
+                <option value="shop">店铺</option>
+                <option value="post">帖子</option>
+                <option value="region">区域</option>
+              </>
+            )}
           </select>
           <input type="number" className="canteen-search-input" style={{ flex: 1, boxSizing: 'border-box' }} placeholder="排序"
             value={form.sort_order} onChange={(e) => setForm((f) => ({ ...f, sort_order: e.target.value }))} />
         </div>
 
-        {form.link_type !== 'none' && (
+        {form.type === 'ad' && form.link_type === 'post' ? (
+          <select className="canteen-search-input" style={{ width: '100%', boxSizing: 'border-box', marginBottom: 8 }} value={form.link_target}
+            onChange={(e) => setForm((f) => ({ ...f, link_target: e.target.value }))}>
+            <option value="">请选择广告内容</option>
+            {advertisements.filter((ad) => ad.status !== 'archived').map((ad) => (
+              <option key={ad.id} value={ad.id}>{ad.title} · {ad.sponsor_name} ({ad.status})</option>
+            ))}
+          </select>
+        ) : form.link_type !== 'none' && (
           <input className="canteen-search-input" style={{ width: '100%', boxSizing: 'border-box', marginBottom: 8 }} placeholder="跳转目标（ID/URL/code）" value={form.link_target}
             onChange={(e) => setForm((f) => ({ ...f, link_target: e.target.value }))} />
         )}

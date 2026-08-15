@@ -1,17 +1,16 @@
 :root {
-  /* 更“扁”的 Tab 栏，但仍能完整容纳图标+文字 */
-  --tabbar-height: 76px;
+  --tabbar-height: 58px;
 }
 
 .tab-bar {
   position: fixed;
-  bottom: calc(10px + var(--safe-bottom));
+  bottom: calc(8px + var(--safe-bottom));
   left: 50%;
   transform: translateX(-50%);
-  width: calc(100% - 24px);
+  width: calc(100% - 16px);
   max-width: 430px;
   box-sizing: border-box;
-  height: var(--tabbar-height, 84px);
+  height: var(--tabbar-height, 58px);
   padding: 0;
   background: transparent;
   z-index: 100;
@@ -26,35 +25,30 @@
   grid-template-columns: repeat(4, 1fr);
   align-items: stretch;
   gap: 0;
-  border-radius: 18px;
-  /* 浅灰玻璃底（避免看起来发黑） */
-  background: rgba(241, 245, 249, 0.92);
-  backdrop-filter: saturate(180%) blur(22px);
-  -webkit-backdrop-filter: saturate(180%) blur(22px);
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  box-shadow: 0 18px 50px rgba(2, 6, 23, 0.16);
+  border-radius: 16px;
+  background: rgba(248, 248, 250, 0.82);
+  backdrop-filter: saturate(150%) blur(18px);
+  -webkit-backdrop-filter: saturate(150%) blur(18px);
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  box-shadow: 0 8px 28px rgba(2, 6, 23, 0.12);
   overflow: hidden;
 }
 
 .tab-indicator {
   position: absolute;
   inset: 0 auto 0 0;
-  padding: 6px;
+  padding: 4px;
   will-change: transform;
-  transition: transform 360ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 190ms ease-out;
   pointer-events: none;
 }
 
 .tab-indicator-pill {
   height: 100%;
   width: 100%;
-  border-radius: 14px;
-  /* 厦大蓝（选中滑块） */
-  background: linear-gradient(135deg, rgba(0, 91, 172, 0.22), rgba(56, 189, 248, 0.16));
-  box-shadow:
-    inset 0 1px rgba(255, 255, 255, 0.55),
-    0 10px 26px rgba(2, 6, 23, 0.10);
-  border: 1px solid rgba(0, 91, 172, 0.18);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.07);
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .tab-item {
@@ -63,16 +57,17 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  padding: 6px 0 6px;
-  color: rgba(51, 65, 85, 0.72);
-  transition: color 0.2s;
+  padding: 4px 0;
+  color: rgba(31, 41, 55, 0.62);
+  transition: color 160ms ease-out, font-weight 160ms ease-out;
   -webkit-tap-highlight-color: transparent;
   position: relative;
   z-index: 1;
 }
 
 .tab-item.active {
-  color: rgba(0, 91, 172, 0.98);
+  color: rgba(17, 24, 39, 0.98);
+  font-weight: 650;
 }
 
 .tab-icon {
@@ -90,7 +85,7 @@
 }
 
 .tab-item.active .tab-icon {
-  filter: drop-shadow(0 10px 18px rgba(0, 91, 172, 0.18));
+  filter: none;
 }
 
 .tab-label {
@@ -101,4 +96,36 @@
   max-width: 100%;
   padding: 0 2px;
   letter-spacing: -0.01em;
+}
+
+@supports not ((backdrop-filter: blur(1px))) {
+  .tab-bar-shell {
+    background: rgba(248, 248, 250, 0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab-indicator,
+  .tab-item {
+    transition: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .tab-bar-shell {
+    background: #fff;
+    border-color: rgba(0, 0, 0, 0.35);
+  }
+  .tab-indicator-pill {
+    background: rgba(0, 0, 0, 0.12);
+    border-color: rgba(0, 0, 0, 0.22);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .tab-bar-shell {
+    background: #f8f8fa;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }

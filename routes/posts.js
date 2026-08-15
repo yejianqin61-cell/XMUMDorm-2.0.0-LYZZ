@@ -388,7 +388,7 @@ router.get('/', async (req, res) => {
     const user = parseOptionalUser(req);
     const isAdminUser = user && user.role === 'admin';
 
-    let where = "p.deleted_at IS NULL AND p.type <> 'announcement'";
+    let where = "p.deleted_at IS NULL AND p.type <> 'announcement' AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)";
     if (!isAdminUser) where += ' AND p.hidden_by_admin = 0';
 
     const sqlParams = [];
@@ -699,7 +699,8 @@ router.get('/:id', async (req, res) => {
            WHERE post_id = ? AND user_id = ?
            LIMIT 1
          ) ul ON ul.post_id = p.id
-         WHERE p.id = ?`,
+         WHERE p.id = ?
+           AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)`,
         [id, id, id, likeUserParam, id]
       );
     } catch (e) {
@@ -733,7 +734,8 @@ router.get('/:id', async (req, res) => {
              WHERE post_id = ? AND user_id = ?
              LIMIT 1
            ) ul ON ul.post_id = p.id
-           WHERE p.id = ?`,
+           WHERE p.id = ?
+             AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)`,
           [id, id, id, likeUserParam, id]
         );
       } else {

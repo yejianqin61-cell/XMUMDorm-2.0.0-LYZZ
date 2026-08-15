@@ -7,6 +7,7 @@ import CanteenHome from '../pages/CanteenHome';
 
 const PostNew = lazy(() => import('../pages/PostNew'));
 const PostDetail = lazy(() => import('../pages/PostDetail'));
+const AdvertisementDetail = lazy(() => import('../pages/AdvertisementDetail'));
 const PostSearch = lazy(() => import('../pages/PostSearch'));
 const PostTagFeed = lazy(() => import('../pages/PostTagFeed'));
 const AboutUs = lazy(() => import('../pages/AboutUs'));
@@ -94,6 +95,7 @@ export const layoutRoutes = (
     <Route path="publish" element={renderLazyRoute(PublishCenter)} />
     <Route path="post/new" element={renderLazyRoute(PostNew)} />
     <Route path="post/:id" element={renderLazyRoute(PostDetail)} />
+    <Route path="advertisement/:id" element={renderLazyRoute(AdvertisementDetail)} />
     <Route path="posts/search" element={renderLazyRoute(PostSearch)} />
     <Route path="posts/tag/:slug" element={renderLazyRoute(PostTagFeed)} />
     <Route path="about" element={<SquareHome />} />

@@ -30,7 +30,7 @@ export function getTabRootPath(pathname) {
   return pathname;
 }
 
-/** 微信风格底部 Tab：四栏，图标+文字，选中绿色；支持左右滑动切换（全屏滑动在 Layout 上） */
+/** Apple 风格底部 Tab：四栏，图标+文字；主导航由点击完成，页面滑动由 Layout 管理。 */
 function TabBar() {
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
@@ -42,7 +42,7 @@ function TabBar() {
     <nav
       className="tab-bar"
       role="tablist"
-      aria-label="主导航"
+      aria-label={isZh ? '主导航' : 'Main navigation'}
     >
       <div className="tab-bar-shell" role="presentation">
         <div
@@ -59,6 +59,9 @@ function TabBar() {
           <NavLink
             key={tab.path}
             to={tab.path}
+            role="tab"
+            aria-selected={activeIndex === TABS.indexOf(tab)}
+            aria-label={isZh ? tab.labelZh : tab.labelEn}
             className={({ isActive }) => `tab-item ${isActive ? 'active' : ''}`}
             end={tab.path === '/'}
           >

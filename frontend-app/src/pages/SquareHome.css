@@ -752,7 +752,11 @@
 
 .square-home-page--timeline .today-campus-quick-action__icon {
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
   color: #111;
   stroke-width: 1.9;
 }

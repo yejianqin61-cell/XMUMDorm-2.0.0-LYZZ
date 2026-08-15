@@ -613,7 +613,7 @@ function PostDetail() {
                 onChange={(e) => setNewComment(e.target.value)}
                 maxLength={500}
               />
-              <motion.button
+              <Motion.button
                 type="submit"
                 className="post-detail-bottom-send"
                 disabled={!newComment.trim() || submitLoading}
@@ -622,7 +622,7 @@ function PostDetail() {
                 aria-label={isEn ? 'Send' : '发送'}
               >
                 <SendHorizonal size={18} aria-hidden />
-              </motion.button>
+              </Motion.button>
             </form>
             <ul className="post-detail-comment-list">
               {comments.map((comment) => (

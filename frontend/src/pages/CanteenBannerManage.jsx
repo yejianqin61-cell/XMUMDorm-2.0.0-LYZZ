@@ -15,6 +15,8 @@ import {
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { productImageUrl } from '@shared/api/config';
 import { QK } from '@shared/query/queryKeys';
+import AdvertisementAdminPanel from '@shared/components/AdvertisementAdminPanel';
+import { getAdvertisementsAdmin } from '@shared/api/advertisements';
 import './CanteenHome.css';
 
 const EMPTY_FORM = {
@@ -93,12 +95,19 @@ export default function CanteenBannerManage() {
     select: (d) => (Array.isArray(d) ? d : d?.data || []),
   });
 
+  const advertisementsQuery = useQuery({
+    queryKey: QK.advertisementsAdmin(),
+    queryFn: getAdvertisementsAdmin,
+    enabled: isAdmin,
+  });
+
   if (!isLoggedIn || !isAdmin) {
     return <Navigate to="/eat" replace />;
   }
 
   const banners = bannersQuery.data || [];
   const regions = regionsQuery.data || [];
+  const advertisements = Array.isArray(advertisementsQuery.data) ? advertisementsQuery.data : [];
 
   const resetForm = () => {
     setEditingId(null);
@@ -185,6 +194,11 @@ export default function CanteenBannerManage() {
   return (
     <div className="canteen-home-page canteen-banner-admin-page">
       <div className="canteen-home-inner">
+        <AdvertisementAdminPanel
+          isZh={isZh}
+          onError={(message) => Toast.error(message)}
+          onSuccess={(message) => Toast.success(message)}
+        />
         <p className="canteen-banner-admin-hint">{t.bannerAdminHint}</p>
 
         {bannersQuery.isLoading && <p className="canteen-muted">{t.loading}</p>}
@@ -214,6 +228,7 @@ export default function CanteenBannerManage() {
                 <div className="canteen-banner-admin-item-meta">
                   #{b.sort_order} · {b.link_type}
                   {b.link_target ? ` → ${b.link_target}` : ''}
+                  {b.type === 'ad' && b.advertisement_title ? ` · ${b.advertisement_title}` : ''}
                 </div>
               </div>
               <div className="canteen-banner-admin-item-actions">
@@ -269,7 +284,12 @@ export default function CanteenBannerManage() {
             {t.bannerFieldType}
             <select
               value={form.type}
-              onChange={(ev) => setForm((f) => ({ ...f, type: ev.target.value }))}
+              onChange={(ev) => setForm((f) => ({
+                ...f,
+                type: ev.target.value,
+                link_type: ev.target.value === 'ad' ? 'none' : f.link_type,
+                link_target: ev.target.value === 'ad' ? '' : f.link_target,
+              }))}
             >
               <option value="content">{t.bannerTypeContent}</option>
               <option value="ad">{t.bannerTypeAd}</option>
@@ -304,13 +324,38 @@ export default function CanteenBannerManage() {
               onChange={(ev) => setForm((f) => ({ ...f, link_type: ev.target.value, link_target: '' }))}
             >
               <option value="none">{t.bannerLinkNone}</option>
-              <option value="product">{t.bannerLinkProduct}</option>
-              <option value="shop">{t.bannerLinkShop}</option>
-              <option value="post">{t.bannerLinkPost}</option>
-              <option value="region">{t.bannerLinkRegion}</option>
-              <option value="url">{t.bannerLinkUrl}</option>
+              {form.type === 'ad' ? (
+                <option value="post">{isZh ? '广告帖' : 'Advertisement post'}</option>
+              ) : (
+                <>
+                  <option value="product">{t.bannerLinkProduct}</option>
+                  <option value="shop">{t.bannerLinkShop}</option>
+                  <option value="post">{t.bannerLinkPost}</option>
+                  <option value="region">{t.bannerLinkRegion}</option>
+                  <option value="url">{t.bannerLinkUrl}</option>
+                </>
+              )}
             </select>
           </label>
+
+          {linkNeedsTarget && form.type === 'ad' && form.link_type === 'post' && (
+            <label className="canteen-banner-admin-label">
+              {t.bannerFieldLinkTarget}
+              <select
+                value={form.link_target}
+                onChange={(ev) => setForm((f) => ({ ...f, link_target: ev.target.value }))}
+              >
+                <option value="">{isZh ? '请选择广告内容' : 'Choose an advertisement'}</option>
+                {advertisements
+                  .filter((ad) => ad.status !== 'archived')
+                  .map((ad) => (
+                    <option key={ad.id} value={ad.id}>
+                      {ad.title} · {ad.sponsor_name} ({ad.status})
+                    </option>
+                  ))}
+              </select>
+            </label>
+          )}
 
           {linkNeedsTarget && form.link_type === 'region' && (
             <label className="canteen-banner-admin-label">
@@ -329,7 +374,7 @@ export default function CanteenBannerManage() {
             </label>
           )}
 
-          {linkNeedsTarget && form.link_type !== 'region' && (
+          {linkNeedsTarget && form.link_type !== 'region' && !(form.type === 'ad' && form.link_type === 'post') && (
             <label className="canteen-banner-admin-label">
               {t.bannerFieldLinkTarget}
               <input
