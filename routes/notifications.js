@@ -17,7 +17,10 @@ const {
   getCategoryTypes,
   getModuleTypes,
   getNotificationCategory,
+  getNotificationModule,
 } = require('../services/notificationService');
+
+const MAX_READ_BATCH_SIZE = 100;
 
 function getUnreadAnnouncementCacheKey(userId) {
   return `notifications:unreadAnn:v1:${userId}`;
@@ -94,6 +97,7 @@ async function attachNotificationExtra(rows) {
       created_at: r.created_at
     };
     item.category = getNotificationCategory(r.type);
+    item.module = getNotificationModule(r.type);
     if (r.from_username || r.from_nickname) {
       item.from_user = {
         id: r.from_user_id,
@@ -383,13 +387,21 @@ router.patch('/read-batch', authenticateToken, async (req, res) => {
     if (!Array.isArray(ids) || ids.length === 0) {
       return res.status(400).json({ status: -1, message: '请提供 ids 数组' });
     }
-    const placeholders = ids.map(() => '?').join(',');
-    await query(
+    if (ids.length > MAX_READ_BATCH_SIZE || ids.some((id) => !Number.isInteger(id) || id < 1)) {
+      return res.status(400).json({ status: -1, message: `ids 必须为不超过 ${MAX_READ_BATCH_SIZE} 个正整数` });
+    }
+    const uniqueIds = [...new Set(ids)];
+    const placeholders = uniqueIds.map(() => '?').join(',');
+    const result = await query(
       `UPDATE notifications SET is_read = 1 WHERE user_id = ? AND id IN (${placeholders})`,
-      [req.user.id, ...ids]
+      [req.user.id, ...uniqueIds]
     );
     invalidateUnreadAnnouncementCache(req.user.id);
-    res.status(200).json({ status: 0, message: '已标记为已读' });
+    res.status(200).json({
+      status: 0,
+      message: '已标记为已读',
+      data: { ids: uniqueIds, updated: Number(result?.affectedRows) || 0 },
+    });
   } catch (e) {
     console.error('批量已读错误:', e);
     res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });

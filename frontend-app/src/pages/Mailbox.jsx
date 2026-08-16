@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -10,15 +10,18 @@ import RouteTransition from '../components/ui/RouteTransition';
 import {
   clearNotificationsByCategory,
   getNotifications,
-  markNotificationRead,
+  markNotificationsReadBatch,
 } from '@shared/api/notifications';
 import { NOTIFICATION_CATEGORIES } from '@shared/constants/notifications';
 import { QK } from '@shared/query/queryKeys';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import {
+  applyNotificationsReadToInfiniteData,
+  applyNotificationsReadToSummary,
   buildNotificationGroups,
   displayNotificationName as displayName,
 } from '../utils/notificationGroups';
+import { Toast } from '../context/ToastContext';
 import './Mailbox.css';
 
 function formatTime(createdAt, isZh) {
@@ -101,7 +104,7 @@ const CATEGORY_TABS = NOTIFICATION_CATEGORIES.map((key) => ({ key, ...CATEGORY_L
 const PAGE_SIZE = 20;
 const MAILBOX_STALE_MS = 30 * 1000;
 
-function InteractionGroupDetails({ expanded, group, isZh, onOpenPost, tokenKey }) {
+function InteractionGroupDetails({ expanded, group, isZh, onItemsLoaded, onOpenPost, tokenKey }) {
   const detailsQuery = useInfiniteQuery({
     queryKey: QK.mailboxPostInteractions(tokenKey, group.target.id),
     queryFn: ({ pageParam = 1 }) => getNotifications({
@@ -125,6 +128,10 @@ function InteractionGroupDetails({ expanded, group, isZh, onOpenPost, tokenKey }
       return true;
     });
   }, [detailsQuery.data]);
+
+  useEffect(() => {
+    if (expanded && items.length > 0) void onItemsLoaded([...group.sorted, ...items]);
+  }, [expanded, group.sorted, items, onItemsLoaded]);
 
   if (!expanded) return null;
 
@@ -186,6 +193,7 @@ function Mailbox() {
   const [expandedKey, setExpandedKey] = useState(null);
   const [clearing, setClearing] = useState(false);
   const [clearError, setClearError] = useState('');
+  const trackedReadIds = useRef(new Set());
   const tokenKey = token ?? '';
   const mailboxQueryKey = QK.mailboxNotifications(tokenKey, tab);
   const mailboxQuery = useInfiniteQuery({
@@ -214,10 +222,56 @@ function Mailbox() {
 
   const groups = useMemo(() => buildNotificationGroups(notifications), [notifications]);
 
-  const handleGroupClick = (group) => {
-    const unread = group.sorted.filter((item) => !item.is_read);
-    if (unread.length) Promise.allSettled(unread.map((item) => markNotificationRead(item.id))).catch(() => {});
-  };
+  const latestUnreadSummary = mailboxQuery.data?.pages?.at(-1)?.unreadSummary;
+  useEffect(() => {
+    if (latestUnreadSummary) {
+      queryClient.setQueryData(['notifications', 'unreadSummary', tokenKey], latestUnreadSummary);
+    }
+  }, [latestUnreadSummary, queryClient, tokenKey]);
+
+  const markItemsRead = useCallback(async (items) => {
+    const unread = Array.from(new Map(
+      (items || []).filter((item) => !item.is_read).map((item) => [item.id, item])
+    ).values()).filter((item) => !trackedReadIds.current.has(item.id)).slice(0, 100);
+    if (unread.length === 0) return;
+
+    const ids = unread.map((item) => item.id);
+    const mailboxPrefix = ['notifications', 'mailbox', tokenKey];
+    const unreadSummaryKey = ['notifications', 'unreadSummary', tokenKey];
+    const unreadAnnouncementsKey = QK.unreadAnnouncements(tokenKey);
+    ids.forEach((id) => trackedReadIds.current.add(id));
+    let mailboxSnapshots = [];
+    let summarySnapshot;
+    let announcementsSnapshot;
+
+    try {
+      await queryClient.cancelQueries({ queryKey: mailboxPrefix });
+      mailboxSnapshots = queryClient.getQueriesData({ queryKey: mailboxPrefix });
+      summarySnapshot = queryClient.getQueryData(unreadSummaryKey);
+      announcementsSnapshot = queryClient.getQueryData(unreadAnnouncementsKey);
+      queryClient.setQueriesData({ queryKey: mailboxPrefix }, (data) => (
+        applyNotificationsReadToInfiniteData(data, ids, unread)
+      ));
+      if (summarySnapshot !== undefined) {
+        queryClient.setQueryData(unreadSummaryKey, applyNotificationsReadToSummary(summarySnapshot, unread));
+      }
+      if (Array.isArray(announcementsSnapshot)) {
+        queryClient.setQueryData(unreadAnnouncementsKey, announcementsSnapshot.filter((item) => !ids.includes(item.id)));
+      }
+
+      await markNotificationsReadBatch(ids);
+      queryClient.setQueriesData({ queryKey: mailboxPrefix }, (data) => (
+        applyNotificationsReadToInfiniteData(data, ids, unread)
+      ));
+      await queryClient.invalidateQueries({ queryKey: unreadSummaryKey, exact: true });
+    } catch {
+      for (const [key, data] of mailboxSnapshots) queryClient.setQueryData(key, data);
+      if (summarySnapshot !== undefined) queryClient.setQueryData(unreadSummaryKey, summarySnapshot);
+      if (announcementsSnapshot !== undefined) queryClient.setQueryData(unreadAnnouncementsKey, announcementsSnapshot);
+      ids.forEach((id) => trackedReadIds.current.delete(id));
+      Toast.error(isZh ? '确认已读失败，请重试' : 'Could not mark notifications as read. Please try again.');
+    }
+  }, [isZh, queryClient, tokenKey]);
 
   const handleClear = async () => {
     const tabLabel = CATEGORY_LABELS[tab]?.[isZh ? 'zh' : 'en'] || tab;
@@ -303,7 +357,10 @@ function Mailbox() {
                     className="mailbox-group-toggle"
                     aria-expanded={isExpanded}
                     aria-controls={`mailbox-details-${group.target.id}`}
-                    onClick={() => setExpandedKey((current) => current === group.key ? null : group.key)}
+                    onClick={() => {
+                      const opening = expandedKey !== group.key;
+                      setExpandedKey(opening ? group.key : null);
+                    }}
                   >
                     {summary}
                   </button>
@@ -311,12 +368,13 @@ function Mailbox() {
                     expanded={isExpanded}
                     group={group}
                     isZh={isZh}
-                    onOpenPost={() => handleGroupClick(group)}
+                    onItemsLoaded={markItemsRead}
+                    onOpenPost={() => { void markItemsRead(group.sorted); }}
                     tokenKey={tokenKey}
                   />
                 </div>
               ) : group.contentPath !== '#' ? (
-                <Link to={group.contentPath} className="social-card-link" onClick={() => handleGroupClick(group)}>{summary}</Link>
+                <Link to={group.contentPath} className="social-card-link" onClick={() => { void markItemsRead(group.sorted); }}>{summary}</Link>
               ) : (
                 <div className="social-card-link">
                   {summary}

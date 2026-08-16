@@ -55,3 +55,47 @@ export function buildNotificationGroups(notifications) {
     };
   }).sort((a, b) => compareNewestFirst(a.latest || {}, b.latest || {}));
 }
+
+function decrement(count, amount) {
+  return Math.max(0, (Number(count) || 0) - amount);
+}
+
+export function applyNotificationsReadToSummary(summary, notifications) {
+  if (!summary || typeof summary !== 'object') return summary;
+  const unread = Array.from(new Map(
+    (notifications || []).filter((item) => !item.is_read).map((item) => [item.id, item])
+  ).values());
+  if (unread.length === 0) return summary;
+
+  const byType = { ...(summary.byType || {}) };
+  const byModule = { ...(summary.byModule || {}) };
+  const byCategory = { ...(summary.byCategory || {}) };
+  for (const item of unread) {
+    if (item.type) byType[item.type] = decrement(byType[item.type], 1);
+    if (item.module) byModule[item.module] = decrement(byModule[item.module], 1);
+    if (item.category) byCategory[item.category] = decrement(byCategory[item.category], 1);
+  }
+  return {
+    ...summary,
+    total: decrement(summary.total, unread.length),
+    byType,
+    byModule,
+    byCategory,
+  };
+}
+
+export function applyNotificationsReadToInfiniteData(data, ids, notifications) {
+  if (!data?.pages) return data;
+  const idSet = new Set(ids);
+  const unreadSummary = (summary) => applyNotificationsReadToSummary(summary, notifications);
+  return {
+    ...data,
+    pages: data.pages.map((page) => ({
+      ...page,
+      list: (page?.list || []).map((item) => (
+        idSet.has(item.id) ? { ...item, is_read: true } : item
+      )),
+      unreadSummary: unreadSummary(page?.unreadSummary),
+    })),
+  };
+}

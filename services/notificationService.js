@@ -140,12 +140,17 @@ function getNotificationCategory(type) {
   return 'interaction';
 }
 
+function getNotificationModule(type) {
+  return MODULE_MAP[type] || 'unknown';
+}
+
 module.exports = {
   createNotification,
   createNotificationBatch,
   getModuleTypes,
   getCategoryTypes,
   getNotificationCategory,
+  getNotificationModule,
   MODULE_MAP,
   MODULE_TYPES,
   CATEGORY_TYPES,

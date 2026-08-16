@@ -384,4 +384,53 @@ describe('Notifications Routes', () => {
       );
     });
   });
+
+  describe('PATCH /api/notifications/read-batch', () => {
+    it('deduplicates ids and updates them once within the current user scope', async () => {
+      query.mockResolvedValueOnce({ affectedRows: 2 });
+
+      const res = await supertest(app())
+        .patch('/api/notifications/read-batch')
+        .send({ ids: [3, 3, 4] });
+
+      expect(res.status).toBe(200);
+      expect(query).toHaveBeenCalledTimes(1);
+      expect(query).toHaveBeenCalledWith(
+        expect.stringContaining('WHERE user_id = ? AND id IN (?,?)'),
+        [7, 3, 4]
+      );
+      expect(res.body.data).toEqual({ ids: [3, 4], updated: 2 });
+      expect(simpleCache.delete).toHaveBeenCalledWith('notifications:unreadAnn:v1:7');
+    });
+
+    it.each([
+      {},
+      { ids: [] },
+      { ids: '1,2' },
+      { ids: [1, 0] },
+      { ids: [1, -2] },
+      { ids: [1, 2.5] },
+      { ids: [1, '2'] },
+      { ids: Array.from({ length: 101 }, (_, index) => index + 1) },
+    ])('rejects an invalid batch: %j', async (body) => {
+      const res = await supertest(app())
+        .patch('/api/notifications/read-batch')
+        .send(body);
+
+      expect(res.status).toBe(400);
+      expect(query).not.toHaveBeenCalled();
+      expect(simpleCache.delete).not.toHaveBeenCalled();
+    });
+
+    it('keeps the batch retryable when the database update fails', async () => {
+      query.mockRejectedValueOnce(new Error('database unavailable'));
+
+      const res = await supertest(app())
+        .patch('/api/notifications/read-batch')
+        .send({ ids: [3, 4] });
+
+      expect(res.status).toBe(500);
+      expect(simpleCache.delete).not.toHaveBeenCalled();
+    });
+  });
 });
