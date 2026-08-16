@@ -407,17 +407,9 @@
 .mailbox-announcement-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 10px;
   margin-bottom: 8px;
-}
-
-.mailbox-announcement-label {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: rgba(45, 52, 54, 0.56);
 }
 
 .mailbox-announcement-title {

@@ -4,6 +4,8 @@ import {
   applyNotificationsReadToInfiniteData,
   applyNotificationsReadToSummary,
   buildNotificationGroups,
+  displayNotificationName,
+  getAnnouncementCopy,
 } from '../src/utils/notificationGroups.js';
 
 function notification(id, type, target) {
@@ -122,4 +124,26 @@ test('deduplicates repeated notification ids when updating a standalone summary'
 
   assert.equal(next.total, 0);
   assert.equal(next.byType.treehole_like, 0);
+});
+
+test('omits empty announcement titles and only falls back for an empty body', () => {
+  assert.deepEqual(getAnnouncementCopy({
+    contentTitle: '   ',
+    latest: { extra: { title: '  Campus closure  ', content: '  Classes move online.  ' } },
+  }, 'No announcement body.'), {
+    title: 'Campus closure',
+    body: 'Classes move online.',
+  });
+  assert.deepEqual(getAnnouncementCopy({
+    latest: { extra: { title: '  ', content: '  ' } },
+  }, '暂无公告正文。'), {
+    title: null,
+    body: '暂无公告正文。',
+  });
+});
+
+test('uses the current language fallback for a missing sender', () => {
+  assert.equal(displayNotificationName(null, '有人'), '有人');
+  assert.equal(displayNotificationName({ nickname: '  ', username: 'system-admin' }, 'System'), 'system-admin');
+  assert.equal(displayNotificationName({ nickname: '  ' }, 'System'), 'System');
 });

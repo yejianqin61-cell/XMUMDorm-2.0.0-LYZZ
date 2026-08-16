@@ -20,6 +20,7 @@ import {
   applyNotificationsReadToSummary,
   buildNotificationGroups,
   displayNotificationName as displayName,
+  getAnnouncementCopy,
 } from '../utils/notificationGroups';
 import { Toast } from '../context/ToastContext';
 import './Mailbox.css';
@@ -37,15 +38,6 @@ function formatTime(createdAt, isZh) {
   if (diffDay === 1) return isZh ? '昨天' : 'Yesterday';
   if (diffDay < 7) return isZh ? `${diffDay} 天前` : `${diffDay}d ago`;
   return date.toLocaleDateString(isZh ? 'zh-CN' : 'en-US');
-}
-
-function getAnnouncementCopy(group, isZh) {
-  const latest = group?.latest || {};
-  const title = String(group?.contentTitle || latest.extra?.title || '').trim()
-    || (isZh ? '公告' : 'Announcement');
-  const body = String(latest.extra?.content || '').trim()
-    || (isZh ? '暂无公告正文。' : 'No announcement body.');
-  return { title, body };
 }
 
 function buildAffairsText({ isZh, latest }) {
@@ -148,7 +140,7 @@ function InteractionGroupDetails({ expanded, group, isZh, onItemsLoaded, onOpenP
         <ul className="mailbox-detail-list">
           {items.map((item) => {
             const isComment = item.type === 'comment' || item.type?.endsWith('_comment');
-            const name = displayName(item.from_user) || (isZh ? '有人' : 'Someone');
+            const name = displayName(item.from_user, isZh ? '有人' : 'Someone');
             const action = isComment ? (isZh ? '评论了' : 'commented') : (isZh ? '赞了' : 'liked');
             const excerpt = isComment ? String(item.extra?.content || '').trim() : '';
             return (
@@ -326,22 +318,25 @@ function Mailbox() {
         <ul className="social-stream">
           {groups.map((group, index) => {
             const isAnnouncement = group.target?.type === 'announcement' || group.latest?.type === 'announcement' || group.latest?.type === 'system_announcement';
-            const announcementCopy = isAnnouncement ? getAnnouncementCopy(group, isZh) : null;
+            const announcementCopy = isAnnouncement
+              ? getAnnouncementCopy(group, isZh ? '暂无公告正文。' : 'No announcement body.')
+              : null;
+            const contentTitle = String(group.contentTitle || '').trim();
+            const names = group.topUsers.map((user) => displayName(user, isZh ? '有人' : 'Someone'));
             const aggregateText = group.isAffair ? buildAffairsText({ isZh, latest: group.latest }) : group.category === 'transaction'
-              ? buildMarketplaceText({ isZh, names: group.names, othersCount: group.othersCount, contentTitle: group.contentTitle })
-              : buildAggregateText({ isZh, names: group.names, othersCount: group.othersCount, likeCount: group.likeCount, commentCount: group.commentCount, isPost: group.isPost, contentTitle: group.contentTitle });
+              ? buildMarketplaceText({ isZh, names, othersCount: group.othersCount, contentTitle })
+              : buildAggregateText({ isZh, names, othersCount: group.othersCount, likeCount: group.likeCount, commentCount: group.commentCount, isPost: group.isPost, contentTitle });
             const isExpanded = expandedKey === group.key;
             const summary = isAnnouncement ? <div className="mailbox-announcement" aria-label={isZh ? '公告内容' : 'Announcement content'}>
                   <div className="mailbox-announcement-head">
-                    <span className="mailbox-announcement-label">{isZh ? '公告' : 'Announcement'}</span>
                     <span className="social-time">{formatTime(group.createdAt, isZh)}</span>
                   </div>
-                  <div className="mailbox-announcement-title">{announcementCopy.title}</div>
+                  {announcementCopy.title ? <div className="mailbox-announcement-title">{announcementCopy.title}</div> : null}
                   <div className="mailbox-announcement-body">{announcementCopy.body}</div>
-                  <div className="mailbox-announcement-meta">{displayName(group.latest?.from_user)}</div>
+                  <div className="mailbox-announcement-meta">{displayName(group.latest?.from_user, isZh ? '系统' : 'System')}</div>
                 </div> : <>
                   <div className="social-head"><div className="social-avatars" aria-label={isZh ? '发送者' : 'Senders'}>{group.topUsers.map((user, userIndex) => <span key={`${user?.id || userIndex}`} className="social-avatar" style={{ zIndex: 10 - userIndex }}><img src={user?.avatar || '/default-avatar.svg'} alt="" /></span>)}{group.othersCount > 0 && <span className="social-others">+{group.othersCount}</span>}</div><span className="social-time">{formatTime(group.createdAt, isZh)}</span></div>
-                  <div className="social-title">{group.contentTitle || (isZh ? '（无标题）' : '(Untitled)')}</div>
+                  {contentTitle ? <div className="social-title">{contentTitle}</div> : null}
                   <div className="social-text">{aggregateText}</div>
                   {group.isExpandablePost ? <div className="mailbox-interaction-counts">{[
                     group.likeCount > 0 ? (isZh ? `${group.likeCount} 个赞` : `${group.likeCount} likes`) : null,

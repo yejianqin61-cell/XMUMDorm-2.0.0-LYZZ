@@ -1,6 +1,16 @@
-export function displayNotificationName(user) {
-  if (!user) return 'Someone';
-  return (user.nickname || user.username || 'Someone').trim();
+export function displayNotificationName(user, fallback = 'Someone') {
+  return [user?.nickname, user?.username]
+    .map((value) => String(value || '').trim())
+    .find(Boolean) || fallback;
+}
+
+export function getAnnouncementCopy(group, emptyBody) {
+  const latest = group?.latest || {};
+  const title = [group?.contentTitle, latest.extra?.title]
+    .map((value) => String(value || '').trim())
+    .find(Boolean) || null;
+  const body = String(latest.extra?.content || '').trim() || emptyBody;
+  return { title, body };
 }
 
 function compareNewestFirst(a, b) {
