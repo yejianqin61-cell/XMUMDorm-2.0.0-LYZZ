@@ -51,6 +51,8 @@ describe('Notifications Routes', () => {
           from_user_id: 9,
           extra: JSON.stringify({ content: 'Welcome' }),
           created_at: '2026-06-01 10:00:00',
+          resolved_post_id: 42,
+          post_deleted_at: null,
           post_title: 'Campus News',
           from_username: 'admin',
           from_nickname: 'Admin',
@@ -68,6 +70,7 @@ describe('Notifications Routes', () => {
         key: 'announcement:42',
         title: 'Campus News',
         path: '/post/42',
+        available: true,
       });
       expect(res.body.data.unreadSummary.byCategory).toEqual({
         interaction: 0,
@@ -133,12 +136,124 @@ describe('Notifications Routes', () => {
       expect(query.mock.calls[0][0]).toContain('LIMIT 21 OFFSET 0');
     });
 
+    it('filters a standard post interaction history for the current user', async () => {
+      query
+        .mockResolvedValueOnce([{
+          id: 12,
+          type: 'treehole_comment',
+          is_read: 0,
+          post_id: 42,
+          comment_id: 8,
+          from_user_id: 9,
+          extra: JSON.stringify({ content: 'Reply' }),
+          created_at: '2026-06-03 09:00:00',
+          resolved_post_id: 42,
+          post_deleted_at: null,
+          post_title: 'Campus life',
+        }])
+        .mockResolvedValueOnce([]);
+
+      const res = await supertest(app()).get('/api/notifications?category=interaction&post_id=42&page=2&pageSize=2');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.page).toBe(2);
+      expect(res.body.data.list[0].extra.content).toBe('Reply');
+      expect(query.mock.calls[0][0]).toContain('n.user_id = ?');
+      expect(query.mock.calls[0][0]).toContain('n.post_id = ?');
+      expect(query.mock.calls[0][0]).toContain('LIMIT 3 OFFSET 2');
+      expect(query.mock.calls[0][1]).toEqual(expect.arrayContaining([
+        7,
+        42,
+        'treehole_like',
+        'treehole_comment',
+      ]));
+    });
+
+    it('keeps equal numeric ids in different post domains separate', async () => {
+      query
+        .mockResolvedValueOnce([
+          {
+            id: 21,
+            type: 'treehole_like',
+            is_read: 0,
+            post_id: 5,
+            created_at: '2026-06-03 09:00:00',
+            resolved_post_id: 5,
+            post_deleted_at: null,
+            post_title: 'Treehole post',
+          },
+          {
+            id: 20,
+            type: 'trending_like',
+            is_read: 0,
+            post_id: 5,
+            created_at: '2026-06-03 08:00:00',
+            resolved_post_id: 5,
+            post_deleted_at: null,
+            post_title: 'Wrong table title',
+          },
+          {
+            id: 19,
+            type: 'campus_comment',
+            is_read: 0,
+            post_id: 5,
+            extra: JSON.stringify({ content: 'Noted' }),
+            created_at: '2026-06-03 07:00:00',
+            resolved_post_id: 5,
+            post_deleted_at: null,
+            post_title: 'Wrong table title',
+          },
+        ])
+        .mockResolvedValueOnce([]);
+
+      const res = await supertest(app()).get('/api/notifications?category=interaction');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.list.map((item) => item.target)).toEqual([
+        expect.objectContaining({ key: 'post:5', path: '/post/5', title: 'Treehole post' }),
+        expect.objectContaining({ key: 'trending_post:5', path: '/about/trending/post/5', title: null }),
+        expect.objectContaining({ key: 'campus_post:5', path: '/about/campus/5', title: null }),
+      ]);
+      expect(res.body.data.list.map((item) => item.post_title)).toEqual([
+        'Treehole post',
+        null,
+        null,
+      ]);
+    });
+
+    it('marks an unavailable standard post target without a navigable path', async () => {
+      query
+        .mockResolvedValueOnce([{
+          id: 31,
+          type: 'treehole_like',
+          is_read: 0,
+          post_id: 404,
+          created_at: '2026-06-03 09:00:00',
+          resolved_post_id: null,
+          post_deleted_at: null,
+          post_title: null,
+        }])
+        .mockResolvedValueOnce([]);
+
+      const res = await supertest(app()).get('/api/notifications?category=interaction');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.list[0].target).toEqual(expect.objectContaining({
+        type: 'post',
+        available: false,
+        path: '#',
+      }));
+    });
+
     it.each([
       '/api/notifications?page=0',
       '/api/notifications?page=nope',
       '/api/notifications?pageSize=0',
       '/api/notifications?pageSize=nope',
       '/api/notifications?category=unknown',
+      '/api/notifications?post_id=0',
+      '/api/notifications?post_id=nope',
+      '/api/notifications?post_id=1.5',
     ])('rejects invalid list parameters: %s', async (path) => {
       const res = await supertest(app()).get(path);
 

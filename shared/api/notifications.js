@@ -4,12 +4,13 @@
 import { del, get, patch } from './request';
 
 export function getNotifications(options = {}) {
-  const { page = 1, pageSize = 20, type, is_read, module: mod, category } = options;
+  const { page = 1, pageSize = 20, type, is_read, module: mod, category, postId } = options;
   const params = new URLSearchParams({ page, pageSize });
   if (category) params.set('category', category);
   else if (mod) params.set('module', mod);
   else if (type) params.set('type', type);
   if (is_read !== undefined && is_read !== '') params.set('is_read', is_read);
+  if (postId !== undefined && postId !== null) params.set('post_id', postId);
   return get(`/api/notifications?${params.toString()}`);
 }
 

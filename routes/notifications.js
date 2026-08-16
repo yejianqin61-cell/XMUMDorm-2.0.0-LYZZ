@@ -29,6 +29,13 @@ function invalidateUnreadAnnouncementCache(userId) {
 }
 
 const ANNOUNCEMENT_TYPES = new Set(['announcement', 'system_announcement']);
+const POSTS_TABLE_TYPES = new Set([
+  ...ANNOUNCEMENT_TYPES,
+  'treehole_like',
+  'treehole_comment',
+  'like',
+  'comment',
+]);
 
 function getClearableTypes(types) {
   return types.filter((type) => !ANNOUNCEMENT_TYPES.has(type));
@@ -49,6 +56,19 @@ function buildUnreadSummary(rows) {
   return { total, byType, byModule, byCategory };
 }
 
+function getPostTarget(type, postId, available) {
+  if (type === 'announcement' || type === 'system_announcement') {
+    return { type: 'announcement', key: `announcement:${postId}`, path: available ? `/post/${postId}` : '#' };
+  }
+  if (type === 'trending_like' || type === 'trending_comment') {
+    return { type: 'trending_post', key: `trending_post:${postId}`, path: `/about/trending/post/${postId}` };
+  }
+  if (type === 'campus_like' || type === 'campus_comment') {
+    return { type: 'campus_post', key: `campus_post:${postId}`, path: `/about/campus/${postId}` };
+  }
+  return { type: 'post', key: `post:${postId}`, path: available ? `/post/${postId}` : '#' };
+}
+
 // 为通知附加帖子/发送者等摘要
 async function attachNotificationExtra(rows) {
   if (!rows || rows.length === 0) return [];
@@ -67,7 +87,7 @@ async function attachNotificationExtra(rows) {
       type: r.type,
       is_read: !!r.is_read,
       post_id: r.post_id,
-      post_title: r.post_title || null,
+      post_title: POSTS_TABLE_TYPES.has(r.type) ? (r.post_title || null) : null,
       comment_id: r.comment_id,
       from_user_id: r.from_user_id,
       extra,
@@ -88,14 +108,18 @@ async function attachNotificationExtra(rows) {
     // - handbook/courseReview：由 extra.target* 提供
     try {
       if (item.post_id) {
-        const isAnn = item.type === 'announcement' || item.type === 'system_announcement';
-        const title = item.post_title || (isAnn ? (item.extra && item.extra.title) : null) || null;
+        const isAnn = ANNOUNCEMENT_TYPES.has(item.type);
+        const isStandardPost = POSTS_TABLE_TYPES.has(item.type);
+        const available = !isStandardPost || (!!r.resolved_post_id && !r.post_deleted_at);
+        const title = (isStandardPost ? item.post_title : item.extra?.targetTitle)
+          || (isAnn ? item.extra?.title : null)
+          || null;
+        const target = getPostTarget(item.type, item.post_id, available);
         item.target = {
-          type: isAnn ? 'announcement' : 'post',
+          ...target,
           id: item.post_id,
-          key: `${isAnn ? 'announcement' : 'post'}:${item.post_id}`,
           title,
-          path: `/post/${item.post_id}`,
+          available,
         };
       } else if (item.extra && item.extra.targetType && item.extra.targetId) {
         const tType = String(item.extra.targetType);
@@ -141,6 +165,14 @@ router.get('/', authenticateToken, async (req, res) => {
     const mod = req.query.module; // 模块筛选（新增）
     const category = req.query.category; // 类别筛选（interaction|transaction|system）
     const isRead = req.query.is_read; // 0 | 1
+    const requestedPostId = req.query.post_id;
+    let postId = null;
+    if (requestedPostId !== undefined) {
+      postId = Number(requestedPostId);
+      if (!Number.isInteger(postId) || postId < 1) {
+        return res.status(400).json({ status: -1, message: '帖子目标无效' });
+      }
+    }
 
     let where = 'n.user_id = ?';
     const params = [req.user.id];
@@ -165,11 +197,18 @@ router.get('/', authenticateToken, async (req, res) => {
       where += ' AND n.is_read = ?';
       params.push(isRead === '1' ? 1 : 0);
     }
+    if (postId) {
+      const postTypes = getModuleTypes('treehole');
+      const placeholders = postTypes.map(() => '?').join(',');
+      where += ` AND n.post_id = ? AND n.type IN (${placeholders})`;
+      params.push(postId, ...postTypes);
+    }
 
     const rowsPromise = (async () => {
       try {
         return await query(
         `SELECT n.id, n.type, n.is_read, n.post_id, n.comment_id, n.from_user_id, n.extra, n.created_at,
+          p.id AS resolved_post_id, p.deleted_at AS post_deleted_at,
           p.title AS post_title,
           u.username AS from_username, u.nickname AS from_nickname, u.avatar AS from_avatar
          FROM notifications n
@@ -185,8 +224,11 @@ router.get('/', authenticateToken, async (req, res) => {
         if (!(e && e.code === 'ER_BAD_FIELD_ERROR' && String(e.sqlMessage || '').includes('title'))) throw e;
         return query(
           `SELECT n.id, n.type, n.is_read, n.post_id, n.comment_id, n.from_user_id, n.extra, n.created_at,
+            p.id AS resolved_post_id, p.deleted_at AS post_deleted_at,
+            NULL AS post_title,
             u.username AS from_username, u.nickname AS from_nickname, u.avatar AS from_avatar
            FROM notifications n
+           LEFT JOIN posts p ON n.post_id = p.id
            LEFT JOIN users u ON n.from_user_id = u.id
            WHERE ${where}
            ORDER BY n.created_at DESC, n.id DESC

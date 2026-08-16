@@ -14,6 +14,7 @@ export const QK = {
   postTagsVisible: () => ['posts', 'tags', 'visible'],
   unreadAnnouncements: (tokenKey) => ['notifications', 'unreadAnnouncements', tokenKey],
   mailboxNotifications: (tokenKey, category) => ['notifications', 'mailbox', tokenKey, category],
+  mailboxPostInteractions: (tokenKey, postId) => ['notifications', 'mailbox', tokenKey, 'post', postId],
 
   handbookTabs: () => ['handbook', 'tabs'],
   handbookTags: () => ['handbook', 'tags'],

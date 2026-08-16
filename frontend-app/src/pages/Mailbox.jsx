@@ -15,6 +15,10 @@ import {
 import { NOTIFICATION_CATEGORIES } from '@shared/constants/notifications';
 import { QK } from '@shared/query/queryKeys';
 import { getApiErrorMessage } from '@shared/utils/apiError';
+import {
+  buildNotificationGroups,
+  displayNotificationName as displayName,
+} from '../utils/notificationGroups';
 import './Mailbox.css';
 
 function formatTime(createdAt, isZh) {
@@ -30,11 +34,6 @@ function formatTime(createdAt, isZh) {
   if (diffDay === 1) return isZh ? '昨天' : 'Yesterday';
   if (diffDay < 7) return isZh ? `${diffDay} 天前` : `${diffDay}d ago`;
   return date.toLocaleDateString(isZh ? 'zh-CN' : 'en-US');
-}
-
-function displayName(user) {
-  if (!user) return 'Someone';
-  return (user.nickname || user.username || 'Someone').trim();
 }
 
 function getAnnouncementCopy(group, isZh) {
@@ -102,12 +101,89 @@ const CATEGORY_TABS = NOTIFICATION_CATEGORIES.map((key) => ({ key, ...CATEGORY_L
 const PAGE_SIZE = 20;
 const MAILBOX_STALE_MS = 30 * 1000;
 
+function InteractionGroupDetails({ expanded, group, isZh, onOpenPost, tokenKey }) {
+  const detailsQuery = useInfiniteQuery({
+    queryKey: QK.mailboxPostInteractions(tokenKey, group.target.id),
+    queryFn: ({ pageParam = 1 }) => getNotifications({
+      category: 'interaction',
+      postId: group.target.id,
+      page: pageParam,
+      pageSize: PAGE_SIZE,
+    }),
+    enabled: expanded,
+    initialPageParam: 1,
+    staleTime: MAILBOX_STALE_MS,
+    getNextPageParam: (lastPage) => (
+      lastPage?.hasMore ? (Number(lastPage.page) || 1) + 1 : undefined
+    ),
+  });
+  const items = useMemo(() => {
+    const seen = new Set();
+    return (detailsQuery.data?.pages || []).flatMap((page) => page?.list || []).filter((item) => {
+      if (seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    });
+  }, [detailsQuery.data]);
+
+  if (!expanded) return null;
+
+  return (
+    <div id={`mailbox-details-${group.target.id}`} className="mailbox-interaction-details">
+      {detailsQuery.isLoading ? <div className="mailbox-detail-status">{isZh ? '加载互动…' : 'Loading interactions…'}</div> : null}
+      {detailsQuery.isError && items.length === 0 ? (
+        <div className="mailbox-inline-error" role="alert">
+          <span>{isZh ? '互动明细加载失败。' : 'Could not load interactions.'}</span>
+          <button type="button" onClick={() => detailsQuery.refetch()}>{isZh ? '重试' : 'Retry'}</button>
+        </div>
+      ) : null}
+      {items.length > 0 ? (
+        <ul className="mailbox-detail-list">
+          {items.map((item) => {
+            const isComment = item.type === 'comment' || item.type?.endsWith('_comment');
+            const name = displayName(item.from_user) || (isZh ? '有人' : 'Someone');
+            const action = isComment ? (isZh ? '评论了' : 'commented') : (isZh ? '赞了' : 'liked');
+            const excerpt = isComment ? String(item.extra?.content || '').trim() : '';
+            return (
+              <li key={item.id} className={item.is_read ? '' : 'is-unread'}>
+                <div className="mailbox-detail-meta">
+                  <span><strong>{name}</strong> {action}</span>
+                  <span>{formatTime(item.created_at, isZh)}</span>
+                </div>
+                {excerpt ? <div className="mailbox-detail-excerpt">{excerpt}</div> : null}
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+      {detailsQuery.hasNextPage ? (
+        <button
+          type="button"
+          className="mailbox-detail-more"
+          disabled={detailsQuery.isFetchingNextPage}
+          onClick={() => detailsQuery.fetchNextPage()}
+        >
+          {detailsQuery.isFetchingNextPage
+            ? (isZh ? '加载中…' : 'Loading…')
+            : detailsQuery.isFetchNextPageError
+              ? (isZh ? '重试加载' : 'Retry')
+              : (isZh ? '更多互动' : 'More interactions')}
+        </button>
+      ) : null}
+      <Link to={group.contentPath} className="mailbox-view-post" onClick={onOpenPost}>
+        {isZh ? '查看帖子' : 'View post'}
+      </Link>
+    </div>
+  );
+}
+
 function Mailbox() {
   const queryClient = useQueryClient();
   const { isLoggedIn, token } = useAuth();
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
   const [tab, setTab] = useState('interaction');
+  const [expandedKey, setExpandedKey] = useState(null);
   const [clearing, setClearing] = useState(false);
   const [clearError, setClearError] = useState('');
   const tokenKey = token ?? '';
@@ -136,48 +212,7 @@ function Mailbox() {
     });
   }, [mailboxQuery.data]);
 
-  const groups = useMemo(() => {
-    const map = new Map();
-    for (const notification of notifications) {
-      const target = notification?.target || null;
-      const isAffair = ['activity_register_success', 'activity_start_reminder', 'activity_deadline_reminder'].includes(notification.type);
-      const baseKey = target?.key || `unknown:${notification.id}`;
-      const key = isAffair ? `affair:${baseKey}` : baseKey;
-      if (!map.has(key)) {
-        map.set(key, { key, isPost: target?.type === 'post' || target?.type === 'announcement', isAffair, target, items: [] });
-      }
-      map.get(key).items.push(notification);
-    }
-
-    return Array.from(map.values())
-      .map((group) => {
-        const sorted = [...group.items].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        const seen = new Set();
-        const users = sorted.filter((item) => {
-          const id = item.from_user?.id != null ? String(item.from_user.id) : null;
-          if (!id || seen.has(id)) return false;
-          seen.add(id);
-          return true;
-        }).map((item) => item.from_user);
-        const latest = sorted[0] || null;
-        return {
-          ...group,
-          sorted,
-          latest,
-          unreadCount: sorted.filter((item) => !item.is_read).length,
-          likeCount: sorted.filter((item) => item.type === 'like' || item.type?.endsWith('_like')).length,
-          commentCount: sorted.filter((item) => ['comment', 'handbook_comment', 'course_review_comment'].includes(item.type) || item.type?.endsWith('_comment')).length,
-          topUsers: users.slice(0, 3),
-          othersCount: Math.max(0, users.length - 3),
-          names: users.slice(0, 3).map(displayName),
-          contentTitle: group.target?.title || latest?.post_title || latest?.extra?.targetTitle || null,
-          contentPath: group.target?.path || (latest?.post_id ? `/post/${latest.post_id}` : '#'),
-          createdAt: latest?.created_at,
-          category: latest?.category || 'interaction',
-        };
-      })
-      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-  }, [notifications]);
+  const groups = useMemo(() => buildNotificationGroups(notifications), [notifications]);
 
   const handleGroupClick = (group) => {
     const unread = group.sorted.filter((item) => !item.is_read);
@@ -215,7 +250,7 @@ function Mailbox() {
       <div className="mailbox-topbar">
         <div className="mailbox-tabs" role="tablist" aria-label={isZh ? '通知分类' : 'Notification categories'}>
           {CATEGORY_TABS.map((item) => {
-            return <button key={item.key} type="button" className={`mailbox-tab ${tab === item.key ? 'is-on' : ''}`} onClick={() => { setClearError(''); setTab(item.key); }} role="tab" aria-selected={tab === item.key}>
+            return <button key={item.key} type="button" className={`mailbox-tab ${tab === item.key ? 'is-on' : ''}`} onClick={() => { setClearError(''); setExpandedKey(null); setTab(item.key); }} role="tab" aria-selected={tab === item.key}>
               {isZh ? item.zh : item.en}
             </button>;
           })}
@@ -241,9 +276,8 @@ function Mailbox() {
             const aggregateText = group.isAffair ? buildAffairsText({ isZh, latest: group.latest }) : group.category === 'transaction'
               ? buildMarketplaceText({ isZh, names: group.names, othersCount: group.othersCount, contentTitle: group.contentTitle })
               : buildAggregateText({ isZh, names: group.names, othersCount: group.othersCount, likeCount: group.likeCount, commentCount: group.commentCount, isPost: group.isPost, contentTitle: group.contentTitle });
-            return <li key={group.key} className={`social-card ${group.unreadCount > 0 ? 'is-unread' : ''}`} style={{ animationDelay: `${index * 70}ms` }}>
-              <Link to={group.contentPath} className="social-card-link" onClick={() => handleGroupClick(group)}>
-                {isAnnouncement ? <div className="mailbox-announcement" aria-label={isZh ? '公告内容' : 'Announcement content'}>
+            const isExpanded = expandedKey === group.key;
+            const summary = isAnnouncement ? <div className="mailbox-announcement" aria-label={isZh ? '公告内容' : 'Announcement content'}>
                   <div className="mailbox-announcement-head">
                     <span className="mailbox-announcement-label">{isZh ? '公告' : 'Announcement'}</span>
                     <span className="social-time">{formatTime(group.createdAt, isZh)}</span>
@@ -255,9 +289,40 @@ function Mailbox() {
                   <div className="social-head"><div className="social-avatars" aria-label={isZh ? '发送者' : 'Senders'}>{group.topUsers.map((user, userIndex) => <span key={`${user?.id || userIndex}`} className="social-avatar" style={{ zIndex: 10 - userIndex }}><img src={user?.avatar || '/default-avatar.svg'} alt="" /></span>)}{group.othersCount > 0 && <span className="social-others">+{group.othersCount}</span>}</div><span className="social-time">{formatTime(group.createdAt, isZh)}</span></div>
                   <div className="social-title">{group.contentTitle || (isZh ? '（无标题）' : '(Untitled)')}</div>
                   <div className="social-text">{aggregateText}</div>
+                  {group.isExpandablePost ? <div className="mailbox-interaction-counts">{[
+                    group.likeCount > 0 ? (isZh ? `${group.likeCount} 个赞` : `${group.likeCount} likes`) : null,
+                    group.commentCount > 0 ? (isZh ? `${group.commentCount} 条评论` : `${group.commentCount} comments`) : null,
+                  ].filter(Boolean).join(' · ')}</div> : null}
                   {group.latest?.extra?.content && <div className="social-whisper">“{String(group.latest.extra.content).trim()}”</div>}
-                </>}
-              </Link>
+                </>;
+            return <li key={group.key} className={`social-card ${group.unreadCount > 0 ? 'is-unread' : ''}`} style={{ animationDelay: `${index * 70}ms` }}>
+              {group.isExpandablePost ? (
+                <div className="social-card-link">
+                  <button
+                    type="button"
+                    className="mailbox-group-toggle"
+                    aria-expanded={isExpanded}
+                    aria-controls={`mailbox-details-${group.target.id}`}
+                    onClick={() => setExpandedKey((current) => current === group.key ? null : group.key)}
+                  >
+                    {summary}
+                  </button>
+                  <InteractionGroupDetails
+                    expanded={isExpanded}
+                    group={group}
+                    isZh={isZh}
+                    onOpenPost={() => handleGroupClick(group)}
+                    tokenKey={tokenKey}
+                  />
+                </div>
+              ) : group.contentPath !== '#' ? (
+                <Link to={group.contentPath} className="social-card-link" onClick={() => handleGroupClick(group)}>{summary}</Link>
+              ) : (
+                <div className="social-card-link">
+                  {summary}
+                  <div className="mailbox-unavailable">{isZh ? '内容已不可用' : 'Content unavailable'}</div>
+                </div>
+              )}
             </li>;
           })}
         </ul>
