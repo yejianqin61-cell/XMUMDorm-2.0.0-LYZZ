@@ -11,10 +11,12 @@ describe('personal-space review tab', () => {
     for (const relativePath of userZoneFiles) {
       const source = fs.readFileSync(path.resolve(__dirname, '..', '..', relativePath), 'utf8');
 
-      expect(source).toContain('if (!isOwnProfile || activeTab !== TAB_REVIEWS) return;');
-      expect(source).toContain('[isOwnProfile, activeTab, reviewsReloadKey]');
-      expect(source).toContain('onActionClick={() => setReviewsReloadKey((key) => key + 1)}');
+      expect(source).toContain('activeTab !== TAB_REVIEWS || reviewsLoaded');
+      expect(source).toContain('[isOwnProfile, activeTab, reviewsLoaded, reviewsReloadKey]');
+      expect(source).toContain('setReviewsLoaded(false);');
       expect(source).toContain('{snippet(content) || \' \'}');
+      expect(source).toContain("className={showTabs && activeTab !== TAB_POSTS ? 'hidden' : undefined}");
+      expect(source).toContain("className={activeTab !== TAB_REVIEWS ? 'hidden' : undefined}");
     }
   });
 });

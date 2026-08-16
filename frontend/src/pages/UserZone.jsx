@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Heart, MessageCircle, Star } from 'lucide-react';
 import { getProfile } from '@shared/api/users';
 import { getMyProductReviews, getMyFavorites } from '@shared/api/canteen';
@@ -142,6 +142,7 @@ function UserZone() {
   const [reviews, setReviews] = useState([]);
   const [reviewPage, setReviewPage] = useState(1);
   const [reviewsHasMore, setReviewsHasMore] = useState(false);
+  const [reviewsLoaded, setReviewsLoaded] = useState(false);
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [reviewsLoadingMore, setReviewsLoadingMore] = useState(false);
   const [reviewsError, setReviewsError] = useState(null);
@@ -244,7 +245,7 @@ function UserZone() {
   };
 
   useEffect(() => {
-    if (!isOwnProfile || activeTab !== TAB_REVIEWS) return;
+    if (!isOwnProfile || activeTab !== TAB_REVIEWS || reviewsLoaded) return;
     let cancelled = false;
     setReviewsLoading(true);
     setReviewsError(null);
@@ -259,6 +260,7 @@ function UserZone() {
         setReviews(data?.list ?? []);
         setReviewPage(Number(data?.page) || 1);
         setReviewsHasMore(Boolean(data?.hasMore));
+        setReviewsLoaded(true);
       })
       .catch((err) => {
         if (!cancelled) setReviewsError(getApiErrorMessage(err));
@@ -267,7 +269,11 @@ function UserZone() {
         if (!cancelled) setReviewsLoading(false);
       });
     return () => { cancelled = true; };
-  }, [isOwnProfile, activeTab, reviewsReloadKey]);
+  }, [isOwnProfile, activeTab, reviewsLoaded, reviewsReloadKey]);
+
+  useEffect(() => {
+    setReviewsLoaded(false);
+  }, [userId]);
 
   const loadMoreReviews = async () => {
     if (reviewsLoadingMore || !reviewsHasMore) return;
@@ -465,15 +471,13 @@ function UserZone() {
 
           {/* Content */}
           <div className="mt-4">
-            <AnimatePresence mode="wait">
-              {(!showTabs || activeTab === TAB_POSTS) && (
-                <motion.section
-                  key="posts"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 6 }}
-                  transition={{ duration: 0.22 }}
-                >
+            <motion.section
+              className={showTabs && activeTab !== TAB_POSTS ? 'hidden' : undefined}
+              aria-hidden={showTabs && activeTab !== TAB_POSTS}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.22 }}
+            >
                   {posts.length === 0 ? (
                     <EmptyIllustration
                       title={t.postsEmptyTitle}
@@ -505,23 +509,25 @@ function UserZone() {
                     )}
                     </>
                   )}
-                </motion.section>
-              )}
+            </motion.section>
 
-              {showTabs && activeTab === TAB_REVIEWS && (
-                <motion.section
-                  key="reviews"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 6 }}
-                  transition={{ duration: 0.22 }}
-                >
+            {showTabs && (
+              <motion.section
+                className={activeTab !== TAB_REVIEWS ? 'hidden' : undefined}
+                aria-hidden={activeTab !== TAB_REVIEWS}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.22 }}
+              >
                   {reviewsLoading ? (
                     <PageSkeleton items={2} />
                   ) : reviewsError ? (
                     <ErrorState
                       title={profileErrorTitle('reviews', isZh)}
-                      onActionClick={() => setReviewsReloadKey((key) => key + 1)}
+                      onActionClick={() => {
+                        setReviewsLoaded(false);
+                        setReviewsReloadKey((key) => key + 1);
+                      }}
                       actionLabel={t.retry}
                     />
                   ) : reviews.length === 0 ? (
@@ -550,17 +556,17 @@ function UserZone() {
                       )}
                     </>
                   )}
-                </motion.section>
-              )}
+              </motion.section>
+            )}
 
-              {showTabs && activeTab === TAB_FAVORITES && (
-                <motion.section
-                  key="favorites"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 6 }}
-                  transition={{ duration: 0.22 }}
-                >
+            {showTabs && (
+              <motion.section
+                className={activeTab !== TAB_FAVORITES ? 'hidden' : undefined}
+                aria-hidden={activeTab !== TAB_FAVORITES}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.22 }}
+              >
                   {favoritesLoading ? (
                     <PageSkeleton items={2} />
                   ) : favoritesError ? (
@@ -574,9 +580,8 @@ function UserZone() {
                       ))}
                     </div>
                   )}
-                </motion.section>
-              )}
-            </AnimatePresence>
+              </motion.section>
+            )}
           </div>
         </motion.div>
       </div>
