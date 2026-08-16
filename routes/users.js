@@ -183,6 +183,7 @@ router.get('/me/level', authenticateToken, async (req, res) => {
 
 router.get('/:id/profile', async (req, res) => {
   try {
+    res.set('Cache-Control', 'private, no-store');
     const userId = parsePositiveInteger(req.params.id);
     if (!userId) return res.status(400).json({ status: -1, message: 'ç”¨æˆ· ID æ— æ•ˆ' });
 

@@ -132,6 +132,7 @@ describe('Canteen collaborative maintenance permissions', () => {
     const res = await supertest(app()).get('/api/canteen/my-reviews?page=1&pageSize=1');
 
     expect(res.status).toBe(200);
+    expect(res.headers['cache-control']).toBe('private, no-store');
     expect(res.body.data).toMatchObject({ page: 1, pageSize: 1, hasMore: true });
     expect(res.body.data.list).toHaveLength(1);
     expect(res.body.data.list[0]).toMatchObject({ id: 12, product_id: 5 });

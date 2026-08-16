@@ -1649,6 +1649,7 @@ router.delete('/products/:productId/comments/:commentId', authenticateToken, asy
 // ============================================
 router.get('/my-reviews', authenticateToken, async (req, res) => {
   try {
+    res.set('Cache-Control', 'private, no-store');
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const pageSize = Math.min(30, Math.max(1, parseInt(req.query.pageSize, 10) || 10));
     const offset = (page - 1) * pageSize;
