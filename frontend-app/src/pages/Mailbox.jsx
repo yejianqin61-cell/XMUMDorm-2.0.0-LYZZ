@@ -10,7 +10,6 @@ import {
   clearNotifications,
   clearNotificationsByCategory,
   getNotifications,
-  getUnreadSummary,
   markNotificationRead,
 } from '@shared/api/notifications';
 import { getApiErrorMessage } from '@shared/utils/apiError';
@@ -107,7 +106,7 @@ function Mailbox() {
   const [unreadCounts, setUnreadCounts] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [tab, setTab] = useState('all');
+  const [tab, setTab] = useState('interaction');
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -118,19 +117,19 @@ function Mailbox() {
       return () => window.clearTimeout(timeoutId);
     }
     let cancelled = false;
-    const options = { page: 1, pageSize: 50 };
+    const options = { page: 1, pageSize: 20 };
     if (tab !== 'all') options.category = tab;
     Promise.resolve()
       .then(() => {
         if (cancelled) return null;
         setLoading(true);
         setError(null);
-        return Promise.all([getNotifications(options), getUnreadSummary()]);
+        return getNotifications(options);
       })
-      .then(([result, summary]) => {
+      .then((result) => {
         if (cancelled) return;
         setData({ list: result?.list ?? [], hasMore: !!result?.hasMore });
-        setUnreadCounts(summary?.byCategory || {});
+        setUnreadCounts(result?.unreadSummary?.byCategory || {});
       })
       .catch((err) => {
         if (!cancelled) setError(getApiErrorMessage(err));
@@ -212,11 +211,11 @@ function Mailbox() {
           try {
             if (tab === 'all') await clearNotifications();
             else await clearNotificationsByCategory(tab);
-            const options = { page: 1, pageSize: 50 };
+            const options = { page: 1, pageSize: 20 };
             if (tab !== 'all') options.category = tab;
-            const [result, summary] = await Promise.all([getNotifications(options), getUnreadSummary()]);
+            const result = await getNotifications(options);
             setData({ list: result?.list ?? [], hasMore: !!result?.hasMore });
-            setUnreadCounts(summary?.byCategory || {});
+            setUnreadCounts(result?.unreadSummary?.byCategory || {});
           } catch (err) {
             setError(getApiErrorMessage(err));
           }

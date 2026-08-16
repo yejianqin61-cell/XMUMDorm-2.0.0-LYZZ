@@ -41,8 +41,8 @@ describe('Notifications Routes', () => {
 
   describe('GET /api/notifications', () => {
     it('maps system announcements to announcement targets', async () => {
-      query.mockResolvedValueOnce([
-        {
+      query
+        .mockResolvedValueOnce([{
           id: 1,
           type: 'system_announcement',
           is_read: 0,
@@ -55,8 +55,8 @@ describe('Notifications Routes', () => {
           from_username: 'admin',
           from_nickname: 'Admin',
           from_avatar: null,
-        },
-      ]);
+        }])
+        .mockResolvedValueOnce([{ type: 'system_announcement', cnt: 1 }]);
 
       const res = await supertest(app()).get('/api/notifications');
       expect(res.status).toBe(200);
@@ -69,11 +69,16 @@ describe('Notifications Routes', () => {
         title: 'Campus News',
         path: '/post/42',
       });
+      expect(res.body.data.unreadSummary.byCategory).toEqual({
+        interaction: 0,
+        transaction: 0,
+        system: 1,
+      });
     });
 
     it('supports category filtering and exposes the derived category', async () => {
-      query.mockResolvedValueOnce([
-        {
+      query
+        .mockResolvedValueOnce([{
           id: 5,
           type: 'activity_register_success',
           is_read: 0,
@@ -91,8 +96,8 @@ describe('Notifications Routes', () => {
           from_username: null,
           from_nickname: null,
           from_avatar: null,
-        },
-      ]);
+        }])
+        .mockResolvedValueOnce([{ type: 'activity_register_success', cnt: 1 }]);
 
       const res = await supertest(app()).get('/api/notifications?category=transaction');
 
@@ -101,6 +106,44 @@ describe('Notifications Routes', () => {
       expect(query.mock.calls[0][1]).toContain('activity_register_success');
       expect(res.body.data.list[0].category).toBe('transaction');
       expect(res.body.data.list[0].target.path).toBe('/about/club/activity/22');
+    });
+
+    it('trims the lookahead row and uses stable ordering', async () => {
+      const rows = Array.from({ length: 21 }, (_, index) => ({
+        id: 100 - index,
+        type: 'treehole_like',
+        is_read: 0,
+        post_id: index + 1,
+        comment_id: null,
+        from_user_id: index + 10,
+        extra: null,
+        created_at: '2026-06-03 09:00:00',
+      }));
+      query
+        .mockResolvedValueOnce(rows)
+        .mockResolvedValueOnce([{ type: 'treehole_like', cnt: 21 }]);
+
+      const res = await supertest(app()).get('/api/notifications?category=interaction&page=1&pageSize=20');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.list).toHaveLength(20);
+      expect(res.body.data.hasMore).toBe(true);
+      expect(res.body.data.unreadSummary.byCategory.interaction).toBe(21);
+      expect(query.mock.calls[0][0]).toContain('ORDER BY n.created_at DESC, n.id DESC');
+      expect(query.mock.calls[0][0]).toContain('LIMIT 21 OFFSET 0');
+    });
+
+    it.each([
+      '/api/notifications?page=0',
+      '/api/notifications?page=nope',
+      '/api/notifications?pageSize=0',
+      '/api/notifications?pageSize=nope',
+      '/api/notifications?category=unknown',
+    ])('rejects invalid list parameters: %s', async (path) => {
+      const res = await supertest(app()).get(path);
+
+      expect(res.status).toBe(400);
+      expect(query).not.toHaveBeenCalled();
     });
   });
 
@@ -139,6 +182,8 @@ describe('Notifications Routes', () => {
           from_username: 'admin',
           from_nickname: 'Admin',
           from_avatar: null,
+          resolved_post_id: 88,
+          post_deleted_at: null,
         },
       ]);
 
@@ -147,7 +192,12 @@ describe('Notifications Routes', () => {
       expect(res.body.status).toBe(0);
       expect(query).toHaveBeenCalledTimes(1);
       expect(query.mock.calls[0][0]).toContain("n.type IN ('announcement', 'system_announcement')");
-      expect(res.body.data[0].target.type).toBe('announcement');
+      expect(query.mock.calls[0][0]).toContain('LEFT JOIN posts p ON n.post_id = p.id');
+      expect(res.body.data[0].target).toEqual(expect.objectContaining({
+        type: 'announcement',
+        available: true,
+        path: '/post/88',
+      }));
     });
   });
 

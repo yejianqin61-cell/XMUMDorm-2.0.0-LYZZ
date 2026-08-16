@@ -12,6 +12,8 @@ const authenticateToken = require('../middleware/auth');
 const { assetUrl } = require('../utils/assets');
 const { simpleCache } = require('../utils/simpleCache');
 const {
+  CATEGORY_TYPES,
+  MODULE_TYPES,
   getCategoryTypes,
   getModuleTypes,
   getNotificationCategory,
@@ -24,6 +26,21 @@ function getUnreadAnnouncementCacheKey(userId) {
 function invalidateUnreadAnnouncementCache(userId) {
   if (!userId) return;
   simpleCache.delete(getUnreadAnnouncementCacheKey(userId));
+}
+
+function buildUnreadSummary(rows) {
+  const byType = {};
+  for (const row of rows || []) byType[row.type] = Number(row.cnt) || 0;
+
+  const sumTypes = (types) => types.reduce((sum, type) => sum + (byType[type] || 0), 0);
+  const byModule = Object.fromEntries(
+    Object.entries(MODULE_TYPES).map(([name, types]) => [name, sumTypes(types)])
+  );
+  const byCategory = Object.fromEntries(
+    Object.entries(CATEGORY_TYPES).map(([name, types]) => [name, sumTypes(types)])
+  );
+  const total = Object.values(byType).reduce((sum, count) => sum + count, 0);
+  return { total, byType, byModule, byCategory };
 }
 
 // 为通知附加帖子/发送者等摘要
@@ -100,8 +117,14 @@ async function attachNotificationExtra(rows) {
 // ============================================
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-    const pageSize = Math.min(50, Math.max(1, parseInt(req.query.pageSize, 10) || 20));
+    const requestedPage = req.query.page === undefined ? 1 : Number(req.query.page);
+    const requestedPageSize = req.query.pageSize === undefined ? 20 : Number(req.query.pageSize);
+    if (!Number.isInteger(requestedPage) || requestedPage < 1
+      || !Number.isInteger(requestedPageSize) || requestedPageSize < 1) {
+      return res.status(400).json({ status: -1, message: '分页参数无效' });
+    }
+    const page = requestedPage;
+    const pageSize = Math.min(50, requestedPageSize);
     const offset = (page - 1) * pageSize;
     const limitNum = Number(pageSize) + 1;
     const offsetNum = Number(offset);
@@ -137,9 +160,9 @@ router.get('/', authenticateToken, async (req, res) => {
       params.push(isRead === '1' ? 1 : 0);
     }
 
-    let rows;
-    try {
-      rows = await query(
+    const rowsPromise = (async () => {
+      try {
+        return await query(
         `SELECT n.id, n.type, n.is_read, n.post_id, n.comment_id, n.from_user_id, n.extra, n.created_at,
           p.title AS post_title,
           u.username AS from_username, u.nickname AS from_nickname, u.avatar AS from_avatar
@@ -147,33 +170,39 @@ router.get('/', authenticateToken, async (req, res) => {
          LEFT JOIN posts p ON n.post_id = p.id
          LEFT JOIN users u ON n.from_user_id = u.id
          WHERE ${where}
-         ORDER BY n.created_at DESC
+         ORDER BY n.created_at DESC, n.id DESC
          LIMIT ${limitNum} OFFSET ${offsetNum}`,
         params
-      );
-    } catch (e) {
-      // 兼容未执行 posts.title 迁移：降级不查 post_title
-      if (e && e.code === 'ER_BAD_FIELD_ERROR' && String(e.sqlMessage || '').includes('title')) {
-        rows = await query(
+        );
+      } catch (e) {
+        // 兼容未执行 posts.title 迁移：降级不查 post_title
+        if (!(e && e.code === 'ER_BAD_FIELD_ERROR' && String(e.sqlMessage || '').includes('title'))) throw e;
+        return query(
           `SELECT n.id, n.type, n.is_read, n.post_id, n.comment_id, n.from_user_id, n.extra, n.created_at,
             u.username AS from_username, u.nickname AS from_nickname, u.avatar AS from_avatar
            FROM notifications n
            LEFT JOIN users u ON n.from_user_id = u.id
            WHERE ${where}
-           ORDER BY n.created_at DESC
+           ORDER BY n.created_at DESC, n.id DESC
            LIMIT ${limitNum} OFFSET ${offsetNum}`,
           params
         );
-      } else {
-        throw e;
       }
-    }
-    const list = await attachNotificationExtra(rows);
+    })();
+    const unreadRowsPromise = query(
+      `SELECT type, COUNT(*) AS cnt
+       FROM notifications
+       WHERE user_id = ? AND is_read = 0
+       GROUP BY type`,
+      [req.user.id]
+    );
+    const [rows = [], unreadRows = []] = await Promise.all([rowsPromise, unreadRowsPromise]);
     const hasMore = rows.length > pageSize;
+    const list = await attachNotificationExtra(rows.slice(0, pageSize));
     res.status(200).json({
       status: 0,
       message: '获取成功',
-      data: { list, hasMore, page, pageSize }
+      data: { list, hasMore, page, pageSize, unreadSummary: buildUnreadSummary(unreadRows) }
     });
   } catch (e) {
     console.error('通知列表错误:', e);
@@ -193,29 +222,7 @@ router.get('/unread-summary', authenticateToken, async (req, res) => {
        GROUP BY type`,
       [req.user.id]
     );
-    const byType = {};
-    for (const r of rows || []) {
-      byType[r.type] = Number(r.cnt) || 0;
-    }
-    // 按模块聚合（从 notificationService 获取模块定义）
-    const {
-      MODULE_TYPES: allModuleTypes,
-      CATEGORY_TYPES: allCategoryTypes,
-    } = require('../services/notificationService');
-    const byModule = {};
-    for (const [modName, types] of Object.entries(allModuleTypes)) {
-      let sum = 0;
-      for (const t of types) sum += byType[t] || 0;
-      byModule[modName] = sum;
-    }
-    const byCategory = {};
-    for (const [categoryName, types] of Object.entries(allCategoryTypes)) {
-      let sum = 0;
-      for (const t of types) sum += byType[t] || 0;
-      byCategory[categoryName] = sum;
-    }
-    const total = Object.values(byType).reduce((a, b) => a + (Number(b) || 0), 0);
-    res.status(200).json({ status: 0, message: 'ok', data: { total, byType, byModule, byCategory } });
+    res.status(200).json({ status: 0, message: 'ok', data: buildUnreadSummary(rows) });
   } catch (e) {
     console.error('未读汇总错误:', e);
     res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
@@ -274,8 +281,10 @@ router.get('/unread-announcements', authenticateToken, async (req, res) => {
     const list = await simpleCache.getOrSet(cacheKey, ttlMs, async () => {
       const rows = await query(
         `SELECT n.id, n.type, n.is_read, n.post_id, n.extra, n.created_at, n.from_user_id,
+          p.id AS resolved_post_id, p.deleted_at AS post_deleted_at,
           u.username AS from_username, u.nickname AS from_nickname, u.avatar AS from_avatar
          FROM notifications n
+         LEFT JOIN posts p ON n.post_id = p.id
          LEFT JOIN users u ON n.from_user_id = u.id
          WHERE n.user_id = ? AND n.type IN ('announcement', 'system_announcement') AND n.is_read = 0
          ORDER BY n.created_at DESC
