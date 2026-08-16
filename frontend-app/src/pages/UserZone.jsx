@@ -764,10 +764,8 @@ function FavoriteListItem({ item, locale }) {
 }
 
 function FadeImg({ src, alt, className, locale }) {
-  const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
   useEffect(() => {
-    setLoaded(false);
     setFailed(false);
   }, [src]);
   return (
@@ -777,12 +775,8 @@ function FadeImg({ src, alt, className, locale }) {
         alt={alt}
         loading="lazy"
         decoding="async"
-        onLoad={() => setLoaded(true)}
-        onError={() => {
-          setFailed(true);
-          setLoaded(true); // 避免一直 opacity-0 导致“空白”
-        }}
-        className={`${className} transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+        onError={() => setFailed(true)}
+        className={className}
       />
       {failed ? (
         <div className="absolute inset-0 grid place-items-center bg-slate-100 text-[11px] font-semibold text-slate-400">

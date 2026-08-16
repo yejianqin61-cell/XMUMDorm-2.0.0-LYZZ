@@ -17,6 +17,7 @@ describe('personal-space review tab', () => {
       expect(source).toContain('{snippet(content) || \' \'}');
       expect(source).toContain("className={showTabs && activeTab !== TAB_POSTS ? 'hidden' : undefined}");
       expect(source).toContain("className={activeTab !== TAB_REVIEWS ? 'hidden' : undefined}");
+      expect(source).not.toContain("loaded ? 'opacity-100' : 'opacity-0'");
     }
   });
 });
