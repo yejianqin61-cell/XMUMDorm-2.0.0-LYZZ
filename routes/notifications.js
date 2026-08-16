@@ -73,7 +73,7 @@ function getPostTarget(type, postId, available) {
 }
 
 // 为通知附加帖子/发送者等摘要
-async function attachNotificationExtra(rows) {
+async function attachNotificationExtra(rows, viewerIsAdmin = false) {
   if (!rows || rows.length === 0) return [];
   const list = [];
   for (const r of rows) {
@@ -114,7 +114,11 @@ async function attachNotificationExtra(rows) {
       if (item.post_id) {
         const isAnn = ANNOUNCEMENT_TYPES.has(item.type);
         const isStandardPost = POSTS_TABLE_TYPES.has(item.type);
-        const available = !isStandardPost || (!!r.resolved_post_id && !r.post_deleted_at);
+        const available = !isStandardPost || (
+          !!r.resolved_post_id
+          && !r.post_deleted_at
+          && (!r.post_hidden_by_admin || viewerIsAdmin)
+        );
         const title = (isStandardPost ? item.post_title : item.extra?.targetTitle)
           || (isAnn ? item.extra?.title : null)
           || null;
@@ -155,7 +159,7 @@ router.get('/', authenticateToken, async (req, res) => {
     const requestedPageSize = req.query.pageSize === undefined ? 20 : Number(req.query.pageSize);
     if (!Number.isInteger(requestedPage) || requestedPage < 1
       || !Number.isInteger(requestedPageSize) || requestedPageSize < 1) {
-      return res.status(400).json({ status: -1, message: '分页参数无效' });
+      return res.status(400).json({ status: -1, error: '分页参数无效' });
     }
     const page = requestedPage;
     const pageSize = Math.min(50, requestedPageSize);
@@ -163,7 +167,7 @@ router.get('/', authenticateToken, async (req, res) => {
     const limitNum = Number(pageSize) + 1;
     const offsetNum = Number(offset);
     if (!Number.isInteger(limitNum) || limitNum < 1 || !Number.isInteger(offsetNum) || offsetNum < 0) {
-      return res.status(400).json({ status: -1, message: '分页参数无效' });
+      return res.status(400).json({ status: -1, error: '分页参数无效' });
     }
     const type = req.query.type; // 单类型筛选（兼容旧版）
     const mod = req.query.module; // 模块筛选（新增）
@@ -174,7 +178,7 @@ router.get('/', authenticateToken, async (req, res) => {
     if (requestedPostId !== undefined) {
       postId = Number(requestedPostId);
       if (!Number.isInteger(postId) || postId < 1) {
-        return res.status(400).json({ status: -1, message: '帖子目标无效' });
+        return res.status(400).json({ status: -1, error: '帖子目标无效' });
       }
     }
 
@@ -182,7 +186,7 @@ router.get('/', authenticateToken, async (req, res) => {
     const params = [req.user.id];
     if (category) {
       const types = getCategoryTypes(category);
-      if (!types) return res.status(400).json({ status: -1, message: '未知通知类别' });
+      if (!types) return res.status(400).json({ status: -1, error: '未知通知类别' });
       const placeholders = types.map(() => '?').join(',');
       where += ` AND n.type IN (${placeholders})`;
       params.push(...types);
@@ -212,7 +216,7 @@ router.get('/', authenticateToken, async (req, res) => {
       try {
         return await query(
         `SELECT n.id, n.type, n.is_read, n.post_id, n.comment_id, n.from_user_id, n.extra, n.created_at,
-          p.id AS resolved_post_id, p.deleted_at AS post_deleted_at,
+          p.id AS resolved_post_id, p.deleted_at AS post_deleted_at, p.hidden_by_admin AS post_hidden_by_admin,
           p.title AS post_title,
           u.username AS from_username, u.nickname AS from_nickname, u.avatar AS from_avatar
          FROM notifications n
@@ -228,7 +232,7 @@ router.get('/', authenticateToken, async (req, res) => {
         if (!(e && e.code === 'ER_BAD_FIELD_ERROR' && String(e.sqlMessage || '').includes('title'))) throw e;
         return query(
           `SELECT n.id, n.type, n.is_read, n.post_id, n.comment_id, n.from_user_id, n.extra, n.created_at,
-            p.id AS resolved_post_id, p.deleted_at AS post_deleted_at,
+            p.id AS resolved_post_id, p.deleted_at AS post_deleted_at, p.hidden_by_admin AS post_hidden_by_admin,
             NULL AS post_title,
             u.username AS from_username, u.nickname AS from_nickname, u.avatar AS from_avatar
            FROM notifications n
@@ -250,7 +254,7 @@ router.get('/', authenticateToken, async (req, res) => {
     );
     const [rows = [], unreadRows = []] = await Promise.all([rowsPromise, unreadRowsPromise]);
     const hasMore = rows.length > pageSize;
-    const list = await attachNotificationExtra(rows.slice(0, pageSize));
+    const list = await attachNotificationExtra(rows.slice(0, pageSize), req.user.role === 'admin');
     res.status(200).json({
       status: 0,
       message: '获取成功',
@@ -292,7 +296,7 @@ router.delete('/clear', authenticateToken, async (req, res) => {
 
     if (category) {
       const types = getCategoryTypes(category);
-      if (!types) return res.status(400).json({ status: -1, message: '未知通知类别' });
+      if (!types) return res.status(400).json({ status: -1, error: '未知通知类别' });
       const clearableTypes = getClearableTypes(types);
       const placeholders = clearableTypes.map(() => '?').join(',');
       if (clearableTypes.length > 0) {
@@ -300,7 +304,7 @@ router.delete('/clear', authenticateToken, async (req, res) => {
       }
     } else if (mod) {
       const types = getModuleTypes(mod);
-      if (!types) return res.status(400).json({ status: -1, message: '未知模块' });
+      if (!types) return res.status(400).json({ status: -1, error: '未知模块' });
       const clearableTypes = getClearableTypes(types);
       const placeholders = clearableTypes.map(() => '?').join(',');
       if (clearableTypes.length > 0) {
@@ -339,7 +343,7 @@ router.get('/unread-announcements', authenticateToken, async (req, res) => {
     const list = await simpleCache.getOrSet(cacheKey, ttlMs, async () => {
       const rows = await query(
         `SELECT n.id, n.type, n.is_read, n.post_id, n.extra, n.created_at, n.from_user_id,
-          p.id AS resolved_post_id, p.deleted_at AS post_deleted_at,
+          p.id AS resolved_post_id, p.deleted_at AS post_deleted_at, p.hidden_by_admin AS post_hidden_by_admin,
           u.username AS from_username, u.nickname AS from_nickname, u.avatar AS from_avatar
          FROM notifications n
          LEFT JOIN posts p ON n.post_id = p.id
@@ -349,7 +353,7 @@ router.get('/unread-announcements', authenticateToken, async (req, res) => {
          LIMIT 20`,
         [req.user.id]
       );
-      return await attachNotificationExtra(rows || []);
+      return await attachNotificationExtra(rows || [], req.user.role === 'admin');
     });
     res.status(200).json({ status: 0, message: '获取成功', data: list });
   } catch (e) {
@@ -364,7 +368,7 @@ router.get('/unread-announcements', authenticateToken, async (req, res) => {
 router.patch('/:id/read', authenticateToken, async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
-    if (!id) return res.status(400).json({ status: -1, message: '通知 ID 无效' });
+    if (!id) return res.status(400).json({ status: -1, error: '通知 ID 无效' });
     const rows = await query('SELECT id FROM notifications WHERE id = ? AND user_id = ?', [id, req.user.id]);
     if (!rows || rows.length === 0) {
       return res.status(404).json({ status: -1, message: '通知不存在' });
@@ -385,10 +389,10 @@ router.patch('/read-batch', authenticateToken, async (req, res) => {
   try {
     const { ids } = req.body || {};
     if (!Array.isArray(ids) || ids.length === 0) {
-      return res.status(400).json({ status: -1, message: '请提供 ids 数组' });
+      return res.status(400).json({ status: -1, error: '请提供 ids 数组' });
     }
     if (ids.length > MAX_READ_BATCH_SIZE || ids.some((id) => !Number.isInteger(id) || id < 1)) {
-      return res.status(400).json({ status: -1, message: `ids 必须为不超过 ${MAX_READ_BATCH_SIZE} 个正整数` });
+      return res.status(400).json({ status: -1, error: `ids 必须为不超过 ${MAX_READ_BATCH_SIZE} 个正整数` });
     }
     const uniqueIds = [...new Set(ids)];
     const placeholders = uniqueIds.map(() => '?').join(',');

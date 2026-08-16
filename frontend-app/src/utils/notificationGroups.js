@@ -57,7 +57,6 @@ export function buildNotificationGroups(notifications) {
       commentCount: sorted.filter((item) => ['comment', 'handbook_comment', 'course_review_comment'].includes(item.type) || item.type?.endsWith('_comment')).length,
       topUsers: users.slice(0, 3),
       othersCount: Math.max(0, users.length - 3),
-      names: users.slice(0, 3).map(displayNotificationName),
       contentTitle: group.target?.title || latest?.post_title || latest?.extra?.targetTitle || null,
       contentPath: group.target?.available === false ? '#' : (group.target?.path || '#'),
       createdAt: latest?.created_at,

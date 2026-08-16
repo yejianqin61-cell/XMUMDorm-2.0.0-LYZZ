@@ -12,7 +12,6 @@ import {
   getNotifications,
   markNotificationsReadBatch,
 } from '@shared/api/notifications';
-import { NOTIFICATION_CATEGORIES } from '@shared/constants/notifications';
 import { QK } from '@shared/query/queryKeys';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import {
@@ -92,7 +91,7 @@ const CATEGORY_LABELS = {
   transaction: { zh: '事务', en: 'Transaction' },
   system: { zh: '系统', en: 'System' },
 };
-const CATEGORY_TABS = NOTIFICATION_CATEGORIES.map((key) => ({ key, ...CATEGORY_LABELS[key] }));
+const CATEGORY_TABS = ['interaction', 'transaction', 'system'].map((key) => ({ key, ...CATEGORY_LABELS[key] }));
 const PAGE_SIZE = 20;
 const MAILBOX_STALE_MS = 30 * 1000;
 
@@ -217,7 +216,7 @@ function Mailbox() {
   const latestUnreadSummary = mailboxQuery.data?.pages?.at(-1)?.unreadSummary;
   useEffect(() => {
     if (latestUnreadSummary) {
-      queryClient.setQueryData(['notifications', 'unreadSummary', tokenKey], latestUnreadSummary);
+      queryClient.setQueryData(QK.unreadSummary(tokenKey), latestUnreadSummary);
     }
   }, [latestUnreadSummary, queryClient, tokenKey]);
 
@@ -229,7 +228,7 @@ function Mailbox() {
 
     const ids = unread.map((item) => item.id);
     const mailboxPrefix = ['notifications', 'mailbox', tokenKey];
-    const unreadSummaryKey = ['notifications', 'unreadSummary', tokenKey];
+    const unreadSummaryKey = QK.unreadSummary(tokenKey);
     const unreadAnnouncementsKey = QK.unreadAnnouncements(tokenKey);
     ids.forEach((id) => trackedReadIds.current.add(id));
     let mailboxSnapshots = [];
@@ -274,7 +273,7 @@ function Mailbox() {
       await clearNotificationsByCategory(tab);
       const firstPage = await getNotifications({ category: tab, page: 1, pageSize: PAGE_SIZE });
       queryClient.setQueryData(mailboxQueryKey, { pages: [firstPage], pageParams: [1] });
-      queryClient.setQueryData(['notifications', 'unreadSummary', tokenKey], firstPage?.unreadSummary || {});
+      queryClient.setQueryData(QK.unreadSummary(tokenKey), firstPage?.unreadSummary || {});
       await queryClient.invalidateQueries({ queryKey: QK.unreadAnnouncements(tokenKey) });
     } catch (err) {
       setClearError(getApiErrorMessage(err));

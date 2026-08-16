@@ -69,7 +69,7 @@ export async function request(path, options = {}) {
   }
 
   if (data.status !== 0 && data.status !== undefined) {
-    const err = new Error(data.message || '请求失败');
+    const err = new Error(data.error || data.message || '请求失败');
     err.status = res.status;
     err.apiStatus = data.status;
     throw err;

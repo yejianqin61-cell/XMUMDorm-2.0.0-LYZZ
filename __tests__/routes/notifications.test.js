@@ -11,7 +11,10 @@ jest.mock('../../utils/simpleCache', () => ({
   },
 }));
 jest.mock('../../middleware/auth', () => (req, _res, next) => {
-  req.user = { id: 7, role: 'student' };
+  if (req.headers['x-test-unauthorized'] === '1') {
+    return _res.status(401).json({ error: 'Unauthorized' });
+  }
+  req.user = { id: 7, role: req.headers['x-test-admin'] === '1' ? 'admin' : 'student' };
   next();
 });
 
@@ -231,6 +234,7 @@ describe('Notifications Routes', () => {
           created_at: '2026-06-03 09:00:00',
           resolved_post_id: null,
           post_deleted_at: null,
+          post_hidden_by_admin: 0,
           post_title: null,
         }])
         .mockResolvedValueOnce([]);
@@ -243,6 +247,101 @@ describe('Notifications Routes', () => {
         available: false,
         path: '#',
       }));
+    });
+
+    it('marks an admin-hidden post unavailable to a normal user', async () => {
+      query
+        .mockResolvedValueOnce([{
+          id: 32,
+          type: 'treehole_comment',
+          is_read: 0,
+          post_id: 42,
+          created_at: '2026-06-03 09:00:00',
+          resolved_post_id: 42,
+          post_deleted_at: null,
+          post_hidden_by_admin: 1,
+          post_title: 'Hidden post',
+        }])
+        .mockResolvedValueOnce([]);
+
+      const res = await supertest(app()).get('/api/notifications?category=interaction');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.list[0].target).toEqual(expect.objectContaining({
+        available: false,
+        path: '#',
+      }));
+      expect(query.mock.calls[0][0]).toContain('p.hidden_by_admin AS post_hidden_by_admin');
+    });
+
+    it('keeps an admin-hidden post available to an administrator', async () => {
+      query
+        .mockResolvedValueOnce([{
+          id: 33,
+          type: 'treehole_comment',
+          is_read: 0,
+          post_id: 42,
+          created_at: '2026-06-03 09:00:00',
+          resolved_post_id: 42,
+          post_deleted_at: null,
+          post_hidden_by_admin: 1,
+          post_title: 'Hidden post',
+        }])
+        .mockResolvedValueOnce([]);
+
+      const res = await supertest(app())
+        .get('/api/notifications?category=interaction')
+        .set('x-test-admin', '1');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.list[0].target).toEqual(expect.objectContaining({
+        available: true,
+        path: '/post/42',
+      }));
+    });
+
+    it('keeps equal-timestamp notifications stable across two pages', async () => {
+      const sameTime = '2026-06-03 09:00:00';
+      const rows = (from, to) => Array.from({ length: from - to + 1 }, (_, index) => ({
+        id: from - index,
+        type: 'treehole_like',
+        is_read: 1,
+        post_id: from - index,
+        created_at: sameTime,
+      }));
+      query
+        .mockResolvedValueOnce(rows(40, 20))
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce(rows(20, 1))
+        .mockResolvedValueOnce([]);
+
+      const first = await supertest(app()).get('/api/notifications?category=interaction&page=1&pageSize=20');
+      const second = await supertest(app()).get('/api/notifications?category=interaction&page=2&pageSize=20');
+      const ids = [...first.body.data.list, ...second.body.data.list].map((item) => item.id);
+
+      expect(first.body.data.hasMore).toBe(true);
+      expect(second.body.data.hasMore).toBe(false);
+      expect(ids).toHaveLength(40);
+      expect(new Set(ids)).toHaveProperty('size', 40);
+      expect(query.mock.calls[0][0]).toContain('ORDER BY n.created_at DESC, n.id DESC');
+      expect(query.mock.calls[2][0]).toContain('LIMIT 21 OFFSET 20');
+    });
+
+    it('returns 401 when authentication rejects the request', async () => {
+      const res = await supertest(app())
+        .get('/api/notifications')
+        .set('x-test-unauthorized', '1');
+
+      expect(res.status).toBe(401);
+      expect(query).not.toHaveBeenCalled();
+    });
+
+    it('returns 500 when the notification list query fails', async () => {
+      query.mockRejectedValueOnce(new Error('database unavailable'));
+
+      const res = await supertest(app()).get('/api/notifications');
+
+      expect(res.status).toBe(500);
     });
 
     it.each([
@@ -258,6 +357,7 @@ describe('Notifications Routes', () => {
       const res = await supertest(app()).get(path);
 
       expect(res.status).toBe(400);
+      expect(typeof res.body.error).toBe('string');
       expect(query).not.toHaveBeenCalled();
     });
   });
@@ -418,6 +518,7 @@ describe('Notifications Routes', () => {
         .send(body);
 
       expect(res.status).toBe(400);
+      expect(typeof res.body.error).toBe('string');
       expect(query).not.toHaveBeenCalled();
       expect(simpleCache.delete).not.toHaveBeenCalled();
     });

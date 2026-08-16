@@ -13,6 +13,7 @@ export const QK = {
   postHotTags: (limit) => ['posts', 'hotTags', limit || 8],
   postTagsVisible: () => ['posts', 'tags', 'visible'],
   unreadAnnouncements: (tokenKey) => ['notifications', 'unreadAnnouncements', tokenKey],
+  unreadSummary: (tokenKey) => ['notifications', 'unreadSummary', tokenKey],
   mailboxNotifications: (tokenKey, category) => ['notifications', 'mailbox', tokenKey, category],
   mailboxPostInteractions: (tokenKey, postId) => ['notifications', 'mailbox', tokenKey, 'post', postId],
 
