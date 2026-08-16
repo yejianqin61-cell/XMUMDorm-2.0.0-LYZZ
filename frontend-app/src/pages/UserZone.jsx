@@ -146,6 +146,7 @@ function UserZone() {
   const [reviewsLoadingMore, setReviewsLoadingMore] = useState(false);
   const [reviewsError, setReviewsError] = useState(null);
   const [reviewsLoadMoreError, setReviewsLoadMoreError] = useState(null);
+  const [reviewsReloadKey, setReviewsReloadKey] = useState(0);
   const [favorites, setFavorites] = useState([]);
   const [favoritesLoading, setFavoritesLoading] = useState(false);
   const [favoritesError, setFavoritesError] = useState(null);
@@ -243,7 +244,7 @@ function UserZone() {
   };
 
   useEffect(() => {
-    if (!isOwnProfile) return;
+    if (!isOwnProfile || activeTab !== TAB_REVIEWS) return;
     let cancelled = false;
     setReviewsLoading(true);
     setReviewsError(null);
@@ -266,7 +267,7 @@ function UserZone() {
         if (!cancelled) setReviewsLoading(false);
       });
     return () => { cancelled = true; };
-  }, [isOwnProfile]);
+  }, [isOwnProfile, activeTab, reviewsReloadKey]);
 
   const loadMoreReviews = async () => {
     if (reviewsLoadingMore || !reviewsHasMore) return;
@@ -518,7 +519,11 @@ function UserZone() {
                   {reviewsLoading ? (
                     <PageSkeleton items={2} />
                   ) : reviewsError ? (
-                    <ErrorState title={profileErrorTitle('reviews', isZh)} />
+                    <ErrorState
+                      title={profileErrorTitle('reviews', isZh)}
+                      onActionClick={() => setReviewsReloadKey((key) => key + 1)}
+                      actionLabel={t.retry}
+                    />
                   ) : reviews.length === 0 ? (
                     <EmptyIllustration title={t.reviewsEmptyTitle} description={t.reviewsEmptyDesc} actionLabel={t.eatNow} actionTo="/eat" />
                   ) : (
