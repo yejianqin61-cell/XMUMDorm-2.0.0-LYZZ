@@ -1,4 +1,5 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -7,11 +8,12 @@ import ErrorState from '../components/ui/ErrorState';
 import PageSkeleton from '../components/ui/PageSkeleton';
 import RouteTransition from '../components/ui/RouteTransition';
 import {
-  clearNotifications,
   clearNotificationsByCategory,
   getNotifications,
   markNotificationRead,
 } from '@shared/api/notifications';
+import { NOTIFICATION_CATEGORIES } from '@shared/constants/notifications';
+import { QK } from '@shared/query/queryKeys';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import './Mailbox.css';
 
@@ -91,58 +93,52 @@ function buildAggregateText({ isZh, names, othersCount, likeCount, commentCount,
   return isZh ? `${prefix} 赞了${titlePart}。` : `${prefix} liked ${titlePart}.`;
 }
 
-const CATEGORY_TABS = [
-  { key: 'all', label: '全部', labelEn: 'All' },
-  { key: 'interaction', label: '互动', labelEn: 'Interaction' },
-  { key: 'transaction', label: '事务', labelEn: 'Transaction' },
-  { key: 'system', label: '系统', labelEn: 'System' },
-];
+const CATEGORY_LABELS = {
+  interaction: { zh: '互动', en: 'Interaction' },
+  transaction: { zh: '事务', en: 'Transaction' },
+  system: { zh: '系统', en: 'System' },
+};
+const CATEGORY_TABS = NOTIFICATION_CATEGORIES.map((key) => ({ key, ...CATEGORY_LABELS[key] }));
+const PAGE_SIZE = 20;
+const MAILBOX_STALE_MS = 30 * 1000;
 
 function Mailbox() {
-  const { isLoggedIn } = useAuth();
+  const queryClient = useQueryClient();
+  const { isLoggedIn, token } = useAuth();
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
-  const [data, setData] = useState({ list: [], hasMore: false });
-  const [unreadCounts, setUnreadCounts] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [tab, setTab] = useState('interaction');
+  const [clearing, setClearing] = useState(false);
+  const [clearError, setClearError] = useState('');
+  const tokenKey = token ?? '';
+  const mailboxQueryKey = QK.mailboxNotifications(tokenKey, tab);
+  const mailboxQuery = useInfiniteQuery({
+    queryKey: mailboxQueryKey,
+    queryFn: ({ pageParam = 1 }) => getNotifications({
+      category: tab,
+      page: pageParam,
+      pageSize: PAGE_SIZE,
+    }),
+    enabled: isLoggedIn && !!token,
+    initialPageParam: 1,
+    staleTime: MAILBOX_STALE_MS,
+    getNextPageParam: (lastPage) => (
+      lastPage?.hasMore ? (Number(lastPage.page) || 1) + 1 : undefined
+    ),
+  });
 
-  useEffect(() => {
-    if (!isLoggedIn) {
-      const timeoutId = window.setTimeout(() => {
-        setData({ list: [], hasMore: false });
-        setLoading(false);
-      }, 0);
-      return () => window.clearTimeout(timeoutId);
-    }
-    let cancelled = false;
-    const options = { page: 1, pageSize: 20 };
-    if (tab !== 'all') options.category = tab;
-    Promise.resolve()
-      .then(() => {
-        if (cancelled) return null;
-        setLoading(true);
-        setError(null);
-        return getNotifications(options);
-      })
-      .then((result) => {
-        if (cancelled) return;
-        setData({ list: result?.list ?? [], hasMore: !!result?.hasMore });
-        setUnreadCounts(result?.unreadSummary?.byCategory || {});
-      })
-      .catch((err) => {
-        if (!cancelled) setError(getApiErrorMessage(err));
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, [isLoggedIn, tab]);
+  const notifications = useMemo(() => {
+    const seen = new Set();
+    return (mailboxQuery.data?.pages || []).flatMap((page) => page?.list || []).filter((item) => {
+      if (seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    });
+  }, [mailboxQuery.data]);
 
   const groups = useMemo(() => {
     const map = new Map();
-    for (const notification of Array.isArray(data?.list) ? data.list : []) {
+    for (const notification of notifications) {
       const target = notification?.target || null;
       const isAffair = ['activity_register_success', 'activity_start_reminder', 'activity_deadline_reminder'].includes(notification.type);
       const baseKey = target?.key || `unknown:${notification.id}`;
@@ -181,46 +177,61 @@ function Mailbox() {
         };
       })
       .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-  }, [data]);
+  }, [notifications]);
 
   const handleGroupClick = (group) => {
     const unread = group.sorted.filter((item) => !item.is_read);
     if (unread.length) Promise.allSettled(unread.map((item) => markNotificationRead(item.id))).catch(() => {});
   };
 
+  const handleClear = async () => {
+    const tabLabel = CATEGORY_LABELS[tab]?.[isZh ? 'zh' : 'en'] || tab;
+    if (!window.confirm(isZh ? `清空${tabLabel}通知？` : `Clear ${tabLabel} notifications?`)) return;
+    setClearing(true);
+    setClearError('');
+    try {
+      await clearNotificationsByCategory(tab);
+      const firstPage = await getNotifications({ category: tab, page: 1, pageSize: PAGE_SIZE });
+      queryClient.setQueryData(mailboxQueryKey, { pages: [firstPage], pageParams: [1] });
+      queryClient.setQueryData(['notifications', 'unreadSummary', tokenKey], firstPage?.unreadSummary || {});
+      await queryClient.invalidateQueries({ queryKey: QK.unreadAnnouncements(tokenKey) });
+    } catch (err) {
+      setClearError(getApiErrorMessage(err));
+    } finally {
+      setClearing(false);
+    }
+  };
+
   if (!isLoggedIn) {
     return <RouteTransition className="mailbox-page"><EmptyState title={isZh ? '请先登录' : 'Please log in'} description={isZh ? '登录后查看信箱。' : 'Please log in to view mailbox.'} actionLabel={isZh ? '去登录' : 'Log in'} actionTo="/login" icon="✉" /></RouteTransition>;
   }
-  if (loading) return <RouteTransition className="mailbox-page"><PageSkeleton items={4} /></RouteTransition>;
-  if (error) return <RouteTransition className="mailbox-page"><ErrorState title={isZh ? '信箱加载失败' : 'Mailbox failed to load'} description={error} onActionClick={() => window.location.reload()} /></RouteTransition>;
+  if (mailboxQuery.isLoading) return <RouteTransition className="mailbox-page"><PageSkeleton items={4} /></RouteTransition>;
+  if (mailboxQuery.isError && notifications.length === 0) {
+    return <RouteTransition className="mailbox-page"><ErrorState title={isZh ? '信箱加载失败' : 'Mailbox failed to load'} description={getApiErrorMessage(mailboxQuery.error)} onActionClick={() => mailboxQuery.refetch()} /></RouteTransition>;
+  }
 
   return (
     <RouteTransition className="mailbox-page">
       <div className="mailbox-topbar">
         <div className="mailbox-tabs" role="tablist" aria-label={isZh ? '通知分类' : 'Notification categories'}>
           {CATEGORY_TABS.map((item) => {
-            const count = item.key === 'all' ? Object.values(unreadCounts).reduce((sum, value) => sum + value, 0) : (unreadCounts[item.key] || 0);
-            return <button key={item.key} type="button" className={`mailbox-tab ${tab === item.key ? 'is-on' : ''}`} onClick={() => setTab(item.key)} role="tab" aria-selected={tab === item.key}>
-              {isZh ? item.label : item.labelEn}{count > 0 && <span className="mailbox-tab-count">{count}</span>}
+            return <button key={item.key} type="button" className={`mailbox-tab ${tab === item.key ? 'is-on' : ''}`} onClick={() => { setClearError(''); setTab(item.key); }} role="tab" aria-selected={tab === item.key}>
+              {isZh ? item.zh : item.en}
             </button>;
           })}
         </div>
-        <button type="button" className="mailbox-clear-btn" onClick={async () => {
-          const tabLabel = isZh ? CATEGORY_TABS.find((item) => item.key === tab)?.label || tab : tab;
-          if (!window.confirm(isZh ? `清空${tabLabel}通知？` : `Clear ${tabLabel} notifications?`)) return;
-          try {
-            if (tab === 'all') await clearNotifications();
-            else await clearNotificationsByCategory(tab);
-            const options = { page: 1, pageSize: 20 };
-            if (tab !== 'all') options.category = tab;
-            const result = await getNotifications(options);
-            setData({ list: result?.list ?? [], hasMore: !!result?.hasMore });
-            setUnreadCounts(result?.unreadSummary?.byCategory || {});
-          } catch (err) {
-            setError(getApiErrorMessage(err));
-          }
-        }}>{isZh ? '清空' : 'Clear'}</button>
+        <button type="button" className="mailbox-clear-btn" disabled={clearing} onClick={handleClear}>
+          {clearing ? (isZh ? '清理中…' : 'Clearing…') : (isZh ? '清空' : 'Clear')}
+        </button>
       </div>
+
+      {clearError ? <div className="mailbox-inline-error" role="alert">{clearError}</div> : null}
+      {mailboxQuery.isError && notifications.length > 0 ? (
+        <div className="mailbox-inline-error" role="alert">
+          <span>{isZh ? '刷新失败，已保留现有通知。' : 'Refresh failed. Existing notifications are still available.'}</span>
+          <button type="button" onClick={() => mailboxQuery.refetch()}>{isZh ? '重试' : 'Retry'}</button>
+        </div>
+      ) : null}
 
       {groups.length === 0 ? <EmptyState title={isZh ? '暂无通知' : 'No notifications'} description={isZh ? '新的消息会出现在这里。' : 'New notifications will appear here.'} icon="✉" /> : (
         <ul className="social-stream">
@@ -251,6 +262,21 @@ function Mailbox() {
           })}
         </ul>
       )}
+
+      {mailboxQuery.hasNextPage ? (
+        <button
+          type="button"
+          className="mailbox-load-more"
+          disabled={mailboxQuery.isFetchingNextPage}
+          onClick={() => mailboxQuery.fetchNextPage()}
+        >
+          {mailboxQuery.isFetchingNextPage
+            ? (isZh ? '加载中…' : 'Loading…')
+            : mailboxQuery.isFetchNextPageError
+              ? (isZh ? '重试加载' : 'Retry')
+              : (isZh ? '加载更多' : 'Load more')}
+        </button>
+      ) : null}
     </RouteTransition>
   );
 }

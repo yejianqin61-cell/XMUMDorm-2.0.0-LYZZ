@@ -244,5 +244,29 @@ describe('Notifications Routes', () => {
         expect.arrayContaining([7, 'activity_register_success'])
       );
     });
+
+    it('preserves announcements when clearing the system category', async () => {
+      query.mockResolvedValueOnce({ affectedRows: 1 });
+
+      const res = await supertest(app()).delete('/api/notifications/clear?category=system');
+
+      expect(res.status).toBe(200);
+      expect(query).toHaveBeenCalledWith(
+        expect.stringContaining('DELETE FROM notifications WHERE user_id = ? AND type IN'),
+        [7, 'system_ban']
+      );
+    });
+
+    it('preserves announcements when clearing the system module', async () => {
+      query.mockResolvedValueOnce({ affectedRows: 1 });
+
+      const res = await supertest(app()).delete('/api/notifications/clear?module=system');
+
+      expect(res.status).toBe(200);
+      expect(query).toHaveBeenCalledWith(
+        expect.stringContaining('DELETE FROM notifications WHERE user_id = ? AND type IN'),
+        [7, 'system_ban']
+      );
+    });
   });
 });

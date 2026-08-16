@@ -28,6 +28,12 @@ function invalidateUnreadAnnouncementCache(userId) {
   simpleCache.delete(getUnreadAnnouncementCacheKey(userId));
 }
 
+const ANNOUNCEMENT_TYPES = new Set(['announcement', 'system_announcement']);
+
+function getClearableTypes(types) {
+  return types.filter((type) => !ANNOUNCEMENT_TYPES.has(type));
+}
+
 function buildUnreadSummary(rows) {
   const byType = {};
   for (const row of rows || []) byType[row.type] = Number(row.cnt) || 0;
@@ -241,13 +247,19 @@ router.delete('/clear', authenticateToken, async (req, res) => {
     if (category) {
       const types = getCategoryTypes(category);
       if (!types) return res.status(400).json({ status: -1, message: '未知通知类别' });
-      const placeholders = types.map(() => '?').join(',');
-      await query(`DELETE FROM notifications WHERE user_id = ? AND type IN (${placeholders})`, [req.user.id, ...types]);
+      const clearableTypes = getClearableTypes(types);
+      const placeholders = clearableTypes.map(() => '?').join(',');
+      if (clearableTypes.length > 0) {
+        await query(`DELETE FROM notifications WHERE user_id = ? AND type IN (${placeholders})`, [req.user.id, ...clearableTypes]);
+      }
     } else if (mod) {
       const types = getModuleTypes(mod);
       if (!types) return res.status(400).json({ status: -1, message: '未知模块' });
-      const placeholders = types.map(() => '?').join(',');
-      await query(`DELETE FROM notifications WHERE user_id = ? AND type IN (${placeholders})`, [req.user.id, ...types]);
+      const clearableTypes = getClearableTypes(types);
+      const placeholders = clearableTypes.map(() => '?').join(',');
+      if (clearableTypes.length > 0) {
+        await query(`DELETE FROM notifications WHERE user_id = ? AND type IN (${placeholders})`, [req.user.id, ...clearableTypes]);
+      }
     } else if (scope === 'marketplace') {
       const types = getModuleTypes('marketplace');
       const placeholders = types.map(() => '?').join(',');
