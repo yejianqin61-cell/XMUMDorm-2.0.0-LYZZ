@@ -303,20 +303,49 @@ describe('Users Routes', () => {
             show_major: 0,
           },
         ])
-        .mockResolvedValueOnce([{ id: 101, content: 'Public post', type: 'treehole', created_at: '2026-06-01 10:00:00' }])
-        .mockResolvedValueOnce([{ post_count: 31, comment_received_count: 2, like_received_count: 3 }])
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([]);
+        .mockResolvedValueOnce([
+          {
+            id: 101,
+            content: 'Public post',
+            type: 'treehole',
+            created_at: '2026-06-01 10:00:00',
+            like_count: 3,
+            comment_count: 2,
+            image_file_path: '/uploads/one.jpg',
+            image_sort_order: 0,
+          },
+          {
+            id: 101,
+            content: 'Public post',
+            type: 'treehole',
+            created_at: '2026-06-01 10:00:00',
+            like_count: 3,
+            comment_count: 2,
+            image_file_path: '/uploads/two.jpg',
+            image_sort_order: 1,
+          },
+        ])
+        .mockResolvedValueOnce([{ post_count: 31, comment_received_count: 2, like_received_count: 3 }]);
 
       const res = await supertest(app()).get('/api/users/12/profile?page=1&pageSize=999');
 
       expect(res.status).toBe(200);
       expect(res.body.data).toMatchObject({ page: 1, pageSize: 30, hasMore: true });
+      expect(res.body.data.posts[0]).toMatchObject({ like_count: 3, comment_count: 2 });
+      expect(res.body.data.posts).toHaveLength(1);
+      expect(res.body.data.posts[0].images.map(({ url }) => url)).toEqual([
+        'https://cdn.test//uploads/one.jpg',
+        'https://cdn.test//uploads/two.jpg',
+      ]);
       expect(query.mock.calls[1][0]).toContain('LIMIT 30 OFFSET 0');
+      expect(query.mock.calls[1][0]).toContain('SELECT COUNT(*) FROM post_likes');
+      expect(query.mock.calls[1][0]).toContain('SELECT COUNT(*) FROM comments');
+      expect(query.mock.calls[1][0]).toContain('LEFT JOIN post_images');
       const statsSql = query.mock.calls[2][0];
       expect(statsSql).toContain('p.hidden_by_admin = 0');
       expect(statsSql).toContain('NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)');
+      expect(query.mock.calls.some(([sql]) => String(sql).includes('GROUP BY post_id'))).toBe(false);
+      expect(query).toHaveBeenCalledTimes(3);
     });
   });
 });

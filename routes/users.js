@@ -204,21 +204,22 @@ router.get('/:id/profile', async (req, res) => {
       return res.status(200).json({ status: 0, message: 'èŽ·å–æˆåŠŸ', data: cached });
     }
 
-    const u = await getUserBaseRow(userId);
-    if (!u) {
-      return res.status(404).json({ status: -1, message: 'ç”¨æˆ·ä¸å­˜åœ¨' });
-    }
-
-    const campusIdentity = normalizeCampusIdentity(u);
-
-    const [posts, statsRows] = await Promise.all([
+    const [u, posts, statsRows] = await Promise.all([
+      getUserBaseRow(userId),
       query(
-        `SELECT p.id, p.content, p.type, p.created_at
-           FROM posts p
-          WHERE p.user_id = ? AND p.deleted_at IS NULL AND p.hidden_by_admin = 0
-            AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)
-          ORDER BY p.created_at DESC
-          LIMIT ${limitNum} OFFSET ${offsetNum}`,
+        `SELECT post_page.*, pi.file_path AS image_file_path, pi.sort_order AS image_sort_order
+           FROM (
+             SELECT p.id, p.content, p.type, p.created_at,
+                    (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
+                    (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count
+               FROM posts p
+              WHERE p.user_id = ? AND p.deleted_at IS NULL AND p.hidden_by_admin = 0
+                AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)
+              ORDER BY p.created_at DESC
+              LIMIT ${limitNum} OFFSET ${offsetNum}
+           ) post_page
+           LEFT JOIN post_images pi ON pi.post_id = post_page.id
+          ORDER BY post_page.created_at DESC, pi.sort_order`,
         [userId]
       ),
       query(
@@ -229,59 +230,32 @@ router.get('/:id/profile', async (req, res) => {
         [userId, userId, userId]
       ),
     ]);
+    if (!u) {
+      return res.status(404).json({ status: -1, message: 'ç”¨æˆ·ä¸å­˜åœ¨' });
+    }
+
+    const campusIdentity = normalizeCampusIdentity(u);
+
     const statsRow = statsRows?.[0];
-    const postIds = (posts || []).map((p) => p.id);
-
-    let images = [];
-    let likeCounts = [];
-    let commentCounts = [];
-    if (postIds.length > 0) {
-      const placeholders = postIds.map(() => '?').join(',');
-      [images, likeCounts, commentCounts] = await Promise.all([
-        query(
-          `SELECT post_id, file_path, sort_order
-             FROM post_images
-            WHERE post_id IN (${placeholders})
-            ORDER BY post_id, sort_order`,
-          postIds
-        ),
-        query(
-          `SELECT post_id, COUNT(*) AS cnt
-             FROM post_likes
-            WHERE post_id IN (${placeholders})
-            GROUP BY post_id`,
-          postIds
-        ),
-        query(
-          `SELECT post_id, COUNT(*) AS cnt
-             FROM comments
-            WHERE post_id IN (${placeholders}) AND deleted_at IS NULL
-            GROUP BY post_id`,
-          postIds
-        ),
-      ]);
+    const postsById = new Map();
+    for (const p of posts || []) {
+      if (!postsById.has(p.id)) {
+        postsById.set(p.id, {
+          id: p.id,
+          content: p.content,
+          type: p.type,
+          created_at: p.created_at,
+          like_count: Number(p.like_count) || 0,
+          comment_count: Number(p.comment_count) || 0,
+          user_liked: false,
+          images: [],
+        });
+      }
+      if (p.image_file_path) {
+        postsById.get(p.id).images.push({ url: assetUrl(p.image_file_path), sort_order: p.image_sort_order });
+      }
     }
-
-    const imagesByPost = {};
-    for (const img of images || []) {
-      if (!imagesByPost[img.post_id]) imagesByPost[img.post_id] = [];
-      imagesByPost[img.post_id].push({ url: assetUrl(img.file_path), sort_order: img.sort_order });
-    }
-    const likeByPost = {};
-    for (const r of likeCounts || []) likeByPost[r.post_id] = Number(r.cnt) || 0;
-    const commentByPost = {};
-    for (const r of commentCounts || []) commentByPost[r.post_id] = Number(r.cnt) || 0;
-
-    const postList = (posts || []).map((p) => ({
-      id: p.id,
-      content: p.content,
-      type: p.type,
-      created_at: p.created_at,
-      like_count: likeByPost[p.id] || 0,
-      comment_count: commentByPost[p.id] || 0,
-      user_liked: false,
-      images: (imagesByPost[p.id] || []).sort((a, b) => a.sort_order - b.sort_order),
-    }));
+    const postList = Array.from(postsById.values());
 
     const data = {
       user: formatPublicProfileUser(u, campusIdentity),
