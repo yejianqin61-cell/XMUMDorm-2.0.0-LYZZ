@@ -30,7 +30,7 @@ export default function PersonalAside() {
   });
   const todosQuery = useQuery({
     queryKey: QK.todosList({ listType: undefined, status: 'active' }),
-    queryFn: () => getTodos({ status: 'active', pageSize: 20 }),
+    queryFn: () => getTodos({ status: 'active', pageSize: 100 }),
     enabled: isLoggedIn && !!userId,
     staleTime: 30 * 1000,
     ...(persistedTodos !== undefined ? { initialData: { list: persistedTodos } } : {}),
@@ -38,7 +38,7 @@ export default function PersonalAside() {
   const courses = useMemo(() => getTodayCourses(scheduleQuery.data), [scheduleQuery.data]);
   const holidays = useMemo(() => upcomingHolidays().slice(0, 3), []);
   const rawTodos = todosQuery.data?.data?.list || todosQuery.data?.list || todosQuery.data?.data || [];
-  const todos = Array.isArray(rawTodos) ? rawTodos.slice(0, 2) : [];
+  const todos = Array.isArray(rawTodos) ? rawTodos : [];
 
   useEffect(() => {
     if (userId && Array.isArray(rawTodos)) writePersistedTodos(userId, rawTodos);
@@ -58,17 +58,6 @@ export default function PersonalAside() {
         )) : <p className="personal-aside__empty">{isZh ? '今天没有课程' : 'No classes today'}</p>}
       </section>
 
-      <section className="personal-aside__section personal-aside__section--todos">
-        <Link to="/myzone/todos" className="personal-aside__heading">
-          <span><CheckSquare size={20} strokeWidth={1.8} />{isZh ? '待办' : 'To-do'}</span><ChevronRight size={18} />
-        </Link>
-        {isLoggedIn && todos.length ? todos.map((todo) => (
-          <Link key={todo.id} to="/myzone/todos" className="personal-aside__row personal-aside__row--todo">
-            <strong>{todo.title}</strong>
-          </Link>
-        )) : <p className="personal-aside__empty">{isZh ? '没有待办事项' : 'No to-dos'}</p>}
-      </section>
-
       <section className="personal-aside__section personal-aside__section--level">
         <Link to="/myzone" className="personal-aside__heading">
           <span>{isZh ? '成长' : 'Growth'}</span><ChevronRight size={15} />
@@ -86,6 +75,17 @@ export default function PersonalAside() {
             <span>{formatHolidayDate(holiday, isZh)} · {daysUntil(holiday.start)} {isZh ? '天后' : (daysUntil(holiday.start) === 1 ? 'day' : 'days')}</span>
           </Link>
         ))}
+      </section>
+
+      <section className="personal-aside__section personal-aside__section--todos">
+        <Link to="/myzone/todos" className="personal-aside__heading">
+          <span><CheckSquare size={20} strokeWidth={1.8} />{isZh ? '待办' : 'To-do'}</span><ChevronRight size={18} />
+        </Link>
+        {isLoggedIn && todos.length ? todos.map((todo) => (
+          <Link key={todo.id} to="/myzone/todos" className="personal-aside__row personal-aside__row--todo">
+            <strong>{todo.title}</strong>
+          </Link>
+        )) : <p className="personal-aside__empty">{isZh ? '没有待办事项' : 'No to-dos'}</p>}
       </section>
     </div>
   );
