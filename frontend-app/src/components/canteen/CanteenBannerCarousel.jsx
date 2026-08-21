@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
@@ -8,6 +8,7 @@ import { getCanteenBanners } from '@shared/api/canteen';
 import { recordAdvertisementClick } from '@shared/api/advertisements';
 import { QK } from '@shared/query/queryKeys';
 import { productImageUrl } from '@shared/api/config';
+import { readPersistedSquareBanners, writePersistedSquareBanners } from '../../utils/squarePersist';
 import './CanteenBannerCarousel.css';
 
 const LINK_NAV = {
@@ -24,28 +25,49 @@ export default function CanteenBannerCarousel({
   queryKey = QK.canteenBanners(),
   adminTo = '/eat/banners',
   placementType = 'canteen',
+  persistKey = '',
 }) {
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
   const t = getCanteenStrings(isZh);
+  const persisted = useMemo(
+    () => persistKey === 'square' ? readPersistedSquareBanners() : undefined,
+    [persistKey]
+  );
   const { data, isLoading, isError } = useQuery({
     queryKey,
     queryFn: fetchFn,
     staleTime: 5 * 60 * 1000,
+    initialData: persisted?.data,
+    // Cached data is a first paint only; always refresh it in the background.
+    initialDataUpdatedAt: persisted ? 0 : undefined,
   });
   const banners = Array.isArray(data) ? data : data?.data || [];
   const [idx, setIdx] = useState(0);
+  const activeBannerIdRef = useRef(null);
   const intervalRef = useRef(null);
+
+  useEffect(() => {
+    if (persistKey === 'square' && data != null && !isError) writePersistedSquareBanners(data);
+  }, [data, isError, persistKey]);
 
   const len = banners.length;
   const next = useCallback(() => {
-    if (len > 0) setIdx((p) => (p + 1) % len);
-  }, [len]);
+    if (len > 0) setIdx((p) => {
+      const nextIndex = (p + 1) % len;
+      activeBannerIdRef.current = banners[nextIndex]?.id ?? null;
+      return nextIndex;
+    });
+  }, [banners, len]);
   const prev = useCallback(() => {
-    if (len > 0) setIdx((p) => (p - 1 + len) % len);
-  }, [len]);
+    if (len > 0) setIdx((p) => {
+      const nextIndex = (p - 1 + len) % len;
+      activeBannerIdRef.current = banners[nextIndex]?.id ?? null;
+      return nextIndex;
+    });
+  }, [banners, len]);
 
   const resetAutoplay = useCallback(() => {
     clearInterval(intervalRef.current);
@@ -61,8 +83,21 @@ export default function CanteenBannerCarousel({
   }, [len, next]);
 
   useEffect(() => {
-    if (idx >= len && len > 0) setIdx(0);
-  }, [idx, len]);
+    if (len === 0) {
+      activeBannerIdRef.current = null;
+      if (idx !== 0) setIdx(0);
+      return;
+    }
+    const currentIndex = activeBannerIdRef.current == null
+      ? -1
+      : banners.findIndex((banner) => banner.id === activeBannerIdRef.current);
+    const nextIndex = currentIndex >= 0 ? currentIndex : Math.min(idx, len - 1);
+    if (nextIndex !== idx) {
+      setIdx(nextIndex);
+      return;
+    }
+    activeBannerIdRef.current = banners[nextIndex]?.id ?? null;
+  }, [data, banners, idx, len]);
 
   const handleClick = (b) => {
     if (b.type === 'ad' && b.link_type === 'post' && b.link_target) {
@@ -71,7 +106,9 @@ export default function CanteenBannerCarousel({
         placement_id: b.id,
         click_type: 'banner',
       }).catch(() => {});
-      navigate(`/advertisement/${b.link_target}`);
+      navigate(`/advertisement/${b.link_target}`, {
+        state: { tabIndex: placementType === 'square' ? 0 : 2 },
+      });
       return;
     }
     if (b.link_type === 'url' && b.link_target) {
@@ -181,6 +218,7 @@ export default function CanteenBannerCarousel({
               aria-label={t.bannerSlide(i + 1)}
               onClick={(e) => {
                 e.stopPropagation();
+                activeBannerIdRef.current = banners[i]?.id ?? null;
                 setIdx(i);
                 resetAutoplay();
               }}

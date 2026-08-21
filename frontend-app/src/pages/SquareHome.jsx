@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { BookOpenText, HandHelping, Heart, Megaphone, MessageCircle, MoreHorizontal, Plus, RefreshCw, Settings2, Shapes, Store } from 'lucide-react';
@@ -12,6 +12,7 @@ import PageSkeleton from '../components/ui/PageSkeleton';
 import CanteenBannerCarousel from '../components/canteen/CanteenBannerCarousel';
 import TodayCampusQuickActions from '../components/square/TodayCampusQuickActions';
 import { QK } from '@shared/query/queryKeys';
+import { readPersistedCampusFeed, writePersistedCampusFeed } from '../utils/squarePersist';
 import './SquareHome.css';
 
 const TAB_STORAGE_KEY = 'square-home-tab';
@@ -63,13 +64,20 @@ export default function SquareHome() {
   const [noticeTab, setNoticeTab] = useState(readStoredNoticeTab);
   const [likedCampus, setLikedCampus] = useState({});
   const [campusLikeCounts, setCampusLikeCounts] = useState({});
+  const persistedCampus = useMemo(() => readPersistedCampusFeed(noticeTab), [noticeTab]);
 
   const campusQuery = useQuery({
     queryKey: QK.campusFeed(noticeTab, 1),
     queryFn: () => getCampusFeed({ tab: noticeTab, page: 1, pageSize: 8 }),
     enabled: tab === 'campus',
     staleTime: 30 * 1000,
+    initialData: persistedCampus?.data,
+    // Cached data is a first paint only; always refresh it in the background.
+    initialDataUpdatedAt: persistedCampus ? 0 : undefined,
   });
+  useEffect(() => {
+    if (campusQuery.isSuccess) writePersistedCampusFeed(noticeTab, campusQuery.data);
+  }, [campusQuery.data, campusQuery.isSuccess, noticeTab]);
   const trendingQuery = useQuery({
     queryKey: QK.trendingTopics(),
     queryFn: getTrendingTopics,
@@ -188,6 +196,7 @@ export default function SquareHome() {
         <CanteenBannerCarousel
           fetchFn={getSquareBanners}
           queryKey={QK.squareBanners()}
+          persistKey="square"
           adminTo="/about/admin/orgs?tab=banners"
           placementType="square"
         />
