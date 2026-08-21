@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -13,6 +13,7 @@ import {
   formatTodoDueDisplay,
 } from '@shared/utils/formatTodoDue';
 import { motion, AnimatePresence } from 'framer-motion';
+import { readPersistedTodos, writePersistedTodos } from '../utils/todoPersist';
 import './TodoList.css';
 
 const PRIORITY_LABELS = { 0: '无', 1: '低', 2: '中', 3: '高' };
@@ -33,11 +34,19 @@ function getTodoSortValue(todo) {
   return new Date(`${dueDate}T${dueTime || '23:59'}:00`).getTime();
 }
 
+function insertTodoInCache(data, todo) {
+  if (Array.isArray(data?.data?.list)) return { ...data, data: { ...data.data, list: [todo, ...data.data.list] } };
+  if (Array.isArray(data?.list)) return { ...data, list: [todo, ...data.list] };
+  if (Array.isArray(data?.data)) return { ...data, data: [todo, ...data.data] };
+  return data;
+}
+
 export default function TodoList() {
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, user } = useAuth();
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
   const queryClient = useQueryClient();
+  const userId = Number(user?.id) || 0;
 
   const [filter, setFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('active');
@@ -52,15 +61,24 @@ export default function TodoList() {
 
   const listType = filter === 'all' ? undefined : filter;
   const status = statusFilter === 'all' ? undefined : statusFilter;
+  const persistedTodos = useMemo(() => readPersistedTodos(userId), [userId]);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: QK.todosList({ listType, status }),
     queryFn: () => getTodos({ list_type: listType, status, pageSize: 50 }),
     enabled: isLoggedIn,
     staleTime: 30 * 1000,
+    ...(persistedTodos !== undefined && listType === undefined && status === 'active'
+      ? { initialData: { list: persistedTodos } }
+      : {}),
   });
 
   const rawTodos = data?.data?.list || data?.list || data?.data || [];
+  useEffect(() => {
+    if (userId && listType === undefined && status === 'active' && Array.isArray(rawTodos)) {
+      writePersistedTodos(userId, rawTodos);
+    }
+  }, [listType, rawTodos, status, userId]);
   const todos = useMemo(() => {
     return [...rawTodos].sort((a, b) => {
       if (!!a.is_completed !== !!b.is_completed) return a.is_completed ? 1 : -1;
@@ -73,12 +91,22 @@ export default function TodoList() {
 
   const createMutation = useMutation({
     mutationFn: createTodo,
+    onMutate: async (body) => {
+      await queryClient.cancelQueries({ queryKey: ['todos', 'list'] });
+      const previous = queryClient.getQueriesData({ queryKey: ['todos', 'list'] });
+      const optimisticTodo = { ...body, id: `optimistic-${Date.now()}`, is_completed: false, created_at: new Date().toISOString() };
+      queryClient.setQueriesData({ queryKey: ['todos', 'list'] }, (cached) => insertTodoInCache(cached, optimisticTodo));
+      return { previous };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['todos'] });
       resetForm();
       Toast.success(isZh ? '已创建' : 'Created');
     },
-    onError: (error) => Toast.error(getApiErrorMessage(error)),
+    onError: (error, _body, context) => {
+      context?.previous.forEach(([queryKey, cached]) => queryClient.setQueryData(queryKey, cached));
+      Toast.error(getApiErrorMessage(error));
+    },
   });
 
   const updateMutation = useMutation({
