@@ -20,6 +20,13 @@ export const HOLIDAYS_2028 = [
   { id: 'thaipusam-2028', start: '2028-02-13', end: '2028-02-14', nameZh: '大宝森节', nameEn: 'Thaipusam' },
   { id: 'nuzul-al-quran-2028', start: '2028-02-13', end: '2028-02-14', nameZh: '古兰经降世日', nameEn: 'Nuzul Al-Quran' },
   { id: 'aidilfitri-2028', start: '2028-02-27', end: '2028-02-29', nameZh: '开斋节', nameEn: 'Hari Raya Aidilfitri' },
+  { id: 'awal-muharram-2028', start: '2028-06-17', end: '2028-06-17', nameZh: '回历元旦', nameEn: 'Awal Muharram' },
+  { id: 'prophet-birthday-2028', start: '2028-08-25', end: '2028-08-25', nameZh: '穆罕默德先知诞辰', nameEn: "Prophet Muhammad's Birthday" },
+  { id: 'merdeka-2028', start: '2028-08-31', end: '2028-08-31', nameZh: '国庆日', nameEn: 'Merdeka Day' },
+  { id: 'malaysia-day-2028', start: '2028-09-16', end: '2028-09-16', nameZh: '马来西亚日', nameEn: 'Malaysia Day' },
+  { id: 'deepavali-2028', start: '2028-11-08', end: '2028-11-09', nameZh: '屠妖节', nameEn: 'Deepavali' },
+  { id: 'selangor-sultan-2028', start: '2028-12-11', end: '2028-12-11', nameZh: '雪兰莪苏丹诞辰', nameEn: "Sultan of Selangor's Birthday" },
+  { id: 'christmas-2028', start: '2028-12-25', end: '2028-12-25', nameZh: '圣诞节', nameEn: 'Christmas Day' },
 ];
 
 export const ALL_HOLIDAYS = [...HOLIDAYS_2027, ...HOLIDAYS_2028];
