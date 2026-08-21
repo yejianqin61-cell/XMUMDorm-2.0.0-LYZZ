@@ -35,9 +35,9 @@ export default function PersonalAside() {
 
   return (
     <div className="personal-aside">
-      <section className="personal-aside__section">
+      <section className="personal-aside__section personal-aside__section--schedule">
         <Link to="/myzone/schedule" className="personal-aside__heading">
-          <span><CalendarDays size={16} />{isZh ? '今日课程' : 'Today'}</span><ChevronRight size={15} />
+          <span><CalendarDays size={20} strokeWidth={1.8} />{isZh ? '今日课程' : 'Today'}</span><ChevronRight size={18} />
         </Link>
         {isLoggedIn && courses.length ? courses.slice(0, 2).map((course) => (
           <Link key={course.id || `${course.name}-${course.start_time}`} to="/myzone/schedule" className="personal-aside__row">
@@ -47,9 +47,9 @@ export default function PersonalAside() {
         )) : <p className="personal-aside__empty">{isZh ? '今天没有课程' : 'No classes today'}</p>}
       </section>
 
-      <section className="personal-aside__section">
+      <section className="personal-aside__section personal-aside__section--todos">
         <Link to="/myzone/todos" className="personal-aside__heading">
-          <span><CheckSquare size={16} />{isZh ? '待办' : 'To-do'}</span><ChevronRight size={15} />
+          <span><CheckSquare size={20} strokeWidth={1.8} />{isZh ? '待办' : 'To-do'}</span><ChevronRight size={18} />
         </Link>
         {isLoggedIn && todos.length ? todos.map((todo) => (
           <Link key={todo.id} to="/myzone/todos" className="personal-aside__row personal-aside__row--todo">
