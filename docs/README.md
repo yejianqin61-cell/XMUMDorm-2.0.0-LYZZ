@@ -43,6 +43,7 @@ Constitution → Requirement → Clarify → Architecture → Module → Tasks �
 | 07 | [Implement/](07-Implement/) | 实施记录：开发公报、迁移清单、参考笔记 |
 | 08 | [Test/](08-Test/) | 测试报告：Web 端 & 移动端模块测试 |
 | 09 | [Deploy/](09-Deploy/) | 部署运维：Git 手册、生产环境 init-db 指南 |
+| Team | [team/](team/) | 团队协作契约、成员协作与变更流程 |
 
 ---
 
