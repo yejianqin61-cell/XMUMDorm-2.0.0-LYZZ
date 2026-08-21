@@ -40,6 +40,14 @@ frontend/canteen-production.png
 # 上传文件目录（2.0.0）
 uploads/
 
+# 本地材料、账号辅助脚本与截图（可能包含个人信息或签名数据）
+软件著作权申请材料/
+.scratch/
+output/
+tree.txt
+scripts/create-app-review-account.js
+android/app/huawei-sign.zip
+
 
 coverage/
 
