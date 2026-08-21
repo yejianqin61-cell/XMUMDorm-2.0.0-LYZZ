@@ -211,24 +211,30 @@ function Layout({ mode = 'mobile' }) {
         </>
       )}
       {showAnnouncements && announcements.length > 0 && (
-        <div className="app-ann-modal-backdrop" role="dialog" aria-modal="true" aria-label="全站公告 Site-wide announcements">
+        <div className="app-ann-modal-backdrop" role="dialog" aria-modal="true" aria-label="公告">
           <div className="app-ann-modal">
-            <h2 className="app-ann-title">全站公告 Site-wide Announcements</h2>
+            <h2 className="app-ann-title">公告</h2>
             <div className="app-ann-list">
               {announcements.map((n) => (
                 <div key={n.id} className="app-ann-item">
                   <p className="app-ann-item-title">{n.extra?.title || '公告 Announcement'}</p>
+                  <p className="app-ann-item-content">
+                    {n.extra?.content || n.content || '（公告内容为空）'}
+                  </p>
                   <p className="app-ann-item-meta">
                     {n.from_user?.nickname || n.from_user?.username || '管理员 Admin'} ·{' '}
                     {n.created_at ? new Date(n.created_at).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''}
                   </p>
-                  <button
-                    type="button"
-                    className="app-ann-know-btn"
-                    onClick={() => handleAnnouncementKnow(n.id)}
-                  >
-                    知道了 Got it
-                  </button>
+                  <div className="app-ann-item-actions">
+                    {n.target?.available && n.target?.path && n.target.path !== '#' && (
+                      <button type="button" className="app-ann-detail-btn" onClick={async () => { await handleAnnouncementKnow(n.id); navigate(n.target.path); }}>
+                        查看详情
+                      </button>
+                    )}
+                    <button type="button" className="app-ann-know-btn" onClick={() => handleAnnouncementKnow(n.id)}>
+                      知道了
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
