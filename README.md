@@ -1,72 +1,58 @@
-# XMUMDorm（厦马小筑 / Jack Dorm）
-## www.xmumdorm.com   .apk is ready.  、
-<br>
-这两天处于项目动荡期，因为web的前端正在和app的前端分化演进，所以web的前端会一天一个样儿
-<br>
-### please open it on your smartphone
-
-> 厦门大学马来西亚分校（XMUM）校园社交与生活一站式平台 · All-in-One Campus Platform
-
-🌐 [English Version](README_EN.md) &nbsp;|&nbsp; 🇨🇳 [中文版介绍](README_CN.md)（面向校方）
-
-**Production**: https://xmumdorm-200-lyzz-production.up.railway.app &nbsp;|&nbsp; **Developer**: Ye Jianqin
+<div align="center">
+  <img src="frontend/public/icons/appIcon-216.png" width="108" alt="厦马小筑图标">
+  <h1>厦马小筑 · XMUMDorm</h1>
+  <p>厦门大学马来西亚分校学生的校园生活社区</p>
+  <p><a href="README_CN.md">中文介绍</a> &nbsp;|&nbsp; <a href="README_EN.md">English</a></p>
+</div>
 
 ---
 
-## Tech Stack 技术栈 · Quick Glance
+## 校园生活，在这里发生
 
-| Layer | Technology |
-|------|------|
-| Backend | Node.js + Express (17 routes) |
-| Database | MySQL (57 migrations) |
-| Auth | JWT (student / merchant / admin) |
-| Web | React 19 + Vite 7 + Tailwind CSS 4 + Liquid Glass |
-| Mobile | Capacitor 8 → Android APK + iOS (ready) |
-| Push | JPush（极光推送）— APNs + 华为/小米/OPPO/vivo/FCM |
-| State | TanStack Query (React Query v5) |
-| Storage | Cloudflare R2 (S3-compatible) |
-| Testing | Jest 30 + Supertest (108 backend + 416 mobile = 524 total) |
-| CI/CD | Railway + Git |
-| i18n | 中文 / English |
+厦马小筑面向厦门大学马来西亚分校（XMUM）学生，连接校园资讯、同学交流与日常生活服务。无论是寻找一顿饭、发布一条消息，还是加入社团、安排自己的课程，都可以从这里开始。
 
----
+| 校园社区 | 校园生活 |
+| :--- | :--- |
+| 树洞发帖、评论、点赞与收藏 | 食堂信息、菜品点评与排行榜 |
+| 学校及学院通知、校园热搜 | 二手交易、跑腿互助 |
+| 社团动态、活动发布与报名 | 课程表、待办、日记 |
 
-## Feature Modules 功能模块
+## 主要功能
 
-🌳 **TreeHole** — Campus social space · 🍽️ **Canteen** — Food & dining platform · 🏛️ **Square** — Info hub · 👥 **Clubs** — Club management · 🛒 **Marketplace** — Second-hand trading · 🏃 **Errands** — Task posting · 📚 **Handbook** — Freshman guide · 📝 **Course Reviews** — Anonymous ratings · 📅 **Schedule** — Weekly calendar · ⭐ **Level System** — XP & badges · ✅ **To-Do** · 📓 **Diary** · 🔔 **Notifications** (6 categories + JPush) · 🛡️ **Admin Dashboard** (user/content/report/audit management)
+### 广场与校园资讯
 
-> 📖 [Full Chinese introduction 完整中文介绍](README_CN.md) &nbsp;|&nbsp; 📖 [Full English introduction 完整英文介绍](README_EN.md)
+- 查看学校、学院与专业组织发布的通知
+- 浏览校园热搜、社团动态、新生指南与一站式校园信息
+- 在受控的轮播位查看校园活动与合作推广内容
 
----
+### 树洞与同学交流
 
-## Key Stats 核心数据
+- 发布图文帖子，参与评论、点赞和收藏
+- 按话题浏览校园讨论，查看个人发布与互动记录
+- 使用举报功能共同维护友善的社区环境
 
-| Metric | Value |
-|------|------|
-| Commits | **288** |
-| Development | 2026.01.27 – 06.08 (**4.5 months**) |
-| Codebase | **60,000+ lines** |
-| Test Cases | **524** (100% pass) |
-| Documentation | **100+ documents** |
+### 食堂
 
----
+- 浏览各食堂分区、商铺与菜品
+- 查看热门菜品、商铺排行和最新点评
+- 为菜品补充信息、上传图片并发表真实评价
 
-## Running 快速启动
+### 社团、二手与跑腿
 
-```bash
-# Backend
-npm install && npm start
+- 发现社团、关注动态、发布活动并完成报名
+- 发布或浏览闲置物品，联系交易对象
+- 发布配送、代购等校园跑腿需求，查看任务进展
 
-# Web Frontend
-cd frontend && npm install && npm run dev
+### 个人空间
 
-# Android App
-npm run build:capacitor && npx cap sync android && npx cap open android
+- 管理个人资料与公开范围
+- 使用课程表、待办和日记整理校园生活
+- 在信箱查看公告、互动和事务通知
 
-# Tests
-npm test
-```
+## 使用方式
 
----
+访问 [厦马小筑](https://xmumdorm-200-lyzz-production.up.railway.app) 使用 Web 版；Android 应用正在逐步提供给 XMUM 学生。
 
-*Last updated 2026-06-08 · Ye Jianqin · CST2509054@xmu.edu.my*
+## 联系与反馈
+
+遇到问题、发现不当内容，或有功能建议，请通过应用内“联系我们”或 `yejianqin61@gmail.com` 联系我们。
