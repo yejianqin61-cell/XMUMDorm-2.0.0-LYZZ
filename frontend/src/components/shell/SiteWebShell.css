@@ -212,6 +212,11 @@
 .personal-aside__section--schedule .personal-aside__heading svg:first-child { color: #16a34a; }
 .personal-aside__section--todos .personal-aside__heading { color: #1e3a8a; }
 .personal-aside__section--todos .personal-aside__heading svg:first-child { color: #2563eb; }
+.personal-aside__section--holidays .personal-aside__heading { color: #166534; }
+.personal-aside__section--holidays .personal-aside__heading svg:first-child { color: #16a34a; }
+.personal-aside__row--holiday { padding: 8px 0; }
+.personal-aside__row--holiday strong { font-size: 14px; }
+.personal-aside__row--holiday span { color: #64748b; font-size: 12px; }
 .personal-aside__section--level { padding-bottom: 0; }
 
 .site-web-shell__content-inner {

@@ -9,6 +9,7 @@ import { getScheduleWeek } from '@shared/api/schedule';
 import { getTodos } from '@shared/api/todos';
 import { QK } from '@shared/query/queryKeys';
 import { readPersistedTodos, writePersistedTodos } from '../../utils/todoPersist';
+import { upcomingHolidays, daysUntil, formatHolidayDate } from '../../data/holidays';
 
 function getTodayCourses(data) {
   const day = new Date().getDay() || 7;
@@ -35,6 +36,7 @@ export default function PersonalAside() {
     ...(persistedTodos !== undefined ? { initialData: { list: persistedTodos } } : {}),
   });
   const courses = useMemo(() => getTodayCourses(scheduleQuery.data), [scheduleQuery.data]);
+  const holidays = useMemo(() => upcomingHolidays().slice(0, 3), []);
   const rawTodos = todosQuery.data?.data?.list || todosQuery.data?.list || todosQuery.data?.data || [];
   const todos = Array.isArray(rawTodos) ? rawTodos.slice(0, 2) : [];
 
@@ -72,6 +74,18 @@ export default function PersonalAside() {
           <span>{isZh ? '成长' : 'Growth'}</span><ChevronRight size={15} />
         </Link>
         {isLoggedIn ? <LevelProgressBar level={user?.level} levelProgress={user?.levelProgress} isZh={isZh} /> : <p className="personal-aside__empty">{isZh ? '登录后查看成长进度' : 'Log in to view progress'}</p>}
+      </section>
+
+      <section className="personal-aside__section personal-aside__section--holidays">
+        <Link to="/myzone/holidays" className="personal-aside__heading">
+          <span><CalendarDays size={20} strokeWidth={1.8} />{isZh ? '放假日' : 'Holidays'}</span><ChevronRight size={18} />
+        </Link>
+        {holidays.map((holiday) => (
+          <Link key={holiday.id} to="/myzone/holidays" className="personal-aside__row personal-aside__row--holiday">
+            <strong>{isZh ? holiday.nameZh : holiday.nameEn}</strong>
+            <span>{formatHolidayDate(holiday, isZh)} · {daysUntil(holiday.start)} {isZh ? '天后' : (daysUntil(holiday.start) === 1 ? 'day' : 'days')}</span>
+          </Link>
+        ))}
       </section>
     </div>
   );
