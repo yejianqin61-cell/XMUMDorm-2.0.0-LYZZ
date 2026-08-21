@@ -91,8 +91,9 @@ Constitution → Requirement → Clarify → Architecture → Module → Tasks �
 
 ## 文档维护约定
 
-1. **新模块设计** → 在 `04-Module/` 下创建 `MNN-模块名/` 子文件夹
-2. **新任务拆解** → 在 `05-Tasks/` 下对应模块文件夹，命名 `MNN-TaskNNN-描述.md`
-3. **测试报告** → 在 `08-Test/` 下按 `Web端/` 或 `移动端/` 分组
-4. **分析报告** → 在 `06-Analyze/` 下，命名 `<主题>_<版本>.md`
-5. 所有文件使用 `.md` 格式，中文命名优先
+1. **层级目录只放 README 和主题文件夹**：不得在 `00-Constitution` 至 `10-Study` 的层级根目录直接新增正文文档。
+2. **新模块设计** → 在 `04-Module/` 下创建 `MNN-模块名/` 子文件夹。
+3. **新任务拆解** → 在 `05-Tasks/` 下对应模块或横向主题文件夹中创建任务文档。
+4. **测试报告** → 在 `08-Test/` 下按 `Web端/`、`移动端/`、`reports/` 或 `regression/` 分组。
+5. **分析报告** → 在 `06-Analyze/` 下选择 `audits/`、`phase-plans/`、`ui-research/`、`performance/`、`mobile/` 或 `notifications/`。
+6. 新增主题目录时，同时补充该层 README 索引；所有文件优先使用 `.md` 和中文命名。
