@@ -14,6 +14,16 @@ export const HOLIDAYS_2027 = [
   { id: 'merdeka', start: '2027-08-31', end: '2027-08-31', nameZh: '国庆日', nameEn: 'Merdeka Day' },
 ];
 
+export const HOLIDAYS_2028 = [
+  { id: 'new-year-2028', start: '2028-01-01', end: '2028-01-01', nameZh: '元旦', nameEn: "New Year's Day" },
+  { id: 'cny-2028', start: '2028-01-26', end: '2028-01-27', nameZh: '春节', nameEn: 'Chinese New Year' },
+  { id: 'thaipusam-2028', start: '2028-02-13', end: '2028-02-14', nameZh: '大宝森节', nameEn: 'Thaipusam' },
+  { id: 'nuzul-al-quran-2028', start: '2028-02-13', end: '2028-02-14', nameZh: '古兰经降世日', nameEn: 'Nuzul Al-Quran' },
+  { id: 'aidilfitri-2028', start: '2028-02-27', end: '2028-02-29', nameZh: '开斋节', nameEn: 'Hari Raya Aidilfitri' },
+];
+
+export const ALL_HOLIDAYS = [...HOLIDAYS_2027, ...HOLIDAYS_2028];
+
 export function holidayDate(value) {
   const [year, month, day] = String(value).split('-').map(Number);
   return new Date(year, month - 1, day);
@@ -27,7 +37,7 @@ export function daysUntil(value, today = new Date()) {
 
 export function upcomingHolidays(today = new Date()) {
   const current = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  return HOLIDAYS_2027
+  return ALL_HOLIDAYS
     .filter((holiday) => holidayDate(holiday.end) >= current)
     .sort((a, b) => holidayDate(a.start) - holidayDate(b.start));
 }

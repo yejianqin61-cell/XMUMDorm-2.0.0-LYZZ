@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { CalendarDays } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
-import { HOLIDAYS_2027, daysUntil, formatHolidayDate } from '../data/holidays';
+import { ALL_HOLIDAYS, daysUntil, formatHolidayDate } from '../data/holidays';
 import './Holidays.css';
 
 export default function Holidays() {
@@ -19,11 +19,11 @@ export default function Holidays() {
           <span className="holidays-page__icon" aria-hidden="true"><CalendarDays size={24} strokeWidth={1.8} /></span>
           <div>
             <h1>{isZh ? '放假日' : 'Holidays'}</h1>
-            <p>{isZh ? '2027 年马来西亚公共假期' : 'Malaysia public holidays · 2027'}</p>
+            <p>{isZh ? '2027–2028 年马来西亚公共假期' : 'Malaysia public holidays · 2027–2028'}</p>
           </div>
         </div>
         <section className="holidays-list" aria-label={isZh ? '假日列表' : 'Holiday list'}>
-          {HOLIDAYS_2027.map((holiday) => {
+          {ALL_HOLIDAYS.map((holiday) => {
             const countdown = daysUntil(holiday.start, today);
             return (
               <div className="holidays-list__row" key={holiday.id}>
