@@ -19,7 +19,7 @@ export default function Holidays() {
           <span className="holidays-page__icon" aria-hidden="true"><CalendarDays size={24} strokeWidth={1.8} /></span>
           <div>
             <h1>{isZh ? '放假日' : 'Holidays'}</h1>
-            <p>{isZh ? '2027–2028 年马来西亚公共假期' : 'Malaysia public holidays · 2027–2028'}</p>
+            <p>{isZh ? '2026–2028 年马来西亚公共假期' : 'Malaysia public holidays · 2026–2028'}</p>
           </div>
         </div>
         <section className="holidays-list" aria-label={isZh ? '假日列表' : 'Holiday list'}>
