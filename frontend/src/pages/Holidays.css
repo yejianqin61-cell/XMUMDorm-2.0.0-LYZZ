@@ -1,0 +1,114 @@
+.holidays-page {
+  min-height: 100%;
+  padding: 8px 0 48px;
+}
+
+.holidays-page__inner {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.holidays-page__back {
+  border: 0;
+  padding: 4px 0 18px;
+  background: transparent;
+  color: #64748b;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.holidays-page__title-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 0 26px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.12);
+}
+
+.holidays-page__icon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  color: #166534;
+  border-left: 2px solid #16a34a;
+  background: rgba(22, 163, 74, 0.07);
+}
+
+.holidays-page h1 {
+  margin: 0;
+  color: #0f172a;
+  font-size: clamp(26px, 4vw, 34px);
+  letter-spacing: -0.04em;
+}
+
+.holidays-page__title-row p {
+  margin: 5px 0 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.holidays-list__row {
+  display: grid;
+  grid-template-columns: minmax(126px, 0.9fr) minmax(0, 1.8fr) 74px;
+  align-items: center;
+  gap: 18px;
+  padding: 17px 0;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.holidays-list__date {
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.holidays-list__name {
+  min-width: 0;
+}
+
+.holidays-list__name strong,
+.holidays-list__name span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.holidays-list__name strong {
+  color: #0f172a;
+  font-size: 16px;
+}
+
+.holidays-list__name span {
+  margin-top: 3px;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.holidays-list__countdown {
+  text-align: right;
+  color: #166534;
+}
+
+.holidays-list__countdown strong {
+  display: inline-block;
+  font-size: 20px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.holidays-list__countdown span {
+  display: block;
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 11px;
+}
+
+@media (max-width: 560px) {
+  .holidays-page { padding: 0 4px 32px; }
+  .holidays-list__row { grid-template-columns: 1fr auto; gap: 8px 12px; }
+  .holidays-list__date { grid-column: 1 / -1; }
+  .holidays-list__countdown { grid-column: 2; grid-row: 2; }
+}

@@ -195,16 +195,28 @@
   }
 }
 
-.personal-aside { border-left: 1px solid rgba(15, 23, 42, 0.08); padding-left: 20px; }
-.personal-aside__section { padding: 0 0 18px; margin-bottom: 18px; border-bottom: 1px solid rgba(15, 23, 42, 0.08); }
+.personal-aside { border-left: 1px solid rgba(15, 23, 42, 0.1); padding-left: 24px; }
+.personal-aside__section { padding: 0 0 24px; margin-bottom: 24px; border-bottom: 1px solid rgba(15, 23, 42, 0.1); }
 .personal-aside__section:last-child { border-bottom: 0; }
-.personal-aside__heading { display: flex; align-items: center; justify-content: space-between; color: #0f172a; font-size: 14px; font-weight: 700; text-decoration: none; margin-bottom: 10px; }
-.personal-aside__heading span { display: inline-flex; align-items: center; gap: 7px; }
-.personal-aside__row { display: block; padding: 7px 0; color: #334155; text-decoration: none; }
-.personal-aside__row strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 600; }
-.personal-aside__row span, .personal-aside__empty { display: block; margin: 3px 0 0; color: #94a3b8; font-size: 12px; }
-.personal-aside__row--todo { padding-left: 12px; position: relative; }
-.personal-aside__row--todo::before { content: ''; position: absolute; left: 0; top: 13px; width: 5px; height: 5px; border: 1px solid #94a3b8; border-radius: 50%; }
+.personal-aside__heading { display: flex; align-items: center; justify-content: space-between; color: #0f172a; font-size: 16px; font-weight: 750; letter-spacing: -0.02em; text-decoration: none; margin-bottom: 14px; }
+.personal-aside__heading span { display: inline-flex; align-items: center; gap: 9px; }
+.personal-aside__heading svg:last-child { color: #94a3b8; transition: transform 160ms ease, color 160ms ease; }
+.personal-aside__heading:hover svg:last-child { color: #0f172a; transform: translateX(2px); }
+.personal-aside__row { display: block; padding: 10px 0; color: #334155; text-decoration: none; }
+.personal-aside__row strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; line-height: 1.35; font-weight: 650; }
+.personal-aside__row span, .personal-aside__empty { display: block; margin: 5px 0 0; color: #64748b; font-size: 13px; line-height: 1.35; }
+.personal-aside__row:hover strong { color: #0f172a; }
+.personal-aside__row--todo { padding-left: 18px; position: relative; }
+.personal-aside__row--todo::before { content: ''; position: absolute; left: 0; top: 17px; width: 7px; height: 7px; border: 1.5px solid #64748b; border-radius: 50%; }
+.personal-aside__section--schedule .personal-aside__heading { color: #14532d; }
+.personal-aside__section--schedule .personal-aside__heading svg:first-child { color: #16a34a; }
+.personal-aside__section--todos .personal-aside__heading { color: #1e3a8a; }
+.personal-aside__section--todos .personal-aside__heading svg:first-child { color: #2563eb; }
+.personal-aside__section--holidays .personal-aside__heading { color: #166534; }
+.personal-aside__section--holidays .personal-aside__heading svg:first-child { color: #16a34a; }
+.personal-aside__row--holiday { padding: 8px 0; }
+.personal-aside__row--holiday strong { font-size: 14px; }
+.personal-aside__row--holiday span { color: #64748b; font-size: 12px; }
 .personal-aside__section--level { padding-bottom: 0; }
 
 .site-web-shell__content-inner {

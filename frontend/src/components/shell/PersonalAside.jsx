@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { CalendarDays, CheckSquare, ChevronRight } from 'lucide-react';
@@ -7,6 +7,9 @@ import { useLanguage } from '../../context/LanguageContext';
 import LevelProgressBar from '../LevelProgressBar';
 import { getScheduleWeek } from '@shared/api/schedule';
 import { getTodos } from '@shared/api/todos';
+import { QK } from '@shared/query/queryKeys';
+import { readPersistedTodos, writePersistedTodos } from '../../utils/todoPersist';
+import { upcomingHolidays, daysUntil, formatHolidayDate } from '../../data/holidays';
 
 function getTodayCourses(data) {
   const day = new Date().getDay() || 7;
@@ -17,6 +20,8 @@ function getTodayCourses(data) {
 export default function PersonalAside() {
   const { isLoggedIn, user } = useAuth();
   const { isZh } = useLanguage();
+  const userId = Number(user?.id) || 0;
+  const persistedTodos = useMemo(() => readPersistedTodos(userId), [userId]);
   const scheduleQuery = useQuery({
     queryKey: ['aside', 'schedule-week'],
     queryFn: () => getScheduleWeek(1),
@@ -24,20 +29,26 @@ export default function PersonalAside() {
     staleTime: 5 * 60 * 1000,
   });
   const todosQuery = useQuery({
-    queryKey: ['aside', 'todos'],
+    queryKey: QK.todosList({ listType: undefined, status: 'active' }),
     queryFn: () => getTodos({ status: 'active', pageSize: 20 }),
-    enabled: isLoggedIn,
+    enabled: isLoggedIn && !!userId,
     staleTime: 30 * 1000,
+    ...(persistedTodos !== undefined ? { initialData: { list: persistedTodos } } : {}),
   });
   const courses = useMemo(() => getTodayCourses(scheduleQuery.data), [scheduleQuery.data]);
+  const holidays = useMemo(() => upcomingHolidays().slice(0, 3), []);
   const rawTodos = todosQuery.data?.data?.list || todosQuery.data?.list || todosQuery.data?.data || [];
   const todos = Array.isArray(rawTodos) ? rawTodos.slice(0, 2) : [];
 
+  useEffect(() => {
+    if (userId && Array.isArray(rawTodos)) writePersistedTodos(userId, rawTodos);
+  }, [rawTodos, userId]);
+
   return (
     <div className="personal-aside">
-      <section className="personal-aside__section">
+      <section className="personal-aside__section personal-aside__section--schedule">
         <Link to="/myzone/schedule" className="personal-aside__heading">
-          <span><CalendarDays size={16} />{isZh ? '今日课程' : 'Today'}</span><ChevronRight size={15} />
+          <span><CalendarDays size={20} strokeWidth={1.8} />{isZh ? '今日课程' : 'Today'}</span><ChevronRight size={18} />
         </Link>
         {isLoggedIn && courses.length ? courses.slice(0, 2).map((course) => (
           <Link key={course.id || `${course.name}-${course.start_time}`} to="/myzone/schedule" className="personal-aside__row">
@@ -47,9 +58,9 @@ export default function PersonalAside() {
         )) : <p className="personal-aside__empty">{isZh ? '今天没有课程' : 'No classes today'}</p>}
       </section>
 
-      <section className="personal-aside__section">
+      <section className="personal-aside__section personal-aside__section--todos">
         <Link to="/myzone/todos" className="personal-aside__heading">
-          <span><CheckSquare size={16} />{isZh ? '待办' : 'To-do'}</span><ChevronRight size={15} />
+          <span><CheckSquare size={20} strokeWidth={1.8} />{isZh ? '待办' : 'To-do'}</span><ChevronRight size={18} />
         </Link>
         {isLoggedIn && todos.length ? todos.map((todo) => (
           <Link key={todo.id} to="/myzone/todos" className="personal-aside__row personal-aside__row--todo">
@@ -63,6 +74,18 @@ export default function PersonalAside() {
           <span>{isZh ? '成长' : 'Growth'}</span><ChevronRight size={15} />
         </Link>
         {isLoggedIn ? <LevelProgressBar level={user?.level} levelProgress={user?.levelProgress} isZh={isZh} /> : <p className="personal-aside__empty">{isZh ? '登录后查看成长进度' : 'Log in to view progress'}</p>}
+      </section>
+
+      <section className="personal-aside__section personal-aside__section--holidays">
+        <Link to="/myzone/holidays" className="personal-aside__heading">
+          <span><CalendarDays size={20} strokeWidth={1.8} />{isZh ? '放假日' : 'Holidays'}</span><ChevronRight size={18} />
+        </Link>
+        {holidays.map((holiday) => (
+          <Link key={holiday.id} to="/myzone/holidays" className="personal-aside__row personal-aside__row--holiday">
+            <strong>{isZh ? holiday.nameZh : holiday.nameEn}</strong>
+            <span>{formatHolidayDate(holiday, isZh)} · {daysUntil(holiday.start)} {isZh ? '天后' : (daysUntil(holiday.start) === 1 ? 'day' : 'days')}</span>
+          </Link>
+        ))}
       </section>
     </div>
   );
