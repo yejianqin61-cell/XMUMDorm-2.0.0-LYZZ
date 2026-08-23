@@ -16,6 +16,7 @@ import Button from '../components/auth/Button';
 function Login() {
   const [studentIdOrEmail, setStudentIdOrEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const { login, skipLogin } = useAuth();
@@ -31,6 +32,11 @@ function Login() {
       Toast.error('请填写邮箱/用户名和密码 Please fill in email / username and password');
       return;
     }
+    if (!privacyAccepted) {
+      Toast.error('Please read and agree to the Privacy Policy and Terms of Service');
+      return;
+    }
+    try { localStorage.setItem('xmum-privacy-consent-v1', 'true'); } catch {}
     setLoading(true);
     try {
       const result = await login(sid, password);
@@ -86,6 +92,18 @@ function Login() {
             disabled={loading}
           />
           <div className="space-y-3 pt-1">
+            <label className="flex items-start gap-2 text-[12px] leading-relaxed text-slate-500">
+              <input
+                type="checkbox"
+                checked={privacyAccepted}
+                onChange={(e) => setPrivacyAccepted(e.target.checked)}
+                disabled={loading}
+                className="mt-0.5 h-4 w-4 shrink-0 accent-emerald-600"
+              />
+              <span>
+                I have read and agree to the <Link to="/privacy" className="font-semibold text-emerald-700 underline">Privacy Policy</Link> and <Link to="/terms" className="font-semibold text-emerald-700 underline">Terms of Service</Link>.
+              </span>
+            </label>
             <Button type="submit" variant="primary" disabled={loading}>
               {loading ? '登录中…' : 'login'}
             </Button>

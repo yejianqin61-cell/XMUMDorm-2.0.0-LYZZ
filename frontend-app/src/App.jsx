@@ -32,6 +32,32 @@ import './styles/tokens.css';
 import './styles/card.css';
 import './styles/state.css';
 
+const PRIVACY_CONSENT_KEY = 'xmum-privacy-consent-v1';
+
+function PrivacyConsentPrompt({ onAccept }) {
+  const { lang } = useLanguage();
+  const isEn = lang === 'en';
+  return (
+    <div className="privacy-consent-backdrop" role="dialog" aria-modal="true" aria-labelledby="privacy-consent-title">
+      <div className="privacy-consent-card">
+        <h2 id="privacy-consent-title">{isEn ? 'Before you continue' : '继续使用前请先阅读'}</h2>
+        <p>
+          {isEn
+            ? 'Please read our Privacy Policy and Terms of Service before using XMUMDorm. You must agree to continue.'
+            : '请先阅读《隐私政策》和《服务条款》。同意后才能继续使用厦马小筑。'}
+        </p>
+        <div className="privacy-consent-links">
+          <a href="/privacy" target="_blank" rel="noreferrer">{isEn ? 'Privacy Policy' : '隐私政策'}</a>
+          <a href="/terms" target="_blank" rel="noreferrer">{isEn ? 'Terms of Service' : '服务条款'}</a>
+        </div>
+        <button type="button" className="privacy-consent-accept" onClick={onAccept}>
+          {isEn ? 'I have read and agree' : '我已阅读并同意'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function SplashScreen({ fadeOut, onReady }) {
   const videoRef = useRef(null);
 
@@ -184,6 +210,13 @@ function AppShell() {
   const [installPromptEvent, setInstallPromptEvent] = useState(null);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [manualGuide, setManualGuide] = useState(null);
+  const [privacyConsent, setPrivacyConsent] = useState(() => {
+    try {
+      return window.localStorage.getItem(PRIVACY_CONSENT_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  });
 
   const startSplashTimers = useCallback(() => {
     if (startedRef.current) return;
@@ -262,6 +295,13 @@ function AppShell() {
     handleInstallLater();
   };
 
+  const acceptPrivacyConsent = () => {
+    try {
+      window.localStorage.setItem(PRIVACY_CONSENT_KEY, 'true');
+    } catch {}
+    setPrivacyConsent(true);
+  };
+
   if (showSplash) {
     return <SplashScreen fadeOut={fadeOut} onReady={startSplashTimers} />;
   }
@@ -275,6 +315,7 @@ function AppShell() {
         onInstallLater={handleInstallLater}
         onInstallNow={handleInstallNow}
       />
+      {!privacyConsent ? <PrivacyConsentPrompt onAccept={acceptPrivacyConsent} /> : null}
     </>
   );
 }
