@@ -119,7 +119,7 @@ function Register() {
               role="tablist"
               aria-label={isZh ? '选择账号类型' : 'Select account type'}
             >
-              <motion.div
+              <Motion.div
                 layoutId="register-role-pill"
                 className="absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-full bg-white shadow-sm ring-1 ring-slate-200"
                 animate={{ x: role === ROLE_STUDENT ? 0 : '100%' }}
