@@ -17,3 +17,24 @@ if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
   }
 }
 
+// A stale service-worker response can leave the HTML and hashed CSS from
+// different deployments on screen. Recover once when the global token sheet
+// is missing instead of rendering an unstyled application.
+if (typeof window !== 'undefined' && !import.meta.env.DEV) {
+  const recoveryKey = 'dorm-css-recovery-v1';
+  const hasCoreStyles = () => Boolean(getComputedStyle(document.documentElement).getPropertyValue('--color-bg-page').trim());
+  window.addEventListener('load', () => {
+    if (hasCoreStyles() || window.sessionStorage.getItem(recoveryKey)) return;
+    window.sessionStorage.setItem(recoveryKey, '1');
+    navigator.serviceWorker?.getRegistrations?.()
+      .then((regs) => Promise.all(regs.map((registration) => registration.unregister())))
+      .catch(() => {})
+      .finally(() => {
+        if (window.caches?.keys) {
+          window.caches.keys().then((keys) => Promise.all(keys.map((key) => window.caches.delete(key)))).catch(() => {});
+        }
+        window.location.reload();
+      });
+  });
+}
+

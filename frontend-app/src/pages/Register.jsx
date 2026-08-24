@@ -24,6 +24,7 @@ function Register() {
   const [loading, setLoading] = useState(false);
   const [sendingCode, setSendingCode] = useState(false);
   const [codeCountdown, setCodeCountdown] = useState(0);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
 
   const navigate = useNavigate();
 
@@ -65,6 +66,12 @@ function Register() {
 
     setLoading(true);
     setMessage({ type: '', text: '' });
+    if (!privacyAccepted) {
+      showMsg('Please read and agree to the Privacy Policy and Terms of Service', 'error');
+      setLoading(false);
+      return;
+    }
+    try { localStorage.setItem('xmum-privacy-consent-v1', 'true'); } catch {}
     try {
       const body =
         role === ROLE_STUDENT
@@ -303,6 +310,18 @@ function Register() {
           ) : null}
 
           <div className="mt-auto mb-4 pt-2 sm:mb-5">
+            <label className="mb-3 flex items-start gap-2 text-[12px] leading-relaxed text-slate-500">
+              <input
+                type="checkbox"
+                checked={privacyAccepted}
+                onChange={(e) => setPrivacyAccepted(e.target.checked)}
+                disabled={loading}
+                className="mt-0.5 h-4 w-4 shrink-0 accent-emerald-600"
+              />
+              <span>
+                I have read and agree to the <Link to="/privacy" className="font-semibold text-emerald-700 underline">Privacy Policy</Link> and <Link to="/terms" className="font-semibold text-emerald-700 underline">Terms of Service</Link>.
+              </span>
+            </label>
             <Button
               type="submit"
               variant="primary"

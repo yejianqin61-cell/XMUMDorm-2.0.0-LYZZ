@@ -101,3 +101,61 @@
   color: #fff;
 }
 
+.privacy-consent-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.48);
+}
+
+.privacy-consent-card {
+  width: min(100%, 420px);
+  padding: 24px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.2);
+}
+
+.privacy-consent-card h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 20px;
+}
+
+.privacy-consent-card p {
+  margin: 12px 0;
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.privacy-consent-links {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.privacy-consent-links a {
+  color: #047857;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.privacy-consent-accept {
+  width: 100%;
+  min-height: 44px;
+  border: 0;
+  border-radius: 8px;
+  background: #0f172a;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
