@@ -1,5 +1,5 @@
 // IMPORTANT: bump this to force clients update cache
-const CACHE_NAME = 'dorm-cache-v11';
+const CACHE_NAME = 'dorm-cache-v12';
 const URLS_TO_CACHE = [
   '/',
   '/index.html',
@@ -105,6 +105,14 @@ self.addEventListener('fetch', (event) => {
 
   const url = request.url;
   const isApi = url.includes('/api/');
+  const isBuildAsset = /\.(?:css|js|map|html)$/i.test(new URL(url).pathname);
+
+  // Build assets are content-hashed and must always come from the network.
+  // Caching them can pair an old stylesheet with a newer HTML shell.
+  if (isBuildAsset) {
+    event.respondWith(fetch(request));
+    return;
+  }
 
   event.respondWith(
     fetch(request)
