@@ -6,7 +6,7 @@ export const HOLIDAYS_2027 = [
   { id: 'deepavali', start: '2027-10-28', end: '2027-10-28', nameZh: '屠妖节', nameEn: 'Deepavali' },
   { id: 'aidilfitri', start: '2027-03-10', end: '2027-03-11', nameZh: '开斋节', nameEn: 'Hari Raya Aidilfitri' },
   { id: 'agong-birthday', start: '2027-06-07', end: '2027-06-07', nameZh: '国家元首诞辰', nameEn: "Agong's Birthday" },
-  { id: 'selangor-sultan', start: '2027-12-11', end: '2027-12-11', nameZh: '雪兰莪苏丹诞辰', nameEn: "Sultan of Selangor's Birthday" },
+  { id: 'selangor-sultan', start: '2027-12-11', end: '2027-12-11', nameZh: '雪兰莪苏丹生日', nameEn: "Sultan of Selangor's Birthday" },
   { id: 'labour-day', start: '2027-05-01', end: '2027-05-01', nameZh: '劳动节', nameEn: 'Labour Day' },
   { id: 'prophet-birthday', start: '2027-08-15', end: '2027-08-16', nameZh: '穆罕默德先知诞辰', nameEn: "Prophet Muhammad's Birthday" },
   { id: 'christmas', start: '2027-12-25', end: '2027-12-25', nameZh: '圣诞节', nameEn: 'Christmas Day' },
@@ -20,7 +20,7 @@ export const HOLIDAYS_2026 = [
   { id: 'merdeka-2026', start: '2026-08-31', end: '2026-08-31', nameZh: '国庆日', nameEn: 'Merdeka Day' },
   { id: 'malaysia-day-2026', start: '2026-09-16', end: '2026-09-16', nameZh: '马来西亚日', nameEn: 'Malaysia Day' },
   { id: 'deepavali-2026', start: '2026-11-08', end: '2026-11-09', nameZh: '屠妖节', nameEn: 'Deepavali' },
-  { id: 'selangor-sultan-2026', start: '2026-12-11', end: '2026-12-11', nameZh: '雪兰莪苏丹诞辰', nameEn: "Sultan of Selangor's Birthday" },
+  { id: 'selangor-sultan-2026', start: '2026-12-11', end: '2026-12-11', nameZh: '雪兰莪苏丹生日', nameEn: "Sultan of Selangor's Birthday" },
   { id: 'christmas-2026', start: '2026-12-25', end: '2026-12-25', nameZh: '圣诞节', nameEn: 'Christmas Day' },
 ];
 
