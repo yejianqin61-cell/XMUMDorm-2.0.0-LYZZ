@@ -6,4 +6,5 @@
 | --- | --- |
 | [product/](product/) | 全局 PRD 与帖子系统基础需求 |
 | [module-specs/](module-specs/) | 食堂、通知、个人空间与 Phase 3 等模块规格 |
+| [DormMap/](DormMap/) | 校园 2D/3D 导览、地图活动与地点内容治理策划 |
 | [presentation/](presentation/) | 项目介绍与展示材料 |
