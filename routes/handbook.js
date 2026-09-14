@@ -18,7 +18,8 @@ const { simpleCache } = require('../utils/simpleCache');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { uploadBuffer, guessContentType, isObjectStorageConfigured } = require('../services/objectStorage');
+const { uploadBuffer, isObjectStorageConfigured } = require('../services/objectStorage');
+const { prepareImageUpload } = require('../services/imageProcessing');
 
 // -------------------- helpers --------------------
 function isAdmin(req) {
@@ -1532,18 +1533,19 @@ router.post('/upload/image', authenticateToken, (req, res, next) => {
     const safeExt = ALLOWED_EXT.includes(ext) ? ext : '.jpg';
 
     const key = `handbook/images/user_${req.user.id}_${Date.now()}_${Math.random().toString(16).slice(2)}${safeExt}`;
+    const prepared = await prepareImageUpload({ key, body: file.buffer, mimetype: file.mimetype });
     const useObjectStorage = isObjectStorageConfigured();
 
     if (useObjectStorage) {
-      await uploadBuffer({ key, body: file.buffer, contentType: guessContentType(file.mimetype, safeExt) });
+      await uploadBuffer(prepared);
     } else {
       ensureUploadsDir('handbook/images');
-      const filePath = path.join(process.cwd(), 'uploads', key);
+      const filePath = path.join(process.cwd(), 'uploads', prepared.key);
       ensureUploadsDir(path.dirname(key));
-      fs.writeFileSync(filePath, file.buffer);
+      fs.writeFileSync(filePath, prepared.body);
     }
 
-    res.status(200).json({ status: 0, message: 'ok', data: { key, url: assetUrl(key) } });
+    res.status(200).json({ status: 0, message: 'ok', data: { key: prepared.key, url: assetUrl(prepared.key) } });
   } catch (e) {
     console.error('handbook upload error:', e);
     res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });

@@ -8,6 +8,7 @@
   min-height: 100%;
   padding: 0;
   overflow-y: auto;
+  overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
   background: var(--post-ios-bg-grouped, #f2f2f7);
 }

@@ -6,10 +6,10 @@
   min-width: 0;
   box-sizing: border-box;
   overflow-x: hidden;
-  overscroll-behavior-x: none;
+  overscroll-behavior: contain;
   /* Keep native vertical scrolling and let media controls consume horizontal drags. */
   touch-action: manipulation;
-  padding: 14px 18px calc(var(--tabbar-height, 76px) + var(--safe-bottom, 0px) + 86px);
+  padding: 0 12px calc(var(--tabbar-height, 76px) + var(--safe-bottom, 0px) + 86px);
   min-height: 100%;
   background: #fbfcfe;
   font-family: var(--post-ios-font, inherit);
@@ -82,10 +82,13 @@
 }
 
 .post-detail-card {
+  width: 100%;
+  max-width: 680px;
+  box-sizing: border-box;
   background: rgba(255, 255, 255, 0.75);
   border-radius: 24px;
   padding: 18px;
-  margin-bottom: 12px;
+  margin: 0 auto 12px;
   box-shadow: 0 18px 60px rgba(2, 6, 23, 0.10);
   border: 1px solid rgba(226, 232, 240, 0.9);
   backdrop-filter: blur(18px);

@@ -15,7 +15,8 @@ const authenticateToken = require('../middleware/auth');
 const { bannerImageUpload, postImagesUpload } = require('../middleware/upload');
 const { logAudit } = require('../services/auditLog');
 const { assetUrl } = require('../utils/assets');
-const { uploadBuffer, guessContentType } = require('../services/objectStorage');
+const { uploadBuffer } = require('../services/objectStorage');
+const { prepareImageUpload } = require('../services/imageProcessing');
 const { simpleCache } = require('../utils/simpleCache');
 const sanitizeHtml = require('sanitize-html');
 const { grantExp, revokeByRef, checkAndGrantPostPopularRewards } = require('../services/expService');
@@ -94,9 +95,9 @@ async function saveSquareBannerImage(file, bannerId) {
   const safeExt = ['.jpg', '.jpeg', '.png', '.webp', '.gif'].includes(ext)
     ? (ext === '.jpeg' ? '.jpg' : ext)
     : '.jpg';
-  const key = `square/banners/banner_${bannerId}${safeExt}`;
-  await uploadBuffer({ key, body: file.buffer, contentType: guessContentType(file.mimetype, safeExt) });
-  return key;
+  const prepared = await prepareImageUpload({ key: `square/banners/banner_${bannerId}${safeExt}`, body: file.buffer, mimetype: file.mimetype });
+  await uploadBuffer(prepared);
+  return prepared.key;
 }
 
 async function saveTrendingPostImage(file, postId, index) {
@@ -104,9 +105,9 @@ async function saveTrendingPostImage(file, postId, index) {
   const safeExt = ['.jpg', '.jpeg', '.png', '.webp', '.gif'].includes(ext)
     ? (ext === '.jpeg' ? '.jpg' : ext)
     : '.jpg';
-  const key = `square/trending/posts/post_${postId}_${index}${safeExt}`;
-  await uploadBuffer({ key, body: file.buffer, contentType: guessContentType(file.mimetype, safeExt) });
-  return key;
+  const prepared = await prepareImageUpload({ key: `square/trending/posts/post_${postId}_${index}${safeExt}`, body: file.buffer, mimetype: file.mimetype });
+  await uploadBuffer(prepared);
+  return prepared.key;
 }
 
 async function saveCampusPostImage(file, postId, index) {
@@ -114,9 +115,9 @@ async function saveCampusPostImage(file, postId, index) {
   const safeExt = ['.jpg', '.jpeg', '.png', '.webp', '.gif'].includes(ext)
     ? (ext === '.jpeg' ? '.jpg' : ext)
     : '.jpg';
-  const key = `square/campus/posts/post_${postId}_${index}${safeExt}`;
-  await uploadBuffer({ key, body: file.buffer, contentType: guessContentType(file.mimetype, safeExt) });
-  return key;
+  const prepared = await prepareImageUpload({ key: `square/campus/posts/post_${postId}_${index}${safeExt}`, body: file.buffer, mimetype: file.mimetype });
+  await uploadBuffer(prepared);
+  return prepared.key;
 }
 
 function parseBannerBody(body) {

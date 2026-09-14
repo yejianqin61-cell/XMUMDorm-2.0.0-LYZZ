@@ -37,9 +37,8 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
-      // Capacitor plugins are available at runtime in the WebView,
-      // but not installed in frontend/node_modules. Vite should skip them.
-      external: (id) => id.startsWith('@capacitor/'),
+      // Bundle Capacitor plugins so the local Android WebView never receives
+      // an unresolved bare import such as "@capacitor/app".
       output: {
         manualChunks,
       },

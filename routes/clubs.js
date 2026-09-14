@@ -22,7 +22,8 @@ const sensitiveWordFilter = require('../middleware/sensitiveWordFilter');
 const { createNotification, createNotificationBatch } = require('../services/notificationService');
 const jwt = require('jsonwebtoken');
 const { assetUrl } = require('../utils/assets');
-const { uploadBuffer, guessContentType, isObjectStorageConfigured } = require('../services/objectStorage');
+const { uploadBuffer, isObjectStorageConfigured } = require('../services/objectStorage');
+const { prepareImageUpload } = require('../services/imageProcessing');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -137,14 +138,15 @@ async function saveClubLogo(file, clubId) {
   const ext = extFromMime(file.mimetype, file.originalname);
   const key = `clubs/club_${clubId}${ext}`;
   const useObjectStorage = isObjectStorageConfigured();
+  const prepared = await prepareImageUpload({ key, body: file.buffer, mimetype: file.mimetype });
   if (useObjectStorage) {
-    await uploadBuffer({ key, body: file.buffer, contentType: guessContentType(file.mimetype, ext) });
-    return key;
+    await uploadBuffer(prepared);
+    return prepared.key;
   }
   ensureUploadsDir('clubs');
-  const outPath = path.join(process.cwd(), 'uploads', key);
-  fs.writeFileSync(outPath, file.buffer);
-  return key;
+  const outPath = path.join(process.cwd(), 'uploads', prepared.key);
+  fs.writeFileSync(outPath, prepared.body);
+  return prepared.key;
 }
 
 async function saveClubPostImage(file, postId, index) {
@@ -152,14 +154,15 @@ async function saveClubPostImage(file, postId, index) {
   const ext = extFromMime(file.mimetype, file.originalname);
   const key = `clubs/posts/cp_${postId}_${index}${ext}`;
   const useObjectStorage = isObjectStorageConfigured();
+  const prepared = await prepareImageUpload({ key, body: file.buffer, mimetype: file.mimetype });
   if (useObjectStorage) {
-    await uploadBuffer({ key, body: file.buffer, contentType: guessContentType(file.mimetype, ext) });
-    return key;
+    await uploadBuffer(prepared);
+    return prepared.key;
   }
   ensureUploadsDir('clubs/posts');
-  const outPath = path.join(process.cwd(), 'uploads', key);
-  fs.writeFileSync(outPath, file.buffer);
-  return key;
+  const outPath = path.join(process.cwd(), 'uploads', prepared.key);
+  fs.writeFileSync(outPath, prepared.body);
+  return prepared.key;
 }
 
 async function saveActivityImage(file, activityId, index) {
@@ -167,14 +170,15 @@ async function saveActivityImage(file, activityId, index) {
   const ext = extFromMime(file.mimetype, file.originalname);
   const key = `clubs/activities/act_${activityId}_${index}${ext}`;
   const useObjectStorage = isObjectStorageConfigured();
+  const prepared = await prepareImageUpload({ key, body: file.buffer, mimetype: file.mimetype });
   if (useObjectStorage) {
-    await uploadBuffer({ key, body: file.buffer, contentType: guessContentType(file.mimetype, ext) });
-    return key;
+    await uploadBuffer(prepared);
+    return prepared.key;
   }
   ensureUploadsDir('clubs/activities');
-  const outPath = path.join(process.cwd(), 'uploads', key);
-  fs.writeFileSync(outPath, file.buffer);
-  return key;
+  const outPath = path.join(process.cwd(), 'uploads', prepared.key);
+  fs.writeFileSync(outPath, prepared.body);
+  return prepared.key;
 }
 
 function activityImageKeysFromRow(row) {

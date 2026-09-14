@@ -126,7 +126,7 @@ button {
 
 /* ===== Capacitor Native Environment ===== */
 body.capacitor-native {
-  overscroll-behavior-x: none;
+  overscroll-behavior: contain;
   -webkit-user-select: none;
   /*
    * Safe Area 跨平台适配：
