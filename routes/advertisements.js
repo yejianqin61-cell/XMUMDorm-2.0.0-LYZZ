@@ -142,7 +142,7 @@ router.get('/public/:postId', async (req, res) => {
              FROM canteen_banners cb
              WHERE cb.type = 'ad'
                AND cb.link_type = 'post'
-               AND cb.link_target = CAST(ap.post_id AS CHAR)
+               AND CAST(TRIM(cb.link_target) AS UNSIGNED) = ap.post_id
                AND cb.is_active = 1
                AND (cb.starts_at IS NULL OR cb.starts_at <= ?)
                AND (cb.ends_at IS NULL OR cb.ends_at >= ?)
@@ -152,7 +152,7 @@ router.get('/public/:postId', async (req, res) => {
              FROM square_banners sb
              WHERE sb.type = 'ad'
                AND sb.link_type = 'post'
-               AND sb.link_target = CAST(ap.post_id AS CHAR)
+               AND CAST(TRIM(sb.link_target) AS UNSIGNED) = ap.post_id
                AND sb.is_active = 1
                AND (sb.starts_at IS NULL OR sb.starts_at <= ?)
                AND (sb.ends_at IS NULL OR sb.ends_at >= ?)
@@ -207,7 +207,7 @@ router.post('/public/:postId/click', async (req, res) => {
              SELECT 1 FROM canteen_banners cb
              WHERE cb.id = ?
                AND cb.type = 'ad' AND cb.link_type = 'post'
-               AND cb.link_target = CAST(ap.post_id AS CHAR)
+               AND CAST(TRIM(cb.link_target) AS UNSIGNED) = ap.post_id
                AND cb.is_active = 1
                AND (cb.starts_at IS NULL OR cb.starts_at <= ?)
                AND (cb.ends_at IS NULL OR cb.ends_at >= ?)
@@ -216,7 +216,7 @@ router.post('/public/:postId/click', async (req, res) => {
              SELECT 1 FROM square_banners sb
              WHERE sb.id = ?
                AND sb.type = 'ad' AND sb.link_type = 'post'
-               AND sb.link_target = CAST(ap.post_id AS CHAR)
+               AND CAST(TRIM(sb.link_target) AS UNSIGNED) = ap.post_id
                AND sb.is_active = 1
                AND (sb.starts_at IS NULL OR sb.starts_at <= ?)
                AND (sb.ends_at IS NULL OR sb.ends_at >= ?)
@@ -225,7 +225,7 @@ router.post('/public/:postId/click', async (req, res) => {
              EXISTS (
                SELECT 1 FROM canteen_banners cb
                WHERE cb.type = 'ad' AND cb.link_type = 'post'
-                 AND cb.link_target = CAST(ap.post_id AS CHAR)
+                 AND CAST(TRIM(cb.link_target) AS UNSIGNED) = ap.post_id
                  AND cb.is_active = 1
                  AND (cb.starts_at IS NULL OR cb.starts_at <= ?)
                  AND (cb.ends_at IS NULL OR cb.ends_at >= ?)
@@ -233,7 +233,7 @@ router.post('/public/:postId/click', async (req, res) => {
              OR EXISTS (
                SELECT 1 FROM square_banners sb
                WHERE sb.type = 'ad' AND sb.link_type = 'post'
-                 AND sb.link_target = CAST(ap.post_id AS CHAR)
+                 AND CAST(TRIM(sb.link_target) AS UNSIGNED) = ap.post_id
                  AND sb.is_active = 1
                  AND (sb.starts_at IS NULL OR sb.starts_at <= ?)
                  AND (sb.ends_at IS NULL OR sb.ends_at >= ?)

@@ -1,5 +1,8 @@
 .merchant-list-page {
   min-height: 100svh;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
   padding: 8px 16px 24px;
   /* 方案 A：晨曦广场 (Sunrise XMUM) */
   background: #f8fafc;

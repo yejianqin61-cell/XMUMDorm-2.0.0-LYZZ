@@ -15,7 +15,8 @@ const sensitiveWordFilter = require('../middleware/sensitiveWordFilter');
 const { createNotification } = require('../services/notificationService');
 const { assetUrl } = require('../utils/assets');
 const { simpleCache } = require('../utils/simpleCache');
-const { uploadBuffer, guessContentType, isObjectStorageConfigured } = require('../services/objectStorage');
+const { uploadBuffer, isObjectStorageConfigured } = require('../services/objectStorage');
+const { prepareImageUpload } = require('../services/imageProcessing');
 
 const multer = require('multer');
 const path = require('path');
@@ -454,15 +455,16 @@ router.post('/items', authenticateToken, checkSanction, sensitiveWordFilter, (re
       const f = files[i];
       const ext = extMap[f.mimetype] || '.jpg';
       const key = `marketplace/items/item_${itemId}_${i + 1}${ext}`;
+      const prepared = await prepareImageUpload({ key, body: f.buffer, mimetype: f.mimetype });
       if (useObjectStorage) {
-        await uploadBuffer({ key, body: f.buffer, contentType: guessContentType(f.mimetype, ext) });
+        await uploadBuffer(prepared);
       } else {
-        const filePath = path.join(process.cwd(), 'uploads', key);
-        fs.writeFileSync(filePath, f.buffer);
+        const filePath = path.join(process.cwd(), 'uploads', prepared.key);
+        fs.writeFileSync(filePath, prepared.body);
       }
       await query(
         'INSERT INTO marketplace_item_images (item_id, file_path, sort_order) VALUES (?, ?, ?)',
-        [itemId, key, i]
+        [itemId, prepared.key, i]
       );
     }
 

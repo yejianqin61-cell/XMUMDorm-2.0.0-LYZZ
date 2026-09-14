@@ -78,24 +78,26 @@ function addFreeSlots(raw) {
 
 function Schedule() {
   const { lang } = useLanguage();
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, user } = useAuth();
   const queryClient = useQueryClient();
   const isZh = lang !== 'en';
   const [importOpen, setImportOpen] = useState(false);
   const [pushOpen, setPushOpen] = useState(false);
 
   const FIXED_WEEK = 1;
-  const persistedWeek = useMemo(() => readPersistedScheduleWeek(FIXED_WEEK), []);
+  const userId = Number(user?.id) || 0;
+  const persistedWeek = useMemo(() => readPersistedScheduleWeek(userId, FIXED_WEEK), [userId]);
   const weekQuery = useQuery({
-    queryKey: QK.scheduleWeek(FIXED_WEEK),
+    queryKey: [...QK.scheduleWeek(FIXED_WEEK), userId],
     queryFn: async () => {
       const data = await getScheduleWeek(FIXED_WEEK);
-      writePersistedScheduleWeek(FIXED_WEEK, data);
+      writePersistedScheduleWeek(userId, FIXED_WEEK, data);
       return data;
     },
+    enabled: isLoggedIn && !!userId,
     ...(persistedWeek !== undefined ? { initialData: persistedWeek } : {}),
-    staleTime: Infinity,
-    gcTime: Infinity,
+    staleTime: 30 * 60 * 1000,
+    gcTime: 24 * 60 * 60 * 1000,
   });
   const weekData = weekQuery.data ?? null;
   const loadingWeek = weekQuery.isFetching;
@@ -652,4 +654,3 @@ function Schedule() {
 }
 
 export default Schedule;
-

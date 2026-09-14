@@ -225,6 +225,7 @@ function FoodDetail() {
       await deleteProductComment(productId, commentId);
       Toast.success(isEn ? 'Deleted' : '已删除');
       queryClient.invalidateQueries({ queryKey: QK.canteenProductComments(productId) });
+      queryClient.invalidateQueries({ queryKey: ['myzone', 'reviewsCount'] });
     } catch (err) {
       Toast.error(getApiErrorMessage(err));
     }
@@ -292,6 +293,7 @@ function FoodDetail() {
                 queryClient.setQueryData(QK.canteenProductFavorite(pid), true);
                 Toast.success(isEn ? 'Added to favorites' : '已收藏');
               }
+              queryClient.invalidateQueries({ queryKey: ['myzone', 'favoritesCount'] });
             } catch (err) {
               Toast.error(getApiErrorMessage(err));
             }

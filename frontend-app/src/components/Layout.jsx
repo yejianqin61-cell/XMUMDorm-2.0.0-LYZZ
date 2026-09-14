@@ -16,6 +16,8 @@ import { getUnreadAnnouncements, markNotificationRead, markNotificationsReadBatc
 import { QK } from '@shared/query/queryKeys';
 import { BACKGROUND_IMAGES } from '../config/backgrounds';
 import { Toast } from '../context/ToastContext';
+import { ArrowLeft } from 'lucide-react';
+import { App as CapacitorApp } from '@capacitor/app';
 import './TopBar.css';
 import './TabBar.css';
 import './Layout.css';
@@ -74,9 +76,6 @@ const TITLE_BY_PATH_EN = {
   '/about/trending': 'Trending',
 };
 
-/** 需要显示返回键的路径（含 /post/:id 详情页、帖子搜索/话题） */
-const SHOW_BACK_PATHS = ['/post/new', '/post/', '/posts/'];
-
 /** 整体布局：顶栏（标题+信箱）+ 内容区 + 底部 Tab；Tab 仅能通过底部点击切换；主 Tab 间切换带过渡动画 + 公告弹窗 */
 function Layout() {
   const location = useLocation();
@@ -128,6 +127,58 @@ function Layout() {
     // 只在四个根 Tab 页使用“常驻页面 + 滑块切换”，子路由仍交给 Outlet 渲染
     return pathname === '/' || pathname === '/eat' || pathname === '/about' || pathname === '/myzone';
   }, [pathname]);
+
+  const showGlobalBack = !isRootTabPage;
+  const fallbackPath = useMemo(() => {
+    if (pathname.startsWith('/eat')) return '/eat';
+    if (pathname.startsWith('/myzone')) return '/myzone';
+    if (pathname.startsWith('/about')) return '/about';
+    if (pathname.startsWith('/post') || pathname.startsWith('/posts')) return '/';
+    return ['/about', '/', '/eat', '/myzone'][activeTabIndex] || '/about';
+  }, [activeTabIndex, pathname]);
+
+  const handleGlobalBack = () => {
+    // React Router records its in-app position as history.state.idx. Do not
+    // send a directly opened Capacitor route back to the previous native page.
+    if (Number(window.history.state?.idx) > 0) {
+      navigate(-1);
+      return;
+    }
+    navigate(fallbackPath, { replace: true });
+  };
+
+  const nativeBackStateRef = useRef({ fallbackPath, isRootTabPage });
+  useEffect(() => {
+    nativeBackStateRef.current = { fallbackPath, isRootTabPage };
+  }, [fallbackPath, isRootTabPage]);
+
+  useEffect(() => {
+    if (!isNative()) return undefined;
+
+    let disposed = false;
+    let listener;
+    CapacitorApp.addListener('backButton', ({ canGoBack }) => {
+      const { fallbackPath: target, isRootTabPage: atRoot } = nativeBackStateRef.current;
+      const historyIndex = Number(window.history.state?.idx);
+      const hasAppHistory = Number.isFinite(historyIndex) ? historyIndex > 0 : !!canGoBack;
+
+      if (hasAppHistory) {
+        navigate(-1);
+      } else if (atRoot) {
+        CapacitorApp.exitApp();
+      } else {
+        navigate(target, { replace: true });
+      }
+    }).then((handle) => {
+      if (disposed) handle.remove();
+      else listener = handle;
+    });
+
+    return () => {
+      disposed = true;
+      listener?.remove();
+    };
+  }, [navigate]);
 
   // iOS Safari 对 overscroll-behavior 支持不稳定：对“不可滚动”的 Tab（Eat/Square）全局禁止下拉回弹
   // iOS 下拉回弹锁已不再需要（所有 Tab 页均为滚动列表）
@@ -298,6 +349,17 @@ function Layout() {
           )}
         </div>
       </main>
+      {showGlobalBack && (
+        <button
+          type="button"
+          className="app-global-back pressable"
+          onClick={handleGlobalBack}
+          aria-label={isZh ? '返回上一级' : 'Go back'}
+          title={isZh ? '返回上一级' : 'Go back'}
+        >
+          <ArrowLeft size={21} strokeWidth={2.2} aria-hidden="true" />
+        </button>
+      )}
       {showTreeHoleFab && (
         <>
           <button

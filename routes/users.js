@@ -12,7 +12,8 @@ const { query } = require('../database');
 const authenticateToken = require('../middleware/auth');
 const { avatarUpload } = require('../middleware/upload');
 const { assetUrl } = require('../utils/assets');
-const { uploadBuffer, guessContentType } = require('../services/objectStorage');
+const { uploadBuffer } = require('../services/objectStorage');
+const { prepareImageUpload } = require('../services/imageProcessing');
 const { simpleCache } = require('../utils/simpleCache');
 const { getUserLevelSummary, formatAuthorLevel } = require('../services/expService');
 const { getExpProgress } = require('../constants/levelThresholds');
@@ -365,14 +366,14 @@ router.patch('/me/avatar', authenticateToken, (req, res, next) => {
     const ext = path.extname(req.file.originalname || '').toLowerCase() || '.jpg';
     const safeExt = ['.jpg', '.jpeg', '.png', '.webp', '.gif'].includes(ext) ? (ext === '.jpeg' ? '.jpg' : ext) : '.jpg';
     const ts = Date.now();
-    const key = `avatars/user_${req.user.id}_${ts}${safeExt}`;
-    await uploadBuffer({ key, body: req.file.buffer, contentType: guessContentType(req.file.mimetype, safeExt) });
-    await query('UPDATE users SET avatar = ? WHERE id = ?', [key, req.user.id]);
+    const prepared = await prepareImageUpload({ key: `avatars/user_${req.user.id}_${ts}${safeExt}`, body: req.file.buffer, mimetype: req.file.mimetype });
+    await uploadBuffer(prepared);
+    await query('UPDATE users SET avatar = ? WHERE id = ?', [prepared.key, req.user.id]);
     simpleCache.delete(`users:me:v1:${req.user.id}`);
     res.status(200).json({
       status: 0,
       message: 'å¤´åƒæ›´æ–°æˆåŠŸ',
-      data: { avatar: assetUrl(key) },
+      data: { avatar: assetUrl(prepared.key) },
     });
   } catch (e) {
     console.error('å¤´åƒä¸Šä¼ é”™è¯¯:', e);

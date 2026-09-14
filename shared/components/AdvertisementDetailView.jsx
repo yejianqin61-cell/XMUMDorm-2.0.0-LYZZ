@@ -6,7 +6,7 @@ import { recordAdvertisementClick } from '@shared/api/advertisements';
 import './AdvertisementDetailView.css';
 
 function absoluteAsset(url) {
-  if (!url) return '';
+  if (typeof url !== 'string' || !url) return '';
   return url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
 }
 
@@ -32,7 +32,9 @@ export default function AdvertisementDetailView({
   const ExternalLink = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M14 5h5v5M19 5l-8 8" /><path d="M19 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5" /></svg>;
   const unavailable = error?.status === 410;
   const imageUrls = useMemo(
-    () => (advertisement?.images || []).map((image) => absoluteAsset(image.url)).filter(Boolean),
+    () => (Array.isArray(advertisement?.images) ? advertisement.images : [])
+      .map((image) => absoluteAsset(typeof image === 'string' ? image : image?.url))
+      .filter(Boolean),
     [advertisement]
   );
 
@@ -43,10 +45,14 @@ export default function AdvertisementDetailView({
       recordAdvertisementClick(advertisement.id, { click_type: 'cta' }).catch(() => {});
     }
     if (type === 'https' && /^https:\/\//i.test(target)) {
-      if (Capacitor.isNativePlatform()) {
-        await Browser.open({ url: target });
-      } else {
-        window.open(target, '_blank', 'noopener,noreferrer');
+      try {
+        if (Capacitor.isNativePlatform()) {
+          await Browser.open({ url: target });
+        } else {
+          window.open(target, '_blank', 'noopener,noreferrer');
+        }
+      } catch (openError) {
+        console.error('Failed to open advertisement link:', openError);
       }
       return;
     }

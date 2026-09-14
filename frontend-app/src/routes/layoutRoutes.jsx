@@ -4,10 +4,12 @@ import TreeHole from '../pages/TreeHole';
 import SquareHome from '../pages/SquareHome';
 import MyZone from '../pages/MyZone';
 import CanteenHome from '../pages/CanteenHome';
+// Keep the paid-content destination in the entry bundle. A carousel click must
+// not depend on a WebView resolving a late relative chunk from an old cache.
+import AdvertisementDetail from '../pages/AdvertisementDetail';
 
 const PostNew = lazy(() => import('../pages/PostNew'));
 const PostDetail = lazy(() => import('../pages/PostDetail'));
-const AdvertisementDetail = lazy(() => import('../pages/AdvertisementDetail'));
 const PostSearch = lazy(() => import('../pages/PostSearch'));
 const PostTagFeed = lazy(() => import('../pages/PostTagFeed'));
 const AboutUs = lazy(() => import('../pages/AboutUs'));

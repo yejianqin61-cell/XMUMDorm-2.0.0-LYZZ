@@ -171,14 +171,12 @@ function MyZone() {
   });
 
   const reviewsCountQuery = useQuery({
-    queryKey: ['myzone', 'reviewsCount'],
-    enabled: isLoggedIn,
+    queryKey: ['myzone', 'reviewsCount', userId],
+    enabled: isLoggedIn && !!userId,
     queryFn: async () => {
       const data = await getMyProductReviews({ page: 1, pageSize: 1 });
-      const total = data?.total ?? data?.count ?? data?.pagination?.total;
-      if (Number.isFinite(Number(total))) return Number(total);
-      const list = data?.list ?? [];
-      return Array.isArray(list) ? list.length : 0;
+      const total = Number(data?.total ?? data?.count ?? data?.pagination?.total ?? data?.list?.length);
+      return Number.isFinite(total) ? total : 0;
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
@@ -188,14 +186,12 @@ function MyZone() {
   });
 
   const favoritesCountQuery = useQuery({
-    queryKey: ['myzone', 'favoritesCount'],
-    enabled: isLoggedIn,
+    queryKey: ['myzone', 'favoritesCount', userId],
+    enabled: isLoggedIn && !!userId,
     queryFn: async () => {
       const data = await getMyFavorites({ page: 1, pageSize: 1 });
-      const total = data?.total ?? data?.count ?? data?.pagination?.total;
-      if (Number.isFinite(Number(total))) return Number(total);
-      const list = data?.list ?? [];
-      return Array.isArray(list) ? list.length : 0;
+      const total = Number(data?.total ?? data?.count ?? data?.pagination?.total ?? data?.list?.length);
+      return Number.isFinite(total) ? total : 0;
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 60 * 60 * 1000,

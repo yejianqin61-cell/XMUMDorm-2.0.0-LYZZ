@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -13,6 +13,7 @@ import {
   formatTodoDueDisplay,
 } from '@shared/utils/formatTodoDue';
 import { motion, AnimatePresence } from 'framer-motion';
+import { readPersistedTodos, writePersistedTodos } from '../utils/todoPersist';
 import './TodoList.css';
 
 const PRIORITY_LABELS = { 0: '无', 1: '低', 2: '中', 3: '高' };
@@ -44,7 +45,7 @@ function toggleTodoInCache(data, id) {
 }
 
 export default function TodoList() {
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, user } = useAuth();
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
   const queryClient = useQueryClient();
@@ -62,15 +63,25 @@ export default function TodoList() {
 
   const listType = filter === 'all' ? undefined : filter;
   const status = statusFilter === 'all' ? undefined : statusFilter;
+  const userId = Number(user?.id) || 0;
+  const persistedTodos = useMemo(() => readPersistedTodos(userId), [userId]);
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: QK.todosList({ listType, status }),
+    queryKey: [...QK.todosList({ listType, status }), userId],
     queryFn: () => getTodos({ list_type: listType, status, pageSize: 50 }),
-    enabled: isLoggedIn,
-    staleTime: 30 * 1000,
+    enabled: isLoggedIn && !!userId,
+    staleTime: 60 * 1000,
+    ...(persistedTodos !== undefined && listType === undefined && status === 'active'
+      ? { initialData: { list: persistedTodos } }
+      : {}),
   });
 
-  const rawTodos = data?.data?.list || data?.list || data?.data || [];
+  const rawTodos = useMemo(() => data?.data?.list || data?.list || data?.data || [], [data]);
+  useEffect(() => {
+    if (userId && listType === undefined && status === 'active' && Array.isArray(rawTodos)) {
+      writePersistedTodos(userId, rawTodos);
+    }
+  }, [listType, rawTodos, status, userId]);
   const todos = useMemo(() => {
     return [...rawTodos].sort((a, b) => {
       if (!!a.is_completed !== !!b.is_completed) return a.is_completed ? 1 : -1;

@@ -26,7 +26,8 @@ const { shanghaiDaysAgoStart } = require('../utils/timezone');
 const sanitizeHtml = require('sanitize-html');
 const path = require('path');
 const { assetUrl } = require('../utils/assets');
-const { uploadBuffer, guessContentType } = require('../services/objectStorage');
+const { uploadBuffer } = require('../services/objectStorage');
+const { prepareImageUpload } = require('../services/imageProcessing');
 const { simpleCache } = require('../utils/simpleCache');
 const { grantExp } = require('../services/expService');
 const { attachExp } = require('../utils/expResponse');
@@ -49,9 +50,9 @@ async function saveBannerImageFile(file, bannerId) {
   const safeExt = ['.jpg', '.jpeg', '.png', '.webp', '.gif'].includes(ext)
     ? (ext === '.jpeg' ? '.jpg' : ext)
     : '.jpg';
-  const key = `canteen/banners/banner_${bannerId}${safeExt}`;
-  await uploadBuffer({ key, body: file.buffer, contentType: guessContentType(file.mimetype, safeExt) });
-  return key;
+  const prepared = await prepareImageUpload({ key: `canteen/banners/banner_${bannerId}${safeExt}`, body: file.buffer, mimetype: file.mimetype });
+  await uploadBuffer(prepared);
+  return prepared.key;
 }
 
 function parseBannerBody(body) {
@@ -742,10 +743,10 @@ router.patch('/shops/:shopId', authenticateToken, (req, res, next) => {
     if (req.file && req.file.buffer) {
       const ext = path.extname(req.file.originalname || '').toLowerCase() || '.jpg';
       const safeExt = ['.jpg', '.jpeg', '.png', '.webp'].includes(ext) ? (ext === '.jpeg' ? '.jpg' : ext) : '.jpg';
-      const key = `shops/shop_${shopId}${safeExt}`;
-      await uploadBuffer({ key, body: req.file.buffer, contentType: guessContentType(req.file.mimetype, safeExt) });
+      const prepared = await prepareImageUpload({ key: `shops/shop_${shopId}${safeExt}`, body: req.file.buffer, mimetype: req.file.mimetype });
+      await uploadBuffer(prepared);
       updates.push('logo_path = ?');
-      params.push(key);
+      params.push(prepared.key);
     }
     params.push(shopId);
     const sql = `UPDATE shops SET ${updates.join(', ')} WHERE id = ? AND deleted_at IS NULL`;
@@ -1658,8 +1659,8 @@ router.get('/my-reviews', authenticateToken, async (req, res) => {
     if (!Number.isInteger(limitNum) || limitNum < 1 || !Number.isInteger(offsetNum) || offsetNum < 0) {
       return res.status(400).json({ status: -1, message: '分页参数无效' });
     }
-    const rows = await query(
-      `SELECT pc.id, pc.product_id, pc.rating, pc.content, pc.created_at,
+    const [rows, totalRows] = await Promise.all([
+      query(`SELECT pc.id, pc.product_id, pc.rating, pc.content, pc.created_at,
         p.name AS product_name, p.shop_id,
         s.name AS shop_name,
         (SELECT pi.file_path FROM product_images pi WHERE pi.product_id = pc.product_id ORDER BY pi.sort_order ASC LIMIT 1) AS product_image_path
@@ -1669,8 +1670,16 @@ router.get('/my-reviews', authenticateToken, async (req, res) => {
        WHERE pc.user_id = ? AND pc.parent_id IS NULL AND pc.deleted_at IS NULL
        ORDER BY pc.created_at DESC
        LIMIT ${limitNum} OFFSET ${offsetNum}`,
-      [req.user.id]
-    );
+      [req.user.id]),
+      query(
+        `SELECT COUNT(*) AS total
+           FROM product_comments pc
+           INNER JOIN products p ON p.id = pc.product_id AND p.deleted_at IS NULL
+           INNER JOIN shops s ON s.id = p.shop_id AND s.deleted_at IS NULL
+          WHERE pc.user_id = ? AND pc.parent_id IS NULL AND pc.deleted_at IS NULL`,
+        [req.user.id]
+      ),
+    ]);
     const hasMore = (rows || []).length > pageSize;
     const pageRows = (rows || []).slice(0, pageSize);
     const reviewIds = pageRows.map((row) => row.id);
@@ -1702,7 +1711,8 @@ router.get('/my-reviews', authenticateToken, async (req, res) => {
       product_image: assetUrl(row.product_image_path),
       images: imagesByReview[row.id] || [],
     }));
-    res.status(200).json({ status: 0, message: '获取成功', data: { list, hasMore, page, pageSize } });
+    const total = Number(totalRows?.[0]?.total) || 0;
+    res.status(200).json({ status: 0, message: '获取成功', data: { list, total, hasMore, page, pageSize } });
   } catch (e) {
     console.error('获取我的点评错误:', e);
     res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
@@ -1783,8 +1793,8 @@ router.get('/my-favorites', authenticateToken, async (req, res) => {
     if (!Number.isInteger(limitNum) || limitNum < 1 || offsetNum < 0) {
       return res.status(400).json({ status: -1, message: '分页参数无效' });
     }
-    const rows = await query(
-      `SELECT pf.product_id, pf.created_at AS favorited_at,
+    const [rows, totalRows] = await Promise.all([
+      query(`SELECT pf.product_id, pf.created_at AS favorited_at,
         p.name AS product_name, p.shop_id,
         s.name AS shop_name,
         (SELECT pi.file_path FROM product_images pi WHERE pi.product_id = pf.product_id ORDER BY pi.sort_order ASC LIMIT 1) AS product_image_path
@@ -1794,8 +1804,16 @@ router.get('/my-favorites', authenticateToken, async (req, res) => {
        WHERE pf.user_id = ?
        ORDER BY pf.created_at DESC
        LIMIT ${limitNum} OFFSET ${offsetNum}`,
-      [req.user.id]
-    );
+      [req.user.id]),
+      query(
+        `SELECT COUNT(*) AS total
+           FROM product_favorites pf
+           INNER JOIN products p ON p.id = pf.product_id AND p.deleted_at IS NULL
+           INNER JOIN shops s ON s.id = p.shop_id AND s.deleted_at IS NULL
+          WHERE pf.user_id = ?`,
+        [req.user.id]
+      ),
+    ]);
     const list = (rows || []).slice(0, pageSize).map((r) => ({
       product_id: r.product_id,
       product_name: r.product_name,
@@ -1804,7 +1822,8 @@ router.get('/my-favorites', authenticateToken, async (req, res) => {
       favorited_at: r.favorited_at,
     }));
     const hasMore = (rows || []).length > pageSize;
-    res.status(200).json({ status: 0, message: '获取成功', data: { list, hasMore, page, pageSize } });
+    const total = Number(totalRows?.[0]?.total) || 0;
+    res.status(200).json({ status: 0, message: '获取成功', data: { list, total, hasMore, page, pageSize } });
   } catch (e) {
     console.error('获取我的收藏错误:', e);
     res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });

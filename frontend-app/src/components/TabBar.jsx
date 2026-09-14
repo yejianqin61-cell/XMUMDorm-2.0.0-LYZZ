@@ -9,11 +9,26 @@ const TABS = [
   { path: '/myzone', iconKey: 'My Zone', labelZh: '我的', labelEn: 'My Zone' },
 ];
 
+// These legacy routes live under /about but are reached from My Zone's About page.
+const MY_ZONE_ABOUT_ROUTES = new Set([
+  '/about/profile',
+  '/about/team',
+  '/about/editor-note',
+  '/about/algorithm',
+  '/about/level-algorithm',
+  '/about/thanks',
+  '/about/disclaimer',
+  '/about/contact',
+  '/about/schedule',
+  '/about/diary',
+]);
+
 /** 根据当前路径得到对应的 Tab 下标（供 Layout 全屏滑动切换复用） */
 export function getTabIndex(pathname) {
-  if (pathname.startsWith('/myzone')) return 3;
-  if (pathname.startsWith('/eat')) return 2;
-  if (pathname === '/' || pathname.startsWith('/post') || pathname.startsWith('/treehole')) return 1;
+  if (pathname.startsWith('/myzone') || pathname.startsWith('/user') || pathname.startsWith('/mailbox')) return 3;
+  if (MY_ZONE_ABOUT_ROUTES.has(pathname)) return 3;
+  if (pathname.startsWith('/eat') || pathname.startsWith('/merchant')) return 2;
+  if (pathname === '/' || pathname.startsWith('/post') || pathname.startsWith('/treehole') || pathname.startsWith('/publish')) return 1;
   if (pathname.startsWith('/about')) return 0;
   return 0;
 }
@@ -35,7 +50,10 @@ function TabBar() {
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
   const location = useLocation();
-  const activeIndex = getTabIndex(location.pathname);
+  const routeTabIndex = location.state?.tabIndex;
+  const activeIndex = Number.isInteger(routeTabIndex) && routeTabIndex >= 0 && routeTabIndex < TABS.length
+    ? routeTabIndex
+    : getTabIndex(location.pathname);
   const tabCount = TABS.length;
 
   return (
@@ -55,24 +73,27 @@ function TabBar() {
         >
           <div className="tab-indicator-pill" />
         </div>
-        {TABS.map((tab) => (
+        {TABS.map((tab, index) => {
+          const selected = activeIndex === index;
+          return (
           <NavLink
             key={tab.path}
             to={tab.path}
             role="tab"
-            aria-selected={activeIndex === TABS.indexOf(tab)}
+            aria-selected={selected}
             aria-label={isZh ? tab.labelZh : tab.labelEn}
-            className={({ isActive }) => `tab-item ${isActive ? 'active' : ''}`}
+            className={`tab-item ${selected ? 'active' : ''}`}
             end={tab.path === '/'}
           >
-            {({ isActive }) => (
+            {() => (
               <>
-                <span className="tab-icon">{getIcon(tab.iconKey, isActive)}</span>
+                <span className="tab-icon">{getIcon(tab.iconKey, selected)}</span>
                 <span className="tab-label">{isZh ? tab.labelZh : tab.labelEn}</span>
               </>
             )}
           </NavLink>
-        ))}
+          );
+        })}
       </div>
     </nav>
   );

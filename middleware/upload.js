@@ -9,8 +9,9 @@
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { uploadBuffer, guessContentType, isObjectStorageConfigured } = require('../services/objectStorage');
+const { uploadBuffer, isObjectStorageConfigured } = require('../services/objectStorage');
 const sharp = require('sharp');
+const { prepareImageUpload } = require('../services/imageProcessing');
 
 // 默认只允许静态图（头像/商品图/评论图）
 const ALLOWED_IMAGE_MIMES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -105,13 +106,15 @@ async function savePostImages(files, postId) {
     const filename = `post_${postId}_${i + 1}${ext}`;
     const key = `posts/${filename}`;
     const thumbKey = `posts/thumbs/post_${postId}_${i + 1}.webp`;
+    const prepared = await prepareImageUpload({ key, body: file.buffer, mimetype: file.mimetype });
     if (useObjectStorage) {
-      await uploadBuffer({ key, body: file.buffer, contentType: guessContentType(file.mimetype, ext) });
+      await uploadBuffer(prepared);
+      keys.push(prepared.key);
     } else {
-      const filePath = path.join(process.cwd(), 'uploads', key);
-      fs.writeFileSync(filePath, file.buffer);
+      const filePath = path.join(process.cwd(), 'uploads', prepared.key);
+      fs.writeFileSync(filePath, prepared.body);
+      keys.push(prepared.key);
     }
-    keys.push(key);
 
     // 生成缩略图：瀑布流优先加载，减少带宽与解码压力
     // - webp: 兼容性好
@@ -177,9 +180,9 @@ async function saveProductImages(files, productId) {
     const file = files[i];
     const ext = extMap[file.mimetype] || '.jpg';
     const filename = `product_${productId}_${i + 1}${ext}`;
-    const key = `products/${filename}`;
-    await uploadBuffer({ key, body: file.buffer, contentType: guessContentType(file.mimetype, ext) });
-    keys.push(key);
+    const prepared = await prepareImageUpload({ key: `products/${filename}`, body: file.buffer, mimetype: file.mimetype });
+    await uploadBuffer(prepared);
+    keys.push(prepared.key);
   }
   return keys;
 }
@@ -192,9 +195,9 @@ async function saveCommentImages(files, commentId) {
     const file = files[i];
     const ext = extMap[file.mimetype] || '.jpg';
     const filename = `comment_${commentId}_${i + 1}${ext}`;
-    const key = `comments/${filename}`;
-    await uploadBuffer({ key, body: file.buffer, contentType: guessContentType(file.mimetype, ext) });
-    keys.push(key);
+    const prepared = await prepareImageUpload({ key: `comments/${filename}`, body: file.buffer, mimetype: file.mimetype });
+    await uploadBuffer(prepared);
+    keys.push(prepared.key);
   }
   return keys;
 }

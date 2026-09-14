@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -28,6 +28,9 @@ import {
 } from '@shared/utils/formatTodoDue';
 import UserLevelBadge from '../components/UserLevelBadge';
 import LevelProgressBar from '../components/LevelProgressBar';
+import { readPersistedTodos, writePersistedTodos } from '../utils/todoPersist';
+import { readPersistedScheduleWeek, writePersistedScheduleWeek } from '../utils/schedulePersist';
+import { QK } from '@shared/query/queryKeys';
 
 function MyZoneStrings(isZh) {
   return {
@@ -99,8 +102,9 @@ function MyZone() {
   const isZh = lang !== 'en';
   const t = MyZoneStrings(isZh);
 
-  const { isLoggedIn, isMerchant, isAdmin, displayName, displayAvatar, user, userLoading, logout } = useAuth();
+  const { isLoggedIn, isMerchant, isAdmin, displayName, displayAvatar, user, userLoading } = useAuth();
   const userId = user?.id ? Number(user.id) : 0;
+  const persistedSchedule = useMemo(() => readPersistedScheduleWeek(userId, 1), [userId]);
 
   const goLogin = () => navigate('/login', { state: { from: { pathname: '/myzone' } } });
   const goProfile = () => {
@@ -113,10 +117,15 @@ function MyZone() {
   };
 
   const scheduleTodayQuery = useQuery({
-    queryKey: ['myzone', 'scheduleWeek', 1],
-    enabled: isLoggedIn,
-    queryFn: () => getScheduleWeek(1),
-    staleTime: 5 * 60 * 1000,
+    queryKey: [...QK.scheduleWeek(1), userId],
+    enabled: isLoggedIn && !!userId,
+    queryFn: async () => {
+      const data = await getScheduleWeek(1);
+      writePersistedScheduleWeek(userId, 1, data);
+      return data;
+    },
+    ...(persistedSchedule !== undefined ? { initialData: persistedSchedule } : {}),
+    staleTime: 30 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
@@ -159,14 +168,12 @@ function MyZone() {
   });
 
   const reviewsCountQuery = useQuery({
-    queryKey: ['myzone', 'reviewsCount'],
-    enabled: isLoggedIn,
+    queryKey: ['myzone', 'reviewsCount', userId],
+    enabled: isLoggedIn && !!userId,
     queryFn: async () => {
       const data = await getMyProductReviews({ page: 1, pageSize: 1 });
-      const total = data?.total ?? data?.count ?? data?.pagination?.total;
-      if (Number.isFinite(Number(total))) return Number(total);
-      const list = data?.list ?? [];
-      return Array.isArray(list) ? list.length : 0;
+      const total = Number(data?.total ?? data?.count ?? data?.pagination?.total ?? data?.list?.length);
+      return Number.isFinite(total) ? total : 0;
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
@@ -176,14 +183,12 @@ function MyZone() {
   });
 
   const favoritesCountQuery = useQuery({
-    queryKey: ['myzone', 'favoritesCount'],
-    enabled: isLoggedIn,
+    queryKey: ['myzone', 'favoritesCount', userId],
+    enabled: isLoggedIn && !!userId,
     queryFn: async () => {
       const data = await getMyFavorites({ page: 1, pageSize: 1 });
-      const total = data?.total ?? data?.count ?? data?.pagination?.total;
-      if (Number.isFinite(Number(total))) return Number(total);
-      const list = data?.list ?? [];
-      return Array.isArray(list) ? list.length : 0;
+      const total = Number(data?.total ?? data?.count ?? data?.pagination?.total ?? data?.list?.length);
+      return Number.isFinite(total) ? total : 0;
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
@@ -284,7 +289,7 @@ function MyZone() {
             <CurrentCourseCard isLoggedIn={isLoggedIn} course={currentCourse} loading={scheduleTodayQuery.isFetching} to="/myzone/schedule" />
           </motion.section>
 
-          {isLoggedIn && <TodoPreview />}
+          {isLoggedIn && <TodoPreview userId={userId} />}
 
           <motion.section
             variants={listItem}
@@ -337,18 +342,24 @@ function MyZone() {
   );
 }
 
-function TodoPreview() {
+function TodoPreview({ userId }) {
   const navigate = useNavigate();
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
 
+  const persistedTodos = useMemo(() => readPersistedTodos(userId), [userId]);
   const { data } = useQuery({
-    queryKey: ['todos', 'preview'],
+    queryKey: ['todos', 'preview', userId],
     queryFn: () => getTodos({ status: 'active', pageSize: 20 }),
+    enabled: !!userId,
     staleTime: 30 * 1000,
+    ...(persistedTodos !== undefined ? { initialData: { list: persistedTodos } } : {}),
   });
 
-  const rawTodos = data?.data?.list || data?.list || data?.data || [];
+  const rawTodos = useMemo(() => data?.data?.list || data?.list || data?.data || [], [data]);
+  useEffect(() => {
+    if (userId && Array.isArray(rawTodos)) writePersistedTodos(userId, rawTodos);
+  }, [rawTodos, userId]);
   const topItems = [...rawTodos]
     .sort((a, b) => {
       const timeDiff = getTodoSortValue(a) - getTodoSortValue(b);

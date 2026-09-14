@@ -23,6 +23,7 @@
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
+  overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
   padding-bottom: calc(var(--tabbar-height, 72px) + var(--safe-bottom, 0px) + 12px);
 }

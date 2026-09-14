@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Toast } from '../context/ToastContext';
 import EmptyState from '../components/ui/EmptyState';
@@ -20,6 +21,7 @@ const RATING_OPTIONS = [
 function FoodReviewPublish() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { isLoggedIn, isMerchant, isAdmin } = useAuth();
   const [food, setFood] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -107,6 +109,7 @@ function FoodReviewPublish() {
     setSubmitLoading(true);
     postProductComment(productId, { rating, content: comment.trim(), imageFiles })
       .then(() => {
+        queryClient.invalidateQueries({ queryKey: ['myzone', 'reviewsCount'] });
         Toast.success('Review published');
         setTimeout(() => navigate(`/eat/food/${id}`, { replace: true }), 600);
       })
