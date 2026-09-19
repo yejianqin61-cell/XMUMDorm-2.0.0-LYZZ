@@ -244,18 +244,37 @@ function parseScheduleText(text) {
 
   for (const block of blocks) {
     const parsed = parseCourseBlock(block);
+    if (parsed.course.course_code) {
+      parsed.course.course_code = parsed.course.course_code.toUpperCase();
+    }
     courses.push(parsed.course);
     for (const m of parsed.meetings) meetings.push({ course_code: parsed.course.course_code, ...m });
     for (const e of parsed.errors) errors.push(e);
     errorCount += parsed.errors.length;
   }
 
+  // The source timetable may repeat a course block for different meeting times.
+  // The database keeps one course per user/course code, while meetings remain many-to-one.
+  const coursesByCode = new Map();
+  for (const course of courses) {
+    const code = course.course_code;
+    if (!code) continue;
+    const existing = coursesByCode.get(code);
+    if (!existing) {
+      coursesByCode.set(code, course);
+      continue;
+    }
+    existing.raw_block = [existing.raw_block, course.raw_block].filter(Boolean).join('\n\n');
+    errors.push(`重复课程号已合并：${code}`);
+  }
+  const uniqueCourses = [...coursesByCode.values()];
+
   return {
-    courses,
+    courses: uniqueCourses,
     meetings,
     errors,
     stats: {
-      courseCount: courses.length,
+      courseCount: uniqueCourses.length,
       meetingCount: meetings.length,
       errorCount: errors.length
     }
