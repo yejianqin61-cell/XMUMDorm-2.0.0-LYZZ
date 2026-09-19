@@ -240,8 +240,6 @@ function parseScheduleText(text) {
 
   const courses = [];
   const meetings = [];
-  let errorCount = errors.length;
-
   for (const block of blocks) {
     const parsed = parseCourseBlock(block);
     if (parsed.course.course_code) {
@@ -250,7 +248,6 @@ function parseScheduleText(text) {
     courses.push(parsed.course);
     for (const m of parsed.meetings) meetings.push({ course_code: parsed.course.course_code, ...m });
     for (const e of parsed.errors) errors.push(e);
-    errorCount += parsed.errors.length;
   }
 
   // The source timetable may repeat a course block for different meeting times.
@@ -265,7 +262,6 @@ function parseScheduleText(text) {
       continue;
     }
     existing.raw_block = [existing.raw_block, course.raw_block].filter(Boolean).join('\n\n');
-    errors.push(`重复课程号已合并：${code}`);
   }
   const uniqueCourses = [...coursesByCode.values()];
 
