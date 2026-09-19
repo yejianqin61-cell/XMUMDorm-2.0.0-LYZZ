@@ -130,10 +130,10 @@ router.post('/import/commit', authenticateToken, async (req, res) => {
         message: '课程表表不存在：请对当前连接的数据库执行 migrations/009_timetable_import.sql（如果你用 Railway，请确保脚本连接的是 Railway 的 DATABASE_URL）'
       });
     }
-    if (e?.message?.includes('timetable_')) {
+    if (code === 'ER_DUP_ENTRY') {
       return res.status(500).json({
         status: -1,
-        message: '课程表功能后端未完成数据库升级：请先执行 migrations/009_timetable_import.sql'
+        message: '课程表中存在重复课程号，请检查导入内容后重试'
       });
     }
     return res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
@@ -191,12 +191,6 @@ router.get('/week', authenticateToken, async (req, res) => {
       return res.status(500).json({
         status: -1,
         message: '课程表表不存在：请对当前连接的数据库执行 migrations/009_timetable_import.sql（如果你用 Railway，请确保脚本连接的是 Railway 的 DATABASE_URL）'
-      });
-    }
-    if (e?.message?.includes('timetable_')) {
-      return res.status(500).json({
-        status: -1,
-        message: '课程表功能后端未完成数据库升级：请先执行 migrations/009_timetable_import.sql'
       });
     }
     return res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
