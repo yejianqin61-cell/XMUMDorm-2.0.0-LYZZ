@@ -1,26 +1,12 @@
-/* 帖子详情：与树洞列表同一套 iOS 分组背景 + 白卡片 + 系统蓝/灰字阶 */
+/* 帖子详情 */
 
 .post-detail-page {
+  position: relative;
   padding: 14px 18px var(--space-12);
   min-height: 100%;
   background: var(--color-bg-page);
   font-family: var(--font-family-body);
   -webkit-font-smoothing: antialiased;
-}
-
-.post-detail-layout {
-  gap: var(--space-4);
-}
-
-.post-detail-layout .detail-page-layout__main {
-  max-width: none;
-}
-
-.post-detail-empty {
-  text-align: center;
-  color: var(--post-ios-secondary-label, rgba(60, 60, 67, 0.6));
-  margin: 24px 0;
-  font-size: 15px;
 }
 
 .post-detail-loading,
@@ -53,7 +39,41 @@
   cursor: pointer;
 }
 
+/* 首图氛围模糊层 */
+.post-detail-atmo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 260px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.post-detail-atmo-img {
+  position: absolute;
+  inset: -60px 0 0;
+  background-size: cover;
+  background-position: center;
+  filter: blur(34px) brightness(1.1);
+  opacity: 0.28;
+  transform: scale(1.08);
+}
+
+.post-detail-atmo-fade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    var(--color-bg-page) 100%
+  );
+}
+
 .post-detail-card {
+  position: relative;
+  z-index: 1;
   padding: 20px;
   border: 1px solid var(--color-border-default);
   border-radius: 8px;
@@ -322,19 +342,9 @@
   color: var(--color-text-primary);
 }
 
-.post-detail-comments-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 6px;
+.post-detail-comments {
+  margin-top: var(--space-2);
 }
-
-.post-detail-comments-head .post-detail-comments-title {
-  margin: 0;
-}
-
-/* removed header composer; now using floating bottom bar */
 
 .post-detail-replying-inline {
   margin-top: 10px;
@@ -391,23 +401,6 @@
   .post-detail-comment-delete:hover {
     color: var(--post-ios-red, #ff3b30);
     background: rgba(255, 59, 48, 0.08);
-  }
-}
-
-.post-detail-reply-delete {
-  padding: 4px 8px;
-  border: none;
-  background: none;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 400;
-  color: var(--post-ios-accent, #007aff);
-  border-radius: var(--post-ios-radius-sm, 10px);
-}
-
-@media (hover: hover) {
-  .post-detail-reply-delete:hover {
-    opacity: 0.65;
   }
 }
 
@@ -521,6 +514,21 @@
   z-index: 90;
 }
 
+.post-detail-bottom-emoji {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 0;
+  flex-shrink: 0;
+}
+
 .post-detail-bottom-input {
   flex: 1;
   min-width: 0;
@@ -611,4 +619,3 @@
   margin-left: 4px;
   color: var(--post-ios-tertiary-label, rgba(60, 60, 67, 0.6));
 }
-
