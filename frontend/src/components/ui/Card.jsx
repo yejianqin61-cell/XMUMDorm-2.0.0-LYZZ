@@ -1,6 +1,4 @@
-function joinClassNames(...parts) {
-  return parts.filter(Boolean).join(' ');
-}
+import NeoCard from '../retroui/Card';
 
 export default function Card({
   as: Component = 'div',
@@ -12,27 +10,17 @@ export default function Card({
   children,
   ...rest
 }) {
+  const padMap = { sm: 'p-3', md: 'p-4', lg: 'p-6' };
+  const pad = padMap[padding] || 'p-4';
+
   return (
     <Component
-      className={joinClassNames(
-        'ui-card',
-        variant === 'strong' && 'ui-card--strong',
-        variant === 'muted' && 'ui-card--muted',
-        interactive && 'ui-card--interactive',
-        className
-      )}
+      className={`ui-card ${interactive ? 'cursor-pointer' : ''} ${className}`}
       {...rest}
     >
-      <div
-        className={joinClassNames(
-          'ui-card__body',
-          padding === 'sm' && 'ui-card__body--sm',
-          padding === 'lg' && 'ui-card__body--lg',
-          bodyClassName
-        )}
-      >
+      <NeoCard className={`w-full ${pad} ${bodyClassName}`}>
         {children}
-      </div>
+      </NeoCard>
     </Component>
   );
 }

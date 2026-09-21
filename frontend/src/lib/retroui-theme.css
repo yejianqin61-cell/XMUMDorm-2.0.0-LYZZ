@@ -1,0 +1,44 @@
+/* RetroUI Neobrutalism Theme — Tailwind v4 @theme inline */
+
+@theme inline {
+  --color-background: var(--ru-background);
+  --color-foreground: var(--ru-foreground);
+  --color-primary: var(--ru-primary);
+  --color-primary-foreground: var(--ru-primary-foreground);
+  --color-primary-hover: var(--ru-primary-hover);
+  --color-secondary: var(--ru-secondary);
+  --color-secondary-foreground: var(--ru-secondary-foreground);
+  --color-card: var(--ru-card);
+  --color-card-foreground: var(--ru-card-foreground);
+  --color-muted: var(--ru-muted);
+  --color-muted-foreground: var(--ru-muted-foreground);
+  --color-accent: var(--ru-accent);
+  --color-accent-foreground: var(--ru-accent-foreground);
+  --color-destructive: var(--ru-destructive);
+  --color-destructive-foreground: var(--ru-destructive-foreground);
+  --color-border: var(--ru-border);
+  --color-popover: var(--ru-popover);
+  --color-input: var(--ru-input);
+}
+
+:root {
+  --radius: 0;
+  --ru-background: #f5ece7;
+  --ru-foreground: #000;
+  --ru-card: #fff;
+  --ru-card-foreground: #000;
+  --ru-primary: #ffdb33;
+  --ru-primary-hover: #ffcc00;
+  --ru-primary-foreground: #000;
+  --ru-secondary: #000;
+  --ru-secondary-foreground: #fff;
+  --ru-muted: #d5d5d5;
+  --ru-popover: #fff;
+  --ru-muted-foreground: #5a5a5a;
+  --ru-accent: #fae583;
+  --ru-accent-foreground: #000;
+  --ru-destructive: #e63946;
+  --ru-destructive-foreground: #fff;
+  --ru-border: #000;
+  --ru-input: #fff;
+}

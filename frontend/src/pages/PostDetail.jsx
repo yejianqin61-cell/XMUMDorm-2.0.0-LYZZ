@@ -1,9 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { motion as Motion } from 'framer-motion';
-import { ArrowLeft, Heart, MessageCircle, MoreHorizontal, SendHorizonal } from 'lucide-react';
-import ReportButton from '../components/ReportButton';
+import { ArrowLeft } from 'lucide-react';
+import PostDetailShell from '../components/PostDetailShell';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import {
@@ -17,22 +16,11 @@ import {
 import { API_BASE_URL } from '@shared/api/config';
 import { Toast } from '../context/ToastContext';
 import { useExpFeedback } from '../context/ExpFeedbackContext';
-import UserLevelBadge from '../components/UserLevelBadge';
-import EmptyState from '../components/ui/EmptyState';
-import ImagePreview from '../components/ImagePreview';
-import { StackedCardCarousel } from '../components/StackedCardCarousel';
-import LikeBurst from '../components/LikeBurst';
-import DetailPageLayout from '../components/templates/DetailPageLayout';
-import { formatPostTime } from '@shared/utils/formatTime';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { QK } from '@shared/query/queryKeys';
 import './PostDetail.css';
 
 function prefixAvatar(url) {
-  return url && !url.startsWith('http') ? `${API_BASE_URL}${url}` : url;
-}
-
-function prefixImageUrl(url) {
   return url && !url.startsWith('http') ? `${API_BASE_URL}${url}` : url;
 }
 
@@ -47,7 +35,7 @@ function mapCommentTree(c) {
   };
 }
 
-function PostDetail() {
+export default function PostDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -60,17 +48,8 @@ function PostDetail() {
 
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
-  const [newComment, setNewComment] = useState('');
-  const [replyingTo, setReplyingTo] = useState(null);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [imagePreview, setImagePreview] = useState({ open: false, index: 0 });
-  const [ownerMenuOpen, setOwnerMenuOpen] = useState(false);
-  const likeBurstRef = useRef(null);
-  const composerInputRef = useRef(null);
-  const commentsRef = useRef(null);
-  const [carouselIndex, setCarouselIndex] = useState(0);
-  const [carouselDir, setCarouselDir] = useState(1);
 
   const detailQuery = useQuery({
     queryKey: QK.postDetail(postId, tokenKey),
@@ -102,11 +81,6 @@ function PostDetail() {
     setLiked(!!post.user_liked);
   }, [post]);
 
-  useEffect(() => {
-    setCarouselIndex(0);
-    setCarouselDir(1);
-  }, [postId]);
-
   const requireLogin = useCallback(() => {
     if (!isLoggedIn) {
       navigate('/login', { replace: true, state: { from: { pathname: `/post/${id}` } } });
@@ -115,17 +89,8 @@ function PostDetail() {
     return false;
   }, [id, isLoggedIn, navigate]);
 
-  const focusComposer = useCallback(() => {
-    try {
-      composerInputRef.current?.focus?.();
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  const handleLike = async (event) => {
+  const handleLike = useCallback(async () => {
     if (requireLogin()) return;
-    likeBurstRef.current?.trigger(event);
     const prevLiked = liked;
     const prevCount = likeCount;
     const optimisticLiked = !prevLiked;
@@ -206,150 +171,141 @@ function PostDetail() {
         }
       );
     }
-  };
+  }, [liked, likeCount, postId, tokenKey, queryClient, requireLogin, handleExpResponse]);
 
-  const handleSubmitComment = async (event) => {
-    event.preventDefault();
-    if (requireLogin()) return;
-    if (!newComment.trim()) return;
-    const content = newComment.trim();
-    const parentId = replyingTo?.id ?? null;
+  const handleSubmitComment = useCallback(
+    async ({ content, parentId }) => {
+      setSubmitLoading(true);
 
-    setSubmitLoading(true);
+      const prevComments = queryClient.getQueryData(QK.postComments(postId));
+      const prevDetail = queryClient.getQueryData(QK.postDetail(postId, tokenKey));
+      const tempId = -Date.now();
+      const nowIso = new Date().toISOString();
+      const me = user
+        ? {
+            id: user.id,
+            username: user.username,
+            nickname: user.nickname,
+            avatar: prefixAvatar(user.avatar),
+          }
+        : null;
 
-    const prevComments = queryClient.getQueryData(QK.postComments(postId));
-    const prevDetail = queryClient.getQueryData(QK.postDetail(postId, tokenKey));
-    const tempId = -Date.now();
-    const nowIso = new Date().toISOString();
-    const me = user
-      ? {
-          id: user.id,
-          username: user.username,
-          nickname: user.nickname,
-          avatar: prefixAvatar(user.avatar),
-        }
-      : null;
-
-    const optimisticNode = {
-      id: tempId,
-      post_id: postId,
-      user_id: user?.id,
-      parent_id: parentId,
-      content,
-      created_at: nowIso,
-      author: me,
-      replies: [],
-      __optimistic: true,
-    };
-
-    const bumpCommentCountInPostCaches = (delta) => {
-      queryClient.setQueryData(QK.postDetail(postId, tokenKey), (old) => {
-        if (!old || old.id !== postId) return old;
-        return { ...old, comment_count: Math.max(0, Number(old.comment_count || 0) + delta) };
-      });
-
-      queryClient.setQueriesData(
-        {
-          predicate: (query) => {
-            const key = query.queryKey || [];
-            return key[0] === 'posts' && key[1] === 'infinite' && key[2] === tokenKey;
-          },
-        },
-        (old) => {
-          if (!old || !old.pages || !Array.isArray(old.pages)) return old;
-          return {
-            ...old,
-            pages: old.pages.map((page) => {
-              const list = Array.isArray(page.list) ? page.list : [];
-              return {
-                ...page,
-                list: list.map((item) => {
-                  if (!item || item.id !== postId) return item;
-                  return { ...item, comment_count: Math.max(0, Number(item.comment_count || 0) + delta) };
-                }),
-              };
-            }),
-          };
-        }
-      );
-    };
-
-    setNewComment('');
-    setReplyingTo(null);
-
-    queryClient.setQueryData(QK.postComments(postId), (old) => {
-      const list = Array.isArray(old) ? [...old] : [];
-      if (!parentId) {
-        return [optimisticNode, ...list];
-      }
-      return list.map((comment) => {
-        if (!comment || comment.id !== parentId) return comment;
-        const replies = Array.isArray(comment.replies) ? comment.replies : [];
-        return { ...comment, replies: [...replies, { ...optimisticNode, replies: undefined }] };
-      });
-    });
-    bumpCommentCountInPostCaches(1);
-
-    try {
-      const created = await createComment(postId, {
+      const optimisticNode = {
+        id: tempId,
+        post_id: postId,
+        user_id: user?.id,
+        parent_id: parentId ?? null,
         content,
-        parent_id: parentId ?? undefined,
-      });
-      handleExpResponse(created);
-      const normalized = created ? mapCommentTree({ ...created, replies: [] }) : null;
+        created_at: nowIso,
+        author: me,
+        replies: [],
+        __optimistic: true,
+      };
+
+      const bumpCommentCountInPostCaches = (delta) => {
+        queryClient.setQueryData(QK.postDetail(postId, tokenKey), (old) => {
+          if (!old || old.id !== postId) return old;
+          return { ...old, comment_count: Math.max(0, Number(old.comment_count || 0) + delta) };
+        });
+
+        queryClient.setQueriesData(
+          {
+            predicate: (query) => {
+              const key = query.queryKey || [];
+              return key[0] === 'posts' && key[1] === 'infinite' && key[2] === tokenKey;
+            },
+          },
+          (old) => {
+            if (!old || !old.pages || !Array.isArray(old.pages)) return old;
+            return {
+              ...old,
+              pages: old.pages.map((page) => {
+                const list = Array.isArray(page.list) ? page.list : [];
+                return {
+                  ...page,
+                  list: list.map((item) => {
+                    if (!item || item.id !== postId) return item;
+                    return { ...item, comment_count: Math.max(0, Number(item.comment_count || 0) + delta) };
+                  }),
+                };
+              }),
+            };
+          }
+        );
+      };
 
       queryClient.setQueryData(QK.postComments(postId), (old) => {
         const list = Array.isArray(old) ? [...old] : [];
         if (!parentId) {
-          return list.map((comment) => (comment && comment.id === tempId ? normalized || comment : comment));
+          return [optimisticNode, ...list];
         }
         return list.map((comment) => {
           if (!comment || comment.id !== parentId) return comment;
           const replies = Array.isArray(comment.replies) ? comment.replies : [];
-          return {
-            ...comment,
-            replies: replies.map((reply) => (reply && reply.id === tempId ? normalized || reply : reply)),
-          };
+          return { ...comment, replies: [...replies, { ...optimisticNode, replies: undefined }] };
         });
       });
+      bumpCommentCountInPostCaches(1);
 
-      Toast.success(isEn ? 'Comment posted' : '评论成功');
-    } catch (error) {
-      queryClient.setQueryData(QK.postComments(postId), prevComments);
-      queryClient.setQueryData(QK.postDetail(postId, tokenKey), prevDetail);
-      bumpCommentCountInPostCaches(-1);
-      Toast.error(getApiErrorMessage(error));
-    } finally {
-      setSubmitLoading(false);
-    }
-  };
+      try {
+        const created = await createComment(postId, {
+          content,
+          parent_id: parentId ?? undefined,
+        });
+        handleExpResponse(created);
+        const normalized = created ? mapCommentTree({ ...created, replies: [] }) : null;
 
-  const startReply = (comment) => setReplyingTo({ id: comment.id, content: comment.content });
-  const cancelReply = () => {
-    setReplyingTo(null);
-    setNewComment('');
-  };
+        queryClient.setQueryData(QK.postComments(postId), (old) => {
+          const list = Array.isArray(old) ? [...old] : [];
+          if (!parentId) {
+            return list.map((c) => (c && c.id === tempId ? normalized || c : c));
+          }
+          return list.map((c) => {
+            if (!c || c.id !== parentId) return c;
+            const replies = Array.isArray(c.replies) ? c.replies : [];
+            return {
+              ...c,
+              replies: replies.map((r) => (r && r.id === tempId ? normalized || r : r)),
+            };
+          });
+        });
 
-  const handleDeleteComment = async (commentId) => {
-    if (requireLogin()) return;
-    if (!window.confirm('Delete this comment? This action cannot be undone.')) return;
-    try {
-      await deleteComment(postId, commentId);
-      Toast.success('Deleted');
-      await queryClient.invalidateQueries({ queryKey: QK.postComments(postId) });
-    } catch (error) {
-      Toast.error(getApiErrorMessage(error));
-    }
-  };
+        Toast.success(isEn ? 'Comment posted' : '评论成功');
+      } catch (error) {
+        queryClient.setQueryData(QK.postComments(postId), prevComments);
+        queryClient.setQueryData(QK.postDetail(postId, tokenKey), prevDetail);
+        bumpCommentCountInPostCaches(-1);
+        Toast.error(getApiErrorMessage(error));
+      } finally {
+        setSubmitLoading(false);
+      }
+    },
+    [postId, tokenKey, user, queryClient, handleExpResponse, isEn]
+  );
 
-  const isAuthor = post && (post.user_id === user?.id || post.author?.id === user?.id || isAdmin);
+  const handleDeleteComment = useCallback(
+    async (commentId) => {
+      if (requireLogin()) return;
+      if (!window.confirm(isEn ? 'Delete this comment? This action cannot be undone.' : '确定删除这条评论？此操作不可撤销。')) return;
+      try {
+        await deleteComment(postId, commentId);
+        Toast.success(isEn ? 'Deleted' : '已删除');
+        await queryClient.invalidateQueries({ queryKey: QK.postComments(postId) });
+      } catch (error) {
+        Toast.error(getApiErrorMessage(error));
+      }
+    },
+    [postId, queryClient, requireLogin, isEn]
+  );
 
-  const handleDeletePost = async () => {
-    if (!window.confirm('Delete this post? This action cannot be undone.')) return;
+  const isAuthor = post ? (post.user_id === user?.id || post.author?.id === user?.id || isAdmin) : false;
+
+  const handleDeletePost = useCallback(async () => {
+    if (!window.confirm(isEn ? 'Delete this post? This action cannot be undone.' : '确定删除这条帖子？此操作不可撤销。')) return;
     setDeleteLoading(true);
     try {
       await deletePost(postId);
-      Toast.success('Deleted');
+      Toast.success(isEn ? 'Deleted' : '已删除');
       queryClient.setQueriesData(
         {
           predicate: (query) => {
@@ -376,340 +332,62 @@ function PostDetail() {
     } finally {
       setDeleteLoading(false);
     }
-  };
+  }, [postId, tokenKey, queryClient, navigate, isEn]);
 
-  const loading = detailQuery.isPending && !post;
-  const error = detailQuery.error ? getApiErrorMessage(detailQuery.error) : null;
-
-  if (loading) {
-    return (
-      <div className="post-detail-page">
-        <p className="post-detail-loading state-loading">Loading...</p>
-      </div>
-    );
-  }
-
-  if (error && !post) {
-    return (
-      <div className="post-detail-page">
-        <p className="post-detail-error state-error">{error}</p>
-        <button type="button" className="post-detail-text-btn" onClick={() => navigate('/')}>
-          Back to Home
-        </button>
-      </div>
-    );
-  }
-
-  if (!post) {
-    return (
-      <div className="post-detail-page">
-        <EmptyState
-          title="Post not found"
-          description="Post not found"
-          actionLabel="Back to Home"
-          onActionClick={() => navigate('/')}
-        />
-      </div>
-    );
-  }
-
-  const author = post.author || {};
-  const displayName = author.nickname ?? author.username ?? 'Anonymous';
-  const totalCommentCount = comments.reduce((sum, comment) => sum + 1 + (comment.replies?.length || 0), 0);
-  const imageUrls = Array.isArray(post.images) ? post.images.map((img) => prefixImageUrl(img.url)).filter(Boolean) : [];
+  const headerSlot = (
+    <Link
+      to="/"
+      className="post-detail-back"
+      aria-label={isEn ? 'Back to home' : '返回首页'}
+      title={isEn ? 'Back to home' : '返回首页'}
+    >
+      <ArrowLeft size={18} aria-hidden />
+    </Link>
+  );
 
   const detailTags = (() => {
-    if (post.type === 'announcement') {
+    if (post?.type === 'announcement') {
       return [{ key: 'ann', slug: null, label: isEn ? 'Announcement' : '公告' }];
     }
-    const tags = Array.isArray(post.tags) ? post.tags : [];
+    const tags = Array.isArray(post?.tags) ? post.tags : [];
     return tags.map((tag) => ({
       key: tag.id,
       slug: tag.slug,
       label: isEn ? (tag.name_en || tag.name_zh || tag.slug) : (tag.name_zh || tag.name_en || tag.slug),
+      to: tag.slug ? `/posts/tag/${encodeURIComponent(tag.slug)}` : '#',
     }));
   })();
 
   return (
-    <div className="post-detail-page">
-      {commentsQuery.isError ? (
-        <p className="post-detail-error" role="alert">
-          {getApiErrorMessage(commentsQuery.error)}
-        </p>
-      ) : null}
-
-      <DetailPageLayout
-        className="post-detail-layout"
-        header={(
-          <Link to="/" className="post-detail-back" aria-label={isEn ? 'Back to home' : '返回首页'} title={isEn ? 'Back to home' : '返回首页'}>
-            <ArrowLeft size={18} aria-hidden />
-          </Link>
-        )}
-        content={(
-          <article className="post-detail-card">
-            <div className="post-detail-author">
-              <button
-                type="button"
-                className="post-detail-avatar-wrap"
-                onClick={() => {
-                  if (author.id) {
-                    navigate(`/user/${author.id}`);
-                  }
-                }}
-                aria-label={`查看 ${displayName} 的主页`}
-              >
-                {author.avatar ? (
-                  <img src={author.avatar} alt="" className="post-detail-avatar" />
-                ) : (
-                  <img src="/default-avatar.svg" alt="" className="post-detail-avatar post-detail-avatar-default" />
-                )}
-              </button>
-
-              <div className="post-detail-author-info">
-                <div className="post-detail-name-tags">
-                  <span className="post-detail-username">{displayName}</span>
-                  {author.level ? (
-                    <UserLevelBadge level={author.level} badgeEmoji={author.badgeEmoji} size="sm" isZh={!isEn} />
-                  ) : null}
-                  {detailTags.length > 0 ? (
-                    <div className="post-detail-tags" aria-label={isEn ? 'Tags' : '标签'}>
-                      {detailTags.map((tag) =>
-                        tag.slug ? (
-                          <Link
-                            key={tag.key}
-                            to={`/posts/tag/${encodeURIComponent(tag.slug)}`}
-                            className="post-detail-tag"
-                          >
-                            {tag.label}
-                          </Link>
-                        ) : (
-                          <span key={tag.key} className="post-detail-tag post-detail-tag--static">
-                            {tag.label}
-                          </span>
-                        )
-                      )}
-                    </div>
-                  ) : null}
-                </div>
-                {post.created_at ? (
-                  <span className="post-detail-time" title={formatPostTime(post.created_at, true)}>
-                    {formatPostTime(post.created_at)}
-                  </span>
-                ) : null}
-              </div>
-
-              {isAuthor ? (
-                <div className="post-detail-owner-actions">
-                  <button
-                    type="button"
-                    className="post-detail-more-btn"
-                    onClick={() => setOwnerMenuOpen((open) => !open)}
-                    disabled={deleteLoading}
-                    title={isEn ? 'More' : '更多'}
-                    aria-label={isEn ? 'More' : '更多'}
-                    aria-expanded={ownerMenuOpen}
-                  >
-                    <MoreHorizontal size={18} aria-hidden />
-                  </button>
-                  {ownerMenuOpen ? (
-                    <button
-                      type="button"
-                      className="post-detail-delete-btn"
-                      onClick={() => {
-                        setOwnerMenuOpen(false);
-                        handleDeletePost();
-                      }}
-                    >
-                      {isEn ? 'Delete post' : '删除帖子'}
-                    </button>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
-
-            <p className="post-detail-content">{post.content}</p>
-
-            {imageUrls.length > 0 ? (
-              <div className="post-detail-media" aria-label="Post images">
-                {imageUrls.length === 1 ? (
-                  <button
-                    type="button"
-                    className="post-detail-image-wrap"
-                    onClick={() => setImagePreview({ open: true, index: 0 })}
-                  >
-                    <img src={imageUrls[0]} alt="" className="post-detail-image" />
-                  </button>
-                ) : (
-                  <StackedCardCarousel
-                    flat
-                    urls={imageUrls}
-                    index={carouselIndex}
-                    onChangeIndex={(next, dir) => {
-                      setCarouselDir(dir);
-                      setCarouselIndex(next);
-                    }}
-                    onOpenPreview={(index) => setImagePreview({ open: true, index })}
-                    dir={carouselDir}
-                  />
-                )}
-              </div>
-            ) : null}
-
-            {imagePreview.open && post.images?.length > 0 ? (
-              <ImagePreview
-                urls={post.images.map((img) => prefixImageUrl(img.url))}
-                initialIndex={imagePreview.index}
-                onClose={() => setImagePreview({ open: false, index: 0 })}
-              />
-            ) : null}
-
-            <div className="post-detail-actions">
-<Motion.button
-                type="button"
-                className={`post-detail-like-btn ${liked ? 'is-liked' : ''}`}
-                onClick={handleLike}
-                aria-pressed={liked}
-                whileTap={{ scale: 0.92 }}
-                transition={{ type: 'spring', stiffness: 700, damping: 28 }}
-              >
-                <Heart size={18} aria-hidden fill={liked ? 'currentColor' : 'none'} />
-                <span className="post-detail-like-count">{likeCount}</span>
-</Motion.button>
-              <button
-                type="button"
-                className="post-detail-comment-count"
-                onClick={() => commentsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-              >
-                <MessageCircle size={18} aria-hidden />
-                <span>{totalCommentCount}</span>
-              </button>
-              {!isAuthor ? (
-                <ReportButton target_type="post" target_id={post.id} className="post-detail-report-btn" />
-              ) : null}
-            </div>
-          </article>
-        )}
-        comments={(
-          <section className="post-detail-comments" ref={commentsRef}>
-            <h2 className="post-detail-comments-title">{isEn ? 'Comments' : '评论'}</h2>
-            {replyingTo ? (
-              <div className="post-detail-replying-inline">
-                <span>
-                  {isEn ? 'Reply:' : '回复:'} {replyingTo.content.slice(0, 20)}
-                  {replyingTo.content.length > 20 ? '...' : ''}
-                </span>
-                <button type="button" onClick={cancelReply}>
-                  {isEn ? 'Cancel' : '取消'}
-                </button>
-              </div>
-            ) : null}
-            <form className="post-detail-bottom-bar" onSubmit={handleSubmitComment}>
-              <input
-                ref={composerInputRef}
-                type="text"
-                className="post-detail-bottom-input"
-                placeholder={replyingTo ? (isEn ? 'Reply...' : '回复...') : (isEn ? 'Add a comment...' : '添加评论...')}
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                maxLength={500}
-              />
-              <Motion.button
-                type="submit"
-                className="post-detail-bottom-send"
-                disabled={!newComment.trim() || submitLoading}
-                whileTap={{ scale: 0.92 }}
-                transition={{ type: 'spring', stiffness: 700, damping: 28 }}
-                aria-label={isEn ? 'Send' : '发送'}
-              >
-                <SendHorizonal size={18} aria-hidden />
-              </Motion.button>
-            </form>
-            <ul className="post-detail-comment-list">
-              {comments.map((comment) => (
-                <li key={comment.id} className="post-detail-comment-wrap">
-                  <div className="post-detail-thread">
-                    <div className="post-detail-thread-avatar">
-                      {comment.author?.avatar ? (
-                        <img src={comment.author.avatar} alt="" />
-                      ) : (
-                        <img src="/default-avatar.svg" alt="" className="is-default" />
-                      )}
-                    </div>
-                    <div className="post-detail-thread-body">
-                      <div className="post-detail-thread-meta">
-                        <span className="post-detail-thread-name">
-                          {(comment.author?.nickname ?? comment.author?.username) || 'Anonymous'}
-                          {comment.author?.level ? (
-                            <UserLevelBadge level={comment.author.level} badgeEmoji={comment.author.badgeEmoji} size="sm" isZh={!isEn} />
-                          ) : null}
-                        </span>
-                        <button type="button" className="post-detail-reply-btn" onClick={() => { startReply(comment); focusComposer(); }}>
-                          {isEn ? 'Reply' : '回复'}
-                        </button>
-                        <ReportButton target_type="comment" target_id={comment.id} className="post-detail-report-btn" iconOnly />
-                        {comment.user_id === user?.id || isAdmin ? (
-                          <button
-                            type="button"
-                            className="post-detail-comment-delete"
-                            onClick={() => handleDeleteComment(comment.id)}
-                            title={isEn ? 'Delete' : '删除'}
-                            aria-label={isEn ? 'Delete' : '删除'}
-                          >
-                            ...
-                          </button>
-                        ) : null}
-                      </div>
-                      <p className="post-detail-thread-text">{comment.content}</p>
-                    </div>
-                  </div>
-                  {comment.replies && comment.replies.length > 0 ? (
-                    <ul className="post-detail-reply-list">
-                      {comment.replies.map((reply) => (
-                        <li key={reply.id} className="post-detail-thread post-detail-thread--reply">
-                          <div className="post-detail-thread-avatar">
-                            {reply.author?.avatar ? (
-                              <img src={reply.author.avatar} alt="" />
-                            ) : (
-                              <img src="/default-avatar.svg" alt="" className="is-default" />
-                            )}
-                          </div>
-                          <div className="post-detail-thread-body">
-                            <div className="post-detail-thread-meta">
-                              <span className="post-detail-thread-name">
-                                {(reply.author?.nickname ?? reply.author?.username) || 'Anonymous'}
-                                {reply.author?.level ? (
-                                  <UserLevelBadge level={reply.author.level} badgeEmoji={reply.author.badgeEmoji} size="sm" isZh={!isEn} />
-                                ) : null}
-                              </span>
-                              <ReportButton target_type="comment" target_id={reply.id} className="post-detail-report-btn" iconOnly />
-                              {reply.user_id === user?.id || isAdmin ? (
-                                <button
-                                  type="button"
-                                  className="post-detail-comment-delete"
-                                  onClick={() => handleDeleteComment(reply.id)}
-                                  title={isEn ? 'Delete' : '删除'}
-                                  aria-label={isEn ? 'Delete' : '删除'}
-                                >
-                                  ...
-                                </button>
-                              ) : null}
-                            </div>
-                            <p className="post-detail-thread-text">{reply.content}</p>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-      />
-
-      <LikeBurst ref={likeBurstRef} />
-    </div>
+    <PostDetailShell
+      post={post}
+      comments={comments}
+      loading={detailQuery.isPending && !post}
+      error={detailQuery.error ? getApiErrorMessage(detailQuery.error) : null}
+      liked={liked}
+      likeCount={likeCount}
+      onLike={handleLike}
+      onSubmitComment={handleSubmitComment}
+      submitLoading={submitLoading}
+      isLoggedIn={isLoggedIn}
+      user={user}
+      isAdmin={isAdmin}
+      onDeleteComment={handleDeleteComment}
+      loginPath="/login"
+      emptyTitle={isEn ? 'Post not found' : '帖子不存在'}
+      emptyActionLabel={isEn ? 'Back to Home' : '返回首页'}
+      onEmptyAction={() => navigate('/')}
+      headerSlot={headerSlot}
+      title={null}
+      metaSlot={null}
+      tags={detailTags}
+      reportTargetType={isAuthor ? null : 'post'}
+      commentReportType="comment"
+      isAuthor={isAuthor}
+      onDeletePost={handleDeletePost}
+      deleteLoading={deleteLoading}
+      showAtmo
+      showCommentCountBtn
+    />
   );
 }
-
-export default PostDetail;

@@ -1,12 +1,16 @@
+import NeoButton, { buttonVariants } from '../retroui/Button';
 import './Button.css';
 
-function joinClassNames(...parts) {
-  return parts.filter(Boolean).join(' ');
-}
-
-function isButtonElement(Component) {
-  return Component === 'button';
-}
+const VARIANT_MAP = {
+  primary: 'default',
+  secondary: 'secondary',
+  outline: 'outline',
+  danger: 'destructive',
+  tertiary: 'ghost',
+  ghost: 'ghost',
+  skip: 'link',
+  link: 'link',
+};
 
 export default function Button({
   as: Component = 'button',
@@ -22,26 +26,37 @@ export default function Button({
   block = false,
   ...rest
 }) {
+  const ruVariant = VARIANT_MAP[variant] || 'default';
   const mergedDisabled = disabled || loading;
-  const mergedType = isButtonElement(Component) ? (type ?? 'button') : undefined;
+
+  if (Component === 'button') {
+    return (
+      <NeoButton
+        type={type ?? 'button'}
+        variant={ruVariant}
+        size={size}
+        disabled={mergedDisabled}
+        loading={loading}
+        iconLeft={iconLeft}
+        iconRight={iconRight}
+        className={`${block ? 'w-full' : ''} ${className}`}
+        {...rest}
+      >
+        {children}
+      </NeoButton>
+    );
+  }
 
   return (
     <Component
-      type={mergedType}
-      className={joinClassNames(
-        'ui-button',
-        `ui-button--${variant}`,
-        `ui-button--${size}`,
-        block && 'ui-button--block',
-        className
-      )}
-      disabled={isButtonElement(Component) ? mergedDisabled : undefined}
-      aria-disabled={!isButtonElement(Component) && mergedDisabled ? 'true' : undefined}
+      className={`${buttonVariants({ variant: ruVariant, size })} ${block ? 'w-full' : ''} ${className}`}
+      disabled={mergedDisabled}
+      aria-disabled={mergedDisabled ? 'true' : undefined}
       {...rest}
     >
-      {loading ? <span className="ui-button__spinner" aria-hidden="true" /> : iconLeft}
+      {iconLeft}
       <span>{children}</span>
-      {!loading ? iconRight : null}
+      {iconRight}
     </Component>
   );
 }

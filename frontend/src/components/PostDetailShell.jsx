@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Heart, SendHorizonal, Smile } from 'lucide-react';
+import { Heart, MessageCircle, MoreHorizontal, SendHorizonal, Smile } from 'lucide-react';
 import ReportButton from './ReportButton';
 import { useLanguage } from '../context/LanguageContext';
 import { API_BASE_URL } from '@shared/api/config';
@@ -48,17 +48,24 @@ export default function PostDetailShell({
   tags = [],
   reportTargetType = null,
   commentReportType = null,
+  isAuthor = false,
+  onDeletePost,
+  deleteLoading = false,
+  showAtmo = false,
+  showCommentCountBtn = false,
 }) {
   const navigate = useNavigate();
   const { lang } = useLanguage();
   const isEn = lang === 'en';
   const likeBurstRef = useRef(null);
   const composerInputRef = useRef(null);
+  const commentsRef = useRef(null);
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState(null);
   const [imagePreview, setImagePreview] = useState({ open: false, index: 0 });
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [carouselDir, setCarouselDir] = useState(1);
+  const [ownerMenuOpen, setOwnerMenuOpen] = useState(false);
 
   const postId = post?.id;
 
@@ -148,7 +155,7 @@ export default function PostDetailShell({
 
   return (
     <div className="post-detail-page">
-      {heroUrl ? (
+      {showAtmo && heroUrl ? (
         <div className="post-detail-atmo" aria-hidden="true">
           <div className="post-detail-atmo-img" style={{ backgroundImage: `url('${heroUrl}')` }} />
           <div className="post-detail-atmo-fade" />
@@ -196,13 +203,41 @@ export default function PostDetailShell({
               )}
             </div>
             {post.created_at && (
-              <span className="post-detail-time" title={formatPostTime(post.created_at, true)}>
-                {formatPostTime(post.created_at)}
-                {metaSlot ? <span className="post-detail-time-extra">{metaSlot}</span> : null}
-              </span>
-            )}
+                <span className="post-detail-time" title={formatPostTime(post.created_at, true)}>
+                  {formatPostTime(post.created_at)}
+                  {metaSlot ? <span className="post-detail-time-extra">{metaSlot}</span> : null}
+                </span>
+              )}
+            </div>
+
+            {isAuthor && onDeletePost ? (
+              <div className="post-detail-owner-actions">
+                <button
+                  type="button"
+                  className="post-detail-more-btn"
+                  onClick={() => setOwnerMenuOpen((open) => !open)}
+                  disabled={deleteLoading}
+                  title={isEn ? 'More' : '更多'}
+                  aria-label={isEn ? 'More' : '更多'}
+                  aria-expanded={ownerMenuOpen}
+                >
+                  <MoreHorizontal size={18} aria-hidden />
+                </button>
+                {ownerMenuOpen ? (
+                  <button
+                    type="button"
+                    className="post-detail-delete-btn"
+                    onClick={() => {
+                      setOwnerMenuOpen(false);
+                      onDeletePost();
+                    }}
+                  >
+                    {isEn ? 'Delete post' : '删除帖子'}
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
           </div>
-        </div>
 
         {title ? <h1 className="post-detail-heading">{title}</h1> : null}
         <p className="post-detail-content">{post.content}</p>
@@ -252,6 +287,16 @@ export default function PostDetailShell({
             <Heart size={18} aria-hidden fill={liked ? 'currentColor' : 'none'} />
             <span className="post-detail-like-count">{likeCount}</span>
           </motion.button>
+          {showCommentCountBtn ? (
+            <button
+              type="button"
+              className="post-detail-comment-count"
+              onClick={() => commentsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            >
+              <MessageCircle size={18} aria-hidden />
+              <span>{totalCommentCount}</span>
+            </button>
+          ) : null}
           {reportTargetType && postId && (
             <ReportButton target_type={reportTargetType} target_id={postId} className="post-detail-report-btn" />
           )}
@@ -260,7 +305,7 @@ export default function PostDetailShell({
 
       <LikeBurst ref={likeBurstRef} />
 
-      <section className="post-detail-comments">
+      <section className="post-detail-comments" ref={commentsRef}>
         <h2 className="post-detail-comments-title">
           {isEn ? `Comments (${totalCommentCount})` : `评论 (${totalCommentCount})`}
         </h2>
