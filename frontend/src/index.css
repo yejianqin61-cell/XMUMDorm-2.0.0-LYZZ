@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./lib/retroui-theme.css";
 
 /* 全局主题：年轻、有活力、国际化（Inter + Noto Sans SC） */
 /* @deprecated — 以下变量由 tokens.css Legacy bridge 统一接管。
