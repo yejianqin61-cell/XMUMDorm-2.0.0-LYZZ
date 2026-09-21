@@ -1,3 +1,4 @@
+import NeoTextarea from '../retroui/Textarea';
 import { forwardRef } from 'react';
 import './Field.css';
 
@@ -28,16 +29,12 @@ const Textarea = forwardRef(function Textarea(
           {required ? <span className="ui-field__required"> *</span> : null}
         </label>
       ) : null}
-      <textarea
+      <NeoTextarea
         ref={ref}
         id={id}
         rows={rows}
-        className={joinClassNames(
-          'ui-field__control',
-          'ui-field__control--multiline',
-          error && 'is-error',
-          textareaClassName
-        )}
+        error={!!error}
+        className={textareaClassName}
         aria-invalid={error ? 'true' : undefined}
         {...rest}
       />

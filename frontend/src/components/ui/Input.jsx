@@ -1,3 +1,4 @@
+import NeoInput from '../retroui/Input';
 import { forwardRef } from 'react';
 import './Field.css';
 
@@ -22,6 +23,8 @@ const Input = forwardRef(function Input(
   },
   ref
 ) {
+  const sizeClass = size === 'sm' ? 'px-3 py-1.5 text-sm' : 'min-h-[48px]';
+
   return (
     <div className={joinClassNames('ui-field', compact && 'ui-field--compact', className)}>
       {label ? (
@@ -32,15 +35,14 @@ const Input = forwardRef(function Input(
       ) : null}
       <div className="ui-field__control-wrap">
         {prefix ? <span className="ui-field__prefix">{prefix}</span> : null}
-        <input
+        <NeoInput
           ref={ref}
           id={id}
+          error={!!error}
           className={joinClassNames(
-            'ui-field__control',
-            `ui-field__control--${size}`,
-            prefix && 'ui-field__control--with-prefix',
-            suffix && 'ui-field__control--with-suffix',
-            error && 'is-error',
+            prefix && 'pl-10',
+            suffix && 'pr-10',
+            sizeClass,
             inputClassName
           )}
           aria-invalid={error ? 'true' : undefined}
