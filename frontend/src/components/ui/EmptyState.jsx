@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
-import AppCard from './AppCard';
-import Button from './Button';
-import { useLanguage } from '../../context/LanguageContext';
+import { NeoEmpty } from '../retroui/Empty';
+import NeoButton from './Button';
 
 export default function EmptyState({
   title,
@@ -10,12 +9,10 @@ export default function EmptyState({
   actionTo,
   onActionClick,
   action = null,
-  icon = '○',
+  icon = null,
   eyebrow,
   className = '',
 }) {
-  const { isZh } = useLanguage();
-  const finalEyebrow = eyebrow ?? (isZh ? '暂无内容' : 'Empty');
   const resolvedAction = action || (
     actionLabel && (actionTo || onActionClick)
       ? {
@@ -28,28 +25,31 @@ export default function EmptyState({
   const hasAction = resolvedAction?.label && (resolvedAction?.to || resolvedAction?.onClick);
 
   return (
-    <AppCard className={className} tone="muted">
-      <div className="ui-state ui-state--empty" role="status" aria-label={title}>
-        <div className="ui-state__art" aria-hidden="true">
-          <span className="ui-state__icon">{icon}</span>
-        </div>
-        {finalEyebrow ? <p className="ui-state__eyebrow">{finalEyebrow}</p> : null}
-        <h3 className="ui-state__title">{title}</h3>
-        {description ? <p className="ui-state__description">{description}</p> : null}
-        {hasAction ? (
-          <div className="ui-state__actions">
+    <NeoEmpty className={className}>
+      <NeoEmpty.Content>
+        {icon && <NeoEmpty.Icon>{icon}</NeoEmpty.Icon>}
+        {eyebrow && (
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            {eyebrow}
+          </p>
+        )}
+        <NeoEmpty.Title>{title}</NeoEmpty.Title>
+        <NeoEmpty.Separator />
+        {description && <NeoEmpty.Description>{description}</NeoEmpty.Description>}
+        {hasAction && (
+          <>
             {resolvedAction.to ? (
-              <Button as={Link} to={resolvedAction.to} variant={resolvedAction.variant || 'primary'} onClick={resolvedAction.onClick}>
+              <NeoButton as={Link} to={resolvedAction.to} variant={resolvedAction.variant || 'primary'} onClick={resolvedAction.onClick}>
                 {resolvedAction.label}
-              </Button>
+              </NeoButton>
             ) : (
-              <Button type="button" variant={resolvedAction.variant || 'primary'} onClick={resolvedAction.onClick}>
+              <NeoButton type="button" variant={resolvedAction.variant || 'primary'} onClick={resolvedAction.onClick}>
                 {resolvedAction.label}
-              </Button>
+              </NeoButton>
             )}
-          </div>
-        ) : null}
-      </div>
-    </AppCard>
+          </>
+        )}
+      </NeoEmpty.Content>
+    </NeoEmpty>
   );
 }

@@ -31,11 +31,12 @@ export default function NeoBadge({
   variant = 'default',
   size = 'sm',
   className = '',
+  as: Component = 'span',
   ...props
 }) {
   return (
-    <span className={cn(badgeVariants({ variant, size }), className)} {...props}>
+    <Component className={cn(badgeVariants({ variant, size }), className)} {...props}>
       {children}
-    </span>
+    </Component>
   );
 }
