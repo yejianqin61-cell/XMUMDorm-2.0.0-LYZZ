@@ -5,7 +5,7 @@ import { getCanteenStrings } from '../../i18n/canteenStrings';
 import { getRegions } from '@shared/api/canteen';
 import { QK } from '@shared/query/queryKeys';
 import Card from '../../components/ui/Card';
-import NeoSkeleton from '../../components/retroui/Skeleton';
+import { NeoSkeleton } from '../../components/retroui/Skeleton';
 import EmptyState from '../../components/ui/EmptyState';
 import ErrorState from '../../components/ui/ErrorState';
 

@@ -11,7 +11,7 @@ import { formatPostTime } from '@shared/utils/formatTime';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import { NeoLoader } from '../../components/retroui/Loader';
-import NeoSkeleton from '../../components/retroui/Skeleton';
+import { NeoSkeleton } from '../../components/retroui/Skeleton';
 import EmptyState from '../../components/ui/EmptyState';
 import ErrorState from '../../components/ui/ErrorState';
 
