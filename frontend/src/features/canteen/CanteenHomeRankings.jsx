@@ -9,6 +9,13 @@ import {
   getRankingsNewHitProducts,
 } from '@shared/api/rankings';
 import { productImageUrl } from '@shared/api/config';
+import Button from '../../components/ui/Button';
+import Card from '../../components/ui/Card';
+import Badge from '../../components/ui/Badge';
+import NeoTab from '../../components/retroui/Tab';
+import { NeoLoader } from '../../components/retroui/Loader';
+import ErrorState from '../../components/ui/ErrorState';
+import EmptyState from '../../components/ui/EmptyState';
 
 export default function CanteenHomeRankings({ title, showTabs = true, footer }) {
   const navigate = useNavigate();
@@ -34,72 +41,106 @@ export default function CanteenHomeRankings({ title, showTabs = true, footer }) 
 
   const query = results[tab];
   const items = query.data?.data || query.data || [];
-  const isLoading = query.isLoading;
-  const isError = query.isError;
+  const isLoadingVal = query.isLoading;
+  const isErrorVal = query.isError;
+
+  const rankTone = (i) => {
+    if (i === 0) return 'warning';
+    if (i === 1) return 'secondary';
+    if (i === 2) return 'primary';
+    return 'default';
+  };
 
   const renderItem = (item, i) => {
     if (tab === 1) {
       return (
-        <div key={item.shop_id || i} className="canteen-rank-item" onClick={() => navigate(`/eat/merchant/${item.shop_id}`)}>
-          <span className={`canteen-rank-badge canteen-rank-badge--${i < 3 ? i + 1 : 'n'}`}>{i + 1}</span>
-          <div className="canteen-rank-icon-wrap">
-            <img src={item.logo_url ? productImageUrl(item.logo_url) : '/shops/default.jpg'} alt={item.shop_name} className="canteen-rank-thumb" />
+        <Card
+          key={item.shop_id || i}
+          className="flex items-center gap-3 cursor-pointer hover:bg-muted transition-colors"
+          onClick={() => navigate(`/eat/merchant/${item.shop_id}`)}
+        >
+          <Badge tone={rankTone(i)}>{i + 1}</Badge>
+          <div className="w-9 h-9 shrink-0 flex items-center justify-center">
+            <img
+              src={item.logo_url ? productImageUrl(item.logo_url) : '/shops/default.jpg'}
+              alt={item.shop_name}
+              className="w-8 h-8 object-cover border-2 border-black"
+            />
           </div>
-          <div className="canteen-rank-body">
-            <span className="canteen-rank-name">{item.shop_name}</span>
-            <span className="canteen-rank-meta">
+          <div className="flex flex-col min-w-0 flex-1">
+            <span className="font-semibold text-sm truncate">{item.shop_name}</span>
+            <span className="text-xs text-muted-foreground">
               {t.rankScore} {Number(item.comprehensive_score || 0).toFixed(1)}
             </span>
           </div>
-        </div>
+        </Card>
       );
     }
     return (
-      <div key={item.product_id || item.product_name || i} className="canteen-rank-item" onClick={() => navigate(`/eat/food/${item.product_id}`)}>
-        <span className={`canteen-rank-badge canteen-rank-badge--${i < 3 ? i + 1 : 'n'}`}>{i + 1}</span>
-        <div className="canteen-rank-icon-wrap">
-          <img src={productImageUrl(item.cover_url || item.image_url)} alt={item.product_name || item.name} className="canteen-rank-thumb" />
+      <Card
+        key={item.product_id || item.product_name || i}
+        className="flex items-center gap-3 cursor-pointer hover:bg-muted transition-colors"
+        onClick={() => navigate(`/eat/food/${item.product_id}`)}
+      >
+        <Badge tone={rankTone(i)}>{i + 1}</Badge>
+        <div className="w-9 h-9 shrink-0 flex items-center justify-center">
+          <img
+            src={productImageUrl(item.cover_url || item.image_url)}
+            alt={item.product_name || item.name}
+            className="w-8 h-8 object-cover border-2 border-black"
+          />
         </div>
-        <div className="canteen-rank-body">
-          <span className="canteen-rank-name">{item.product_name || item.name}</span>
-          <span className="canteen-rank-meta">
+        <div className="flex flex-col min-w-0 flex-1">
+          <span className="font-semibold text-sm truncate">{item.product_name || item.name}</span>
+          <span className="text-xs text-muted-foreground">
             {item.shop_name || item.region_code || ''}
             {item.comprehensive_score != null
               ? ` · ${Number(item.comprehensive_score).toFixed(1)}${t.rankPoints}`
               : ''}
           </span>
         </div>
-      </div>
+      </Card>
     );
   };
+
+  const tabValues = TABS.map((_, i) => String(i));
+  const currentTabValue = String(tab);
 
   return (
     <div className="canteen-section">
       <div className="canteen-section-header">
-      <h3 className="canteen-section-title">{title || t.rankingsTitle}</h3>
-        <button type="button" className="canteen-section-more" onClick={() => navigate('/eat/rankings')}>
+        <h3 className="canteen-section-title">{title || t.rankingsTitle}</h3>
+        <Button variant="link" size="sm" onClick={() => navigate('/eat/rankings')}>
           {t.rankingsViewAll}
-        </button>
+        </Button>
       </div>
-      {showTabs && <div className="canteen-rank-tabs">
-        {TABS.map((tabItem, i) => (
-          <button
-            key={tabItem.key}
-            type="button"
-            className={`canteen-rank-tab${tab === i ? ' canteen-rank-tab--active' : ''}`}
-            onClick={() => setTab(i)}
-          >
-            {tabItem.label}
-          </button>
-        ))}
-      </div>}
-      <div className="canteen-rank-list">
-        {isLoading ? (
-          <div className="state-loading" style={{ paddingTop: 60 }} />
-        ) : isError ? (
-          <div className="state-error">{t.loadFailed}</div>
+
+      {showTabs && (
+        <NeoTab
+          value={currentTabValue}
+          onValueChange={(v) => setTab(Number(v))}
+          className="mb-4"
+        >
+          <NeoTab.List className="flex flex-row space-x-2 w-full">
+            {TABS.map((tabItem, i) => (
+              <NeoTab.Trigger key={tabItem.key} value={String(i)} className="flex-1 justify-center">
+                {tabItem.label}
+              </NeoTab.Trigger>
+            ))}
+          </NeoTab.List>
+        </NeoTab>
+      )}
+
+      <div className="flex flex-col gap-2">
+        {isLoadingVal ? (
+          <div className="flex flex-col items-center py-12 gap-3">
+            <NeoLoader />
+            <span className="text-sm text-muted-foreground">{t.loading}</span>
+          </div>
+        ) : isErrorVal ? (
+          <ErrorState message={t.loadFailed} />
         ) : items.length === 0 ? (
-          <div className="state-empty">{t.noData}</div>
+          <EmptyState message={t.noData} />
         ) : (
           items.slice(0, 5).map(renderItem)
         )}

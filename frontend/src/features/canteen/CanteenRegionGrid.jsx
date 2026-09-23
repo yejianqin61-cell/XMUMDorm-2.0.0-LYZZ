@@ -4,6 +4,10 @@ import { useLanguage } from '../../context/LanguageContext';
 import { getCanteenStrings } from '../../i18n/canteenStrings';
 import { getRegions } from '@shared/api/canteen';
 import { QK } from '@shared/query/queryKeys';
+import Card from '../../components/ui/Card';
+import { NeoSkeleton } from '../../components/retroui/Skeleton';
+import EmptyState from '../../components/ui/EmptyState';
+import ErrorState from '../../components/ui/ErrorState';
 
 const REGION_ICONS = {
   D6: '/D6.png',
@@ -29,40 +33,42 @@ export default function CanteenRegionGrid() {
   });
   const regions = data?.data || data || [];
 
-  if (isLoading) {
-    return (
-      <div className="canteen-section">
-        <div className="canteen-region-grid">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="canteen-region-item canteen-region-skeleton" />
-          ))}
-        </div>
-      </div>
-    );
-  }
-  if (isError || regions.length === 0) return null;
-
   return (
     <div className="canteen-section">
       <h3 className="canteen-section-title">{t.regionSectionTitle}</h3>
-      <div className="canteen-region-grid">
-        {regions.map((r) => (
-          <Link
-            key={r.id || r.code}
-            to={`/eat/${r.code}`}
-            className="canteen-region-item pressable"
-          >
-            <div className="canteen-region-icon-wrap">
-              <img
-                src={REGION_ICONS[r.code] || '/OTHERS.png'}
-                alt={regionLabel(r, t)}
-                className="canteen-region-icon"
-              />
-            </div>
-            <span className="canteen-region-name">{regionLabel(r, t)}</span>
-          </Link>
-        ))}
-      </div>
+
+      {isLoading ? (
+        <div className="canteen-region-grid">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <NeoSkeleton key={i} className="h-20 w-full rounded-md" />
+          ))}
+        </div>
+      ) : isError ? (
+        <ErrorState message={t.loadFailedShort} />
+      ) : regions.length === 0 ? (
+        <EmptyState message={t.noData} />
+      ) : (
+        <div className="canteen-region-grid">
+          {regions.map((r) => (
+            <Link
+              key={r.id || r.code}
+              to={`/eat/${r.code}`}
+              className="no-underline"
+            >
+              <Card className="flex flex-col items-center justify-center py-4 gap-2 hover:bg-muted cursor-pointer transition-colors">
+                <div className="w-14 h-14 flex items-center justify-center">
+                  <img
+                    src={REGION_ICONS[r.code] || '/OTHERS.png'}
+                    alt={regionLabel(r, t)}
+                    className="w-12 h-12 object-contain"
+                  />
+                </div>
+                <span className="text-sm font-semibold">{regionLabel(r, t)}</span>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

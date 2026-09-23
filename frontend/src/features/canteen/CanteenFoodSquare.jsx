@@ -8,6 +8,12 @@ import { QK } from '@shared/query/queryKeys';
 import { FOOD_SQUARE_TAG_SLUG } from '@shared/constants/canteen';
 import { getUploadUrl } from '@shared/api/config';
 import { formatPostTime } from '@shared/utils/formatTime';
+import Button from '../../components/ui/Button';
+import Card from '../../components/ui/Card';
+import { NeoLoader } from '../../components/retroui/Loader';
+import { NeoSkeleton } from '../../components/retroui/Skeleton';
+import EmptyState from '../../components/ui/EmptyState';
+import ErrorState from '../../components/ui/ErrorState';
 
 export default function CanteenFoodSquare({ title, limit = 10, showHint = true }) {
   const navigate = useNavigate();
@@ -51,9 +57,9 @@ export default function CanteenFoodSquare({ title, limit = 10, showHint = true }
   const header = (
     <div className="canteen-section-head">
       <h3 className="canteen-section-title">{title || t.foodSquareTitle}</h3>
-      <button type="button" className="canteen-food-compose-btn pressable" onClick={goWrite}>
+      <Button variant="secondary" size="sm" onClick={goWrite}>
         {t.foodSquareCompose}
-      </button>
+      </Button>
     </div>
   );
 
@@ -61,7 +67,11 @@ export default function CanteenFoodSquare({ title, limit = 10, showHint = true }
     return (
       <div className="canteen-section">
         {header}
-        <div className="state-loading" style={{ paddingTop: 60 }} />
+        <div className="flex flex-col gap-3 pt-4">
+          {[1, 2, 3].map((i) => (
+            <NeoSkeleton key={i} className="h-20 w-full" />
+          ))}
+        </div>
       </div>
     );
   }
@@ -70,7 +80,7 @@ export default function CanteenFoodSquare({ title, limit = 10, showHint = true }
     return (
       <div className="canteen-section">
         {header}
-        <div className="state-error">{t.loadFailedShort}</div>
+        <ErrorState message={t.loadFailedShort} />
       </div>
     );
   }
@@ -78,54 +88,63 @@ export default function CanteenFoodSquare({ title, limit = 10, showHint = true }
   return (
     <div className="canteen-section">
       {header}
-      {showHint && <p className="canteen-food-hint">{t.foodSquareHint}</p>}
+      {showHint && <p className="text-sm text-muted-foreground mb-3 mt-1">{t.foodSquareHint}</p>}
       {allItems.length === 0 ? (
-        <div className="canteen-food-empty">
-          <p>{t.foodSquareEmpty}</p>
-          <button type="button" className="canteen-food-write-btn pressable" onClick={goWrite}>
+        <div className="flex flex-col items-center gap-4 py-8">
+          <EmptyState message={t.foodSquareEmpty} />
+          <Button variant="default" onClick={goWrite}>
             {t.foodSquareWrite}
-          </button>
+          </Button>
         </div>
       ) : (
         <>
-          <div className="canteen-food-list">
+          <div className="flex flex-col gap-3">
             {allItems.map((item) => (
-              <div
+              <Card
                 key={item.id}
-                className="canteen-food-item pressable"
+                className="cursor-pointer hover:bg-muted transition-colors p-0 overflow-hidden"
                 onClick={() => navigate(`/post/${item.id}`)}
               >
                 {item.cover_url && (
-                  <img src={getUploadUrl(item.cover_url)} alt="" className="canteen-food-cover" loading="lazy" />
+                  <img src={getUploadUrl(item.cover_url)} alt="" className="w-full h-36 object-cover" loading="lazy" />
                 )}
-                <div className="canteen-food-body">
-                  <p className="canteen-food-excerpt">{item.title_or_excerpt}</p>
-                  <div className="canteen-food-meta">
-                    <span className="canteen-food-author">
+                <div className="p-4 flex flex-col gap-2">
+                  <p className="text-sm font-semibold line-clamp-2">{item.title_or_excerpt}</p>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1.5">
                       {item.author?.avatar && (
-                        <img src={getUploadUrl(item.author.avatar)} alt="" className="canteen-food-avatar" />
+                        <img src={getUploadUrl(item.author.avatar)} alt="" className="w-5 h-5 rounded-full border-2 border-black" />
                       )}
                       {item.author?.name || t.anonymous}
                     </span>
-                    <span className="canteen-food-stats">
+                    <span className="flex items-center gap-2">
                       {item.like_count > 0 && <span>👍 {item.like_count}</span>}
                       {item.comment_count > 0 && <span>💬 {item.comment_count}</span>}
                       <span>{formatPostTime(item.created_at)}</span>
                     </span>
                   </div>
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
           {limit === 10 && hasNextPage && (
-            <button
-              type="button"
-              className="canteen-food-more pressable"
-              disabled={isFetchingNextPage}
-              onClick={() => fetchNextPage()}
-            >
-              {isFetchingNextPage ? t.loading : t.loadMore}
-            </button>
+            <div className="flex justify-center mt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isFetchingNextPage}
+                onClick={() => fetchNextPage()}
+              >
+                {isFetchingNextPage ? (
+                  <span className="flex items-center gap-2">
+                    <NeoLoader size="sm" count={3} />
+                    {t.loading}
+                  </span>
+                ) : (
+                  t.loadMore
+                )}
+              </Button>
+            </div>
           )}
         </>
       )}
