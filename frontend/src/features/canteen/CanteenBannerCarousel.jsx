@@ -8,6 +8,8 @@ import { getCanteenBanners } from '@shared/api/canteen';
 import { recordAdvertisementClick } from '@shared/api/advertisements';
 import { QK } from '@shared/query/queryKeys';
 import { productImageUrl } from '@shared/api/config';
+import Button from '../../components/ui/Button';
+import Badge from '../../components/ui/Badge';
 import './CanteenBannerCarousel.css';
 
 const LINK_NAV = {
@@ -102,13 +104,14 @@ export default function CanteenBannerCarousel({
             className="canteen-banner-admin-link"
             onClick={stopNav}
           >
-            {t.bannerManage}
+            <Badge tone="info" size="sm">{t.bannerManage}</Badge>
           </Link>
         )}
         {len > 1 && (
           <>
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="icon"
               className="canteen-banner-nav canteen-banner-nav--prev"
               aria-label={t.bannerPrev}
               onClick={(e) => {
@@ -116,10 +119,11 @@ export default function CanteenBannerCarousel({
                 prev();
               }}
             >
-              <span aria-hidden>‹</span>
-            </button>
-            <button
-              type="button"
+              ‹
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               className="canteen-banner-nav canteen-banner-nav--next"
               aria-label={t.bannerNext}
               onClick={(e) => {
@@ -127,8 +131,8 @@ export default function CanteenBannerCarousel({
                 next();
               }}
             >
-              <span aria-hidden>›</span>
-            </button>
+              ›
+            </Button>
           </>
         )}
         <div
@@ -156,7 +160,9 @@ export default function CanteenBannerCarousel({
             <div className="canteen-banner-content">
               <div className="canteen-banner-title-row">
                 <span className="canteen-banner-title">{b.title}</span>
-                {b.type === 'ad' && <span className="canteen-banner-ad-tag">{t.bannerAd}</span>}
+                {b.type === 'ad' && (
+                  <Badge tone="warning" size="sm" className="text-[10px]">{t.bannerAd}</Badge>
+                )}
               </div>
               {b.subtitle ? <span className="canteen-banner-subtitle">{b.subtitle}</span> : null}
             </div>

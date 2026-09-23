@@ -6,6 +6,10 @@ import { getCanteenStrings } from '../../i18n/canteenStrings';
 import { pickRandomMeal } from '@shared/api/canteen';
 import { QK } from '@shared/query/queryKeys';
 import { productImageUrl } from '@shared/api/config';
+import Button from '../../components/ui/Button';
+import Card from '../../components/ui/Card';
+import { NeoLoader } from '../../components/retroui/Loader';
+import ErrorState from '../../components/ui/ErrorState';
 
 export default function CanteenPickMeal({ compact = false }) {
   const navigate = useNavigate();
@@ -36,57 +40,60 @@ export default function CanteenPickMeal({ compact = false }) {
   const content = (
     <>
       {!active ? (
-        <div className={compact ? 'canteen-pick-compact-init' : 'canteen-pick-init'}>
-          {!compact && <p className="canteen-pick-text">{t.pickPrompt}</p>}
-          <button type="button" className={compact ? 'canteen-pick-compact-btn pressable' : 'canteen-pick-btn pressable'} onClick={handlePick}>
+        <div className={compact ? '' : 'canteen-pick-init'}>
+          {!compact && <p className="text-muted-foreground text-sm mb-4">{t.pickPrompt}</p>}
+          <Button variant={compact ? 'secondary' : 'default'} size={compact ? 'sm' : 'md'} onClick={handlePick}>
             {compact ? '换一个' : t.pickBtn}
-          </button>
+          </Button>
         </div>
       ) : loading ? (
-        <div className="canteen-pick-loading">
-          <div className="canteen-pick-dice">🎲</div>
-          <span>{t.pickLoading}</span>
+        <div className="flex flex-col items-center gap-3 py-8">
+          <span className="text-4xl animate-bounce">🎲</span>
+          <span className="text-sm text-muted-foreground">{t.pickLoading}</span>
+          <NeoLoader size="sm" />
         </div>
       ) : isError ? (
-        <div className="state-error">{t.pickError}</div>
+        <ErrorState message={t.pickError} />
       ) : !meal ? (
-        <div className="canteen-pick-empty">
-          <p>{t.pickEmpty}</p>
-          <button type="button" className="canteen-pick-reroll pressable" onClick={() => refetch()}>
+        <div className="flex flex-col items-center gap-3 py-8">
+          <p className="text-sm text-muted-foreground">{t.pickEmpty}</p>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
             {t.pickRetry}
-          </button>
+          </Button>
         </div>
       ) : (
-        <div className="canteen-pick-result">
-          <div className="canteen-pick-card" onClick={() => navigate(`/eat/food/${meal.id}`)}>
-            <img
-              src={productImageUrl(meal.cover_url)}
-              alt={meal.name}
-              className="canteen-pick-img"
-            />
-            <div className="canteen-pick-info">
-              <span className="canteen-pick-name">{meal.name}</span>
-              <span className="canteen-pick-shop">
-                {meal.shop_name}
-                {meal.region_code ? ` · ${meal.region_code}` : ''}
-              </span>
-              {meal.comprehensive_score != null && Number(meal.comprehensive_score) > 0 && (
-                <span className="canteen-pick-score">
-                  {t.pickOverallScore} {Number(meal.comprehensive_score).toFixed(1)}
+        <div className="flex flex-col items-center gap-3">
+          <Card className="w-full cursor-pointer" onClick={() => navigate(`/eat/food/${meal.id}`)}>
+            <div className="flex items-center gap-4">
+              <img
+                src={productImageUrl(meal.cover_url)}
+                alt={meal.name}
+                className="w-16 h-16 object-cover border-2 border-black shrink-0"
+              />
+              <div className="flex flex-col min-w-0">
+                <span className="font-semibold text-base truncate">{meal.name}</span>
+                <span className="text-sm text-muted-foreground">
+                  {meal.shop_name}
+                  {meal.region_code ? ` · ${meal.region_code}` : ''}
                 </span>
-              )}
+                {meal.comprehensive_score != null && Number(meal.comprehensive_score) > 0 && (
+                  <span className="text-sm font-bold text-primary mt-1">
+                    {t.pickOverallScore} {Number(meal.comprehensive_score).toFixed(1)}
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
-          <button type="button" className="canteen-pick-reroll pressable" onClick={handleReroll}>
+          </Card>
+          <Button variant="outline" size="sm" onClick={handleReroll}>
             {t.pickReroll}
-          </button>
+          </Button>
         </div>
       )}
     </>
   );
 
   if (compact) {
-    return <div className="canteen-pick-compact">{content}</div>;
+    return <div>{content}</div>;
   }
 
   return (
