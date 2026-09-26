@@ -153,4 +153,96 @@ describe('Posts Routes', () => {
       );
     });
   });
+
+  describe('GET /api/posts', () => {
+    // 回归：分页曾经直接 LIMIT 在 `posts LEFT JOIN post_images` 的结果上，
+    // 于是 LIMIT/OFFSET 切的是「帖子×图片」的行 → 每页只回一半帖子、
+    // 且多图帖会跨页重复（page1 末尾与 page2 开头是同一帖）。
+    function idRows(count, startId = 200) {
+      return Array.from({ length: count }, (_, i) => ({ id: startId - i }));
+    }
+
+    function detailRows(ids) {
+      return ids.map((id, index) => ({
+        id,
+        user_id: 7,
+        title: null,
+        content: `post ${id}`,
+        type: 'normal',
+        deleted_at: null,
+        hidden_by_admin: 0,
+        created_at: new Date(Date.UTC(2026, 0, 1, 0, index)).toISOString(),
+        updated_at: null,
+        author_id: 7,
+        author_username: 'u7',
+        author_nickname: 'U7',
+        author_avatar: null,
+        author_level: 1,
+        author_badge: null,
+        image_path: `posts/post_${id}_1.jpg`,
+        sort_order: 0,
+        like_count: 0,
+        comment_count: 0,
+        user_liked: 0,
+      }));
+    }
+
+    it('把 LIMIT/OFFSET 作用在帖子上，不在图片 join 之后分页', async () => {
+      query
+        .mockResolvedValueOnce(idRows(11))
+        .mockResolvedValueOnce(detailRows([200, 199, 198, 197, 196, 195, 194, 193, 192, 191]));
+
+      const res = await supertest(app()).get('/api/posts?page=1&pageSize=10');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.list).toHaveLength(10);
+      expect(res.body.data.hasMore).toBe(true);
+
+      const pageSql = query.mock.calls[0][0];
+      expect(pageSql).toMatch(/FROM posts p/);
+      expect(pageSql).not.toMatch(/post_images/);
+      expect(pageSql).toMatch(/LIMIT 11 OFFSET 0/);
+    });
+
+    it('详情查询只取本页 id，页内不出现重复帖子', async () => {
+      query
+        .mockResolvedValueOnce(idRows(3))
+        .mockResolvedValueOnce(detailRows([200, 199, 198]));
+
+      const res = await supertest(app()).get('/api/posts?page=2&pageSize=10');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.hasMore).toBe(false);
+
+      const [pageSql, pageParams] = query.mock.calls[0];
+      expect(pageParams).toEqual([]);
+      expect(pageSql).toMatch(/LIMIT 11 OFFSET 10/);
+
+      const [detailSql, detailParams] = query.mock.calls[1];
+      expect(detailSql).toMatch(/p\.id IN \(\?, \?, \?\)/);
+      expect(detailParams.slice(1)).toEqual([200, 199, 198]);
+
+      const ids = res.body.data.list.map((p) => p.id);
+      expect(ids).toEqual([200, 199, 198]);
+      expect(new Set(ids).size).toBe(ids.length);
+    });
+
+    it('聚合同一帖的多张图片，且按 sort_order 排序', async () => {
+      query
+        .mockResolvedValueOnce(idRows(1))
+        .mockResolvedValueOnce([
+          { ...detailRows([200])[0], image_path: 'posts/post_200_2.jpg', sort_order: 1 },
+          { ...detailRows([200])[0], image_path: 'posts/post_200_1.jpg', sort_order: 0 },
+        ]);
+
+      const res = await supertest(app()).get('/api/posts?page=1&pageSize=10');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.list).toHaveLength(1);
+      expect(res.body.data.list[0].images).toEqual([
+        { url: 'https://cdn.test/posts/post_200_1.jpg', sort_order: 0 },
+        { url: 'https://cdn.test/posts/post_200_2.jpg', sort_order: 1 },
+      ]);
+    });
+  });
 });
