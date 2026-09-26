@@ -43,6 +43,17 @@ function assertScore(value, label) {
   if (!Number.isInteger(value) || value < 1 || value > 5) throw new Error(`${label} must be an integer from 1 to 5`);
 }
 
+function buildComment(record) {
+  const existing = String(record.comment || '').trim();
+  const question = String(record.question || '').trim();
+  const answer = String(record.answer || '').trim();
+  if (existing) return existing;
+  if (question && answer) return `问题：${question}\n解答：${answer}`;
+  if (question) return `问题：${question}`;
+  if (answer) return `解答：${answer}`;
+  return '';
+}
+
 async function main() {
   if (!fs.existsSync(inputPath)) throw new Error(`Input extract not found: ${inputPath}`);
   const records = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
@@ -63,14 +74,17 @@ async function main() {
     let inserted = 0;
     if (apply) await conn.beginTransaction();
     for (const record of records) {
-      const params = [ownerId, record.course_name, record.teacher || null, record.comment, record.term_year || null, record.term_month || null];
+      const comment = buildComment(record);
+      if (!String(record.course_name || '').trim()) throw new Error(`course_name is required at source row ${record.source_row || 'unknown'}`);
+      if (!comment) throw new Error(`comment, question, or answer is required for ${record.course_name}`);
+      const params = [ownerId, record.course_name, record.teacher || null, comment, record.term_year || null, record.term_month || null];
       const [matches] = await conn.query(
         `SELECT id FROM course_reviews
          WHERE created_by = ? AND course_name = ? AND COALESCE(teacher, '') = COALESCE(?, '')
            AND comment = ? AND ((term_year = ?) OR (term_year IS NULL AND ? IS NULL))
            AND ((term_month = ?) OR (term_month IS NULL AND ? IS NULL)) AND deleted_at IS NULL
          LIMIT 1`,
-        [ownerId, record.course_name, record.teacher || null, record.comment, record.term_year || null, record.term_year || null, record.term_month || null, record.term_month || null]
+        [ownerId, record.course_name, record.teacher || null, comment, record.term_year || null, record.term_year || null, record.term_month || null, record.term_month || null]
       );
       if (matches.length) {
         existing += 1;
@@ -81,7 +95,7 @@ async function main() {
           `INSERT INTO course_reviews
             (course_name, teacher, tag, tags_json, rating, difficulty, comment, created_by, term_year, term_month)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [record.course_name, record.teacher || null, 'GE', JSON.stringify(record.tags || ['GE']), defaultRating, defaultDifficulty, record.comment, ownerId, record.term_year || null, record.term_month || null]
+          [record.course_name, record.teacher || null, 'GE', JSON.stringify(record.tags || ['GE']), defaultRating, defaultDifficulty, comment, ownerId, record.term_year || null, record.term_month || null]
         );
       }
       inserted += 1;

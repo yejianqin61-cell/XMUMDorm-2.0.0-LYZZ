@@ -114,6 +114,24 @@ def extract(path: Path):
 
         if not cells and question and question not in PLACEHOLDERS:
             report["question_only_rows"].append({"row": row_number, "course_name": current_course, "question": question})
+            # A question without an answer is still useful course context. Keep it
+            # in the same review body so the importer can write one complete
+            # course_reviews.comment value without using the follow-up comments
+            # table.
+            records.append({
+                "source_row": row_number,
+                "source_column": None,
+                "source_section": current_section,
+                "course_name": current_course,
+                "teacher": None,
+                "tags": ["GE"],
+                "rating": 3,
+                "difficulty": 3,
+                "comment": f"问题：{question}",
+                "term_year": None,
+                "term_month": None,
+                "source_key": stable_key(current_course, f"问题：{question}"),
+            })
         for column, comment in cells:
             records.append({
                 "source_row": row_number,

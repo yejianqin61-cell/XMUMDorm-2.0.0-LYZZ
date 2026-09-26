@@ -122,8 +122,8 @@
   "ignored_placeholders": 0,
   "course_rows": 143,
   "unique_courses": 140,
-  "review_rows_before_dedup": 392,
-  "review_rows_after_dedup": 390,
+  "review_rows_before_dedup": 409,
+  "review_rows_after_dedup": 407,
   "duplicate_rows_removed": 2,
   "course_names": [
     "#mysocialmediapresence",
