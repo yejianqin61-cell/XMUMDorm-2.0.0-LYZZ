@@ -1120,6 +1120,22 @@
     "source_key": "9a2860f200b6fb49c6cfdfd1"
   },
   {
+    "source_row": 27,
+    "source_column": null,
+    "source_section": "Art",
+    "course_name": "Fascinating Fermentation",
+    "teacher": null,
+    "tags": [
+      "GE"
+    ],
+    "rating": 3,
+    "difficulty": 3,
+    "comment": "问题：请问大家这门课怎么样？好拿分吗",
+    "term_year": null,
+    "term_month": null,
+    "source_key": "232a28abf6fd6df1b0e16329"
+  },
+  {
     "source_row": 28,
     "source_column": "C",
     "source_section": "Art",
@@ -1262,6 +1278,22 @@
     "term_year": null,
     "term_month": null,
     "source_key": "af4edebdb96aa216cd8f1972"
+  },
+  {
+    "source_row": 31,
+    "source_column": null,
+    "source_section": "Art",
+    "course_name": "Introduction and Practice to Intertranslation of Chinese-Malay",
+    "teacher": null,
+    "tags": [
+      "GE"
+    ],
+    "rating": 3,
+    "difficulty": 3,
+    "comment": "问题：请问这节课给分怎么样？",
+    "term_year": null,
+    "term_month": null,
+    "source_key": "065d314b455784c0843fa0c9"
   },
   {
     "source_row": 32,
@@ -1536,6 +1568,22 @@
     "source_key": "acfc89b0e94d9e1d59b12349"
   },
   {
+    "source_row": 39,
+    "source_column": null,
+    "source_section": "Art",
+    "course_name": "Introduction to Text Analytics for Product Review Analysis",
+    "teacher": null,
+    "tags": [
+      "GE"
+    ],
+    "rating": 3,
+    "difficulty": 3,
+    "comment": "问题：这节课难度如何，老师给分怎么样",
+    "term_year": null,
+    "term_month": null,
+    "source_key": "5655e855411e5c90d2e3af41"
+  },
+  {
     "source_row": 40,
     "source_column": "D",
     "source_section": "Art",
@@ -1726,6 +1774,38 @@
     "term_year": null,
     "term_month": null,
     "source_key": "97e64fb43baf694344b5d9dc"
+  },
+  {
+    "source_row": 46,
+    "source_column": null,
+    "source_section": "Art",
+    "course_name": "New Media: Digital, Activism and Society",
+    "teacher": null,
+    "tags": [
+      "GE"
+    ],
+    "rating": 3,
+    "difficulty": 3,
+    "comment": "问题：问下这课怎么样",
+    "term_year": null,
+    "term_month": null,
+    "source_key": "47e554cb8d315273127d5210"
+  },
+  {
+    "source_row": 47,
+    "source_column": null,
+    "source_section": "Art",
+    "course_name": "Political Communication",
+    "teacher": null,
+    "tags": [
+      "GE"
+    ],
+    "rating": 3,
+    "difficulty": 3,
+    "comment": "问题：有final 吗，老师怎么样",
+    "term_year": null,
+    "term_month": null,
+    "source_key": "905e0deaeb5371d00d7ebc44"
   },
   {
     "source_row": 48,
@@ -2000,6 +2080,22 @@
     "source_key": "4f4c452d8d3e84b3fb829d62"
   },
   {
+    "source_row": 53,
+    "source_column": null,
+    "source_section": "Art",
+    "course_name": "Technical Writing",
+    "teacher": null,
+    "tags": [
+      "GE"
+    ],
+    "rating": 3,
+    "difficulty": 3,
+    "comment": "问题：收评价",
+    "term_year": null,
+    "term_month": null,
+    "source_key": "989cc65a2d2cf1a5346f107e"
+  },
+  {
     "source_row": 54,
     "source_column": "C",
     "source_section": "Art",
@@ -2062,6 +2158,22 @@
     "term_year": null,
     "term_month": null,
     "source_key": "d21a1a877d36cbf090513019"
+  },
+  {
+    "source_row": 55,
+    "source_column": null,
+    "source_section": "Art",
+    "course_name": "The Art of Invisibility Science",
+    "teacher": null,
+    "tags": [
+      "GE"
+    ],
+    "rating": 3,
+    "difficulty": 3,
+    "comment": "问题：好学吗？好拿高分吗",
+    "term_year": null,
+    "term_month": null,
+    "source_key": "1a95614729546d3add4fc0e2"
   },
   {
     "source_row": 56,
@@ -2960,6 +3072,22 @@
     "source_key": "56c1906595a685cca62dcf12"
   },
   {
+    "source_row": 72,
+    "source_column": null,
+    "source_section": "新设课程",
+    "course_name": "Western Classical Music:Theory,History and practice",
+    "teacher": null,
+    "tags": [
+      "GE"
+    ],
+    "rating": 3,
+    "difficulty": 3,
+    "comment": "问题：自备竖笛的音乐课吗💦课程难度大吗？老师给分怎么样？能拿高分吗？",
+    "term_year": null,
+    "term_month": null,
+    "source_key": "73a6cf7868ffb5aa21861ec1"
+  },
+  {
     "source_row": 73,
     "source_column": "C",
     "source_section": "新设课程",
@@ -3040,6 +3168,22 @@
     "source_key": "43f537fb6d6dd1a3601f94c2"
   },
   {
+    "source_row": 79,
+    "source_column": null,
+    "source_section": "Business",
+    "course_name": "Accounting and Ethics",
+    "teacher": null,
+    "tags": [
+      "GE"
+    ],
+    "rating": 3,
+    "difficulty": 3,
+    "comment": "问题：想问一下，这门课讲的是什么呀？有打表嘛",
+    "term_year": null,
+    "term_month": null,
+    "source_key": "b045d0305c50ade20937ebd8"
+  },
+  {
     "source_row": 80,
     "source_column": "C",
     "source_section": "Business",
@@ -3086,6 +3230,22 @@
     "term_year": null,
     "term_month": null,
     "source_key": "e8bf78981d511a67ca3c8127"
+  },
+  {
+    "source_row": 82,
+    "source_column": null,
+    "source_section": "Business",
+    "course_name": "Business and Administrative Communication",
+    "teacher": null,
+    "tags": [
+      "GE"
+    ],
+    "rating": 3,
+    "difficulty": 3,
+    "comment": "问题：小组作业比较折磨人 好的小组决定分数！",
+    "term_year": null,
+    "term_month": null,
+    "source_key": "b92bd7f3e2618c35e3220205"
   },
   {
     "source_row": 83,
@@ -3456,6 +3616,22 @@
     "source_key": "4014367539acb1dab551b413"
   },
   {
+    "source_row": 90,
+    "source_column": null,
+    "source_section": "Business",
+    "course_name": "Foundations of Business Analytics",
+    "teacher": null,
+    "tags": [
+      "GE"
+    ],
+    "rating": 3,
+    "difficulty": 3,
+    "comment": "问题：这门课怎么样啊，给分怎么样",
+    "term_year": null,
+    "term_month": null,
+    "source_key": "46bd8326bdfd21f2325ec434"
+  },
+  {
     "source_row": 91,
     "source_column": "C",
     "source_section": "Business",
@@ -3822,6 +3998,38 @@
     "term_year": null,
     "term_month": null,
     "source_key": "befc10b9da093e1a4cf96ab2"
+  },
+  {
+    "source_row": 98,
+    "source_column": null,
+    "source_section": "Business",
+    "course_name": "Introduction to Business Ethics",
+    "teacher": null,
+    "tags": [
+      "GE"
+    ],
+    "rating": 3,
+    "difficulty": 3,
+    "comment": "问题：难吗，好拿分吗",
+    "term_year": null,
+    "term_month": null,
+    "source_key": "9fca2c090ebc9e803655526b"
+  },
+  {
+    "source_row": 99,
+    "source_column": null,
+    "source_section": "Business",
+    "course_name": "Introduction to Enterprise Risk Management",
+    "teacher": null,
+    "tags": [
+      "GE"
+    ],
+    "rating": 3,
+    "difficulty": 3,
+    "comment": "问题：这节课难度如何，老师给分怎么样",
+    "term_year": null,
+    "term_month": null,
+    "source_key": "2507046b94e51c59a546a04a"
   },
   {
     "source_row": 100,
@@ -4928,6 +5136,22 @@
     "source_key": "0294ac587d84688a737d1ed3"
   },
   {
+    "source_row": 123,
+    "source_column": null,
+    "source_section": "Science",
+    "course_name": "Brief History of Biomedical Revolution",
+    "teacher": null,
+    "tags": [
+      "GE"
+    ],
+    "rating": 3,
+    "difficulty": 3,
+    "comment": "问题：蹲",
+    "term_year": null,
+    "term_month": null,
+    "source_key": "7f6b50c644c66885e4cae302"
+  },
+  {
     "source_row": 124,
     "source_column": "C",
     "source_section": "Science",
@@ -5246,6 +5470,22 @@
     "term_year": null,
     "term_month": null,
     "source_key": "1e54513f8694475046d46b5e"
+  },
+  {
+    "source_row": 129,
+    "source_column": null,
+    "source_section": "Science",
+    "course_name": "Energy Demand Management",
+    "teacher": null,
+    "tags": [
+      "GE"
+    ],
+    "rating": 3,
+    "difficulty": 3,
+    "comment": "问题：蹲评价，难吗，给分高吗（蹲",
+    "term_year": null,
+    "term_month": null,
+    "source_key": "6998902b7881f0249029cc77"
   },
   {
     "source_row": 130,
@@ -5648,6 +5888,22 @@
     "source_key": "1249dcf85e4df801844f9e63"
   },
   {
+    "source_row": 140,
+    "source_column": null,
+    "source_section": "Science",
+    "course_name": "Introduction to Remote Sensing",
+    "teacher": null,
+    "tags": [
+      "GE"
+    ],
+    "rating": 3,
+    "difficulty": 3,
+    "comment": "问题：给分怎么样",
+    "term_year": null,
+    "term_month": null,
+    "source_key": "65a8ee0e16a539a87480c195"
+  },
+  {
     "source_row": 141,
     "source_column": "C",
     "source_section": "Science",
@@ -5982,6 +6238,22 @@
     "term_year": null,
     "term_month": null,
     "source_key": "26f194dd8e8ba5106114cb8f"
+  },
+  {
+    "source_row": 148,
+    "source_column": null,
+    "source_section": "Science",
+    "course_name": "Waste and Energy from a Global Perspective",
+    "teacher": null,
+    "tags": [
+      "GE"
+    ],
+    "rating": 3,
+    "difficulty": 3,
+    "comment": "问题：请问给分如何",
+    "term_year": null,
+    "term_month": null,
+    "source_key": "2e07e528c9d534dddb271a73"
   },
   {
     "source_row": 149,
