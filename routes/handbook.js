@@ -45,6 +45,17 @@ function cleanText(input, maxLen) {
   return s.length > maxLen ? s.slice(0, maxLen) : s;
 }
 
+function validExternalUrl(input) {
+  const value = cleanText(input, 600);
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' || url.protocol === 'http:' ? url.toString() : null;
+  } catch (_) {
+    return null;
+  }
+}
+
 function toInt(v, fallback) {
   const n = parseInt(v, 10);
   return Number.isFinite(n) ? n : fallback;
@@ -266,7 +277,7 @@ router.get('/articles', async (req, res) => {
 
     const rows = await query(
       `SELECT
-        a.id, a.title, a.summary, a.cover_path, a.status, a.published_at, a.created_at, a.updated_at,
+        a.id, a.title, a.summary, a.cover_path, a.content_type, a.external_url, a.status, a.published_at, a.created_at, a.updated_at,
         a.views_count, a.likes_count, a.saves_count,
         t.slug AS tab_slug,
         u.id AS author_id, u.username AS author_username, u.nickname AS author_nickname, u.avatar AS author_avatar,
@@ -289,6 +300,8 @@ router.get('/articles', async (req, res) => {
         title: r.title,
         summary: r.summary,
         cover: r.cover_path ? assetUrl(r.cover_path, r.updated_at) : null,
+        contentType: r.content_type || 'markdown',
+        externalUrl: r.external_url || null,
         tab: r.tab_slug,
         tags: [],
         author: r.author_id
@@ -326,7 +339,7 @@ router.get('/articles/:id', async (req, res) => {
 
     const rows = await query(
       `SELECT
-        a.id, a.title, a.summary, a.cover_path, a.content, a.source_name, a.source_link,
+        a.id, a.title, a.summary, a.cover_path, a.content, a.content_type, a.external_url, a.source_name, a.source_link,
         a.status, a.published_at, a.created_at, a.updated_at,
         a.views_count, a.likes_count, a.saves_count, a.shares_count,
         t.slug AS tab_slug,
@@ -370,6 +383,8 @@ router.get('/articles/:id', async (req, res) => {
         summary: row.summary,
         cover: row.cover_path ? assetUrl(row.cover_path, row.updated_at) : null,
         content: row.content,
+        contentType: row.content_type || 'markdown',
+        externalUrl: row.external_url || null,
         tags: (tagRows || []).map((t) => ({ id: t.id, slug: t.slug, name_zh: t.name_zh, name_en: t.name_en })),
         authorInfo: row.author_id
           ? { id: row.author_id, username: row.author_username, nickname: row.author_nickname, avatar: assetUrl(row.author_avatar) }
@@ -409,6 +424,8 @@ router.post('/articles', authenticateToken, checkSanction, sensitiveWordFilter, 
     const title = cleanText(req.body && req.body.title, 200);
     const summary = cleanText(req.body && req.body.summary, 400) || null;
     const content = String(req.body && req.body.content ? req.body.content : '').trim();
+    const contentType = cleanText(req.body && req.body.content_type, 30) || 'markdown';
+    const externalUrl = validExternalUrl(req.body && req.body.external_url);
     const tabSlug = cleanText(req.body && req.body.tab, 40);
     const coverPath = cleanText(req.body && req.body.cover_path, 500) || null;
     const sourceName = cleanText(req.body && req.body.source_name, 120) || null;
@@ -416,7 +433,9 @@ router.post('/articles', authenticateToken, checkSanction, sensitiveWordFilter, 
     const tagIds = Array.isArray(req.body && req.body.tag_ids) ? req.body.tag_ids : [];
 
     if (!title) return res.status(400).json({ status: -1, message: '标题不能为空' });
-    if (!content) return res.status(400).json({ status: -1, message: '内容不能为空' });
+    if (!['markdown', 'external_link'].includes(contentType)) return res.status(400).json({ status: -1, message: 'content_type 无效' });
+    if (contentType === 'markdown' && !content) return res.status(400).json({ status: -1, message: '内容不能为空' });
+    if (contentType === 'external_link' && !externalUrl) return res.status(400).json({ status: -1, message: 'external_url 必须是 http 或 https 链接' });
     if (!tabSlug) return res.status(400).json({ status: -1, message: 'tab 不能为空' });
 
     const tabRows = await query('SELECT id FROM handbook_tabs WHERE slug = ? AND is_enabled = 1 LIMIT 1', [tabSlug]);
@@ -433,9 +452,9 @@ router.post('/articles', authenticateToken, checkSanction, sensitiveWordFilter, 
 
     const result = await query(
       `INSERT INTO handbook_articles
-        (tab_id, author_user_id, title, summary, cover_path, content, source_name, source_link, status, published_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [tab.id, req.user.id, title, summary, coverPath, content, sourceName, sourceLink, status, publishedAt]
+        (tab_id, author_user_id, title, summary, cover_path, content, content_type, external_url, source_name, source_link, status, published_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [tab.id, req.user.id, title, summary, coverPath, content, contentType, externalUrl, sourceName, sourceLink, status, publishedAt]
     );
     const articleId = result.insertId;
 
@@ -476,6 +495,8 @@ router.patch('/articles/:id', authenticateToken, async (req, res) => {
     const title = req.body && req.body.title != null ? cleanText(req.body.title, 200) : undefined;
     const summary = req.body && req.body.summary != null ? cleanText(req.body.summary, 400) : undefined;
     const content = req.body && req.body.content != null ? String(req.body.content).trim() : undefined;
+    const contentType = req.body && req.body.content_type != null ? cleanText(req.body.content_type, 30) : undefined;
+    const externalUrl = req.body && req.body.external_url != null ? validExternalUrl(req.body.external_url) : undefined;
     const tabSlug = req.body && req.body.tab != null ? cleanText(req.body.tab, 40) : undefined;
     const coverPath = req.body && req.body.cover_path != null ? cleanText(req.body.cover_path, 500) : undefined;
     const sourceName = req.body && req.body.source_name != null ? cleanText(req.body.source_name, 120) : undefined;
@@ -509,6 +530,14 @@ router.patch('/articles/:id', authenticateToken, async (req, res) => {
     if (title !== undefined) { fields.push('title = ?'); params.push(title); }
     if (summary !== undefined) { fields.push('summary = ?'); params.push(summary || null); }
     if (content !== undefined) { fields.push('content = ?'); params.push(content); }
+    if (contentType !== undefined) {
+      if (!['markdown', 'external_link'].includes(contentType)) return res.status(400).json({ status: -1, message: 'content_type 无效' });
+      fields.push('content_type = ?'); params.push(contentType);
+    }
+    if (externalUrl !== undefined) {
+      if (!externalUrl) return res.status(400).json({ status: -1, message: 'external_url 必须是 http 或 https 链接' });
+      fields.push('external_url = ?'); params.push(externalUrl);
+    }
     if (tabId !== undefined) { fields.push('tab_id = ?'); params.push(tabId); }
     if (coverPath !== undefined) { fields.push('cover_path = ?'); params.push(coverPath || null); }
     if (sourceName !== undefined) { fields.push('source_name = ?'); params.push(sourceName || null); }

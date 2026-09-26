@@ -323,6 +323,9 @@
   padding: 12px;
 }
 .handbook-card-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-weight: 900;
   font-size: 15px;
   color: rgba(15, 23, 42, 0.92);

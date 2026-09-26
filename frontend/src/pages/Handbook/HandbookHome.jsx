@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bookmark, Eye, Heart, Search } from 'lucide-react';
+import { Bookmark, ExternalLink, Eye, Heart, Search } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { getHandbookTabs, listCourseReviews, listHandbookArticles } from '@shared/api/handbook';
 import { QK } from '@shared/query/queryKeys';
@@ -18,6 +18,17 @@ function useQueryString() {
 function tabLabel(t, isZh) {
   if (!t) return '';
   return isZh ? (t.name_zh || t.name_en || t.slug) : (t.name_en || t.name_zh || t.slug);
+}
+
+function HandbookArticleCardLink({ article, children }) {
+  if (article.contentType === 'external_link' && article.externalUrl) {
+    return (
+      <a href={article.externalUrl} target="_blank" rel="noopener noreferrer" className="no-underline">
+        {children}
+      </a>
+    );
+  }
+  return <Link to={`/about/freshman-guide/a/${article.id}`} className="no-underline">{children}</Link>;
 }
 
 function HandbookHome() {
@@ -182,10 +193,13 @@ function HandbookHome() {
 
       <div className="handbook-list">
         {list.map((a) => (
-          <Link key={a.id} to={`/about/freshman-guide/a/${a.id}`} className="no-underline">
+          <HandbookArticleCardLink key={a.id} article={a}>
             <NeoCard className="flex gap-3 p-3 cursor-pointer">
             <div className="handbook-card-main">
-              <div className="handbook-card-title">{a.title}</div>
+              <div className="handbook-card-title">
+                {a.title}
+                {a.contentType === 'external_link' ? <ExternalLink size={15} aria-label={isZh ? '新标签页打开' : 'Opens in a new tab'} /> : null}
+              </div>
               {a.summary ? <div className="handbook-card-summary">{a.summary}</div> : null}
               <div className="handbook-card-meta">
                 {a.author ? (
@@ -217,7 +231,7 @@ function HandbookHome() {
               </div>
             ) : null}
             </NeoCard>
-          </Link>
+          </HandbookArticleCardLink>
         ))}
 
         {infinite.hasNextPage && (
