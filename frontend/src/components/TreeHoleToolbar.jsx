@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, Search } from 'lucide-react';
+import { PenLine, Plus, Search } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { getPostTagsList } from '@shared/api/posts';
+import { getPostTagsList, getHotPostTags } from '@shared/api/posts';
 import { getVisibleTags } from '@shared/api/tags';
 import { QK } from '@shared/query/queryKeys';
 import TreeHoleTagPanel from './TreeHoleTagPanel';
@@ -39,10 +39,27 @@ function TreeHoleToolbar({ selectedSlug = null, onSelectTagSlug }) {
   });
   const visibleTags = visibleQuery.data?.visible || [];
 
+  // 游客端标签栏：按帖子热度（usage_count）排序的热门标签，双语名沿用全量标签
+  const hotTagsQuery = useQuery({
+    queryKey: QK.postHotTags(10),
+    queryFn: () => getHotPostTags(10),
+    staleTime: POST_TAGS_STALE_MS,
+    select: (data) => (Array.isArray(data) ? data : []),
+  });
+  const hotTags = useMemo(() => {
+    const order = new Map();
+    (hotTagsQuery.data || []).forEach((t, i) => order.set(t.slug, i));
+    if (order.size === 0) return tags.slice(0, 10);
+    return tags
+      .filter((t) => order.has(t.slug))
+      .sort((a, b) => order.get(a.slug) - order.get(b.slug))
+      .slice(0, 10);
+  }, [hotTagsQuery.data, tags]);
+
   const topTags = useMemo(() => {
     if (isLoggedIn && visibleQuery.data) return visibleTags;
-    return tags.slice(0, 10);
-  }, [isLoggedIn, visibleQuery.data, visibleTags, tags]);
+    return hotTags;
+  }, [isLoggedIn, visibleQuery.data, visibleTags, hotTags]);
 
   const tagDisplay = (tag) => {
     const raw = isZh ? (tag.name_zh || tag.name_en) : (tag.name_en || tag.name_zh);
@@ -85,22 +102,16 @@ function TreeHoleToolbar({ selectedSlug = null, onSelectTagSlug }) {
         </form>
       </div>
 
-      <div className="treehole-toolbar__tag-row mt-3 flex items-center gap-3">
+      <div className="treehole-toolbar__tag-row mt-3 flex items-center gap-2.5">
         <div className="treehole-toolbar__tag-track relative flex-1 overflow-hidden treehole-tag-mask">
-          <div className="treehole-tag-scroll flex items-center gap-6 overflow-x-auto whitespace-nowrap px-3 text-[14px]">
+          <div className="treehole-tag-scroll flex items-center gap-2 overflow-x-auto whitespace-nowrap px-3 py-1 text-[14px]">
             <motion.button
               type="button"
-              whileTap={{ scale: 0.98 }}
+              whileTap={{ scale: 0.97 }}
               onClick={() => pickTagSlug(null)}
-              className={`relative py-2 transition ${selectedSlug == null ? 'font-bold text-cyan-600 scale-105' : 'font-normal text-slate-400'}`}
+              className={`shrink-0 rounded-full border-2 px-3 py-1.5 transition ${selectedSlug == null ? 'border-[#122E8A] bg-[#122E8A] font-bold text-white shadow-[2px_2px_0_0_#122E8A]' : 'border-transparent font-normal text-slate-500'}`}
             >
               {isZh ? '热门' : 'Popular'}
-              {selectedSlug == null ? (
-                <motion.span
-                  layoutId="treeholeTagUnderline"
-                  className="absolute -bottom-0.5 left-0 right-0 h-[2px] rounded-full bg-cyan-500"
-                />
-              ) : null}
             </motion.button>
 
             {topTags.map((tag) => {
@@ -109,29 +120,32 @@ function TreeHoleToolbar({ selectedSlug = null, onSelectTagSlug }) {
                 <motion.button
                   key={tag.id}
                   type="button"
-                  whileTap={{ scale: 0.98 }}
+                  whileTap={{ scale: 0.97 }}
                   onClick={() => pickTagSlug(active ? null : tag.slug)}
-                  className={`relative py-2 transition ${active ? 'font-bold text-cyan-600 scale-105' : 'font-normal text-slate-400'}`}
+                  className={`shrink-0 rounded-full border-2 px-3 py-1.5 transition ${active ? 'border-[#122E8A] bg-[#122E8A] font-bold text-white shadow-[2px_2px_0_0_#122E8A]' : 'border-transparent font-normal text-slate-500'}`}
                 >
                   {tagDisplay(tag)}
-                  {active ? (
-                    <motion.span
-                      layoutId="treeholeTagUnderline"
-                      className="absolute -bottom-0.5 left-0 right-0 h-[2px] rounded-full bg-cyan-500"
-                    />
-                  ) : null}
                 </motion.button>
               );
             })}
           </div>
         </div>
 
+        <Link
+          to="/post/new"
+          className="treehole-toolbar__publish"
+          aria-label={isZh ? '发布帖子' : 'New post'}
+          title={isZh ? '发布帖子' : 'New post'}
+        >
+          <PenLine size={18} strokeWidth={2.2} aria-hidden />
+        </Link>
+
         {isLoggedIn && (
           <motion.button
             type="button"
             whileTap={{ scale: 0.92 }}
             onClick={() => setTagPanelOpen(true)}
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white/70 text-slate-500 shadow-sm backdrop-blur-md"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-[#122E8A] bg-white text-[#122E8A] shadow-[2px_2px_0_0_#122E8A]"
             aria-label={isZh ? '管理标签' : 'Manage tags'}
           >
             <Plus size={18} />

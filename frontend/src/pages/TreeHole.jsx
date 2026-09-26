@@ -243,8 +243,6 @@ function TreeHole() {
       return lastPageParam + 1;
     },
     initialData: initialSessionData,
-    // 避免“切换筛选/重新拉取时清空列表导致白块闪烁”
-    placeholderData: (prev) => prev,
     staleTime: 5 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
     refetchOnWindowFocus: false,

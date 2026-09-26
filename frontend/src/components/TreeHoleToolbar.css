@@ -71,6 +71,38 @@
   mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
 }
 
+/* 树洞发布入口：新粗野圆形铅笔按钮（桌面/平板端；移动端由右下角 FAB 承担） */
+.treehole-toolbar__publish {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  border: 2px solid var(--ru-primary, #122E8A);
+  background: var(--ru-card, #fff);
+  color: var(--ru-primary, #122E8A);
+  box-shadow: 3px 3px 0 0 var(--ru-primary, #122E8A);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.treehole-toolbar__publish:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 0 var(--ru-primary, #122E8A);
+}
+
+.treehole-toolbar__publish:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 0 var(--ru-primary, #122E8A);
+}
+
+@media (max-width: 767px) {
+  .treehole-toolbar__publish {
+    display: none;
+  }
+}
+
 .app-layout--desktop-shell .treehole-toolbar {
   padding: 0 0 10px;
 }
