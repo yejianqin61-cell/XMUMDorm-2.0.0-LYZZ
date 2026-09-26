@@ -386,7 +386,6 @@ export default function PostDetail() {
       isAuthor={isAuthor}
       onDeletePost={handleDeletePost}
       deleteLoading={deleteLoading}
-      showAtmo
       showCommentCountBtn
     />
   );
