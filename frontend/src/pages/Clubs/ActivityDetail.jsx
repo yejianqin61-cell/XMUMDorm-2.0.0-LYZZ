@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { ArrowLeft, CalendarPlus2, ExternalLink, Eye, Heart, ListTodo, MapPin, MessageCircle, Trash2 } from 'lucide-react';
+import { ArrowLeft, CalendarPlus2, Clock3, ExternalLink, Eye, Heart, ListTodo, MapPin, MessageCircle, Trash2, UsersRound } from 'lucide-react';
 import ReportButton from '../../components/ReportButton';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
@@ -23,6 +23,9 @@ import { API_BASE_URL } from '@shared/api/config';
 import ImagePreview from '../../components/ImagePreview';
 import { StackedCardCarousel } from '../../components/StackedCardCarousel';
 import ClubCommentsSection from '../../components/clubs/ClubCommentsSection';
+import NeoButton from '../../components/retroui/Button';
+import NeoBadge from '../../components/retroui/Badge';
+import NeoCard from '../../components/retroui/Card';
 import '../PostDetail.css';
 import './Clubs.css';
 
@@ -233,6 +236,15 @@ function ActivityDetail() {
     }
   }, [a?.time]);
 
+  const eventDate = useMemo(() => parseDateTime(a?.time), [a?.time]);
+  const eventDay = eventDate ? String(eventDate.getDate()).padStart(2, '0') : '--';
+  const eventMonth = eventDate
+    ? eventDate.toLocaleDateString(isZh ? 'zh-CN' : 'en-US', { month: 'short' }).toUpperCase()
+    : (isZh ? '日期' : 'DATE');
+  const statusLabel = String(a.status || '').toLowerCase() === 'ended'
+    ? (isZh ? '已结束' : 'ENDED')
+    : (isZh ? '进行中' : 'OPEN');
+
   const todoMut = useMutation({
     mutationFn: async () => {
       const start = parseDateTime(a?.time);
@@ -258,7 +270,7 @@ function ActivityDetail() {
   if (q.isError || !a) return <div className="state-error">{q.error?.message || (isZh ? '加载失败' : 'Failed')}</div>;
 
   return (
-    <div className="club-page club-page--floating-comments">
+    <div className="club-page club-page--floating-comments activity-detail-page">
       <div className="club-activity-detail-main">
         <div className="club-profile-top">
         <button type="button" className="club-back" onClick={() => nav(-1)} aria-label={isZh ? '返回' : 'Back'}>
@@ -268,19 +280,40 @@ function ActivityDetail() {
         <Link className="club-profile-link" to={`/about/club/${a.clubId}`}>{isZh ? '社团' : 'Club'}</Link>
         </div>
 
-        <div className="club-profile-card">
-        <div className="club-feed-title">{a.title}</div>
-        <div className="club-feed-sub">{a.clubName}</div>
-        {a.summary ? <div className="club-detail-desc">{a.summary}</div> : null}
-
-        <div className="club-detail-meta">
-          {timeText ? <div>{timeText}</div> : null}
-          {a.location ? (
-            <div className="club-detail-loc">
-              <MapPin size={16} aria-hidden /> <span className="club-wrap">{a.location}</span>
+        <NeoCard className="club-profile-card activity-detail-card">
+          <div className="activity-detail-hero">
+            <div className="activity-detail-date" aria-label={timeText || (isZh ? '活动日期' : 'Activity date')}>
+              <span>{eventMonth}</span>
+              <strong>{eventDay}</strong>
             </div>
-          ) : null}
-        </div>
+            <div className="activity-detail-heading">
+              <div className="activity-detail-kicker">
+                <NeoBadge variant="accent" size="sm">{isZh ? '社团活动' : 'CLUB ACTIVITY'}</NeoBadge>
+                <span>{a.clubName}</span>
+              </div>
+              <h1 className="activity-detail-title">{a.title}</h1>
+              <NeoBadge variant={statusLabel === 'OPEN' || statusLabel === '进行中' ? 'primary' : 'default'} size="sm">
+                {statusLabel}
+              </NeoBadge>
+            </div>
+          </div>
+
+          {a.summary ? <div className="club-detail-desc activity-detail-summary">{a.summary}</div> : null}
+
+          <div className="activity-detail-info-grid">
+            {timeText ? (
+              <div className="activity-detail-info">
+                <Clock3 size={18} aria-hidden />
+                <div><span>{isZh ? '时间' : 'WHEN'}</span><strong>{timeText}</strong></div>
+              </div>
+            ) : null}
+            {a.location ? (
+              <div className="activity-detail-info">
+                <MapPin size={18} aria-hidden />
+                <div><span>{isZh ? '地点' : 'WHERE'}</span><strong className="club-wrap">{a.location}</strong></div>
+              </div>
+            ) : null}
+          </div>
 
         <ActivityRegisterBar
           isZh={isZh}
@@ -299,21 +332,24 @@ function ActivityDetail() {
           onCancel={() => cancelRegisterMut.mutate()}
         />
 
-        <div className="club-detail-utility-row">
-          <button
-            type="button"
-            className="club-detail-utility-btn pressable"
+        <div className="club-detail-utility-row activity-detail-utilities">
+          <NeoButton
+            variant="outline"
+            size="sm"
+            className="activity-detail-utility-btn"
+            iconLeft={<CalendarPlus2 size={16} aria-hidden />}
             onClick={() => {
               const ok = downloadEventIcs(a);
               if (!ok) Toast.error(isZh ? '当前活动缺少可导出的时间信息' : 'This activity does not have exportable time info yet');
             }}
           >
-            <CalendarPlus2 size={16} aria-hidden />
-            <span>{isZh ? '加入日历' : 'Add to calendar'}</span>
-          </button>
-          <button
-            type="button"
-            className="club-detail-utility-btn pressable"
+            {isZh ? '加入日历' : 'Add to calendar'}
+          </NeoButton>
+          <NeoButton
+            variant="outline"
+            size="sm"
+            className="activity-detail-utility-btn"
+            iconLeft={<ListTodo size={16} aria-hidden />}
             disabled={todoMut.isPending}
             onClick={() => {
               if (!token) {
@@ -323,9 +359,8 @@ function ActivityDetail() {
               todoMut.mutate();
             }}
           >
-            <ListTodo size={16} aria-hidden />
-            <span>{todoMut.isPending ? (isZh ? '加入中…' : 'Adding…') : (isZh ? '加入待办' : 'Add to to-do')}</span>
-          </button>
+            {todoMut.isPending ? (isZh ? '加入中…' : 'Adding…') : (isZh ? '加入待办' : 'Add to to-do')}
+          </NeoButton>
         </div>
 
         {imageUrls.length > 0 ? (
@@ -353,17 +388,18 @@ function ActivityDetail() {
           </div>
         ) : null}
 
-        <div className="club-detail-actions">
-          <button
-            type="button"
-            className={`club-like-btn pressable ${liked ? 'is-on' : ''}`}
+        <div className="club-detail-actions activity-detail-actions">
+          <NeoButton
+            variant={liked ? 'default' : 'outline'}
+            size="sm"
+            className="activity-detail-like"
             disabled={!token || likeMut.isPending}
             onClick={() => likeMut.mutate()}
             title={!token ? (isZh ? '登录后可点赞' : 'Login to like') : (isZh ? '点赞' : 'Like')}
+            iconLeft={<Heart size={18} aria-hidden />}
           >
-            <Heart size={18} aria-hidden />
-            <span>{a.stats?.likes ?? 0}</span>
-          </button>
+            {a.stats?.likes ?? 0}
+          </NeoButton>
           <div className="club-like-meta">
             <MessageCircle size={18} aria-hidden /> <span>{a.stats?.comments ?? 0}</span>
           </div>
@@ -372,33 +408,40 @@ function ActivityDetail() {
           </div>
           {a.registration ? (
             <div className="club-like-meta">
+              <UsersRound size={18} aria-hidden />
               <span>{isZh ? '已报名' : 'Registered'}</span>
               <span>{a.registration.count ?? 0}</span>
             </div>
           ) : null}
           {a.signupLink ? (
-            <a className="club-join-link pressable" href={a.signupLink} target="_blank" rel="noreferrer">
+            <a
+              className="activity-detail-signup"
+              href={a.signupLink}
+              target="_blank"
+              rel="noreferrer"
+            >
               <ExternalLink size={16} aria-hidden /> {isZh ? '外链报名' : 'Signup'}
             </a>
           ) : null}
           {canManage ? (
-            <button
-              type="button"
-              className="club-delete-btn pressable"
+            <NeoButton
+              variant="destructive"
+              size="sm"
+              className="activity-detail-delete"
               disabled={deleteMut.isPending}
               onClick={() => {
                 if (window.confirm(isZh ? '确定删除该活动？删除后不可恢复。' : 'Delete this activity? This cannot be undone.')) {
                   deleteMut.mutate();
                 }
               }}
+              iconLeft={<Trash2 size={16} aria-hidden />}
             >
-              <Trash2 size={16} aria-hidden />
-              <span>{isZh ? '删除' : 'Delete'}</span>
-            </button>
+              {isZh ? '删除' : 'Delete'}
+            </NeoButton>
           ) : null}
           <ReportButton target_type="club_activity" target_id={activityId} className="text-slate-400 hover:text-red-500" />
         </div>
-        </div>
+        </NeoCard>
       </div>
 
       <ClubCommentsSection targetType="activity" targetId={activityId} isZh={isZh} floatingComposer fillVertical />
