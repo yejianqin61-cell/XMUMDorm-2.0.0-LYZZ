@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import Button from './ui/Button';
 import './StackedCardCarousel.css';
 
 function mod(n, m) {
@@ -91,12 +92,26 @@ export function StackedCardCarousel({ urls, index, onChangeIndex, onOpenPreview,
           </motion.button>
         </AnimatePresence>
 
-        <button type="button" className="post-detail-carousel-arrow post-detail-carousel-arrow--left" onClick={() => go(-1)} aria-label="Previous">
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="post-detail-carousel-arrow post-detail-carousel-arrow--left"
+          onClick={() => go(-1)}
+          aria-label="Previous"
+        >
           <ChevronLeft size={18} aria-hidden />
-        </button>
-        <button type="button" className="post-detail-carousel-arrow post-detail-carousel-arrow--right" onClick={() => go(1)} aria-label="Next">
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="post-detail-carousel-arrow post-detail-carousel-arrow--right"
+          onClick={() => go(1)}
+          aria-label="Next"
+        >
           <ChevronRight size={18} aria-hidden />
-        </button>
+        </Button>
       </div>
 
       <div className="post-detail-carousel-dots" aria-label="Pagination">
