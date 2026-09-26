@@ -10,7 +10,7 @@ const CONTENT = {
       {
         title: '引言',
         paragraphs: [
-          'XMUMDorm（厦马小筑 / Jack Dorm）重视你的隐私。本隐私政策说明我们如何收集、使用和保护你的个人信息。',
+          'XMUMDorm（厦马小筑）重视你的隐私。本隐私政策说明我们如何收集、使用和保护你的个人信息。',
           '使用 XMUMDorm 即表示你同意本隐私政策的条款。',
         ],
       },
@@ -74,7 +74,7 @@ const CONTENT = {
       {
         title: 'Introduction',
         paragraphs: [
-          'XMUMDorm (Jack Dorm) values your privacy. This policy explains how we collect, use, and protect your personal information.',
+          'XMUMDorm values your privacy. This policy explains how we collect, use, and protect your personal information.',
           'By using XMUMDorm, you agree to the terms of this privacy policy.',
         ],
       },

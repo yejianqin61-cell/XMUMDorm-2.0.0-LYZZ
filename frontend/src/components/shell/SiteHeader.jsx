@@ -21,7 +21,7 @@ export default function SiteHeader({ children = null, className = '' }) {
           <>
             <Link to="/about" className="site-web-shell__brand">
               <div className="site-web-shell__brand-copy">
-                <strong>Dorm</strong>
+                <strong>XMUM Dorm</strong>
               </div>
             </Link>
             <div className="site-web-shell__header-meta">

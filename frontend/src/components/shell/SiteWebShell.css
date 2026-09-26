@@ -60,6 +60,8 @@
 .site-web-shell__brand-copy strong {
   font-size: 28px;
   line-height: var(--line-height-tight);
+  /* 品牌从「Dorm」变成「XMUM Dorm」后加长，避免在窄屏被折成两行 */
+  white-space: nowrap;
 }
 
 .site-web-shell__header-meta {
