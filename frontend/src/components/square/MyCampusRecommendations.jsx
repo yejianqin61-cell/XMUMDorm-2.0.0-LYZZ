@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import EmptyState from '../ui/EmptyState';
-import AppCard from '../ui/AppCard';
+import NeoCard from '../retroui/Card';
 import { useLanguage } from '../../context/LanguageContext';
 
 export default function MyCampusRecommendations({ summary }) {
@@ -32,14 +32,14 @@ export default function MyCampusRecommendations({ summary }) {
       ) : (
         <div className="square-recommend-grid">
           {cards.map((card) => (
-            <Link key={`${card.badge}-${card.id}`} to={card.href} className="square-recommend-link">
-              <AppCard className="square-recommend-card" interactive>
+            <Link key={`${card.badge}-${card.id}`} to={card.href} className="square-recommend-link no-underline">
+              <NeoCard className="p-5 flex flex-col gap-3 cursor-pointer">
                 <div className="square-recommend-card__top">
                   <span className="square-recommend-card__badge">{card.badge}</span>
                 </div>
                 <h3 className="square-recommend-card__title">{card.title}</h3>
                 {card.meta ? <p className="square-recommend-card__meta">{card.meta}</p> : null}
-              </AppCard>
+              </NeoCard>
             </Link>
           ))}
         </div>

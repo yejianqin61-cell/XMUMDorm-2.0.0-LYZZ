@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
-import Card from '../ui/Card';
+import NeoCard from '../retroui/Card';
 
 const NOTICE_LINKS = {
   zh: [
@@ -48,7 +48,7 @@ export default function TodayCampusHero() {
 
   return (
     <section className="today-campus-panel">
-      <div className="today-campus-hero">
+      <NeoCard className="today-campus-hero p-5 flex flex-col gap-4">
         <div className="today-campus-hero__content">
           <h2 className="today-campus-hero__title">{isEn ? 'Campus Notices' : '校园通知'}</h2>
         </div>
@@ -57,16 +57,14 @@ export default function TodayCampusHero() {
             <Link
               key={item.key}
               to={item.to}
-              className={`today-campus-hero__notice-link today-campus-hero__notice-link--${item.accent} no-underline`}
+              className={`today-campus-hero__notice-link today-campus-hero__notice-link--${item.accent} no-underline flex flex-col gap-2 p-4`}
             >
-              <Card className={`flex flex-col gap-2.5 p-5 rounded-2xl`}>
-                <span className="today-campus-hero__notice-kicker">{item.kicker}</span>
-                <strong className="today-campus-hero__notice-title">{item.title}</strong>
-              </Card>
+              <span className="today-campus-hero__notice-kicker">{item.kicker}</span>
+              <strong className="today-campus-hero__notice-title">{item.title}</strong>
             </Link>
           ))}
         </div>
-      </div>
+      </NeoCard>
     </section>
   );
 }

@@ -3,9 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { postTrendingPost } from '@shared/api/square';
 import { useExpFeedback } from '../context/ExpFeedbackContext';
-import Button from '../components/ui/Button';
-import Textarea from '../components/ui/Textarea';
-import Card from '../components/ui/Card';
+import NeoButton from '../components/retroui/Button';
+import NeoTextarea from '../components/retroui/Textarea';
+import NeoCard from '../components/retroui/Card';
 
 export default function SquareTrendingPostNew() {
   const { id } = useParams();
@@ -58,10 +58,10 @@ export default function SquareTrendingPostNew() {
   return (
     <div className="square-home-page">
       <div className="square-home-inner">
-        <Card className="p-5 flex flex-col gap-4">
-          <h3 className="square-section-title m-0">{isEn ? 'Join Discussion' : '参与讨论'}</h3>
+        <NeoCard className="p-5 flex flex-col gap-4">
+          <h3 className="text-xl font-black tracking-tight m-0">{isEn ? 'Join Discussion' : '参与讨论'}</h3>
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-            <Textarea
+            <NeoTextarea
               className="min-h-[120px] resize-y"
               placeholder={isEn ? 'Share your thoughts... (line breaks supported)' : '写下你的想法...（支持换行）'}
               value={content}
@@ -73,12 +73,12 @@ export default function SquareTrendingPostNew() {
             {previews.length > 0 && (
               <div className="flex gap-2 flex-wrap">
                 {previews.map((url, index) => (
-                  <div key={url} className="relative w-20 h-20 rounded-lg overflow-hidden">
+                  <div key={url} className="relative w-20 h-20 border-2 border-black overflow-hidden">
                     <img src={url} alt="" className="w-full h-full object-cover" />
                     <button
                       type="button"
                       onClick={() => removeFile(index)}
-                      className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/60 text-white border-0 cursor-pointer text-xs flex items-center justify-center"
+                      className="absolute top-0.5 right-0.5 w-5 h-5 bg-red-500 text-white border-0 cursor-pointer text-xs flex items-center justify-center font-black"
                       aria-label={isEn ? 'Remove image' : '删除图片'}
                     >
                       ×
@@ -89,14 +89,14 @@ export default function SquareTrendingPostNew() {
             )}
 
             {files.length < 3 && (
-              <Button
+              <NeoButton
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => fileInputRef.current?.click()}
               >
                 {isEn ? `Add image / GIF (${files.length}/3)` : `添加图片/GIF (${files.length}/3)`}
-              </Button>
+              </NeoButton>
             )}
             <input
               ref={fileInputRef}
@@ -107,16 +107,16 @@ export default function SquareTrendingPostNew() {
               onChange={handleFileChange}
             />
 
-            {error && <p className="text-[var(--post-ios-red)] text-[13px] m-0 mt-2">{error}</p>}
-            <Button
+            {error && <p className="text-red-500 text-sm font-bold m-0 mt-2 border-2 border-red-500 p-2">{error}</p>}
+            <NeoButton
               type="submit"
-              variant="primary"
+              variant="default"
               disabled={submitting || !content.trim()}
             >
               {submitting ? (isEn ? 'Posting...' : '发布中...') : (isEn ? 'Post' : '发布')}
-            </Button>
+            </NeoButton>
           </form>
-        </Card>
+        </NeoCard>
       </div>
     </div>
   );

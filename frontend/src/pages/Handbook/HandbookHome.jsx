@@ -6,6 +6,8 @@ import { Bookmark, Eye, Heart, Search } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { getHandbookTabs, listCourseReviews, listHandbookArticles } from '@shared/api/handbook';
 import { QK } from '@shared/query/queryKeys';
+import NeoButton from '../../components/retroui/Button';
+import NeoCard from '../../components/retroui/Card';
 import './Handbook.css';
 
 function useQueryString() {
@@ -149,11 +151,15 @@ function HandbookHome() {
           {isZh ? '美食 · 游玩 · 榴莲 · 校内周边咨询 · 学法分享 · 课程测评' : 'Food · Explore · Durian · Campus Guide · Study Tips · Reviews'}
         </div>
         <div className="handbook-hero-actions">
-          <Link to="/about/freshman-guide/new" className="handbook-btn handbook-btn--primary">
-            {isZh ? '投稿/发布' : 'Write'}
+          <Link to="/about/freshman-guide/new">
+            <NeoButton variant="default" size="sm">
+              {isZh ? '投稿/发布' : 'Write'}
+            </NeoButton>
           </Link>
-          <Link to="/about/freshman-guide/course-review/new" className="handbook-btn handbook-btn--ghost">
-            {isZh ? '新建课程评价' : 'New course review'}
+          <Link to="/about/freshman-guide/course-review/new">
+            <NeoButton variant="outline" size="sm">
+              {isZh ? '新建课程评价' : 'New course review'}
+            </NeoButton>
           </Link>
         </div>
       </div>
@@ -176,7 +182,8 @@ function HandbookHome() {
 
       <div className="handbook-list">
         {list.map((a) => (
-          <Link key={a.id} to={`/about/freshman-guide/a/${a.id}`} className="handbook-card">
+          <Link key={a.id} to={`/about/freshman-guide/a/${a.id}`} className="no-underline">
+            <NeoCard className="flex gap-3 p-3 cursor-pointer">
             <div className="handbook-card-main">
               <div className="handbook-card-title">{a.title}</div>
               {a.summary ? <div className="handbook-card-summary">{a.summary}</div> : null}
@@ -209,6 +216,7 @@ function HandbookHome() {
                 <img src={a.cover} alt="" loading="lazy" decoding="async" />
               </div>
             ) : null}
+            </NeoCard>
           </Link>
         ))}
 
@@ -240,4 +248,3 @@ function HandbookHome() {
 }
 
 export default HandbookHome;
-
