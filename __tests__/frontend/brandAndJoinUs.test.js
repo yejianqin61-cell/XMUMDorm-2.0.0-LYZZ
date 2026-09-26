@@ -131,3 +131,34 @@ describe('左侧栏「加入我们」', () => {
     expect(sidebar).toMatch(/label: isZh \? item\.labelZh : item\.labelEn/);
   });
 });
+
+/**
+ * 微信号统一（2026-09-26 用户裁定：xmumdorm666 是官方号）
+ *
+ * 背景：站点上曾同时存在两个微信号 —— 老的「联系我们」页（Web / Capacitor App /
+ * RN 移动端 About）写的是个人号 YEJIANQIN_git，新加的「加入我们」写的是官方号
+ * xmumdorm666。两个号同时对外，用户不知道该加哪个，所以统一到官方号。
+ */
+describe('微信号全站统一为官方号 xmumdorm666', () => {
+  const wechatFiles = [
+    ['frontend', 'src', 'pages', 'ContactUs.jsx'],
+    ['frontend-app', 'src', 'pages', 'ContactUs.jsx'],
+    ['mobile', 'src', 'screens', 'AboutInfoScreen.tsx'],
+  ];
+
+  it('三处联系页面都写官方号，都不再出现历史个人号', () => {
+    for (const parts of wechatFiles) {
+      const src = read(...parts);
+      expect(src).toContain(WECHAT_ID);
+      expect(src).not.toContain('YEJIANQIN_git');
+    }
+  });
+
+  it('移动端 About 的联系信息测试读的是真实源码，不是拿常量自比', () => {
+    // 原测试写的是 const wechat = 'YEJIANQIN_git'; expect(wechat).toContain('YEJIANQIN');
+    // —— 页面改成任何内容它都不会红，等于没测。现在必须出现 readFileSync。
+    const spec = read('mobile', '__tests__', 'screens', 'AboutSystem.test.js');
+    expect(spec).toContain('readFileSync');
+    expect(spec).toContain('AboutInfoScreen.tsx');
+  });
+});

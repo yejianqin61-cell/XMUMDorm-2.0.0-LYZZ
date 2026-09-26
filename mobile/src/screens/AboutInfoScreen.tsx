@@ -47,7 +47,7 @@ export default function AboutInfoScreen({ onBack }: { onBack: () => void }) {
             </Text>
             <View style={s.contactItem}>
               <Text style={s.contactLabel}>微信</Text>
-              <Text style={s.contactValue}>YEJIANQIN_git</Text>
+              <Text style={s.contactValue}>xmumdorm666</Text>
             </View>
             <View style={s.contactItem}>
               <Text style={s.contactLabel}>电话</Text>
