@@ -1,3 +1,6 @@
+import NeoButton from '../retroui/Button';
+import NeoCard from '../retroui/Card';
+
 function formatDeadline(deadline, isZh) {
   if (!deadline) return isZh ? '截止时间待定' : 'Deadline TBD';
   const date = new Date(deadline);
@@ -16,7 +19,7 @@ function ActivityRegisterBar({
   onCancel,
 }) {
   return (
-    <div className="activity-register-bar">
+    <NeoCard className="activity-register-bar">
       <div className="activity-register-bar__meta">
         <div className="activity-register-bar__count">
           <span className="activity-register-bar__count-value">{count}</span>
@@ -29,19 +32,17 @@ function ActivityRegisterBar({
         </div>
       </div>
 
-      <button
-        type="button"
-        className={`activity-register-bar__button ${registered ? 'is-secondary' : 'is-primary'} pressable`}
+      <NeoButton
+        variant={registered ? 'outline' : 'default'}
+        size="md"
+        className="activity-register-bar__button"
         disabled={disabled || loading}
         onClick={registered ? onCancel : onRegister}
+        loading={loading}
       >
-        {loading
-          ? (isZh ? '处理中…' : 'Working…')
-          : registered
-            ? (isZh ? '取消报名' : 'Cancel registration')
-            : (isZh ? '立即报名' : 'Register now')}
-      </button>
-    </div>
+        {registered ? (isZh ? '取消报名' : 'Cancel registration') : (isZh ? '立即报名' : 'Register now')}
+      </NeoButton>
+    </NeoCard>
   );
 }
 
