@@ -1,5 +1,6 @@
 import { createElement, lazy, Suspense } from 'react';
 import { Route, Navigate } from 'react-router-dom';
+import RouteErrorBoundary from '../components/RouteErrorBoundary';
 import TreeHole from '../pages/TreeHole';
 import SquareHome from '../pages/SquareHome';
 import MyZone from '../pages/MyZone';
@@ -82,10 +83,15 @@ const ConfessionWall = lazy(() => import('../pages/ConfessionWall'));
 const ConfessionCompose = lazy(() => import('../pages/ConfessionCompose'));
 
 function renderLazyRoute(Component) {
+  // 每个懒加载路由都套一层错误边界：
+  // ① 部署后旧 chunk 失效 → 自动重载（见 shared/utils/chunkLoadRecovery）；
+  // ② 页面渲染期抛错 → 显示兜底 UI，而不是让 React 卸载整棵树变白屏。
   return (
-    <Suspense fallback={<div className="state-loading route-loading">Loading...</div>}>
-      {createElement(Component)}
-    </Suspense>
+    <RouteErrorBoundary>
+      <Suspense fallback={<div className="state-loading route-loading">Loading...</div>}>
+        {createElement(Component)}
+      </Suspense>
+    </RouteErrorBoundary>
   );
 }
 
