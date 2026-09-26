@@ -83,4 +83,10 @@ export const QK = {
 
   todosList: (filters) => ['todos', 'list', filters],
   todosToday: () => ['todos', 'today'],
+
+  // M09 万能墙：窗口是命令式滑窗状态，tokenKey 参与 key 以区分登录/游客的 liked 视图
+  confessionWindow: (tokenKey) => ['confessions', 'window', tokenKey ?? '_guest'],
+  confessionMeta: () => ['confessions', 'meta'],
+  confessionDetail: (id, tokenKey) => ['confessions', 'detail', id, tokenKey ?? '_guest'],
+  confessionComments: (id) => ['confessions', 'comments', id],
 };

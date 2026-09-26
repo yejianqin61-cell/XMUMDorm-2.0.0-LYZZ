@@ -21,6 +21,7 @@ import {
 import { queryClient } from '@shared/query/queryClient';
 import { Toast } from '../../context/ToastContext';
 import ImagePreview from '../../components/ImagePreview';
+import Button from '../../components/ui/Button';
 import './Marketplace.css';
 
 function statusLabel(s, isZh) {
@@ -490,12 +491,26 @@ function StackedCardCarousel({ urls, index, onChangeIndex, onOpenPreview, dir, s
           />
         </motion.button>
 
-        <button type="button" className="mp-detail-carousel-arrow mp-detail-carousel-arrow--left" onClick={() => go(-1)} aria-label="Previous">
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="mp-detail-carousel-arrow mp-detail-carousel-arrow--left"
+          onClick={() => go(-1)}
+          aria-label="Previous"
+        >
           ‹
-        </button>
-        <button type="button" className="mp-detail-carousel-arrow mp-detail-carousel-arrow--right" onClick={() => go(1)} aria-label="Next">
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="mp-detail-carousel-arrow mp-detail-carousel-arrow--right"
+          onClick={() => go(1)}
+          aria-label="Next"
+        >
           ›
-        </button>
+        </Button>
       </div>
 
       <div className="mp-detail-carousel-dots" aria-label="Pagination">
@@ -512,4 +527,3 @@ function StackedCardCarousel({ urls, index, onChangeIndex, onOpenPreview, dir, s
     </div>
   );
 }
-

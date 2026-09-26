@@ -78,6 +78,8 @@ const FoodCreate = lazy(() => import('../pages/FoodCreate'));
 const MerchantFoodDetail = lazy(() => import('../pages/MerchantFoodDetail'));
 const MerchantShopEdit = lazy(() => import('../pages/MerchantShopEdit'));
 const Rankings = lazy(() => import('../pages/Rankings'));
+const ConfessionWall = lazy(() => import('../pages/ConfessionWall'));
+const ConfessionCompose = lazy(() => import('../pages/ConfessionCompose'));
 
 function renderLazyRoute(Component) {
   return (
@@ -173,6 +175,9 @@ export const layoutRoutes = (
     <Route path="merchant/shop/edit" element={renderLazyRoute(MerchantShopEdit)} />
     <Route path="merchant/food/new" element={renderLazyRoute(FoodCreate)} />
     <Route path="merchant/food/:id" element={renderLazyRoute(MerchantFoodDetail)} />
+    {/* M09 万能墙 */}
+    <Route path="confession" element={renderLazyRoute(ConfessionWall)} />
+    <Route path="confession/new" element={renderLazyRoute(ConfessionCompose)} />
     <Route path="*" element={<Navigate to="/" replace />} />
   </>
 );

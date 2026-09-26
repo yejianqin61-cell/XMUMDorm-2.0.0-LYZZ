@@ -1020,6 +1020,38 @@ async function resolveContentUrl(targetType, targetId) {
 // ============================================
 
 const CONTENT_MODULES = {
+  confession: {
+    // M09 万能墙。
+    // ⚠️ 刻意**不声明 hiddenField**：routes/admin.js 的列表查询会对 hiddenField
+    // 无条件追加 `AND hidden = 0`（见下方 list 处理器），导致被隐藏的条目从后台
+    // 列表彻底消失、再也无法恢复。只配 deletedField 即可让「隐藏=逻辑删除、
+    // 恢复=置 NULL」这条路径保持可用。
+    label: '万能墙帖子',
+    table: 'confessions',
+    idField: 'id',
+    titleField: 'LEFT(c.content, 60) AS title',
+    contentField: 'c.content',
+    userField: 'c.user_id',
+    timeField: 'c.created_at',
+    deletedField: 'c.deleted_at',
+    hiddenField: null,
+    searchFields: ['c.content'],
+    joinUser: true,
+    listFields: 'c.id, LEFT(c.content, 60) AS title, c.template_key, u.username, c.created_at, c.deleted_at',
+    listOrder: 'c.created_at DESC',
+    tableAlias: 'c',
+    hasComments: true,
+    commentTable: 'confession_comments',
+    commentIdField: 'id',
+    // 根评论挂 confession_id（与 comments 表挂 post_id 同构）
+    commentParentField: 'confession_id',
+    commentUserField: 'user_id',
+    commentContentField: 'content',
+    commentTimeField: 'created_at',
+    commentDeletedField: 'deleted_at',
+    // 只列出该帖的一级评论（与 treehole 模块行为一致；回复不在后台详情页展示）
+    commentParentIsParent: true,
+  },
   treehole: {
     label: '树洞帖子',
     table: 'posts',

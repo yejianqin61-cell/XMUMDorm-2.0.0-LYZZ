@@ -2,6 +2,7 @@ import {
   BookOpen,
   Compass,
   HandHeart,
+  Heart,
   TreePine,
   ShoppingBag,
   UserRound,
@@ -10,6 +11,15 @@ import {
 } from 'lucide-react';
 
 export const SITE_PRIMARY_NAV_ITEMS = [
+  {
+    // M09 万能墙：置于导航列首位（产品决策 #9）
+    key: 'confession',
+    labelZh: '万能墙',
+    labelEn: 'Wall',
+    to: '/confession',
+    icon: Heart,
+    matchPrefixes: ['/confession'],
+  },
   {
     key: 'square',
     labelZh: '广场',

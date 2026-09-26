@@ -33,6 +33,7 @@ router.post('/', authenticateToken, async (req, res) => {
       'marketplace', 'errand', 'handbook_article', 'handbook_comment',
       'course_review', 'trending_post', 'campus_post',
       'trending_comment', 'campus_comment', 'club_comment', 'course_review_comment',
+      'confession', 'confession_comment',
     ];
     if (!validTargets.includes(target_type)) {
       return res.status(400).json({ status: -1, message: '无效的举报目标类型' });
@@ -152,6 +153,14 @@ async function findReportedUser(targetType, targetId) {
       break;
     case 'course_review':
       sql = 'SELECT created_by AS user_id FROM course_reviews WHERE id = ?';
+      break;
+    // M09 万能墙：匿名墙对用户匿名，但被举报时必须能追溯到真实作者，
+    // 否则举报形同虚设（该 switch 的 default 会静默返回 null）。
+    case 'confession':
+      sql = 'SELECT user_id FROM confessions WHERE id = ?';
+      break;
+    case 'confession_comment':
+      sql = 'SELECT user_id FROM confession_comments WHERE id = ?';
       break;
     default:
       return null;
