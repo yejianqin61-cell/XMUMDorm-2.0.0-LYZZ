@@ -384,7 +384,7 @@ export default function ConfessionWall() {
         </div>
         <div className="cf-wall__header-actions">
           <span className="cf-wall__kbd-hint" aria-hidden="true">
-            {isZh ? '↑↓ 翻页 · Enter 评论 · Esc 收起' : '↑↓ navigate · Enter comments'}
+            {isZh ? '↑↓ 翻页 · Enter 评论 · Esc 关闭弹窗' : '↑↓ navigate · Enter comments'}
           </span>
           <Link className="cf-wall__cta" to="/confession/new">
             {isZh ? '我要投稿' : 'Post'}
@@ -414,6 +414,7 @@ export default function ConfessionWall() {
             onOpenComments={() => setCommentsOpen(true)}
             onDelete={handleDeleteConfession}
             likePending={likeMutation.isPending && likeMutation.variables === item.id}
+            commentsOpen={commentsOpen && item.id === currentId}
           />
         )}
       />

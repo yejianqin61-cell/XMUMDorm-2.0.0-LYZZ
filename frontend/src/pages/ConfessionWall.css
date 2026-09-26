@@ -8,17 +8,28 @@
  *   .cf-pager__viewport 高度 = var(--cf-pager-height)
  *   .cf-pager__track 用 translateY(calc(-index * var(--cf-pager-height))) 位移
  *   .cf-pager__pane 绝对定位在 top: calc(i * var(--cf-pager-height))
+ *
+ * 注意：评论弹窗 portal 到 body，已经不在 .cf-wall 子树里，
+ * 因此 --cf-accent* 必须同时在 .cf-comments-backdrop 上再声明一次（见下）。
  */
 
 .cf-wall,
-.cf-compose {
+.cf-compose,
+.cf-comments-backdrop {
   /* 模块强调色：珊瑚玫瑰，与树洞的冷紫蓝形成区分 */
   --cf-accent: #e8738f;
   --cf-accent-soft: #fdeef2;
   --cf-accent-text: #b93e5e;
+}
 
-  /* 翻页视口高度：改这里即可整体调整一屏一篇的高度 */
-  --cf-pager-height: 72vh;
+.cf-wall,
+.cf-compose {
+  /* 一屏一篇的视口高度：改这里即可整体调整卡片高度。
+     88vh ≈ 旧值 72vh 的 1.22 倍。外壳合计约 377px（顶栏 120 + 页面留白 64
+     + 墙自身头部/控制条约 193），所以 88vh 在常见屏幕上会略微超出一屏、
+     页面可滚动——这是刻意的：真正「封顶在视口内」的算法
+     min(88vh, calc(100dvh - 377px)) 在任何真实屏幕上都会得到比 72vh 更矮的值。 */
+  --cf-pager-height: 88vh;
 
   --cf-pager-duration: 380ms;
   --cf-pager-ease: cubic-bezier(0.22, 1, 0.36, 1);
@@ -481,34 +492,72 @@
 }
 
 /* ============================================
-   评论区面板（同页展开）
+   评论区弹窗（悬浮居中 · portal 到 body）
    ============================================ */
+.cf-comments-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000; /* 高于站点外壳(≤200)与业务弹窗(≤1300)，低于 Toast(10000) */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8);
+  background: rgba(15, 23, 42, 0.42);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  animation: cf-backdrop-in var(--motion-base) var(--ease-soft-out);
+}
+
+@keyframes cf-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 .cf-comments {
-  width: min(720px, 100%);
-  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  width: min(680px, 100%);
+  /* dvh 在移动端软键盘弹出时才会跟着缩，vh 不会；两行做渐进降级 */
+  max-height: min(84vh, 780px);
+  max-height: min(84dvh, 780px);
   padding: var(--space-10) var(--space-12);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-xl);
   background: var(--color-bg-surface);
-  box-shadow: var(--shadow-soft);
+  box-shadow: var(--shadow-float);
+  overflow: hidden;
   animation: cf-panel-in var(--motion-base) var(--ease-soft-out);
 }
 
 @keyframes cf-panel-in {
   from {
     opacity: 0;
-    transform: translateY(-8px);
+    transform: translateY(12px) scale(0.98);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
+}
+
+/* 只有列表区滚动，标题与输入框常驻可见 */
+.cf-comments__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: var(--space-2);
 }
 
 .cf-comments__head {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-shrink: 0;
   margin-bottom: var(--space-8);
 }
 
@@ -551,6 +600,11 @@
 .cf-comments__close:hover {
   background: var(--color-bg-surface-soft);
   color: var(--color-text-primary);
+}
+
+.cf-comments__close:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
 }
 
 .cf-comments__state {
@@ -650,6 +704,7 @@
 }
 
 .cf-comments__form {
+  flex-shrink: 0;
   margin-top: var(--space-10);
   padding-top: var(--space-8);
   border-top: 1px solid var(--color-border-soft);
@@ -1047,8 +1102,12 @@
 @media (max-width: 767px) {
   .cf-wall,
   .cf-compose {
-    --cf-pager-height: 68vh;
+    --cf-pager-height: 82vh;
     padding: var(--space-6) 0 var(--space-12);
+  }
+
+  .cf-comments-backdrop {
+    padding: var(--space-6);
   }
 
   .cf-card,
@@ -1095,6 +1154,7 @@
     transition: opacity 120ms linear;
   }
 
+  .cf-comments-backdrop,
   .cf-comments {
     animation: none;
   }

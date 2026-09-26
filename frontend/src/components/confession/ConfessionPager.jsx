@@ -17,7 +17,7 @@
 import { useLanguage } from '../../context/LanguageContext';
 
 /** 与 CSS 中 --cf-pager-height 保持一致，供内联样式计算位移 */
-export const PAGER_PANE_HEIGHT = 'var(--cf-pager-height, 72vh)';
+export const PAGER_PANE_HEIGHT = 'var(--cf-pager-height, 88vh)';
 
 function ChevronUpIcon() {
   return (
