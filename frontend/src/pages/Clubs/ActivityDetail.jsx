@@ -241,7 +241,10 @@ function ActivityDetail() {
   const eventMonth = eventDate
     ? eventDate.toLocaleDateString(isZh ? 'zh-CN' : 'en-US', { month: 'short' }).toUpperCase()
     : (isZh ? '日期' : 'DATE');
-  const statusLabel = String(a.status || '').toLowerCase() === 'ended'
+  // ⚠️ 必须用 a?.status：本行在下面的 `if (q.isLoading)` / `if (q.isError || !a)` 早退**之前**执行，
+  // 冷启动（直接打开 URL 或刷新，查询尚在 pending，a === undefined）时 a.status 会抛
+  // TypeError: Cannot read properties of undefined (reading 'status')，整个页面被 React 卸载成白屏。
+  const statusLabel = String(a?.status || '').toLowerCase() === 'ended'
     ? (isZh ? '已结束' : 'ENDED')
     : (isZh ? '进行中' : 'OPEN');
 

@@ -478,3 +478,29 @@ ACM协会
 本次是「整文件重写」而非「按引用删除」造成的连带删除。
 若后续还要迁移某页，应先迁移 JSX 再删旧规则（`d58d753` 就是这个顺序）。
 
+### 8.2 活动详情页冷启动白屏（2026-09-26 修复）
+
+**现象**：**直接打开或刷新** `/about/club/activity/:id` 整页白屏（`body` 文本长度为 0）；
+从列表页点进去却正常。
+
+**根因**：`d58d753` 在**守护语句之前**新增了一行未加可选链的解引用：
+
+```jsx
+L244  const statusLabel = String(a.status || '').toLowerCase() === 'ended' …
+L269  if (q.isLoading) return <div className="state-loading">…</div>;
+L270  if (q.isError || !a) return <div className="state-error">…</div>;
+```
+
+冷启动时查询仍是 `pending`，`a === undefined` → 抛
+`TypeError: Cannot read properties of undefined (reading 'status')` →
+React 卸载整个 `<ActivityDetail>` → 白屏。
+从列表页进入时 TanStack Query 已有缓存、`a` 立即可用，因此**不复现**——
+这正是「只有刷新/直链才白屏」的原因，也是它容易被漏掉的原因。
+
+**修复**：`L244` 改为 `a?.status`，并加注释标明该行位于早退守卫之前、必须用可选链。
+
+**规约**：组件内所有「从查询结果派生的常量」若写在早退（`isLoading` / `isError` / `!data`）
+**之前**，一律使用可选链；否则数据未到达时的第一次渲染必然抛错，而缓存命中会掩盖它。
+新增此类派生逻辑后，必须用**直链/刷新**验证一次，不能只从列表页点进去验证。
+
+
