@@ -5,6 +5,9 @@ import { getTrendingTopicDetail, getTrendingPosts } from '@shared/api/square';
 import { QK } from '@shared/query/queryKeys';
 import { getUploadUrl } from '@shared/api/config';
 import { formatPostTime } from '@shared/utils/formatTime';
+import Button from '../components/ui/Button';
+import Card from '../components/ui/Card';
+import { NeoLoader } from '../components/retroui/Loader';
 import './SquareHome.css';
 
 function getHeatTone(postCount, isEn) {
@@ -107,13 +110,12 @@ export default function SquareTrendingDetail() {
                 </div>
               </div>
 
-              <button
-                type="button"
-                className="square-trending-join-btn pressable"
+              <Button
+                variant="primary"
                 onClick={() => navigate(`/about/trending/${topicId}/new`)}
               >
                 {isEn ? 'Join discussion' : '参与讨论'}
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -129,54 +131,57 @@ export default function SquareTrendingDetail() {
           </div>
 
           {postsLoading ? (
-            <div className="state-loading" style={{ paddingTop: 60 }} />
+            <div className="flex flex-col items-center py-16 gap-3">
+              <NeoLoader />
+              <span className="text-sm text-muted-foreground">{isEn ? 'Loading...' : '加载中...'}</span>
+            </div>
           ) : postsError ? (
             <div className="state-error">{isEn ? 'Load failed' : '加载失败'}</div>
           ) : posts.length === 0 ? (
             <div className="state-empty">{isEn ? 'No discussion yet. Be the first to speak.' : '暂无讨论，来做第一个发言的人吧'}</div>
           ) : (
-            <div className="square-trending-discussion-list">
+            <div className="flex flex-col gap-4.5">
               {posts.map((post, index) => {
                 const firstImage = post.images && post.images.length > 0 ? post.images[0] : null;
 
                 return (
-                  <div
+                  <Card
                     key={post.id}
-                    className="square-trending-post-card pressable"
+                    className="cursor-pointer hover:shadow-md transition-shadow"
                     style={{ animationDelay: `${index * 50}ms` }}
                     onClick={() => navigate(`/about/trending/post/${post.id}`)}
                   >
-                    <div className="square-trending-post-card__inner">
+                    <div className="flex gap-4 items-start">
                       {firstImage && (
                         <img
                           src={getUploadUrl(firstImage.url)}
                           alt=""
-                          className="square-trending-post-card__image"
+                          className="w-21 h-21 object-cover rounded-2xl shrink-0"
                           loading="lazy"
                         />
                       )}
 
-                      <div className="square-trending-post-card__content">
-                        <div className="square-trending-post-card__header">
-                          <span className="square-trending-post-card__author">
+                      <div className="flex-1 min-w-0 flex flex-col gap-3">
+                        <div className="flex items-center justify-between gap-3 flex-wrap">
+                          <span className="text-xs font-bold text-[#10233b]/55">
                             {post.author?.name || (isEn ? 'Anonymous' : '匿名')}
                           </span>
-                          <span className="square-trending-post-card__time">
+                          <span className="text-xs text-[#10233b]/40">
                             {formatPostTime(post.created_at)}
                           </span>
                         </div>
 
-                        <p className="square-trending-post-card__text">
+                        <p className="text-[15px] leading-relaxed text-[#10233b] whitespace-pre-wrap break-words line-clamp-3 m-0">
                           {post.content}
                         </p>
 
-                        <div className="square-trending-post-card__meta">
+                        <div className="flex flex-wrap gap-3 text-xs text-[#10233b]/50">
                           <span>👍 {post.like_count || 0}</span>
                           <span>💬 {post.comment_count || 0}</span>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </Card>
                 );
               })}
 
