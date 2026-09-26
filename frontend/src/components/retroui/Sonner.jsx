@@ -6,7 +6,7 @@ function NeoToaster(props) {
       toastOptions={{
         classNames: {
           toast:
-            'h-auto w-full p-4 bg-background border-2 border-border shadow-[4px_4px_0_0_#000] group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border flex items-center relative',
+            'h-auto w-full p-4 bg-background border-2 border-border shadow-[4px_4px_0_0_#122E8A] group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border flex items-center relative',
           description:
             'group-[.toast]:text-muted-foreground ml-2 text-sm font-sans',
           actionButton:

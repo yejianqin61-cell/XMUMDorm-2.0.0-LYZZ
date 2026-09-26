@@ -31,8 +31,8 @@ function AccordionItem({ value, className = '', children, ...props }) {
   return (
     <div
       className={cn(
-        'border-2 border-black bg-background text-foreground shadow-[4px_4px_0_0_#000] transition-all',
-        isOpen ? 'shadow-none' : 'hover:shadow-[2px_2px_0_0_#000]',
+        'border-2 border-black bg-background text-foreground shadow-[4px_4px_0_0_var(--color-black)] transition-all',
+        isOpen ? 'shadow-none' : 'hover:shadow-[2px_2px_0_0_var(--color-black)]',
         className
       )}
       data-state={isOpen ? 'open' : 'closed'}

@@ -11,7 +11,7 @@ const NeoTextarea = forwardRef(function NeoTextarea(
       rows={rows}
       className={cn(
         'w-full rounded-none border-2 border-black bg-input px-4 py-2',
-        'shadow-[4px_4px_0_0_#000]',
+        'shadow-[4px_4px_0_0_#122E8A]',
         'font-semibold text-foreground placeholder:text-muted-foreground',
         'resize-y min-h-[96px]',
         'transition-all',
