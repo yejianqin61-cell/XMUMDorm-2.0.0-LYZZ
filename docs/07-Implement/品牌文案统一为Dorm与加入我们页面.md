@@ -77,8 +77,10 @@ const title = resolvePageTitle(pathname, isZh);   // 算出来了……
 新增页面 `frontend/src/pages/JoinUs.jsx` + `JoinUs.css`，路由 `about/join-us`
 （懒加载，与 `/about/*` 其它页一致，公开无需登录）：
 
-- 正文**逐字**使用给定文案：「如果你想学习怎么用AI开发出你的网站…」→ 实测原文
-- 微信一行展示 `xmumdorm666`，并带「复制」按钮（`navigator.clipboard`，失败时 toast 引导手动选中）
+- 正文**逐字**使用给定文案（含 2026-09-26 追加的「如果你发现本站有任何使用问题」一句）
+- 联系区两行：**微信** `xmumdorm666`、**邮箱** `yejianqin61@gmail.com`，
+  每行各带一个「复制」按钮（`navigator.clipboard`，失败时 toast 引导手动选中；
+  复制状态按行记，只让刚复制的那行变「已复制」）。邮箱另外做成 `mailto:` 链接，点了直接发信
 
 > 小增强：复制按钮是我加的（微信号手选复制很别扭）。英文界面下文案是我翻译的对应英文，
 > 中文界面是原文逐字。不想要复制按钮的话删掉即可。
@@ -102,8 +104,9 @@ const title = resolvePageTitle(pathname, isZh);   // 算出来了……
 | 左栏导航项数 / 顺序 | 10 项，`加入我们` 位于 `跑腿` 与 `我的` 之间 |
 | 点击后的 URL / 标题 | `/about/join-us` / `Dorm` |
 | 页面正文 | 与需求原文逐字一致 |
-| 微信行 | `微信 xmumdorm666` |
-| 复制按钮 | 点击后按钮变「已复制」+ toast「微信号已复制」 |
+| 微信行 | `微信 xmumdorm666`，带「复制」按钮 |
+| 邮箱行 | `邮箱 yejianqin61@gmail.com`，`mailto:` 链接 + 「复制」按钮 |
+| 复制按钮 | 点邮箱行的复制 → 该行变「已复制」+ toast「已复制」，微信行仍是「复制」（状态按行记） |
 | 当前导航高亮 | `加入我们` 高亮（`aria-current="page"`），`广场` 未被误高亮 |
 | 页面内是否还有 Jack | `false` |
 | 是否触发错误边界 | `false` |

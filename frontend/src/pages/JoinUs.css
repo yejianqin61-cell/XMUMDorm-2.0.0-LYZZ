@@ -23,6 +23,15 @@
   color: var(--wx-text, #111);
 }
 
+.join-us-contacts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .join-us-contact {
   display: flex;
   align-items: center;
@@ -43,13 +52,20 @@
   color: var(--wx-text-secondary, #555);
 }
 
-.join-us-contact-id {
+.join-us-contact-value {
   font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.01em;
   color: #2563eb;
+  text-decoration: none;
   user-select: all;
   -webkit-user-select: all;
+  /* 邮箱在窄屏也不能撑破卡片 */
+  word-break: break-all;
+}
+
+a.join-us-contact-value:hover {
+  text-decoration: underline;
 }
 
 .join-us-copy {

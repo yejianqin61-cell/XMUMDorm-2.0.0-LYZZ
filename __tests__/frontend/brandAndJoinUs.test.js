@@ -17,8 +17,10 @@ const ROOT = path.resolve(__dirname, '..', '..');
 const read = (...segments) => fs.readFileSync(path.resolve(ROOT, ...segments), 'utf8');
 
 /** 招募文案（中文为产品给定原文，必须逐字一致） */
-const JOIN_LEAD_ZH = '如果你想学习怎么用AI开发出你自己的网站，如果你想共同成为Dorm的创造者。那就快快联系我们。';
+const JOIN_LEAD_ZH =
+  '如果你想学习怎么用AI开发出你自己的网站，如果你想共同成为Dorm的创造者，如果你发现本站有任何使用问题，那就快快联系我们。';
 const WECHAT_ID = 'xmumdorm666';
+const CONTACT_EMAIL = 'yejianqin61@gmail.com';
 
 describe('标签页标题改成 Dorm，且不再出现 Jack 字样', () => {
   it('Web 的 index.html 标题是 Dorm', () => {
@@ -101,12 +103,26 @@ describe('左侧栏「加入我们」', () => {
     expect(routes).toContain('path="about/join-us" element={renderLazyRoute(JoinUs)}');
   });
 
-  it('页面逐字显示产品给定的招募文案与微信号', () => {
+  it('页面逐字显示产品给定的招募文案与联系方式', () => {
     const page = read('frontend', 'src', 'pages', 'JoinUs.jsx');
     expect(page).toContain(JOIN_LEAD_ZH);
     expect(page).toContain(`const WECHAT_ID = '${WECHAT_ID}';`);
-    expect(page).toContain('{WECHAT_ID}');
+    expect(page).toContain(`const CONTACT_EMAIL = '${CONTACT_EMAIL}';`);
+    expect(page).toContain('{value}');
     expect(page).toContain('加入我们');
+  });
+
+  it('联系区同时有微信与邮箱，两个都能复制', () => {
+    const page = read('frontend', 'src', 'pages', 'JoinUs.jsx');
+    expect(page).toContain("labelZh: '微信'");
+    expect(page).toContain("labelZh: '邮箱'");
+    expect(page).toContain("labelEn: 'Email'");
+    // 邮箱额外做成 mailto 链接，点了能直接发信
+    expect(page).toContain('mailto:${CONTACT_EMAIL}');
+    // 复制按钮按行记状态，只让刚复制的那行变「已复制」
+    expect(page).toContain('useState(null)');
+    expect(page).toMatch(/handleCopy\(value\)/);
+    expect(page).toContain('copiedValue === value');
   });
 
   it('侧边栏是通用渲染，新增导航项无需改 SiteSidebar', () => {
