@@ -6,7 +6,7 @@ import { getUploadUrl } from '@shared/api/config';
 import ErrorState from '../components/ui/ErrorState';
 import PageSkeleton from '../components/ui/PageSkeleton';
 import RouteTransition from '../components/ui/RouteTransition';
-import Card from '../components/ui/Card';
+import Card from '../components/retroui/Card';
 import NeoTab from '../components/retroui/Tab';
 import { QK } from '@shared/query/queryKeys';
 import { formatPostTime } from '@shared/utils/formatTime';
@@ -119,21 +119,21 @@ export default function SquareCampusFeed() {
               const firstImage = item.images?.[0]?.url ? getUploadUrl(item.images[0].url) : null;
               return (
                 <Link key={item.id} to={`/about/campus/${item.id}`} className="no-underline">
-                  <Card className="flex flex-col gap-3.5 p-4.5 cursor-pointer hover:shadow-md transition-shadow">
+                  <Card className="flex flex-col gap-3 p-4 cursor-pointer">
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs font-bold text-[#10233b]/50">{item.organization?.name || currentMeta.label}</span>
-                      <span className="text-xs text-[#10233b]/45 shrink-0">{formatPostTime(item.created_at, true)}</span>
+                      <span className="text-xs font-bold">{item.organization?.name || currentMeta.label}</span>
+                      <span className="text-xs shrink-0">{formatPostTime(item.created_at, true)}</span>
                     </div>
                     <div className="flex gap-3.5 items-start">
                       <div className="flex-1 min-w-0 flex flex-col gap-2.5">
-                        <h2 className="text-lg font-extrabold tracking-tight text-[#10233b] m-0">{item.title}</h2>
-                        <p className="text-sm leading-relaxed text-[#10233b]/65 line-clamp-3 break-words m-0">{item.content}</p>
+                        <h2 className="text-lg font-extrabold tracking-tight m-0">{item.title}</h2>
+                        <p className="text-sm leading-relaxed line-clamp-3 break-words m-0">{item.content}</p>
                       </div>
                       {firstImage ? (
                         <img
                           src={firstImage}
                           alt=""
-                          className="w-22 h-22 object-cover rounded-2xl shrink-0"
+                          className="w-22 h-22 object-cover shrink-0 border-2 border-black"
                           loading="lazy"
                         />
                       ) : null}

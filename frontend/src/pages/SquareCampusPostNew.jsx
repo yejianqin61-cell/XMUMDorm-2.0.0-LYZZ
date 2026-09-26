@@ -5,12 +5,11 @@ import { useLanguage } from '../context/LanguageContext';
 import { getMyOrganizations } from '@shared/api/organizations';
 import { postCampusPost } from '@shared/api/square';
 import { QK } from '@shared/query/queryKeys';
-import Button from '../components/ui/Button';
-import Input from '../components/ui/Input';
-import Textarea from '../components/ui/Textarea';
-import Select from '../components/ui/Select';
-import Label from '../components/ui/Label';
-import Card from '../components/ui/Card';
+import NeoButton from '../components/retroui/Button';
+import NeoInput from '../components/retroui/Input';
+import NeoTextarea from '../components/retroui/Textarea';
+import NeoSelect from '../components/retroui/Select';
+import NeoCard from '../components/retroui/Card';
 import NeoTab from '../components/retroui/Tab';
 
 export default function SquareCampusPostNew() {
@@ -91,8 +90,8 @@ export default function SquareCampusPostNew() {
   return (
     <div className="square-home-page">
       <div className="square-home-inner">
-        <Card className="p-5 flex flex-col gap-4">
-          <h3 className="square-section-title m-0">{isEn ? 'Publish Campus Notice' : '发布校园通知'}</h3>
+        <NeoCard className="p-5 flex flex-col gap-4">
+          <h3 className="text-xl font-black tracking-tight m-0">{isEn ? 'Publish Campus Notice' : '发布校园通知'}</h3>
 
           <NeoTab
             value={tab}
@@ -120,11 +119,11 @@ export default function SquareCampusPostNew() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-              <div className="flex flex-col gap-1">
-                <Label className="text-[13px] text-[var(--post-ios-secondary-label)]">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-black">
                   {isEn ? 'Posting as' : '发布身份'}
-                </Label>
-                <Select
+                </label>
+                <NeoSelect
                   className="w-full"
                   value={orgId}
                   onChange={(e) => setOrgId(e.target.value)}
@@ -134,14 +133,14 @@ export default function SquareCampusPostNew() {
                       {org.name} ({org.title || (isEn ? 'Member' : '成员')})
                     </option>
                   ))}
-                </Select>
+                </NeoSelect>
               </div>
 
-              <div className="flex flex-col gap-1">
-                <Label className="text-[13px] text-[var(--post-ios-secondary-label)]">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-black">
                   {isEn ? 'Title' : '标题'}
-                </Label>
-                <Input
+                </label>
+                <NeoInput
                   type="text"
                   className="w-full"
                   placeholder={isEn ? 'Enter title...' : '输入标题...'}
@@ -151,11 +150,11 @@ export default function SquareCampusPostNew() {
                 />
               </div>
 
-              <div className="flex flex-col gap-1">
-                <Label className="text-[13px] text-[var(--post-ios-secondary-label)]">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-black">
                   {isEn ? 'Content' : '内容'}
-                </Label>
-                <Textarea
+                </label>
+                <NeoTextarea
                   className="min-h-[120px] resize-y w-full"
                   placeholder={isEn ? 'Enter content... (line breaks supported)' : '输入正文...（支持换行）'}
                   value={content}
@@ -167,12 +166,12 @@ export default function SquareCampusPostNew() {
               {previews.length > 0 && (
                 <div className="flex gap-2 flex-wrap">
                   {previews.map((url, index) => (
-                    <div key={url} className="relative w-20 h-20 rounded-lg overflow-hidden">
+                    <div key={url} className="relative w-20 h-20 border-2 border-black overflow-hidden">
                       <img src={url} alt="" className="w-full h-full object-cover" />
                       <button
                         type="button"
                         onClick={() => removeFile(index)}
-                        className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/60 text-white border-0 cursor-pointer text-xs flex items-center justify-center"
+                        className="absolute top-0.5 right-0.5 w-5 h-5 bg-red-500 text-white border-0 cursor-pointer text-xs flex items-center justify-center font-black"
                         aria-label={isEn ? 'Remove image' : '删除图片'}
                       >
                         ×
@@ -183,14 +182,14 @@ export default function SquareCampusPostNew() {
               )}
 
               {files.length < 3 && (
-                <Button
+                <NeoButton
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   {isEn ? `Add image / GIF (${files.length}/3)` : `添加图片/GIF (${files.length}/3)`}
-                </Button>
+                </NeoButton>
               )}
               <input
                 ref={fileInputRef}
@@ -201,18 +200,18 @@ export default function SquareCampusPostNew() {
                 onChange={handleFileChange}
               />
 
-              {error && <p className="text-[var(--post-ios-red)] text-[13px] m-0 mt-2">{error}</p>}
+              {error && <p className="text-red-500 text-sm font-bold m-0 mt-2 border-2 border-red-500 p-2">{error}</p>}
 
-              <Button
+              <NeoButton
                 type="submit"
-                variant="primary"
+                variant="default"
                 disabled={submitting || !title.trim() || !content.trim() || !orgId}
               >
                 {submitting ? (isEn ? 'Publishing...' : '发布中...') : (isEn ? 'Publish' : '发布')}
-              </Button>
+              </NeoButton>
             </form>
           )}
-        </Card>
+        </NeoCard>
       </div>
     </div>
   );

@@ -243,8 +243,7 @@
 .handbook-search-input {
   flex: 1;
   height: 40px;
-  border-radius: 14px;
-  border: 1px solid rgba(15, 23, 42, 0.10);
+  border: 2px solid #000;
   padding: 0 12px;
   background: rgba(255, 255, 255, 0.72);
   outline: none;
@@ -252,8 +251,7 @@
 .handbook-search-go {
   height: 40px;
   padding: 0 14px;
-  border-radius: 14px;
-  border: 1px solid rgba(15, 23, 42, 0.10);
+  border: 2px solid #000;
   background: rgba(255, 255, 255, 0.72);
   font-weight: 800;
   color: rgba(15, 23, 42, 0.88);
@@ -322,11 +320,7 @@
   display: flex;
   gap: 12px;
   text-decoration: none;
-  border-radius: 20px;
   padding: 12px;
-  background: rgba(255, 255, 255, 0.70);
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.06);
 }
 .handbook-card-title {
   font-weight: 900;
@@ -396,10 +390,9 @@
 .handbook-card-cover {
   width: 96px;
   height: 96px;
-  border-radius: 16px;
   overflow: hidden;
   flex: 0 0 auto;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 2px solid #000;
 }
 .handbook-card-cover img {
   width: 100%;
@@ -411,18 +404,16 @@
 .handbook-loadmore {
   margin-top: 6px;
   height: 42px;
-  border-radius: 16px;
-  border: 1px solid rgba(15, 23, 42, 0.10);
-  background: rgba(255, 255, 255, 0.70);
+  border: 2px solid #000;
+  background: #ffdc58;
   font-weight: 900;
+  cursor: pointer;
 }
 
 .handbook-empty {
   padding: 18px 14px;
-  border-radius: 18px;
   background: rgba(255, 255, 255, 0.52);
-  border: 0;
-  box-shadow: 0 16px 46px rgba(15, 23, 42, 0.05);
+  border: 2px solid #000;
 }
 .handbook-empty-title {
   font-weight: 900;

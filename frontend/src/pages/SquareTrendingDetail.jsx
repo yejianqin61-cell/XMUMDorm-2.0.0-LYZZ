@@ -5,8 +5,8 @@ import { getTrendingTopicDetail, getTrendingPosts } from '@shared/api/square';
 import { QK } from '@shared/query/queryKeys';
 import { getUploadUrl } from '@shared/api/config';
 import { formatPostTime } from '@shared/utils/formatTime';
-import Button from '../components/ui/Button';
-import Card from '../components/ui/Card';
+import NeoButton from '../components/retroui/Button';
+import NeoCard from '../components/retroui/Card';
 import { NeoLoader } from '../components/retroui/Loader';
 import './SquareHome.css';
 
@@ -110,12 +110,12 @@ export default function SquareTrendingDetail() {
                 </div>
               </div>
 
-              <Button
-                variant="primary"
+              <NeoButton
+                variant="default"
                 onClick={() => navigate(`/about/trending/${topicId}/new`)}
               >
                 {isEn ? 'Join discussion' : '参与讨论'}
-              </Button>
+              </NeoButton>
             </div>
           </div>
         )}
@@ -145,9 +145,9 @@ export default function SquareTrendingDetail() {
                 const firstImage = post.images && post.images.length > 0 ? post.images[0] : null;
 
                 return (
-                  <Card
+                  <NeoCard
                     key={post.id}
-                    className="cursor-pointer hover:shadow-md transition-shadow"
+                    className="cursor-pointer p-4"
                     style={{ animationDelay: `${index * 50}ms` }}
                     onClick={() => navigate(`/about/trending/post/${post.id}`)}
                   >
@@ -156,32 +156,32 @@ export default function SquareTrendingDetail() {
                         <img
                           src={getUploadUrl(firstImage.url)}
                           alt=""
-                          className="w-21 h-21 object-cover rounded-2xl shrink-0"
+                          className="w-21 h-21 object-cover border-2 border-black shrink-0"
                           loading="lazy"
                         />
                       )}
 
                       <div className="flex-1 min-w-0 flex flex-col gap-3">
                         <div className="flex items-center justify-between gap-3 flex-wrap">
-                          <span className="text-xs font-bold text-[#10233b]/55">
+                          <span className="text-xs font-bold">
                             {post.author?.name || (isEn ? 'Anonymous' : '匿名')}
                           </span>
-                          <span className="text-xs text-[#10233b]/40">
+                          <span className="text-xs">
                             {formatPostTime(post.created_at)}
                           </span>
                         </div>
 
-                        <p className="text-[15px] leading-relaxed text-[#10233b] whitespace-pre-wrap break-words line-clamp-3 m-0">
+                        <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words line-clamp-3 m-0">
                           {post.content}
                         </p>
 
-                        <div className="flex flex-wrap gap-3 text-xs text-[#10233b]/50">
+                        <div className="flex flex-wrap gap-3 text-xs">
                           <span>👍 {post.like_count || 0}</span>
                           <span>💬 {post.comment_count || 0}</span>
                         </div>
                       </div>
                     </div>
-                  </Card>
+                  </NeoCard>
                 );
               })}
 
