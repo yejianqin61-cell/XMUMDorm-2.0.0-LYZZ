@@ -1,13 +1,14 @@
 import { useNavigate } from 'react-router-dom';
 import { CalendarDays } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
-import { ALL_HOLIDAYS, daysUntil, formatHolidayDate } from '../data/holidays';
+import { upcomingHolidays, daysUntil, formatHolidayDate } from '../data/holidays';
 import './Holidays.css';
 
 export default function Holidays() {
   const navigate = useNavigate();
   const { isZh } = useLanguage();
   const today = new Date();
+  const holidays = upcomingHolidays(today);
 
   return (
     <div className="holidays-page">
@@ -23,7 +24,7 @@ export default function Holidays() {
           </div>
         </div>
         <section className="holidays-list" aria-label={isZh ? '假日列表' : 'Holiday list'}>
-          {ALL_HOLIDAYS.map((holiday) => {
+          {holidays.map((holiday) => {
             const countdown = daysUntil(holiday.start, today);
             return (
               <div className="holidays-list__row" key={holiday.id}>

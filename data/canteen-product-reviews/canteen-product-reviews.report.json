@@ -1,0 +1,505 @@
+{
+  "generated_at": "2026-09-26T13:39:15.010Z",
+  "shop_count": 63,
+  "product_count": 3202,
+  "selected_shop_count": 63,
+  "selected_product_count": 308,
+  "review_count": 616,
+  "expected_reviews_per_selected_product": 2,
+  "shortfall_shops": [
+    {
+      "shop_id": 1,
+      "shop_name": "蔡徐坤ikun specialty store",
+      "available_products": 4,
+      "selected_products": 4,
+      "shortfall": 1
+    },
+    {
+      "shop_id": 49,
+      "shop_name": "广东脆肉皖鱼GuangDong Fish set",
+      "available_products": 3,
+      "selected_products": 3,
+      "shortfall": 2
+    },
+    {
+      "shop_id": 52,
+      "shop_name": "蜜雪冰城MIXUE",
+      "available_products": 1,
+      "selected_products": 1,
+      "shortfall": 4
+    }
+  ],
+  "score_range": [
+    6,
+    10
+  ],
+  "rating_mapping": {
+    "6": "拉完了",
+    "7": "NPC",
+    "8": "人上人",
+    "9": "顶级",
+    "10": "夯爆了"
+  },
+  "review_template_count": 10,
+  "review_templates": [
+    "第一口印象",
+    "风味平衡",
+    "口感变化",
+    "香气表现",
+    "食材搭配",
+    "收尾回味",
+    "日常满足",
+    "口味建议",
+    "场景感受",
+    "复购判断"
+  ],
+  "notes": [
+    "评价为根据菜品名称/说明生成的示例文本，统一带有“示例评价”标记，不代表真实用餐体验。",
+    "文案模板参考 docs/research/food-review-copy-templates.md；同一道菜的两条评价使用不同模板。",
+    "每家店最多选择前 5 道未删除菜品，按 product_id 稳定选择。",
+    "3 家店不足 5 道菜，未重复伪造菜品，实际按可用数量生成。"
+  ],
+  "shops": [
+    {
+      "shop_id": 1,
+      "shop_name": "蔡徐坤ikun specialty store",
+      "available_products": 4,
+      "selected_products": 4,
+      "shortfall": 1
+    },
+    {
+      "shop_id": 2,
+      "shop_name": "Sitrus盛果庄 Fruit store",
+      "available_products": 57,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 3,
+      "shop_name": "兰州拉面",
+      "available_products": 27,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 4,
+      "shop_name": "大树下Chinese Cusine",
+      "available_products": 26,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 5,
+      "shop_name": "momoyo",
+      "available_products": 43,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 6,
+      "shop_name": "Thaitora",
+      "available_products": 86,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 7,
+      "shop_name": "Boyaxuan Restaurant",
+      "available_products": 112,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 8,
+      "shop_name": "Restea",
+      "available_products": 122,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 9,
+      "shop_name": "Zuscoffee",
+      "available_products": 28,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 10,
+      "shop_name": "蜀之味ShuZhiWei",
+      "available_products": 51,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 11,
+      "shop_name": "海南鸡饭Hainan Chicken Rice",
+      "available_products": 24,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 12,
+      "shop_name": "Thumbsup大拇指",
+      "available_products": 19,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 13,
+      "shop_name": "回味面馆Simple delicious noodles",
+      "available_products": 43,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 14,
+      "shop_name": "五指山Five fingers",
+      "available_products": 16,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 15,
+      "shop_name": "美式早餐AmericanBreakfast",
+      "available_products": 40,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 16,
+      "shop_name": "Coffee,tea,fruit,lightmeals,chocolate夏一城",
+      "available_products": 41,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 17,
+      "shop_name": "Let's kopitiam",
+      "available_products": 114,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 18,
+      "shop_name": "小巨蛋cafeteria on the lake",
+      "available_products": 49,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 19,
+      "shop_name": "mad plate express",
+      "available_products": 47,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 20,
+      "shop_name": "小九州 Rice&noodles",
+      "available_products": 81,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 21,
+      "shop_name": "膳一城Drinks",
+      "available_products": 61,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 22,
+      "shop_name": "佳味食轩RICE",
+      "available_products": 18,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 23,
+      "shop_name": "Unipot有你香锅",
+      "available_products": 34,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 24,
+      "shop_name": "SAPID",
+      "available_products": 73,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 25,
+      "shop_name": "沙县小吃Shaxian Snacks",
+      "available_products": 38,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 26,
+      "shop_name": "天猫校园咖啡Tianmao coffee",
+      "available_products": 39,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 27,
+      "shop_name": "铜锅米线Copper Pot Rice Noodles",
+      "available_products": 13,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 28,
+      "shop_name": "我想吃I want to eat",
+      "available_products": 42,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 29,
+      "shop_name": "香源砂锅菜Casserole Dishes",
+      "available_products": 55,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 30,
+      "shop_name": "Starbuck星巴克",
+      "available_products": 49,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 31,
+      "shop_name": "一碟一味one plate one flavor",
+      "available_products": 26,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 32,
+      "shop_name": "百家牛肉面Beef noodles",
+      "available_products": 81,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 33,
+      "shop_name": "一口甜 one bite sweet",
+      "available_products": 33,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 34,
+      "shop_name": "一口云 YI KOUYUN",
+      "available_products": 20,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 35,
+      "shop_name": "Xinjiang restaurant新疆餐厅",
+      "available_products": 94,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 36,
+      "shop_name": "笆篱世家大排档Food Stall",
+      "available_products": 33,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 37,
+      "shop_name": "马中南洋餐厅Nanyang Restaurant",
+      "available_products": 90,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 38,
+      "shop_name": "茶白道Cha baidao",
+      "available_products": 44,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 39,
+      "shop_name": "点点点",
+      "available_products": 33,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 40,
+      "shop_name": "爆汁炸鸡堡Burger",
+      "available_products": 60,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 41,
+      "shop_name": "Ju Jiao Hotpot & Grill聚椒火锅",
+      "available_products": 140,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 42,
+      "shop_name": "Optimy",
+      "available_products": 65,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 43,
+      "shop_name": "Chicken Hot Pot千百味鸡煲",
+      "available_products": 119,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 44,
+      "shop_name": "Wallace华莱士",
+      "available_products": 14,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 45,
+      "shop_name": "Eat hami",
+      "available_products": 16,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 46,
+      "shop_name": "123Expressmart",
+      "available_products": 72,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 47,
+      "shop_name": "Nasi lemak",
+      "available_products": 194,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 48,
+      "shop_name": "东北饺子王Dumplings King",
+      "available_products": 88,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 49,
+      "shop_name": "广东脆肉皖鱼GuangDong Fish set",
+      "available_products": 3,
+      "selected_products": 3,
+      "shortfall": 2
+    },
+    {
+      "shop_id": 50,
+      "shop_name": "KOREAN BIBIMBAP (韩国拌饭)",
+      "available_products": 14,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 51,
+      "shop_name": "Hao Liao好料",
+      "available_products": 18,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 52,
+      "shop_name": "蜜雪冰城MIXUE",
+      "available_products": 1,
+      "selected_products": 1,
+      "shortfall": 4
+    },
+    {
+      "shop_id": 53,
+      "shop_name": "MULAN木兰",
+      "available_products": 37,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 54,
+      "shop_name": "NOMUNOMU NORM",
+      "available_products": 78,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 55,
+      "shop_name": "BR Robins bell的一家甜品店",
+      "available_products": 35,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 56,
+      "shop_name": "Astana",
+      "available_products": 76,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 57,
+      "shop_name": "佳粤中国餐厅Chinese Cuisine",
+      "available_products": 86,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 58,
+      "shop_name": "GEPUK,GEPREK",
+      "available_products": 32,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 59,
+      "shop_name": "榴宝贝DurianBaby",
+      "available_products": 20,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 60,
+      "shop_name": "CHIBA(Japanese Cuisine)",
+      "available_products": 23,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 61,
+      "shop_name": "三千尺 San Qianchi",
+      "available_products": 49,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 62,
+      "shop_name": "生活银座",
+      "available_products": 39,
+      "selected_products": 5,
+      "shortfall": 0
+    },
+    {
+      "shop_id": 63,
+      "shop_name": "水果捞Fruit Salad",
+      "available_products": 17,
+      "selected_products": 5,
+      "shortfall": 0
+    }
+  ]
+}
