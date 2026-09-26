@@ -46,8 +46,9 @@ function AvatarImage({ className = '', src, alt = '', ...props }) {
       src={src}
       alt={alt}
       className={cn(
+        // 圆形/方形由外层 NeoAvatar 的 rounded-* + overflow-hidden 裁切，这里不再引用 shape
+        // （此前这里误用了未定义变量 shape，任何带 src 的头像都会抛 ReferenceError 崩掉整页）
         'aspect-square h-full w-full object-cover',
-        shape === 'circle' ? 'rounded-full' : '',
         !loaded && 'hidden',
         className
       )}
