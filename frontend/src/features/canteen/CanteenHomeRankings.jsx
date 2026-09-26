@@ -56,49 +56,49 @@ export default function CanteenHomeRankings({ title, showTabs = true, footer }) 
       return (
         <Card
           key={item.shop_id || i}
-          className="flex items-center gap-3 cursor-pointer hover:bg-muted transition-colors"
+          className="flex items-center justify-between gap-3 cursor-pointer hover:bg-muted transition-colors"
           onClick={() => navigate(`/eat/merchant/${item.shop_id}`)}
         >
-          <Badge tone={rankTone(i)}>{i + 1}</Badge>
-          <div className="w-9 h-9 shrink-0 flex items-center justify-center">
-            <img
-              src={item.logo_url ? productImageUrl(item.logo_url) : '/shops/default.jpg'}
-              alt={item.shop_name}
-              className="w-8 h-8 object-cover border-2 border-black"
-            />
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <Badge tone={rankTone(i)}>{i + 1}</Badge>
+            <div className="flex flex-col min-w-0">
+              <span className="font-semibold text-sm truncate">{item.shop_name}</span>
+              <span className="text-xs text-muted-foreground">
+                {t.rankScore} {Number(item.comprehensive_score || 0).toFixed(1)}
+              </span>
+            </div>
           </div>
-          <div className="flex flex-col min-w-0 flex-1">
-            <span className="font-semibold text-sm truncate">{item.shop_name}</span>
-            <span className="text-xs text-muted-foreground">
-              {t.rankScore} {Number(item.comprehensive_score || 0).toFixed(1)}
-            </span>
-          </div>
+          <img
+            src={item.logo_url ? productImageUrl(item.logo_url) : '/shops/default.jpg'}
+            alt={item.shop_name}
+            className="w-14 h-14 object-cover border-2 border-black shrink-0"
+          />
         </Card>
       );
     }
     return (
       <Card
         key={item.product_id || item.product_name || i}
-        className="flex items-center gap-3 cursor-pointer hover:bg-muted transition-colors"
+        className="flex items-center justify-between gap-3 cursor-pointer hover:bg-muted transition-colors"
         onClick={() => navigate(`/eat/food/${item.product_id}`)}
       >
-        <Badge tone={rankTone(i)}>{i + 1}</Badge>
-        <div className="w-9 h-9 shrink-0 flex items-center justify-center">
-          <img
-            src={productImageUrl(item.cover_url || item.image_url)}
-            alt={item.product_name || item.name}
-            className="w-8 h-8 object-cover border-2 border-black"
-          />
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <Badge tone={rankTone(i)}>{i + 1}</Badge>
+          <div className="flex flex-col min-w-0">
+            <span className="font-semibold text-sm truncate">{item.product_name || item.name}</span>
+            <span className="text-xs text-muted-foreground">
+              {item.shop_name || item.region_code || ''}
+              {item.comprehensive_score != null
+                ? ` · ${Number(item.comprehensive_score).toFixed(1)}${t.rankPoints}`
+                : ''}
+            </span>
+          </div>
         </div>
-        <div className="flex flex-col min-w-0 flex-1">
-          <span className="font-semibold text-sm truncate">{item.product_name || item.name}</span>
-          <span className="text-xs text-muted-foreground">
-            {item.shop_name || item.region_code || ''}
-            {item.comprehensive_score != null
-              ? ` · ${Number(item.comprehensive_score).toFixed(1)}${t.rankPoints}`
-              : ''}
-          </span>
-        </div>
+        <img
+          src={productImageUrl(item.cover_url || item.image_url)}
+          alt={item.product_name || item.name}
+          className="w-14 h-14 object-cover border-2 border-black shrink-0"
+        />
       </Card>
     );
   };
