@@ -1272,3 +1272,101 @@
   min-width: 100px;
   max-width: 130px;
 }
+
+/* ------------------------------------------------------------------
+   ActivityDetail（/about/club/activity/:id）专用类
+   ⚠️ 勿删：该页面**尚未** RetroUI 化（不在 retroui-rollout-plan 的 Phase 4-5 清单里），
+   仍然依赖这些旧类名。5ba330a「社团页 RetroUI 化」重写 Clubs.css 时一并删掉了它们的
+   定义（-1385 行），导致活动详情页整个失去样式（标题缩成小字、封面图失去约束）。
+   这里按 5ba330a^ 的原定义原样恢复。
+   ------------------------------------------------------------------ */
+
+.club-feed-title {
+  font-size: 15px;
+  font-weight: 950;
+  color: #111827;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
+}
+
+.club-detail-meta {
+  margin-top: 8px;
+  display: grid;
+  gap: 6px;
+  color: rgba(0, 0, 0, 0.55);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.club-detail-loc {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.club-detail-utility-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  background: rgba(255, 255, 255, 0.92);
+  color: rgba(15, 23, 42, 0.82);
+  font-size: 12px;
+  font-weight: 800;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+}
+
+.club-detail-utility-btn:disabled {
+  opacity: 0.6;
+}
+
+.club-like-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.8);
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.club-like-btn.is-on {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.18);
+  color: rgba(153, 27, 27, 0.95);
+}
+
+.club-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 800;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  background: rgba(254, 242, 242, 0.96);
+  color: rgba(185, 28, 28, 0.95);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.club-delete-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.club-delete-btn--compact {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.club-delete-btn--icon-only {
+  padding: 8px;
+  border-radius: 12px;
+}
