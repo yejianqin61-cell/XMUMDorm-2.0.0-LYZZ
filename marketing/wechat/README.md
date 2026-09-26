@@ -140,6 +140,7 @@ PUPPETEER_EXECUTABLE_PATH="/path/to/chrome" npx tsx src/index.ts ./article.html 
   `docs/06-Analyze/content-research/公众号推文排版模板与编辑器调研.md` 里推荐的
   Markdown 排版工具（写 Markdown 一键转换）。
 - **图片必须重传**，见上。
-- 复制用的 `navigator.clipboard.write` 需要安全上下文，`file://` 和 `http://127.0.0.1`
-  在 Chrome 里都算安全上下文，双击打开即可；换了别的浏览器如果不支持，
+- 复制用的 `navigator.clipboard.write` 需要安全上下文。**双击打开（`file://`）这条路
+  已实测可用**：`window.isSecureContext === true`、`ClipboardItem` 存在、点一下就复制成功、
+  控制台零报错，所以不需要起任何本地服务。换成不支持 `ClipboardItem` 的浏览器时，
   会自动回退到「选中 + 复制」的老办法，按钮上会提示。
