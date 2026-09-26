@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dorm 公众号推文模板 · 预览与复制</title>
+<!--
+  ============================================================================
+  Dorm 微信公众号推文模板
+  ============================================================================
+  怎么用：
+    1. 双击本文件，用 Chrome / Edge 打开
+    2. 点右上角「复制全文到公众号」
+    3. 打开公众号后台 → 新建图文消息 → 在正文区 Ctrl+V
+
+  为什么必须这么绕：
+    微信编辑器会过滤掉 <style> 标签、class 选择器、id 选择器，
+    只保留**写在标签上的内联 style**。所以本文件里正文部分
+    （#articleBody 里面）全部是内联样式，且不用 class。
+    外面那圈工具栏和手机壳用的是 <style>，它**不在复制范围内**，
+    只负责让预览好看。
+
+  改配色：搜索替换下面 6 个颜色值即可（正文里出现的地方都要换）
+    #122D78  深蓝   标题 / 强调文字 / 竖条
+    #ACD3F8  天蓝   品牌主色 / 圆点 / 浅色描边
+    #C9E0FA  浅天蓝 顶部品牌条底色
+    #EAF4FE  浅蓝   高亮块底色
+    #F9F9F0  奶油白 引用块底色
+    #3F3F3F  深灰   正文（不用纯黑）
+
+  已避开的微信坑（依据见 docs/06-Analyze/content-research/ 的调研）：
+    · 不设 font-family —— 官方明确「不建议设置任何字体族」
+    · 不用 !important —— 官方明确不建议
+    · 不写死宽度 —— 官方把「固定宽度」列为违规项，所以用 max-width + width:100%
+    · 嵌套层级很浅 —— 官方会把「同标签名同样式单子节点」超过 10 层的链路自动精简
+    · 不用 @media / 伪元素 / position / float / animation
+    · <img> 带 data-w —— 官方建议，图片加载超时时用它兜底
+    · 文字背景不用渐变 —— 官方 Dark Mode 规则不建议（本模板原来是渐变，已改纯色）
+
+  本模板已用官方校验器跑过：wechatjs/verify-article-structure-spec 的 cli/
+  （这是微信官方唯一的 HTML 结构校验器，未发布到 npm，需 clone 后跑）。
+  它只剩一条 line-height 报警，经逐帧测量确认是该校验器自身的误报，详见
+  docs/07-Implement/公众号推文模板与微信号统一.md
+  ============================================================================
+-->
+<style>
+  /* ↓↓↓ 这一段只是预览页外壳，不会被复制进公众号 ↓↓↓ */
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 0 0 60px;
+    background: #eef2f7;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+                 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  }
+  .bar {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 20px;
+    background: rgba(255, 255, 255, .92);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid #dde5ef;
+  }
+  .bar h1 { margin: 0; font-size: 15px; color: #122d78; font-weight: 700; }
+  .bar .spacer { flex: 1; }
+  .bar .hint { font-size: 12px; color: #7b8698; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 18px; border: 0; border-radius: 999px;
+    background: #122d78; color: #fff; font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+    transition: transform .12s ease, background .12s ease;
+  }
+  .btn:hover { background: #1b3f9c; }
+  .btn:active { transform: scale(.97); }
+  .btn.ok { background: #15803d; }
+  .btn.bad { background: #b91c1c; }
+  .stage { display: flex; justify-content: center; padding: 28px 16px 0; }
+  /* 375px ≈ 微信在 iPhone 上的正文可视宽度 */
+  .phone {
+    width: 375px; max-width: 100%;
+    background: #fff;
+    border: 1px solid #dde5ef;
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(18, 45, 120, .08);
+    padding: 22px 16px 30px;
+  }
+  .phone-tag {
+    width: 375px; max-width: 100%;
+    margin: 0 auto 8px;
+    font-size: 12px; color: #8a94a6; text-align: center;
+  }
+  /* ↑↑↑ 预览页外壳结束 ↑↑↑ */
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <h1>Dorm 公众号推文模板</h1>
+  <span class="hint">左边就是手机上看到的样子 · 375px</span>
+  <span class="spacer"></span>
+  <span class="hint" id="status"></span>
+  <button class="btn" id="copyBtn" type="button">复制全文到公众号</button>
+</div>
+
+<div class="phone-tag">↓ 复制范围 = 下面这张白卡片里的全部内容 ↓</div>
+
+<div class="stage">
+  <div class="phone">
+    <!-- ==================================================================
+         复制范围从这里开始。下面所有样式都是内联的，不用 class。
+         ================================================================== -->
+    <section id="articleBody" style="max-width:677px;width:100%;margin:0 auto;">
+
+      <!-- ① 顶部品牌条：天蓝纯色 + 吉祥物
+           这里原来用的是浅蓝渐变，被微信官方校验器判为
+           darkmode-no-gradient（Dark Mode 下文字背景不要用渐变），故改成纯色。 -->
+      <section style="background-color:#C9E0FA;border-radius:14px;padding:20px 18px 16px;text-align:center;">
+        <img
+          src="../../frontend/public/icon-512-removebg-preview.png"
+          alt="XMUM Dorm"
+          data-w="503"
+          style="display:block;width:132px;max-width:100%;height:auto;margin:0 auto 10px;border:0;"
+        />
+        <p style="margin:0;font-size:13px;line-height:1.6;color:#122D78;letter-spacing:2px;font-weight:bold;">X M U M &nbsp; D O R M</p>
+        <p style="margin:6px 0 0;font-size:12px;line-height:1.6;color:#3E5C93;letter-spacing:0.5px;">厦马小筑 · 属于 XMUM 的校园社区</p>
+      </section>
+
+      <!-- ② 标题区 -->
+      <section style="margin:26px 0 0;">
+        <p style="margin:0 0 12px;font-size:22px;line-height:1.5;color:#122D78;font-weight:bold;letter-spacing:0.5px;">
+          我们在做一个<br />属于 XMUM 的校园社区
+        </p>
+        <p style="margin:0;font-size:13px;line-height:1.7;color:#8A94A6;letter-spacing:0.5px;">
+          2026 年 9 月 · Dorm 2.0
+        </p>
+      </section>
+
+      <!-- 细分割线 -->
+      <section style="height:1px;background-color:#E5EAF2;margin:18px 0 0;"></section>
+
+      <!-- ③ 导语：奶油白底 + 天蓝左边条 -->
+      <section style="background-color:#F9F9F0;border-left:4px solid #ACD3F8;border-radius:0 10px 10px 0;padding:16px 18px;margin:22px 0 0;">
+        <p style="margin:0;font-size:15px;line-height:1.75;color:#3F3F3F;letter-spacing:0.5px;">
+          如果你想学习怎么用 AI 开发出你自己的网站，如果你想共同成为 Dorm 的创造者，如果你发现本站有任何使用问题，那就快快联系我们。
+        </p>
+      </section>
+
+      <!-- ④ 小节标题 01 -->
+      <section style="margin:30px 0 14px;">
+        <section style="border-left:4px solid #122D78;padding-left:11px;">
+          <span style="font-size:17px;font-weight:bold;color:#122D78;letter-spacing:0.5px;">01 &nbsp;Dorm 是什么</span>
+        </section>
+      </section>
+
+      <p style="margin:0 0 16px;font-size:15px;line-height:1.75;color:#3F3F3F;letter-spacing:0.5px;">
+        Dorm 是一个由厦门大学马来西亚分校学生<strong style="color:#122D78;">独立开发</strong>的校园社区平台。它不是课程作业，也不是 PPT 里的构想——它已经上线，已经有真实同学在用。
+      </p>
+
+      <!-- 要点列表：不用 ul/li，避免圆点被微信吃掉 -->
+      <section style="margin:0 0 16px;">
+        <section style="margin:0 0 10px;">
+          <span style="display:inline-block;width:6px;height:6px;background-color:#ACD3F8;border-radius:50%;margin-right:9px;vertical-align:middle;"></span>
+          <span style="font-size:15px;line-height:1.75;color:#3F3F3F;letter-spacing:0.5px;">万能墙、广场、树洞，发你想发的</span>
+        </section>
+        <section style="margin:0 0 10px;">
+          <span style="display:inline-block;width:6px;height:6px;background-color:#ACD3F8;border-radius:50%;margin-right:9px;vertical-align:middle;"></span>
+          <span style="font-size:15px;line-height:1.75;color:#3F3F3F;letter-spacing:0.5px;">食堂点评、二手市场、跑腿，办你要办的</span>
+        </section>
+        <section style="margin:0 0 10px;">
+          <span style="display:inline-block;width:6px;height:6px;background-color:#ACD3F8;border-radius:50%;margin-right:9px;vertical-align:middle;"></span>
+          <span style="font-size:15px;line-height:1.75;color:#3F3F3F;letter-spacing:0.5px;">社团、新生指南、课程表、课程评价，查你想查的</span>
+        </section>
+      </section>
+
+      <!-- ⑤ 高亮块：浅蓝底 + 深蓝字 -->
+      <section style="background-color:#EAF4FE;border-radius:10px;padding:16px 18px;margin:22px 0 0;">
+        <p style="margin:0;font-size:15px;line-height:1.75;color:#122D78;letter-spacing:0.5px;">
+          一句话：<strong style="color:#122D78;font-weight:bold;">把 XMUM 学生日常要用的东西，塞进一个网站里。</strong>
+        </p>
+      </section>
+
+      <!-- ④ 小节标题 02 -->
+      <section style="margin:30px 0 14px;">
+        <section style="border-left:4px solid #122D78;padding-left:11px;">
+          <span style="font-size:17px;font-weight:bold;color:#122D78;letter-spacing:0.5px;">02 &nbsp;我们在找什么样的人</span>
+        </section>
+      </section>
+
+      <p style="margin:0 0 16px;font-size:15px;line-height:1.75;color:#3F3F3F;letter-spacing:0.5px;">
+        不限专业，不限年级，也不要求你「已经很厉害」。下面任何一条对得上，都可以来找我们：
+      </p>
+
+      <section style="margin:0 0 16px;">
+        <section style="margin:0 0 10px;">
+          <span style="display:inline-block;width:6px;height:6px;background-color:#122D78;border-radius:50%;margin-right:9px;vertical-align:middle;"></span>
+          <span style="font-size:15px;line-height:1.75;color:#3F3F3F;letter-spacing:0.5px;">会写前端或后端，想让代码真的被人用起来</span>
+        </section>
+        <section style="margin:0 0 10px;">
+          <span style="display:inline-block;width:6px;height:6px;background-color:#122D78;border-radius:50%;margin-right:9px;vertical-align:middle;"></span>
+          <span style="font-size:15px;line-height:1.75;color:#3F3F3F;letter-spacing:0.5px;">会做设计、画插画，看不惯「程序员审美」</span>
+        </section>
+        <section style="margin:0 0 10px;">
+          <span style="display:inline-block;width:6px;height:6px;background-color:#122D78;border-radius:50%;margin-right:9px;vertical-align:middle;"></span>
+          <span style="font-size:15px;line-height:1.75;color:#3F3F3F;letter-spacing:0.5px;">会写文案、做宣发，知道怎么把好东西讲出去</span>
+        </section>
+        <section style="margin:0 0 10px;">
+          <span style="display:inline-block;width:6px;height:6px;background-color:#122D78;border-radius:50%;margin-right:9px;vertical-align:middle;"></span>
+          <span style="font-size:15px;line-height:1.75;color:#3F3F3F;letter-spacing:0.5px;">或者什么都不太会，但愿意学——我们就是一路这么学过来的</span>
+        </section>
+      </section>
+
+      <!-- ⑥ 引用 / 金句：奶油底 + 居中 -->
+      <section style="background-color:#F9F9F0;border-radius:12px;padding:20px 18px;margin:24px 0 0;text-align:center;">
+        <p style="margin:0 0 8px;font-size:15px;line-height:1.9;color:#122D78;letter-spacing:0.6px;font-weight:bold;">
+          「你可能不需要很厉害才能开始，<br />但你需要开始才会很厉害。」
+        </p>
+        <p style="margin:0;font-size:12px;line-height:1.6;color:#A0916B;letter-spacing:0.5px;">—— 写给还在犹豫的你</p>
+      </section>
+
+      <!-- ④ 小节标题 03 -->
+      <section style="margin:30px 0 14px;">
+        <section style="border-left:4px solid #122D78;padding-left:11px;">
+          <span style="font-size:17px;font-weight:bold;color:#122D78;letter-spacing:0.5px;">03 &nbsp;你能得到什么</span>
+        </section>
+      </section>
+
+      <section style="margin:0 0 16px;">
+        <section style="margin:0 0 10px;">
+          <span style="display:inline-block;width:6px;height:6px;background-color:#ACD3F8;border-radius:50%;margin-right:9px;vertical-align:middle;"></span>
+          <span style="font-size:15px;line-height:1.75;color:#3F3F3F;letter-spacing:0.5px;">一段真实上线、真实用户的项目经历</span>
+        </section>
+        <section style="margin:0 0 10px;">
+          <span style="display:inline-block;width:6px;height:6px;background-color:#ACD3F8;border-radius:50%;margin-right:9px;vertical-align:middle;"></span>
+          <span style="font-size:15px;line-height:1.75;color:#3F3F3F;letter-spacing:0.5px;">学会用 AI 把一个想法变成能跑的东西</span>
+        </section>
+        <section style="margin:0 0 10px;">
+          <span style="display:inline-block;width:6px;height:6px;background-color:#ACD3F8;border-radius:50%;margin-right:9px;vertical-align:middle;"></span>
+          <span style="font-size:15px;line-height:1.75;color:#3F3F3F;letter-spacing:0.5px;">一群愿意一起折腾的人</span>
+        </section>
+      </section>
+
+      <!-- 图片位：真要用图时，把下面这块虚线框整体换成注释里的 <img> -->
+      <!--
+        <img
+          src="这里填图片地址"
+          alt="配图"
+          data-w="1080"
+          style="display:block;width:100%;max-width:100%;height:auto;border-radius:12px;border:1px solid #E5EAF2;"
+        />
+        data-w 填图片原始像素宽度：官方检测引擎在图片加载超时会按
+        img.style.width → data-w → width 属性 依次兜底，建议养成习惯。
+      -->
+      <section style="margin:24px 0 0;">
+        <section style="background-color:#F4F8FE;border:1px dashed #ACD3F8;border-radius:12px;padding:34px 18px;text-align:center;">
+          <p style="margin:0 0 6px;font-size:15px;line-height:1.7;color:#5B7FB5;letter-spacing:0.5px;font-weight:bold;">
+            配图放这里
+          </p>
+          <p style="margin:0;font-size:12px;line-height:1.7;color:#8A94A6;letter-spacing:0.5px;">
+            点一下这块 → 删掉 → 在公众号编辑器里插入图片<br />图片宽度建议 900px 以上
+          </p>
+        </section>
+        <p style="margin:9px 0 0;font-size:12px;line-height:1.6;color:#9AA4B2;text-align:center;letter-spacing:0.5px;">
+          ▲ 把这行换成图片说明
+        </p>
+      </section>
+
+      <!-- 圆点分隔 -->
+      <section style="margin:30px 0;text-align:center;line-height:1;">
+        <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background-color:#ACD3F8;margin:0 5px;"></span>
+        <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background-color:#DCEBFB;margin:0 5px;"></span>
+        <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background-color:#ACD3F8;margin:0 5px;"></span>
+      </section>
+
+      <!-- ⑦ CTA 联系卡片 -->
+      <section style="background-color:#F7FBFF;border:1px solid #CFE3FA;border-radius:14px;padding:22px 20px;text-align:center;">
+        <p style="margin:0 0 14px;font-size:17px;line-height:1.6;color:#122D78;font-weight:bold;letter-spacing:1px;">
+          加入我们
+        </p>
+        <p style="margin:0 0 8px;font-size:15px;line-height:1.75;color:#3F3F3F;letter-spacing:0.5px;">
+          微信：<strong style="color:#122D78;font-size:17px;letter-spacing:1px;">xmumdorm666</strong>
+        </p>
+        <p style="margin:0;font-size:15px;line-height:1.75;color:#3F3F3F;letter-spacing:0.5px;">
+          邮箱：<strong style="color:#122D78;font-size:15px;letter-spacing:0.5px;">yejianqin61@gmail.com</strong>
+        </p>
+        <p style="margin:14px 0 0;font-size:12px;line-height:1.7;color:#8A94A6;letter-spacing:0.5px;">
+          长按上方微信号即可选中复制<br />加好友请备注「Dorm」
+        </p>
+      </section>
+
+      <!-- ⑧ 页脚 -->
+      <section style="margin:26px 0 0;padding-top:18px;border-top:1px solid #E5EAF2;text-align:center;">
+        <p style="margin:0 0 6px;font-size:12px;line-height:1.7;color:#9AA4B2;letter-spacing:1px;font-weight:bold;">
+          XMUM DORM · 厦马小筑
+        </p>
+        <p style="margin:0;font-size:12px;line-height:1.7;color:#9AA4B2;letter-spacing:0.5px;">
+          由厦门大学马来西亚分校学生独立开发<br />不代表校方立场
+        </p>
+      </section>
+
+    </section>
+    <!-- ==================================================================
+         复制范围到这里结束
+         ================================================================== -->
+  </div>
+</div>
+
+<script>
+  var articleBody = document.getElementById('articleBody');
+  var copyBtn = document.getElementById('copyBtn');
+  var statusEl = document.getElementById('status');
+
+  function flash(btn, text, cls) {
+    var original = btn.textContent;
+    btn.textContent = text;
+    btn.classList.add(cls);
+    setTimeout(function () {
+      btn.textContent = original;
+      btn.classList.remove(cls);
+    }, 1800);
+  }
+
+  copyBtn.addEventListener('click', function () {
+    // 首选：ClipboardItem 直接写 text/html，保真度最高（内联样式完整保留）
+    var html = articleBody.outerHTML;
+    var text = articleBody.innerText;
+
+    if (navigator.clipboard && window.ClipboardItem) {
+      navigator.clipboard
+        .write([
+          new ClipboardItem({
+            'text/html': new Blob([html], { type: 'text/html' }),
+            'text/plain': new Blob([text], { type: 'text/plain' }),
+          }),
+        ])
+        .then(function () {
+          flash(copyBtn, '✓ 已复制，去粘贴', 'ok');
+          statusEl.textContent = '已复制 ' + html.length + ' 字符';
+        })
+        .catch(legacyCopy);
+      return;
+    }
+    legacyCopy();
+  });
+
+  // 回退：选中 #articleBody 再 execCommand('copy')，老浏览器/非安全上下文也能用
+  function legacyCopy() {
+    try {
+      var range = document.createRange();
+      range.selectNodeContents(articleBody);
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      var ok = document.execCommand('copy');
+      sel.removeAllRanges();
+      if (!ok) throw new Error('execCommand returned false');
+      flash(copyBtn, '✓ 已复制，去粘贴', 'ok');
+      statusEl.textContent = '已复制（回退模式）';
+    } catch (err) {
+      flash(copyBtn, '复制失败，请手动选中', 'bad');
+      statusEl.textContent = '请手动拖选正文后 Ctrl+C';
+    }
+  }
+</script>
+</body>
+</html>
