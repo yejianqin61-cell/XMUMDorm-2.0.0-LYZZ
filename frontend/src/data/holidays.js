@@ -6,7 +6,7 @@ export const HOLIDAYS_2027 = [
   { id: 'hari-raya-haji', start: '2027-05-17', end: '2027-05-17', nameZh: '哈芝节', nameEn: 'Hari Raya Haji' },
   { id: 'wesak', start: '2027-05-20', end: '2027-05-20', nameZh: '卫塞节', nameEn: 'Wesak Day' },
   { id: 'awal-muharram', start: '2027-06-06', end: '2027-06-07', nameZh: '回历元旦', nameEn: 'Awal Muharram' },
-  { id: 'agong-birthday', start: '2027-06-07', end: '2027-06-07', nameZh: '国家元首诞辰', nameEn: "Agong's Birthday" },
+  { id: 'agong-birthday', start: '2027-06-07', end: '2027-06-07', nameZh: '国家元首生日', nameEn: "Agong's Birthday" },
   { id: 'prophet-birthday', start: '2027-08-15', end: '2027-08-16', nameZh: '穆罕默德先知诞辰', nameEn: "Prophet Muhammad's Birthday" },
   { id: 'merdeka', start: '2027-08-31', end: '2027-08-31', nameZh: '国庆日', nameEn: 'Merdeka Day' },
   { id: 'malaysia-day', start: '2027-09-16', end: '2027-09-16', nameZh: '马来西亚日', nameEn: 'Malaysia Day' },
