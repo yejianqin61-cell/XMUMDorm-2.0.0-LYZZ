@@ -3,6 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { listMyClubs } from '@shared/api/clubs';
+import NeoCard from '../../components/retroui/Card';
+import { NeoAvatar } from '../../components/retroui/Avatar';
 import './Clubs.css';
 
 function MyClubs() {
@@ -18,9 +20,9 @@ function MyClubs() {
 
   const list = q.data?.list || [];
   return (
-    <div className="club-page">
+    <div className="club-page neo-club-page">
       <div className="club-top">
-        <div className="club-title">{isZh ? '我的社团' : 'My Clubs'}</div>
+        <div className="neo-club-title">{isZh ? '我的社团' : 'My Clubs'}</div>
       </div>
 
       {!token ? (
@@ -34,14 +36,17 @@ function MyClubs() {
 
       <div className="club-my-row club-my-row--full" aria-label={isZh ? '我的社团列表' : 'My clubs'}>
         {list.map((c) => (
-          <Link key={c.id} to={`/about/club/${c.id}`} className="club-my-card pressable">
-            <div className="club-my-avatar">
-              {c.avatar ? <img src={c.avatar} alt="" /> : <div className="club-battle-logo-ph" aria-hidden />}
-            </div>
-            <div className="club-my-main">
-              <div className="club-my-name" title={c.name}>{c.name}</div>
-              <div className="club-my-meta">{Number(c.followers || 0)} {isZh ? '关注' : 'followers'}</div>
-            </div>
+          <Link key={c.id} to={`/about/club/${c.id}`} className="club-my-link">
+            <NeoCard className="club-my-card w-full">
+              <NeoAvatar size="lg">
+                <NeoAvatar.Image src={c.avatar} alt={c.name} />
+                <NeoAvatar.Fallback>{c.name?.charAt(0) || 'C'}</NeoAvatar.Fallback>
+              </NeoAvatar>
+              <div className="club-my-main">
+                <div className="club-my-name" title={c.name}>{c.name}</div>
+                <div className="club-my-meta">{Number(c.followers || 0)} {isZh ? '关注' : 'followers'}</div>
+              </div>
+            </NeoCard>
           </Link>
         ))}
       </div>
@@ -50,4 +55,3 @@ function MyClubs() {
 }
 
 export default MyClubs;
-

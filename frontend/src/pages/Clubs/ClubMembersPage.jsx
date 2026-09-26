@@ -4,6 +4,8 @@ import { ArrowLeft } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { QK } from '@shared/query/queryKeys';
 import { getClubProfile } from '@shared/api/clubs';
+import NeoCard from '../../components/retroui/Card';
+import { NeoAvatar } from '../../components/retroui/Avatar';
 import './Clubs.css';
 
 function ClubMembersPage() {
@@ -28,7 +30,7 @@ function ClubMembersPage() {
   }
 
   return (
-    <div className="club-page">
+    <div className="club-page neo-club-page">
       <div className="club-profile-top">
         <button type="button" className="club-back" onClick={() => nav(-1)} aria-label={isZh ? '返回' : 'Back'}>
           <ArrowLeft size={18} aria-hidden />
@@ -39,9 +41,12 @@ function ClubMembersPage() {
         </Link>
       </div>
 
-      <div className="club-profile-card">
+      <NeoCard className="club-profile-card w-full">
         <div className="club-members-page-head">
-          {basic.avatar ? <img src={basic.avatar} alt="" className="club-members-page-avatar" /> : <div className="club-members-page-avatar club-avatar--ph" />}
+          <NeoAvatar size="lg">
+            <NeoAvatar.Image src={basic.avatar} alt={basic.name} />
+            <NeoAvatar.Fallback>{basic.name?.charAt(0) || 'C'}</NeoAvatar.Fallback>
+          </NeoAvatar>
           <div>
             <div className="club-members-page-name">{basic.name}</div>
             <div className="club-members-page-meta">
@@ -57,7 +62,10 @@ function ClubMembersPage() {
             {members.map((m) => (
               <div key={m.id} className="club-mini-card">
                 <div className="club-card-row">
-                  {m.avatar ? <img src={m.avatar} alt="" className="club-avatar" /> : <div className="club-avatar club-avatar--ph" />}
+                  <NeoAvatar size="sm">
+                    <NeoAvatar.Image src={m.avatar} alt={m.nickname || m.username} />
+                    <NeoAvatar.Fallback>{(m.nickname || m.username || 'M').charAt(0)}</NeoAvatar.Fallback>
+                  </NeoAvatar>
                   <div className="club-card-main">
                     <div className="club-card-name">{m.nickname || m.username || (isZh ? '成员' : 'Member')}</div>
                     <div className="club-card-desc">{[m.email, m.role].filter(Boolean).join(' · ')}</div>
@@ -67,7 +75,7 @@ function ClubMembersPage() {
             ))}
           </div>
         )}
-      </div>
+      </NeoCard>
     </div>
   );
 }

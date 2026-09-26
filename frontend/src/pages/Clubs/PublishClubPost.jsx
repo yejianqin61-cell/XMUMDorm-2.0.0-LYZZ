@@ -9,6 +9,10 @@ import { QK } from '@shared/query/queryKeys';
 import { createClubPost, getClubProfile } from '@shared/api/clubs';
 import { queryClient } from '@shared/query/queryClient';
 import { getApiErrorMessage } from '@shared/utils/apiError';
+import NeoButton from '../../components/retroui/Button';
+import NeoInput from '../../components/retroui/Input';
+import NeoTextarea from '../../components/retroui/Textarea';
+import NeoCard from '../../components/retroui/Card';
 import ImagePreview from '../../components/ImagePreview';
 import { StackedCardCarousel } from '../../components/StackedCardCarousel';
 import '../PostDetail.css';
@@ -102,7 +106,7 @@ function PublishClubPost() {
 
   if (!token) {
     return (
-      <div className="club-page">
+      <div className="club-page neo-club-page">
         <div className="state-empty">{isZh ? '请先登录' : 'Please log in'}</div>
       </div>
     );
@@ -110,7 +114,7 @@ function PublishClubPost() {
 
   if (!Number.isFinite(clubId) || clubId <= 0) {
     return (
-      <div className="club-page publish-activity-page">
+      <div className="club-page publish-activity-page neo-club-page">
         <div className="club-profile-top">
           <button type="button" className="club-back" onClick={() => nav(-1)} aria-label={isZh ? '返回' : 'Back'}>
             <ArrowLeft size={18} aria-hidden />
@@ -119,8 +123,10 @@ function PublishClubPost() {
           <Link className="club-profile-link" to="/about/club">{isZh ? '广场' : 'Square'}</Link>
         </div>
         <p className="publish-activity-hint">{isZh ? '请从社团资料页进入。' : 'Open from a club profile.'}</p>
-        <Link to="/about/club/list" className="club-members-more pressable">
-          {isZh ? '去社团列表' : 'Club list'}
+        <Link to="/about/club/list" className="club-members-more">
+          <NeoButton variant="outline" size="sm">
+            {isZh ? '去社团列表' : 'Club list'}
+          </NeoButton>
         </Link>
       </div>
     );
@@ -130,7 +136,7 @@ function PublishClubPost() {
   if (q.isError || !basic) return <div className="state-error">{q.error?.message || (isZh ? '加载失败' : 'Failed')}</div>;
 
   return (
-    <div className="club-page publish-activity-page">
+    <div className="club-page publish-activity-page neo-club-page">
       <div className="club-profile-top">
         <button type="button" className="club-back" onClick={() => nav(-1)} aria-label={isZh ? '返回' : 'Back'}>
           <ArrowLeft size={18} aria-hidden />
@@ -141,17 +147,17 @@ function PublishClubPost() {
         </Link>
       </div>
 
-      <div className="club-profile-card">
+      <NeoCard className="club-profile-card w-full">
         <div className="publish-activity-club">{basic.name}</div>
 
         <form className="club-admin-form publish-activity-form" onSubmit={submit}>
           <label className="club-field">
             <div className="club-label">{isZh ? '标题（可选）' : 'Title (optional)'}</div>
-            <input className="club-input" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={160} />
+            <NeoInput value={title} onChange={(e) => setTitle(e.target.value)} maxLength={160} />
           </label>
           <label className="club-field">
             <div className="club-label">{isZh ? '正文' : 'Content'}</div>
-            <textarea className="club-textarea" rows={8} value={content} onChange={(e) => setContent(e.target.value)} maxLength={8000} />
+            <NeoTextarea rows={8} value={content} onChange={(e) => setContent(e.target.value)} maxLength={8000} />
           </label>
 
           <div className="club-field">
@@ -166,7 +172,7 @@ function PublishClubPost() {
                 </div>
               ))}
               {previewUrls.length < 4 ? (
-                <button type="button" className="publish-activity-add-img pressable" onClick={() => fileInputRef.current?.click()}>
+                <button type="button" className="publish-activity-add-img" onClick={() => fileInputRef.current?.click()}>
                   <PlusCircle size={22} aria-hidden />
                   <span>{isZh ? '添加' : 'Add'}</span>
                 </button>
@@ -203,12 +209,12 @@ function PublishClubPost() {
             <ImagePreview urls={previewUrls} initialIndex={imagePreview.index} onClose={() => setImagePreview({ open: false, index: 0 })} />
           ) : null}
 
-          <button type="submit" className="club-admin-submit pressable" disabled={!content.trim() || postMut.isPending}>
+          <NeoButton type="submit" variant="default" disabled={!content.trim() || postMut.isPending}>
             <PlusCircle size={16} aria-hidden />
             {postMut.isPending ? (isZh ? '发布中…' : 'Posting…') : (isZh ? '发布' : 'Publish')}
-          </button>
+          </NeoButton>
         </form>
-      </div>
+      </NeoCard>
     </div>
   );
 }

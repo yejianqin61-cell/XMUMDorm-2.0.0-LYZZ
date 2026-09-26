@@ -6,6 +6,10 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { getClubFeed } from '@shared/api/clubs';
 import { API_BASE_URL } from '@shared/api/config';
+import NeoCard from '../../components/retroui/Card';
+import NeoButton from '../../components/retroui/Button';
+import NeoBadge from '../../components/retroui/Badge';
+import { NeoToggle } from '../../components/retroui/Toggle';
 import './Clubs.css';
 
 function prefixMediaUrl(url) {
@@ -57,73 +61,77 @@ function ClubsHome() {
   const errorMsg = q.error?.message || (isZh ? '加载失败，请稍后再试' : 'Failed to load');
 
   return (
-    <div className="club-page">
+    <div className="club-page neo-club-page">
       <div className="club-top">
-        <div className="club-title">{isZh ? '社团广场' : 'Club Square'}</div>
-        {isAdmin ? (
-          <Link to="/about/club/new" className="club-admin-create pressable">
-            {isZh ? '创建社团' : 'Create'}
+        <div className="neo-club-title">{isZh ? '社团广场' : 'Club Square'}</div>
+        <div className="flex items-center gap-3">
+          {isAdmin ? (
+            <Link to="/about/club/new">
+              <NeoButton variant="default" size="sm">
+                {isZh ? '创建社团' : 'Create'}
+              </NeoButton>
+            </Link>
+          ) : null}
+          <Link to="/publish">
+            <NeoButton variant="outline" size="sm">
+              {isZh ? '去发布' : 'Publish'}
+            </NeoButton>
           </Link>
-        ) : null}
-      </div>
-
-      <div className="club-top-actions">
-        <Link to="/publish" className="club-admin-create pressable">
-          {isZh ? '去发布' : 'Publish'}
-        </Link>
+        </div>
       </div>
 
       {/* Top feature grid */}
       <div className="club-feature-grid">
-        <Link to="/about/club/list" className="club-feature club-feature--purple pressable">
-          <div className="club-feature-left">
-            <div className="club-feature-title">{isZh ? '社团大全' : 'Club List'}</div>
-            <div className="club-feature-sub">{isZh ? '发现你感兴趣的社团' : 'Discover clubs'}</div>
-          </div>
-          <div className="club-feature-art club-feature-art--mega" aria-hidden />
+        <Link to="/about/club/list" className="club-feature-link">
+          <NeoCard className="club-feature club-feature--purple w-full">
+            <div className="club-feature-left">
+              <div className="club-feature-title">{isZh ? '社团大全' : 'Club List'}</div>
+              <div className="club-feature-sub">{isZh ? '发现你感兴趣的社团' : 'Discover clubs'}</div>
+            </div>
+            <div className="club-feature-art club-feature-art--mega" aria-hidden />
+          </NeoCard>
         </Link>
-        <Link to="/about/club/my" className="club-feature club-feature--blue pressable">
-          <div className="club-feature-left">
-            <div className="club-feature-title">{isZh ? '我的社团' : 'My Clubs'}</div>
-            <div className="club-feature-sub">{isZh ? '关注、活动与日常' : 'Follows & updates'}</div>
-          </div>
-          <div className="club-feature-art club-feature-art--badge" aria-hidden />
+        <Link to="/about/club/my" className="club-feature-link">
+          <NeoCard className="club-feature club-feature--blue w-full">
+            <div className="club-feature-left">
+              <div className="club-feature-title">{isZh ? '我的社团' : 'My Clubs'}</div>
+              <div className="club-feature-sub">{isZh ? '关注、活动与日常' : 'Follows & updates'}</div>
+            </div>
+            <div className="club-feature-art club-feature-art--badge" aria-hidden />
+          </NeoCard>
         </Link>
       </div>
 
       {/* Middle: category tabs + Open/Done */}
       <div className="club-filter-bar">
         <div className="club-filter" role="tablist" aria-label="club category filter">
-          {FILTERS.map((f) => {
-            const active = filter === f.key;
-            return (
-              <button
-                key={f.key}
-                type="button"
-                className={`club-filter-tab ${active ? 'is-active' : ''}`}
-                onClick={() => setFilter(f.key)}
-                role="tab"
-                aria-selected={active}
-              >
-                {isZh ? f.zh : f.en}
-              </button>
-            );
-          })}
+          {FILTERS.map((f) => (
+            <NeoToggle
+              key={f.key}
+              size="sm"
+              variant="outlined"
+              pressed={filter === f.key}
+              onPressedChange={() => setFilter(f.key)}
+              role="tab"
+            >
+              {isZh ? f.zh : f.en}
+            </NeoToggle>
+          ))}
         </div>
         <div className="club-lifecycle" role="group" aria-label={isZh ? '活动状态筛选' : 'Activity state'}>
           {(['open', 'done']).map((key) => {
             const active = lifecycle === key;
             const label = key === 'open' ? (isZh ? '进行中' : 'Open') : (isZh ? '已结束' : 'Done');
             return (
-              <button
+              <NeoToggle
                 key={key}
-                type="button"
-                className={`club-lifecycle-pill ${active ? 'is-active' : ''}`}
-                onClick={() => setLifecycle(key)}
-                aria-pressed={active}
+                size="sm"
+                variant="solid"
+                pressed={active}
+                onPressedChange={() => setLifecycle(key)}
               >
                 {label}
-              </button>
+              </NeoToggle>
             );
           })}
         </div>
@@ -139,26 +147,29 @@ function ClubsHome() {
       <div className="club-feed-list">
         {list.map((x) => {
           const href = x.type === 'activity' ? `/about/club/activity/${x.id}` : `/about/club/post/${x.id}`;
-          const tagText = x.type === 'activity' ? (isZh ? '活动' : 'ACTIVITY') : (isZh ? '日常' : 'POST');
           const when = formatDateTime(x.createdAt);
           const cover = x.cover ? prefixMediaUrl(x.cover) : null;
           return (
-            <Link key={`${x.type}-${x.id}`} to={href} className="club-hcard pressable">
-              <div className="club-hcard-img">
-                {cover ? <img src={cover} alt="" /> : <div className="club-hcard-img-ph" aria-hidden />}
-              </div>
-              <div className="club-hcard-body">
-                <div className="club-hcard-title-row">
-                  <span className={`club-hcard-tag ${x.type === 'activity' ? 'is-activity' : 'is-post'}`}>{tagText}</span>
-                  <div className="club-hcard-title">{x.title}</div>
+            <Link key={`${x.type}-${x.id}`} to={href} className="club-hcard-link">
+              <NeoCard className="club-hcard w-full">
+                <div className="club-hcard-img">
+                  {cover ? <img src={cover} alt="" /> : <div className="club-hcard-img-ph" aria-hidden />}
                 </div>
-                <div className="club-hcard-meta">{[when, x.clubName].filter(Boolean).join(' · ')}</div>
-                {x.summary ? <div className="club-hcard-desc">{x.summary}</div> : null}
-                <div className="club-hcard-stats">
-                  <span className="club-hcard-stat"><Eye size={16} aria-hidden />{x.stats?.views ?? 0}</span>
-                  <span className="club-hcard-stat"><Heart size={16} aria-hidden />{x.stats?.likes ?? 0}</span>
+                <div className="club-hcard-body">
+                  <div className="club-hcard-title-row">
+                    <NeoBadge variant={x.type === 'activity' ? 'accent' : 'default'} size="sm">
+                      {x.type === 'activity' ? (isZh ? '活动' : 'ACTIVITY') : (isZh ? '日常' : 'POST')}
+                    </NeoBadge>
+                    <div className="club-hcard-title">{x.title}</div>
+                  </div>
+                  <div className="club-hcard-meta">{[when, x.clubName].filter(Boolean).join(' · ')}</div>
+                  {x.summary ? <div className="club-hcard-desc">{x.summary}</div> : null}
+                  <div className="club-hcard-stats">
+                    <span className="club-hcard-stat"><Eye size={16} aria-hidden />{x.stats?.views ?? 0}</span>
+                    <span className="club-hcard-stat"><Heart size={16} aria-hidden />{x.stats?.likes ?? 0}</span>
+                  </div>
                 </div>
-              </div>
+              </NeoCard>
             </Link>
           );
         })}
@@ -168,4 +179,3 @@ function ClubsHome() {
 }
 
 export default ClubsHome;
-

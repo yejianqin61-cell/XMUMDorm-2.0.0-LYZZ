@@ -18,6 +18,14 @@ import {
 } from '@shared/api/clubs';
 import { queryClient } from '@shared/query/queryClient';
 import { getApiErrorMessage } from '@shared/utils/apiError';
+import NeoButton from '../../components/retroui/Button';
+import NeoInput from '../../components/retroui/Input';
+import NeoTextarea from '../../components/retroui/Textarea';
+import NeoSelect from '../../components/retroui/Select';
+import NeoCard from '../../components/retroui/Card';
+import NeoBadge from '../../components/retroui/Badge';
+import { NeoAvatar } from '../../components/retroui/Avatar';
+import { NeoToggle } from '../../components/retroui/Toggle';
 import './Clubs.css';
 
 function ClubProfile() {
@@ -29,8 +37,6 @@ function ClubProfile() {
   const { token } = useAuth();
   const { user } = useAuth();
 
-  // NOTE: keep all hooks before any early return to avoid React hooks order issues.
-  /** 管理区折叠：null | 'edit' | 'members' */
   const [adminPanel, setAdminPanel] = useState(null);
   const [editName, setEditName] = useState('');
   const [editCategory, setEditCategory] = useState('music');
@@ -197,7 +203,7 @@ function ClubProfile() {
   if (q.isError || !basic) return <div className="state-error">{q.error?.message || (isZh ? '加载失败' : 'Failed')}</div>;
 
   return (
-    <div className="club-page">
+    <div className="club-page neo-club-page">
       <div className="club-profile-top">
         <button type="button" className="club-back" onClick={() => nav(-1)} aria-label={isZh ? '返回' : 'Back'}>
           <ArrowLeft size={18} aria-hidden />
@@ -206,28 +212,31 @@ function ClubProfile() {
         <Link className="club-profile-link" to="/about/club">{isZh ? '列表' : 'List'}</Link>
       </div>
 
-      <div className="club-profile-card">
+      <NeoCard className="club-profile-card w-full">
         <div className="club-profile-head">
-          {basic.avatar ? <img src={basic.avatar} alt="" className="club-profile-avatar" /> : <div className="club-profile-avatar club-avatar--ph" />}
+          <NeoAvatar size="xl">
+            <NeoAvatar.Image src={basic.avatar} alt={basic.name} />
+            <NeoAvatar.Fallback>{basic.name?.charAt(0) || 'C'}</NeoAvatar.Fallback>
+          </NeoAvatar>
           <div className="club-profile-head-main">
             <div className="club-profile-name">{basic.name}</div>
             <div className="club-profile-followers">{Number(basic.followers || 0)} {isZh ? '关注' : 'followers'}</div>
           </div>
-          <button
-            type="button"
-            className={`club-follow-btn pressable ${following ? 'is-on' : ''}`}
+          <NeoButton
+            variant={following ? 'secondary' : 'default'}
+            size="sm"
             disabled={!token || followMut.isPending}
             title={!token ? (isZh ? '登录后可关注' : 'Login to follow') : (following ? (isZh ? '已关注' : 'Following') : (isZh ? '关注' : 'Follow'))}
             onClick={() => {
               if (!token) return;
               followMut.mutate();
             }}
+            iconLeft={<UserPlus size={16} aria-hidden />}
           >
-            <UserPlus size={16} aria-hidden />
-            <span>{following ? (isZh ? '已关注' : 'Following') : (isZh ? '关注' : 'Follow')}</span>
-          </button>
+            {following ? (isZh ? '已关注' : 'Following') : (isZh ? '关注' : 'Follow')}
+          </NeoButton>
         </div>
-        {basic.category ? <div className="club-chip">{basic.category}</div> : null}
+        {basic.category ? <NeoBadge variant="accent" size="sm" className="mt-2">{basic.category}</NeoBadge> : null}
         <div className="club-profile-desc">{basic.description || (isZh ? '（暂无介绍）' : '(No description)')}</div>
 
         <div className="club-join">
@@ -236,8 +245,10 @@ function ClubProfile() {
           {join?.ig ? <div className="club-join-row">IG: {join.ig}</div> : null}
           {join?.xhs ? <div className="club-join-row">{isZh ? '小红书' : 'XHS'}: {join.xhs}</div> : null}
           {join?.signupLink ? (
-            <a className="club-join-link pressable" href={join.signupLink} target="_blank" rel="noreferrer">
-              <ExternalLink size={16} aria-hidden /> {isZh ? '外链报名' : 'Signup link'}
+            <a className="club-join-link" href={join.signupLink} target="_blank" rel="noreferrer">
+              <NeoButton variant="outline" size="sm" iconLeft={<ExternalLink size={16} aria-hidden />}>
+                {isZh ? '外链报名' : 'Signup link'}
+              </NeoButton>
             </a>
           ) : null}
         </div>
@@ -257,7 +268,10 @@ function ClubProfile() {
                     {members.slice(0, 3).map((m) => (
                       <div key={m.id} className="club-mini-card">
                         <div className="club-card-row">
-                          {m.avatar ? <img src={m.avatar} alt="" className="club-avatar" /> : <div className="club-avatar club-avatar--ph" />}
+                          <NeoAvatar size="sm">
+                            <NeoAvatar.Image src={m.avatar} alt={m.nickname || m.username} />
+                            <NeoAvatar.Fallback>{(m.nickname || m.username || 'M').charAt(0)}</NeoAvatar.Fallback>
+                          </NeoAvatar>
                           <div className="club-card-main">
                             <div className="club-card-name">{m.nickname || m.username || (isZh ? '成员' : 'Member')}</div>
                             <div className="club-card-desc">{[m.email, m.role].filter(Boolean).join(' · ')}</div>
@@ -267,8 +281,10 @@ function ClubProfile() {
                     ))}
                   </div>
                   {members.length > 3 ? (
-                    <Link to={`/about/club/${clubId}/members`} className="club-members-more pressable">
-                      {isZh ? '展示更多' : 'Show all'}
+                    <Link to={`/about/club/${clubId}/members`} className="club-members-more">
+                      <NeoButton variant="outline" size="sm">
+                        {isZh ? '展示更多' : 'Show all'}
+                      </NeoButton>
                     </Link>
                   ) : null}
                 </>
@@ -281,37 +297,39 @@ function ClubProfile() {
           <div className="club-admin-panel">
             <div className="club-admin-h">{isZh ? '社团管理' : 'Club admin'}</div>
             <div className="club-admin-toolbar" role="toolbar" aria-label={isZh ? '社团管理操作' : 'Club admin actions'}>
-              <button
-                type="button"
-                className={`club-admin-toolbtn pressable ${adminPanel === 'edit' ? 'is-on' : ''}`}
-                aria-expanded={adminPanel === 'edit'}
-                onClick={() => toggleAdminPanel('edit')}
+              <NeoToggle
+                variant="outlined"
+                size="sm"
+                pressed={adminPanel === 'edit'}
+                onPressedChange={() => toggleAdminPanel('edit')}
               >
                 <Pencil size={16} aria-hidden />
                 <span>{isZh ? '编辑资料' : 'Edit'}</span>
-              </button>
-              <button
-                type="button"
-                className={`club-admin-toolbtn pressable ${adminPanel === 'members' ? 'is-on' : ''}`}
-                aria-expanded={adminPanel === 'members'}
-                onClick={() => toggleAdminPanel('members')}
+              </NeoToggle>
+              <NeoToggle
+                variant="outlined"
+                size="sm"
+                pressed={adminPanel === 'members'}
+                onPressedChange={() => toggleAdminPanel('members')}
               >
                 <UserRoundPlus size={16} aria-hidden />
                 <span>{isZh ? '添加成员' : 'Members'}</span>
-              </button>
+              </NeoToggle>
               <Link
                 to={`/about/club/activity/new?clubId=${clubId}`}
-                className="club-admin-toolbtn club-admin-toolbtn--link pressable"
+                className="club-admin-toolbtn--link"
               >
-                <PlusCircle size={16} aria-hidden />
-                <span>{isZh ? '发布活动' : 'Activity'}</span>
+                <NeoButton variant="outline" size="sm" iconLeft={<PlusCircle size={16} aria-hidden />}>
+                  {isZh ? '发布活动' : 'Activity'}
+                </NeoButton>
               </Link>
               <Link
                 to={`/about/club/post/new?clubId=${clubId}`}
-                className="club-admin-toolbtn club-admin-toolbtn--link pressable"
+                className="club-admin-toolbtn--link"
               >
-                <MessageSquarePlus size={16} aria-hidden />
-                <span>{isZh ? '发布日常' : 'Post'}</span>
+                <NeoButton variant="outline" size="sm" iconLeft={<MessageSquarePlus size={16} aria-hidden />}>
+                  {isZh ? '发布日常' : 'Post'}
+                </NeoButton>
               </Link>
             </div>
 
@@ -320,49 +338,53 @@ function ClubProfile() {
                 <div className="club-admin-form">
                   <label className="club-field">
                     <div className="club-label">{isZh ? '名字' : 'Name'}</div>
-                    <input className="club-input" value={editName} onChange={(e) => setEditName(e.target.value)} />
+                    <NeoInput value={editName} onChange={(e) => setEditName(e.target.value)} />
                   </label>
                   <label className="club-field">
                     <div className="club-label">{isZh ? '分类' : 'Category'}</div>
-                    <select className="club-input" value={editCategory} onChange={(e) => setEditCategory(e.target.value)}>
+                    <NeoSelect value={editCategory} onChange={(e) => setEditCategory(e.target.value)}>
                       <option value="music">music</option>
                       <option value="tech">tech</option>
                       <option value="culture">culture</option>
                       <option value="sport">sport</option>
                       <option value="art">art</option>
-                    </select>
+                    </NeoSelect>
                   </label>
                   <label className="club-field">
                     <div className="club-label">{isZh ? '简介' : 'Description'}</div>
-                    <textarea className="club-textarea" rows={3} value={editDesc} onChange={(e) => setEditDesc(e.target.value)} />
+                    <NeoTextarea rows={3} value={editDesc} onChange={(e) => setEditDesc(e.target.value)} />
                   </label>
                   <label className="club-field">
                     <div className="club-label">{isZh ? '联系方式' : 'Contact'}</div>
-                    <input className="club-input" value={editContact} onChange={(e) => setEditContact(e.target.value)} />
+                    <NeoInput value={editContact} onChange={(e) => setEditContact(e.target.value)} />
                   </label>
                   <label className="club-field">
                     <div className="club-label">{isZh ? '报名链接' : 'Signup link'}</div>
-                    <input className="club-input" value={editSignup} onChange={(e) => setEditSignup(e.target.value)} />
+                    <NeoInput value={editSignup} onChange={(e) => setEditSignup(e.target.value)} />
                   </label>
                   <div className="club-grid2">
                     <label className="club-field">
                       <div className="club-label">IG</div>
-                      <input className="club-input" value={editIg} onChange={(e) => setEditIg(e.target.value)} />
+                      <NeoInput value={editIg} onChange={(e) => setEditIg(e.target.value)} />
                     </label>
                     <label className="club-field">
                       <div className="club-label">{isZh ? '小红书' : 'XHS'}</div>
-                      <input className="club-input" value={editXhs} onChange={(e) => setEditXhs(e.target.value)} />
+                      <NeoInput value={editXhs} onChange={(e) => setEditXhs(e.target.value)} />
                     </label>
                   </div>
                   <label className="club-field">
                     <div className="club-label">{isZh ? 'Logo' : 'Logo'}</div>
-                    <input className="club-input" type="file" accept="image/*" onChange={(e) => setEditLogo(e.target.files?.[0] || null)} />
+                    <NeoInput type="file" accept="image/*" onChange={(e) => setEditLogo(e.target.files?.[0] || null)} />
                   </label>
 
-                  <button type="button" className="club-admin-submit pressable" disabled={saveClubMut.isPending} onClick={() => saveClubMut.mutate()}>
-                    <Save size={16} aria-hidden />
+                  <NeoButton
+                    variant="default"
+                    disabled={saveClubMut.isPending}
+                    onClick={() => saveClubMut.mutate()}
+                    iconLeft={<Save size={16} aria-hidden />}
+                  >
                     {saveClubMut.isPending ? (isZh ? '保存中…' : 'Saving…') : (isZh ? '保存修改' : 'Save')}
-                  </button>
+                  </NeoButton>
                 </div>
               </div>
             ) : null}
@@ -372,23 +394,28 @@ function ClubProfile() {
                 <div className="club-admin-member">
                   <div className="club-admin-subh club-admin-subh--first">{isZh ? '添加成员或管理员' : 'Add member or admin'}</div>
                   <div className="club-admin-member-row">
-                    <input
-                      className="club-input"
+                    <NeoInput
                       value={memberEmail}
                       onChange={(e) => setMemberEmail(e.target.value)}
                       placeholder={isZh ? '输入学生邮箱…' : 'Student email...'}
                     />
-                    <select className="club-input club-input--sm" value={memberRole} onChange={(e) => setMemberRole(e.target.value)}>
+                    <NeoSelect value={memberRole} onChange={(e) => setMemberRole(e.target.value)} className="club-input--sm">
                       <option value="member">{isZh ? '成员' : 'member'}</option>
                       <option value="admin">{isZh ? '管理员' : 'admin'}</option>
-                    </select>
-                    <button type="button" className="club-admin-mini pressable" disabled={!memberEmail.trim() || addMemberMut.isPending} onClick={() => addMemberMut.mutate()}>
-                      <UserRoundPlus size={16} aria-hidden /> {isZh ? '添加' : 'Add'}
-                    </button>
+                    </NeoSelect>
+                    <NeoButton
+                      variant="default"
+                      size="sm"
+                      disabled={!memberEmail.trim() || addMemberMut.isPending}
+                      onClick={() => addMemberMut.mutate()}
+                      iconLeft={<UserRoundPlus size={16} aria-hidden />}
+                    >
+                      {isZh ? '添加' : 'Add'}
+                    </NeoButton>
                   </div>
 
                   <div className="club-admin-subh">{isZh ? '按邮箱搜索用户' : 'Search user by email'}</div>
-                  <input className="club-input" value={userQuery} onChange={(e) => setUserQuery(e.target.value)} placeholder="xxx@xmu.edu.my" />
+                  <NeoInput value={userQuery} onChange={(e) => setUserQuery(e.target.value)} placeholder="xxx@xmu.edu.my" />
                   {usersQ.data?.list?.length ? (
                     <div className="club-admin-search-list">
                       {usersQ.data.list.map((u) => (
@@ -397,9 +424,13 @@ function ClubProfile() {
                             <div className="club-admin-search-name">{u.nickname || u.username}</div>
                             <div className="club-admin-search-email">{u.email}</div>
                           </div>
-                          <button type="button" className="club-admin-mini pressable" onClick={() => { setMemberEmail(u.email); }}>
+                          <NeoButton
+                            variant="outline"
+                            size="sm"
+                            onClick={() => { setMemberEmail(u.email); }}
+                          >
                             {isZh ? '填入' : 'Use'}
-                          </button>
+                          </NeoButton>
                         </div>
                       ))}
                     </div>
@@ -410,15 +441,15 @@ function ClubProfile() {
 
           </div>
         ) : null}
-      </div>
+      </NeoCard>
 
       <section className="club-section">
         <div className="club-section-h">{isZh ? '活动' : 'Activities'}</div>
         {activities.length === 0 ? <div className="club-mini-empty">{isZh ? '暂无活动' : 'No activities'}</div> : null}
         <div className="club-mini-list">
           {activities.slice(0, 6).map((a) => (
-            <div key={a.id} className="club-mini-card">
-              <Link to={`/about/club/activity/${a.id}`} className="club-mini-card-main pressable">
+            <NeoCard key={a.id} as="div" className="club-mini-card w-full">
+              <Link to={`/about/club/activity/${a.id}`} className="club-mini-card-main">
                 <div className="club-mini-title">{a.title}</div>
                 <div className="club-mini-sub">
                   {[a.time ? new Date(a.time).toLocaleString() : '', a.location].filter(Boolean).join(' · ')}
@@ -426,11 +457,11 @@ function ClubProfile() {
               </Link>
               {canManage ? (
                 <div className="club-admin-activity-row">
-                  {a.tag ? <span className="club-chip">{a.tag}</span> : null}
-                  <span className="club-chip">{a.status}</span>
-                  <button
-                    type="button"
-                    className="club-admin-mini pressable"
+                  {a.tag ? <NeoBadge size="sm">{a.tag}</NeoBadge> : null}
+                  <NeoBadge variant="outline" size="sm">{a.status}</NeoBadge>
+                  <NeoButton
+                    variant="outline"
+                    size="sm"
                     disabled={statusMut.isPending}
                     onClick={() => {
                       const cur = String(a.status || '');
@@ -441,20 +472,20 @@ function ClubProfile() {
                     {String(a.status || '') === 'ended'
                       ? (isZh ? '恢复进行中' : 'Resume')
                       : (isZh ? '标记结束' : 'Mark ended')}
-                  </button>
-                  <button
-                    type="button"
-                    className="club-delete-btn club-delete-btn--compact pressable"
+                  </NeoButton>
+                  <NeoButton
+                    variant="destructive"
+                    size="sm"
                     disabled={deleteActivityMut.isPending}
                     onClick={() => {
                       if (window.confirm(isZh ? '确定删除该活动？删除后不可恢复。' : 'Delete this activity? This cannot be undone.')) {
                         deleteActivityMut.mutate(a.id);
                       }
                     }}
+                    iconLeft={<Trash2 size={14} aria-hidden />}
                   >
-                    <Trash2 size={14} aria-hidden />
                     {isZh ? '删除' : 'Delete'}
-                  </button>
+                  </NeoButton>
                 </div>
               ) : null}
               {a.signupLink ? (
@@ -462,7 +493,7 @@ function ClubProfile() {
                   <MapPin size={14} aria-hidden /> {isZh ? '报名' : 'Sign up'}
                 </a>
               ) : null}
-            </div>
+            </NeoCard>
           ))}
         </div>
       </section>
@@ -473,14 +504,14 @@ function ClubProfile() {
         <div className="club-mini-list">
           {posts.slice(0, 6).map((p) => (
             <div key={p.id} className="club-mini-card club-mini-card--row">
-              <Link to={`/about/club/post/${p.id}`} className="club-mini-card-main pressable">
+              <Link to={`/about/club/post/${p.id}`} className="club-mini-card-main">
                 <div className="club-mini-title">{p.content ? String(p.content).slice(0, 40) : (isZh ? '社团日常' : 'Club post')}</div>
                 <div className="club-mini-sub">{p.createdAt ? new Date(p.createdAt).toLocaleString() : ''}</div>
               </Link>
               {canManage ? (
-                <button
-                  type="button"
-                  className="club-delete-btn club-delete-btn--icon-only pressable"
+                <NeoButton
+                  variant="destructive"
+                  size="icon"
                   title={isZh ? '删除' : 'Delete'}
                   aria-label={isZh ? '删除该日常帖' : 'Delete post'}
                   disabled={deletePostMut.isPending}
@@ -489,9 +520,8 @@ function ClubProfile() {
                       deletePostMut.mutate(p.id);
                     }
                   }}
-                >
-                  <Trash2 size={16} aria-hidden />
-                </button>
+                  iconLeft={<Trash2 size={16} aria-hidden />}
+                />
               ) : null}
             </div>
           ))}
@@ -502,4 +532,3 @@ function ClubProfile() {
 }
 
 export default ClubProfile;
-
