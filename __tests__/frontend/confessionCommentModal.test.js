@@ -114,6 +114,37 @@ describe('万能墙：一屏一篇高度', () => {
   it('翻页位移用的兜底值与 CSS 一致', () => {
     expect(pager).toContain("export const PAGER_PANE_HEIGHT = 'var(--cf-pager-height, 88vh)';");
   });
+
+  it('pane 显式等于视口高度（否则卡片 min-height:100% 失去参照，撑不满一屏）', () => {
+    expect(css).toMatch(/\.cf-pager__pane\s*\{[^}]*height:\s*var\(--cf-pager-height\);/s);
+  });
+});
+
+describe('万能墙：翻页按钮可见性（V1.1）', () => {
+  const css = read('frontend', 'src', 'pages', 'ConfessionWall.css');
+  const pager = read('frontend', 'src', 'components', 'confession', 'ConfessionPager.jsx');
+
+  it('控制条在 DOM 顺序上位于视口之前（88vh 下留在视口下方会落到折叠线以外）', () => {
+    const controlsAt = pager.indexOf('className="cf-pager__controls"');
+    const viewportAt = pager.indexOf('className="cf-pager__viewport"');
+    expect(controlsAt).toBeGreaterThan(-1);
+    expect(viewportAt).toBeGreaterThan(-1);
+    expect(controlsAt).toBeLessThan(viewportAt);
+  });
+
+  it('边界提示也在视口之前，不会落在折叠线下', () => {
+    const hintAt = pager.indexOf('cf-pager__hint');
+    const viewportAt = pager.indexOf('className="cf-pager__viewport"');
+    expect(hintAt).toBeGreaterThan(-1);
+    expect(hintAt).toBeLessThan(viewportAt);
+  });
+
+  it('两个翻页按钮分别贴左右两端（space-between + 中间分组）', () => {
+    expect(css).toMatch(/\.cf-pager__controls\s*\{[^}]*justify-content:\s*space-between;/s);
+    expect(css).toMatch(/\.cf-pager__center\s*\{/);
+    expect(pager.indexOf('cf-pager__btn--prev')).toBeLessThan(pager.indexOf('cf-pager__center'));
+    expect(pager.indexOf('cf-pager__center')).toBeLessThan(pager.indexOf('cf-pager__btn--next'));
+  });
 });
 
 describe('万能墙：评论入口无障碍状态', () => {

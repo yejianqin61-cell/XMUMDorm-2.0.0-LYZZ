@@ -7,9 +7,14 @@
  * 几何约定（与 ConfessionWall.css 中的 `.cf-pager__viewport` 高度严格配套）：
  *   viewport 为确定高度 H（--cf-pager-height）；
  *   track 通过 `translateY(calc(-index * H))` 位移；
- *   每个 pane 绝对定位在 `top: calc(i * H)`，高度同为 H。
+ *   每个 pane 绝对定位在 `top: calc(i * H)`，**并通过 height 显式设为 H**。
  * 用确定高度而非百分比，是为了避开「父高由 min-height 决定时百分比高度退化为 auto」
  * 的 CSS 陷阱——那会导致单个 pane 撑满整条 track。
+ * 同理 pane 必须显式给 height：否则 pane 高度退化为内容高度，卡片里的 `min-height: 100%`
+ * 失去参照，一张卡片撑不满一屏（V1.1 修复）。
+ *
+ * 布局顺序（V1.1）：控制条与边界提示都在视口**上方**。88vh 的一屏一篇必然让页面可滚动，
+ * 控制条若留在视口下方会落到折叠线以外，用户看不到翻页按钮；两个翻页按钮分别贴左右两端。
  *
  * 无障碍：容器 role=region，翻页按钮为真实 button（键盘与鼠标等价），
  * 当前篇通过 aria-live 播报。
@@ -74,6 +79,65 @@ export default function ConfessionPager({
 
   return (
     <div className="cf-pager">
+      {/*
+        控制条放在视口**上方**：一屏一篇的高度是 88vh，控制条若留在视口下方，
+        在常见屏幕上会落到折叠线以下（1440×900 实测：视口底部 y=1058，控制条 y=1070），
+        用户看不到也点不到翻页按钮。两个翻页按钮分别贴到左右两端。
+      */}
+      <div className="cf-pager__controls">
+        <button
+          type="button"
+          className="cf-pager__btn cf-pager__btn--prev"
+          onClick={onPrev}
+          disabled={!canPrev}
+          aria-label={isZh ? '上篇（更新）' : 'Previous (newer)'}
+          title={isZh ? '上篇 ↑' : 'Previous ↑'}
+        >
+          <ChevronUpIcon />
+        </button>
+
+        <div className="cf-pager__center">
+          <div className="cf-pager__position" aria-live="polite" aria-atomic="true">
+            <strong>{positionNumber}</strong>
+            <span className="cf-pager__position-sep">/</span>
+            <span>{total > 0 ? total : count}</span>
+          </div>
+
+          {(onFirst || onLast) && (
+            <div className="cf-pager__jumps">
+              <button type="button" className="cf-pager__jump" onClick={onFirst} disabled={!canPrev}>
+                {isZh ? '最新' : 'Newest'}
+              </button>
+              <button type="button" className="cf-pager__jump" onClick={onLast} disabled={!canNext}>
+                {isZh ? '最旧' : 'Oldest'}
+              </button>
+            </div>
+          )}
+        </div>
+
+        <button
+          type="button"
+          className="cf-pager__btn cf-pager__btn--next"
+          onClick={onNext}
+          disabled={!canNext}
+          aria-label={isZh ? '下篇（更旧）' : 'Next (older)'}
+          title={isZh ? '下篇 ↓' : 'Next ↓'}
+        >
+          <ChevronDownIcon />
+        </button>
+      </div>
+
+      {atNewestEdge && (
+        <p className="cf-pager__hint" role="status">
+          {isZh ? '已经是最新一篇了' : 'This is the newest confession'}
+        </p>
+      )}
+      {atOldestEdge && (
+        <p className="cf-pager__hint" role="status">
+          {isZh ? '已经是最旧一篇了' : 'This is the oldest confession'}
+        </p>
+      )}
+
       <div className="cf-pager__viewport" role="region" aria-label={isZh ? '万能墙' : 'Confession Wall'}>
         <div
           className="cf-pager__track"
@@ -92,58 +156,6 @@ export default function ConfessionPager({
           ))}
         </div>
       </div>
-
-      <div className="cf-pager__controls">
-        <button
-          type="button"
-          className="cf-pager__btn"
-          onClick={onPrev}
-          disabled={!canPrev}
-          aria-label={isZh ? '上篇（更新）' : 'Previous (newer)'}
-          title={isZh ? '上篇 ↑' : 'Previous ↑'}
-        >
-          <ChevronUpIcon />
-        </button>
-
-        <div className="cf-pager__position" aria-live="polite" aria-atomic="true">
-          <strong>{positionNumber}</strong>
-          <span className="cf-pager__position-sep">/</span>
-          <span>{total > 0 ? total : count}</span>
-        </div>
-
-        <button
-          type="button"
-          className="cf-pager__btn"
-          onClick={onNext}
-          disabled={!canNext}
-          aria-label={isZh ? '下篇（更旧）' : 'Next (older)'}
-          title={isZh ? '下篇 ↓' : 'Next ↓'}
-        >
-          <ChevronDownIcon />
-        </button>
-
-        {(onFirst || onLast) && (
-          <div className="cf-pager__jumps">
-            <button type="button" className="cf-pager__jump" onClick={onFirst} disabled={!canPrev}>
-              {isZh ? '最新' : 'Newest'}
-            </button>
-            <button type="button" className="cf-pager__jump" onClick={onLast} disabled={!canNext}>
-              {isZh ? '最旧' : 'Oldest'}
-            </button>
-          </div>
-        )}
-      </div>
-
-      {atNewestEdge && (
-        <p className="cf-pager__hint" role="status">
-          {isZh ? '已经是最新一篇了' : 'This is the newest confession'}
-        </p>
-      )}
-      {atOldestEdge && (
-        <p className="cf-pager__hint" role="status">
-          {isZh ? '已经是最旧一篇了' : 'This is the oldest confession'}
-        </p>
-      )}
     </div>
   );
 }

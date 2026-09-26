@@ -438,3 +438,36 @@ ACM协会
 
 ### 组织权限等级
 
+------
+
+## 八、回归修复记录
+
+### 8.1 活动详情页失去全部样式（2026-09-26 修复）
+
+**现象**：`/about/club/activity/:id`（`ActivityDetail.jsx`）整个页面失去样式——
+标题、社团名、活动正文挤成左上角的小字，地点/报名数/截止时间挤成一行行无间距文本，
+「加入日历 / 加入待办」退化成纯文字，封面图失去约束、撑满一屏。
+
+**根因**：提交 `5ba330a`「feat(clubs): replace club pages with neobrutalism (retroui) components」
+把 `frontend/src/pages/Clubs/Clubs.css` 整体重写（**−1385 / +574 行**），并按清单迁移了
+`ClubPostDetail` / `ClubProfile` / `ClubsHome` / `ClubListPage` / `ClubMembersPage` /
+`CreateClub` / `MyClubs` / `PublishClubPost` / `ClubCommentsSection` —— **`ActivityDetail.jsx` 不在该清单内**，
+但它依赖的 6 个旧类名被一并删除了：
+
+| 被删类名 | 作用 |
+|----------|------|
+| `.club-feed-title` | 活动标题排版 |
+| `.club-detail-meta` | 活动元信息栅格（地点/报名数/截止时间） |
+| `.club-detail-loc` | 地点行的 inline-flex 对齐 |
+| `.club-detail-utility-btn` | 「加入日历 / 加入待办」胶囊按钮 |
+| `.club-like-btn` / `.club-like-btn.is-on` | 点赞按钮及选中态 |
+| `.club-delete-btn`（含 `--compact` / `--icon-only`） | 删除按钮 |
+
+**修复**：按 `5ba330a^` 的原定义把上述规则原样恢复到 `Clubs.css` 末尾，并加注释标明
+「该页面尚未 RetroUI 化，勿随清理删除」。规则内容经逐行比对确认与原定义一致
+（仅 `rgba()` 内空格被规范化）。
+
+**后续规约**：清理页面级 CSS 时必须先确认该类名**是否仍被任一未迁移页面引用**；
+本次是「整文件重写」而非「按引用删除」造成的连带删除。
+若后续要迁移 `ActivityDetail`，应先迁移 JSX 再删这些旧规则。
+

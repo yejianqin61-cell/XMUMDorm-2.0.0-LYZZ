@@ -410,8 +410,10 @@ commentsOpen: boolean     // 评论区面板是否展开
 
 沿用仓库既有 `Layout.jsx` 的 `translate` 手法，但改为纵向：
 
-- 结构：`.cf-pager__viewport`（**确定高度** `H = var(--cf-pager-height)`，`overflow: hidden`）内放 `.cf-pager__track`，track 用 `transform: translateY(calc(-1 * index * H))` 位移；每个 `.cf-pager__pane` 绝对定位在 `top: calc(i * H)`，高度同为 `H`
+- 结构：`.cf-pager__viewport`（**确定高度** `H = var(--cf-pager-height)`，`overflow: hidden`）内放 `.cf-pager__track`，track 用 `transform: translateY(calc(-1 * index * H))` 位移；每个 `.cf-pager__pane` 绝对定位在 `top: calc(i * H)`，并**显式 `height: H`**
 - **不用百分比**：父高由 `min-height` 撑开时，百分比高度会退化为 `auto`，导致单个 pane 撑满整条 track。因此统一走确定高度变量（`ConfessionPager.jsx` 的 `PAGER_PANE_HEIGHT` 与 CSS 必须同步）
+- **pane 必须显式给 height**（V1.1 修复）：V1.0 只写了 `top`、漏了 `height`，于是 pane 高度退化为内容高度，卡片上的 `min-height: 100%` 失去参照 → 卡片只有内容那么高、视口下方留出大片空白。这是「高度加了但看不出变化」的真正原因
+- **控制条与边界提示放在视口上方**（V1.1 修复）：`88vh` 的一屏一篇必然让页面可滚动，控制条留在视口下方会落到折叠线以外（1440×900 实测视口底 y=1058、控制条 y=1070，**任何常见屏幕都看不到翻页按钮**）。控制条移至上方的同时，两个翻页按钮分别贴左右两端（`justify-content: space-between` + `.cf-pager__center` 承载序号与「最新/最旧」）
 - 高度取值：桌面 `88vh`、窄屏 `82vh`（V1.1 由 72vh / 68vh 加高；详见 §17.2 关于「为什么没有封顶在视口内」的实测）
 - 过渡：`transform 380ms cubic-bezier(0.22, 1, 0.36, 1)`（与仓库其他动效的缓动风格一致，偏「快出慢入」）
 - 非当前屏 `opacity: 0.35` + `scale(0.97)`，当前屏 `opacity: 1` + `scale(1)`
@@ -848,3 +850,59 @@ V1.1 增加规则 3（§7.3）：焦点在 `BUTTON` / `A` / `SUMMARY` 上时，`
 - 弹窗在移动端软键盘弹出时的实际表现（`max-height` 已用 `dvh`，但真机行为需目视）
 - 遮罩 `backdrop-filter: blur(3px)` 在低端安卓上的性能
 - 88vh 卡片在 1366×768 等矮屏上的观感（数学上页面必然可滚动）
+
+---
+
+## 18. 迭代记录：V1.2（翻页按钮移出折叠线）
+
+需求：**「左右翻页的那个按钮被挡住了，可以各自将按钮左右平移」**（1440×900 桌面浏览器实测）。
+
+### 18.1 复现与根因
+
+在浏览器里量出来的结果：
+
+| 元素 | 修复前 | 说明 |
+|------|--------|------|
+| `.cf-pager__viewport` | y=266 → 1058（h=792，88vh） | 一屏一篇的视口 |
+| `.cf-pager__controls` | **y=1070** | 视口下方，**在 900px 的折叠线以外** |
+| `.cf-pager__pane`（当前篇） | **h=412.5** | ⚠️ 只有内容那么高 |
+| `.cf-card` | **h=404.5** | 视口 792px 里只占 412px，下面 380px 是空白 |
+
+两个独立缺陷叠在一起：
+
+1. **控制条落在视口下方。** `页面高度 = 外壳 377px + 88vh`，所以在**任何**常见屏幕上控制条都在折叠线以下。用户必须滚动才能看到翻页按钮——这就是「被挡住了」。
+   用 `document.elementsFromPoint` 对按钮中心做命中测试，栈里只有 `svg / button / .cf-pager__controls / .cf-pager`，**没有任何元素覆盖它**，所以不是层叠遮挡，是几何位置问题。
+2. **`.cf-pager__pane` 漏了 `height`。** §7.4 写的是「pane 高度同为 H」，但 CSS 只给了 `top: calc(i * H)`。pane 高度因此退化为内容高度，卡片上的 `min-height: 100%` 失去参照 → 卡片只有 404px。**这才是「高度加了 1.22 倍却看不出变化」的真正原因**（88vh 只是把空白区域加高了）。
+
+### 18.2 改动
+
+| 文件 | 改动 |
+|------|------|
+| `frontend/src/components/confession/ConfessionPager.jsx` | 控制条与边界提示移到视口**之前**（DOM 顺序）；两个翻页按钮改用 `.cf-pager__btn--prev` / `--next` 并分别置于控制条两端，中间新增 `.cf-pager__center` 承载序号与「最新/最旧」 |
+| `frontend/src/pages/ConfessionWall.css` | `.cf-pager__pane` 补 `height: var(--cf-pager-height)`；`.cf-pager__controls` 由 `justify-content: center` 改为 `space-between`；新增 `.cf-pager__center`；移除 `.cf-pager__jumps` 的 `margin-left` |
+
+### 18.3 修复后实测（1440×900）
+
+| 元素 | 修复后 |
+|------|--------|
+| `.cf-pager__controls` | **y=266**（折叠线以上，无需滚动） |
+| 上篇按钮 | x=**329**（最左） |
+| 序号 / 最新 / 最旧 | x≈620–790（居中分组） |
+| 下篇按钮 | x=**1015**（最右） |
+| `.cf-pager__pane` | h=**792**（= 视口高度） |
+| `.cf-card` | h=**784**（真正撑满一屏，此前 404） |
+
+### 18.4 ⚠️ 已知取舍：88vh 下卡片底部的互动行仍在折叠线外
+
+卡片现在会撑满 792px，因此卡片**底部**（`匿名 · 时间` 元信息行与 `♡ / 💬` 互动行）落在折叠线以下，需要向下滚一点才能点赞/评论。
+
+这是 §17.2 「加高」与「一屏看全」互斥的直接后果，不是新缺陷。若要让**整张卡片连互动行**都在一屏内，实测可用值：
+
+```
+--cf-pager-height: 62vh;   /* 1440×900 下卡片 ≈558px，仍是 V1.0 实际可见高度 404px 的 1.38 倍 */
+```
+
+推导：卡片顶部固定在 y≈318px（外壳 120 + 页面留白 24 + 墙内边距 16 + 页头 61 + gap + 控制条 52），
+要让卡片底部不越过折叠线需 `0.62 × H ≤ H − 318`，即**视口高 ≥ 837px 时成立**。
+**是否采用由产品负责人裁定**；当前保留 88vh（需求方此前明确选择的更高值）。
+

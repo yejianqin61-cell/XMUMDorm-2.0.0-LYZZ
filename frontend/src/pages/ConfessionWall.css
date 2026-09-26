@@ -137,6 +137,9 @@
   position: absolute;
   left: 0;
   width: 100%;
+  /* 必须与视口等高：否则 pane 高度退化为内容高度，卡片上的 min-height:100%
+     失去参照，一张卡片撑不满一屏、视口下方留出大片空白（V1.1 修复） */
+  height: var(--cf-pager-height);
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
@@ -160,11 +163,20 @@
     transform var(--cf-pager-duration) var(--cf-pager-ease);
 }
 
+/* 控制条位于视口上方（DOM 顺序），两个翻页按钮分别贴左右两端 */
 .cf-pager__controls {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+}
+
+.cf-pager__center {
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
   gap: var(--space-6);
+  min-width: 0;
 }
 
 .cf-pager__btn {
@@ -228,7 +240,6 @@
 .cf-pager__jumps {
   display: inline-flex;
   gap: var(--space-4);
-  margin-left: var(--space-4);
 }
 
 .cf-pager__jump {

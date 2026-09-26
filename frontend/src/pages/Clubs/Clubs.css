@@ -1273,288 +1273,100 @@
   max-width: 130px;
 }
 
-/* Activity detail: a compact event-poster layout built from the RetroUI primitives. */
-.activity-detail-page {
-  max-width: 980px !important;
-  padding-top: 20px !important;
-}
+/* ------------------------------------------------------------------
+   ActivityDetail（/about/club/activity/:id）专用类
+   ⚠️ 勿删：该页面**尚未** RetroUI 化（不在 retroui-rollout-plan 的 Phase 4-5 清单里），
+   仍然依赖这些旧类名。5ba330a「社团页 RetroUI 化」重写 Clubs.css 时一并删掉了它们的
+   定义（-1385 行），导致活动详情页整个失去样式（标题缩成小字、封面图失去约束）。
+   这里按 5ba330a^ 的原定义原样恢复。
+   ------------------------------------------------------------------ */
 
-.activity-detail-page .club-activity-detail-main {
-  max-width: 760px;
-  margin: 0 auto;
-}
-
-.activity-detail-page .club-profile-top {
-  margin-bottom: 8px;
-}
-
-.activity-detail-card {
-  width: 100%;
-  padding: 0 !important;
-  overflow: hidden;
-  background: var(--ru-card, #fff);
-}
-
-.activity-detail-hero {
-  display: grid;
-  grid-template-columns: 112px minmax(0, 1fr);
-  gap: 20px;
-  align-items: stretch;
-  padding: 22px;
-  background:
-    radial-gradient(circle at 90% 8%, rgba(255,255,255,.7), transparent 34%),
-    var(--ru-primary, #ffdb33);
-  border-bottom: 2px solid #000;
-}
-
-.activity-detail-date {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 112px;
-  border: 2px solid #000;
-  background: var(--ru-card, #fff);
-  box-shadow: 4px 4px 0 #000;
-  color: #000;
-}
-
-.activity-detail-date span {
-  font-size: 12px;
+.club-feed-title {
+  font-size: 15px;
   font-weight: 950;
-  letter-spacing: .12em;
-}
-
-.activity-detail-date strong {
-  margin-top: 2px;
-  font-size: 48px;
-  line-height: .95;
-  letter-spacing: -.06em;
-}
-
-.activity-detail-heading {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 10px;
-}
-
-.activity-detail-kicker {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 9px;
-  color: rgba(0,0,0,.68);
-  font-size: 12px;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: .04em;
-}
-
-.activity-detail-title {
-  max-width: 100%;
-  margin: 0;
-  color: #000;
-  font-size: clamp(28px, 5vw, 48px);
-  font-weight: 950;
-  line-height: 1.02;
-  letter-spacing: -.055em;
+  color: #111827;
   overflow-wrap: anywhere;
+  line-height: 1.25;
 }
 
-.activity-detail-summary {
-  margin: 0;
-  padding: 22px 22px 4px;
-  font-size: 16px;
-  line-height: 1.75;
-  color: rgba(0,0,0,.76);
-}
-
-.activity-detail-info-grid {
+.club-detail-meta {
+  margin-top: 8px;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  padding: 18px 22px 2px;
-}
-
-.activity-detail-info {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  min-width: 0;
-  padding: 13px;
-  border: 2px solid #000;
-  background: var(--ru-background, #f5ece7);
-}
-
-.activity-detail-info svg {
-  flex: 0 0 auto;
-  margin-top: 2px;
-}
-
-.activity-detail-info div {
-  display: grid;
-  min-width: 0;
-  gap: 4px;
-}
-
-.activity-detail-info span {
-  color: var(--ru-muted-foreground, #5a5a5a);
-  font-size: 10px;
-  font-weight: 950;
-  letter-spacing: .12em;
-}
-
-.activity-detail-info strong {
-  color: #000;
+  gap: 6px;
+  color: rgba(0, 0, 0, 0.55);
   font-size: 13px;
-  line-height: 1.4;
-}
-
-.activity-detail-card .activity-register-bar {
-  width: auto;
-  margin: 18px 22px 0;
-}
-
-.activity-register-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 14px 16px !important;
-  background: var(--ru-accent, #fae583);
-  box-shadow: 4px 4px 0 #000 !important;
-}
-
-.activity-register-bar__meta {
-  display: grid;
-  min-width: 0;
-  gap: 5px;
-}
-
-.activity-register-bar__count {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
-
-.activity-register-bar__count-value {
-  color: #000;
-  font-size: 28px;
-  font-weight: 950;
-  line-height: 1;
-}
-
-.activity-register-bar__count-label,
-.activity-register-bar__deadline {
-  color: rgba(0,0,0,.68);
-  font-size: 12px;
   font-weight: 800;
 }
 
-.activity-register-bar__button {
-  min-width: 132px;
-  box-shadow: 3px 3px 0 #000 !important;
-}
-
-.activity-detail-utilities {
-  padding: 18px 22px 0;
-}
-
-.activity-detail-utility-btn {
-  box-shadow: 3px 3px 0 #000 !important;
-}
-
-.activity-detail-actions {
-  margin: 18px 22px 0;
-  padding: 16px 0 22px;
-  border-top: 2px solid #000;
-}
-
-.activity-detail-actions .activity-detail-like {
-  box-shadow: 3px 3px 0 #000;
-}
-
-.activity-detail-signup {
+.club-detail-loc {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-height: 32px;
-  padding: 4px 12px;
-  border: 2px solid #000;
-  background: #000;
-  color: #fff;
-  box-shadow: 3px 3px 0 #000;
-  font-size: 14px;
-  font-weight: 700;
-  text-decoration: none;
 }
 
-.activity-detail-signup:hover {
-  transform: translateY(1px);
-  box-shadow: 1px 1px 0 #000;
+.club-detail-utility-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  background: rgba(255, 255, 255, 0.92);
+  color: rgba(15, 23, 42, 0.82);
+  font-size: 12px;
+  font-weight: 800;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
 }
 
-.activity-detail-delete {
-  margin-left: auto;
+.club-detail-utility-btn:disabled {
+  opacity: 0.6;
 }
 
-@media (max-width: 640px) {
-  .activity-detail-page {
-    padding: 8px 8px calc(var(--tabbar-height, 72px) + var(--safe-bottom, 0px) + 96px) !important;
-  }
+.club-like-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.8);
+  font-weight: 950;
+  cursor: pointer;
+}
 
-  .activity-detail-hero {
-    grid-template-columns: 78px minmax(0, 1fr);
-    gap: 14px;
-    padding: 16px;
-  }
+.club-like-btn.is-on {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.18);
+  color: rgba(153, 27, 27, 0.95);
+}
 
-  .activity-detail-date {
-    min-height: 78px;
-  }
+.club-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 800;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  background: rgba(254, 242, 242, 0.96);
+  color: rgba(185, 28, 28, 0.95);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
 
-  .activity-detail-date strong {
-    font-size: 34px;
-  }
+.club-delete-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
-  .activity-detail-title {
-    font-size: clamp(25px, 9vw, 36px);
-  }
+.club-delete-btn--compact {
+  padding: 6px 10px;
+  font-size: 12px;
+}
 
-  .activity-detail-summary,
-  .activity-detail-info-grid,
-  .activity-detail-utilities {
-    padding-left: 16px;
-    padding-right: 16px;
-  }
-
-  .activity-detail-info-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .activity-detail-card .activity-register-bar {
-    margin-left: 16px;
-    margin-right: 16px;
-  }
-
-  .activity-detail-actions {
-    margin-left: 16px;
-    margin-right: 16px;
-  }
-
-  .activity-register-bar {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .activity-register-bar__button {
-    width: 100%;
-  }
-
-  .activity-detail-delete {
-    margin-left: 0;
-  }
+.club-delete-btn--icon-only {
+  padding: 8px;
+  border-radius: 12px;
 }
