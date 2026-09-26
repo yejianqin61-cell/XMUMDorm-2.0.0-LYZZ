@@ -20,9 +20,10 @@
     外面那圈工具栏和手机壳用的是 <style>，它**不在复制范围内**，
     只负责让预览好看。
 
-  改配色：搜索替换下面 5 个颜色值即可（正文里出现的地方都要换）
+  改配色：搜索替换下面 6 个颜色值即可（正文里出现的地方都要换）
     #122D78  深蓝   标题 / 强调文字 / 竖条
     #ACD3F8  天蓝   品牌主色 / 圆点 / 浅色描边
+    #C9E0FA  浅天蓝 顶部品牌条底色
     #EAF4FE  浅蓝   高亮块底色
     #F9F9F0  奶油白 引用块底色
     #3F3F3F  深灰   正文（不用纯黑）
@@ -34,6 +35,12 @@
     · 嵌套层级很浅 —— 官方会把「同标签名同样式单子节点」超过 10 层的链路自动精简
     · 不用 @media / 伪元素 / position / float / animation
     · <img> 带 data-w —— 官方建议，图片加载超时时用它兜底
+    · 文字背景不用渐变 —— 官方 Dark Mode 规则不建议（本模板原来是渐变，已改纯色）
+
+  本模板已用官方校验器跑过：wechatjs/verify-article-structure-spec 的 cli/
+  （这是微信官方唯一的 HTML 结构校验器，未发布到 npm，需 clone 后跑）。
+  它只剩一条 line-height 报警，经逐帧测量确认是该校验器自身的误报，详见
+  docs/07-Implement/公众号推文模板与微信号统一.md
   ============================================================================
 -->
 <style>
@@ -105,8 +112,10 @@
          ================================================================== -->
     <section id="articleBody" style="max-width:677px;width:100%;margin:0 auto;">
 
-      <!-- ① 顶部品牌条：天蓝渐变 + 吉祥物 -->
-      <section style="background:linear-gradient(180deg,#ACD3F8 0%,#DCEBFB 100%);border-radius:14px;padding:20px 18px 16px;text-align:center;">
+      <!-- ① 顶部品牌条：天蓝纯色 + 吉祥物
+           这里原来用的是浅蓝渐变，被微信官方校验器判为
+           darkmode-no-gradient（Dark Mode 下文字背景不要用渐变），故改成纯色。 -->
+      <section style="background-color:#C9E0FA;border-radius:14px;padding:20px 18px 16px;text-align:center;">
         <img
           src="../../frontend/public/icon-512-removebg-preview.png"
           alt="XMUM Dorm"

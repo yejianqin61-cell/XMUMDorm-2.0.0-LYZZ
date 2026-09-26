@@ -72,6 +72,12 @@ describe('公众号模板 — 避开微信官方明确的违规写法', () => {
     expect(region).not.toMatch(/::(before|after)/);
   });
 
+  it('文字背景不用渐变（官方 Dark Mode 规则不建议）', () => {
+    // 顶部品牌条原来是 linear-gradient，被官方校验器判为 darkmode-no-gradient，
+    // 已改纯色。渐变在 Dark Mode 下会先被 mix 成纯色，文字对比度会失控。
+    expect(copyRegion()).not.toMatch(/(linear|radial|conic)-gradient/);
+  });
+
   it('容器用 max-width 而不是写死宽度（官方把固定宽度列为违规）', () => {
     expect(copyRegion()).toContain('max-width:677px');
     expect(copyRegion()).toContain('width:100%');

@@ -50,9 +50,31 @@ marketing/wechat/
 | **「固定宽度」属于违规**（会让居中不一致、内容溢出被截断） | 容器用 `max-width:677px;width:100%`，图片 `max-width:100%` |
 | 同标签名、同样式、单子节点的嵌套**超过 10 层会被自动精简** | 本模板最深处只有 4 层 |
 | 建议给 `<img>` 加 `data-w`（图片原始像素宽） | 吉祥物写了 `data-w="503"` |
-| Dark Mode 下**不要用渐变做文字背景** | 渐变只用在顶部品牌条（其上没有正文文字） |
+| Dark Mode 下**不要用渐变做文字背景** | 顶部品牌条用纯色 `#C9E0FA`（原来是渐变，已改） |
 
 依据同样在 `docs/06-Analyze/content-research/` 的调研文档里，逐条标了出处。
+
+### 已用微信官方校验器跑过
+
+[`wechatjs/verify-article-structure-spec`](https://github.com/wechatjs/verify-article-structure-spec)
+是微信官方唯一的 HTML 结构校验器。**注意它没有发布到 npm**
+（`@tencent/verify-article-structure` 在 npmjs 和腾讯镜像都是 404），
+要用得先 clone，再进 `cli/` 目录 `npm install`：
+
+```bash
+git clone --depth 1 https://github.com/wechatjs/verify-article-structure-spec.git
+cd verify-article-structure-spec/cli
+PUPPETEER_SKIP_DOWNLOAD=true npm install   # 用系统 Chrome 就不用下 Chromium
+PUPPETEER_EXECUTABLE_PATH="/path/to/chrome" npx tsx src/index.ts ./article.html --json
+```
+
+本模板跑完的结果：**只剩一条 `line-height` 报警，且已确认是该校验器自身的误报**
+（它把 `<strong>` 的文字算了两遍，行数虚高）。逐帧测量的证据在
+`docs/07-Implement/公众号推文模板与微信号统一.md`。
+
+> 跑之前记得只取「复制范围」——本文件里 `#articleBody` 到「复制范围到这里结束」
+> 之间那一段才等于真正会进公众号的 HTML。外层工具栏和手机壳带 `<style>` 和 class，
+> 整个文件丢进去会被判一堆无关的违规。
 
 页面里那段 `<style>`（工具栏 + 手机壳）**不在复制范围内**，只负责让预览好看。
 
