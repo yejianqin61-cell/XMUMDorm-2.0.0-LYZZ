@@ -5,6 +5,11 @@ import { ImagePlus } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { createClub } from '@shared/api/clubs';
+import NeoButton from '../../components/retroui/Button';
+import NeoInput from '../../components/retroui/Input';
+import NeoTextarea from '../../components/retroui/Textarea';
+import NeoSelect from '../../components/retroui/Select';
+import NeoCard from '../../components/retroui/Card';
 import './Clubs.css';
 
 const CATS = [
@@ -61,83 +66,84 @@ function CreateClub() {
   }
 
   return (
-    <div className="club-page">
+    <div className="club-page neo-club-page">
       <div className="club-top">
-        <div className="club-title">{isZh ? '创建社团' : 'Create club'}</div>
+        <div className="neo-club-title">{isZh ? '创建社团' : 'Create club'}</div>
       </div>
 
-      <form
-        className="club-admin-form"
-        onSubmit={(e) => {
-          e.preventDefault();
-          setErr('');
-          if (!name.trim()) return setErr(isZh ? '社团名字不能为空' : 'Name required');
-          mut.mutate();
-        }}
-      >
-        {err ? <div className="state-inline-error">{err}</div> : null}
+      <NeoCard className="w-full p-6">
+        <form
+          className="club-admin-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            setErr('');
+            if (!name.trim()) return setErr(isZh ? '社团名字不能为空' : 'Name required');
+            mut.mutate();
+          }}
+        >
+          {err ? <div className="state-inline-error">{err}</div> : null}
 
-        <label className="club-field">
-          <div className="club-label">{isZh ? '社团名字' : 'Name'}</div>
-          <input className="club-input" value={name} onChange={(e) => setName(e.target.value)} maxLength={120} />
-        </label>
-
-        <label className="club-field">
-          <div className="club-label">{isZh ? '社团分类' : 'Category'}</div>
-          <select className="club-input" value={category} onChange={(e) => setCategory(e.target.value)}>
-            {CATS.map((c) => (
-              <option key={c.key} value={c.key}>
-                {isZh ? c.zh : c.en}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="club-field">
-          <div className="club-label">{isZh ? '社团简介' : 'Description'}</div>
-          <textarea className="club-textarea" value={description} onChange={(e) => setDescription(e.target.value)} rows={4} />
-        </label>
-
-        <div className="club-grid2">
           <label className="club-field">
-            <div className="club-label">IG</div>
-            <input className="club-input" value={ig} onChange={(e) => setIg(e.target.value)} maxLength={80} placeholder="@..." />
+            <div className="club-label">{isZh ? '社团名字' : 'Name'}</div>
+            <NeoInput value={name} onChange={(e) => setName(e.target.value)} maxLength={120} />
           </label>
+
           <label className="club-field">
-            <div className="club-label">{isZh ? '小红书' : 'XHS'}</div>
-            <input className="club-input" value={xhs} onChange={(e) => setXhs(e.target.value)} maxLength={120} />
+            <div className="club-label">{isZh ? '社团分类' : 'Category'}</div>
+            <NeoSelect value={category} onChange={(e) => setCategory(e.target.value)}>
+              {CATS.map((c) => (
+                <option key={c.key} value={c.key}>
+                  {isZh ? c.zh : c.en}
+                </option>
+              ))}
+            </NeoSelect>
           </label>
-        </div>
 
-        <label className="club-field">
-          <div className="club-label">{isZh ? '联系方式（文本）' : 'Contact text'}</div>
-          <input className="club-input" value={contactText} onChange={(e) => setContactText(e.target.value)} maxLength={255} />
-        </label>
+          <label className="club-field">
+            <div className="club-label">{isZh ? '社团简介' : 'Description'}</div>
+            <NeoTextarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} />
+          </label>
 
-        <label className="club-field">
-          <div className="club-label">{isZh ? '报名链接' : 'Signup link'}</div>
-          <input className="club-input" value={signupLink} onChange={(e) => setSignupLink(e.target.value)} maxLength={500} placeholder="https://..." />
-        </label>
-
-        <label className="club-field">
-          <div className="club-label">{isZh ? '添加负责人（邮箱，可选）' : 'Admin email (optional)'}</div>
-          <input className="club-input" value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} maxLength={120} placeholder="xxx@xmu.edu.my" />
-        </label>
-
-        <label className="club-field">
-          <div className="club-label">
-            <ImagePlus size={16} aria-hidden /> {isZh ? 'Logo 图片' : 'Logo'}
+          <div className="club-grid2">
+            <label className="club-field">
+              <div className="club-label">IG</div>
+              <NeoInput value={ig} onChange={(e) => setIg(e.target.value)} maxLength={80} placeholder="@..." />
+            </label>
+            <label className="club-field">
+              <div className="club-label">{isZh ? '小红书' : 'XHS'}</div>
+              <NeoInput value={xhs} onChange={(e) => setXhs(e.target.value)} maxLength={120} />
+            </label>
           </div>
-          <input className="club-input" type="file" accept="image/*" onChange={(e) => setLogo(e.target.files?.[0] || null)} />
-        </label>
 
-        <button type="submit" className="club-admin-submit pressable" disabled={mut.isPending}>
-          {mut.isPending ? (isZh ? '创建中…' : 'Creating…') : (isZh ? '创建' : 'Create')}
-        </button>
-      </form>
+          <label className="club-field">
+            <div className="club-label">{isZh ? '联系方式（文本）' : 'Contact text'}</div>
+            <NeoInput value={contactText} onChange={(e) => setContactText(e.target.value)} maxLength={255} />
+          </label>
+
+          <label className="club-field">
+            <div className="club-label">{isZh ? '报名链接' : 'Signup link'}</div>
+            <NeoInput value={signupLink} onChange={(e) => setSignupLink(e.target.value)} maxLength={500} placeholder="https://..." />
+          </label>
+
+          <label className="club-field">
+            <div className="club-label">{isZh ? '添加负责人（邮箱，可选）' : 'Admin email (optional)'}</div>
+            <NeoInput value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} maxLength={120} placeholder="xxx@xmu.edu.my" />
+          </label>
+
+          <label className="club-field">
+            <div className="club-label">
+              <ImagePlus size={16} aria-hidden /> {isZh ? 'Logo 图片' : 'Logo'}
+            </div>
+            <NeoInput type="file" accept="image/*" onChange={(e) => setLogo(e.target.files?.[0] || null)} />
+          </label>
+
+          <NeoButton type="submit" variant="default" disabled={mut.isPending}>
+            {mut.isPending ? (isZh ? '创建中…' : 'Creating…') : (isZh ? '创建' : 'Create')}
+          </NeoButton>
+        </form>
+      </NeoCard>
     </div>
   );
 }
 
 export default CreateClub;
-

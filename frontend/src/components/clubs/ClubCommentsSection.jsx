@@ -7,6 +7,9 @@ import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '@shared/api/config';
 import { Toast } from '../../context/ToastContext';
 import { getApiErrorMessage } from '@shared/utils/apiError';
+import NeoButton from '../retroui/Button';
+import NeoInput from '../retroui/Input';
+import NeoTextarea from '../retroui/Textarea';
 import {
   getClubActivityComments,
   getClubPostComments,
@@ -269,9 +272,9 @@ export default function ClubCommentsSection({ targetType, targetId, isZh, floati
                 </div>
               ) : null}
               <div className="club-comment-sheet-row">
-                <textarea
+                <NeoTextarea
                   ref={textareaRef}
-                  className="club-comment-sheet-textarea"
+                  className="club-comment-sheet-textarea flex-1"
                   placeholder={
                     replyingTo
                       ? isZh
@@ -286,14 +289,14 @@ export default function ClubCommentsSection({ targetType, targetId, isZh, floati
                   maxLength={500}
                   rows={4}
                 />
-                <button
-                  type="button"
-                  className="club-comment-sheet-send"
+                <NeoButton
+                  variant="default"
+                  size="sm"
                   disabled={!text.trim() || createMut.isPending}
                   onClick={submitComment}
                 >
                   {createMut.isPending ? (isZh ? '发送中…' : 'Sending…') : isZh ? '发送' : 'Send'}
-                </button>
+                </NeoButton>
               </div>
             </div>
           </>,
@@ -304,14 +307,17 @@ export default function ClubCommentsSection({ targetType, targetId, isZh, floati
   const fabEl =
     floatingComposer && typeof document !== 'undefined'
       ? createPortal(
-          <button
-            type="button"
-            className={`club-comment-fab pressable ${fabPulse ? 'is-pulse' : ''}`}
-            aria-label={isZh ? '写评论' : 'Write a comment'}
-            onClick={openSheet}
-          >
-            <PenLine size={26} strokeWidth={2.2} color="#fff" aria-hidden />
-          </button>,
+          <div className={`club-comment-fab-wrapper ${fabPulse ? 'is-pulse' : ''}`}>
+            <NeoButton
+              variant="default"
+              size="icon"
+              className="club-comment-fab-btn"
+              aria-label={isZh ? '写评论' : 'Write a comment'}
+              onClick={openSheet}
+            >
+              <PenLine size={22} strokeWidth={2.2} aria-hidden />
+            </NeoButton>
+          </div>,
           document.body
         )
       : null;
@@ -428,10 +434,10 @@ export default function ClubCommentsSection({ targetType, targetId, isZh, floati
 
       {!floatingComposer ? (
         <form className="club-comments-bar" onSubmit={onSubmit}>
-          <input
+          <NeoInput
             ref={inputRef}
             type="text"
-            className="club-comments-input"
+            className="club-comments-input flex-1"
             placeholder={
               replyingTo
                 ? isZh
@@ -445,14 +451,15 @@ export default function ClubCommentsSection({ targetType, targetId, isZh, floati
             onChange={(e) => setText(e.target.value)}
             maxLength={500}
           />
-          <button
+          <NeoButton
             type="submit"
-            className="club-comments-send"
+            variant="default"
+            size="icon"
             disabled={!text.trim() || createMut.isPending}
             aria-label={isZh ? '发送' : 'Send'}
           >
             <SendHorizonal size={18} aria-hidden />
-          </button>
+          </NeoButton>
         </form>
       ) : null}
 

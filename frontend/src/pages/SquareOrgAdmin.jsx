@@ -25,6 +25,7 @@ import { productImageUrl } from '@shared/api/config';
 import { QK } from '@shared/query/queryKeys';
 import AdminPageLayout from '../components/templates/AdminPageLayout';
 import PageHeader from '../components/templates/PageHeader';
+import NeoTab from '../components/retroui/Tab';
 import './SquareHome.css';
 
 export default function SquareOrgAdmin() {
@@ -48,22 +49,23 @@ export default function SquareOrgAdmin() {
             />
           )}
           toolbar={(
-            <div className="square-campus-tabs">
-              {[
-                { key: 'orgs', label: '组织管理' },
-                { key: 'trending', label: '热搜管理' },
-                { key: 'banners', label: '广场轮播' },
-              ].map((t) => (
-                <button
-                  key={t.key}
-                  type="button"
-                  className={`square-campus-tab${activeTab === t.key ? ' square-campus-tab--active' : ''}`}
-                  onClick={() => setActiveTab(t.key)}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
+            <NeoTab
+              value={activeTab}
+              onValueChange={(v) => setActiveTab(v)}
+              className="w-full"
+            >
+              <NeoTab.List className="flex flex-row gap-2 w-full">
+                {[
+                  { key: 'orgs', label: '组织管理' },
+                  { key: 'trending', label: '热搜管理' },
+                  { key: 'banners', label: '广场轮播' },
+                ].map((t) => (
+                  <NeoTab.Trigger key={t.key} value={t.key} className="flex-1 justify-center">
+                    {t.label}
+                  </NeoTab.Trigger>
+                ))}
+              </NeoTab.List>
+            </NeoTab>
           )}
           content={activeTab === 'orgs' ? <OrgManager /> : activeTab === 'trending' ? <TrendingAdmin /> : <Navigate to="/eat/banners?placement=square" replace />}
         />

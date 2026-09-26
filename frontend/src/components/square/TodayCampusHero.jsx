@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
+import Card from '../ui/Card';
 
 const NOTICE_LINKS = {
   zh: [
@@ -56,10 +57,12 @@ export default function TodayCampusHero() {
             <Link
               key={item.key}
               to={item.to}
-              className={`today-campus-hero__notice-link today-campus-hero__notice-link--${item.accent}`}
+              className={`today-campus-hero__notice-link today-campus-hero__notice-link--${item.accent} no-underline`}
             >
-              <span className="today-campus-hero__notice-kicker">{item.kicker}</span>
-              <strong className="today-campus-hero__notice-title">{item.title}</strong>
+              <Card className={`flex flex-col gap-2.5 p-5 rounded-2xl`}>
+                <span className="today-campus-hero__notice-kicker">{item.kicker}</span>
+                <strong className="today-campus-hero__notice-title">{item.title}</strong>
+              </Card>
             </Link>
           ))}
         </div>

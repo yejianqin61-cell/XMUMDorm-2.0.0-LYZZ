@@ -6,6 +6,8 @@ import { getUploadUrl } from '@shared/api/config';
 import ErrorState from '../components/ui/ErrorState';
 import PageSkeleton from '../components/ui/PageSkeleton';
 import RouteTransition from '../components/ui/RouteTransition';
+import Card from '../components/ui/Card';
+import NeoTab from '../components/retroui/Tab';
 import { QK } from '@shared/query/queryKeys';
 import { formatPostTime } from '@shared/utils/formatTime';
 import './SquareHome.css';
@@ -78,23 +80,19 @@ export default function SquareCampusFeed() {
           <span className="square-campus-feed-hero__eyebrow">{currentMeta.eyebrow}</span>
           <h1 className="square-campus-feed-hero__title">{currentMeta.label}</h1>
           <p className="square-campus-feed-hero__subtitle">{currentMeta.description}</p>
-          <div className="square-campus-feed-tabs" role="tablist" aria-label={isEn ? 'Campus notice categories' : '校园公告分类'}>
-            {tabs.map((tab) => {
-              const isActive = tab.key === currentTab;
-              return (
-                <button
-                  key={tab.key}
-                  type="button"
-                  role="tab"
-                  aria-selected={isActive}
-                  className={`square-campus-feed-tab${isActive ? ' square-campus-feed-tab--active' : ''}`}
-                  onClick={() => setSearchParams({ tab: tab.key })}
-                >
+          <NeoTab
+            value={currentTab}
+            onValueChange={(v) => setSearchParams({ tab: v })}
+            className="w-full"
+          >
+            <NeoTab.List className="flex flex-row gap-2 w-full">
+              {tabs.map((tab) => (
+                <NeoTab.Trigger key={tab.key} value={tab.key} className="flex-1 justify-center">
                   {tab.label}
-                </button>
-              );
-            })}
-          </div>
+                </NeoTab.Trigger>
+              ))}
+            </NeoTab.List>
+          </NeoTab>
         </section>
 
         {feedQuery.isLoading ? (
@@ -120,25 +118,27 @@ export default function SquareCampusFeed() {
             {feedItems.map((item) => {
               const firstImage = item.images?.[0]?.url ? getUploadUrl(item.images[0].url) : null;
               return (
-                <Link key={item.id} to={`/about/campus/${item.id}`} className="square-campus-feed-card">
-                  <div className="square-campus-feed-card__meta">
-                    <span className="square-campus-feed-card__org">{item.organization?.name || currentMeta.label}</span>
-                    <span className="square-campus-feed-card__time">{formatPostTime(item.created_at, true)}</span>
-                  </div>
-                  <div className="square-campus-feed-card__body">
-                    <div className="square-campus-feed-card__content">
-                      <h2 className="square-campus-feed-card__title">{item.title}</h2>
-                      <p className="square-campus-feed-card__excerpt">{item.content}</p>
+                <Link key={item.id} to={`/about/campus/${item.id}`} className="no-underline">
+                  <Card className="flex flex-col gap-3.5 p-4.5 cursor-pointer hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-xs font-bold text-[#10233b]/50">{item.organization?.name || currentMeta.label}</span>
+                      <span className="text-xs text-[#10233b]/45 shrink-0">{formatPostTime(item.created_at, true)}</span>
                     </div>
-                    {firstImage ? (
-                      <img
-                        src={firstImage}
-                        alt=""
-                        className="square-campus-feed-card__image"
-                        loading="lazy"
-                      />
-                    ) : null}
-                  </div>
+                    <div className="flex gap-3.5 items-start">
+                      <div className="flex-1 min-w-0 flex flex-col gap-2.5">
+                        <h2 className="text-lg font-extrabold tracking-tight text-[#10233b] m-0">{item.title}</h2>
+                        <p className="text-sm leading-relaxed text-[#10233b]/65 line-clamp-3 break-words m-0">{item.content}</p>
+                      </div>
+                      {firstImage ? (
+                        <img
+                          src={firstImage}
+                          alt=""
+                          className="w-22 h-22 object-cover rounded-2xl shrink-0"
+                          loading="lazy"
+                        />
+                      ) : null}
+                    </div>
+                  </Card>
                 </Link>
               );
             })}

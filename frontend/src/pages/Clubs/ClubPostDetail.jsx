@@ -10,6 +10,9 @@ import { Toast } from '../../context/ToastContext';
 import { deleteClubPost, getClubPostDetail, toggleClubLike, trackClubView } from '@shared/api/clubs';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { API_BASE_URL } from '@shared/api/config';
+import NeoButton from '../../components/retroui/Button';
+import NeoCard from '../../components/retroui/Card';
+import NeoBadge from '../../components/retroui/Badge';
 import ImagePreview from '../../components/ImagePreview';
 import { StackedCardCarousel } from '../../components/StackedCardCarousel';
 import ClubCommentsSection from '../../components/clubs/ClubCommentsSection';
@@ -106,7 +109,7 @@ function ClubPostDetail() {
   if (q.isError || !p) return <div className="state-error">{q.error?.message || (isZh ? '加载失败' : 'Failed')}</div>;
 
   return (
-    <div className="club-page club-page--floating-comments">
+    <div className="club-page club-page--floating-comments neo-club-page">
       <div className="club-activity-detail-main">
         <div className="club-profile-top">
           <button type="button" className="club-back" onClick={() => nav(-1)} aria-label={isZh ? '返回' : 'Back'}>
@@ -116,7 +119,7 @@ function ClubPostDetail() {
           <Link className="club-profile-link" to={`/about/club/${p.clubId}`}>{isZh ? '社团' : 'Club'}</Link>
         </div>
 
-        <div className="club-profile-card">
+        <NeoCard className="club-profile-card w-full">
           <div className="club-feed-sub">{p.clubName}</div>
           <div className="club-detail-desc club-wrap">{p.content}</div>
 
@@ -146,16 +149,16 @@ function ClubPostDetail() {
           ) : null}
 
           <div className="club-detail-actions">
-            <button
-              type="button"
-              className={`club-like-btn pressable ${liked ? 'is-on' : ''}`}
+            <NeoButton
+              variant={liked ? 'default' : 'outline'}
+              size="sm"
               disabled={!token || likeMut.isPending}
               onClick={() => likeMut.mutate()}
               title={!token ? (isZh ? '登录后可点赞' : 'Login to like') : (isZh ? '点赞' : 'Like')}
+              iconLeft={<Heart size={16} aria-hidden />}
             >
-              <Heart size={18} aria-hidden />
-              <span>{p.stats?.likes ?? 0}</span>
-            </button>
+              {p.stats?.likes ?? 0}
+            </NeoButton>
             <div className="club-like-meta">
               <MessageCircle size={18} aria-hidden /> <span>{p.stats?.comments ?? 0}</span>
             </div>
@@ -163,23 +166,23 @@ function ClubPostDetail() {
               <Eye size={18} aria-hidden /> <span>{p.stats?.views ?? 0}</span>
             </div>
             {canManage ? (
-              <button
-                type="button"
-                className="club-delete-btn pressable"
+              <NeoButton
+                variant="destructive"
+                size="sm"
                 disabled={deleteMut.isPending}
                 onClick={() => {
                   if (window.confirm(isZh ? '确定删除该日常帖？删除后不可恢复。' : 'Delete this post? This cannot be undone.')) {
                     deleteMut.mutate();
                   }
                 }}
+                iconLeft={<Trash2 size={16} aria-hidden />}
               >
-                <Trash2 size={16} aria-hidden />
-                <span>{isZh ? '删除' : 'Delete'}</span>
-              </button>
+                {isZh ? '删除' : 'Delete'}
+              </NeoButton>
             ) : null}
             <ReportButton target_type="club_post" target_id={postId} className="text-slate-400 hover:text-red-500" />
           </div>
-        </div>
+        </NeoCard>
       </div>
 
       <ClubCommentsSection targetType="post" targetId={postId} isZh={isZh} floatingComposer fillVertical />

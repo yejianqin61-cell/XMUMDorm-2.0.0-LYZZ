@@ -4,6 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import { Search } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { listClubs } from '@shared/api/clubs';
+import NeoInput from '../../components/retroui/Input';
+import NeoCard from '../../components/retroui/Card';
+import { NeoToggle } from '../../components/retroui/Toggle';
 import './Clubs.css';
 
 const CATEGORIES = [
@@ -44,31 +47,33 @@ function ClubListPage() {
   }, [qy.data, cat]);
 
   return (
-    <div className="club-page club-battle-page">
+    <div className="club-page club-battle-page neo-club-page">
       <div className="club-battle-shell">
         <aside className="club-battle-sidebar" aria-label={isZh ? '分类' : 'Categories'}>
           {CATEGORIES.map((x) => {
             const active = cat === x.key;
             return (
-              <button
+              <NeoToggle
                 key={x.key}
-                type="button"
-                className={`club-battle-cat ${active ? 'is-active' : ''}`}
-                onClick={() => setCat(x.key)}
+                variant="solid"
+                size="sm"
+                pressed={active}
+                onPressedChange={() => setCat(x.key)}
+                className="w-full justify-start"
               >
                 {isZh ? x.zh : x.en}
-              </button>
+              </NeoToggle>
             );
           })}
         </aside>
 
         <section className="club-battle-grid-area">
           <div className="club-battle-grid-top">
-            <div className="club-battle-grid-title">{isZh ? '百团大战' : 'ClubList'}</div>
+            <div className="neo-club-title">{isZh ? '百团大战' : 'ClubList'}</div>
             <div className="club-battle-search">
-              <Search size={18} aria-hidden />
-              <input
-                className="club-battle-search-input"
+              <Search size={18} aria-hidden className="text-muted-foreground" />
+              <NeoInput
+                className="club-battle-search-input neo-search-input"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder={isZh ? '搜索社团…' : 'Search clubs…'}
@@ -84,12 +89,14 @@ function ClubListPage() {
 
           <div className="club-battle-grid">
             {list.map((c) => (
-              <Link key={c.id} to={`/about/club/${c.id}`} className="club-battle-item pressable">
-                <div className="club-battle-logo">
-                  {c.avatar ? <img src={c.avatar} alt="" /> : <div className="club-battle-logo-ph" aria-hidden />}
-                </div>
-                <div className="club-battle-name" title={c.name}>{c.name}</div>
-                <div className="club-battle-stat">{`🔥 ${Number(c.followers || 0)} Active`}</div>
+              <Link key={c.id} to={`/about/club/${c.id}`} className="club-battle-link">
+                <NeoCard className="club-battle-item w-full">
+                  <div className="club-battle-logo">
+                    {c.avatar ? <img src={c.avatar} alt="" /> : <div className="club-battle-logo-ph" aria-hidden />}
+                  </div>
+                  <div className="club-battle-name" title={c.name}>{c.name}</div>
+                  <div className="club-battle-stat">{`🔥 ${Number(c.followers || 0)} Active`}</div>
+                </NeoCard>
               </Link>
             ))}
           </div>
@@ -100,4 +107,3 @@ function ClubListPage() {
 }
 
 export default ClubListPage;
-

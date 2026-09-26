@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import Badge from '../ui/Badge';
 
 export default function HotTagsStrip({ tags = [] }) {
   if (!tags.length) return null;
@@ -14,11 +15,12 @@ export default function HotTagsStrip({ tags = [] }) {
           去发现 →
         </Link>
       </div>
-      <div className="square-hot-tags-strip" role="list" aria-label="热门标签">
+      <div className="flex flex-wrap gap-2" role="list" aria-label="热门标签">
         {tags.map((tag) => (
-          <Link key={tag.id || tag.slug} to={`/posts/tag/${tag.slug}`} className="square-hot-tag-chip" role="listitem">
-            <span className="square-hot-tag-chip__name">#{tag.name}</span>
-            <span className="square-hot-tag-chip__meta">{tag.usage_count || 0} 条</span>
+          <Link key={tag.id || tag.slug} to={`/posts/tag/${tag.slug}`} className="no-underline" role="listitem">
+            <Badge tone="neutral" size="md" className="cursor-pointer">
+              #{tag.name} · {tag.usage_count || 0}
+            </Badge>
           </Link>
         ))}
       </div>
