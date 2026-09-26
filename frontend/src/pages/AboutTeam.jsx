@@ -8,28 +8,22 @@ import './AboutTeam.css';
  */
 const TEAM_SECTIONS = [
   {
-    roleZh: '创始人&开发者',
-    roleEn: 'Founder & Developer',
+    roleZh: '开发团队',
+    roleEn: 'Full-stack developer',
     members: [
       {
         nameZh: '叶健钦',
         nameEn: 'Ye Jianqin',
         lineZh: '厦门大学马来西亚分校 计算机科学与技术专业',
-        lineEn: 'CST Student in Xiamen University Malaysia',
-        tagZh: '哈基米',
+        lineEn: 'CST student in Xiamen University Malaysia',
       },
-    ],
-  },
-  {
-    roleZh: '技术顾问',
-    roleEn: 'Technical advisor',
-    members: [
       {
-        nameZh: '叶以翔',
-        nameEn: 'Ye Yixiang',
-        lineZh: '四川大学',
-        lineEn: 'Sichuan University',
+        nameZh: '阴沛森',
+        nameEn: 'Yin Peisen',
+        lineZh: '厦门大学马来西亚分校 计算机科学与技术专业',
+        lineEn: 'CST student in Xiamen University Malaysia',
       },
+      
     ],
   },
   {
@@ -84,35 +78,26 @@ const TEAM_SECTIONS = [
         lineZh: '厦门大学马来西亚分校 计算机科学与技术专业',
         lineEn: 'CST student in Xiamen University Malaysia',
       },
-    ],
-  },
-  {
-    roleZh: '美术顾问',
-    roleEn: 'Art advisor',
-    members: [
-      {
-        nameZh: '厦门 涂宜晖女士',
-        nameEn: 'Ms. Tu Yihui, Xiamen',
-        lineZh: '',
-        lineEn: '',
-      },
-    ],
-  },
-  {
-    roleZh: 'Dorm 3.0探索 Explore for Dorm future',
-    roleEn: 'Explore for Dorm future',
-    members: [
-      {
-        nameZh: '叶健钦',
-        nameEn: 'Ye Jianqin',
-        lineZh: '厦门大学马来西亚分校 计算机科学与技术专业',
-        lineEn: 'CST student in Xiamen University Malaysia',
-      },
       {
         nameZh: '郑黄泽',
         nameEn: 'Zheng Huangze',
         lineZh: '厦门大学马来西亚分校 计算机科学与技术专业',
         lineEn: 'CST student in Xiamen University Malaysia',
+      },
+    ],
+  },
+  
+  
+  {
+    roleZh: '创始人',
+    roleEn: 'Founder & Developer',
+    members: [
+      {
+        nameZh: '叶健钦',
+        nameEn: 'Ye Jianqin',
+        lineZh: '厦门大学马来西亚分校 计算机科学与技术专业',
+        lineEn: 'CST Student in Xiamen University Malaysia',
+        tagZh: '哈基米',
       },
     ],
   },
