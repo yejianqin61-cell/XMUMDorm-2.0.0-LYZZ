@@ -20,7 +20,7 @@ function MenuTrigger({ className = '', children, ...props }) {
     <button
       type="button"
       className={cn(
-        'inline-flex items-center justify-center font-semibold border-2 border-black bg-background px-4 py-2 shadow-[4px_4px_0_0_#000] transition-all hover:shadow-[2px_2px_0_0_#000] active:shadow-none active:translate-x-1 active:translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
+        'inline-flex items-center justify-center font-semibold border-2 border-black bg-background px-4 py-2 shadow-[4px_4px_0_0_var(--color-black)] transition-all hover:shadow-[2px_2px_0_0_var(--color-black)] active:shadow-none active:translate-x-1 active:translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
         className
       )}
       onClick={() => setOpen(!open)}
@@ -66,7 +66,7 @@ function MenuContent({ className = '', children, align = 'start', ...props }) {
       ref={ref}
       role="menu"
       className={cn(
-        'absolute z-50 min-w-[180px] bg-background border-2 border-black shadow-[4px_4px_0_0_#000] py-1 mt-1',
+        'absolute z-50 min-w-[180px] bg-background border-2 border-black shadow-[4px_4px_0_0_var(--color-black)] py-1 mt-1',
         align === 'end' ? 'right-0' : 'left-0',
         className
       )}

@@ -6,7 +6,7 @@ function NeoEmpty({ className = '', children, ...props }) {
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center p-4 md:p-8 border-2 shadow-[4px_4px_0_0_#000] transition-all hover:shadow-none bg-card text-center',
+        'flex flex-col items-center justify-center p-4 md:p-8 border-2 shadow-[4px_4px_0_0_#122E8A] transition-all hover:shadow-none bg-card text-center',
         className
       )}
       {...props}

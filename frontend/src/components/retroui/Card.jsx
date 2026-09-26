@@ -9,7 +9,7 @@ export default function NeoCard({
   return (
     <Component
       className={cn(
-        'inline-block border-2 border-black bg-card shadow-[4px_4px_0_0_#000] hover:shadow-none transition-all',
+        'inline-block border-2 border-black bg-card shadow-[4px_4px_0_0_#122E8A] hover:shadow-none transition-all',
         className,
       )}
       {...props}

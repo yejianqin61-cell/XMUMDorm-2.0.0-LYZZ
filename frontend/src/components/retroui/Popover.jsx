@@ -74,7 +74,7 @@ function PopoverContent({
       ref={contentRef}
       style={{ position: 'absolute', top: pos.top, left: pos.left }}
       className={cn(
-        'z-50 w-72 border-2 border-black bg-background p-4 shadow-[4px_4px_0_0_#000]',
+        'z-50 w-72 border-2 border-black bg-background p-4 shadow-[4px_4px_0_0_#122E8A]',
         className
       )}
       {...props}

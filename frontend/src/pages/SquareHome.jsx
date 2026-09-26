@@ -5,7 +5,6 @@ import { useLanguage } from '../context/LanguageContext';
 import CanteenBannerCarousel from '../features/canteen/CanteenBannerCarousel';
 import TodayCampusHero from '../components/square/TodayCampusHero';
 import TodayCampusQuickActions from '../components/square/TodayCampusQuickActions';
-import MyCampusRecommendations from '../components/square/MyCampusRecommendations';
 import PageSkeleton from '../components/ui/PageSkeleton';
 import ErrorState from '../components/ui/ErrorState';
 import FadeInSection from '../components/ui/FadeInSection';
@@ -44,55 +43,6 @@ const PRIMARY_ACTIONS = [
   },
 ];
 
-function formatMeta(item, fallback) {
-  const meta = [];
-  if (item.organization_name) meta.push(item.organization_name);
-  if (item.club_name) meta.push(item.club_name);
-  if (item.location) meta.push(item.location);
-  if (item.status_label) meta.push(item.status_label);
-  return meta.filter(Boolean).join(' · ') || fallback;
-}
-
-function buildRecommendationSummary(summary, isEn) {
-  const cards = [];
-
-  (summary.campus_highlights || []).slice(0, 1).forEach((item) => {
-    cards.push({
-      id: `campus-${item.id}`,
-      badge: isEn ? 'Campus' : '校园',
-      title: item.title,
-      meta: formatMeta(item, isEn ? 'Campus bulletin' : '校园公告'),
-      href: `/about/campus/posts/${item.id}`,
-    });
-  });
-
-  (summary.hot_activities || []).slice(0, 1).forEach((item) => {
-    cards.push({
-      id: `activity-${item.id}`,
-      badge: isEn ? 'Event' : '活动',
-      title: item.title,
-      meta: formatMeta(item, isEn ? 'Club activity' : '社团活动'),
-      href: '/about/club',
-    });
-  });
-
-  (summary.hot_treeholes || []).slice(0, Math.max(0, 2 - cards.length)).forEach((item) => {
-    cards.push({
-      id: `treehole-${item.id}`,
-      badge: isEn ? 'Discussion' : '讨论',
-      title: item.excerpt || (isEn ? 'Open the discussion' : '打开这条讨论'),
-      meta: `${item.like_count || 0}${isEn ? ' likes' : ' 赞'} · ${item.comment_count || 0}${isEn ? ' comments' : ' 评论'}`,
-      href: `/posts/${item.id}`,
-    });
-  });
-
-  return {
-    is_personalized: false,
-    profile: {},
-    cards: cards.slice(0, 2),
-  };
-}
-
 export default function SquareHome() {
   const { lang } = useLanguage();
   const isEn = lang === 'en';
@@ -102,14 +52,6 @@ export default function SquareHome() {
     queryFn: getSquareHomeSummary,
     staleTime: 30 * 1000,
   });
-
-  const summary = summaryQuery.data || {
-    hot_topics: [],
-    hot_activities: [],
-    hot_treeholes: [],
-    campus_highlights: [],
-  };
-  const recommendationSummary = buildRecommendationSummary(summary, isEn);
 
   return (
     <RouteTransition className="square-home-page">
@@ -140,10 +82,6 @@ export default function SquareHome() {
 
             <FadeInSection className="square-home-slot square-home-slot--hero" delay={0.06}>
               <TodayCampusHero />
-            </FadeInSection>
-
-            <FadeInSection className="square-home-slot square-home-slot--recommendations" delay={0.1}>
-              <MyCampusRecommendations summary={recommendationSummary} />
             </FadeInSection>
           </>
         )}
