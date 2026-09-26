@@ -23,6 +23,8 @@ export const TITLE_BY_PATH_ZH = {
   '/eat/map': '食堂地图',
   '/eat/banners': '轮播管理',
   '/about/trending': '热搜榜',
+  '/confession': '万能墙',
+  '/confession/new': '投稿万能墙',
 };
 
 export const TITLE_BY_PATH_EN = {
@@ -45,6 +47,8 @@ export const TITLE_BY_PATH_EN = {
   '/eat/map': 'Canteen Map',
   '/eat/banners': 'Carousel',
   '/about/trending': 'Trending',
+  '/confession': 'Confession Wall',
+  '/confession/new': 'Post to the Wall',
 };
 
 /**

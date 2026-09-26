@@ -120,3 +120,58 @@ CREATE TABLE IF NOT EXISTS notifications (
   FOREIGN KEY (from_user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='通知';
 
+-- ============================================
+-- 万能墙帖子表 (confessions) - M09
+-- 来源迁移: 064_confessions.sql
+-- ============================================
+-- user_id 仅用于管理员后台追溯；匿名墙业务层严禁下发该字段
+CREATE TABLE IF NOT EXISTS confessions (
+  id INT AUTO_INCREMENT PRIMARY KEY COMMENT '帖子ID',
+  user_id INT NOT NULL COMMENT '作者ID（前台匿名，仅后台可追溯）',
+  template_key VARCHAR(32) NOT NULL DEFAULT 'bigtype' COMMENT '展示版式：bigtype/letter/note',
+  content TEXT NOT NULL COMMENT '正文（纯文本，已 sanitize）',
+  deleted_at TIMESTAMP NULL DEFAULT NULL COMMENT '逻辑删除时间',
+  hidden_by_admin TINYINT(1) NOT NULL DEFAULT 0 COMMENT '管理员隐藏标记',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_created_at (created_at),
+  INDEX idx_deleted_created (deleted_at, created_at),
+  INDEX idx_user_id (user_id),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='万能墙帖子';
+
+-- ============================================
+-- 万能墙点赞表 (confession_likes) - M09
+-- 来源迁移: 065_confession_social.sql
+-- ============================================
+CREATE TABLE IF NOT EXISTS confession_likes (
+  user_id INT NOT NULL,
+  confession_id INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (user_id, confession_id),
+  INDEX idx_confession_id (confession_id),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (confession_id) REFERENCES confessions(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='万能墙点赞';
+
+-- ============================================
+-- 万能墙评论表 (confession_comments) - M09
+-- 来源迁移: 065_confession_social.sql
+-- ============================================
+CREATE TABLE IF NOT EXISTS confession_comments (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  confession_id INT NOT NULL,
+  user_id INT NOT NULL COMMENT '评论者ID（前台匿名）',
+  parent_id INT NULL COMMENT 'NULL=一级评论，非空=回复某条一级评论（仅二级）',
+  content TEXT NOT NULL,
+  deleted_at TIMESTAMP NULL DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_confession_id (confession_id),
+  INDEX idx_parent_id (parent_id),
+  INDEX idx_user_id (user_id),
+  FOREIGN KEY (confession_id) REFERENCES confessions(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (parent_id) REFERENCES confession_comments(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='万能墙评论';
+

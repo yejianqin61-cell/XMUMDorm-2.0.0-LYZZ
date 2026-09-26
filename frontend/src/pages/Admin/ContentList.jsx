@@ -9,6 +9,7 @@ const PAGE_SIZE = 20;
 
 const MODULES = [
   { key: 'treehole', label: '树洞帖子', labelEn: 'Treehole' },
+  { key: 'confession', label: '万能墙帖子', labelEn: 'Confession Wall' },
   { key: 'canteen', label: '食堂点评', labelEn: 'Canteen Reviews' },
   { key: 'trending', label: '热搜帖子', labelEn: 'Trending' },
   { key: 'campus', label: '校园此刻', labelEn: 'Campus' },
