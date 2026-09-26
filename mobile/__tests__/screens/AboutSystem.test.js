@@ -28,17 +28,26 @@ describe('关于 — 鸣谢数据', () => {
 });
 
 describe('关于 — 联系信息', () => {
-  it('6. 微信', () => {
-    const wechat = 'YEJIANQIN_git';
-    expect(wechat).toContain('YEJIANQIN');
+  // 这组以前是「拿常量跟常量比」的假测试，页面改成任何内容都不会红。
+  // 现在直接读真实源码，微信号统一为官方号 xmumdorm666 这件事才算被锁住。
+  const fs = require('fs');
+  const path = require('path');
+  const source = fs.readFileSync(
+    path.join(__dirname, '..', '..', 'src', 'screens', 'AboutInfoScreen.tsx'),
+    'utf8'
+  );
+
+  it('6. 微信为官方号 xmumdorm666', () => {
+    expect(source).toContain('xmumdorm666');
+  });
+  it('6b. 不应再出现历史微信号 YEJIANQIN_git', () => {
+    expect(source).not.toContain('YEJIANQIN_git');
   });
   it('7. 电话', () => {
-    const phone = '01115078663';
-    expect(phone.length).toBeGreaterThan(5);
+    expect(source).toContain('01115078663');
   });
   it('8. 邮箱', () => {
-    const email = 'yejianqin61@gmail.com';
-    expect(email).toContain('@');
+    expect(source).toContain('yejianqin61@gmail.com');
   });
 });
 

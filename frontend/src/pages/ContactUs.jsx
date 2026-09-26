@@ -22,7 +22,7 @@ function ContactUs() {
               联系方式：
             </p>
             <p>
-              微信：YEJIANQIN_git<br />
+              微信：xmumdorm666<br />
               电话：01115078663<br />
               邮箱：yejianqin61@gmail.com
             </p>
@@ -42,7 +42,7 @@ function ContactUs() {
               Contact Information:
             </p>
             <p>
-              WeChat: YEJIANQIN_git<br />
+              WeChat: xmumdorm666<br />
               Phone: 01115078663<br />
               Email: yejianqin61@gmail.com
             </p>
