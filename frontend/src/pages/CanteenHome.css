@@ -131,39 +131,6 @@
   padding: 4px 0 8px;
 }
 
-.canteen-search-bar-inner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--post-ios-card);
-  border-radius: var(--post-ios-radius-md);
-  padding: 10px 14px;
-  box-shadow: var(--post-ios-shadow-card);
-  border: 1px solid var(--post-ios-separator);
-}
-
-.canteen-search-bar-icon {
-  color: var(--post-ios-tertiary-label);
-  flex-shrink: 0;
-}
-
-.canteen-search-bar-input {
-  flex: 1;
-  border: none;
-  outline: none;
-  font-size: 15px;
-  font-family: inherit;
-  color: var(--post-ios-label);
-  background: transparent;
-}
-.canteen-search-bar-input::placeholder {
-  color: var(--post-ios-tertiary-label);
-}
-.canteen-search-bar-input::-webkit-search-decoration,
-.canteen-search-bar-input::-webkit-search-cancel-button {
-  display: none;
-}
-
 /* ====== 轮播管理（管理员） ====== */
 .canteen-banner-admin-page .canteen-home-inner {
   padding-bottom: 32px;
