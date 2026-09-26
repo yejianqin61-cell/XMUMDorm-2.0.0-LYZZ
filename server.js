@@ -226,7 +226,7 @@ app.listen(PORT, async () => {
       console.warn('排行榜每周重置未启动:', e.message);
     }
 
-    // Web Push：课前约 30 分钟提醒（吉隆坡时间，依赖 CLASS_REMINDER_WEEK 与课表）
+    // Web Push：课前约 30 分钟提醒（吉隆坡时间，周次由 shared/config/semesters.js 自动跟进）
     try {
       const { runClassReminderTick } = require('./services/classReminderPush');
       setInterval(() => {

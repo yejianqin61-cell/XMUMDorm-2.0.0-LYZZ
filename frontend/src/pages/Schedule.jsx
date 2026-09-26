@@ -1,13 +1,19 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { BookOpen, Coffee, MapPin, RefreshCw, Upload, X } from 'lucide-react';
+import { BookOpen, ChevronLeft, ChevronRight, Coffee, MapPin, RefreshCw, Upload, X } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { Toast } from '../context/ToastContext';
 import { commitScheduleImport, getScheduleWeek, previewScheduleImport } from '@shared/api/schedule';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { QK } from '@shared/query/queryKeys';
-import { readPersistedScheduleWeek, writePersistedScheduleWeek } from '../utils/schedulePersist';
+import {
+  clampWeek,
+  formatWeekDateRangeLabel,
+  formatYmdLabel,
+  resolveSemesterContext,
+} from '@shared/config/semesters';
+import { readPersistedScheduleWeek, writePersistedScheduleWeek, clearPersistedScheduleWeeks } from '../utils/schedulePersist';
 import {
   getPushVapidPublicKey,
   subscribePush,
@@ -84,13 +90,20 @@ function Schedule() {
   const [importOpen, setImportOpen] = useState(false);
   const [pushOpen, setPushOpen] = useState(false);
 
-  const FIXED_WEEK = 1;
-  const persistedWeek = useMemo(() => readPersistedScheduleWeek(FIXED_WEEK), []);
+  // 学期日历：「现在第几周」由 shared/config/semesters.js 统一回答
+  const semesterContext = useMemo(() => resolveSemesterContext(), []);
+  const totalWeeks = semesterContext.totalWeeks;
+  const currentWeek = semesterContext.status === 'during' ? semesterContext.week : null;
+  // 默认落在当前周（未开学 / 已结束则落在第 1 周），用户可以手动翻周
+  const [week, setWeek] = useState(() => clampWeek(semesterContext.defaultWeek, totalWeeks));
+  const isViewingCurrentWeek = currentWeek != null && week === currentWeek;
+
+  const persistedWeek = useMemo(() => readPersistedScheduleWeek(week), [week]);
   const weekQuery = useQuery({
-    queryKey: QK.scheduleWeek(FIXED_WEEK),
+    queryKey: QK.scheduleWeek(week),
     queryFn: async () => {
-      const data = await getScheduleWeek(FIXED_WEEK);
-      writePersistedScheduleWeek(FIXED_WEEK, data);
+      const data = await getScheduleWeek(week);
+      writePersistedScheduleWeek(week, data);
       return data;
     },
     ...(persistedWeek !== undefined ? { initialData: persistedWeek } : {}),
@@ -211,7 +224,9 @@ function Schedule() {
       Toast.success(isZh ? '导入成功' : 'Imported');
       setImportOpen(false);
       setPreview(null);
-      await queryClient.invalidateQueries({ queryKey: QK.scheduleWeek(FIXED_WEEK) });
+      // 重新导入会覆盖所有周次，所以把各周的本地缓存与查询都作废
+      clearPersistedScheduleWeeks();
+      await queryClient.invalidateQueries({ queryKey: ['schedule', 'week'] });
     } catch (e) {
       Toast.error(e?.message || (isZh ? '导入失败' : 'Import failed'));
     } finally {
@@ -334,6 +349,64 @@ function Schedule() {
             {getApiErrorMessage(weekQuery.error) || (isZh ? '获取课表失败' : 'Failed to load schedule')}
           </p>
         )}
+        <div className="schedule-weekbar" role="group" aria-label={isZh ? '周次切换' : 'Week navigation'}>
+          <button
+            type="button"
+            className="schedule-weekbar__nav"
+            onClick={() => setWeek((w) => Math.max(1, w - 1))}
+            disabled={week <= 1}
+            aria-label={isZh ? '上一周' : 'Previous week'}
+          >
+            <ChevronLeft size={18} aria-hidden />
+          </button>
+          <div className="schedule-weekbar__center">
+            <div className="schedule-weekbar__title">
+              <span>{isZh ? `第 ${week} 周` : `Week ${week}`}</span>
+              {isViewingCurrentWeek ? (
+                <span className="schedule-weekbar__badge">{isZh ? '本周' : 'This week'}</span>
+              ) : null}
+            </div>
+            <div className="schedule-weekbar__range">
+              {formatWeekDateRangeLabel(semesterContext.semester, week, isZh)}
+            </div>
+          </div>
+          <button
+            type="button"
+            className="schedule-weekbar__nav"
+            onClick={() => setWeek((w) => Math.min(totalWeeks, w + 1))}
+            disabled={week >= totalWeeks}
+            aria-label={isZh ? '下一周' : 'Next week'}
+          >
+            <ChevronRight size={18} aria-hidden />
+          </button>
+        </div>
+
+        {currentWeek != null && !isViewingCurrentWeek ? (
+          <button
+            type="button"
+            className="schedule-weekbar__back"
+            onClick={() => setWeek(currentWeek)}
+          >
+            {isZh ? `回到本周（第 ${currentWeek} 周）` : `Back to this week (Week ${currentWeek})`}
+          </button>
+        ) : null}
+
+        {semesterContext.status === 'before' ? (
+          <p className="schedule-semester-note" role="status">
+            {isZh
+              ? `还没开学 · 距开学 ${semesterContext.daysUntilStart} 天（${formatYmdLabel(semesterContext.startDate, true)} 起算第 1 周）`
+              : `Semester not started · ${semesterContext.daysUntilStart} day(s) to go (Week 1 starts ${formatYmdLabel(semesterContext.startDate, false)})`}
+          </p>
+        ) : null}
+
+        {semesterContext.status === 'after' ? (
+          <p className="schedule-semester-note" role="status">
+            {isZh
+              ? `学期已结束（最后一天 ${formatYmdLabel(semesterContext.endDate, true)}），共 ${semesterContext.totalWeeks} 周`
+              : `Semester ended (last day ${formatYmdLabel(semesterContext.endDate, false)}), ${semesterContext.totalWeeks} weeks total`}
+          </p>
+        ) : null}
+
         <button
           type="button"
           className="schedule-smart-banner"
@@ -353,7 +426,9 @@ function Schedule() {
         </button>
 
         <div className="schedule-days">
-          <section className="schedule-day schedule-today" aria-label={isZh ? '今日课程' : "Today's classes"}>
+          {/* 「今日课程」只在正看当前周时才有意义；翻到别的周时今天不在那一周里 */}
+          {isViewingCurrentWeek ? (
+            <section className="schedule-day schedule-today" aria-label={isZh ? '今日课程' : "Today's classes"}>
             <h2 className="schedule-day-title schedule-today-heading">
               <span>{isZh ? '今日课程' : "Today's classes"}</span>
               <span className="schedule-today-meta">
@@ -412,6 +487,7 @@ function Schedule() {
               </ul>
             )}
           </section>
+          ) : null}
 
           {[1, 2, 3, 4, 5, 6, 7].map((d) => {
             const listRaw = Array.isArray(days[d]) ? days[d] : [];

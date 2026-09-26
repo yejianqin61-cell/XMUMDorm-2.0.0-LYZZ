@@ -24,6 +24,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { getProfile } from '@shared/api/users';
 import { getMyFavorites, getMyProductReviews } from '@shared/api/canteen';
 import { getScheduleWeek } from '@shared/api/schedule';
+import { resolveSemesterContext } from '@shared/config/semesters';
 import { getTodos } from '@shared/api/todos';
 import {
   formatTodoDueDisplay,
@@ -124,10 +125,15 @@ function MyZone() {
     navigate('/', { replace: true });
   };
 
+  // 「当前/下一节课」必须按**本周**查，不能用写死的第 1 周
+  // （第 1 周和第 10 周的课表不一样，例如 (Week 9-14) 的课第 1 周根本不上）
+  const semesterContext = useMemo(() => resolveSemesterContext(), []);
+  const scheduleWeek = semesterContext.status === 'during' ? semesterContext.week : null;
+
   const scheduleTodayQuery = useQuery({
-    queryKey: ['myzone', 'scheduleWeek', 1],
-    enabled: isLoggedIn,
-    queryFn: () => getScheduleWeek(1),
+    queryKey: ['myzone', 'scheduleWeek', scheduleWeek],
+    enabled: isLoggedIn && scheduleWeek != null,
+    queryFn: () => getScheduleWeek(scheduleWeek),
     staleTime: 5 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -136,7 +142,7 @@ function MyZone() {
   });
 
   const currentCourse = useMemo(() => {
-    if (!isLoggedIn) return null;
+    if (!isLoggedIn || scheduleWeek == null) return null;
     const weekData = scheduleTodayQuery.data ?? null;
     const days = weekData?.days || {};
     const dow = getTodayDayOfWeek();
@@ -153,7 +159,7 @@ function MyZone() {
       return nowMin <= et;
     });
     return match || todayList[0];
-  }, [isLoggedIn, scheduleTodayQuery.data]);
+  }, [isLoggedIn, scheduleWeek, scheduleTodayQuery.data]);
 
   const postsCountQuery = useQuery({
     queryKey: ['myzone', 'postCount', userId],

@@ -1,30 +1,15 @@
 /**
- * 课前约 30 分钟 Web Push（吉隆坡时区，与课表 week 字段一致）
+ * 课前约 30 分钟 Web Push（吉隆坡时区）
  * 由 server 定时调用 runClassReminderTick（默认每分钟）
+ *
+ * 周次来源：shared/config/semesters.js（与前端课表页同一个学期日历）。
+ * 历史缺陷：这里原先用环境变量 CLASS_REMINDER_WEEK（默认 1）固定按第 1 周过滤，
+ * 导致 (Week 9-14) 的课**永远收不到提醒**，而 (Week 1-14) 的课在学期结束后还在推。
+ * 现在改为按「今天属于第几周」动态计算；未开学 / 学期结束后直接不发。
  */
 const { query } = require('../database');
 const { configureWebPush, sendPushToUser } = require('./pushSend');
-
-/** API 周几：1=周一 … 7=周日（与 timetable_meetings.day_of_week 一致） */
-function kualaLumpurCalendarParts() {
-  const d = new Date();
-  const fmt = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Kuala_Lumpur',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    weekday: 'short',
-  });
-  const parts = fmt.formatToParts(d);
-  const m = {};
-  for (const p of parts) {
-    if (p.type !== 'literal') m[p.type] = p.value;
-  }
-  const map = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 7 };
-  const dayOfWeek = map[m.weekday];
-  const ymd = `${m.year}-${m.month}-${m.day}`;
-  return { dayOfWeek, ymd };
-}
+const { kualaLumpurCalendarParts, resolveSemesterContext } = require('../shared/config/semesters');
 
 function classStartInstantMs(ymd, startTimeSql) {
   const t = String(startTimeSql || '09:00:00');
@@ -32,13 +17,29 @@ function classStartInstantMs(ymd, startTimeSql) {
   return new Date(`${ymd}T${hm}+08:00`).getTime();
 }
 
-async function runClassReminderTick() {
+/**
+ * 跑一次课前提醒检查。
+ * @param {object} [options]
+ * @param {Date}   [options.now]  注入当前时间（测试用）
+ * @param {number} [options.week] 覆盖周次（仅排查问题用，正常不传）
+ */
+async function runClassReminderTick(options = {}) {
   if (!process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) return;
   if (!configureWebPush()) return;
 
-  const week = Math.max(1, Math.min(60, parseInt(process.env.CLASS_REMINDER_WEEK, 10) || 1));
-  const { dayOfWeek, ymd } = kualaLumpurCalendarParts();
-  const now = Date.now();
+  const nowDate = options.now instanceof Date ? options.now : new Date();
+  const { dayOfWeek, ymd } = kualaLumpurCalendarParts(nowDate);
+
+  // 「今天算第几周」——没开学或学期结束就不发提醒
+  const context = resolveSemesterContext(nowDate);
+  const week = Number.isFinite(Number(options.week))
+    ? Math.max(1, Math.min(60, Math.floor(Number(options.week))))
+    : context.status === 'during'
+      ? context.week
+      : null;
+  if (!week) return;
+
+  const now = nowDate.getTime();
 
   let candidates;
   try {
@@ -72,7 +73,7 @@ async function runClassReminderTick() {
     const payload = {
       title,
       body,
-      url: '/about/schedule',
+      url: '/myzone/schedule',
       tag: `class-${row.meeting_id}-${ymd}`,
     };
 
