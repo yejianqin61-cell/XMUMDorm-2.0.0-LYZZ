@@ -143,7 +143,11 @@
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
+  /* ⚠️ 不要设 overscroll-behavior: contain（V1.2 修复）。
+     pane 是滚动容器且通常没有内部溢出（scrollHeight == clientHeight），
+     一旦 contain，滚轮事件会被它吞掉且不再向上链到页面 —— 鼠标悬停在中间列上时
+     整页无法滚动。而一屏一篇的高度（88vh + 外壳）必然让页面可滚动。
+     contain 只保留在弹窗的 .cf-comments__body 上（那里的背景本来就是锁定的）。 */
   padding: var(--space-2);
 }
 

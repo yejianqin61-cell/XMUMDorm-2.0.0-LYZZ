@@ -463,11 +463,44 @@ ACM协会
 | `.club-like-btn` / `.club-like-btn.is-on` | 点赞按钮及选中态 |
 | `.club-delete-btn`（含 `--compact` / `--icon-only`） | 删除按钮 |
 
-**修复**：按 `5ba330a^` 的原定义把上述规则原样恢复到 `Clubs.css` 末尾，并加注释标明
-「该页面尚未 RetroUI 化，勿随清理删除」。规则内容经逐行比对确认与原定义一致
-（仅 `rgba()` 内空格被规范化）。
+**修复（最终）**：由 `d58d753`「feat(frontend): refresh club activity detail UI」**把 `ActivityDetail.jsx`
+正式迁移到新样式**（改写 JSX 127 行、`Clubs.css` 增补 288 行）解决。
+迁移后该页不再引用上述任何一个旧类名，核对新 JSX 的 35 个类名，除 Tailwind 工具类
+`text-slate-400` 外全部有定义。
 
-**后续规约**：清理页面级 CSS 时必须先确认该类名**是否仍被任一未迁移页面引用**；
+**一次并行的重复修复（记录备查）**：在同一时间窗内，另一个执行者（M09 万能墙的迭代）
+也独立定位到了同一根因，并采取了「按 `5ba330a^` 原定义恢复这 6 个类」的修法，
+在 1440×900 浏览器实测通过（元信息恢复栅格、地点行恢复图标对齐、两个按钮恢复胶囊样式）。
+随后发现 `d58d753` 已在 main 上完成正式迁移，该恢复被判定为**冗余**并在合并 main 时撤销
+（`Clubs.css` 取 main 版本）。两条独立路径得出同一根因结论，可作为该诊断的交叉验证。
+
+**后续规约**：清理页面级 CSS 时必须先确认类名**是否仍被任一未迁移页面引用**；
 本次是「整文件重写」而非「按引用删除」造成的连带删除。
-若后续要迁移 `ActivityDetail`，应先迁移 JSX 再删这些旧规则。
+若后续还要迁移某页，应先迁移 JSX 再删旧规则（`d58d753` 就是这个顺序）。
+
+### 8.2 活动详情页冷启动白屏（2026-09-26 修复）
+
+**现象**：**直接打开或刷新** `/about/club/activity/:id` 整页白屏（`body` 文本长度为 0）；
+从列表页点进去却正常。
+
+**根因**：`d58d753` 在**守护语句之前**新增了一行未加可选链的解引用：
+
+```jsx
+L244  const statusLabel = String(a.status || '').toLowerCase() === 'ended' …
+L269  if (q.isLoading) return <div className="state-loading">…</div>;
+L270  if (q.isError || !a) return <div className="state-error">…</div>;
+```
+
+冷启动时查询仍是 `pending`，`a === undefined` → 抛
+`TypeError: Cannot read properties of undefined (reading 'status')` →
+React 卸载整个 `<ActivityDetail>` → 白屏。
+从列表页进入时 TanStack Query 已有缓存、`a` 立即可用，因此**不复现**——
+这正是「只有刷新/直链才白屏」的原因，也是它容易被漏掉的原因。
+
+**修复**：`L244` 改为 `a?.status`，并加注释标明该行位于早退守卫之前、必须用可选链。
+
+**规约**：组件内所有「从查询结果派生的常量」若写在早退（`isLoading` / `isError` / `!data`）
+**之前**，一律使用可选链；否则数据未到达时的第一次渲染必然抛错，而缓存命中会掩盖它。
+新增此类派生逻辑后，必须用**直链/刷新**验证一次，不能只从列表页点进去验证。
+
 

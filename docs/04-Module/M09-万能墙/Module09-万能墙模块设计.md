@@ -906,3 +906,33 @@ V1.1 增加规则 3（§7.3）：焦点在 `BUTTON` / `A` / `SUMMARY` 上时，`
 要让卡片底部不越过折叠线需 `0.62 × H ≤ H − 318`，即**视口高 ≥ 837px 时成立**。
 **是否采用由产品负责人裁定**；当前保留 88vh（需求方此前明确选择的更高值）。
 
+### 18.5 追加修复：悬停在中间列上时整页无法滚动
+
+需求：「鼠标 hover 在中间列的时候，无法向下滚动」。
+
+**复现**（1440×900，dev server，用真实滚轮事件而不是推断）：
+
+| 量 | 值 |
+|----|----|
+| `documentElement.scrollHeight` | 1207 |
+| `window.innerHeight` | 900 |
+| `.cf-pager__pane` 的 `scrollHeight` / `clientHeight` | **792 / 792**（没有内部溢出） |
+| `.cf-pager__pane` 的 `overscroll-behavior-y` | **`contain`** ← 元凶 |
+| 鼠标移到卡片上（692,700）滚轮 400px 后 `window.scrollY` | **0**（没动） |
+
+**根因**：`.cf-pager__pane` 是滚动容器（`overflow-y: auto`），而 `overscroll-behavior: contain`
+的语义是「滚到头也不许把滚动链传给祖先」。pane 在 88vh 下**恰好没有内部溢出**，
+于是滚轮事件被它吞掉、页面又拿不到 → 悬停在中间列上时整页滚不动。
+而 `88vh + 外壳约 377px` 必然让页面可滚动（本例 1207 > 900），两者直接冲突。
+
+**修复**：删掉 `.cf-pager__pane` 的 `overscroll-behavior: contain`（回到默认 `auto`）。
+滚动链恢复：pane 没有溢出时滚轮直接滚页面；长文（信笺版式）时先滚 pane、到底后接续滚页面，都是期望行为。
+`.cf-comments__body` 上的 `contain` **保留**——那里背景滚动本来就被弹窗锁着，语义正确。
+
+**修复后实测**：`overscroll-behavior-y` = `auto`；鼠标在卡片上滚轮 400px → `scrollY` = **307**
+（即滚到 1207−900 的底部）；悬停在左侧导航上同样 = 307。
+
+**教训**：`overscroll-behavior: contain` 用在「可能没有溢出」的滚动容器上会静默吞掉滚轮事件。
+给元素加 `overflow: auto` + `contain` 之前，先确认它在正常内容下是否真的有溢出。
+
+
