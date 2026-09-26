@@ -2,7 +2,32 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App.jsx';
+import { recoverFromChunkLoadError } from '@shared/utils/chunkLoadRecovery';
 import './registerServiceWorker';
+
+/**
+ * 部署换血防护：站点发新版本后，已经打开的标签页内存里仍是旧的 index.html，
+ * 点开懒加载路由会去请求「旧文件名」的 chunk（服务端已删除），动态 import 失败 → 白屏。
+ * Vite 会为这类失败派发 `vite:preloadError`，这里先于 React 接管：自动重载一次取回新版本。
+ * 闸门规则见 shared/utils/chunkLoadRecovery（同一文件名每会话只重载一次，避免死循环）。
+ */
+window.addEventListener('vite:preloadError', (event) => {
+  const storage = (() => {
+    try {
+      return window.sessionStorage;
+    } catch (_) {
+      return null;
+    }
+  })();
+
+  const result = recoverFromChunkLoadError(event.payload, {
+    storage,
+    reload: () => window.location.reload(),
+  });
+
+  // 已经在重载了，就别让 Vite 再把错误抛出去（否则会走一遍兜底 UI 再刷新）
+  if (result === 'reloaded') event.preventDefault();
+});
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
