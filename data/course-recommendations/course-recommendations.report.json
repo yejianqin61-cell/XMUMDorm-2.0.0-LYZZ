@@ -1,0 +1,276 @@
+{
+  "source_file": "厦马选课推荐.xlsx",
+  "source_sheet": "工作表1",
+  "excluded_sections": [
+    {
+      "row": 161,
+      "section": "老师避雷"
+    },
+    {
+      "row": 174,
+      "section": "老师推荐"
+    },
+    {
+      "row": 191,
+      "section": "老师询问"
+    },
+    {
+      "row": 207,
+      "section": "选课常见问题：专业回答请email学校官方"
+    }
+  ],
+  "question_only_rows": [
+    {
+      "row": 27,
+      "course_name": "Fascinating Fermentation",
+      "question": "请问大家这门课怎么样？好拿分吗"
+    },
+    {
+      "row": 31,
+      "course_name": "Introduction and Practice to Intertranslation of Chinese-Malay",
+      "question": "请问这节课给分怎么样？"
+    },
+    {
+      "row": 39,
+      "course_name": "Introduction to Text Analytics for Product Review Analysis",
+      "question": "这节课难度如何，老师给分怎么样"
+    },
+    {
+      "row": 46,
+      "course_name": "New Media: Digital, Activism and Society",
+      "question": "问下这课怎么样"
+    },
+    {
+      "row": 47,
+      "course_name": "Political Communication",
+      "question": "有final 吗，老师怎么样"
+    },
+    {
+      "row": 53,
+      "course_name": "Technical Writing",
+      "question": "收评价"
+    },
+    {
+      "row": 55,
+      "course_name": "The Art of Invisibility Science",
+      "question": "好学吗？好拿高分吗"
+    },
+    {
+      "row": 72,
+      "course_name": "Western Classical Music:Theory,History and practice",
+      "question": "自备竖笛的音乐课吗💦课程难度大吗？老师给分怎么样？能拿高分吗？"
+    },
+    {
+      "row": 79,
+      "course_name": "Accounting and Ethics",
+      "question": "想问一下，这门课讲的是什么呀？有打表嘛"
+    },
+    {
+      "row": 82,
+      "course_name": "Business and Administrative Communication",
+      "question": "小组作业比较折磨人 好的小组决定分数！"
+    },
+    {
+      "row": 90,
+      "course_name": "Foundations of Business Analytics",
+      "question": "这门课怎么样啊，给分怎么样"
+    },
+    {
+      "row": 98,
+      "course_name": "Introduction to Business Ethics",
+      "question": "难吗，好拿分吗"
+    },
+    {
+      "row": 99,
+      "course_name": "Introduction to Enterprise Risk Management",
+      "question": "这节课难度如何，老师给分怎么样"
+    },
+    {
+      "row": 123,
+      "course_name": "Brief History of Biomedical Revolution",
+      "question": "蹲"
+    },
+    {
+      "row": 129,
+      "course_name": "Energy Demand Management",
+      "question": "蹲评价，难吗，给分高吗（蹲"
+    },
+    {
+      "row": 140,
+      "course_name": "Introduction to Remote Sensing",
+      "question": "给分怎么样"
+    },
+    {
+      "row": 148,
+      "course_name": "Waste and Energy from a Global Perspective",
+      "question": "请问给分如何"
+    }
+  ],
+  "truncated_comments": [],
+  "duplicate_comments": [
+    {
+      "source_key": "d3cdb9246e4e275ba1c28a00",
+      "first_row": 50,
+      "duplicate_row": 50
+    },
+    {
+      "source_key": "ad6722a2fbc0e7c548ffa105",
+      "first_row": 109,
+      "duplicate_row": 109
+    }
+  ],
+  "ignored_placeholders": 0,
+  "course_rows": 143,
+  "unique_courses": 140,
+  "review_rows_before_dedup": 392,
+  "review_rows_after_dedup": 390,
+  "duplicate_rows_removed": 2,
+  "course_names": [
+    "#mysocialmediapresence",
+    "A Brief History of Astronomy",
+    "Accounting and Ethics",
+    "Accounting for Decision Making",
+    "Acting and Appreciation of Theatre",
+    "AI for Mathematics",
+    "American Society and Culture",
+    "Application and method of TCM massage and scraping health care",
+    "Aquariums and the Breeding of Aquatic Organisms",
+    "Art and Science",
+    "Art Appreciation",
+    "Art Is Therapy",
+    "Auditing for Beginners",
+    "Basic Korean Language",
+    "Basics of Project Management for Software Development",
+    "Beyond the Stars: Exploring the Mysteries of the Universe",
+    "Blockchain Finance",
+    "Brief History of Biomedical Revolution",
+    "Business and Administrative Communication",
+    "Business Strategy",
+    "Car Culture",
+    "Chemistry and the environment",
+    "Chemistry in Materials",
+    "Chemistry Is Everywhere I",
+    "Chinese Economy",
+    "Chinese Epigraphy in Southeast Asia",
+    "Chinese Seal Carving: Appreciation and Practice",
+    "Cinematic Communication",
+    "Communication and Law in Malaysia",
+    "Communication skills for job search",
+    "Computer Skills for Beginners",
+    "Creative Writing in Literature and Art",
+    "Critical Thinking Skills",
+    "Cross-Cultural Communication",
+    "Cyberpsychology",
+    "Data Management and Artificial Intelligence",
+    "Design Management",
+    "Designing Nature: AI, Atoms, and the Art of Simulation",
+    "Digital Publishing",
+    "Economics and Society",
+    "Electronic Automation Systems",
+    "Elementary Number Theory",
+    "Energy Demand Management",
+    "Engineering Innovations",
+    "English Novels and Short Stories",
+    "Enterprenuership and Sustainable Development",
+    "Environmental Economics",
+    "Environmental Problems and Environmental Awareness",
+    "Face Recognition With Machine Learning",
+    "Fascinating Fermentation",
+    "Film appreciation",
+    "Film Appreciation: Introduction to Cinema",
+    "First Step into MATLAB for undergraduates",
+    "Fish Collection and Preservation",
+    "Food and Nutrition",
+    "Foundations of Business Analytics",
+    "French for Communication",
+    "From Physics to Finance: Quantitative Finance",
+    "Fun of Mushroom Growing",
+    "Fundamental of Forensic Science",
+    "Fundamentals of Artificial Intelligence (AI)",
+    "Fundamentals of Contract Law",
+    "Fundamentals of Digital Marketing",
+    "Fundamentals of Electronic Commerce",
+    "Fundamentals of Supply Chain and Logistics Management",
+    "Gesture Recognition",
+    "Globalization and Sustainable Development",
+    "Healthy and Effective Relationships",
+    "Imaged Futures of Technology and Society",
+    "International Investment Law",
+    "Introduction and Practice to Intertranslation of Chinese-Malay",
+    "Introduction to Advanced Mathematics I",
+    "Introduction to Advanced Mathematics II",
+    "Introduction to Building Lighting",
+    "Introduction to Business Ethics",
+    "Introduction to Chatbot Design and Implementation",
+    "Introduction to Chinese Medicine",
+    "Introduction to Creative Typography Design",
+    "Introduction to Enterprise Risk Management",
+    "Introduction to Entrepreneurship",
+    "Introduction to Finance",
+    "Introduction to FinTech",
+    "Introduction to German Language I",
+    "Introduction to Global Mandarin",
+    "Introduction to Human Resource Management",
+    "Introduction to International Business",
+    "Introduction to IT",
+    "Introduction to Legal Studies",
+    "Introduction to Linear Algebra",
+    "Introduction to Logic",
+    "Introduction to Machine Learning with Python",
+    "Introduction to Operations Management",
+    "Introduction to Personal Financial Planning",
+    "Introduction to Remote Sensing",
+    "Introduction to Text Analytics for Product Review Analysis",
+    "Languages and Writings of the World",
+    "Leadership with Fun",
+    "Mathematical Graphics",
+    "Mathematical Theory of Games",
+    "Media and Representations",
+    "Microfinance and Development",
+    "Multimedia Storytelling",
+    "Nature’s Mysteries and Scientific Inventions",
+    "New Media: Digital, Activism and Society",
+    "Physics in Movies",
+    "Political Communication",
+    "Positive Psychology",
+    "Principles of Economics",
+    "Principles of Health Economics",
+    "Principles of Management",
+    "Principles of Marketing",
+    "Principles of Public Relations",
+    "Probability and Statistics in Real Life",
+    "Protection of Innovation",
+    "Psychology of Interpersonal Communication",
+    "Public Speaking",
+    "Python Programming in Business",
+    "Readings in world modern chinese poetry",
+    "Save Our Earth with New Energy!",
+    "Science and Nature",
+    "Speech Communication",
+    "Success Strategies",
+    "Technical Writing",
+    "Technology and Culture: Science Fiction, Video Games and Social Media",
+    "The Art of Invisibility Science",
+    "The Art of Online Shop Management",
+    "The four great classical novels of chinese literature and drama series",
+    "The History and Culture of Football Games",
+    "The Magic of Semiconductor Technology",
+    "The Presidents in American History: From F.D.Roosevelt to Barack Obama",
+    "There's Plenty of Room at the Bottom",
+    "Understanding Evolution",
+    "Visual Communication",
+    "Waste and Energy from a Global Perspective",
+    "Water Motions in the Global Ocean",
+    "Web Site Design",
+    "Western Classical Music:Theory,History and practice",
+    "What's in a chemical plant?",
+    "What's on your plate? Food technologies around the world",
+    "Wireless Technology for Preserving the Environment"
+  ],
+  "notes": [
+    "Only rows 5-159, the structured course section, are imported.",
+    "Teacher-only and FAQ sections are excluded because they do not map safely to course_reviews.",
+    "The source has no structured rating, difficulty, teacher, or term. rating/difficulty default to 3 and can be overridden by the import command.",
+    "Imported comments are anonymous source material and are attributed to the explicit --created-by user only for database ownership/audit."
+  ]
+}
