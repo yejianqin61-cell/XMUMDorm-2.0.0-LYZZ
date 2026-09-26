@@ -142,14 +142,99 @@
   gap: 8px;
 }
 
-.schedule-week-toolbar {
-  display: none;
+/* 周次栏：显示「第 N 周 · 日期范围」，可左右翻周 */
+.schedule-weekbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 2px 0 10px;
+  padding: 8px 10px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  box-shadow: 0 16px 46px rgba(2, 6, 23, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.40);
 }
 
-.schedule-week-fixed {
+.schedule-weekbar__nav {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.75);
+  color: rgba(15, 23, 42, 0.78);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.schedule-weekbar__nav:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.schedule-weekbar__center {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: center;
+}
+
+.schedule-weekbar__title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 16px;
+  font-weight: 850;
+  letter-spacing: -0.02em;
+  color: rgb(15, 23, 42);
+}
+
+.schedule-weekbar__badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--sched-grad);
+  color: #fff;
+}
+
+.schedule-weekbar__range {
+  margin-top: 1px;
+  font-size: 12px;
+  color: var(--wx-text-secondary, #64748b);
+}
+
+.schedule-weekbar__back {
+  display: block;
+  width: 100%;
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 12px;
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
   font-size: 13px;
-  font-weight: 600;
-  color: var(--wx-text-secondary, #666);
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 未开学 / 学期已结束的提示条 */
+.schedule-semester-note {
+  margin: 0 0 10px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(255, 193, 7, 0.18);
+  border: 1px solid rgba(255, 152, 0, 0.35);
+  color: #8b4513;
+  font-size: 12.5px;
+  line-height: 1.45;
 }
 
 .schedule-days {
