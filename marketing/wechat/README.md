@@ -159,7 +159,7 @@ PUPPETEER_EXECUTABLE_PATH="/path/to/chrome" npx tsx src/index.ts ./article.html 
 8. 引用 / 金句块（居中 + 奶油底）
 9. 图片位 + 图注
 10. 圆点分隔符
-11. CTA 联系卡片（微信 `xmumdorm666` + 邮箱 `yejianqin61@gmail.com`）
+11. CTA 联系卡片（官方微信 `xmumdorm666`，全站唯一对外联系方式）
 12. 页脚（品牌署名 + 「学生独立开发 / 不代表校方立场」）
 
 ## 已知限制

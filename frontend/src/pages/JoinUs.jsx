@@ -1,13 +1,16 @@
 import { useState } from 'react';
-import { Copy, Mail, MessageCircle } from 'lucide-react';
+import { Copy, MessageCircle } from 'lucide-react';
 import Card from '../components/ui/Card';
 import { useLanguage } from '../context/LanguageContext';
 import { Toast } from '../context/ToastContext';
 import './JoinUs.css';
 
-/** 招募联系方式（文案由产品给定，中文为原文） */
+/**
+ * 招募联系方式（文案由产品给定，中文为原文）。
+ * 2026-09-27 用户裁定：**全站唯一对外联系方式就是官方微信号**，邮箱与电话全部下线，
+ * 所以这里的常量只剩微信号一个，不要再把邮箱加回来。
+ */
 const WECHAT_ID = 'xmumdorm666';
-const CONTACT_EMAIL = 'yejianqin61@gmail.com';
 
 function JoinUs() {
   const { lang } = useLanguage();
@@ -36,14 +39,6 @@ function JoinUs() {
       value: WECHAT_ID,
       href: null,
       Icon: MessageCircle,
-    },
-    {
-      key: 'email',
-      labelZh: '邮箱',
-      labelEn: 'Email',
-      value: CONTACT_EMAIL,
-      href: `mailto:${CONTACT_EMAIL}`,
-      Icon: Mail,
     },
   ];
 

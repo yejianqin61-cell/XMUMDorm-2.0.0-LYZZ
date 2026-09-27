@@ -43,11 +43,13 @@ describe('关于 — 联系信息', () => {
   it('6b. 不应再出现历史微信号 YEJIANQIN_git', () => {
     expect(source).not.toContain('YEJIANQIN_git');
   });
-  it('7. 电话', () => {
-    expect(source).toContain('01115078663');
+  it('7. 不再暴露电话（全站唯一联系方式是微信号）', () => {
+    expect(source).not.toContain('01115078663');
+    expect(source).not.toContain('电话');
   });
-  it('8. 邮箱', () => {
-    expect(source).toContain('yejianqin61@gmail.com');
+  it('8. 不再暴露邮箱（全站唯一联系方式是微信号）', () => {
+    expect(source).not.toContain('yejianqin61@gmail.com');
+    expect(source).not.toContain('邮箱');
   });
 });
 

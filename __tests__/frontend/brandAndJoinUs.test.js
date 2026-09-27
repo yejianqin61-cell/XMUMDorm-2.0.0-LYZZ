@@ -20,7 +20,6 @@ const read = (...segments) => fs.readFileSync(path.resolve(ROOT, ...segments), '
 const JOIN_LEAD_ZH =
   '如果你想学习怎么用AI开发出你自己的网站，如果你想共同成为Dorm的创造者，如果你发现本站有任何使用问题，那就快快联系我们。';
 const WECHAT_ID = 'xmumdorm666';
-const CONTACT_EMAIL = 'yejianqin61@gmail.com';
 
 describe('标签页标题改成 Dorm，且不再出现 Jack 字样', () => {
   it('Web 的 index.html 标题是 Dorm', () => {
@@ -103,22 +102,21 @@ describe('左侧栏「加入我们」', () => {
     expect(routes).toContain('path="about/join-us" element={renderLazyRoute(JoinUs)}');
   });
 
-  it('页面逐字显示产品给定的招募文案与联系方式', () => {
+  it('页面逐字显示产品给定的招募文案与官方微信号', () => {
     const page = read('frontend', 'src', 'pages', 'JoinUs.jsx');
     expect(page).toContain(JOIN_LEAD_ZH);
     expect(page).toContain(`const WECHAT_ID = '${WECHAT_ID}';`);
-    expect(page).toContain(`const CONTACT_EMAIL = '${CONTACT_EMAIL}';`);
     expect(page).toContain('{value}');
     expect(page).toContain('加入我们');
   });
 
-  it('联系区同时有微信与邮箱，两个都能复制', () => {
+  it('联系区只有微信一种渠道（邮箱已按用户裁定下线）', () => {
     const page = read('frontend', 'src', 'pages', 'JoinUs.jsx');
     expect(page).toContain("labelZh: '微信'");
-    expect(page).toContain("labelZh: '邮箱'");
-    expect(page).toContain("labelEn: 'Email'");
-    // 邮箱额外做成 mailto 链接，点了能直接发信
-    expect(page).toContain('mailto:${CONTACT_EMAIL}');
+    // 2026-09-27 用户裁定：全站只能出现 xmumdorm666 这一个联系方式
+    expect(page).not.toContain("labelZh: '邮箱'");
+    expect(page).not.toContain('mailto:');
+    expect(page).not.toContain('CONTACT_EMAIL');
     // 复制按钮按行记状态，只让刚复制的那行变「已复制」
     expect(page).toContain('useState(null)');
     expect(page).toMatch(/handleCopy\(value\)/);
@@ -133,27 +131,37 @@ describe('左侧栏「加入我们」', () => {
 });
 
 /**
- * 微信号统一（2026-09-26 用户裁定：xmumdorm666 是官方号）
+ * 联系方式收口（2026-09-26 / 2026-09-27 用户两次裁定）
  *
- * 背景：站点上曾同时存在两个微信号 —— 老的「联系我们」页（Web / Capacitor App /
+ * 第一次：站点上曾同时存在两个微信号 —— 老的「联系我们」页（Web / Capacitor App /
  * RN 移动端 About）写的是个人号 YEJIANQIN_git，新加的「加入我们」写的是官方号
  * xmumdorm666。两个号同时对外，用户不知道该加哪个，所以统一到官方号。
  *
- * 2026-09-27 更新：Web / App 的「联系我们」页已随「关于」页收束整体下线
- * （见 aboutPageSlimming.test.js），这两端的对外微信号只剩「加入我们」一处；
- * RN 移动端的 About 不在本次范围内，继续保留自己的联系页。
+ * 第二次（本次收紧）：**全站只能出现 xmumdorm666 这一个联系方式**。
+ * 邮箱（yejianqin61@gmail.com）与电话（01115078663）全部下线，
+ * 隐私政策 / 服务条款原本只有邮箱一种渠道，改为微信号。
+ * 因此这里从「统一微信号」扩成「列出所有对外联系方式落点」，
+ * 逐个断言：有官方号、没有历史号、没有邮箱、没有电话。
  */
-describe('微信号全站统一为官方号 xmumdorm666', () => {
-  const wechatFiles = [
+describe('全站联系方式只有官方微信号 xmumdorm666', () => {
+  const contactSurfaces = [
     ['frontend', 'src', 'pages', 'JoinUs.jsx'],
+    ['frontend', 'src', 'pages', 'PrivacyPolicy.jsx'],
+    ['frontend', 'src', 'pages', 'TermsOfService.jsx'],
+    ['frontend-app', 'src', 'pages', 'PrivacyPolicy.jsx'],
+    ['frontend-app', 'src', 'pages', 'TermsOfService.jsx'],
     ['mobile', 'src', 'screens', 'AboutInfoScreen.tsx'],
+    ['public', 'privacy-policy.html'],
   ];
 
-  it('各联系入口都写官方号，都不再出现历史个人号', () => {
-    for (const parts of wechatFiles) {
+  it('每个落点都写官方号，且没有历史号 / 邮箱 / 电话', () => {
+    for (const parts of contactSurfaces) {
       const src = read(...parts);
       expect(src).toContain(WECHAT_ID);
       expect(src).not.toContain('YEJIANQIN_git');
+      expect(src).not.toContain('yejianqin61@gmail.com');
+      expect(src).not.toContain('mailto:');
+      expect(src).not.toContain('01115078663');
     }
   });
 

@@ -93,11 +93,13 @@ describe('公众号模板 — 避开微信官方明确的违规写法', () => {
 });
 
 describe('公众号模板 — 联系方式与品牌', () => {
-  it('CTA 里是官方微信号与邮箱，没有历史微信号', () => {
+  it('CTA 里只有官方微信号，没有历史微信号、也没有邮箱', () => {
     const region = copyRegion();
     expect(region).toContain('xmumdorm666');
-    expect(region).toContain('yejianqin61@gmail.com');
     expect(region).not.toContain('YEJIANQIN_git');
+    // 2026-09-27 用户裁定：全站唯一对外联系方式是官方微信号
+    expect(region).not.toContain('yejianqin61@gmail.com');
+    expect(region).not.toContain('邮箱');
   });
 
   it('不出现 Jack 字样，中文名保留「厦马小筑」', () => {
