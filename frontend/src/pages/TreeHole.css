@@ -69,7 +69,8 @@
 .treehole-content {
   position: relative;
   z-index: 1;
-  padding: 10px 12px calc(var(--tabbar-height, 72px) + var(--safe-bottom, 0px) + 20px);
+  /* 移动端：左右 12px 留白 + 底部让开固定底栏（底栏 76px 高、距底 10px） */
+  padding: 10px 12px calc(var(--tabbar-height, 76px) + 10px + var(--safe-bottom, 0px) + 16px);
 }
 
 .treehole-refreshing {
@@ -708,12 +709,23 @@
   border-radius: 18px;
 }
 
+/* --------- 移动端可读性：窄屏卡片里的作者名放大到可读 --------- */
+@media (max-width: 767px) {
+  /*
+   * 卡片只有 ~158px 宽，作者名原本 10px（比 iOS 最小正文还小一档）。
+   * 放大到 11px，同时把省略宽度收紧到 8em，保证胶囊整体不撑满卡片。
+   */
+  .treehole-glass-author {
+    font-size: 11px;
+    max-width: 8em;
+  }
+}
+
 /* --------- Mobile stability: avoid iOS/WebView paint holes --------- */
 @media (pointer: coarse) {
   .treehole-page--mobile .treehole-grid {
     gap: 12px;
   }
-
   /* C-tier stability: remove heavy effects in scroll area */
 
   /* filter: blur() + transforms on big images is a common Safari blank-rect trigger */
