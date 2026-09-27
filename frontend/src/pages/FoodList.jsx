@@ -1,13 +1,15 @@
 import { useRef, useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { useQueries } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Search } from 'lucide-react';
+import { PenLine, Search } from 'lucide-react';
 import MerchantHeader from '../components/MerchantHeader';
 import CategorySidebar from '../components/CategorySidebar';
 import CategorySection from '../components/CategorySection';
 import PageSkeleton from '../components/ui/PageSkeleton';
 import EmptyState from '../components/ui/EmptyState';
+import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { getShop, getCategories, getProducts } from '@shared/api/canteen';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { getUploadUrl, productImageUrl } from '@shared/api/config';
@@ -20,6 +22,10 @@ const STALE_MS = 3 * 60 * 1000;
 function FoodList() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { isLoggedIn } = useAuth();
+  const { lang } = useLanguage();
+  const isEn = lang === 'en';
   const [search, setSearch] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [activeId, setActiveId] = useState(null);
@@ -198,6 +204,94 @@ function FoodList() {
     navigate(`/eat/merchant/${shopId}/hot`);
   };
 
+  /** 共建写操作统一登录门：未登录先登录，登录后回到本商铺 */
+  const requireLogin = (nextPath) => {
+    if (isLoggedIn) {
+      navigate(nextPath);
+      return;
+    }
+    navigate('/login', {
+      state: { from: { pathname: location.pathname, search: location.search } },
+    });
+  };
+
+  const managePath = `/eat/merchant/${shopId}/manage`;
+  const handleManageShop = () => requireLogin(managePath);
+  const handleAddDish = () =>
+    requireLogin(`/merchant/food/new?shopId=${shopId}&from=${encodeURIComponent(managePath)}`);
+
+  /** 顶部共建操作条：本店热门 + 搜索 + 共建维护（空菜单与正常菜单共用，避免重复实现） */
+  const shopControls = (
+    <div className="food-shop-hot-entry">
+      <div className="food-shop-hot-controls">
+        <button
+          type="button"
+          className="food-shop-hot-entry-btn pressable"
+          onClick={handleGoHot}
+        >
+          本店热门 · Top dishes
+        </button>
+        <div className="food-shop-search-wrap">
+          <div className="relative" ref={searchWrapRef}>
+            <AnimatePresence initial={false} mode="wait">
+              {searchOpen ? (
+                <motion.form
+                  key="top-search-open"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    setSearchOpen(false);
+                  }}
+                  initial={{ width: 44, opacity: 0.98 }}
+                  animate={{ width: 176, opacity: 1 }}
+                  exit={{ width: 44, opacity: 0.98 }}
+                  transition={{ type: 'spring', stiffness: 520, damping: 38 }}
+                  style={{ maxWidth: 'min(190px, 44vw)' }}
+                  className="h-11"
+                >
+                  <div className="flex h-11 items-center gap-2 rounded-full border border-blue-200/70 bg-white/80 px-3 shadow-sm backdrop-blur-xl">
+                    <Search size={18} className="text-blue-600" aria-hidden />
+                    <input
+                      ref={searchInputRef}
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') setSearchOpen(false);
+                      }}
+                      placeholder="搜索…"
+                      className="min-w-0 w-full bg-transparent text-[14px] text-slate-800 placeholder:text-slate-400 outline-none"
+                      type="search"
+                    />
+                  </div>
+                </motion.form>
+              ) : (
+                <motion.button
+                  key="top-search-closed"
+                  type="button"
+                  onClick={() => setSearchOpen(true)}
+                  whileTap={{ scale: 0.98 }}
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-blue-200/70 bg-white/70 text-blue-700 shadow-sm backdrop-blur-md"
+                  style={{ borderWidth: '0.5px' }}
+                  aria-label="搜索"
+                >
+                  <Search size={18} aria-hidden />
+                </motion.button>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+        <button
+          type="button"
+          className="food-shop-manage-btn"
+          onClick={handleManageShop}
+          aria-label={isEn ? 'Maintain this shop' : '共建维护这家商铺'}
+          title={isEn ? 'Add / edit dishes and categories' : '添加或编辑菜品、分类'}
+        >
+          <PenLine size={18} aria-hidden />
+        </button>
+      </div>
+    </div>
+  );
+
   const filteredGroups = search.trim()
     ? (() => {
         const q = search.trim().toLowerCase();
@@ -283,29 +377,18 @@ function FoodList() {
     return (
       <div className="food-list-page">
         <MerchantHeader merchant={merchant} />
-        <div className="food-shop-hot-entry">
-          <div className="food-shop-hot-controls">
-            <button
-              type="button"
-              className="food-shop-hot-entry-btn pressable"
-              onClick={handleGoHot}
-            >
-              本店热门 · Top dishes
-            </button>
-            <div className="food-shop-search-wrap">
-              <input
-                type="search"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="food-shop-search-input"
-                placeholder="搜索本店菜品… Search dishes"
-              />
-            </div>
-          </div>
-        </div>
+        {shopControls}
         <EmptyState
-          title="暂无商品"
-          description="商家还没发布商品。No dishes yet."
+          title={isEn ? 'No dishes yet' : '暂无商品'}
+          description={
+            categories.length === 0
+              ? (isEn
+                  ? 'This shop has no category yet — add one, then publish the first dish.'
+                  : '这家商铺还没有分类。先建一个分类，再发布第一道菜。')
+              : (isEn ? 'Be the first to add a dish here.' : '可以直接补充这家商铺的第一道菜。')
+          }
+          actionLabel={isEn ? 'Add dish' : '添加菜品'}
+          onActionClick={handleAddDish}
         />
       </div>
     );
@@ -314,65 +397,7 @@ function FoodList() {
   return (
     <div className="food-list-page">
       <MerchantHeader merchant={merchant} />
-      <div className="food-shop-hot-entry">
-        <div className="food-shop-hot-controls">
-          <button
-            type="button"
-            className="food-shop-hot-entry-btn pressable"
-            onClick={handleGoHot}
-          >
-            本店热门 · Top dishes
-          </button>
-          <div className="food-shop-search-wrap">
-            <div className="relative" ref={searchWrapRef}>
-              <AnimatePresence initial={false} mode="wait">
-                {searchOpen ? (
-                  <motion.form
-                    key="top-search-open"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      setSearchOpen(false);
-                    }}
-                    initial={{ width: 44, opacity: 0.98 }}
-                    animate={{ width: 176, opacity: 1 }}
-                    exit={{ width: 44, opacity: 0.98 }}
-                    transition={{ type: 'spring', stiffness: 520, damping: 38 }}
-                    style={{ maxWidth: 'min(190px, 44vw)' }}
-                    className="h-11"
-                  >
-                    <div className="flex h-11 items-center gap-2 rounded-full border border-blue-200/70 bg-white/80 px-3 shadow-sm backdrop-blur-xl">
-                      <Search size={18} className="text-blue-600" aria-hidden />
-                      <input
-                        ref={searchInputRef}
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Escape') setSearchOpen(false);
-                        }}
-                        placeholder="搜索…"
-                        className="min-w-0 w-full bg-transparent text-[14px] text-slate-800 placeholder:text-slate-400 outline-none"
-                        type="search"
-                      />
-                    </div>
-                  </motion.form>
-                ) : (
-                  <motion.button
-                    key="top-search-closed"
-                    type="button"
-                    onClick={() => setSearchOpen(true)}
-                    whileTap={{ scale: 0.98 }}
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-blue-200/70 bg-white/70 text-blue-700 shadow-sm backdrop-blur-md"
-                    style={{ borderWidth: '0.5px' }}
-                    aria-label="搜索"
-                  >
-                    <Search size={18} aria-hidden />
-                  </motion.button>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-        </div>
-      </div>
+      {shopControls}
 
       <div className="food-list-layout">
         <CategorySidebar

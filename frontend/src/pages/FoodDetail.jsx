@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { PenLine, Plus } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Tag from '../components/ui/Tag';
 import Card from '../components/ui/Card';
@@ -27,6 +28,7 @@ import { getApiErrorMessage } from '@shared/utils/apiError';
 import { formatRatingLabel } from '@shared/constants/rating';
 import { DEFAULT_PRODUCT_IMAGE_PATH, productImageUrl } from '@shared/api/config';
 import { QK } from '@shared/query/queryKeys';
+import { invalidateCanteenContent } from '../features/canteen/invalidateCanteen';
 import './FoodDetail.css';
 
 const STALE_PRODUCT_MS = 3 * 60 * 1000;
@@ -179,6 +181,21 @@ export default function FoodDetail() {
     navigate(`/eat/food/${id}/review`);
   };
 
+  const selfPath = `/eat/food/${food.id}`;
+
+  /** 共建：编辑当前菜品（任意登录用户），成功后回到本页 */
+  const handleEditDish = () => {
+    if (requireLogin()) return;
+    navigate(`/merchant/food/${food.id}?from=${encodeURIComponent(selfPath)}`);
+  };
+
+  /** 共建：给这家商铺上传新菜品 */
+  const handleAddDish = () => {
+    if (requireLogin()) return;
+    if (!food.shop_id) return;
+    navigate(`/merchant/food/new?shopId=${food.shop_id}&from=${encodeURIComponent(selfPath)}`);
+  };
+
   const handleLikeReview = (reviewId) => {
     if (requireLogin()) return;
     setLikedReviewIds((prev) => {
@@ -256,6 +273,24 @@ export default function FoodDetail() {
                 <Button variant="secondary" size="sm" onClick={handleReview}>
                   去点评
                 </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleEditDish}
+                  iconLeft={<PenLine size={15} aria-hidden />}
+                >
+                  编辑菜品 Edit
+                </Button>
+                {food.shop_id ? (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleAddDish}
+                    iconLeft={<Plus size={15} aria-hidden />}
+                  >
+                    上传菜品 Add dish
+                  </Button>
+                ) : null}
                 {isAdmin ? (
                   <Button
                     variant="secondary"
@@ -264,15 +299,9 @@ export default function FoodDetail() {
                       if (!food || !window.confirm(`确定删除 "${food.name}" 吗？删除后不可恢复。`)) return;
                       try {
                         await deleteProduct(food.id);
-                        if (food.shop_id != null) {
-                          queryClient.invalidateQueries({ queryKey: QK.canteenShop(food.shop_id) });
-                          queryClient.invalidateQueries({ queryKey: QK.canteenShopCategories(food.shop_id) });
-                          queryClient.invalidateQueries({ queryKey: QK.canteenShopProducts(food.shop_id) });
-                          queryClient.invalidateQueries({ queryKey: QK.canteenShopHotProducts(food.shop_id) });
-                        } else {
-                          queryClient.invalidateQueries({ queryKey: ['canteen', 'shop'] });
-                        }
+                        // 菜品已删除：先移除详情缓存，再刷新商铺菜单、分类计数与排行榜
                         queryClient.removeQueries({ queryKey: QK.canteenProduct(food.id) });
+                        invalidateCanteenContent(queryClient);
                         Toast.success('商品已删除');
                         navigate(-1);
                       } catch (error) {

@@ -24,7 +24,11 @@ function Login() {
   const { handleExpResponse } = useExpFeedback();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = location.state?.from?.pathname || '/';
+  // 保留回跳目标的 query（共建入口依赖 ?shopId= / ?from= / ?region=）
+  const fromState = location.state?.from;
+  const from = fromState?.pathname
+    ? `${fromState.pathname}${fromState.search || ''}`
+    : '/';
 
   const handleSubmit = async (e) => {
     e.preventDefault();

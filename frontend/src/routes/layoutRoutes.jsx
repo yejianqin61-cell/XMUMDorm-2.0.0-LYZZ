@@ -69,6 +69,7 @@ const CanteenArea = lazy(() => import('../pages/CanteenArea'));
 const CanteenBannerManage = lazy(() => import('../pages/CanteenBannerManage'));
 const CanteenSearch = lazy(() => import('../pages/CanteenSearch'));
 const MerchantList = lazy(() => import('../pages/MerchantList'));
+const CanteenShopManage = lazy(() => import('../pages/CanteenShopManage'));
 const AreaProductRanking = lazy(() => import('../pages/AreaProductRanking'));
 const FoodList = lazy(() => import('../pages/FoodList'));
 const FoodShopHot = lazy(() => import('../pages/FoodShopHot'));
@@ -176,11 +177,13 @@ export const layoutRoutes = (
     <Route path="eat/:area" element={renderLazyRoute(MerchantList)} />
     <Route path="eat/merchant/:id" element={renderLazyRoute(FoodList)} />
     <Route path="eat/merchant/:id/hot" element={renderLazyRoute(FoodShopHot)} />
+    <Route path="eat/merchant/:id/manage" element={renderLazyRoute(CanteenShopManage)} />
     <Route path="eat/food/:id" element={renderLazyRoute(FoodDetail)} />
     <Route path="eat/food/:id/review" element={renderLazyRoute(FoodReviewPublish)} />
     <Route path="merchant/create" element={renderLazyRoute(StoreCreate)} />
     <Route path="merchant/manage" element={renderLazyRoute(FoodManage)} />
     <Route path="merchant/shop/edit" element={renderLazyRoute(MerchantShopEdit)} />
+    <Route path="merchant/shop/edit/:shopId" element={renderLazyRoute(MerchantShopEdit)} />
     <Route path="merchant/food/new" element={renderLazyRoute(FoodCreate)} />
     <Route path="merchant/food/:id" element={renderLazyRoute(MerchantFoodDetail)} />
     {/* M09 万能墙 */}

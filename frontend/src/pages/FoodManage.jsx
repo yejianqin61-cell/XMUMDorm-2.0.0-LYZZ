@@ -1,17 +1,22 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import FoodCard from '../components/FoodCard';
 import PageSkeleton from '../components/ui/PageSkeleton';
 import EmptyState from '../components/ui/EmptyState';
 import { Toast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { getShopMe, getProducts, deleteProduct, createCategory } from '@shared/api/canteen';
 import { productImageUrl } from '@shared/api/config';
+import { invalidateCanteenContent } from '../features/canteen/invalidateCanteen';
 import './FoodManage.css';
 
-/** 商家端菜品管理：getShopMe + getProducts，支持删除，入口发布新菜品 */
+/** 商家端菜品管理：getShopMe + getProducts；菜品删除仅管理员可见可用 */
 function FoodManage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { isAdmin } = useAuth();
   const [shop, setShop] = useState(null);
   const [foods, setFoods] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -73,14 +78,16 @@ function FoodManage() {
   }, [load]);
 
   const handleDelete = (food) => {
+    if (!isAdmin) return;
     if (!window.confirm(`确定删除 "${food.name}" 吗？ Delete this dish?`)) return;
     deleteProduct(food.id)
       .then(() => {
         Toast.success('已删除');
+        invalidateCanteenContent(queryClient, { productId: food.id });
         load();
       })
       .catch((err) => {
-        Toast.error(err.message || '删除失败');
+        Toast.error(getApiErrorMessage(err));
       });
   };
 
@@ -93,6 +100,7 @@ function FoodManage() {
       .then(() => {
         setNewCategoryName('');
         setShowNewCategory(false);
+        invalidateCanteenContent(queryClient);
       })
       .catch((err) => Toast.error(getApiErrorMessage(err)))
       .finally(() => setCategorySubmitting(false));
@@ -182,7 +190,7 @@ function FoodManage() {
         <ul className="food-manage-list" aria-label="菜品列表">
           {foods.map((food) => (
             <li key={food.id}>
-              <FoodCard food={food} mode="merchant" onDelete={handleDelete} />
+              <FoodCard food={food} mode="merchant" onDelete={handleDelete} canDelete={isAdmin} />
             </li>
           ))}
         </ul>
