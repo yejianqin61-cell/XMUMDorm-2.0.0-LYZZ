@@ -29,10 +29,7 @@ export const SITE_PRIMARY_NAV_ITEMS = [
     icon: Compass,
     matchPrefixes: [
       '/about/map',
-      '/about/thanks',
       '/about/profile',
-      '/about/team',
-      '/about/editor-note',
       '/about/algorithm',
       '/about/level-algorithm',
       '/about/campus',

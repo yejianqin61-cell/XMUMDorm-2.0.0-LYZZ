@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Award, ChevronRight, Code2, FileText, HeartHandshake, Mail, ShieldAlert, Users } from 'lucide-react';
+import { Award, ChevronRight, Code2, ShieldAlert } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 const listContainer = {
@@ -23,7 +23,11 @@ function softIcon(bg, fg) {
   return { backgroundColor: bg, color: fg };
 }
 
-/** 关于我们详情页：按 MyZone 现代风格重做 */
+/**
+ * 关于详情页：按 MyZone 现代风格重做。
+ * 只保留说明性条目（算法说明 + 免责声明）；
+ * 团队介绍 / 编者的话 / 特别鸣谢 / 联系我们 已整体下线（页面、路由、入口一并移除）。
+ */
 function AboutProfile() {
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
@@ -34,7 +38,7 @@ function AboutProfile() {
         <motion.div variants={listContainer} initial="hidden" animate="show">
           <motion.div variants={listItem} className="mb-5">
             <h1 className="text-[22px] font-semibold tracking-tight text-slate-900">
-              {isZh ? '关于我们' : 'About us'}
+              {isZh ? '关于' : 'About'}
             </h1>
             <p className="mt-1 text-[13px] font-medium text-slate-400">
               {isZh ? '项目介绍与相关说明' : 'Project info & documentation'}
@@ -45,23 +49,9 @@ function AboutProfile() {
             variants={listItem}
             className="rounded-3xl bg-white p-3 shadow-sm"
             style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}
-            aria-label={isZh ? '关于我们入口' : 'About entries'}
+            aria-label={isZh ? '关于入口' : 'About entries'}
           >
             <div className="divide-y divide-slate-100">
-              <AboutRow
-                to="/about/team"
-                title={isZh ? '团队介绍' : 'Team'}
-                sub={isZh ? '哈基米方阵' : 'Hakimi Matrix team'}
-                icon={<Users className="h-5 w-5" />}
-                iconStyle={softIcon('rgba(59,130,246,0.12)', 'rgb(37,99,235)')}
-              />
-              <AboutRow
-                to="/about/editor-note"
-                title={isZh ? '编者的话' : "Editor's Note"}
-                sub={isZh ? 'Dorm 的故事' : 'Story behind Dorm'}
-                icon={<FileText className="h-5 w-5" />}
-                iconStyle={softIcon('rgba(168,85,247,0.12)', 'rgb(147,51,234)')}
-              />
               <AboutRow
                 to="/about/algorithm"
                 title={isZh ? '评分算法说明' : 'Scoring Algorithm'}
@@ -76,9 +66,7 @@ function AboutProfile() {
                 icon={<Award className="h-5 w-5" />}
                 iconStyle={softIcon('rgba(16,185,129,0.14)', 'rgb(5,150,105)')}
               />
-              <AboutRow to="/about/thanks" title={isZh ? '特别鸣谢' : 'Special Thanks'} sub={isZh ? '感谢一路支持 Dorm 的朋友' : 'People who supported Dorm'} icon={<HeartHandshake className="h-5 w-5" />} iconStyle={softIcon('rgba(244,63,94,0.12)', 'rgb(225,29,72)')} />
               <AboutRow to="/about/disclaimer" title={isZh ? '免责声明' : 'Disclaimer'} sub={isZh ? '平台内容与使用说明' : 'Platform and usage notes'} icon={<ShieldAlert className="h-5 w-5" />} iconStyle={softIcon('rgba(234,179,8,0.14)', 'rgb(202,138,4)')} />
-              <AboutRow to="/about/contact" title={isZh ? '联系我们' : 'Contact us'} sub={isZh ? '反馈、合作与内容处理' : 'Feedback, partnerships and reports'} icon={<Mail className="h-5 w-5" />} iconStyle={softIcon('rgba(34,197,94,0.12)', 'rgb(22,163,74)')} />
             </div>
           </motion.section>
         </motion.div>
@@ -109,5 +97,3 @@ function AboutRow({ to, title, sub, icon, iconStyle }) {
 }
 
 export default AboutProfile;
-
-

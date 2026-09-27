@@ -138,15 +138,18 @@ describe('左侧栏「加入我们」', () => {
  * 背景：站点上曾同时存在两个微信号 —— 老的「联系我们」页（Web / Capacitor App /
  * RN 移动端 About）写的是个人号 YEJIANQIN_git，新加的「加入我们」写的是官方号
  * xmumdorm666。两个号同时对外，用户不知道该加哪个，所以统一到官方号。
+ *
+ * 2026-09-27 更新：Web / App 的「联系我们」页已随「关于」页收束整体下线
+ * （见 aboutPageSlimming.test.js），这两端的对外微信号只剩「加入我们」一处；
+ * RN 移动端的 About 不在本次范围内，继续保留自己的联系页。
  */
 describe('微信号全站统一为官方号 xmumdorm666', () => {
   const wechatFiles = [
-    ['frontend', 'src', 'pages', 'ContactUs.jsx'],
-    ['frontend-app', 'src', 'pages', 'ContactUs.jsx'],
+    ['frontend', 'src', 'pages', 'JoinUs.jsx'],
     ['mobile', 'src', 'screens', 'AboutInfoScreen.tsx'],
   ];
 
-  it('三处联系页面都写官方号，都不再出现历史个人号', () => {
+  it('各联系入口都写官方号，都不再出现历史个人号', () => {
     for (const parts of wechatFiles) {
       const src = read(...parts);
       expect(src).toContain(WECHAT_ID);
