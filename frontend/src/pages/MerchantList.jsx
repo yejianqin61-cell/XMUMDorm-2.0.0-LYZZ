@@ -1,12 +1,14 @@
 import { useMemo } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { PenLine, Plus } from 'lucide-react';
 import Button from '../components/ui/Button';
 import EmptyState from '../components/ui/EmptyState';
 import PageHeader from '../components/templates/PageHeader';
 import SectionHeader from '../components/templates/SectionHeader';
 import ListPageLayout from '../components/templates/ListPageLayout';
 import { AREA_LABELS } from '../components/AreaCard';
+import { useAuth } from '../context/AuthContext';
 import { getRegions, getShopsByRegion, getRegionTopProducts } from '@shared/api/canteen';
 import { getUploadUrl, DEFAULT_PRODUCT_IMAGE_PATH } from '@shared/api/config';
 import { getApiErrorMessage } from '@shared/utils/apiError';
@@ -34,6 +36,9 @@ export default function MerchantList() {
   const isEn = lang === 'en';
   const t = getCanteenAreaRankingStrings(lang, 50);
   const { area } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { isLoggedIn } = useAuth();
   const code = normalizeAreaCodeParam(area ?? '');
 
   const regionsQuery = useQuery({
@@ -50,6 +55,26 @@ export default function MerchantList() {
   );
   const regionId = region?.id;
   const areaLabel = region?.name ?? AREA_LABELS[code] ?? code;
+
+  /** 共建写操作统一登录门：未登录先登录，登录后回到当前分区 */
+  const requireLogin = (nextPath) => {
+    if (isLoggedIn) {
+      navigate(nextPath);
+      return;
+    }
+    navigate('/login', {
+      state: { from: { pathname: location.pathname, search: location.search } },
+    });
+  };
+
+  const returnTo = encodeURIComponent(location.pathname);
+  const handleAddShop = () => {
+    if (!regionId) return;
+    requireLogin(`/merchant/create?region=${regionId}&from=${returnTo}`);
+  };
+  const handleEditShop = (shopId) => {
+    requireLogin(`/merchant/shop/edit/${shopId}?from=${returnTo}`);
+  };
 
   const shopsQuery = useQuery({
     queryKey: QK.canteenRegionShops(regionId),
@@ -130,18 +155,32 @@ export default function MerchantList() {
         list={(
           <div className="merchant-list-content">
             <section>
-              <SectionHeader title={isEn ? 'Merchants' : '商家'} compact />
+              <SectionHeader
+                title={isEn ? 'Merchants' : '商家'}
+                compact
+                action={(
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    iconLeft={<Plus size={16} aria-hidden />}
+                    onClick={handleAddShop}
+                    disabled={!regionId}
+                  >
+                    {isEn ? 'Add shop' : '新增商家'}
+                  </Button>
+                )}
+              />
               {merchants.length === 0 ? (
                 <div className="merchant-list-empty">
                   <p>{isEn ? 'No merchants here yet.' : '这个分区暂时没有商家。'}</p>
-                  <Link to="/eat" className="merchant-list-return">{isEn ? 'Browse other zones' : '浏览其他分区'}</Link>
+                  <p>{isEn ? 'Be the first to add one.' : '你可以直接补充第一家。'}</p>
                 </div>
               ) : (
                 <ul className="merchant-list-list" aria-label={t.merchantsListAria(areaLabel)}>
                   {merchants.map((merchant) => {
                     const endTime = extractEndTime(merchant.openingHours);
                     return (
-                      <li key={merchant.id}>
+                      <li key={merchant.id} className="merchant-list-row">
                         <Link to={`/eat/merchant/${merchant.id}`} className="merchant-min">
                           <span className="merchant-min-name">{merchant.name}</span>
                           <span className="merchant-min-meta">
@@ -149,6 +188,15 @@ export default function MerchantList() {
                           </span>
                           <span className="merchant-min-arrow" aria-hidden>›</span>
                         </Link>
+                        <button
+                          type="button"
+                          className="merchant-list-edit"
+                          onClick={() => handleEditShop(merchant.id)}
+                          aria-label={isEn ? `Edit ${merchant.name}` : `编辑商家 ${merchant.name}`}
+                          title={isEn ? 'Edit shop' : '编辑商家'}
+                        >
+                          <PenLine size={16} aria-hidden />
+                        </button>
                       </li>
                     );
                   })}

@@ -1,40 +1,70 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import FoodDetailView from '../components/FoodDetailView';
 import FoodForm from '../components/FoodForm';
 import EmptyState from '../components/ui/EmptyState';
 import ImagePreview from '../components/ImagePreview';
+import Button from '../components/ui/Button';
 import { Toast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { getProduct, getCategories, updateProduct, deleteProduct } from '@shared/api/canteen';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { productImageUrl } from '@shared/api/config';
+import { invalidateCanteenContent } from '../features/canteen/invalidateCanteen';
 import './MerchantFoodDetail.css';
 
-/** 商家端菜品详情：getProduct + getCategories，编辑 updateProduct，删除 deleteProduct */
+/**
+ * 菜品编辑（共建）：任意登录用户都可编辑任意未删除菜品的名称、描述、分类、价格与图片。
+ * 删除入口只对管理员展示，且服务端会再次校验管理员身份。
+ */
 function MerchantFoodDetail() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const queryClient = useQueryClient();
+  const { isLoggedIn, isAdmin } = useAuth();
+  const { lang } = useLanguage();
+  const isEn = lang === 'en';
+
+  const productId = useMemo(() => {
+    const n = id ? parseInt(id, 10) : 0;
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  }, [id]);
+  const from = searchParams.get('from') || '';
+
   const [food, setFood] = useState(null);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(true);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [imagePreviewOpen, setImagePreviewOpen] = useState(false);
 
+  // 未登录：按 US-003 引导登录，登录后回到本页
   useEffect(() => {
-    const productId = id ? parseInt(id, 10) : 0;
+    if (isLoggedIn) return;
+    navigate('/login', {
+      replace: true,
+      state: { from: { pathname: location.pathname, search: location.search } },
+    });
+  }, [isLoggedIn, navigate, location.pathname, location.search]);
+
+  useEffect(() => {
+    if (!isLoggedIn) return undefined;
     if (!productId) {
       setFood(null);
       setLoading(false);
-      return;
+      return undefined;
     }
     let cancelled = false;
     setLoading(true);
     setError(null);
     getProduct(productId)
       .then((data) => {
-        if (cancelled) return;
+        if (cancelled) return undefined;
         const d = data;
         const imgs = d?.images ?? [];
         const firstImg = productImageUrl(imgs[0]?.url);
@@ -62,7 +92,7 @@ function MerchantFoodDetail() {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [id]);
+  }, [isLoggedIn, productId]);
 
   const handleSave = (values) => {
     if (!food) return;
@@ -77,6 +107,12 @@ function MerchantFoodDetail() {
     if (values.imageFile) payload.imageFile = values.imageFile;
     updateProduct(food.id, payload)
       .then((updated) => {
+        invalidateCanteenContent(queryClient, { productId: food.id });
+        Toast.success(isEn ? 'Saved' : '已保存');
+        if (from) {
+          navigate(from, { replace: true });
+          return;
+        }
         const imgs = updated?.images ?? [];
         const firstImgUrl = productImageUrl(imgs[0]?.url);
         setFood((prev) => ({
@@ -88,35 +124,40 @@ function MerchantFoodDetail() {
           price: updated?.price !== undefined ? updated.price : prev.price,
           image: firstImgUrl,
         }));
-        Toast.success('已保存');
         setIsEditing(false);
       })
       .catch((err) => {
-        Toast.error(err.message || '保存失败');
+        Toast.error(getApiErrorMessage(err));
       })
       .finally(() => {
         setSubmitLoading(false);
       });
   };
 
-  const handleDelete = () => {
-    if (!food || !window.confirm(`确定删除 "${food.name}" 吗？ Delete this dish?`)) return;
-    deleteProduct(food.id)
-      .then(() => {
-        Toast.success('已删除');
-        navigate('/merchant/manage', { replace: true });
-      })
-      .catch((err) => Toast.error(getApiErrorMessage(err)));
-  };
-
-  const handleCancelEdit = () => {
-    setIsEditing(false);
+  const handleDelete = async () => {
+    if (!food) return;
+    const confirmed = window.confirm(
+      isEn
+        ? `Delete "${food.name}"? This cannot be undone.`
+        : `确定删除“${food.name}”吗？删除后不可恢复。`
+    );
+    if (!confirmed) return;
+    try {
+      await deleteProduct(food.id);
+      invalidateCanteenContent(queryClient, { productId: food.id });
+      Toast.success(isEn ? 'Dish deleted' : '菜品已删除');
+      if (from) navigate(from, { replace: true });
+      else if (food.shop_id) navigate(`/eat/merchant/${food.shop_id}`, { replace: true });
+      else navigate(-1);
+    } catch (err) {
+      Toast.error(getApiErrorMessage(err));
+    }
   };
 
   if (loading) {
     return (
       <div className="merchant-food-detail-page">
-        <p className="merchant-food-detail-loading state-loading">加载中…</p>
+        <p className="state-loading">{isEn ? 'Loading…' : '加载中…'}</p>
       </div>
     );
   }
@@ -124,10 +165,10 @@ function MerchantFoodDetail() {
   if (error && !food) {
     return (
       <div className="merchant-food-detail-page">
-        <p className="merchant-food-detail-error state-error">{error}</p>
-        <button type="button" className="merchant-food-detail-back" onClick={() => navigate(-1)}>
-          返回 Back
-        </button>
+        <p className="state-error">{error}</p>
+        <Button variant="secondary" size="sm" onClick={() => navigate(-1)}>
+          {isEn ? 'Back' : '返回'}
+        </Button>
       </div>
     );
   }
@@ -136,9 +177,9 @@ function MerchantFoodDetail() {
     return (
       <div className="merchant-food-detail-page">
         <EmptyState
-          title="菜品不存在"
-          description="Food not found"
-          actionLabel="返回"
+          title={isEn ? 'Dish not found' : '菜品不存在'}
+          description={isEn ? 'It may have been deleted.' : '它可能已被删除。'}
+          actionLabel={isEn ? 'Back' : '返回'}
           onActionClick={() => navigate(-1)}
         />
       </div>
@@ -147,7 +188,17 @@ function MerchantFoodDetail() {
 
   return (
     <div className="merchant-food-detail-page">
-      {error && <p className="merchant-food-detail-error" role="alert">{error}</p>}
+      <header className="merchant-food-detail-head">
+        <h1 className="merchant-food-detail-title">{isEn ? 'Edit dish' : '编辑菜品'}</h1>
+        <p className="merchant-food-detail-sub">
+          {isEn
+            ? 'Anyone signed in can fix this dish. Deleting stays admin-only.'
+            : '登录后任何人都可以修正这道菜品；删除仅管理员可用。'}
+        </p>
+      </header>
+
+      {error ? <p className="merchant-food-detail-error" role="alert">{error}</p> : null}
+
       {isEditing ? (
         <FoodForm
           categories={categories}
@@ -159,17 +210,17 @@ function MerchantFoodDetail() {
             description: food.description,
           }}
           onSubmit={handleSave}
-          onCancel={handleCancelEdit}
+          onCancel={() => (from ? navigate(from) : setIsEditing(false))}
           loading={submitLoading}
         />
       ) : (
         <div className="merchant-food-detail-shell">
           <section className="merchant-food-detail-hero">
             <div className="merchant-food-detail-hero__copy">
-              <p className="merchant-food-detail-hero__eyebrow">Merchant Dish Detail</p>
+              <p className="merchant-food-detail-hero__eyebrow">Dish detail</p>
               <h1 className="merchant-food-detail-hero__title">{food.name}</h1>
               <p className="merchant-food-detail-hero__subtitle">
-                {food.description || 'Review the dish presentation, confirm its info, and decide whether to edit, delete, or jump into user reviews.'}
+                {food.description || (isEn ? 'No description yet.' : '暂无描述。')}
               </p>
             </div>
             <div className="merchant-food-detail-hero__stats">
@@ -202,44 +253,37 @@ function MerchantFoodDetail() {
             <aside className="merchant-food-detail-side">
               <section className="merchant-food-detail-card">
                 <h2 className="merchant-food-detail-card__title">Quick Actions</h2>
-                <p className="merchant-food-detail-card__desc">Keep the most frequent management actions together for faster desktop review.</p>
                 <div className="merchant-food-detail-actions">
-                  <button
-                    type="button"
-                    className="merchant-food-detail-btn"
-                    onClick={() => navigate(`/eat/food/${food.id}/review`)}
-                    disabled={submitLoading}
-                  >
-                    去点评 Review
-                  </button>
                   <button
                     type="button"
                     className="merchant-food-detail-btn merchant-food-detail-btn-edit"
                     onClick={() => setIsEditing(true)}
                     disabled={submitLoading}
                   >
-                    编辑 Edit
+                    {isEn ? 'Edit' : '编辑'}
                   </button>
-                  <button
-                    type="button"
-                    className="merchant-food-detail-btn merchant-food-detail-btn-delete"
-                    onClick={handleDelete}
-                    disabled={submitLoading}
-                  >
-                    删除 Delete
-                  </button>
+                  {isAdmin ? (
+                    <button
+                      type="button"
+                      className="merchant-food-detail-btn merchant-food-detail-btn-delete"
+                      onClick={handleDelete}
+                      disabled={submitLoading}
+                    >
+                      {isEn ? 'Delete' : '删除'}
+                    </button>
+                  ) : null}
                   <button
                     type="button"
                     className="merchant-food-detail-btn merchant-food-detail-btn-back"
                     onClick={() => navigate(-1)}
                   >
-                    返回管理 Back to Manage
+                    {isEn ? 'Back' : '返回'}
                   </button>
                 </div>
               </section>
 
               <section className="merchant-food-detail-card merchant-food-detail-card--soft">
-                <h2 className="merchant-food-detail-card__title">Info Snapshot</h2>
+                <h2 className="merchant-food-detail-card__title">Info</h2>
                 <div className="merchant-food-detail-info">
                   <div className="merchant-food-detail-info__row">
                     <span>Dish ID</span>
@@ -251,7 +295,10 @@ function MerchantFoodDetail() {
                   </div>
                   <div className="merchant-food-detail-info__row">
                     <span>Category</span>
-                    <strong>{food.category_id ?? food.categoryId ?? '-'}</strong>
+                    <strong>
+                      {categories.find((c) => String(c.id) === String(food.category_id))?.name
+                        || (isEn ? 'Uncategorized' : '未分类')}
+                    </strong>
                   </div>
                 </div>
               </section>

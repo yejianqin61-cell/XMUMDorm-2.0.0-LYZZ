@@ -1,7 +1,31 @@
 .merchant-food-detail-page {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
   min-height: 100%;
-  padding: 12px 16px 24px;
+  padding: 16px;
   background: transparent;
+}
+
+.merchant-food-detail-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.merchant-food-detail-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--ru-primary, #122e8a);
+}
+
+.merchant-food-detail-sub {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-secondary, #6b7280);
 }
 
 .merchant-food-detail-shell {

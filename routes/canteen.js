@@ -262,7 +262,7 @@ router.get('/regions', async (req, res) => {
 // ============================================
 // 店铺
 // ============================================
-router.post('/shops', authenticateToken, async (req, res) => {
+router.post('/shops', authenticateToken, checkSanction, sensitiveWordFilter, async (req, res) => {
   try {
     const name = (req.body.name || '').trim();
     const regionId = parseInt(req.body.region_id, 10);
@@ -716,14 +716,14 @@ router.get('/shops/:shopId', async (req, res) => {
   }
 });
 
-router.patch('/shops/:shopId', authenticateToken, (req, res, next) => {
+router.patch('/shops/:shopId', authenticateToken, checkSanction, (req, res, next) => {
   shopLogoUpload(req, res, (err) => {
     if (err) {
       return res.status(400).json({ status: -1, message: err.message || '图片格式或大小不符合要求' });
     }
     next();
   });
-}, async (req, res) => {
+}, sensitiveWordFilter, async (req, res) => {
   try {
     const shopId = parseInt(req.params.shopId, 10);
     if (!shopId) return res.status(400).json({ status: -1, message: '店铺 ID 无效' });
@@ -879,7 +879,7 @@ router.delete('/categories/:categoryId', authenticateToken, async (req, res) => 
 // ============================================
 // 商品
 // ============================================
-router.post('/products', authenticateToken, sensitiveWordFilter, (req, res, next) => {
+router.post('/products', authenticateToken, checkSanction, (req, res, next) => {
   productImagesUpload(req, res, (err) => {
     if (err) {
       return res.status(400).json({
@@ -889,7 +889,7 @@ router.post('/products', authenticateToken, sensitiveWordFilter, (req, res, next
     }
     next();
   });
-}, async (req, res) => {
+}, sensitiveWordFilter, async (req, res) => {
   try {
     const categoryId = parseInt(req.body.category_id, 10);
     const name = (req.body.name || '').trim();
@@ -1245,7 +1245,7 @@ router.get('/products/:productId', async (req, res) => {
 });
 
 // 编辑商品：支持 JSON 或 multipart（带新图片时用 FormData，会替换旧图）
-router.patch('/products/:productId', authenticateToken, (req, res, next) => {
+router.patch('/products/:productId', authenticateToken, checkSanction, (req, res, next) => {
   const isMultipart = (req.headers['content-type'] || '').toLowerCase().includes('multipart/form-data');
   if (isMultipart) {
     productImagesUpload(req, res, (err) => {
@@ -1255,7 +1255,7 @@ router.patch('/products/:productId', authenticateToken, (req, res, next) => {
   } else {
     next();
   }
-}, async (req, res) => {
+}, sensitiveWordFilter, async (req, res) => {
   try {
     const productId = parseInt(req.params.productId, 10);
     if (!productId) return res.status(400).json({ status: -1, message: '商品 ID 无效' });

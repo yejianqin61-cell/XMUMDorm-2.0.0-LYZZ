@@ -25,11 +25,46 @@
   border-bottom: 1px solid var(--post-ios-separator);
 }
 
+.merchant-list-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.merchant-list-edit {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  color: var(--ru-primary, #122e8a);
+  background: var(--ru-card, #fff);
+  border: 2px solid var(--ru-primary, #122e8a);
+  box-shadow: 2px 2px 0 0 var(--ru-primary, #122e8a);
+  cursor: pointer;
+  transition: transform var(--motion-fast, 0.12s) var(--ease-standard, ease), box-shadow var(--motion-fast, 0.12s) var(--ease-standard, ease);
+}
+
+.merchant-list-edit:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 0 var(--ru-primary, #122e8a);
+}
+
+.merchant-list-edit:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 0 var(--ru-primary, #122e8a);
+}
+
 .merchant-min {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 12px;
+  flex: 1;
+  min-width: 0;
   min-height: 64px;
   color: var(--post-ios-label);
   text-decoration: none;
