@@ -101,6 +101,17 @@
   .treehole-toolbar__publish {
     display: none;
   }
+
+  /*
+   * 标签胶囊是移动端最主要的筛选入口，之前只有 37px 高（14px 字号 + py-1.5），
+   * 低于 44px 的触控目标下限。撑到 44px 并垂直居中，横向滚动条本身不受影响。
+   */
+  .treehole-tag-scroll button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+  }
 }
 
 .app-layout--desktop-shell .treehole-toolbar {
