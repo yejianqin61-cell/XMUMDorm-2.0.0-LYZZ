@@ -21,9 +21,6 @@ const SquareCampusFeed = lazy(() => import('../pages/SquareCampusFeed'));
 const SquareCampusPostNew = lazy(() => import('../pages/SquareCampusPostNew'));
 const SquareCampusPostDetail = lazy(() => import('../pages/SquareCampusPostDetail'));
 const SquareOrgAdmin = lazy(() => import('../pages/SquareOrgAdmin'));
-const AboutTeam = lazy(() => import('../pages/AboutTeam'));
-const AboutThanks = lazy(() => import('../pages/AboutThanks'));
-const AboutEditorNote = lazy(() => import('../pages/AboutEditorNote'));
 const AboutAlgorithm = lazy(() => import('../pages/AboutAlgorithm'));
 const AboutLevelAlgorithm = lazy(() => import('../pages/AboutLevelAlgorithm'));
 const AboutProfile = lazy(() => import('../pages/AboutProfile'));
@@ -59,7 +56,6 @@ const TodoList = lazy(() => import('../pages/TodoList'));
 const Holidays = lazy(() => import('../pages/Holidays'));
 const Settings = lazy(() => import('../pages/Settings'));
 const Disclaimer = lazy(() => import('../pages/Disclaimer'));
-const ContactUs = lazy(() => import('../pages/ContactUs'));
 const UserZone = lazy(() => import('../pages/UserZone'));
 const MyPosts = lazy(() => import('../pages/MyPosts'));
 const MyReviews = lazy(() => import('../pages/MyReviews'));
@@ -110,17 +106,13 @@ export const layoutRoutes = (
     <Route path="posts/tag/:slug" element={renderLazyRoute(PostTagFeed)} />
     <Route path="about" element={<SquareHome />} />
     <Route path="about/map" element={renderLazyRoute(AboutUs)} />
-    <Route path="about/thanks" element={renderLazyRoute(AboutThanks)} />
     <Route path="about/profile" element={renderLazyRoute(AboutProfile)} />
     {/* 兼容旧路径：原本挂在 /about 下会导致 Tab 误高亮到“广场” */}
     <Route path="about/schedule" element={<Navigate to="/myzone/schedule" replace />} />
-    <Route path="about/team" element={renderLazyRoute(AboutTeam)} />
-    <Route path="about/editor-note" element={renderLazyRoute(AboutEditorNote)} />
     <Route path="about/algorithm" element={renderLazyRoute(AboutAlgorithm)} />
     <Route path="about/level-algorithm" element={renderLazyRoute(AboutLevelAlgorithm)} />
     <Route path="about/diary" element={<Navigate to="/myzone/diary" replace />} />
     <Route path="about/disclaimer" element={renderLazyRoute(Disclaimer)} />
-    <Route path="about/contact" element={renderLazyRoute(ContactUs)} />
     <Route path="about/club" element={renderLazyRoute(SquareClub)} />
     <Route path="about/club/list" element={renderLazyRoute(ClubListPage)} />
     <Route path="about/club/my" element={renderLazyRoute(MyClubs)} />
