@@ -35,15 +35,20 @@ function NeoAvatar({ className = '', size, shape, children, ...props }) {
   );
 }
 
-function AvatarImage({ className = '', src, alt = '', ...props }) {
+function isRemoteDefaultAvatar(src) {
+  return typeof src === 'string' && /\/uploads\/default-avatar\.(?:png|svg)(?:[?#].*)?$/i.test(src);
+}
+
+function AvatarImage({ className = '', src, alt = '', shape = 'circle', ...props }) {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
+  const imageSrc = isRemoteDefaultAvatar(src) ? '/default-avatar.svg' : src;
 
-  if (error || !src) return null;
+  if (error || !imageSrc) return null;
 
   return (
     <img
-      src={src}
+      src={imageSrc}
       alt={alt}
       className={cn(
         'aspect-square h-full w-full object-cover',

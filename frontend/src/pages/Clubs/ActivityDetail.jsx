@@ -241,7 +241,7 @@ function ActivityDetail() {
   const eventMonth = eventDate
     ? eventDate.toLocaleDateString(isZh ? 'zh-CN' : 'en-US', { month: 'short' }).toUpperCase()
     : (isZh ? '日期' : 'DATE');
-  const statusLabel = String(a.status || '').toLowerCase() === 'ended'
+  const statusLabel = String(a?.status || '').toLowerCase() === 'ended'
     ? (isZh ? '已结束' : 'ENDED')
     : (isZh ? '进行中' : 'OPEN');
 
