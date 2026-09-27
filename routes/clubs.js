@@ -27,6 +27,7 @@ const { prepareImageUpload } = require('../services/imageProcessing');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const ExcelJS = require('exceljs');
 
 const CLUB_CATEGORIES = new Set(['music', 'tech', 'culture', 'sport', 'art']);
 const ACTIVITY_STATUS = new Set(['upcoming', 'ongoing', 'ended']);
@@ -60,6 +61,27 @@ function cleanText(input, maxLen) {
 function toInt(v, fallback) {
   const n = parseInt(v, 10);
   return Number.isFinite(n) ? n : fallback;
+}
+
+function formatExportDateTime(value) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
+function exportFileName(value) {
+  return String(value || '社团活动报名成员')
+    .replace(/[\\/:*?"<>|]+/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 80) || '社团活动报名成员';
+}
+
+function safeSpreadsheetText(value) {
+  const text = value == null ? '' : String(value);
+  return /^[=+\-@]/.test(text) ? `'${text}` : text;
 }
 
 function computeActivityStatus(startTime, endTime) {
@@ -1376,6 +1398,95 @@ router.get('/activity/:id', async (req, res, next) => {
 // DELETE /api/clubs/activities/:id/register
 // GET /api/clubs/activities/:id/registration-status
 // =========================
+// GET /api/clubs/activities/:id/registrations/export
+// The workbook is produced in memory for this response only. No export file or
+// export history is saved to disk or the database.
+router.get('/activities/:id/registrations/export', authenticateToken, async (req, res, next) => {
+  try {
+    const activityId = toInt(req.params.id, 0);
+    const userId = Number(req.user?.id || 0);
+    if (!activityId || !userId) return res.status(400).json({ status: -1, message: '参数错误' });
+
+    const activityRows = await query(
+      `SELECT a.id, a.club_id, a.title, a.start_time, a.end_time, a.location, c.name AS club_name
+       FROM club_activities a
+       JOIN clubs c ON c.id = a.club_id
+       WHERE a.id = ?
+       LIMIT 1`,
+      [activityId]
+    );
+    const activity = activityRows?.[0];
+    if (!activity) return res.status(404).json({ status: -1, message: '活动不存在' });
+
+    const canManage = isSiteAdmin(req) || (await userCanManageClub(userId, Number(activity.club_id)));
+    if (!canManage) return res.status(403).json({ status: -1, message: '仅社团管理员可导出报名名单' });
+
+    const registrations = await query(
+      `SELECT u.student_id, u.username, u.nickname, u.email, r.created_at
+       FROM club_activity_registrations r
+       JOIN users u ON u.id = r.user_id
+       WHERE r.activity_id = ? AND r.status = 'registered'
+       ORDER BY r.created_at ASC, r.id ASC`,
+      [activityId]
+    );
+
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'XMUMDorm';
+    workbook.created = new Date();
+    const worksheet = workbook.addWorksheet('报名成员');
+    worksheet.columns = [
+      { header: '序号', key: 'number', width: 8 },
+      { header: '学号', key: 'studentId', width: 18 },
+      { header: '姓名/昵称', key: 'name', width: 20 },
+      { header: '用户名', key: 'username', width: 20 },
+      { header: '邮箱', key: 'email', width: 30 },
+      { header: '报名时间', key: 'registeredAt', width: 21 },
+    ];
+    worksheet.mergeCells('A1:F1');
+    worksheet.getCell('A1').value = safeSpreadsheetText(`${activity.club_name} · ${activity.title} 报名成员名单`);
+    worksheet.getCell('A1').font = { bold: true, size: 14 };
+    worksheet.getCell('A1').alignment = { vertical: 'middle', horizontal: 'center' };
+    worksheet.getRow(1).height = 24;
+    worksheet.mergeCells('A2:F2');
+    worksheet.getCell('A2').value = safeSpreadsheetText(`活动时间：${formatExportDateTime(activity.start_time)}${activity.end_time ? ` 至 ${formatExportDateTime(activity.end_time)}` : ''}${activity.location ? `    地点：${activity.location}` : ''}`);
+    worksheet.getCell('A2').alignment = { vertical: 'middle' };
+    worksheet.getCell('A2').font = { color: { argb: 'FF666666' } };
+    worksheet.addRow([]);
+    const headerRow = worksheet.addRow(['序号', '学号', '姓名/昵称', '用户名', '邮箱', '报名时间']);
+    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2563EB' } };
+    headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+
+    (registrations || []).forEach((registration, index) => {
+      const row = worksheet.addRow([
+        index + 1,
+        safeSpreadsheetText(registration.student_id),
+        safeSpreadsheetText(registration.nickname || registration.username),
+        safeSpreadsheetText(registration.username),
+        safeSpreadsheetText(registration.email),
+        formatExportDateTime(registration.created_at),
+      ]);
+      row.alignment = { vertical: 'middle' };
+    });
+    worksheet.views = [{ state: 'frozen', ySplit: 4 }];
+    worksheet.autoFilter = { from: 'A4', to: 'F4' };
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const filename = `${exportFileName(activity.title)}-报名成员名单.xlsx`;
+    res.set({
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`,
+      'Content-Length': String(buffer.length),
+      'Cache-Control': 'no-store, max-age=0',
+      Pragma: 'no-cache',
+      Expires: '0',
+    });
+    return res.send(Buffer.from(buffer));
+  } catch (e) {
+    return next(e);
+  }
+});
+
 router.get('/activities/:id/registration-status', authenticateToken, async (req, res, next) => {
   try {
     const activityId = toInt(req.params.id, 0);

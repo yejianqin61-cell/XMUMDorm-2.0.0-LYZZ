@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { ArrowLeft, CalendarPlus2, Clock3, ExternalLink, Eye, Heart, ListTodo, MapPin, MessageCircle, Trash2, UsersRound } from 'lucide-react';
+import { ArrowLeft, CalendarPlus2, Clock3, Download, ExternalLink, Eye, Heart, ListTodo, MapPin, MessageCircle, Trash2, UsersRound } from 'lucide-react';
 import ReportButton from '../../components/ReportButton';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
@@ -12,6 +12,7 @@ import { Toast } from '../../context/ToastContext';
 import {
   cancelClubActivityRegistration,
   deleteClubActivity,
+  exportClubActivityRegistrations,
   getActivityDetail,
   registerClubActivity,
   toggleClubLike,
@@ -227,6 +228,22 @@ function ActivityDetail() {
     },
   });
 
+  const exportRegistrationsMut = useMutation({
+    mutationFn: async () => await exportClubActivityRegistrations(activityId),
+    onSuccess: ({ blob, filename }) => {
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = filename || '报名成员名单.xlsx';
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      Toast.success(isZh ? '报名成员名单已导出' : 'Registration list exported');
+    },
+    onError: (err) => Toast.error(getApiErrorMessage(err)),
+  });
+
   const timeText = useMemo(() => {
     if (!a?.time) return '';
     try {
@@ -361,6 +378,20 @@ function ActivityDetail() {
           >
             {todoMut.isPending ? (isZh ? '加入中…' : 'Adding…') : (isZh ? '加入待办' : 'Add to to-do')}
           </NeoButton>
+          {canManage ? (
+            <NeoButton
+              variant="outline"
+              size="sm"
+              className="activity-detail-utility-btn"
+              iconLeft={<Download size={16} aria-hidden />}
+              disabled={exportRegistrationsMut.isPending}
+              onClick={() => exportRegistrationsMut.mutate()}
+            >
+              {exportRegistrationsMut.isPending
+                ? (isZh ? '导出中…' : 'Exporting…')
+                : (isZh ? '导出报名名单' : 'Export registrations')}
+            </NeoButton>
+          ) : null}
         </div>
 
         {imageUrls.length > 0 ? (
