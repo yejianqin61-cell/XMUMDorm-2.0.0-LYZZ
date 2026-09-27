@@ -1,5 +1,6 @@
 const express = require('express');
 const supertest = require('supertest');
+const ExcelJS = require('exceljs');
 
 const mockUser = { id: 9, role: 'student' };
 const mockConn = {
@@ -53,6 +54,12 @@ function app() {
   return a;
 }
 
+function binaryParser(res, callback) {
+  const chunks = [];
+  res.on('data', (chunk) => chunks.push(chunk));
+  res.on('end', () => callback(null, Buffer.concat(chunks)));
+}
+
 describe('Clubs activity registration routes', () => {
   beforeEach(() => {
     mockUser.id = 9;
@@ -83,6 +90,59 @@ describe('Clubs activity registration routes', () => {
         count: 6,
         deadline: '2099-08-10 18:00:00',
       });
+    });
+  });
+
+  describe('GET /api/clubs/activities/:id/registrations/export', () => {
+    it('creates an XLSX response in memory for a site administrator', async () => {
+      mockUser.role = 'admin';
+      query
+        .mockResolvedValueOnce([{
+          id: 33,
+          club_id: 8,
+          title: 'Orientation Night',
+          start_time: '2099-08-10 16:00:00',
+          end_time: '2099-08-10 18:00:00',
+          location: 'Library',
+          club_name: 'Tech Club',
+        }])
+        .mockResolvedValueOnce([{
+          student_id: '0123456789',
+          username: 'alice',
+          nickname: '=Alice',
+          email: 'alice@example.test',
+          created_at: '2099-08-01 10:30:00',
+        }]);
+
+      const res = await supertest(app())
+        .get('/api/clubs/activities/33/registrations/export')
+        .buffer(true)
+        .parse(binaryParser);
+
+      expect(res.status).toBe(200);
+      expect(res.headers['content-type']).toContain('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      expect(res.headers['cache-control']).toContain('no-store');
+      expect(res.headers['content-disposition']).toContain('attachment');
+      expect(res.body.subarray(0, 2).toString()).toBe('PK');
+
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(res.body);
+      const worksheet = workbook.getWorksheet('报名成员');
+      expect(worksheet.getCell('A4').value).toBe('序号');
+      expect(worksheet.getCell('B5').value).toBe('0123456789');
+      expect(worksheet.getCell('C5').value).toBe("'=Alice");
+    });
+
+    it('does not expose registration data to ordinary members', async () => {
+      query
+        .mockResolvedValueOnce([{ id: 33, club_id: 8, title: 'Orientation Night', club_name: 'Tech Club' }])
+        .mockResolvedValueOnce([{ role: 'member' }]);
+
+      const res = await supertest(app()).get('/api/clubs/activities/33/registrations/export');
+
+      expect(res.status).toBe(403);
+      expect(res.body.message).toContain('社团管理员');
+      expect(query).toHaveBeenCalledTimes(2);
     });
   });
 
