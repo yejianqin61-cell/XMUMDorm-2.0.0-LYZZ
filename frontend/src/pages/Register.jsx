@@ -157,20 +157,22 @@ function Register() {
                   <input
                     id="reg-email"
                     type="text"
-                    placeholder={isZh ? '输入邮箱前缀' : 'Enter your email prefix'}
+                    placeholder={isZh ? '输入完整邮箱' : 'Enter your full email'}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     autoComplete="email"
                     disabled={loading}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pr-[7.5rem] text-[15px] text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 disabled:opacity-60"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-[15px] text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 disabled:opacity-60"
                   />
-                  {!email.includes('@') && (
-                    <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-[14px] font-medium text-slate-300">
-                      @xmu.edu.my
-                    </span>
-                  )}
                 </div>
-                <p className="pl-0.5 text-[11px] font-medium text-slate-400">{isZh ? '请使用以 @xmu.edu.my 结尾的校园邮箱' : 'Use your campus email ending with @xmu.edu.my'}</p>
+                {/*
+                  这里原本在输入框内右侧浮着一个灰色 @xmu.edu.my（text-slate-300，和 placeholder 同色阶），
+                  用户只填了前缀时会以为后缀已经写好，点“发送”却毫无反应（发送按钮对这种输入是 disabled）。
+                  改为下方给一行完整示例，后缀不再出现在输入区里，避免任何“已经填好”的错觉。
+                */}
+                <p className="pl-0.5 text-[11px] font-medium text-slate-400">
+                  {isZh ? '例如 CST2509054@xmu.edu.my' : 'e.g. CST2509054@xmu.edu.my'}
+                </p>
               </div>
               <InputField
                 id="reg-username"
