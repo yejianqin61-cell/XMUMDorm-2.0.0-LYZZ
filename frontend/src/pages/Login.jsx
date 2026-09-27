@@ -24,7 +24,10 @@ function Login() {
   const { handleExpResponse } = useExpFeedback();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = location.state?.from?.pathname || '/';
+  const fromLocation = location.state?.from;
+  const from = fromLocation
+    ? `${fromLocation.pathname || '/'}${fromLocation.search || ''}`
+    : '/';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
