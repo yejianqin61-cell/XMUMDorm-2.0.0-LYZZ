@@ -49,3 +49,56 @@
   font-weight: 700;
   cursor: pointer;
 }
+
+.publish-center-state,
+.publish-center-hint {
+  margin: 0;
+  color: var(--ui-text-secondary);
+  font-size: 14px;
+}
+
+.publish-center-state--error {
+  color: var(--color-danger, #c0392b);
+}
+
+.publish-center-clubs {
+  display: grid;
+  gap: 12px;
+}
+
+.publish-center-club-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--ui-border-soft);
+  border-radius: 8px;
+}
+
+.publish-center-club-name {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ui-text-primary);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.publish-center-club-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
+.publish-center-club-actions button {
+  padding: 7px 10px;
+  border: 1px solid var(--ui-border-soft);
+  border-radius: 6px;
+  background: var(--ui-surface, #fff);
+  color: var(--ui-text-primary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
