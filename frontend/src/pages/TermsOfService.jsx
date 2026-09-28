@@ -14,7 +14,7 @@ const CONTENT = {
       { title: '5. 免责声明', bullets: ['XMUMDorm 按“现状”提供，不保证服务不中断或无错误。', '二手市场交易风险由买卖双方自行承担。', '跑腿任务的完成质量和时效由任务执行者负责。', '我们不承担因使用本服务而产生的任何间接损失。'] },
       { title: '6. 账号管理', bullets: ['每人限注册一个账号。', '不得将账号出借或转让给他人。', '违反规定的账号可能被暂停或永久封禁。'] },
       { title: '7. 协议修改', paragraphs: ['我们可能会不时更新本协议。重大变更会通过 App 内公告或邮件通知。继续使用服务即表示接受修改后的条款。'] },
-      { title: '8. 联系我们', paragraphs: ['对本协议有任何疑问，请联系：'] },
+      { title: '8. 联系我们', paragraphs: ['对本协议有任何疑问，请通过微信联系我们：'] },
     ],
   },
   en: {
@@ -29,7 +29,7 @@ const CONTENT = {
       { title: '5. Disclaimer', bullets: ['XMUMDorm is provided “as is” without a guarantee of uninterrupted or error-free service.', 'Risks in second-hand transactions are borne by buyers and sellers.', 'The quality and timeliness of errands are the responsibility of the task performer.', 'We are not liable for indirect losses arising from use of the service.'] },
       { title: '6. Account Management', bullets: ['Each person may register only one account.', 'Accounts may not be lent, shared, or transferred to others.', 'Accounts that violate the rules may be suspended or permanently banned.'] },
       { title: '7. Changes to These Terms', paragraphs: ['We may update these terms from time to time. Major changes will be announced in the app or by email. Continued use of the service means you accept the updated terms.'] },
-      { title: '8. Contact Us', paragraphs: ['If you have any questions about these terms, please contact:'] },
+      { title: '8. Contact Us', paragraphs: ['If you have any questions about these terms, please contact us on WeChat:'] },
     ],
   },
 };
@@ -75,7 +75,7 @@ export default function TermsOfService() {
       ))}
 
       <p style={{ marginTop: 8 }}>
-        Email: <a href="mailto:yejianqin61@gmail.com" style={{ color: 'var(--accent)' }}>yejianqin61@gmail.com</a>
+        WeChat: <strong>xmumdorm666</strong>
       </p>
 
       <hr style={{ border: 'none', borderTop: '1px solid var(--post-ios-separator)', margin: '32px 0' }} />

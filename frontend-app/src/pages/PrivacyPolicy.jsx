@@ -13,7 +13,7 @@ const CONTENT = {
       { title: '信息共享', paragraphs: ['我们不会出售、出租或交易你的个人信息。'], bullets: ['在法律法规、司法或行政要求的必要范围内提供信息。', '向为本服务提供基础设施的服务商提供必要数据，包括 Railway 的应用托管与 Cloudflare R2 的图片对象存储。服务商仅按提供服务所需处理数据。'] },
       { title: '数据安全', bullets: ['密码以 bcrypt 哈希形式存储，不保存明文密码。', '网络通信使用 HTTPS 加密。', '你删除的内容不会再公开展示；数据处理仍可能受安全、审计或法律义务约束。'] },
       { title: '你的权利', bullets: ['你可在“我的”中查看和修改个人资料。', '你可删除自己发布的内容。', '你可在“我的”中选择“注销账号”自助停用账号。注销会立即结束登录且该账号无法再次登录；为维护平台安全、处理争议或履行法定义务，必要记录及已公开内容可能继续按本政策处理。'] },
-      { title: '联系我们', paragraphs: ['如对本隐私政策或个人信息处理有疑问，请通过以下邮箱联系：'] },
+      { title: '联系我们', paragraphs: ['如对本隐私政策或个人信息处理有疑问，请通过微信联系：'] },
     ],
   },
   en: {
@@ -27,7 +27,7 @@ const CONTENT = {
       { title: 'Information Sharing', paragraphs: ['We do not sell, rent, or trade personal information.'], bullets: ['When required by applicable law, judicial, or administrative requests.', 'With essential service providers, including Railway for application hosting and Cloudflare R2 for uploaded image storage. They process data only as needed to provide these services.'] },
       { title: 'Data Security', bullets: ['Passwords are stored using bcrypt hashing and never in plain text.', 'Network communications use HTTPS encryption.', 'Deleted content is no longer publicly shown, although necessary records may remain for security, audit, or legal obligations.'] },
       { title: 'Your Rights', bullets: ['You can review and edit your profile in My Zone.', 'You can delete content that you publish.', 'You can deactivate your account through “Deactivate account” in My Zone. This signs you out immediately and the account cannot sign in again. Necessary records and public content may still be handled under this policy for security, dispute handling, or legal obligations.'] },
-      { title: 'Contact Us', paragraphs: ['For questions about this policy or personal information, contact:'] },
+      { title: 'Contact Us', paragraphs: ['For questions about this policy or personal information, contact us on WeChat:'] },
     ],
   },
 };
@@ -48,7 +48,7 @@ export default function PrivacyPolicy() {
           {section.bullets?.length ? <ul style={{ paddingLeft: 20 }}>{section.bullets.map((bullet) => <li key={bullet}>{bullet}</li>)}</ul> : null}
         </section>
       ))}
-      <p style={{ marginTop: 8 }}>Email: <a href="mailto:yejianqin61@gmail.com" style={{ color: 'var(--accent)' }}>yejianqin61@gmail.com</a></p>
+      <p style={{ marginTop: 8 }}>WeChat: <strong>xmumdorm666</strong></p>
       <hr style={{ border: 'none', borderTop: '1px solid var(--post-ios-separator)', margin: '32px 0' }} />
       <Link to="/" style={{ display: 'inline-block', color: 'var(--accent)', textDecoration: 'none', fontSize: 15, marginBottom: 40 }}>{content.back}</Link>
     </div>

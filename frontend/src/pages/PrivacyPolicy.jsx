@@ -62,7 +62,7 @@ const CONTENT = {
       },
       {
         title: '联系我们',
-        paragraphs: ['如果你对隐私政策有任何疑问，请通过以下方式联系我们：'],
+        paragraphs: ['如果你对隐私政策有任何疑问，请通过微信联系我们：'],
       },
     ],
   },
@@ -126,7 +126,7 @@ const CONTENT = {
       },
       {
         title: 'Contact Us',
-        paragraphs: ['If you have any questions about this privacy policy, please contact us at:'],
+        paragraphs: ['If you have any questions about this privacy policy, please contact us on WeChat:'],
       },
     ],
   },
@@ -173,7 +173,7 @@ export default function PrivacyPolicy() {
       ))}
 
       <p style={{ marginTop: 8 }}>
-        Email: <a href="mailto:yejianqin61@gmail.com" style={{ color: 'var(--accent)' }}>yejianqin61@gmail.com</a>
+        WeChat: <strong>xmumdorm666</strong>
       </p>
 
       <hr style={{ border: 'none', borderTop: '1px solid var(--post-ios-separator)', margin: '32px 0' }} />
