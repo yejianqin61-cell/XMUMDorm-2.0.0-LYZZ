@@ -35,6 +35,7 @@
 
 .post-detail-carousel-arrow {
   position: absolute;
+  z-index: 31;
   top: 50%;
   transform: translateY(-50%);
   width: 40px;
