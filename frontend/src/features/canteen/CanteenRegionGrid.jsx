@@ -4,7 +4,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { getCanteenStrings } from '../../i18n/canteenStrings';
 import { getRegions } from '@shared/api/canteen';
 import { QK } from '@shared/query/queryKeys';
-import Card from '../../components/ui/Card';
+import NeoCard from '../../components/retroui/Card';
 import { NeoSkeleton } from '../../components/retroui/Skeleton';
 import EmptyState from '../../components/ui/EmptyState';
 import ErrorState from '../../components/ui/ErrorState';
@@ -53,18 +53,16 @@ export default function CanteenRegionGrid() {
             <Link
               key={r.id || r.code}
               to={`/eat/${r.code}`}
-              className="no-underline"
+              className="canteen-region-link"
             >
-              <Card className="flex flex-col items-center justify-center py-4 gap-2 hover:bg-muted cursor-pointer transition-colors">
-                <div className="w-14 h-14 flex items-center justify-center">
-                  <img
-                    src={REGION_ICONS[r.code] || '/OTHERS.png'}
-                    alt={regionLabel(r, t)}
-                    className="w-12 h-12 object-contain"
-                  />
-                </div>
-                <span className="text-sm font-semibold">{regionLabel(r, t)}</span>
-              </Card>
+              <NeoCard className="canteen-region-card flex flex-col items-center justify-center gap-1.5 hover:bg-muted cursor-pointer transition-colors">
+                <img
+                  src={REGION_ICONS[r.code] || '/OTHERS.png'}
+                  alt={regionLabel(r, t)}
+                  className="canteen-region-icon h-10 w-10 object-contain md:h-12 md:w-12"
+                />
+                <span className="canteen-region-name">{regionLabel(r, t)}</span>
+              </NeoCard>
             </Link>
           ))}
         </div>

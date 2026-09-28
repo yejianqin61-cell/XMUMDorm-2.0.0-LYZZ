@@ -95,25 +95,21 @@ function FoodForm({ categories = [], skipPrice = false, initialValues, onSubmit,
         />
       )}
 
-      {(categories.length > 0 || categories) && (
-        <div className="food-form-field">
-          {categories.length > 0 ? (
-            <Select
-              id="food-form-category"
-              label="菜品分类 Category"
-              required
-              value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
-              className="food-form-select-field"
-            >
-              {categories.map((c) => (
-                <option key={c.id} value={String(c.id)}>{c.name}</option>
-              ))}
-            </Select>
-          ) : (
-            <p className="food-form-category-hint">暂无分类，请先在“管理店铺”页点击“新建分类”创建。No category yet. Create one in Manage Store.</p>
-          )}
-        </div>
+      {categories.length > 0 ? (
+        <Select
+          id="food-form-category"
+          label="菜品分类 Category"
+          required
+          value={categoryId}
+          onChange={(e) => setCategoryId(e.target.value)}
+          className="food-form-select-field"
+        >
+          {categories.map((c) => (
+            <option key={c.id} value={String(c.id)}>{c.name}</option>
+          ))}
+        </Select>
+      ) : (
+        <p className="food-form-category-hint">还没有分类，请先创建分类。No category yet — create one first.</p>
       )}
 
       <div className="food-form-field">

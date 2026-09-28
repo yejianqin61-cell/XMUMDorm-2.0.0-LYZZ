@@ -1,14 +1,18 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Tag from '../../components/ui/Tag';
 import FilterBar from '../../components/templates/FilterBar';
 import { useLanguage } from '../../context/LanguageContext';
 import { listCourseReviews } from '@shared/api/handbook';
+import { flattenPages, nextPageParamFrom } from '@shared/utils/infiniteList';
 import { QK } from '@shared/query/queryKeys';
 import './Handbook.css';
+
+/** 后端 pageSize 上限是 30，这里按页取 20 并逐页累加（线上已有 400+ 条） */
+const PAGE_SIZE = 20;
 
 function CourseReviewPage() {
   const { lang } = useLanguage();
@@ -17,14 +21,21 @@ function CourseReviewPage() {
   const [tags, setTags] = useState([]);
   const filterTags = ['MPU', 'GE', 'ME', 'required', 'final', 'no final'];
 
-  const query = useQuery({
+  // 必须用无限查询：接口是分页的（返回 hasMore），只取第一页会把列表硬顶在 20 条，
+  // 库里 400+ 条也永远只能看到 20 条。筛选条件变化时 queryKey 变化 → 分页自动重置。
+  const query = useInfiniteQuery({
     queryKey: QK.courseReviews({ q, tags }),
-    queryFn: () => listCourseReviews({ q, tags, page: 1, pageSize: 20 }),
+    queryFn: async ({ pageParam }) => {
+      const data = await listCourseReviews({ q, tags, page: pageParam, pageSize: PAGE_SIZE });
+      return { list: data?.list || [], hasMore: !!data?.hasMore, page: pageParam };
+    },
+    initialPageParam: 1,
+    getNextPageParam: nextPageParamFrom,
+    placeholderData: (prev) => prev,
     staleTime: 15 * 1000,
-    select: (d) => d || { list: [], hasMore: false },
   });
 
-  const list = useMemo(() => query.data?.list || [], [query.data]);
+  const list = useMemo(() => flattenPages(query.data?.pages), [query.data]);
 
   return (
     <div className="handbook-page">
@@ -120,6 +131,17 @@ function CourseReviewPage() {
             </Link>
           ))}
         </div>
+
+        {query.hasNextPage ? (
+          <button
+            type="button"
+            className="handbook-loadmore"
+            onClick={() => query.fetchNextPage()}
+            disabled={query.isFetchingNextPage}
+          >
+            {query.isFetchingNextPage ? (isZh ? '加载中…' : 'Loading…') : (isZh ? '加载更多' : 'Load more')}
+          </button>
+        ) : null}
 
         {!query.isFetching && list.length === 0 ? (
           <div className="handbook-mini-empty">{isZh ? '暂无课程测评' : 'No reviews yet'}</div>

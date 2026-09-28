@@ -19,26 +19,28 @@
   --color-border: var(--ru-border);
   --color-popover: var(--ru-popover);
   --color-input: var(--ru-input);
+  --color-black: var(--ru-black);
 }
 
 :root {
   --radius: 0;
-  --ru-background: #f5ece7;
-  --ru-foreground: #000;
-  --ru-card: #fff;
-  --ru-card-foreground: #000;
-  --ru-primary: #ffdb33;
-  --ru-primary-hover: #ffcc00;
-  --ru-primary-foreground: #000;
-  --ru-secondary: #000;
-  --ru-secondary-foreground: #fff;
-  --ru-muted: #d5d5d5;
-  --ru-popover: #fff;
-  --ru-muted-foreground: #5a5a5a;
-  --ru-accent: #fae583;
-  --ru-accent-foreground: #000;
-  --ru-destructive: #e63946;
-  --ru-destructive-foreground: #fff;
-  --ru-border: #000;
-  --ru-input: #fff;
+  --ru-background: #F5EFEA;
+  --ru-foreground: #122E8A;
+  --ru-card: #FFF;
+  --ru-card-foreground: #122E8A;
+  --ru-primary: #122E8A;
+  --ru-primary-hover: #0F2570;
+  --ru-primary-foreground: #FFF;
+  --ru-secondary: #122E8A;
+  --ru-secondary-foreground: #FFF;
+  --ru-muted: #D6DDF0;
+  --ru-popover: #FFF;
+  --ru-muted-foreground: #4A5A8A;
+  --ru-accent: #D6DDF0;
+  --ru-accent-foreground: #122E8A;
+  --ru-destructive: #E63946;
+  --ru-destructive-foreground: #FFF;
+  --ru-border: #122E8A;
+  --ru-input: #FFF;
+  --ru-black: #122E8A;
 }

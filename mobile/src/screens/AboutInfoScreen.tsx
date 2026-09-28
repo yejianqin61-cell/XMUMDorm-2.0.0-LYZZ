@@ -43,23 +43,15 @@ export default function AboutInfoScreen({ onBack }: { onBack: () => void }) {
           <View style={s.card}>
             <Text style={s.title}>联系我们</Text>
             <Text style={s.content}>
-              如果您有任何问题、建议或反馈，欢迎通过以下方式联系我们：{'\n\n'}
+              如果您有任何问题、建议或反馈，欢迎通过微信联系我们：{'\n\n'}
             </Text>
             <View style={s.contactItem}>
               <Text style={s.contactLabel}>微信</Text>
-              <Text style={s.contactValue}>YEJIANQIN_git</Text>
-            </View>
-            <View style={s.contactItem}>
-              <Text style={s.contactLabel}>电话</Text>
-              <Text style={s.contactValue}>01115078663</Text>
-            </View>
-            <View style={s.contactItem}>
-              <Text style={s.contactLabel}>邮箱</Text>
-              <Text style={s.contactValue}>yejianqin61@gmail.com</Text>
+              <Text style={s.contactValue}>xmumdorm666</Text>
             </View>
             <Text style={[s.content, { marginTop: 16 }]}>
               欢迎同学们提供反馈建议，也欢迎有兴趣的同学加入开发团队！{'\n\n'}
-              商家如需认领或修改店铺信息，也可通过以上方式联系。
+              商家如需认领或修改店铺信息，也可通过微信联系。
             </Text>
           </View>
         )}

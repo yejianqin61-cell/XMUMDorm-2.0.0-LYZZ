@@ -10,7 +10,7 @@ const CONTENT = {
       {
         title: '引言',
         paragraphs: [
-          'XMUMDorm（厦马小筑 / Jack Dorm）重视你的隐私。本隐私政策说明我们如何收集、使用和保护你的个人信息。',
+          'XMUMDorm（厦马小筑）重视你的隐私。本隐私政策说明我们如何收集、使用和保护你的个人信息。',
           '使用 XMUMDorm 即表示你同意本隐私政策的条款。',
         ],
       },
@@ -62,7 +62,7 @@ const CONTENT = {
       },
       {
         title: '联系我们',
-        paragraphs: ['如果你对隐私政策有任何疑问，请通过以下方式联系我们：'],
+        paragraphs: ['如果你对隐私政策有任何疑问，请通过微信联系我们：'],
       },
     ],
   },
@@ -74,7 +74,7 @@ const CONTENT = {
       {
         title: 'Introduction',
         paragraphs: [
-          'XMUMDorm (Jack Dorm) values your privacy. This policy explains how we collect, use, and protect your personal information.',
+          'XMUMDorm values your privacy. This policy explains how we collect, use, and protect your personal information.',
           'By using XMUMDorm, you agree to the terms of this privacy policy.',
         ],
       },
@@ -126,7 +126,7 @@ const CONTENT = {
       },
       {
         title: 'Contact Us',
-        paragraphs: ['If you have any questions about this privacy policy, please contact us at:'],
+        paragraphs: ['If you have any questions about this privacy policy, please contact us on WeChat:'],
       },
     ],
   },
@@ -173,7 +173,7 @@ export default function PrivacyPolicy() {
       ))}
 
       <p style={{ marginTop: 8 }}>
-        Email: <a href="mailto:yejianqin61@gmail.com" style={{ color: 'var(--accent)' }}>yejianqin61@gmail.com</a>
+        WeChat: <strong>xmumdorm666</strong>
       </p>
 
       <hr style={{ border: 'none', borderTop: '1px solid var(--post-ios-separator)', margin: '32px 0' }} />

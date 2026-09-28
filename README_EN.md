@@ -47,4 +47,4 @@ Visit [XMUMDorm on the web](https://xmumdorm-200-lyzz-production.up.railway.app)
 
 ## Feedback
 
-Use the in-app Contact Us entry or email `yejianqin61@gmail.com` for questions and feedback.
+Use the in-app "Join Us" page or the official WeChat ID `xmumdorm666` for questions and feedback.

@@ -48,14 +48,15 @@
 | 7 | 审核策略 | **先发后审**：复用 `sensitiveWordFilter` + `checkSanction`，事后靠举报与管理后台处理 |
 | 8 | 互动能力 | 点赞 + 评论/回复（一级评论 + 一层回复，即「二级」）。**不做**浏览量，**不做**经验值/等级联动 |
 | 9 | 入口位置 | Web 左侧导航列（`SITE_PRIMARY_NAV_ITEMS`）**置顶新增**一项 |
-| 10 | 单篇形态 | 中间列一屏一篇；点击卡片或按 Enter → **同页展开评论区面板**，不切换路由 |
-| 11 | 键盘控制 | ↑/← 上篇，↓/→ 下篇，Home/End 首末，Enter/空格 开评论区，Esc 关；焦点在输入框时完全让位 |
+| 10 | 单篇形态 | 中间列一屏一篇；点击评论或按 Enter → **悬浮居中的评论弹窗**，不切换路由 |
+| 11 | 键盘控制 | ↑/← 上篇，↓/→ 下篇，Home/End 首末，Enter/空格 开评论区，Esc 关；焦点在输入框或按钮/链接上时让位 |
 | 12 | 翻页动效 | **纵向滑动**（沿 Y 轴推入推出） |
+| 13 | 一屏一篇高度 | `--cf-pager-height: 88vh`（窄屏 82vh）。V1.1 从 72vh 加高 |
 
 补充事实（来自仓库勘察，非决策）：
 
 - Web 端由 `SiteShellRoute` 按视口宽度分派：`< 768px` 走移动 `Layout`，`≥ 768px` 走桌面三栏 `SiteWebShell`。**本期只保证桌面/平板路径**，移动端沿用同一路由、同一单列布局（不保证键盘交互）。
-- `docs/CONTEXT.md` 规定主题内容（Topic Content）必须留在 Topic Column，禁止在其内部另开右栏。因此评论区以**面板**形式在中间列内展开，而非塞进 Auxiliary Column。
+- `docs/CONTEXT.md` 规定主题内容（Topic Content）必须留在 Topic Column，禁止在其内部另开右栏。V1.0 曾把评论区做成中间列内**向下展开的面板**；V1.1 改为**悬浮居中弹窗**——它是覆盖层（overlay），既不新增栏位、也不把评论挪进 Auxiliary Column，因此同样满足 `CONTEXT.md` 的约束，同时不再挤压缩短翻页视口。
 - 仓库已有 `shared/utils/nestComments.js`，其「一级 + `replies` 数组」的扁平嵌套约定可直接复用。
 
 ---
@@ -358,7 +359,8 @@ export function getTemplate(key) {
 | `frontend/src/components/confession/templates/LetterBody.jsx` | 信笺卡正文 |
 | `frontend/src/components/confession/templates/NoteBody.jsx` | 便签卡正文 |
 | `frontend/src/components/confession/ConfessionPager.jsx` | 纵向滑动轨道（翻页动效） |
-| `frontend/src/components/confession/ConfessionCommentPanel.jsx` | 同页展开的评论区面板 |
+| `frontend/src/components/confession/ConfessionCommentPanel.jsx` | 评论弹窗（`createPortal` 到 `body`，悬浮居中） |
+| `shared/utils/focusTrap.js` | 焦点陷阱纯逻辑（可聚焦选择器 + Tab 环绕决策） |
 | `frontend/src/api/confessions.js` | API 封装（复用 `shared/api/request.js`） |
 
 放在 `components/confession/` 子目录，是因为 `frontend/src/components/` 根目录已堆积约 60 个文件；仓库已有 `components/Admin/`、`components/shell/`、`components/templates/` 的子目录先例。
@@ -391,12 +393,16 @@ commentsOpen: boolean     // 评论区面板是否展开
 | `ArrowDown` / `ArrowRight` | 下一篇（更旧） |
 | `Home` | 跳到窗口最新一篇 |
 | `End` | 跳到窗口最旧一篇 |
-| `Enter` / `Space` | 展开评论区面板（若已展开则聚焦评论输入框） |
-| `Esc` | 关闭评论区面板；面板已关时无操作（**不**触发路由导航） |
+| `Enter` / `Space` | 展开评论区弹窗（若已展开则聚焦评论输入框） |
+| `Esc` | 关闭评论区弹窗；弹窗已关时无操作（**不**触发路由导航） |
 
-**焦点让位规则（关键）**：若 `document.activeElement` 是 `INPUT` / `TEXTAREA` / `[contenteditable]`，则**仅**放行 `Esc`，其余一律不拦截，让浏览器原生行为生效（在评论框里按方向键应移动光标，按空格应输入空格）。
+**焦点让位规则（关键）**：若 `document.activeElement` 是 `INPUT` / `TEXTAREA` / `SELECT` / `[contenteditable]`，则**仅**放行 `Esc`，其余一律不拦截，让浏览器原生行为生效（在评论框里按方向键应移动光标，按空格应输入空格）。
 
-以下情况一律不做任何处理：`e.metaKey || e.ctrlKey || e.altKey` 组合键、事件已被 `defaultPrevented`、`e.repeat` 的极速连按（允许但做节流：两帧内只响应一次，防止动效撕裂）。
+**可激活元素让位规则（V1.1 补）**：若 `document.activeElement` 是 `BUTTON` / `A` / `SUMMARY`，则 `Enter` / `Space` 视为「激活该元素」，同样不拦截——否则在翻页按钮上按回车会被抢成「展开评论区」，把按钮自身的点击吃掉（V1.0 的真实缺陷）。**方向键与 `Home` / `End` 不受此限**：焦点停在按钮上按 ↓ 仍应翻页。
+
+以下情况一律不做任何处理：`e.metaKey || e.ctrlKey || e.altKey` 组合键、事件已被 `defaultPrevented`。
+
+**监听范围**：翻页监听器挂在墙容器（`tabIndex={-1}`）上，**不挂 `window`**；而评论弹窗被 portal 到 `body`、事件不再冒泡到墙容器，因此弹窗自己挂 `window` 监听处理 `Esc` 与 `Tab`（见 §7.5）。两者作用域天然不重叠。
 
 无障碍：容器 `role="region"` + `aria-label="万能墙"`，翻页按钮为真实 `<button>`（键盘用户与鼠标用户等价），当前篇状态通过 `aria-live="polite"` 播报「第 n 篇」。
 
@@ -404,38 +410,67 @@ commentsOpen: boolean     // 评论区面板是否展开
 
 沿用仓库既有 `Layout.jsx` 的 `translate` 手法，但改为纵向：
 
-- 结构：`.confession-pager__track` 内并列若干 `.confession-pager__pane`，通过 `transform: translateY(-${index * 100}%)` 切换
+- 结构：`.cf-pager__viewport`（**确定高度** `H = var(--cf-pager-height)`，`overflow: hidden`）内放 `.cf-pager__track`，track 用 `transform: translateY(calc(-1 * index * H))` 位移；每个 `.cf-pager__pane` 绝对定位在 `top: calc(i * H)`，并**显式 `height: H`**
+- **不用百分比**：父高由 `min-height` 撑开时，百分比高度会退化为 `auto`，导致单个 pane 撑满整条 track。因此统一走确定高度变量（`ConfessionPager.jsx` 的 `PAGER_PANE_HEIGHT` 与 CSS 必须同步）
+- **pane 必须显式给 height**（V1.1 修复）：V1.0 只写了 `top`、漏了 `height`，于是 pane 高度退化为内容高度，卡片上的 `min-height: 100%` 失去参照 → 卡片只有内容那么高、视口下方留出大片空白。这是「高度加了但看不出变化」的真正原因
+- **控制条与边界提示放在视口上方**（V1.1 修复）：`88vh` 的一屏一篇必然让页面可滚动，控制条留在视口下方会落到折叠线以外（1440×900 实测视口底 y=1058、控制条 y=1070，**任何常见屏幕都看不到翻页按钮**）。控制条移至上方的同时，两个翻页按钮分别贴左右两端（`justify-content: space-between` + `.cf-pager__center` 承载序号与「最新/最旧」）
+- 高度取值：桌面 `88vh`、窄屏 `82vh`（V1.1 由 72vh / 68vh 加高；详见 §17.2 关于「为什么没有封顶在视口内」的实测）
 - 过渡：`transform 380ms cubic-bezier(0.22, 1, 0.36, 1)`（与仓库其他动效的缓动风格一致，偏「快出慢入」）
 - 非当前屏 `opacity: 0.35` + `scale(0.97)`，当前屏 `opacity: 1` + `scale(1)`
 - 仅对 `transform` / `opacity` 做动画，走 GPU 合成，避免重排
 - **必须**包 `@media (prefers-reduced-motion: reduce)` 降级为无位移的纯透明度切换
-- 翻页期间 `pointer-events: none` 于轨道上，防止快速连点选错目标
+- 非当前屏 `pointer-events: none`，防止快速连点选错目标
 
 ### 7.5 页面布局
 
 ```
 ┌─ 中间列（Topic Column） ────────────────────┐
-│ 万能墙   [ 第 3 篇 / 共 137 篇 ]   [投稿]    │  ← 页头 + 计数器 + 主操作
+│ 万能墙   [ ↑↓ 翻页 · Enter 评论 ]  [投稿]    │  ← 页头 + 键盘提示 + 主操作
 │                                              │
-│  ┌──────────── 卡片（一屏一篇） ───────────┐  │
+│  ┌──────────── 卡片（一屏一篇 · 88vh）─────┐  │
 │  │  [版式渲染的正文区]                      │  │
 │  │  ─────────────────────────              │  │
 │  │  匿名 · 2 小时前     ♡ 12   💬 3   ⋯    │  │  ← 互动行（点赞/评论/举报）
 │  └─────────────────────────────────────────┘  │
 │                                              │
-│  ┌─ 评论区面板（点击卡片 / Enter 展开）────┐  │
-│  │  评论列表（一级 + 回复）                 │  │
-│  │  [ 写下你的评论…            ] [发送]     │  │
-│  └─────────────────────────────────────────┘  │
-│                                              │
-│           ▲ 上篇   ▼ 下篇                     │  ← 可见的翻页按钮（键盘等价物）
+│           ▲ 上篇   3 / 137   ▼ 下篇           │  ← 可见的翻页按钮（键盘等价物）
 └──────────────────────────────────────────────┘
+
+        ↓ 点击 💬 / 按 Enter（不切路由）
+
+      ╔═══ 悬浮居中弹窗（portal 到 body）═══╗
+      ║ 评论 ③                            ✕ ║
+      ║ ┌─────────────────────────────────┐ ║  ← 标题固定
+      ║ │ 匿名 · 2 小时前                  │ ║
+      ║ │ 我也是这么想的                    │ ║  ← 只有列表区滚动
+      ║ │   匿名 · 1 小时前                 │ ║
+      ║ │   加油！                          │ ║
+      ║ └─────────────────────────────────┘ ║
+      ║ [ 以匿名身份写下你的评论… ]  [发送]  ║  ← 输入框固定
+      ╚═══════════════════════════════════════╝
+        Esc / ✕ / 点击遮罩关闭
 ```
 
 - 卡片限宽居中 `min(720px, 100%)`，避免宽屏下单行文字过长影响阅读
-- 评论区面板在同一列内**向下展开**（非叠加层），展开时页面滚动到面板顶部；这满足 `CONTEXT.md` 对「评论属于 Topic Content」的定义
-- 空态：墙为空时显示引导文案 + 「写下第一篇」按钮（复用 `components/ui/EmptyState.jsx`）
+- 评论弹窗宽 `min(680px, 100%)`、高 `min(84dvh, 780px)`，`z-index: 2000`（高于站点外壳 ≤200 与业务弹窗 ≤1300，低于 Toast 10000）；只有评论列表区滚动，标题与输入框常驻
+- 空态：墙为空时显示引导文案 + 「写下第一篇」按钮
 - 骨架/错误态：复用 `components/ui/PageSkeleton.jsx`、`components/ui/ErrorState.jsx`
+
+### 7.5.1 评论弹窗的无障碍实现（V1.1）
+
+弹窗 portal 到 `body` 后，键盘事件不再冒泡到墙容器，以下三件事必须在弹窗内部自己完成：
+
+| 事项 | 实现 |
+|------|------|
+| 语义 | `role="dialog"` + `aria-modal="true"` + `aria-labelledby`；入口按钮带 `aria-haspopup="dialog"` / `aria-expanded` |
+| 关闭 | `Esc`、右上角 ✕、点击遮罩三者等价。遮罩关闭要求 **mousedown 与 click 都落在遮罩本身**，避免「从弹窗内拖选文字到外面松手」被误判为点击遮罩 |
+| 焦点 | 打开时锁 `body` 滚动并把焦点送进弹窗（已登录 → 输入框；未登录 → 关闭按钮）；`Tab` / `Shift+Tab` 在弹窗内环绕（决策逻辑在 `shared/utils/focusTrap.js`，已单测）；关闭时把焦点**还给打开它的那个元素** |
+| 更深的浮层 | 弹窗内的举报入口（`ReportButton`）会自绘一层 `position: fixed` 覆盖层。检测到「事件目标到弹窗根之间存在 `position: fixed` 祖先」时，`Esc` 让给那一层，不整层关闭 |
+
+**已知局限**：
+
+1. `Tab` 环绕收集的是弹窗内全部可见可聚焦元素，举报浮层打开时不会把焦点限制在举报浮层内部（仓库既有的 `ReportButton` 自身没有焦点管理，改造它超出本模块范围）。
+2. **背景滚动锁只作用于 `document.body`。** 桌面 / 平板外壳（`app-layout--desktop-shell`）的滚动容器是文档本身，锁 `body` 有效；移动端外壳（`Layout mode="mobile"`）的滚动容器是 `.app-main`（`overflow: auto`），锁 `body` 拦不住它——在移动端于遮罩上滑动仍可滚到背景。本期移动端本就明确不保证（见 §2 补充事实），故未做「向上遍历可滚动祖先逐个上锁」的通用实现；如需支持，那才是正确做法。
 
 ### 7.6 数据获取
 
@@ -745,3 +780,159 @@ DDL 会触发隐式提交。结果三张表被**真实创建**，`ROLLBACK` 未�
 - **保留（推荐）**：表为空、结构正确、功能立即可用，且下次部署无需再迁移。
 - **删除以让迁移系统接管**：`DROP TABLE confession_comments, confession_likes, confessions;`
   之后重新走 `npm run migrate:all`。数据为空，无损失。
+
+---
+
+## 17. 迭代记录：V1.1（卡片加高 + 评论改为悬浮弹窗）
+
+需求方两条要求：**① 万能墙的高度高 1.5 倍；② 评论区改为悬浮居中弹窗。**
+
+### 17.1 变更清单
+
+| 文件 | 改动 |
+|------|------|
+| `frontend/src/pages/ConfessionWall.css` | `--cf-pager-height` 72vh → **88vh**（窄屏 68vh → 82vh）；`.cf-comments` 由同页面板改为 `position: fixed` 遮罩 + 居中弹窗；新增 `.cf-comments__body`（只有列表区滚动）；强调色变量在 `.cf-comments-backdrop` 上重新声明；动效降级覆盖遮罩 |
+| `frontend/src/components/confession/ConfessionCommentPanel.jsx` | 改为 `createPortal` 到 `body` 的模态对话框：滚动锁、焦点捕获与归还、`Esc` / `Tab` 自处理、遮罩点击（mousedown+click 双判定）、更深的浮层让位 |
+| `frontend/src/components/confession/ConfessionPager.jsx` | 兜底值同步为 `88vh` |
+| `frontend/src/components/confession/ConfessionCard.jsx` | 评论按钮补 `aria-haspopup="dialog"` / `aria-expanded` |
+| `frontend/src/pages/ConfessionWall.jsx` | 传入 `commentsOpen`；键盘提示文案改为「Esc 关闭弹窗」 |
+| `shared/utils/focusTrap.js` | **新增**：焦点陷阱纯逻辑（选择器 + Tab 环绕决策） |
+| `shared/utils/confessionKeyboard.js` | 新增「可激活元素让位」规则（见 §17.3） |
+
+### 17.2 关于「高度加高 1.5 倍」：实测与结论
+
+需求方在追问下选择了「加高但封顶在视口内」。**实测后该选项在本仓库的布局下不成立**，理由如下。
+
+`.cf-pager__viewport` 之外，页面还占用了固定的垂直空间：
+
+| 占用项 | 高度 |
+|--------|------|
+| `SiteWebShell` 顶栏 `.site-web-shell__header` | 120px（`min-height`） |
+| `.site-web-shell__body` 上下内边距 | 24 + 40 = 64px |
+| `.cf-wall` 上下内边距 | 16 + 32 = 48px |
+| `.cf-wall__header`（标题 + 副标题） | ≈ 61px |
+| `.cf-wall` 两处 `gap` | 2 × 16 = 32px |
+| 翻页控制条（40px）+ gap（12px） | 52px |
+| **合计** | **≈ 377px** |
+
+于是「一屏之内（含控制条）能完整看到一张卡片」的上限是 `calc(100dvh - 377px)`：
+
+| 视口高 | 封顶算法结果 | 旧值 72vh | 
+|--------|--------------|-----------|
+| 800px | 423px（53vh） | 576px |
+| 900px | 523px（58vh） | 648px |
+| 1080px | 703px（65vh） | 778px |
+| 1300px | 923px（71vh） | 936px |
+
+`min(88vh, calc(100dvh - 377px))` 只有在 `dvh ≥ 3142px` 时才会取到 `88vh`——即**在任何真实屏幕上，封顶算法都比旧值 72vh 更矮**。原因是 377px 的固定开销要求视口高约 1300px 才刚好等于 72vh；换言之，V1.0 的 72vh 本来就已经略微超出一屏（页面本来就可滚动）。
+
+**裁定：以「加高」为准，取 88vh，接受页面滚动。** 即 V1.0 的 72vh → 88vh（约 1.22 倍，卡片可见高度显著增加）。若日后确要严格「一篇一屏不滚动」，正确做法不是压低卡片，而是**削减 377px 的固定开销**（压缩墙自身页头、把翻页控制做成叠加层、或对 `/confession` 隐藏站点顶栏），属独立议题。
+
+> 需求原文的「1.5 倍」若字面执行应为 108vh——那会让卡片高度超过屏幕、必须内部滚动才能读完，且翻页位移大于一屏。因此未采用；如需 1.5 倍字面值，只需把 `--cf-pager-height` 改为 `108vh` 一行。
+
+### 17.3 顺带修掉的 V1.0 缺陷：按钮上的 Enter / Space 被抢
+
+V1.0 的键盘规则只定义了「输入框内让位」，没有考虑 `BUTTON` / `A`。结果是：键盘用户把焦点移到「下篇」按钮上按 `Enter`，事件被墙容器的监听器 `preventDefault()` 并解释为「展开评论区」——**按钮自身的点击被吃掉**。
+
+V1.1 增加规则 3（§7.3）：焦点在 `BUTTON` / `A` / `SUMMARY` 上时，`Enter` / `Space` / `Spacebar` 一律返回 `null`（交回原生激活）。方向键与 `Home` / `End` 不受限，按钮上按 ↓ 仍翻页。已补 4 组表驱动测试。
+
+### 17.4 测试与验证
+
+| 测试 | 覆盖 |
+|------|------|
+| `__tests__/frontend/focusTrap.test.js`（新增，16 例） | Tab 环绕决策：中间位置交回浏览器、首尾环绕、焦点在容器外、无可聚焦元素、选择器排除 disabled |
+| `__tests__/frontend/confessionCommentModal.test.js`（新增，19 例） | 结构断言：portal 到 body、`role="dialog"`/`aria-modal`、滚动锁与恢复、焦点归还、`Esc`/`Tab` 自处理、更深的浮层让位、遮罩双判定、可见性过滤；样式断言：遮罩 fixed 居中、`z-index: 2000`、强调色重新声明、限高与列表滚动、动效降级；高度断言：88vh / 82vh / 兜底值一致 |
+| `__tests__/frontend/confessionKeyboard.test.js`（+9 例） | 规则 3：可激活元素上 Enter/Space 让位，方向键不受限 |
+| 既有 `confessionWindow` / `confessions` 路由测试 | 未受影响，全部通过 |
+
+### 17.5 未验证项（需真机确认）
+
+- 弹窗在移动端软键盘弹出时的实际表现（`max-height` 已用 `dvh`，但真机行为需目视）
+- 遮罩 `backdrop-filter: blur(3px)` 在低端安卓上的性能
+- 88vh 卡片在 1366×768 等矮屏上的观感（数学上页面必然可滚动）
+
+---
+
+## 18. 迭代记录：V1.2（翻页按钮移出折叠线）
+
+需求：**「左右翻页的那个按钮被挡住了，可以各自将按钮左右平移」**（1440×900 桌面浏览器实测）。
+
+### 18.1 复现与根因
+
+在浏览器里量出来的结果：
+
+| 元素 | 修复前 | 说明 |
+|------|--------|------|
+| `.cf-pager__viewport` | y=266 → 1058（h=792，88vh） | 一屏一篇的视口 |
+| `.cf-pager__controls` | **y=1070** | 视口下方，**在 900px 的折叠线以外** |
+| `.cf-pager__pane`（当前篇） | **h=412.5** | ⚠️ 只有内容那么高 |
+| `.cf-card` | **h=404.5** | 视口 792px 里只占 412px，下面 380px 是空白 |
+
+两个独立缺陷叠在一起：
+
+1. **控制条落在视口下方。** `页面高度 = 外壳 377px + 88vh`，所以在**任何**常见屏幕上控制条都在折叠线以下。用户必须滚动才能看到翻页按钮——这就是「被挡住了」。
+   用 `document.elementsFromPoint` 对按钮中心做命中测试，栈里只有 `svg / button / .cf-pager__controls / .cf-pager`，**没有任何元素覆盖它**，所以不是层叠遮挡，是几何位置问题。
+2. **`.cf-pager__pane` 漏了 `height`。** §7.4 写的是「pane 高度同为 H」，但 CSS 只给了 `top: calc(i * H)`。pane 高度因此退化为内容高度，卡片上的 `min-height: 100%` 失去参照 → 卡片只有 404px。**这才是「高度加了 1.22 倍却看不出变化」的真正原因**（88vh 只是把空白区域加高了）。
+
+### 18.2 改动
+
+| 文件 | 改动 |
+|------|------|
+| `frontend/src/components/confession/ConfessionPager.jsx` | 控制条与边界提示移到视口**之前**（DOM 顺序）；两个翻页按钮改用 `.cf-pager__btn--prev` / `--next` 并分别置于控制条两端，中间新增 `.cf-pager__center` 承载序号与「最新/最旧」 |
+| `frontend/src/pages/ConfessionWall.css` | `.cf-pager__pane` 补 `height: var(--cf-pager-height)`；`.cf-pager__controls` 由 `justify-content: center` 改为 `space-between`；新增 `.cf-pager__center`；移除 `.cf-pager__jumps` 的 `margin-left` |
+
+### 18.3 修复后实测（1440×900）
+
+| 元素 | 修复后 |
+|------|--------|
+| `.cf-pager__controls` | **y=266**（折叠线以上，无需滚动） |
+| 上篇按钮 | x=**329**（最左） |
+| 序号 / 最新 / 最旧 | x≈620–790（居中分组） |
+| 下篇按钮 | x=**1015**（最右） |
+| `.cf-pager__pane` | h=**792**（= 视口高度） |
+| `.cf-card` | h=**784**（真正撑满一屏，此前 404） |
+
+### 18.4 ⚠️ 已知取舍：88vh 下卡片底部的互动行仍在折叠线外
+
+卡片现在会撑满 792px，因此卡片**底部**（`匿名 · 时间` 元信息行与 `♡ / 💬` 互动行）落在折叠线以下，需要向下滚一点才能点赞/评论。
+
+这是 §17.2 「加高」与「一屏看全」互斥的直接后果，不是新缺陷。若要让**整张卡片连互动行**都在一屏内，实测可用值：
+
+```
+--cf-pager-height: 62vh;   /* 1440×900 下卡片 ≈558px，仍是 V1.0 实际可见高度 404px 的 1.38 倍 */
+```
+
+推导：卡片顶部固定在 y≈318px（外壳 120 + 页面留白 24 + 墙内边距 16 + 页头 61 + gap + 控制条 52），
+要让卡片底部不越过折叠线需 `0.62 × H ≤ H − 318`，即**视口高 ≥ 837px 时成立**。
+**是否采用由产品负责人裁定**；当前保留 88vh（需求方此前明确选择的更高值）。
+
+### 18.5 追加修复：悬停在中间列上时整页无法滚动
+
+需求：「鼠标 hover 在中间列的时候，无法向下滚动」。
+
+**复现**（1440×900，dev server，用真实滚轮事件而不是推断）：
+
+| 量 | 值 |
+|----|----|
+| `documentElement.scrollHeight` | 1207 |
+| `window.innerHeight` | 900 |
+| `.cf-pager__pane` 的 `scrollHeight` / `clientHeight` | **792 / 792**（没有内部溢出） |
+| `.cf-pager__pane` 的 `overscroll-behavior-y` | **`contain`** ← 元凶 |
+| 鼠标移到卡片上（692,700）滚轮 400px 后 `window.scrollY` | **0**（没动） |
+
+**根因**：`.cf-pager__pane` 是滚动容器（`overflow-y: auto`），而 `overscroll-behavior: contain`
+的语义是「滚到头也不许把滚动链传给祖先」。pane 在 88vh 下**恰好没有内部溢出**，
+于是滚轮事件被它吞掉、页面又拿不到 → 悬停在中间列上时整页滚不动。
+而 `88vh + 外壳约 377px` 必然让页面可滚动（本例 1207 > 900），两者直接冲突。
+
+**修复**：删掉 `.cf-pager__pane` 的 `overscroll-behavior: contain`（回到默认 `auto`）。
+滚动链恢复：pane 没有溢出时滚轮直接滚页面；长文（信笺版式）时先滚 pane、到底后接续滚页面，都是期望行为。
+`.cf-comments__body` 上的 `contain` **保留**——那里背景滚动本来就被弹窗锁着，语义正确。
+
+**修复后实测**：`overscroll-behavior-y` = `auto`；鼠标在卡片上滚轮 400px → `scrollY` = **307**
+（即滚到 1207−900 的底部）；悬停在左侧导航上同样 = 307。
+
+**教训**：`overscroll-behavior: contain` 用在「可能没有溢出」的滚动容器上会静默吞掉滚轮事件。
+给元素加 `overflow: auto` + `contain` 之前，先确认它在正常内容下是否真的有溢出。
+
+

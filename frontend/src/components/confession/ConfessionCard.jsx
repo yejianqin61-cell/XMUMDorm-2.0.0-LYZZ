@@ -47,6 +47,7 @@ function TrashIcon() {
  * @param {Function} [props.onOpenComments]
  * @param {Function} [props.onDelete]
  * @param {boolean} [props.likePending]
+ * @param {boolean} [props.commentsOpen] - 本篇的评论弹窗当前是否展开（仅用于无障碍状态播报）
  */
 export default function ConfessionCard({
   confession,
@@ -56,6 +57,7 @@ export default function ConfessionCard({
   onOpenComments,
   onDelete,
   likePending = false,
+  commentsOpen = false,
 }) {
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
@@ -104,6 +106,8 @@ export default function ConfessionCard({
           className="cf-action cf-action--comment"
           onClick={() => onOpenComments && onOpenComments()}
           aria-label={isZh ? '查看评论' : 'View comments'}
+          aria-haspopup="dialog"
+          aria-expanded={commentsOpen}
         >
           <CommentIcon />
           <span className="cf-action__count">{confession.comment_count || 0}</span>

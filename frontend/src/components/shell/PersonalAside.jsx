@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import LevelProgressBar from '../LevelProgressBar';
 import { getScheduleWeek } from '@shared/api/schedule';
+import { resolveSemesterContext } from '@shared/config/semesters';
 import { getTodos } from '@shared/api/todos';
 import { QK } from '@shared/query/queryKeys';
 import { readPersistedTodos, writePersistedTodos } from '../../utils/todoPersist';
@@ -22,10 +23,13 @@ export default function PersonalAside() {
   const { isZh } = useLanguage();
   const userId = Number(user?.id) || 0;
   const persistedTodos = useMemo(() => readPersistedTodos(userId), [userId]);
+  // 「今日课程」按**本周**查（第 1 周与第 10 周的课表不同）；未开学/学期结束则不发请求
+  const semesterContext = useMemo(() => resolveSemesterContext(), []);
+  const scheduleWeek = semesterContext.status === 'during' ? semesterContext.week : null;
   const scheduleQuery = useQuery({
-    queryKey: ['aside', 'schedule-week'],
-    queryFn: () => getScheduleWeek(1),
-    enabled: isLoggedIn,
+    queryKey: ['aside', 'schedule-week', scheduleWeek],
+    queryFn: () => getScheduleWeek(scheduleWeek),
+    enabled: isLoggedIn && scheduleWeek != null,
     staleTime: 5 * 60 * 1000,
   });
   const todosQuery = useQuery({

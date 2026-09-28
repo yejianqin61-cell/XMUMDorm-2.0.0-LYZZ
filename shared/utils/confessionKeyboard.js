@@ -13,6 +13,9 @@
  *   1. 焦点在输入类元素内时，**仅**放行 Esc，其余键全部让位给浏览器原生行为
  *      （在评论框里按方向键应移动光标，按空格应输入空格）。
  *   2. 带修饰键（meta/ctrl/alt）的组合键一律不处理，避免抢占浏览器快捷键。
+ *   3. Enter/Space 落在按钮、链接上时属于「激活该元素」，同样让位——
+ *      否则在翻页按钮上按回车会变成展开评论区，把按钮自身的点击吃掉。
+ *      方向键不受此限：焦点在按钮上按 ↓ 仍应翻页。
  */
 
 export const CONFESSION_KEY_ACTIONS = {
@@ -27,10 +30,18 @@ export const CONFESSION_KEY_ACTIONS = {
 /** 焦点位于这些标签/可编辑区时，键盘翻页必须让位 */
 const TYPING_TAGS = new Set(['INPUT', 'TEXTAREA', 'SELECT']);
 
+/** 焦点位于这些标签时，Enter/Space 是「激活它」，不能抢来当展开评论 */
+const ACTIVATABLE_TAGS = new Set(['BUTTON', 'A', 'SUMMARY']);
+
 function isTypingTarget(activeElementTag, isContentEditable) {
   if (isContentEditable) return true;
   if (!activeElementTag) return false;
   return TYPING_TAGS.has(String(activeElementTag).toUpperCase());
+}
+
+function isActivatableTarget(activeElementTag) {
+  if (!activeElementTag) return false;
+  return ACTIVATABLE_TAGS.has(String(activeElementTag).toUpperCase());
 }
 
 /**
@@ -38,7 +49,7 @@ function isTypingTarget(activeElementTag, isContentEditable) {
  *
  * @param {string} key - KeyboardEvent.key
  * @param {Object} [ctx]
- * @param {boolean} [ctx.commentsOpen=false] - 评论区面板当前是否展开
+ * @param {boolean} [ctx.commentsOpen=false] - 评论弹窗当前是否展开
  * @param {string}  [ctx.activeElementTag]   - 焦点元素的 tagName
  * @param {boolean} [ctx.isContentEditable]  - 焦点元素是否 contenteditable
  * @param {boolean} [ctx.metaKey]  - 按下 Meta
@@ -65,13 +76,21 @@ export function resolveKeyboardAction(key, ctx) {
 
   const typing = isTypingTarget(activeElementTag, isContentEditable);
 
-  // Esc 是唯一在输入框内也放行的键（用于收起面板）
+  // Esc 是唯一在输入框内也放行的键（用于关闭评论弹窗）
   if (key === 'Escape') {
     return commentsOpen ? CONFESSION_KEY_ACTIONS.CLOSE_COMMENTS : null;
   }
 
   // 在输入框里：其余键全部让位
   if (typing) return null;
+
+  // Enter/Space 在按钮、链接上是「激活元素」——交回原生行为
+  if (
+    (key === 'Enter' || key === ' ' || key === 'Spacebar') &&
+    isActivatableTarget(activeElementTag)
+  ) {
+    return null;
+  }
 
   switch (key) {
     case 'ArrowUp':

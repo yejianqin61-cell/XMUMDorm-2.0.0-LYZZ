@@ -1,5 +1,6 @@
 import { createElement, lazy, Suspense } from 'react';
 import { Route, Navigate } from 'react-router-dom';
+import RouteErrorBoundary from '../components/RouteErrorBoundary';
 import TreeHole from '../pages/TreeHole';
 import SquareHome from '../pages/SquareHome';
 import MyZone from '../pages/MyZone';
@@ -20,12 +21,10 @@ const SquareCampusFeed = lazy(() => import('../pages/SquareCampusFeed'));
 const SquareCampusPostNew = lazy(() => import('../pages/SquareCampusPostNew'));
 const SquareCampusPostDetail = lazy(() => import('../pages/SquareCampusPostDetail'));
 const SquareOrgAdmin = lazy(() => import('../pages/SquareOrgAdmin'));
-const AboutTeam = lazy(() => import('../pages/AboutTeam'));
-const AboutThanks = lazy(() => import('../pages/AboutThanks'));
-const AboutEditorNote = lazy(() => import('../pages/AboutEditorNote'));
 const AboutAlgorithm = lazy(() => import('../pages/AboutAlgorithm'));
 const AboutLevelAlgorithm = lazy(() => import('../pages/AboutLevelAlgorithm'));
 const AboutProfile = lazy(() => import('../pages/AboutProfile'));
+const JoinUs = lazy(() => import('../pages/JoinUs'));
 const SquareClub = lazy(() => import('../pages/SquareClub'));
 const SquareSecondHand = lazy(() => import('../pages/SquareSecondHand'));
 const MarketplaceDetail = lazy(() => import('../pages/Marketplace/MarketplaceDetail'));
@@ -57,7 +56,6 @@ const TodoList = lazy(() => import('../pages/TodoList'));
 const Holidays = lazy(() => import('../pages/Holidays'));
 const Settings = lazy(() => import('../pages/Settings'));
 const Disclaimer = lazy(() => import('../pages/Disclaimer'));
-const ContactUs = lazy(() => import('../pages/ContactUs'));
 const UserZone = lazy(() => import('../pages/UserZone'));
 const MyPosts = lazy(() => import('../pages/MyPosts'));
 const MyReviews = lazy(() => import('../pages/MyReviews'));
@@ -67,6 +65,7 @@ const CanteenArea = lazy(() => import('../pages/CanteenArea'));
 const CanteenBannerManage = lazy(() => import('../pages/CanteenBannerManage'));
 const CanteenSearch = lazy(() => import('../pages/CanteenSearch'));
 const MerchantList = lazy(() => import('../pages/MerchantList'));
+const CanteenShopManage = lazy(() => import('../pages/CanteenShopManage'));
 const AreaProductRanking = lazy(() => import('../pages/AreaProductRanking'));
 const FoodList = lazy(() => import('../pages/FoodList'));
 const FoodShopHot = lazy(() => import('../pages/FoodShopHot'));
@@ -82,10 +81,15 @@ const ConfessionWall = lazy(() => import('../pages/ConfessionWall'));
 const ConfessionCompose = lazy(() => import('../pages/ConfessionCompose'));
 
 function renderLazyRoute(Component) {
+  // 每个懒加载路由都套一层错误边界：
+  // ① 部署后旧 chunk 失效 → 自动重载（见 shared/utils/chunkLoadRecovery）；
+  // ② 页面渲染期抛错 → 显示兜底 UI，而不是让 React 卸载整棵树变白屏。
   return (
-    <Suspense fallback={<div className="state-loading route-loading">Loading...</div>}>
-      {createElement(Component)}
-    </Suspense>
+    <RouteErrorBoundary>
+      <Suspense fallback={<div className="state-loading route-loading">Loading...</div>}>
+        {createElement(Component)}
+      </Suspense>
+    </RouteErrorBoundary>
   );
 }
 
@@ -102,17 +106,13 @@ export const layoutRoutes = (
     <Route path="posts/tag/:slug" element={renderLazyRoute(PostTagFeed)} />
     <Route path="about" element={<SquareHome />} />
     <Route path="about/map" element={renderLazyRoute(AboutUs)} />
-    <Route path="about/thanks" element={renderLazyRoute(AboutThanks)} />
     <Route path="about/profile" element={renderLazyRoute(AboutProfile)} />
     {/* 兼容旧路径：原本挂在 /about 下会导致 Tab 误高亮到“广场” */}
     <Route path="about/schedule" element={<Navigate to="/myzone/schedule" replace />} />
-    <Route path="about/team" element={renderLazyRoute(AboutTeam)} />
-    <Route path="about/editor-note" element={renderLazyRoute(AboutEditorNote)} />
     <Route path="about/algorithm" element={renderLazyRoute(AboutAlgorithm)} />
     <Route path="about/level-algorithm" element={renderLazyRoute(AboutLevelAlgorithm)} />
     <Route path="about/diary" element={<Navigate to="/myzone/diary" replace />} />
     <Route path="about/disclaimer" element={renderLazyRoute(Disclaimer)} />
-    <Route path="about/contact" element={renderLazyRoute(ContactUs)} />
     <Route path="about/club" element={renderLazyRoute(SquareClub)} />
     <Route path="about/club/list" element={renderLazyRoute(ClubListPage)} />
     <Route path="about/club/my" element={renderLazyRoute(MyClubs)} />
@@ -148,6 +148,7 @@ export const layoutRoutes = (
     <Route path="about/errands" element={renderLazyRoute(SquareErrands)} />
     <Route path="about/errands/new" element={renderLazyRoute(PublishErrand)} />
     <Route path="about/errands/:id" element={renderLazyRoute(ErrandDetail)} />
+    <Route path="about/join-us" element={renderLazyRoute(JoinUs)} />
     <Route path="myzone" element={<MyZone />} />
     <Route path="user/:id" element={renderLazyRoute(UserZone)} />
     <Route path="myzone/posts" element={renderLazyRoute(MyPosts)} />
@@ -168,11 +169,13 @@ export const layoutRoutes = (
     <Route path="eat/:area" element={renderLazyRoute(MerchantList)} />
     <Route path="eat/merchant/:id" element={renderLazyRoute(FoodList)} />
     <Route path="eat/merchant/:id/hot" element={renderLazyRoute(FoodShopHot)} />
+    <Route path="eat/merchant/:id/manage" element={renderLazyRoute(CanteenShopManage)} />
     <Route path="eat/food/:id" element={renderLazyRoute(FoodDetail)} />
     <Route path="eat/food/:id/review" element={renderLazyRoute(FoodReviewPublish)} />
     <Route path="merchant/create" element={renderLazyRoute(StoreCreate)} />
     <Route path="merchant/manage" element={renderLazyRoute(FoodManage)} />
     <Route path="merchant/shop/edit" element={renderLazyRoute(MerchantShopEdit)} />
+    <Route path="merchant/shop/edit/:shopId" element={renderLazyRoute(MerchantShopEdit)} />
     <Route path="merchant/food/new" element={renderLazyRoute(FoodCreate)} />
     <Route path="merchant/food/:id" element={renderLazyRoute(MerchantFoodDetail)} />
     {/* M09 万能墙 */}

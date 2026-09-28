@@ -30,7 +30,7 @@ function SkeletonText({ className = '', lines = 3, ...props }) {
 
 function SkeletonCard({ className = '', ...props }) {
   return (
-    <div className={cn('border-2 border-black shadow-[4px_4px_0_0_#000] p-4 space-y-3 bg-background', className)} {...props}>
+    <div className={cn('border-2 border-black shadow-[4px_4px_0_0_#122E8A] p-4 space-y-3 bg-background', className)} {...props}>
       <NeoSkeleton className="h-40 w-full" />
       <NeoSkeleton className="h-5 w-2/3" />
       <NeoSkeleton className="h-4 w-full" />

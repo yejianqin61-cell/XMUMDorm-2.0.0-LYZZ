@@ -12,13 +12,9 @@ const TABS = [
 // These legacy routes live under /about but are reached from My Zone's About page.
 const MY_ZONE_ABOUT_ROUTES = new Set([
   '/about/profile',
-  '/about/team',
-  '/about/editor-note',
   '/about/algorithm',
   '/about/level-algorithm',
-  '/about/thanks',
   '/about/disclaimer',
-  '/about/contact',
   '/about/schedule',
   '/about/diary',
 ]);

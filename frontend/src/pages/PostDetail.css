@@ -39,45 +39,11 @@
   cursor: pointer;
 }
 
-/* 首图氛围模糊层 */
-.post-detail-atmo {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 260px;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.post-detail-atmo-img {
-  position: absolute;
-  inset: -60px 0 0;
-  background-size: cover;
-  background-position: center;
-  filter: blur(34px) brightness(1.1);
-  opacity: 0.28;
-  transform: scale(1.08);
-}
-
-.post-detail-atmo-fade {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to bottom,
-    transparent 0%,
-    var(--color-bg-page) 100%
-  );
-}
-
-.post-detail-card {
-  position: relative;
-  z-index: 1;
-  padding: 20px;
-  border: 1px solid var(--color-border-default);
-  border-radius: 8px;
-  background: var(--color-bg-surface);
+/* 帖子主体：扁平化，不再套一层卡片盒 */
+.post-detail-post {
+  padding-bottom: 18px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--color-border-default);
 }
 
 .post-detail-back {
@@ -99,7 +65,7 @@
 
 .post-detail-author {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
   margin-bottom: 14px;
 }
@@ -129,18 +95,11 @@
 
 .post-detail-author-info {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-  flex: 1;
-}
-
-.post-detail-name-tags {
-  display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   min-width: 0;
+  flex: 1;
 }
 
 .post-detail-tags {
@@ -244,14 +203,21 @@
 }
 
 /* Keep detail media readable without letting a single photo dominate the page. */
+/* 树洞详情已去掉 .post-detail-media 外壳，间距直接落在图片/轮播元素上 */
 .post-detail-page .post-detail-image-wrap,
-.club-activity-detail-main .post-detail-image-wrap,
 .post-detail-page .post-detail-carousel,
+.club-activity-detail-main .post-detail-image-wrap,
 .club-activity-detail-main .post-detail-carousel {
-  width: 50%;
-  max-width: 420px;
+  width: 75%;
+  max-width: 630px;
   margin-left: auto;
   margin-right: auto;
+}
+
+.post-detail-page .post-detail-image-wrap,
+.post-detail-page .post-detail-carousel {
+  margin-top: 4px;
+  margin-bottom: 20px;
 }
 
 /* 叠卡轮播样式见 components/StackedCardCarousel.css */
@@ -340,10 +306,6 @@
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--color-text-primary);
-}
-
-.post-detail-comments {
-  margin-top: var(--space-2);
 }
 
 .post-detail-replying-inline {

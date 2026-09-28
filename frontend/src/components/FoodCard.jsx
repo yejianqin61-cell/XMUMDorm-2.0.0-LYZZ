@@ -9,12 +9,13 @@ import './FoodCard.css';
 /**
  * 菜品卡片：展示图片、名称、价格，可选描述
  * - 用户端：整卡 Link 到 /eat/food/:id
- * - 商家端：mode="merchant" 时显示编辑/删除按钮，不整卡跳转
+ * - 商家端：mode="merchant" 时显示编辑按钮（删除按钮仅在 canDelete 为 true，即管理员时显示）
  * @param {Object} food
  * @param {string} [mode] 'user' | 'merchant'
- * @param {Function} [onDelete] 商家端删除回调 (food) => void
+ * @param {Function} [onDelete] 删除回调 (food) => void
+ * @param {boolean} [canDelete] 是否展示删除入口（菜品删除仅管理员可用）
  */
-function FoodCard({ food, mode = 'user', onDelete }) {
+function FoodCard({ food, mode = 'user', onDelete, canDelete = false }) {
   const { isZh } = useLanguage();
   const { id, name, price, image, description, merchantName, comprehensiveScore } = food;
   const priceStr = typeof price === 'number' ? price.toFixed(2) : String(price ?? '—');
@@ -57,18 +58,20 @@ function FoodCard({ food, mode = 'user', onDelete }) {
             <Link to={`/merchant/food/${id}`} className="food-card-action food-card-action-edit">
               {isZh ? '编辑' : 'Edit'}
             </Link>
-            <button
-              type="button"
-              className="food-card-action food-card-action-delete"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onDelete?.(food);
-              }}
-              aria-label={isZh ? `删除 ${name}` : `Delete ${name}`}
-            >
-              {isZh ? '删除' : 'Delete'}
-            </button>
+            {canDelete && onDelete ? (
+              <button
+                type="button"
+                className="food-card-action food-card-action-delete"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onDelete?.(food);
+                }}
+                aria-label={isZh ? `删除 ${name}` : `Delete ${name}`}
+              >
+                {isZh ? '删除' : 'Delete'}
+              </button>
+            ) : null}
           </div>
         )}
       </div>

@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { Bookmark, GraduationCap } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { getMyCourseReviews, getMySavedHandbookArticles } from '@shared/api/handbook';
+import { flattenPages, nextPageParamFrom } from '@shared/utils/infiniteList';
 import { QK } from '@shared/query/queryKeys';
 import './Handbook.css';
 
@@ -16,24 +17,35 @@ function HandbookMe() {
 
   const [tab, setTab] = useState('saved'); // saved | reviews
 
-  const savedQuery = useQuery({
+  // 两个列表接口都支持 page/pageSize 并返回 hasMore，因此逐页累加；只取第一页会硬顶在 20 条。
+  const savedQuery = useInfiniteQuery({
     queryKey: QK.handbookMeSaved(tokenKey, 20),
-    queryFn: () => getMySavedHandbookArticles({ page: 1, pageSize: 20 }),
+    queryFn: async ({ pageParam }) => {
+      const data = await getMySavedHandbookArticles({ page: pageParam, pageSize: 20 });
+      return { list: data?.list || [], hasMore: !!data?.hasMore, page: pageParam };
+    },
+    initialPageParam: 1,
+    getNextPageParam: nextPageParamFrom,
+    placeholderData: (prev) => prev,
     enabled: isLoggedIn && tab === 'saved',
     staleTime: 15 * 1000,
-    select: (d) => d || { list: [], hasMore: false },
   });
 
-  const myReviewsQuery = useQuery({
+  const myReviewsQuery = useInfiniteQuery({
     queryKey: QK.handbookMeCourseReviews(tokenKey, 20),
-    queryFn: () => getMyCourseReviews({ page: 1, pageSize: 20 }),
+    queryFn: async ({ pageParam }) => {
+      const data = await getMyCourseReviews({ page: pageParam, pageSize: 20 });
+      return { list: data?.list || [], hasMore: !!data?.hasMore, page: pageParam };
+    },
+    initialPageParam: 1,
+    getNextPageParam: nextPageParamFrom,
+    placeholderData: (prev) => prev,
     enabled: isLoggedIn && tab === 'reviews',
     staleTime: 15 * 1000,
-    select: (d) => d || { list: [], hasMore: false },
   });
 
-  const savedList = useMemo(() => savedQuery.data?.list || [], [savedQuery.data]);
-  const myReviewsList = useMemo(() => myReviewsQuery.data?.list || [], [myReviewsQuery.data]);
+  const savedList = useMemo(() => flattenPages(savedQuery.data?.pages), [savedQuery.data]);
+  const myReviewsList = useMemo(() => flattenPages(myReviewsQuery.data?.pages), [myReviewsQuery.data]);
 
   return (
     <div className="handbook-page">
@@ -83,6 +95,16 @@ function HandbookMe() {
                 {!savedQuery.isFetching && savedList.length === 0 ? (
                   <div className="handbook-mini-empty">{isZh ? '暂无收藏文章' : 'No saved articles'}</div>
                 ) : null}
+                {savedQuery.hasNextPage ? (
+                  <button
+                    type="button"
+                    className="handbook-loadmore"
+                    onClick={() => savedQuery.fetchNextPage()}
+                    disabled={savedQuery.isFetchingNextPage}
+                  >
+                    {savedQuery.isFetchingNextPage ? (isZh ? '加载中…' : 'Loading…') : (isZh ? '加载更多' : 'Load more')}
+                  </button>
+                ) : null}
               </div>
             ) : (
               <div className="handbook-mini-list" style={{ marginTop: 10 }}>
@@ -103,6 +125,16 @@ function HandbookMe() {
                 ))}
                 {!myReviewsQuery.isFetching && myReviewsList.length === 0 ? (
                   <div className="handbook-mini-empty">{isZh ? '你还没有发布过课程点评' : 'No reviews yet'}</div>
+                ) : null}
+                {myReviewsQuery.hasNextPage ? (
+                  <button
+                    type="button"
+                    className="handbook-loadmore"
+                    onClick={() => myReviewsQuery.fetchNextPage()}
+                    disabled={myReviewsQuery.isFetchingNextPage}
+                  >
+                    {myReviewsQuery.isFetchingNextPage ? (isZh ? '加载中…' : 'Loading…') : (isZh ? '加载更多' : 'Load more')}
+                  </button>
                 ) : null}
               </div>
             )}

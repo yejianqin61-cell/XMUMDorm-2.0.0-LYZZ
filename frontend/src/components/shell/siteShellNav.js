@@ -3,6 +3,7 @@ import {
   Compass,
   HandHeart,
   Heart,
+  HeartHandshake,
   TreePine,
   ShoppingBag,
   UserRound,
@@ -28,10 +29,7 @@ export const SITE_PRIMARY_NAV_ITEMS = [
     icon: Compass,
     matchPrefixes: [
       '/about/map',
-      '/about/thanks',
       '/about/profile',
-      '/about/team',
-      '/about/editor-note',
       '/about/algorithm',
       '/about/level-algorithm',
       '/about/campus',
@@ -88,6 +86,14 @@ export const SITE_PRIMARY_NAV_ITEMS = [
     to: '/about/errands',
     icon: HandHeart,
     matchPrefixes: ['/about/errands'],
+  },
+  {
+    key: 'join-us',
+    labelZh: '加入我们',
+    labelEn: 'Join Us',
+    to: '/about/join-us',
+    icon: HeartHandshake,
+    matchPrefixes: ['/about/join-us'],
   },
   {
     key: 'myzone',

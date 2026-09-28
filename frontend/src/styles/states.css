@@ -242,3 +242,50 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* 路由级错误边界兜底（RouteErrorBoundary）：懒加载失败 / 渲染抛错时替代白屏 */
+.route-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4, 8px);
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 96px var(--space-8) var(--space-12);
+}
+
+.route-error__title {
+  margin: 0;
+  font-size: var(--font-size-body-lg, 16px);
+  font-weight: 600;
+  color: var(--color-text-primary, inherit);
+}
+
+.route-error__hint {
+  margin: 0;
+  font-size: var(--font-size-body-sm, 13px);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-normal, 1.6);
+}
+
+.route-error__actions {
+  margin-top: var(--space-2, 4px);
+}
+
+.route-error__detail {
+  width: 100%;
+  margin-top: var(--space-6, 12px);
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  text-align: left;
+}
+
+.route-error__detail pre {
+  margin: 6px 0 0;
+  padding: 10px 12px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  background: var(--color-bg-subtle, rgba(0, 0, 0, 0.04));
+  border-radius: 8px;
+}

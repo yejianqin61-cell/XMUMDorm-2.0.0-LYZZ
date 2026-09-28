@@ -26,6 +26,12 @@ const SCROLL_CACHE_KEY = 'treehole';
 // 首屏更快：先拉 10 条；首屏出来后后台再预取更多页
 const PAGE_SIZE = 10;
 const PREFETCH_PAGES_AFTER_FIRST = 3; // 额外预取 3 页 => 约 30 条
+/**
+ * 移动端首屏（视口附近）才用 loading="eager"。
+ * 之前这里把整份列表的图片全标成 eager，而瀑布流不做虚拟化、一次渲染 150+ 张卡片，
+ * 等于在蜂窝网络下把整页图片都排进加载队列 —— 与桌面端的 lazy 行为刚好相反。
+ */
+const EAGER_CARD_COUNT = 8;
 const MotionDiv = motion.div;
 const MotionSpan = motion.span;
 
@@ -243,8 +249,6 @@ function TreeHole() {
       return lastPageParam + 1;
     },
     initialData: initialSessionData,
-    // 避免“切换筛选/重新拉取时清空列表导致白块闪烁”
-    placeholderData: (prev) => prev,
     staleTime: 5 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -401,6 +405,14 @@ function TreeHole() {
 
   const leftColumn = list.filter((_, i) => i % 2 === 0);
   const rightColumn = list.filter((_, i) => i % 2 === 1);
+  /** 触屏设备只把首屏前几张图设为 eager，其余交给原生 lazy，避免一次性排队上百张图 */
+  const eagerCardIds = useMemo(() => {
+    if (!isCoarse) return null;
+    const ids = new Set();
+    list.slice(0, EAGER_CARD_COUNT).forEach((p) => ids.add(p.id));
+    return ids;
+  }, [isCoarse, list]);
+  const isEagerCard = (post) => !!eagerCardIds && eagerCardIds.has(post.id);
   const showInitialSkeleton = isPending && list.length === 0;
   const showRefreshing = !showInitialSkeleton && isFetching && list.length > 0;
   const errorMsg = infiniteError ? getApiErrorMessage(infiniteError) : null;
@@ -581,7 +593,7 @@ function TreeHole() {
               <div className="treehole-column">
                 {leftColumnEntries.map((entry) => (
                   entry.type === 'post' ? (
-                    <TreeHoleGlassCard key={entry.key} post={entry.post} eager={isCoarse} mobileStable={isCoarse} />
+                    <TreeHoleGlassCard key={entry.key} post={entry.post} eager={isEagerCard(entry.post)} mobileStable={isCoarse} />
                   ) : (
                     <InterestRecommendationBlock key={entry.key} items={entry.items} />
                   )
@@ -591,7 +603,7 @@ function TreeHole() {
               <div className="treehole-column treehole-column-right">
                 {rightColumnEntries.map((entry) => (
                   entry.type === 'post' ? (
-                    <TreeHoleGlassCard key={entry.key} post={entry.post} eager={isCoarse} mobileStable={isCoarse} />
+                    <TreeHoleGlassCard key={entry.key} post={entry.post} eager={isEagerCard(entry.post)} mobileStable={isCoarse} />
                   ) : (
                     <RelatedCampusTopicsBlock key={entry.key} items={entry.items} />
                   )
@@ -612,10 +624,17 @@ function TreeHole() {
 
   return (
     <RouteTransition className={`treehole-page treehole-page--light ${isCoarse ? 'treehole-page--mobile' : ''}`}>
-      <ListPageLayout
-        filterBar={<TreeHoleToolbar selectedSlug={selectedTagSlug} onSelectTagSlug={handleSelectTag} />}
-        list={treeholeList}
-      />
+      {/*
+        .treehole-content 提供移动端的内边距：12px 左右留白 + 底部让开固定 TabBar 的高度。
+        这个类在 TreeHole.css 里一直存在（PostSearch / PostTagFeed 也在用），只是本页漏了这层包裹，
+        导致卡片贴屏幕边缘、并且最后一张卡片被底部 Tab 栏压住 86px。
+      */}
+      <div className="treehole-content">
+        <ListPageLayout
+          filterBar={<TreeHoleToolbar selectedSlug={selectedTagSlug} onSelectTagSlug={handleSelectTag} />}
+          list={treeholeList}
+        />
+      </div>
       {debug ? (
         <div className="treehole-debug" role="status" aria-live="polite">
           <div className="treehole-debug-row">

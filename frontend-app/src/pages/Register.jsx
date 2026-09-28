@@ -162,20 +162,16 @@ function Register() {
                   <input
                     id="reg-email"
                     type="text"
-                    placeholder="yourname"
+                    placeholder="Enter your full email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     autoComplete="email"
                     disabled={loading}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pr-[7.5rem] text-[15px] text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 disabled:opacity-60"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-[15px] text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 disabled:opacity-60"
                   />
-                  {!email.includes('@') && (
-                    <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-[14px] font-medium text-slate-300">
-                      @xmu.edu.my
-                    </span>
-                  )}
                 </div>
-                <p className="pl-0.5 text-[11px] font-medium text-slate-400">Use your campus email ending with @xmu.edu.my</p>
+                {/* 与 Web 端一致：后缀不再浮在输入框里，改为下方完整示例，避免“后缀已经填好”的错觉 */}
+                <p className="pl-0.5 text-[11px] font-medium text-slate-400">e.g. CST2509054@xmu.edu.my</p>
               </div>
               <InputField
                 id="reg-username"

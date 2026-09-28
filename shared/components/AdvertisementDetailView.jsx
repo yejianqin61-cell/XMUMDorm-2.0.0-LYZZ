@@ -1,9 +1,33 @@
 import { useMemo } from 'react';
-import { Browser } from '@capacitor/browser';
-import { Capacitor } from '@capacitor/core';
 import { API_BASE_URL } from '@shared/api/config';
 import { recordAdvertisementClick } from '@shared/api/advertisements';
 import './AdvertisementDetailView.css';
+
+/** 是否运行在 Capacitor 原生壳里（原生壳会注入 window.Capacitor） */
+function isNativePlatform() {
+  return typeof window !== 'undefined' && Boolean(window.Capacitor?.isNativePlatform?.());
+}
+
+/**
+ * 用系统浏览器打开外链。
+ *
+ * ⚠️ 这里**不能**静态 `import { Browser } from '@capacitor/browser'`（V1.2 修复）：
+ * `frontend/vite.config.js` 的 `build.rollupOptions.external` 把 `@capacitor/*` 标为 external
+ * （这些包只装在**仓库根** node_modules，不在 frontend/node_modules）。构建产物会原样保留
+ * 裸模块说明符，浏览器直接报
+ *   Failed to resolve module specifier "@capacitor/browser"
+ * → `/advertisement/:id` 的整个路由 chunk 加载失败、页面**全白**。
+ * dev 之所以正常，只是因为 Vite 能从根 node_modules 解析到 —— 这个缺陷**只在生产构建里出现**。
+ * 改为「仅在原生平台运行时动态导入」，Web 端永不求值该 import。
+ */
+async function openExternalUrl(url) {
+  if (isNativePlatform()) {
+    const { Browser } = await import('@capacitor/browser');
+    await Browser.open({ url });
+    return;
+  }
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
 
 function absoluteAsset(url) {
   if (typeof url !== 'string' || !url) return '';
@@ -46,11 +70,7 @@ export default function AdvertisementDetailView({
     }
     if (type === 'https' && /^https:\/\//i.test(target)) {
       try {
-        if (Capacitor.isNativePlatform()) {
-          await Browser.open({ url: target });
-        } else {
-          window.open(target, '_blank', 'noopener,noreferrer');
-        }
+        await openExternalUrl(target);
       } catch (openError) {
         console.error('Failed to open advertisement link:', openError);
       }

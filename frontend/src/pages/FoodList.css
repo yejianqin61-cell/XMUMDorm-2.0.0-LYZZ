@@ -135,6 +135,34 @@
   justify-content: flex-end;
 }
 
+/* 共建维护入口：与树洞发布按钮同款的圆形铅笔按钮 */
+.food-shop-manage-btn {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 9999px;
+  border: 2px solid var(--ru-primary, #122e8a);
+  background: var(--ru-card, #fff);
+  color: var(--ru-primary, #122e8a);
+  box-shadow: 3px 3px 0 0 var(--ru-primary, #122e8a);
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.food-shop-manage-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 0 var(--ru-primary, #122e8a);
+}
+
+.food-shop-manage-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 0 var(--ru-primary, #122e8a);
+}
+
 .food-shop-search-input {
   width: 100%;
   padding: 10px 14px;

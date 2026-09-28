@@ -4,7 +4,11 @@
  * ============================================
  * - POST /api/schedule/import/preview  解析预览（不落库）
  * - POST /api/schedule/import/commit   确认导入（覆盖该用户旧课程表）
- * - GET  /api/schedule/week?week=1     查询某周课表（按天分组）
+ * - GET  /api/schedule/week?week=N     查询某周课表（按天分组）
+ *
+ * 周次（Week）概念见 shared/config/semesters.js：
+ * 第 1 周从学期 startDate（周一）开始，/week 的响应里会带上「当前是第几周」，
+ * 前端默认落在当前周，也可以自己按本地同一份学期日历算。
  */
 
 const express = require('express');
@@ -12,6 +16,7 @@ const router = express.Router();
 const authenticateToken = require('../middleware/auth');
 const { pool, query } = require('../database');
 const { parseScheduleText } = require('../utils/scheduleParser');
+const { resolveSemesterContext } = require('../shared/config/semesters');
 
 function normalizeWeekParam(w) {
   const n = Number(w);
@@ -147,6 +152,7 @@ router.get('/week', authenticateToken, async (req, res) => {
   try {
     const userId = req.user?.id;
     const week = normalizeWeekParam(req.query.week) || 1;
+    const context = resolveSemesterContext();
 
     const rows = await query(
       `SELECT
@@ -182,7 +188,23 @@ router.get('/week', authenticateToken, async (req, res) => {
     return res.status(200).json({
       status: 0,
       message: '获取成功',
-      data: { week, days: byDay }
+      data: {
+        week,
+        days: byDay,
+        // 当前周次上下文：客户端可据此显示「第 N 周」，未开学/已结束时为 null
+        currentWeek: context.status === 'during' ? context.week : null,
+        semesterStatus: context.status,
+        totalWeeks: context.totalWeeks,
+        semester: context.semester
+          ? {
+              id: context.semester.id,
+              nameZh: context.semester.nameZh,
+              nameEn: context.semester.nameEn,
+              startDate: context.semester.startDate,
+              weeks: context.semester.weeks
+            }
+          : null
+      }
     });
   } catch (e) {
     console.error('课程表查询错误:', e);

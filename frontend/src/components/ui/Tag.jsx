@@ -42,7 +42,7 @@ export default function Tag({
       variant={ruVariant}
       size={ruSize}
       className={cn(
-        resolvedInteractive && 'cursor-pointer hover:shadow-[2px_2px_0_0_#000] active:translate-y-0.5 active:translate-x-0.5 active:shadow-none transition-all',
+        resolvedInteractive && 'cursor-pointer hover:shadow-[2px_2px_0_0_var(--color-black)] active:translate-y-0.5 active:translate-x-0.5 active:shadow-none transition-all',
         active && 'bg-foreground text-background border-foreground',
         className
       )}

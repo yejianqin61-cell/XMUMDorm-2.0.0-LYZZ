@@ -8,13 +8,13 @@ export const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          'shadow-[4px_4px_0_0_#000] hover:shadow-none bg-primary text-primary-foreground transition hover:translate-y-1 active:translate-y-2 active:translate-x-1 hover:bg-primary-hover',
+          'shadow-[4px_4px_0_0_#122E8A] hover:shadow-none bg-primary text-primary-foreground transition hover:translate-y-1 active:translate-y-2 active:translate-x-1 hover:bg-primary-hover',
         secondary:
-          'shadow-[4px_4px_0_0_#000] hover:shadow-none bg-secondary text-secondary-foreground transition hover:translate-y-1 active:translate-y-2 active:translate-x-1',
+          'shadow-[4px_4px_0_0_#122E8A] hover:shadow-none bg-secondary text-secondary-foreground transition hover:translate-y-1 active:translate-y-2 active:translate-x-1',
         outline:
-          'shadow-[4px_4px_0_0_#000] hover:shadow-none bg-transparent transition hover:translate-y-1 active:translate-y-2 active:translate-x-1',
+          'shadow-[4px_4px_0_0_#122E8A] hover:shadow-none bg-transparent transition hover:translate-y-1 active:translate-y-2 active:translate-x-1',
         destructive:
-          'shadow-[4px_4px_0_0_#000] hover:shadow-none bg-destructive text-destructive-foreground transition hover:translate-y-1 active:translate-y-2 active:translate-x-1',
+          'shadow-[4px_4px_0_0_#122E8A] hover:shadow-none bg-destructive text-destructive-foreground transition hover:translate-y-1 active:translate-y-2 active:translate-x-1',
         ghost:
           'border-transparent bg-transparent hover:bg-muted shadow-none',
         link: 'border-transparent bg-transparent hover:underline shadow-none',

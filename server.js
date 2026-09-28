@@ -1,6 +1,6 @@
 /**
  * ============================================
- * Jack 校园社交网站 - 后端服务器入口文件
+ * Dorm - 后端服务器入口文件
  * ============================================
  * 
  * 这个文件是整个后端服务的入口点，就像前端的 index.html 一样
@@ -144,7 +144,7 @@ app.use('/api', (req, res, next) => {
 // 11. 根路由 - 测试服务器是否运行
 app.get('/', (req, res) => {
   res.json({
-    message: 'Jack 校园社交网站后端服务运行正常！',
+    message: 'Dorm 后端服务运行正常！',
     version: '1.0.0'
   });
 });
@@ -226,7 +226,7 @@ app.listen(PORT, async () => {
       console.warn('排行榜每周重置未启动:', e.message);
     }
 
-    // Web Push：课前约 30 分钟提醒（吉隆坡时间，依赖 CLASS_REMINDER_WEEK 与课表）
+    // Web Push：课前约 30 分钟提醒（吉隆坡时间，周次由 shared/config/semesters.js 自动跟进）
     try {
       const { runClassReminderTick } = require('./services/classReminderPush');
       setInterval(() => {

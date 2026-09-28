@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect, useMemo } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
+import { PenLine } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import TabBar from './TabBar';
 import { getTabIndex } from './TabBar';
@@ -132,7 +133,7 @@ function Layout({ mode = 'mobile' }) {
   };
 
   const title = resolvePageTitle(pathname, isZh);
-  const showTreeHoleFab = !isDesktopShell && pathname === '/' && activeTabIndex === 1;
+  const showTreeHoleFab = !isDesktopShell && (pathname === '/' || pathname === '/treehole') && activeTabIndex === 1;
   const desktopRootRoute = isDesktopShell ? renderDesktopRootRoute(pathname) : null;
   const routeContent = isDesktopShell
     ? (desktopRootRoute || <Outlet />)
@@ -205,7 +206,7 @@ function Layout({ mode = 'mobile' }) {
             className="treehole-fab pressable"
             aria-label={isAdmin ? '发布公告 Announcement' : '发布帖子 Post'}
           >
-            <PlusIcon />
+            <PenLine size={24} strokeWidth={2.2} aria-hidden />
             {isAdmin && <span className="treehole-fab-tag">公告</span>}
           </Link>
         </>
@@ -252,14 +253,6 @@ function Layout({ mode = 'mobile' }) {
       )}
       {!isDesktopShell ? <TabBar /> : null}
     </div>
-  );
-}
-
-function PlusIcon() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
-      <path d="M12 5v14M5 12h14" />
-    </svg>
   );
 }
 

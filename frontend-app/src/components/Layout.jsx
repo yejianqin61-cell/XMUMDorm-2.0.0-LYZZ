@@ -44,7 +44,7 @@ const TITLE_BY_PATH_ZH = {
   '/myzone/profile': '修改资料',
   '/about/algorithm': '评分算法说明',
   '/about/level-algorithm': '等级算法说明',
-  '/about/profile': '关于我们',
+  '/about/profile': '关于',
   '/about/campus': '今日校园',
   '/myzone/schedule': '课程表',
   '/myzone/diary': '多年日记本',
@@ -66,7 +66,7 @@ const TITLE_BY_PATH_EN = {
   '/myzone/profile': 'Profile',
   '/about/algorithm': 'Scoring Algorithm',
   '/about/level-algorithm': 'Level System',
-  '/about/profile': 'About us',
+  '/about/profile': 'About',
   '/about/campus': 'Campus Updates',
   '/myzone/schedule': 'Schedule',
   '/myzone/diary': 'Diary',
@@ -280,12 +280,6 @@ function Layout() {
       title = isZh ? '菜品详情' : 'Food Detail';
     } else if (pathname.startsWith('/merchant/')) {
       title = isZh ? '商家' : 'Merchant';
-    } else if (pathname === '/about/thanks') {
-      title = isZh ? '特别鸣谢' : 'Special Thanks';
-    } else if (pathname === '/about/team') {
-      title = isZh ? '团队介绍' : 'Team';
-    } else if (pathname === '/about/editor-note') {
-      title = isZh ? '编者的话' : "Editor's Note";
     } else if (pathname === '/about/algorithm') {
       title = isZh ? '评分算法说明' : 'Scoring Algorithm';
     } else if (pathname === '/about/level-algorithm') {

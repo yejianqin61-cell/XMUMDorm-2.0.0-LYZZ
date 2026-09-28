@@ -48,9 +48,8 @@ function MyZoneStrings(isZh) {
     diary: isZh ? '多年日记本' : 'Diary',
     todo: 'Todo',
     more: isZh ? '更多' : 'More',
-    aboutProfile: isZh ? '关于我们' : 'About us',
+    aboutProfile: isZh ? '关于' : 'About',
     aboutDisclaimer: isZh ? '免责声明' : 'Disclaimer',
-    aboutContact: isZh ? '联系我们' : 'Contact us',
     storeManage: isZh ? '店铺管理' : 'Store management',
     logIn: isZh ? '登录' : 'Log in',
   };

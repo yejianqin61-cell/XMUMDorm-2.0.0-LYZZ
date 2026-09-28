@@ -1,9 +1,10 @@
 /**
  * 万能墙键盘控制纯逻辑测试 — M09
  *
- * 覆盖设计文档 §7.3 的两条硬规则：
+ * 覆盖设计文档 §7.3 的三条硬规则：
  *   1. 焦点在输入框时仅放行 Esc
  *   2. 带修饰键一律不处理
+ *   3. 焦点在按钮/链接上时 Enter/Space 让位给原生激活
  */
 const {
   resolveKeyboardAction,
@@ -65,6 +66,39 @@ describe('resolveKeyboardAction', () => {
           activeElementTag: 'TEXTAREA',
           commentsOpen: true,
         })
+      ).toBe(A.CLOSE_COMMENTS);
+    });
+  });
+
+  describe('可激活元素让位规则（规则 3）', () => {
+    it.each(['BUTTON', 'button', 'A', 'a', 'SUMMARY'])(
+      '焦点在 %s 上时 Enter / Space 让位（由原生点击激活）',
+      (tag) => {
+        expect(resolveKeyboardAction('Enter', { activeElementTag: tag })).toBeNull();
+        expect(resolveKeyboardAction(' ', { activeElementTag: tag })).toBeNull();
+        expect(resolveKeyboardAction('Spacebar', { activeElementTag: tag })).toBeNull();
+      }
+    );
+
+    it('方向键与 Home/End 不受此限：按钮上按 ↓ 仍要翻页', () => {
+      expect(resolveKeyboardAction('ArrowDown', { activeElementTag: 'BUTTON' })).toBe(A.NEXT);
+      expect(resolveKeyboardAction('ArrowUp', { activeElementTag: 'BUTTON' })).toBe(A.PREV);
+      expect(resolveKeyboardAction('Home', { activeElementTag: 'BUTTON' })).toBe(A.FIRST);
+      expect(resolveKeyboardAction('End', { activeElementTag: 'A' })).toBe(A.LAST);
+    });
+
+    it('焦点在普通容器上时 Enter 仍然展开评论', () => {
+      expect(resolveKeyboardAction('Enter', { activeElementTag: 'DIV' })).toBe(A.OPEN_COMMENTS);
+      expect(resolveKeyboardAction(' ', { activeElementTag: 'DIV' })).toBe(A.OPEN_COMMENTS);
+    });
+
+    it('焦点落在弹窗根节点（section, tabindex=-1）上时 Enter 仍展开评论', () => {
+      expect(resolveKeyboardAction('Enter', { activeElementTag: 'SECTION' })).toBe(A.OPEN_COMMENTS);
+    });
+
+    it('Esc 语义不受规则 3 影响', () => {
+      expect(
+        resolveKeyboardAction('Escape', { activeElementTag: 'BUTTON', commentsOpen: true })
       ).toBe(A.CLOSE_COMMENTS);
     });
   });

@@ -438,3 +438,69 @@ ACM协会
 
 ### 组织权限等级
 
+------
+
+## 八、回归修复记录
+
+### 8.1 活动详情页失去全部样式（2026-09-26 修复）
+
+**现象**：`/about/club/activity/:id`（`ActivityDetail.jsx`）整个页面失去样式——
+标题、社团名、活动正文挤成左上角的小字，地点/报名数/截止时间挤成一行行无间距文本，
+「加入日历 / 加入待办」退化成纯文字，封面图失去约束、撑满一屏。
+
+**根因**：提交 `5ba330a`「feat(clubs): replace club pages with neobrutalism (retroui) components」
+把 `frontend/src/pages/Clubs/Clubs.css` 整体重写（**−1385 / +574 行**），并按清单迁移了
+`ClubPostDetail` / `ClubProfile` / `ClubsHome` / `ClubListPage` / `ClubMembersPage` /
+`CreateClub` / `MyClubs` / `PublishClubPost` / `ClubCommentsSection` —— **`ActivityDetail.jsx` 不在该清单内**，
+但它依赖的 6 个旧类名被一并删除了：
+
+| 被删类名 | 作用 |
+|----------|------|
+| `.club-feed-title` | 活动标题排版 |
+| `.club-detail-meta` | 活动元信息栅格（地点/报名数/截止时间） |
+| `.club-detail-loc` | 地点行的 inline-flex 对齐 |
+| `.club-detail-utility-btn` | 「加入日历 / 加入待办」胶囊按钮 |
+| `.club-like-btn` / `.club-like-btn.is-on` | 点赞按钮及选中态 |
+| `.club-delete-btn`（含 `--compact` / `--icon-only`） | 删除按钮 |
+
+**修复（最终）**：由 `d58d753`「feat(frontend): refresh club activity detail UI」**把 `ActivityDetail.jsx`
+正式迁移到新样式**（改写 JSX 127 行、`Clubs.css` 增补 288 行）解决。
+迁移后该页不再引用上述任何一个旧类名，核对新 JSX 的 35 个类名，除 Tailwind 工具类
+`text-slate-400` 外全部有定义。
+
+**一次并行的重复修复（记录备查）**：在同一时间窗内，另一个执行者（M09 万能墙的迭代）
+也独立定位到了同一根因，并采取了「按 `5ba330a^` 原定义恢复这 6 个类」的修法，
+在 1440×900 浏览器实测通过（元信息恢复栅格、地点行恢复图标对齐、两个按钮恢复胶囊样式）。
+随后发现 `d58d753` 已在 main 上完成正式迁移，该恢复被判定为**冗余**并在合并 main 时撤销
+（`Clubs.css` 取 main 版本）。两条独立路径得出同一根因结论，可作为该诊断的交叉验证。
+
+**后续规约**：清理页面级 CSS 时必须先确认类名**是否仍被任一未迁移页面引用**；
+本次是「整文件重写」而非「按引用删除」造成的连带删除。
+若后续还要迁移某页，应先迁移 JSX 再删旧规则（`d58d753` 就是这个顺序）。
+
+### 8.2 活动详情页冷启动白屏（2026-09-26 修复）
+
+**现象**：**直接打开或刷新** `/about/club/activity/:id` 整页白屏（`body` 文本长度为 0）；
+从列表页点进去却正常。
+
+**根因**：`d58d753` 在**守护语句之前**新增了一行未加可选链的解引用：
+
+```jsx
+L244  const statusLabel = String(a.status || '').toLowerCase() === 'ended' …
+L269  if (q.isLoading) return <div className="state-loading">…</div>;
+L270  if (q.isError || !a) return <div className="state-error">…</div>;
+```
+
+冷启动时查询仍是 `pending`，`a === undefined` → 抛
+`TypeError: Cannot read properties of undefined (reading 'status')` →
+React 卸载整个 `<ActivityDetail>` → 白屏。
+从列表页进入时 TanStack Query 已有缓存、`a` 立即可用，因此**不复现**——
+这正是「只有刷新/直链才白屏」的原因，也是它容易被漏掉的原因。
+
+**修复**：`L244` 改为 `a?.status`，并加注释标明该行位于早退守卫之前、必须用可选链。
+
+**规约**：组件内所有「从查询结果派生的常量」若写在早退（`isLoading` / `isError` / `!data`）
+**之前**，一律使用可选链；否则数据未到达时的第一次渲染必然抛错，而缓存命中会掩盖它。
+新增此类派生逻辑后，必须用**直链/刷新**验证一次，不能只从列表页点进去验证。
+
+

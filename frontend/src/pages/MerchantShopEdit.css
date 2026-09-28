@@ -1,156 +1,103 @@
-.merchant-shop-edit-page {
-  min-height: 100%;
+.shop-edit-page {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
   padding: 16px;
-  background: transparent;
+  min-width: 0;
 }
 
-.merchant-shop-edit-title {
-  margin: 0 0 20px;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--wx-text);
+.shop-edit-head {
+  margin-bottom: 14px;
 }
 
-.merchant-shop-edit-loading,
-.merchant-shop-edit-error {
-  margin: 24px 0;
+.shop-edit-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--ru-primary, #122e8a);
+}
+
+.shop-edit-sub {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-secondary, #6b7280);
+}
+
+.shop-edit-error {
+  margin: 0 0 12px;
   font-size: 14px;
-  color: var(--wx-text-secondary);
+  color: #b91c1c;
 }
 
-.merchant-shop-edit-error {
-  color: var(--wx-red, #ee0a24);
-}
-
-.merchant-shop-edit-back {
-  display: block;
-  margin-top: 12px;
-  padding: 10px 20px;
-  font-size: 15px;
-  color: var(--wx-green);
-  background: transparent;
-  border: 1px solid var(--wx-green);
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.merchant-shop-edit-form {
-  background: rgba(255, 255, 255, 0.92);
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+.shop-edit-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
+  padding: 16px;
+  background: var(--ru-card, #fff);
+  border: 2px solid var(--ru-primary, #122e8a);
+  box-shadow: 3px 3px 0 0 var(--ru-primary, #122e8a);
 }
 
-.merchant-shop-edit-field label {
-  display: block;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--wx-text);
-  margin-bottom: 8px;
-}
-
-.merchant-shop-edit-logo-row {
+.shop-edit-logo-row {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
 }
 
-.merchant-shop-edit-logo-wrap {
+.shop-edit-logo-wrap {
   flex-shrink: 0;
   width: 80px;
   height: 80px;
-  border-radius: 10px;
-  overflow: hidden;
-  border: 1px solid var(--wx-border);
-  cursor: pointer;
   display: block;
-  background: var(--wx-bar-bg);
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--ru-background, #f5efea);
+  border: 2px solid var(--ru-primary, #122e8a);
 }
 
-.merchant-shop-edit-file {
+.shop-edit-file {
   position: absolute;
   width: 0;
   height: 0;
   opacity: 0;
 }
 
-.merchant-shop-edit-logo {
+.shop-edit-logo {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.merchant-shop-edit-logo-placeholder {
-  width: 100%;
-  height: 100%;
+.shop-edit-logo-placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 12px;
-  color: var(--wx-text-secondary);
+  color: var(--color-text-secondary, #6b7280);
 }
 
-.merchant-shop-edit-hint {
+.shop-edit-hint {
   font-size: 12px;
-  color: var(--wx-text-secondary);
+  line-height: 1.4;
+  color: var(--color-text-secondary, #6b7280);
 }
 
-.merchant-shop-edit-input {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid var(--wx-border);
-  border-radius: 8px;
-  font-size: 15px;
-  background: #fff;
-}
-
-.merchant-shop-edit-input:focus {
-  outline: none;
-  border-color: var(--wx-green);
-}
-
-.merchant-shop-edit-actions {
+.shop-edit-actions {
   display: flex;
-  gap: 12px;
-  margin-top: 8px;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
-.merchant-shop-edit-btn {
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 15px;
-  font-weight: 500;
-  cursor: pointer;
-  border: none;
+.shop-edit-actions > * {
+  flex: 1 1 140px;
 }
 
-.merchant-shop-edit-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.merchant-shop-edit-btn-primary {
-  background: var(--wx-green);
-  color: #fff;
-}
-
-@media (hover: hover) {
-  .merchant-shop-edit-btn-primary:hover:not(:disabled) {
-    background: var(--wx-green-dark);
-  }
-}
-
-.merchant-shop-edit-btn-secondary {
-  background: transparent;
-  color: var(--wx-text-secondary);
-  border: 1px solid var(--wx-border);
-}
-
-@media (hover: hover) {
-  .merchant-shop-edit-btn-secondary:hover {
-    background: var(--wx-bar-bg);
+@media (max-width: 400px) {
+  .shop-edit-form {
+    padding: 12px;
+    gap: 14px;
   }
 }

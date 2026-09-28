@@ -10,7 +10,7 @@ const NeoCommand = forwardRef(function NeoCommand(
     <div
       ref={ref}
       className={cn(
-        'flex h-full w-full flex-col overflow-hidden border-2 border-black bg-background shadow-[4px_4px_0_0_#000]',
+        'flex h-full w-full flex-col overflow-hidden border-2 border-black bg-background shadow-[4px_4px_0_0_#122E8A]',
         className
       )}
       {...props}

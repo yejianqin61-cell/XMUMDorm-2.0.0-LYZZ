@@ -3,6 +3,8 @@
   min-height: 100%;
   padding: 0;
   overflow-y: auto;
+  /* 只允许纵向滚动：任何子元素撑宽都不应该让整页左右滑动 */
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   background: var(--post-ios-bg-grouped, #f2f2f7);
 }
@@ -470,59 +472,44 @@
   cursor: wait;
 }
 
-@keyframes canteen-shimmer {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
 /* ====== 区域宫格 ====== */
+/* 5 个区域必须在窄屏一屏放下：列宽自适应 + 卡片内容可收缩 */
 .canteen-region-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(56px, 1fr));
   gap: 8px;
+  min-width: 0;
 }
 
-.canteen-region-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 12px 4px 10px;
-  border-radius: var(--post-ios-radius-md);
-  background: var(--post-ios-card);
-  box-shadow: var(--post-ios-shadow-card);
-  text-decoration: none;
-  -webkit-tap-highlight-color: transparent;
-  transition: transform 140ms ease;
-}
-.canteen-region-item:active {
-  transform: scale(0.94);
+.canteen-region-link {
+  display: block;
+  min-width: 0;
 }
 
-.canteen-region-skeleton {
-  height: 80px;
-  background: var(--post-ios-fill);
-  animation: canteen-shimmer 1.5s infinite;
-}
-
-.canteen-region-icon-wrap {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  overflow: hidden;
-  background: var(--post-ios-fill);
-}
-
-.canteen-region-icon {
+.canteen-region-card {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  min-width: 0;
+  padding: 10px 6px;
 }
 
 .canteen-region-name {
-  font-size: 12px;
+  width: 100%;
+  font-size: 11px;
   font-weight: 600;
+  line-height: 1.25;
+  text-align: center;
   color: var(--post-ios-label);
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 768px) {
+  .canteen-region-card {
+    padding: 14px 10px;
+  }
+
+  .canteen-region-name {
+    font-size: 12px;
+  }
 }
 
 /* ====== 排行榜 ====== */
@@ -1006,17 +993,6 @@
   box-shadow: 0 16px 32px rgba(15, 23, 42, 0.06);
 }
 
-.app-layout--desktop-shell .canteen-region-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.app-layout--desktop-shell .canteen-region-item {
-  align-items: flex-start;
-  min-height: 96px;
-  padding: 14px 14px 12px;
-}
-
 .app-layout--desktop-shell .canteen-food-list {
   gap: 12px;
 }
@@ -1211,12 +1187,6 @@
 
 .app-layout--desktop-shell .canteen-region-grid {
   grid-template-columns: repeat(5, minmax(0, 1fr));
-}
-
-.app-layout--desktop-shell .canteen-region-item {
-  align-items: center;
-  min-height: 0;
-  padding: 12px 4px 10px;
 }
 
 /* The home page owns one full-width flow inside the global middle column. */

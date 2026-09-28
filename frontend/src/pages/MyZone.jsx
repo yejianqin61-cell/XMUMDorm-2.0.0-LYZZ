@@ -11,9 +11,6 @@ import {
   LogOut,
   NotebookText,
   Info,
-  Mail,
-  ShieldAlert,
-  Sparkles,
   Star,
   Store,
   UtensilsCrossed,
@@ -24,6 +21,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { getProfile } from '@shared/api/users';
 import { getMyFavorites, getMyProductReviews } from '@shared/api/canteen';
 import { getScheduleWeek } from '@shared/api/schedule';
+import { resolveSemesterContext } from '@shared/config/semesters';
 import { getTodos } from '@shared/api/todos';
 import {
   formatTodoDueDisplay,
@@ -50,10 +48,8 @@ function MyZoneStrings(isZh) {
     diary: isZh ? '多年日记本' : 'Diary',
     todo: 'Todo',
     more: isZh ? '更多' : 'More',
-    aboutProfile: isZh ? '关于我们' : 'About us',
-    aboutThanks: isZh ? '特别鸣谢' : 'Special Thanks',
+    aboutProfile: isZh ? '关于' : 'About',
     aboutDisclaimer: isZh ? '免责声明' : 'Disclaimer',
-    aboutContact: isZh ? '联系我们' : 'Contact us',
     storeManage: isZh ? '店铺管理' : 'Store management',
     editProfile: isZh ? '编辑资料' : 'Edit profile',
     logOut: isZh ? '退出登录' : 'Log out',
@@ -124,10 +120,15 @@ function MyZone() {
     navigate('/', { replace: true });
   };
 
+  // 「当前/下一节课」必须按**本周**查，不能用写死的第 1 周
+  // （第 1 周和第 10 周的课表不一样，例如 (Week 9-14) 的课第 1 周根本不上）
+  const semesterContext = useMemo(() => resolveSemesterContext(), []);
+  const scheduleWeek = semesterContext.status === 'during' ? semesterContext.week : null;
+
   const scheduleTodayQuery = useQuery({
-    queryKey: ['myzone', 'scheduleWeek', 1],
-    enabled: isLoggedIn,
-    queryFn: () => getScheduleWeek(1),
+    queryKey: ['myzone', 'scheduleWeek', scheduleWeek],
+    enabled: isLoggedIn && scheduleWeek != null,
+    queryFn: () => getScheduleWeek(scheduleWeek),
     staleTime: 5 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -136,7 +137,7 @@ function MyZone() {
   });
 
   const currentCourse = useMemo(() => {
-    if (!isLoggedIn) return null;
+    if (!isLoggedIn || scheduleWeek == null) return null;
     const weekData = scheduleTodayQuery.data ?? null;
     const days = weekData?.days || {};
     const dow = getTodayDayOfWeek();
@@ -153,7 +154,7 @@ function MyZone() {
       return nowMin <= et;
     });
     return match || todayList[0];
-  }, [isLoggedIn, scheduleTodayQuery.data]);
+  }, [isLoggedIn, scheduleWeek, scheduleTodayQuery.data]);
 
   const postsCountQuery = useQuery({
     queryKey: ['myzone', 'postCount', userId],
@@ -339,7 +340,6 @@ function MyZone() {
       <h2 className="px-1 pb-2 text-[15px] font-semibold text-slate-900">{t.more}</h2>
       <div className="divide-y divide-slate-100">
         <MoreRow to="/about/profile" title={t.aboutProfile} icon={<Info className="h-5 w-5" />} iconStyle={softIcon('rgba(59,130,246,0.12)', 'rgb(37,99,235)')} />
-        <MoreRow to="/about/thanks" title={t.aboutThanks} icon={<Sparkles className="h-5 w-5" />} iconStyle={softIcon('rgba(244,63,94,0.12)', 'rgb(225,29,72)')} />
         <MoreRow to="/myzone/settings" title={isZh ? '设置' : 'Settings'} icon={<Info className="h-5 w-5" />} iconStyle={softIcon('rgba(15,23,42,0.08)', 'rgb(51,65,85)')} />
       </div>
     </motion.section>

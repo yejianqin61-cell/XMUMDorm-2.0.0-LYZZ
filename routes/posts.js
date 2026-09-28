@@ -417,11 +417,30 @@ router.get('/', async (req, res) => {
     const viewerUid = user && user.id != null ? parseInt(user.id, 10) : 0;
     const likeUserParam = Number.isFinite(viewerUid) && viewerUid > 0 ? viewerUid : 0;
 
-    // 占位符顺序必须与 SQL 中 ? 出现顺序一致：SELECT 里 user_liked 在前，WHERE 里 LIKE / tag 在后
-    let rows;
-    try {
-      rows = await query(
-        `SELECT p.id, p.user_id, p.title, p.content, p.type, p.deleted_at, p.hidden_by_admin, p.created_at, p.updated_at,
+    // 第一步：只对 posts 分页，先取本页的帖子 id。
+    // 不能把 LIMIT/OFFSET 直接加在 `posts LEFT JOIN post_images` 上：那样切的是
+    // 「帖子 × 图片」的行数，一页只会回一半帖子，多图帖还会跨页重复出现。
+    const pageIdRows = await query(
+      `SELECT p.id
+       FROM posts p
+       WHERE ${where}
+       ORDER BY p.created_at DESC
+       LIMIT ${limitCount} OFFSET ${offset}`,
+      [...sqlParams]
+    );
+    const pageIds = (pageIdRows || []).map((r) => r.id);
+    const hasMore = pageIds.length > pageSize;
+    const postIds = hasMore ? pageIds.slice(0, pageSize) : pageIds;
+
+    // 第二步：按 id 取本页帖子的完整数据（含多图）。
+    // 占位符顺序必须与 SQL 中 ? 出现顺序一致：SELECT 里 user_liked 在前，WHERE 的 IN 在后
+    let rows = [];
+    if (postIds.length > 0) {
+      const idPlaceholders = postIds.map(() => '?').join(', ');
+      const detailParams = [likeUserParam, ...postIds];
+      try {
+        rows = await query(
+          `SELECT p.id, p.user_id, p.title, p.content, p.type, p.deleted_at, p.hidden_by_admin, p.created_at, p.updated_at,
           u.id AS author_id, u.username AS author_username, u.nickname AS author_nickname, u.avatar AS author_avatar,
           u.level AS author_level, u.badge AS author_badge,
           pi.file_path AS image_path, pi.sort_order,
@@ -431,16 +450,15 @@ router.get('/', async (req, res) => {
          FROM posts p
          LEFT JOIN users u ON p.user_id = u.id
          LEFT JOIN post_images pi ON pi.post_id = p.id
-         WHERE ${where}
-         ORDER BY p.created_at DESC
-         LIMIT ${limitCount} OFFSET ${offset}`,
-        [likeUserParam, ...sqlParams]
-      );
-    } catch (e) {
-      // 兼容未执行 013 迁移：降级不查询 title，避免列表直接 500
-      if (e && e.code === 'ER_BAD_FIELD_ERROR' && String(e.sqlMessage || '').includes("p.title")) {
-        rows = await query(
-          `SELECT p.id, p.user_id, p.content, p.type, p.deleted_at, p.hidden_by_admin, p.created_at, p.updated_at,
+         WHERE p.id IN (${idPlaceholders})
+         ORDER BY p.created_at DESC, pi.sort_order ASC`,
+          detailParams
+        );
+      } catch (e) {
+        // 兼容未执行 013 迁移：降级不查询 title，避免列表直接 500
+        if (e && e.code === 'ER_BAD_FIELD_ERROR' && String(e.sqlMessage || '').includes("p.title")) {
+          rows = await query(
+            `SELECT p.id, p.user_id, p.content, p.type, p.deleted_at, p.hidden_by_admin, p.created_at, p.updated_at,
             u.id AS author_id, u.username AS author_username, u.nickname AS author_nickname, u.avatar AS author_avatar,
           u.level AS author_level, u.badge AS author_badge,
             pi.file_path AS image_path, pi.sort_order,
@@ -450,18 +468,17 @@ router.get('/', async (req, res) => {
            FROM posts p
            LEFT JOIN users u ON p.user_id = u.id
            LEFT JOIN post_images pi ON pi.post_id = p.id
-           WHERE ${where}
-           ORDER BY p.created_at DESC
-           LIMIT ${limitCount} OFFSET ${offset}`,
-          [likeUserParam, ...sqlParams]
-        );
-      } else {
-        throw e;
+           WHERE p.id IN (${idPlaceholders})
+           ORDER BY p.created_at DESC, pi.sort_order ASC`,
+            detailParams
+          );
+        } else {
+          throw e;
+        }
       }
     }
     let list = mergePostRows(rows.map((r) => ({ ...r, deleted_at: null })), { user: user || {} });
     list = await enrichPostsWithTags(list);
-    const hasMore = rows.length > pageSize;
     res.status(200).json({
       status: 0,
       message: '获取成功',

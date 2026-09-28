@@ -26,7 +26,7 @@ function NeoDrawer({ open, onClose, children, ...props }) {
   return createPortal(
     <div role="dialog" aria-modal="true" {...props}>
       <div
-        className="fixed inset-0 z-50 bg-black/50"
+        className="fixed inset-0 z-50 bg-neutral-900/50"
         onClick={onClose}
       />
       <DrawerContent onClose={onClose}>{children}</DrawerContent>
@@ -39,7 +39,7 @@ function DrawerContent({ className = '', children, side = 'right', onClose, ...p
   return (
     <div
       className={cn(
-        'fixed z-50 bg-background border-2 border-black shadow-[4px_4px_0_0_#000] flex flex-col',
+        'fixed z-50 bg-background border-2 border-black shadow-[4px_4px_0_0_var(--color-black)] flex flex-col',
         side === 'right' && 'inset-y-0 right-0 w-full max-w-md border-l-2',
         side === 'left' && 'inset-y-0 left-0 w-full max-w-md border-r-2',
         side === 'bottom' && 'inset-x-0 bottom-0 max-h-[80vh] border-t-2 rounded-t-lg',

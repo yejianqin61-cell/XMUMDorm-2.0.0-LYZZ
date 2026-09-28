@@ -51,7 +51,6 @@ export default function PostDetailShell({
   isAuthor = false,
   onDeletePost,
   deleteLoading = false,
-  showAtmo = false,
   showCommentCountBtn = false,
 }) {
   const navigate = useNavigate();
@@ -148,21 +147,13 @@ export default function PostDetailShell({
   const author = post.author || {};
   const displayName = author.nickname ?? author.username ?? author.name ?? (isEn ? 'Anonymous' : '匿名');
   const totalCommentCount = comments.reduce((sum, c) => sum + 1 + (c.replies?.length || 0), 0);
-  const heroUrl = post.images?.[0]?.url ? prefixImageUrl(post.images[0].url) : null;
   const imageUrls = Array.isArray(post.images)
     ? post.images.map((img) => prefixImageUrl(img.url)).filter(Boolean)
     : [];
 
   return (
     <div className="post-detail-page">
-      {showAtmo && heroUrl ? (
-        <div className="post-detail-atmo" aria-hidden="true">
-          <div className="post-detail-atmo-img" style={{ backgroundImage: `url('${heroUrl}')` }} />
-          <div className="post-detail-atmo-fade" />
-        </div>
-      ) : null}
-
-      <article className="post-detail-card">
+      <article className="post-detail-post">
         {headerSlot}
 
         <div className="post-detail-author">
@@ -181,90 +172,87 @@ export default function PostDetailShell({
             )}
           </button>
           <div className="post-detail-author-info">
-            <div className="post-detail-name-tags">
-              <span className="post-detail-username">{displayName}</span>
-              {author.level ? (
-                <UserLevelBadge level={author.level} badgeEmoji={author.badgeEmoji} size="sm" isZh={!isEn} />
-              ) : null}
-              {tags.length > 0 && (
-                <div className="post-detail-tags" aria-label={isEn ? 'Tags' : '标签'}>
-                  {tags.map((t) =>
-                    t.slug ? (
-                      <Link key={t.key} to={t.to || `#`} className="post-detail-tag">
-                        {t.label}
-                      </Link>
-                    ) : (
-                      <span key={t.key} className="post-detail-tag post-detail-tag--static">
-                        {t.label}
-                      </span>
-                    )
-                  )}
-                </div>
-              )}
-            </div>
+            <span className="post-detail-username">{displayName}</span>
+            {author.level ? (
+              <UserLevelBadge level={author.level} badgeEmoji={author.badgeEmoji} size="sm" isZh={!isEn} />
+            ) : null}
             {post.created_at && (
-                <span className="post-detail-time" title={formatPostTime(post.created_at, true)}>
-                  {formatPostTime(post.created_at)}
-                  {metaSlot ? <span className="post-detail-time-extra">{metaSlot}</span> : null}
-                </span>
-              )}
-            </div>
+              <span className="post-detail-time" title={formatPostTime(post.created_at, true)}>
+                {formatPostTime(post.created_at)}
+                {metaSlot ? <span className="post-detail-time-extra">{metaSlot}</span> : null}
+              </span>
+            )}
+            {tags.length > 0 && (
+              <div className="post-detail-tags" aria-label={isEn ? 'Tags' : '标签'}>
+                {tags.map((t) =>
+                  t.slug ? (
+                    <Link key={t.key} to={t.to || `#`} className="post-detail-tag">
+                      {t.label}
+                    </Link>
+                  ) : (
+                    <span key={t.key} className="post-detail-tag post-detail-tag--static">
+                      {t.label}
+                    </span>
+                  )
+                )}
+              </div>
+            )}
+          </div>
 
-            {isAuthor && onDeletePost ? (
-              <div className="post-detail-owner-actions">
+          {isAuthor && onDeletePost ? (
+            <div className="post-detail-owner-actions">
+              <button
+                type="button"
+                className="post-detail-more-btn"
+                onClick={() => setOwnerMenuOpen((open) => !open)}
+                disabled={deleteLoading}
+                title={isEn ? 'More' : '更多'}
+                aria-label={isEn ? 'More' : '更多'}
+                aria-expanded={ownerMenuOpen}
+              >
+                <MoreHorizontal size={18} aria-hidden />
+              </button>
+              {ownerMenuOpen ? (
                 <button
                   type="button"
-                  className="post-detail-more-btn"
-                  onClick={() => setOwnerMenuOpen((open) => !open)}
-                  disabled={deleteLoading}
-                  title={isEn ? 'More' : '更多'}
-                  aria-label={isEn ? 'More' : '更多'}
-                  aria-expanded={ownerMenuOpen}
+                  className="post-detail-delete-btn"
+                  onClick={() => {
+                    setOwnerMenuOpen(false);
+                    onDeletePost();
+                  }}
                 >
-                  <MoreHorizontal size={18} aria-hidden />
+                  {isEn ? 'Delete post' : '删除帖子'}
                 </button>
-                {ownerMenuOpen ? (
-                  <button
-                    type="button"
-                    className="post-detail-delete-btn"
-                    onClick={() => {
-                      setOwnerMenuOpen(false);
-                      onDeletePost();
-                    }}
-                  >
-                    {isEn ? 'Delete post' : '删除帖子'}
-                  </button>
-                ) : null}
-              </div>
-            ) : null}
-          </div>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
 
         {title ? <h1 className="post-detail-heading">{title}</h1> : null}
         <p className="post-detail-content">{post.content}</p>
 
-        {imageUrls.length > 0 && (
-          <div className="post-detail-media" aria-label={isEn ? 'Post images' : '帖子图片'}>
-            {imageUrls.length === 1 ? (
-              <button
-                type="button"
-                className="post-detail-image-wrap"
-                onClick={() => setImagePreview({ open: true, index: 0 })}
-              >
-                <img src={imageUrls[0]} alt="" className="post-detail-image" />
-              </button>
-            ) : (
-              <StackedCardCarousel
-                urls={imageUrls}
-                index={carouselIndex}
-                onChangeIndex={(next, dir) => {
-                  setCarouselDir(dir);
-                  setCarouselIndex(next);
-                }}
-                onOpenPreview={(i) => setImagePreview({ open: true, index: i })}
-                dir={carouselDir}
-              />
-            )}
-          </div>
+        {imageUrls.length === 1 && (
+          <button
+            type="button"
+            className="post-detail-image-wrap"
+            onClick={() => setImagePreview({ open: true, index: 0 })}
+            aria-label={isEn ? 'View image' : '查看图片'}
+          >
+            <img src={imageUrls[0]} alt="" className="post-detail-image" />
+          </button>
+        )}
+
+        {imageUrls.length > 1 && (
+          <StackedCardCarousel
+            urls={imageUrls}
+            index={carouselIndex}
+            onChangeIndex={(next, dir) => {
+              setCarouselDir(dir);
+              setCarouselIndex(next);
+            }}
+            onOpenPreview={(i) => setImagePreview({ open: true, index: i })}
+            dir={carouselDir}
+          />
         )}
 
         {imagePreview.open && imageUrls.length > 0 && (

@@ -7,7 +7,7 @@ import { X } from 'lucide-react';
 const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
 const dialogVariants = cva(
-  'fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border-2 border-black bg-card shadow-[4px_4px_0_0_#000] p-6',
+  'fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border-2 border-black bg-card shadow-[4px_4px_0_0_#122E8A] p-6',
   {
     variants: {
       size: {
@@ -99,7 +99,7 @@ export default function NeoDialog({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 bg-black/80 flex items-start justify-center pt-[10vh]"
+      className="fixed inset-0 z-50 bg-neutral-900/80 flex items-start justify-center pt-[10vh]"
       onClick={handleBackdropClick}
       aria-hidden="true"
     >
