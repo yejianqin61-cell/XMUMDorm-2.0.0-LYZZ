@@ -19,6 +19,7 @@ const requireAdmin = require('../middleware/adminAuth');
 const materialUpload = require('../middleware/materialUpload');
 
 const { query } = require('../database');
+const { inlineLimit, inlineOffset } = require('../utils/sqlLimit');
 const { logAudit } = require('../services/auditLog');
 const gm = require('../services/githubMaterials');
 const cc = require('../services/courseCatalog');
@@ -643,8 +644,8 @@ router.get(
          FROM materials m LEFT JOIN courses c ON c.id = m.course_id
         WHERE m.user_id = ? AND m.deleted_at IS NULL
         ORDER BY m.created_at DESC
-        LIMIT ? OFFSET ?`,
-      [req.user.id, pageSize, offset]
+        LIMIT ${inlineLimit(pageSize, { fallback: 20, max: 100 })} OFFSET ${inlineOffset(offset)}`,
+      [req.user.id]
     );
     const cnt = await query(
       'SELECT COUNT(*) AS n FROM materials WHERE user_id = ? AND deleted_at IS NULL',
