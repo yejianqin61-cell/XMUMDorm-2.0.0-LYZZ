@@ -115,4 +115,10 @@ async function sensitiveWordFilter(req, res, next) {
 // 导出刷新函数供管理端调用（新增/删除/启停敏感词后刷新缓存）
 sensitiveWordFilter.refreshCache = refreshCache;
 
+// 额外导出内部助手，供需要「自行取词表并检查非 req.body 文本」的场景复用
+// （例如学习资料上传时检查 .md/.txt 的**文件内容**）。
+// 默认导出仍是中间件本身，不影响既有用法。
+sensitiveWordFilter.getSensitiveWords = getSensitiveWords;
+sensitiveWordFilter.checkText = checkText;
+
 module.exports = sensitiveWordFilter;

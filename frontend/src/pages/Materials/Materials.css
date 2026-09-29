@@ -1,0 +1,722 @@
+/**
+ * ============================================
+ * M10 学习资料 · 模块样式（液态玻璃）
+ * ============================================
+ * 供 pages/Materials/* 各页共用。沿用项目既有的设计 token
+ * （--app-surface / --radius-lg / --shadow-1 / --post-ios-* 等）。
+ */
+
+/* ---------------------------------------------------------------- 布局 */
+.mat-page {
+  min-height: 100%;
+  padding: 14px 14px calc(var(--tabbar-height, 64px) + var(--safe-bottom, 0px) + 28px);
+  color: #0f172a;
+}
+
+.mat-wrap {
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.mat-hero {
+  padding: 10px 2px 14px;
+}
+
+.mat-hero-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.mat-title {
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 0.3px;
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mat-sub {
+  margin-top: 6px;
+  font-size: 13px;
+  color: rgba(15, 23, 42, 0.6);
+  line-height: 1.6;
+}
+
+/* ---------------------------------------------------------------- 玻璃卡片 */
+.mat-glass {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.62);
+  border-radius: var(--radius-lg, 18px);
+  box-shadow: var(--shadow-1, 0 10px 26px rgba(15, 23, 42, 0.08));
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+}
+
+.mat-section {
+  margin-top: 16px;
+  padding: 14px;
+}
+
+.mat-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.mat-muted {
+  color: rgba(15, 23, 42, 0.55);
+  font-size: 13px;
+}
+
+/* ---------------------------------------------------------------- 工具条 */
+.mat-toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.mat-input,
+.mat-select {
+  height: 38px;
+  padding: 0 12px;
+  font-size: 14px;
+  border-radius: var(--radius-md, 12px);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: rgba(255, 255, 255, 0.72);
+  color: #0f172a;
+  outline: none;
+  min-width: 0;
+}
+
+.mat-input:focus,
+.mat-select:focus {
+  border-color: var(--brand-2, #6366f1);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.14);
+}
+
+.mat-search {
+  flex: 1 1 220px;
+  min-width: 180px;
+}
+
+.mat-textarea {
+  padding: 10px 12px;
+  font-size: 14px;
+  border-radius: var(--radius-md, 12px);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: rgba(255, 255, 255, 0.72);
+  color: #0f172a;
+  outline: none;
+  width: 100%;
+  resize: vertical;
+  font-family: inherit;
+}
+
+/* ---------------------------------------------------------------- 按钮 */
+.mat-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: var(--radius-md, 12px);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: rgba(255, 255, 255, 0.78);
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.12s ease;
+  white-space: nowrap;
+}
+
+.mat-btn:hover:not(:disabled) {
+  background: #fff;
+  transform: translateY(-1px);
+}
+
+.mat-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mat-btn--primary {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--brand-2, #6366f1), var(--brand-3, #8b5cf6));
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.28);
+}
+
+.mat-btn--danger {
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #dc2626;
+  background: rgba(254, 242, 242, 0.9);
+}
+
+.mat-btn--sm {
+  height: 32px;
+  padding: 0 10px;
+  font-size: 13px;
+}
+
+/* ---------------------------------------------------------------- 课程列表 */
+.mat-course-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.mat-course-card {
+  padding: 14px;
+  cursor: pointer;
+  transition: transform 0.14s ease, box-shadow 0.14s ease;
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.mat-course-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-2, 0 16px 36px rgba(15, 23, 42, 0.12));
+}
+
+.mat-course-name {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.mat-course-meta {
+  margin-top: 6px;
+  font-size: 12px;
+  color: rgba(15, 23, 42, 0.55);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.mat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(99, 102, 241, 0.12);
+  color: #4338ca;
+}
+
+.mat-pill--ghost {
+  background: rgba(15, 23, 42, 0.06);
+  color: rgba(15, 23, 42, 0.7);
+}
+
+/* ---------------------------------------------------------------- Tab */
+.mat-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-top: 12px;
+  scrollbar-width: none;
+}
+
+.mat-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.mat-tab {
+  flex: 0 0 auto;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  background: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(15, 23, 42, 0.7);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.mat-tab--active {
+  background: linear-gradient(135deg, var(--brand-2, #6366f1), var(--brand-3, #8b5cf6));
+  border-color: transparent;
+  color: #fff;
+}
+
+/* ---------------------------------------------------------------- 资料列表 */
+.mat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.mat-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.mat-item:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-2, 0 16px 36px rgba(15, 23, 42, 0.12));
+}
+
+.mat-item-icon {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.mat-item-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.mat-item-title {
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.mat-item-meta {
+  margin-top: 5px;
+  font-size: 12px;
+  color: rgba(15, 23, 42, 0.55);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.mat-item-actions {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+/* ---------------------------------------------------------------- 状态 */
+.mat-state {
+  padding: 28px 16px;
+  text-align: center;
+  color: rgba(15, 23, 42, 0.55);
+  font-size: 14px;
+}
+
+.mat-banner {
+  padding: 10px 12px;
+  border-radius: var(--radius-md, 12px);
+  font-size: 13px;
+  line-height: 1.6;
+  margin-top: 12px;
+}
+
+.mat-banner--warn {
+  background: rgba(254, 243, 199, 0.75);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #92400e;
+}
+
+.mat-banner--error {
+  background: rgba(254, 226, 226, 0.8);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #b91c1c;
+}
+
+.mat-banner--ok {
+  background: rgba(220, 252, 231, 0.8);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #166534;
+}
+
+/* ---------------------------------------------------------------- 表单 */
+.mat-field {
+  margin-bottom: 14px;
+}
+
+.mat-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.mat-label .mat-req {
+  color: #dc2626;
+  margin-left: 3px;
+}
+
+.mat-hint {
+  margin-top: 5px;
+  font-size: 12px;
+  color: rgba(15, 23, 42, 0.5);
+  line-height: 1.5;
+}
+
+.mat-row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 560px) {
+  .mat-row2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 文件选择 */
+.mat-file {
+  border: 1.5px dashed rgba(15, 23, 42, 0.2);
+  border-radius: var(--radius-md, 12px);
+  padding: 18px 14px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: border-color 0.14s ease, background 0.14s ease;
+}
+
+.mat-file:hover {
+  border-color: var(--brand-2, #6366f1);
+  background: rgba(99, 102, 241, 0.05);
+}
+
+.mat-file-name {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  word-break: break-all;
+}
+
+/* ---------------------------------------------------------------- 课程选择器 */
+.mat-picker {
+  position: relative;
+}
+
+.mat-picker-menu {
+  position: absolute;
+  z-index: 40;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 4px;
+  border-radius: var(--radius-md, 12px);
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: var(--shadow-2, 0 16px 36px rgba(15, 23, 42, 0.16));
+}
+
+.mat-picker-opt {
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mat-picker-opt:hover,
+.mat-picker-opt--active {
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.mat-picker-create {
+  color: #4338ca;
+  font-weight: 700;
+}
+
+.mat-picker-chosen {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ---------------------------------------------------------------- 上传状态机 */
+.mat-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.mat-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: rgba(15, 23, 42, 0.45);
+}
+
+.mat-step-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid rgba(15, 23, 42, 0.2);
+  font-size: 12px;
+  flex: 0 0 auto;
+}
+
+.mat-step--active {
+  color: #4338ca;
+  font-weight: 700;
+}
+
+.mat-step--active .mat-step-dot {
+  border-color: var(--brand-2, #6366f1);
+  background: rgba(99, 102, 241, 0.12);
+}
+
+.mat-step--done {
+  color: #166534;
+  font-weight: 700;
+}
+
+.mat-step--done .mat-step-dot {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.14);
+}
+
+.mat-step--fail {
+  color: #b91c1c;
+  font-weight: 700;
+}
+
+.mat-step--fail .mat-step-dot {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.12);
+}
+
+/* ---------------------------------------------------------------- 预览器 */
+.mat-viewer {
+  margin-top: 14px;
+}
+
+.mat-viewer-frame {
+  width: 100%;
+  height: min(78vh, 900px);
+  border: 0;
+  border-radius: var(--radius-md, 12px);
+  background: #fff;
+}
+
+.mat-md {
+  padding: 18px 20px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: var(--radius-md, 12px);
+  line-height: 1.75;
+  font-size: 15px;
+  color: #1f2937;
+  overflow-wrap: break-word;
+}
+
+.mat-md h1,
+.mat-md h2,
+.mat-md h3 {
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  font-weight: 900;
+  margin: 1.2em 0 0.5em;
+  line-height: 1.35;
+}
+
+.mat-md h1 {
+  font-size: 1.6em;
+}
+
+.mat-md h2 {
+  font-size: 1.3em;
+}
+
+.mat-md h3 {
+  font-size: 1.12em;
+}
+
+.mat-md p {
+  margin: 0.75em 0;
+}
+
+.mat-md ul,
+.mat-md ol {
+  padding-left: 1.4em;
+  margin: 0.7em 0;
+}
+
+.mat-md li {
+  margin: 0.3em 0;
+}
+
+.mat-md code {
+  background: rgba(15, 23, 42, 0.07);
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 0.9em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.mat-md pre {
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 14px 16px;
+  border-radius: 10px;
+  overflow-x: auto;
+  margin: 0.9em 0;
+}
+
+.mat-md pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  font-size: 0.88em;
+}
+
+.mat-md blockquote {
+  border-left: 3px solid rgba(99, 102, 241, 0.5);
+  padding-left: 14px;
+  margin: 0.9em 0;
+  color: rgba(15, 23, 42, 0.7);
+}
+
+.mat-md table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.9em 0;
+  font-size: 0.94em;
+}
+
+.mat-md th,
+.mat-md td {
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  padding: 7px 10px;
+  text-align: left;
+}
+
+.mat-md th {
+  background: rgba(15, 23, 42, 0.04);
+  font-weight: 800;
+}
+
+.mat-md img {
+  max-width: 100%;
+  border-radius: 8px;
+}
+
+.mat-md a {
+  color: #4338ca;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.mat-md hr {
+  border: 0;
+  border-top: 1px solid rgba(15, 23, 42, 0.12);
+  margin: 1.4em 0;
+}
+
+/* 目录 */
+.mat-toc {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.9;
+}
+
+.mat-toc-title {
+  font-weight: 800;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.mat-toc a {
+  color: rgba(15, 23, 42, 0.72);
+  text-decoration: none;
+}
+
+.mat-toc a:hover {
+  color: #4338ca;
+}
+
+.mat-toc-l2 {
+  padding-left: 12px;
+}
+
+.mat-toc-l3 {
+  padding-left: 24px;
+}
+
+/* ---------------------------------------------------------------- 管理端 */
+.mat-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.mat-table th,
+.mat-table td {
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.mat-table th {
+  font-weight: 800;
+  background: rgba(15, 23, 42, 0.03);
+}
+
+.mat-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.mat-stat {
+  padding: 12px;
+  text-align: center;
+}
+
+.mat-stat-num {
+  font-size: 22px;
+  font-weight: 900;
+  font-family: ui-serif, Georgia, serif;
+}
+
+.mat-stat-label {
+  margin-top: 4px;
+  font-size: 12px;
+  color: rgba(15, 23, 42, 0.55);
+}

@@ -4,6 +4,7 @@ import {
   HandHeart,
   Heart,
   HeartHandshake,
+  Library,
   TreePine,
   ShoppingBag,
   UserRound,
@@ -78,6 +79,15 @@ export const SITE_PRIMARY_NAV_ITEMS = [
     to: '/about/freshman-guide',
     icon: BookOpen,
     matchPrefixes: ['/about/freshman-guide'],
+  },
+  {
+    // M10 学习资料：按课程聚合的笔记/课件/试题/答案（资料本体在外部公开仓库）
+    key: 'materials',
+    labelZh: '学习资料',
+    labelEn: 'Materials',
+    to: '/materials',
+    icon: Library,
+    matchPrefixes: ['/materials'],
   },
   {
     key: 'errands',

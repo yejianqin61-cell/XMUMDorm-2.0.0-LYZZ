@@ -89,4 +89,14 @@ export const QK = {
   confessionMeta: () => ['confessions', 'meta'],
   confessionDetail: (id, tokenKey) => ['confessions', 'detail', id, tokenKey ?? '_guest'],
   confessionComments: (id) => ['confessions', 'comments', id],
+
+  // M10 学习资料
+  materialsList: (params) => ['materials', 'list', params || {}],
+  materialsCourses: (q) => ['materials', 'courses', q || ''],
+  /** 单份资料的正文（走后端兜底或 CDN，键里带 path 与 ref 便于缓存失效） */
+  materialsText: (path, ref) => ['materials', 'text', path, ref || '_main'],
+  materialsMyUploads: (tokenKey, page, pageSize) => ['materials', 'me', 'uploads', tokenKey ?? '_guest', page, pageSize],
+  materialsMySaves: (tokenKey) => ['materials', 'me', 'saves', tokenKey ?? '_guest'],
+  materialsUploadStatus: (id) => ['materials', 'upload', 'status', id],
+  materialsAdminStats: () => ['materials', 'admin', 'stats'],
 };

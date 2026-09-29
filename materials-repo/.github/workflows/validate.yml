@@ -1,0 +1,56 @@
+# ============================================
+# 学习资料库 · PR 校验
+# ============================================
+# 这个 workflow 只做一件事：在 PR 上跑校验，并把它注册为分支保护的
+# required status check（check 名称 = `validate`）。
+#
+# 为什么没有「push 到 main 后重新生成 index.json」的 job？
+#   因为分支保护若开启「Require a pull request before merging」，
+#   任何直推 main 的行为（包括来自 Actions 的推送）都会被拒绝，
+#   那样的 job 必然失败。因此本设计改为：
+#     index.json 由**后端在上传 PR 内一并写入**，main 上永远不需要回推。
+#   管理员手工加文件后需要重建索引时，在本地跑 build-index.mjs 并开一个普通 PR。
+#
+# 为什么不给 contents: write？
+#   write 权限 + 自动合并（0 审批）会构成提权链：任何能开 PR 的人
+#   改掉本文件即可让 CI 以写权限执行任意命令。
+#   权限只给 read，并且校验器会把 .github/** 的改动判为失败（绊线）。
+#   完整防护仍需 CODEOWNERS + Require review from Code Owners，见 CONTRIBUTING.md。
+
+name: validate
+
+on:
+  pull_request:
+    branches: [main]
+
+# 最小权限：只读
+permissions:
+  contents: read
+
+# 同一 PR 的新推送取消旧运行，避免排队
+concurrency:
+  group: validate-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # 需要完整历史才能 diff 出本 PR 的变更文件
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate materials
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: node .github/scripts/validate.mjs

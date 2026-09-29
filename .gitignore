@@ -60,3 +60,6 @@ android/.gradle/
 android/build/
 android/app/src/main/assets/public/
 .capacitor/
+
+# 学习资料（M10）运行时索引快照：服务端写入时生成，含全部资料元数据，不应提交
+data/materials-index.cache.json
