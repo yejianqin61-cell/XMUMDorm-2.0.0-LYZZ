@@ -72,6 +72,7 @@ Constitution → Requirement → Clarify → Architecture → Module → Tasks �
 | M06 管理员后台 | [设计](04-Module/M06-管理员后台/) | [任务](05-Tasks/M06-管理员后台/) | [测试](08-Test/Web端/举报与管理员后台测试报告.md) |
 | M07 一站式平台 | [设计](04-Module/M07-一站式平台/) | — | [测试](08-Test/Web端/一站通模块测试报告.md) |
 | M08 二手市场 | [设计](04-Module/M08-二手市场/) | — | [测试](08-Test/Web端/二手市场模块测试报告.md) |
+| M10 学习资料 | [设计](04-Module/M10-学习资料/) · [需求](01-Requirement/module-specs/学习资料模块需求说明.md) · [可行性](02-Clarify/feasibility/学习资料模块可行性评估.md) | — | — |
 
 ---
 

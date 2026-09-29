@@ -175,3 +175,112 @@ CREATE TABLE IF NOT EXISTS confession_comments (
   FOREIGN KEY (parent_id) REFERENCES confession_comments(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='万能墙评论';
 
+-- ============================================
+-- 学习资料 · 课程字典 (courses) - M10
+-- 来源迁移: 069_materials.sql
+-- 说明：课程身份 = 名字 + 讲师（course_code 可选、不唯一）
+--       lecturer 用空串哨兵而非 NULL —— MySQL 唯一约束对 NULL 不生效
+-- ============================================
+CREATE TABLE IF NOT EXISTS courses (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(180) NOT NULL COMMENT '规范化课程名（聚合单位之一）',
+  lecturer VARCHAR(120) NOT NULL DEFAULT '' COMMENT '讲师；未知用空串哨兵',
+  course_code VARCHAR(32) DEFAULT NULL COMMENT '可选，如 BSC103；不再唯一',
+  is_pseudo TINYINT NOT NULL DEFAULT 0 COMMENT '1=通用/其他 伪课程',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_name_lecturer (name, lecturer),
+  KEY idx_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='课程字典（聚合单位=名字+讲师）';
+
+-- 固定伪课程：id=1，承接不属于任何课程的资料
+INSERT IGNORE INTO courses (id, name, lecturer, course_code, is_pseudo)
+VALUES (1, '通用 / 其他', '', NULL, 1);
+
+-- ============================================
+-- 学习资料 · 课程别名 (course_aliases) - M10
+-- 来源迁移: 069_materials.sql
+-- ============================================
+CREATE TABLE IF NOT EXISTS course_aliases (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  course_id INT NOT NULL COMMENT '指向 courses.id（canonical）',
+  alias_name VARCHAR(180) NOT NULL COMMENT '被合并掉的旧名/别称',
+  alias_lecturer VARCHAR(120) NOT NULL DEFAULT '',
+  alias_code VARCHAR(32) DEFAULT NULL COMMENT '旧课程编码',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_alias (alias_name, alias_lecturer),
+  KEY idx_course (course_id),
+  FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='课程别名/旧名/多 code';
+
+-- ============================================
+-- 学习资料 · 上传记录 (materials) - M10
+-- 来源迁移: 069_materials.sql
+-- 说明：资料本体在外部公开 GitHub 仓库；本表只存审计与元数据，
+--       不存文件内容、不存 CDN 地址（CDN 地址运行时由 index.json + path 拼接）
+-- ============================================
+CREATE TABLE IF NOT EXISTS materials (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL COMMENT '上传者 users.id',
+  course_id INT NOT NULL COMMENT 'courses.id',
+  type VARCHAR(16) NOT NULL COMMENT 'notes/lecture/exam/answer/other',
+  material_path VARCHAR(512) NOT NULL COMMENT '仓库内相对路径 c<id>/<type>/<file>',
+  title VARCHAR(100) NOT NULL,
+  description VARCHAR(300) DEFAULT NULL,
+  lesson INT DEFAULT NULL COMMENT '第三层a：课时序号',
+  lesson_title VARCHAR(64) DEFAULT NULL COMMENT '第三层a：课时标题',
+  exam_node VARCHAR(16) DEFAULT NULL COMMENT '第三层b：midterm/final/quiz/assignment/monthly；NULL=整门课',
+  source VARCHAR(16) DEFAULT NULL COMMENT '仅 exam：official/recalled',
+  tags VARCHAR(255) DEFAULT NULL COMMENT '英文逗号分隔，≤5 个',
+  semester VARCHAR(16) DEFAULT NULL COMMENT '仅展示，不参与课程身份',
+  kind VARCHAR(16) NOT NULL COMMENT 'markdown/pdf/image/archive/document',
+  file_name VARCHAR(255) NOT NULL,
+  file_size BIGINT NOT NULL,
+  file_sha256 CHAR(64) NOT NULL,
+  branch_name VARCHAR(255) DEFAULT NULL,
+  pr_number INT DEFAULT NULL,
+  pr_url VARCHAR(512) DEFAULT NULL,
+  commit_sha CHAR(40) DEFAULT NULL,
+  status VARCHAR(16) NOT NULL DEFAULT 'pending' COMMENT 'pending/merged/rejected/removed',
+  reject_reason VARCHAR(255) DEFAULT NULL,
+  download_count INT NOT NULL DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME DEFAULT NULL,
+  KEY idx_user_created (user_id, created_at DESC),
+  KEY idx_status_created (status, created_at DESC),
+  KEY idx_course_type (course_id, type),
+  KEY idx_sha (file_sha256),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='学习资料上传记录（资料本体在外部 GitHub 仓库）';
+
+-- ============================================
+-- 学习资料 · 收藏 (material_saves) - M10
+-- 来源迁移: 069_materials.sql
+-- ============================================
+CREATE TABLE IF NOT EXISTS material_saves (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  material_id INT NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_user_material (user_id, material_id),
+  KEY idx_material (material_id),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (material_id) REFERENCES materials(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='学习资料收藏';
+
+-- ============================================
+-- 学习资料 · 下载流水 (material_downloads) - M10
+-- 来源迁移: 069_materials.sql
+-- 说明：只插入不更新；materials.download_count 为冗余计数
+-- ============================================
+CREATE TABLE IF NOT EXISTS material_downloads (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  material_id INT NOT NULL,
+  user_id INT DEFAULT NULL COMMENT '游客为 NULL',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_material (material_id),
+  KEY idx_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='学习资料下载流水';
+

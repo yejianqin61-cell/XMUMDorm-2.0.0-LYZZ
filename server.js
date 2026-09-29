@@ -49,6 +49,7 @@ const adminRoutes = require('./routes/admin');
 const reportRoutes = require('./routes/reports');
 const advertisementRoutes = require('./routes/advertisements');
 const confessionRoutes = require('./routes/confessions');
+const materialsRoutes = require('./routes/materials');
 
 // 8. 创建一个 Express 应用实例
 const app = express();
@@ -175,6 +176,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/advertisements', advertisementRoutes);
 app.use('/api/confessions', confessionRoutes);
+app.use('/api/materials', materialsRoutes);
 
 // ============================================
 // 错误处理中间件

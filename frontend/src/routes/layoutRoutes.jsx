@@ -79,6 +79,12 @@ const MerchantShopEdit = lazy(() => import('../pages/MerchantShopEdit'));
 const Rankings = lazy(() => import('../pages/Rankings'));
 const ConfessionWall = lazy(() => import('../pages/ConfessionWall'));
 const ConfessionCompose = lazy(() => import('../pages/ConfessionCompose'));
+const MaterialsHome = lazy(() => import('../pages/Materials/MaterialsHome'));
+const MaterialsCourse = lazy(() => import('../pages/Materials/MaterialsCourse'));
+const MaterialDetail = lazy(() => import('../pages/Materials/MaterialDetail'));
+const MaterialsUpload = lazy(() => import('../pages/Materials/MaterialsUpload'));
+const MaterialsMine = lazy(() => import('../pages/Materials/MaterialsMine'));
+const AdminMaterials = lazy(() => import('../pages/Materials/AdminMaterials'));
 
 function renderLazyRoute(Component) {
   // 每个懒加载路由都套一层错误边界：
@@ -181,6 +187,13 @@ export const layoutRoutes = (
     {/* M09 万能墙 */}
     <Route path="confession" element={renderLazyRoute(ConfessionWall)} />
     <Route path="confession/new" element={renderLazyRoute(ConfessionCompose)} />
+    {/* M10 学习资料：课程为中心；/materials/file 用 ?path= 传参避免路径里的 / 被拆段 */}
+    <Route path="materials" element={renderLazyRoute(MaterialsHome)} />
+    <Route path="materials/course/:id" element={renderLazyRoute(MaterialsCourse)} />
+    <Route path="materials/file" element={renderLazyRoute(MaterialDetail)} />
+    <Route path="materials/upload" element={renderLazyRoute(MaterialsUpload)} />
+    <Route path="materials/me" element={renderLazyRoute(MaterialsMine)} />
+    <Route path="admin/materials" element={renderLazyRoute(AdminMaterials)} />
     <Route path="*" element={<Navigate to="/" replace />} />
   </>
 );
