@@ -12,7 +12,7 @@
  *   4. **魔数嗅探**：真实类型必须与扩展名相符（防「.exe 改名 .pdf」）
  *   5. 文件名安全化（字符集 / 长度 / 路径分隔符）
  *   6. 元数据字段校验（标题 / 类型 / 课时 / 考试节点 / 来源 / 标签 …）
- *   7. 敏感词（标题、简介、标签，以及文本类文件的**内容**）
+ *   7. 敏感词（**仅标题 / 简介 / 课时标题 / 标签**；文件正文按政策不扫，见 assertNoSensitive）
  *   8. 软去重（同 sha 且同 课程+类型+路径 → 拒绝）
  *
  * 全部为纯函数 + 只读查询，可独立单测（不依赖 GitHub）。
@@ -319,37 +319,52 @@ function validateCourseInput(body = {}) {
  * 敏感词
  * ============================================================ */
 
-/** 文本类文件扫描上限（避免 20MB 文本 × 词表造成阻塞） */
-const MAX_SCAN_BYTES = 1024 * 1024;
-
 /**
- * 检查若干文本是否命中敏感词。
- * 失败时抛 MaterialError；词表读取异常按「不阻断」处理（与既有中间件一致）。
+ * 检查若干**元数据**文本是否命中敏感词。
+ *
+ * ⚠️ 策略（2026-09-29 定稿，见设计文档 §17.11）：**只扫元数据，不扫文件正文**。
+ *
+ * 原因：本站词表（`sensitive_words`）是给树洞/广场那种几十字短贴调的，
+ * 里面含 `fk` / `sb` 这类**两个字母**的缩写。把它套到最长 1MB 的课件正文上做匹配，
+ * 会把 `FK`(外键) / `SB`(南桥) / `USB` / `ISBN` / base64 串统统误杀 ——
+ * 实测 7 个正常场景里 5 个被拒。
+ *
+ * 正文的内容风险改由两条兜底：① 每次上传都会开一个 GitHub PR，
+ * 仓库侧有人工可见的 diff；② admin 有下架能力（`DELETE /api/materials/:id`）。
+ *
+ * @param {Array<string|{field: string, text: string}>} entries
+ * @throws {MaterialError} 命中时抛 MATERIALS_SENSITIVE，`meta` 带 `word` 与 `field`
  */
-async function assertNoSensitive(texts) {
-  const list = (texts || []).filter((t) => typeof t === 'string' && t.trim());
-  if (list.length === 0) return;
+async function assertNoSensitive(entries) {
+  const items = (entries || [])
+    .map((e) => (typeof e === 'string' ? { field: '', text: e } : e || {}))
+    .filter((e) => typeof e.text === 'string' && e.text.trim());
+  if (items.length === 0) return;
+
   let words = [];
   try {
     words = await sensitive.getSensitiveWords();
   } catch (e) {
-    console.warn('[materials] 敏感词表读取失败，跳过内容检查:', e.message || e);
+    console.warn('[materials] 敏感词表读取失败，跳过检查:', e.message || e);
     return;
   }
   if (!words || words.length === 0) return;
-  for (const t of list) {
-    const hit = sensitive.checkText(t, words);
+
+  for (const { field, text } of items) {
+    const hit = sensitive.checkText(text, words);
     if (hit && hit.hit) {
-      throw new MaterialError('MATERIALS_SENSITIVE', '内容包含违规词汇，请修改后重新上传');
+      // 必须把**命中的词与字段**一起回给用户。
+      // 旧版只说「包含违规词汇」，用户根本不知道改哪儿 —— 实测这是最恼人的一点。
+      throw new MaterialError(
+        'MATERIALS_SENSITIVE',
+        field
+          ? `${field}包含违规词汇「${hit.word}」，请修改后重新上传`
+          : `内容包含违规词汇「${hit.word}」，请修改后重新上传`,
+        400,
+        { word: hit.word, field: field || null }
+      );
     }
   }
-}
-
-/** 文本类文件 → 抽取可检查的正文片段 */
-function extractTextForScan(buffer, filename) {
-  const ext = extOf(filename);
-  if (!['md', 'markdown', 'txt'].includes(ext)) return null;
-  return buffer.slice(0, MAX_SCAN_BYTES).toString('utf8');
 }
 
 /* ============================================================
@@ -437,13 +452,12 @@ async function validateUpload({ file, body }) {
   // 6. 元数据
   const meta = validateMetadata(body);
 
-  // 7. 敏感词（元数据 + 文本文件内容）
+  // 7. 敏感词（**只查元数据；文件正文按策略不扫**，理由见 assertNoSensitive）
   await assertNoSensitive([
-    meta.title,
-    meta.description,
-    meta.lessonTitle,
-    ...meta.tags,
-    extractTextForScan(file.buffer, fileName),
+    { field: '标题', text: meta.title },
+    { field: '简介', text: meta.description },
+    { field: '课时标题', text: meta.lessonTitle },
+    ...meta.tags.map((t) => ({ field: '标签', text: t })),
   ]);
 
   // 8. 摘要
@@ -467,10 +481,8 @@ module.exports = {
   verifyFileType,
   safeFileName,
   detectBinaryFamily,
-  extractTextForScan,
   assertNoSensitive,
   findDuplicate,
   findSameContentElsewhere,
   parseTags,
-  MAX_SCAN_BYTES,
 };

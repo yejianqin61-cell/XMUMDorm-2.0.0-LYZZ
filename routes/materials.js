@@ -897,7 +897,12 @@ router.patch(
       tags: body.tags != null ? body.tags : row.tags,
     };
     const meta = mv.validateMetadata(merged);
-    await mv.assertNoSensitive([meta.title, meta.description, meta.lessonTitle, ...meta.tags]);
+    await mv.assertNoSensitive([
+      { field: '标题', text: meta.title },
+      { field: '简介', text: meta.description },
+      { field: '课时标题', text: meta.lessonTitle },
+      ...meta.tags.map((t) => ({ field: '标签', text: t })),
+    ]);
 
     await query(
       `UPDATE materials SET title=?, description=?, lesson=?, lesson_title=?, exam_node=?,

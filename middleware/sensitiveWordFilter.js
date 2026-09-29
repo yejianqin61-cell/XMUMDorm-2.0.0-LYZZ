@@ -45,6 +45,33 @@ async function getSensitiveWords() {
 }
 
 /**
+ * 纯 ASCII 词（fk / sb / fuck …）
+ * 这类词**必须**用词边界匹配，不能用子串 —— 否则：
+ *   `sb` 会命中 USB / ISBN / base64 / passage 里的随机串
+ *   `fk` 会命中任意含这两个字母的串
+ * 中文等非 ASCII 词没有「词」的边界概念，仍走子串匹配
+ * （「你sb」中「你」不是 \w，所以 \bsb\b 依然命中，拦截能力不受影响）。
+ */
+const ASCII_ONLY = /^[a-z0-9]+$/i;
+
+function escapeRegExp(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** 词 → 正则 的缓存（词表很长时避免每个请求都重新编译） */
+const regexCache = new Map();
+
+function boundaryRegex(word) {
+  const key = word.toLowerCase();
+  let re = regexCache.get(key);
+  if (!re) {
+    re = new RegExp(`\\b${escapeRegExp(word)}\\b`, 'i');
+    regexCache.set(key, re);
+  }
+  return re;
+}
+
+/**
  * 检查文本是否包含敏感词
  * @returns {{ hit: boolean, word?: string }}
  */
@@ -52,9 +79,8 @@ function checkText(text, words) {
   if (!text || !words || words.length === 0) return { hit: false };
   const lower = text.toLowerCase();
   for (const w of words) {
-    if (lower.includes(w.toLowerCase())) {
-      return { hit: true, word: w };
-    }
+    const hit = ASCII_ONLY.test(w) ? boundaryRegex(w).test(text) : lower.includes(w.toLowerCase());
+    if (hit) return { hit: true, word: w };
   }
   return { hit: false };
 }

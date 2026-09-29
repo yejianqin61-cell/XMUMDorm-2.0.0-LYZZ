@@ -283,9 +283,9 @@ describe('B. 校验层', () => {
     expect(() => V.validateMetadata({ title: 'a', type: 'notes' })).toThrow(/标题需/);
   });
 
-  it('文本类文件抽取正文片段，二进制不抽取', () => {
-    expect(V.extractTextForScan(textFile('# hi'), 'a.md')).toBe('# hi');
-    expect(V.extractTextForScan(pdf(), 'a.pdf')).toBeNull();
+  it('政策锁定：不再导出「扫文件正文」的工具（正文不扫，见 17.11）', () => {
+    expect(V.extractTextForScan).toBeUndefined();
+    expect(V.MAX_SCAN_BYTES).toBeUndefined();
   });
 
   it('修复 multipart 中文文件名乱码，且幂等（乱码不得进仓库）', () => {
@@ -370,7 +370,7 @@ describe('C. 路由', () => {
     expect(res.body.code).toBe('MATERIALS_BAD_EXT');
   });
 
-  it('上传命中敏感词被拒绝', async () => {
+  it('敏感词命中元数据时被拒，并明确告知是哪个词、哪个字段', async () => {
     const res = await supertest(app({ uid: 7 }))
       .post('/api/materials/upload')
       .field('title', '这里是违禁词内容')
@@ -380,7 +380,29 @@ describe('C. 路由', () => {
 
     expect(res.status).toBe(400);
     expect(res.body.code).toBe('MATERIALS_SENSITIVE');
+    // 旧版只说「内容包含违规词汇」，用户无从下手 —— 必须带上词与字段
+    expect(res.body.meta).toEqual({ word: '违禁词', field: '标题' });
+    expect(res.body.message).toContain('违禁词');
+    expect(res.body.message).toContain('标题');
     expect(gm.publishMaterial).not.toHaveBeenCalled();
+  });
+
+  it('政策 17.11：文件正文不扫敏感词 —— .md 正文含敏感词仍可上传', async () => {
+    const body = '# 第三课时\n\n这里写着违禁词三个字，但正文按政策不参与敏感词检查。\n';
+    const res = await supertest(app({ uid: 7 }))
+      .post('/api/materials/upload')
+      .field('title', '第三课时 链表与树')
+      .field('type', 'notes')
+      .field('courseName', '数据结构')
+      .attach('file', textFile(body), '笔记.md');
+
+    expect(res.status).toBe(200);
+    expect(gm.publishMaterial).toHaveBeenCalledTimes(1);
+    // 敏感词检查只应拿到元数据，绝不能拿到正文
+    const sensitive = require('../../middleware/sensitiveWordFilter');
+    for (const call of sensitive.checkText.mock.calls) {
+      expect(String(call[0])).not.toContain('第三课时\n');
+    }
   });
 
   it('软去重：同课程同类型同路径同内容 → 409', async () => {
