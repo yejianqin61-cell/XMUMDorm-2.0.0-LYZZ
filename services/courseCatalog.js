@@ -14,6 +14,7 @@
  */
 
 const { query, pool } = require('../database');
+const { inlineLimit } = require('../utils/sqlLimit');
 const { MaterialError } = require('./materialErrors');
 const {
   PSEUDO_COURSE_ID,
@@ -155,14 +156,15 @@ async function listCourses({ q = '', limit = 200, withCounts = true } = {}) {
     const like = `%${kw}%`;
     params.push(like, like, like);
   }
-  params.push(Number(limit) || 200);
+  // LIMIT 内联整数（不能写成 LIMIT ?）——原因见 utils/sqlLimit.js 的文件头注释
+  const lim = inlineLimit(limit, { fallback: 200, max: 500 });
 
   if (!withCounts) {
     const rows = await query(
       `SELECT c.id AS courseId, c.name, c.lecturer, c.course_code AS courseCode, c.is_pseudo AS isPseudo
          FROM courses c ${where}
         ORDER BY c.name ASC, c.lecturer ASC
-        LIMIT ?`,
+        LIMIT ${lim}`,
       params
     );
     return Array.isArray(rows) ? rows : [];
@@ -178,7 +180,7 @@ async function listCourses({ q = '', limit = 200, withCounts = true } = {}) {
       GROUP BY c.id, c.name, c.lecturer, c.course_code, c.is_pseudo
       HAVING materialCount > 0 OR c.is_pseudo = 1
       ORDER BY materialCount DESC, c.name ASC, c.lecturer ASC
-      LIMIT ?`,
+      LIMIT ${lim}`,
     params
   );
   return Array.isArray(rows) ? rows : [];

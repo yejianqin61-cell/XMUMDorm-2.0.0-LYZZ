@@ -874,6 +874,7 @@ tail -f <后端日志> | grep -i materials
 | — | v1.6 | **后端落地**（§17）：constants/迁移/校验/上传/GitHub 通信/课程字典/15 条路由/前端 API 层；测试 31 用例 + 全量 633 全绿。修复两个真实 bug（错误映射未接线、中文文件名 latin1 乱码）。编号 M09→M10 修正（M09 已被万能墙占用） | — |
 | — | v1.7 | **端到端跑通**（§17.8）：生产代码创建 PR #5 → validate success → **auto-merge 成功** → index.json 与中文路径落 main → jsDelivr 字节一致 → 分支自动清理。另实测 required checks 也拦截**直推 main**（409）与**新建分支**（422），故所有写操作与自动化分支都必须走 PR / 落在 `upload/*`、`tmp/*` | — |
 | — | v1.8 | **前端落地**（§18）：6 个页面 + 6 个组件 + 导航入口；纯逻辑抽到 `shared/utils` 并补 15 个用例；修复被既有守卫抓到的两个真 bug（`process` 未定义会让管理页整条路由崩溃、`mailto:` 字面量触发联系方式守卫）。全量 652 用例全绿 | — |
+| — | v1.9 | **生产迁移执行 + 上线后修复**（§17.9/§17.10）：`069_materials.sql` 已在 Railway 生产库执行（5/5 表 + 伪课程就绪）。上线探活发现 `GET /api/materials/courses` **500**，根因是 `LIMIT ?`（二进制预处理 + JS number → errno 1210），共 3 处；新增 `utils/sqlLimit.js` 内联整数 + 静态守卫测试（含阳性对照）。同时修正「尚未配置」横幅的误导文案（它声称"只能浏览缓存"，实际返回空列表） | — |
 
 ---
 
@@ -1070,6 +1071,78 @@ readIndex → putBlob(材料) → putBlob(index.json) → createTree → createC
 （校验器绊线判失败 + 无绕过权限）。运维清单第 3 条（§17.6）必须先做，
 否则 CI 配置一旦需要更新就会被永久锁死。
 
+### 17.9 上线后发现并修复的第三个真实 bug：`LIMIT ?` 让两个接口线上 500
+
+**发现方式**：生产迁移完成后直接打线上接口探活，`GET /api/materials/courses` 返回 **500**。
+
+```
+GET https://xmumdorm-200-lyzz-production.up.railway.app/api/materials/courses
+→ HTTP 500
+```
+
+**根因**（本地对同一台库逐项二分后确认）：
+
+`database.js` 的 `query()` 用的是 `pool.execute()`，也就是 mysql2 的**二进制预处理协议**。
+在 Railway 托管的那台 MySQL（9.7.2）上，把 JS **number** 绑到 `LIMIT` 占位符会抛：
+
+```
+ER_WRONG_ARGUMENTS (1210) Incorrect arguments to mysqld_stmt_execute
+```
+
+二分结果（同一台库、同一连接）：
+
+| 写法 | 结果 |
+|------|------|
+| `LIMIT ?` + number `200` | ❌ errno 1210 |
+| `LIMIT ?` + string `'200'` | ✅ 通过（靠服务端隐式转换，不可依赖） |
+| `LIMIT 200`（内联字面量） | ✅ 通过 |
+
+**这不是本模块新引入的坑**：`routes/canteen.js` 早已踩过同一个坑并在原处留了注释
+（`// LIMIT 使用内联整数：部分托管 MySQL + mysql2 对 LIMIT ? 预处理偶发异常`），
+**唯一没被遵守的就是本模块**。共 3 处：
+
+| 位置 | 受影响接口 | 线上表现 |
+|------|-----------|---------|
+| `services/courseCatalog.js` `listCourses()`（带计数） | `GET /api/materials/courses` | **实测 500** |
+| `services/courseCatalog.js` `listCourses({withCounts:false})` | 内部/预留调用 | 500 |
+| `routes/materials.js` `/me/uploads` | `GET /api/materials/me/uploads` | 500 |
+
+**为什么 31 个路由用例全绿却没抓到**：那些用例 **mock 掉了 `query()`**，
+SQL 从未真正打到 MySQL。这是一个结构性盲区 —— 见 §17.10。
+
+**修复**：
+1. 新增 `utils/sqlLimit.js`（`inlineLimit` / `inlineOffset`）：先把值收敛成有界整数，
+   再内联进 SQL 文本。结果一定只有十进制数字，不引入注入面。
+2. 3 处全部改为内联。顺带修掉 `Number(null) === 0` / `Number('') === 0` 的坑：
+   `?limit=` 现在回退到默认值，而不是静默变成 1 条。
+3. 新增守卫测试 `__tests__/utils/sqlLimit.test.js`：扫描后端源码里的
+   `LIMIT ?` / `OFFSET ?`（剥注释后再扫，所以 `canteen.js` 的说明性注释不会误伤），
+   并带**阳性对照**——先造一个违规文件，确认守卫真的会红。
+   确实是文本协议的地方可用行内 `sql-limit-placeholder-ok` 显式豁免。
+
+**对着生产库的验证**（不是 mock）：
+
+```
+PASS  listCourses()                                    → 1 行（伪课程）
+PASS  listCourses({withCounts:false})                  → 1 行
+PASS  listCourses 带搜索词（LIKE ? 分支）              → 1 行
+PASS  /me/uploads 那条（LIMIT/OFFSET 内联）            → 0 行，不报错
+PASS  对照：旧写法 LIMIT ? 仍然 errno=1210（根因确认）  → 如预期失败
+```
+
+### 17.10 结构性教训：mock 掉 DB 的集成测试看不见 SQL 方言问题
+
+§17.9 那个 bug 能穿过 31 个用例，原因不是断言写得不够，而是**根本没执行 SQL**。
+本模块的集成测试用 mock 替换 `query()`，因此：
+
+- ✅ 能覆盖：路由顺序、鉴权、参数校验、错误映射、响应结构
+- ❌ 覆盖不到：SQL 语法/方言、占位符协议、索引是否命中、真实约束冲突
+
+**结论**：涉及真实 SQL 的改动，除了 mock 用例，**必须**有一道能打到真库的验证。
+本次采用的补法是一道**静态守卫**（不依赖 DB，能长期拦住同一类错误）+
+一次**对生产库的手工验证**（一次性，但结论落在本节）。
+后续若要把这道防线做成自动化的，需要引入一个可丢弃的测试库（当前无此设施）。
+
 ---
 
 ## 18. 前端实施记录
@@ -1159,7 +1232,18 @@ cd frontend && npm run build             → ✓ built in 8.40s
 
 - **真实浏览器端到端**：点一遍「上传 → 状态机 → 课程页 → 预览 → 下载」，
   目前只验证了构建与纯逻辑单测，没有跑过真实渲染。
-- **生产迁移**：`npm run migrate:materials` 需要在 Railway 的 MySQL 上执行一次
-  （表不存在时 `/api/materials/courses` 会返回 503 并提示迁移）。
+- ~~**生产迁移**~~：✅ **已于 2026-09-29 在 Railway 生产库执行**（`railway` 库，80 表，216 用户）。
+  5/5 表建成、伪课程 `#1 通用 / 其他` 就绪；`init-db.sql` 已同步。
+- **⚠️ 生产环境变量未配置（会阻断整个模块）**：
+  线上后端**没有** `GITHUB_MATERIALS_OWNER` / `_REPO` / `_TOKEN`，
+  实探 `GET /api/materials` 返回 `{"configured":false,"items":[],"total":0}`。
+  本机 `.env` 有这 5 个变量，但 `.env` 被 gitignore，**不会**随代码上服务器 ——
+  Railway 的环境变量必须在 Railway 控制台单独设置。未配置时的可观测行为：
+  | 接口 | 表现 |
+  |------|------|
+  | `GET /api/materials` | 200，但 `configured:false`、列表恒空（**不读本地快照**，设计如此） |
+  | `GET /api/materials/courses` | 正常（只读本库课程字典，与 GitHub 无关） |
+  | `POST /api/materials/upload` | 503 `MATERIALS_NOT_CONFIGURED` |
+  | 前端首页 | 显示「尚未配置」横幅 |
 - **移动端**：本期只做 Web；RN 端按设计文档 §16.2 N2 用 `expo-web-browser` 打开 CDN 地址。
 

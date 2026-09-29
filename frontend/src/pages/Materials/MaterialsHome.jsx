@@ -91,8 +91,8 @@ export default function MaterialsHome() {
         {!configured && (
           <div className="mat-banner mat-banner--warn">
             {isZh
-              ? '学习资料库尚未配置（缺少 GITHUB_MATERIALS_* 环境变量），当前只能浏览缓存。请联系管理员。'
-              : 'Materials repository is not configured yet.'}
+              ? '学习资料库尚未配置（服务端缺少 GITHUB_MATERIALS_* 环境变量），暂时读不到任何资料。请联系管理员。'
+              : 'Materials repository is not configured on the server yet.'}
           </div>
         )}
         {recent && recent.stale && (
