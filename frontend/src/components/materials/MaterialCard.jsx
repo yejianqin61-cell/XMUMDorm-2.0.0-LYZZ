@@ -31,7 +31,6 @@ export default function MaterialCard({ item, isZh = true, onDownload }) {
           {source && <span className="mat-pill mat-pill--ghost">{isZh ? source.labelZh : source.labelEn}</span>}
           <span>{humanSize(item.size)}</span>
           {item.updatedAt && <span>{formatDate(item.updatedAt)}</span>}
-          {item.uploaderNickname && <span>by {item.uploaderNickname}</span>}
           {item.downloadCount > 0 && (
             <span><Download size={12} style={{ verticalAlign: -2 }} /> {item.downloadCount}</span>
           )}

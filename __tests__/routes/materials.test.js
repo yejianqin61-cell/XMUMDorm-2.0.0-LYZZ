@@ -355,7 +355,9 @@ describe('C. 路由', () => {
     const arg = gm.publishMaterial.mock.calls[0][0];
     expect(arg.fileName).toBe('讲义.pdf');
     expect(arg.entryBase.size).toBeGreaterThan(0);
-    expect(arg.entryBase.uploaderNickname).toBe('小明');
+    // ⚠️ 上传者**不得**写进 index.json（它在公开资料库里）——追责靠本站 DB 的 user_id
+    expect(arg.entryBase.uploaderNickname).toBeUndefined();
+    expect(JSON.stringify(arg.entryBase)).not.toMatch(/小明|xm123/);
   });
 
   it('上传时 .html 被 multer 文件过滤器直接拒绝', async () => {
@@ -472,6 +474,69 @@ describe('C. 路由', () => {
     const bad = await supertest(app()).post('/api/materials/download').send({ path: '../../etc/passwd' });
     expect(bad.status).toBe(400);
     expect(bad.body.code).toBe('MATERIALS_BAD_PATH');
+  });
+
+  /* ---------------- 限流策略（用户裁定：默认放开） ---------------- */
+
+  it('默认不限流：同一用户连续 12 次上传都不会 429', async () => {
+    const old = process.env.MATERIALS_UPLOAD_PER_HOUR;
+    delete process.env.MATERIALS_UPLOAD_PER_HOUR;
+    try {
+      for (let i = 0; i < 12; i += 1) {
+        const res = await supertest(app({ uid: 424242 }))
+          .post('/api/materials/upload')
+          .field('title', `第三课时 链表与树 ${i}`)
+          .field('type', 'notes')
+          .field('courseName', '数据结构')
+          .attach('file', pdf(), 'a.pdf');
+        expect(res.status).toBe(200);
+      }
+    } finally {
+      if (old === undefined) delete process.env.MATERIALS_UPLOAD_PER_HOUR;
+      else process.env.MATERIALS_UPLOAD_PER_HOUR = old;
+    }
+  });
+
+  it('显式设置 MATERIALS_UPLOAD_PER_HOUR=2 时，第 3 次被 429（机制仍可用）', async () => {
+    const old = process.env.MATERIALS_UPLOAD_PER_HOUR;
+    process.env.MATERIALS_UPLOAD_PER_HOUR = '2';
+    try {
+      const send = () =>
+        supertest(app({ uid: 424243 }))
+          .post('/api/materials/upload')
+          .field('title', '第三课时 链表与树')
+          .field('type', 'notes')
+          .field('courseName', '数据结构')
+          .attach('file', pdf(), 'a.pdf');
+
+      expect((await send()).status).toBe(200);
+      expect((await send()).status).toBe(200);
+      const third = await send();
+      expect(third.status).toBe(429);
+      expect(third.body.code).toBe('MATERIALS_RATE_LIMITED');
+    } finally {
+      if (old === undefined) delete process.env.MATERIALS_UPLOAD_PER_HOUR;
+      else process.env.MATERIALS_UPLOAD_PER_HOUR = old;
+    }
+  });
+
+  it('设为 0 也等于不限流', async () => {
+    const old = process.env.MATERIALS_UPLOAD_PER_HOUR;
+    process.env.MATERIALS_UPLOAD_PER_HOUR = '0';
+    try {
+      for (let i = 0; i < 6; i += 1) {
+        const res = await supertest(app({ uid: 424244 }))
+          .post('/api/materials/upload')
+          .field('title', `第三课时 ${i}`)
+          .field('type', 'notes')
+          .field('courseName', '数据结构')
+          .attach('file', pdf(), 'a.pdf');
+        expect(res.status).toBe(200);
+      }
+    } finally {
+      if (old === undefined) delete process.env.MATERIALS_UPLOAD_PER_HOUR;
+      else process.env.MATERIALS_UPLOAD_PER_HOUR = old;
+    }
   });
 
   it('收藏 toggle：不存在与存在分别插入与删除', async () => {

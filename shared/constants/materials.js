@@ -189,8 +189,3 @@ export function buildCdnUrl(baseUrl, path) {
   const base = String(baseUrl || '').replace(/\/+$/, '');
   return `${base}/${encodeCdnPath(path)}`;
 }
-
-/** 资料库仓库标识（供展示与调试；不含 token） */
-export function materialsRepoLabel() {
-  return `${process.env.GITHUB_MATERIALS_OWNER || '?'}/${process.env.GITHUB_MATERIALS_REPO || '?'}`;
-}

@@ -83,14 +83,28 @@ const userAgent = (req) => String(req.headers['user-agent'] || '').slice(0, 255)
  * ============================================================ */
 /**
  * 内存滑动窗口。单实例部署下准确；多实例会放宽，属可接受的近似。
- * 与全站 express-rate-limit（按 IP）互补：这里按**用户**，防单个账号刷量。
+ *
+ * **默认不限流**（2026-09-29 用户裁定：有用户需要大批量上传）。
+ * 机制保留，需要收紧时把 `MATERIALS_UPLOAD_PER_HOUR` 设为正整数即可生效，
+ * 设为 0 或留空 = 不限。
+ *
+ * 注意：全站 `express-rate-limit`（按 IP，2500/15min）仍然作用在 /api 上，
+ * 校园网共用出口 IP 下大批量上传仍可能触到那一层。
  */
 const uploadHits = new Map();
 const UPLOAD_WINDOW_MS = 60 * 60 * 1000;
 
+/** 每用户每小时上限；<=0 或未配置表示不限 */
+function uploadHourlyLimit() {
+  const raw = process.env.MATERIALS_UPLOAD_PER_HOUR;
+  if (raw == null || String(raw).trim() === '') return 0;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : 0;
+}
+
 function checkUploadRate(userId) {
-  const limit = Number(process.env.MATERIALS_UPLOAD_PER_HOUR || 5);
-  if (!Number.isFinite(limit) || limit <= 0) return { allowed: true, remaining: Infinity };
+  const limit = uploadHourlyLimit();
+  if (limit <= 0) return { allowed: true, remaining: Infinity, limit: 0 };
   const now = Date.now();
   const list = (uploadHits.get(userId) || []).filter((t) => now - t < UPLOAD_WINDOW_MS);
   if (list.length >= limit) {
@@ -104,7 +118,7 @@ function checkUploadRate(userId) {
       if (v.every((t) => now - t >= UPLOAD_WINDOW_MS)) uploadHits.delete(k);
     }
   }
-  return { allowed: true, remaining: limit - list.length };
+  return { allowed: true, remaining: limit - list.length, limit };
 }
 
 /** 上传权限：MATERIALS_UPLOAD_ROLE=admin 时收紧为仅管理员 */
@@ -451,15 +465,6 @@ router.post(
 
     const materialId = inserted.insertId;
 
-    // ---- 昵称（资料库内唯一允许的用户数据，且只是昵称）
-    let nickname = '匿名同学';
-    try {
-      const u = await query('SELECT nickname, username FROM users WHERE id = ? LIMIT 1', [req.user.id]);
-      if (Array.isArray(u) && u[0]) nickname = u[0].nickname || u[0].username || nickname;
-    } catch {
-      /* 昵称取不到不影响上传 */
-    }
-
     // ---- 推送 PR
     let publish;
     try {
@@ -486,7 +491,8 @@ router.post(
           size: v.size,
           sha256: v.sha256,
           updatedAt: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'),
-          uploaderNickname: nickname,
+          // ⚠️ 不写上传者：index.json 位于**公开**资料库，任何用户信息都不应落进去。
+          // 追责靠本站 DB 的 materials.user_id（见 /admin/stats 的 uploaderByPath）。
           downloads: 0,
         },
       });
@@ -691,6 +697,23 @@ router.get(
     );
     const courseCount = await query('SELECT COUNT(*) AS n FROM courses');
 
+    // 上传者：**只在本站 DB 里**（公开的 index.json 不写上传者）。
+    // 管理端表格按 material_path 关联，用于追责与下架决策。
+    const uploaderRows = await query(
+      `SELECT m.material_path, m.user_id, u.nickname, u.username
+         FROM materials m LEFT JOIN users u ON u.id = m.user_id
+        WHERE m.deleted_at IS NULL
+        ORDER BY m.id DESC LIMIT 500`
+    );
+    const uploaderByPath = {};
+    for (const r of Array.isArray(uploaderRows) ? uploaderRows : []) {
+      if (!r || !r.material_path) continue;
+      uploaderByPath[r.material_path] = {
+        userId: r.user_id,
+        name: r.nickname || r.username || `#${r.user_id}`,
+      };
+    }
+
     let repo = null;
     if (gm.isConfigured()) {
       try {
@@ -707,16 +730,17 @@ router.get(
 
     return ok(res, {
       configured: gm.isConfigured(),
-      // 供管理端展示（仓库标识不是机密；token 绝不下发）
-      repoLabel: `${process.env.GITHUB_MATERIALS_OWNER || '?'}/${process.env.GITHUB_MATERIALS_REPO || '?'}`,
-      cdnBase: process.env.GITHUB_MATERIALS_CDN_BASE || 'https://cdn.jsdelivr.net/gh',
+      // ⚠️ 不再下发 repoLabel：它等于把私有资料库的 owner/repo 印在管理端界面上。
       enabled: String(process.env.MATERIALS_ENABLED ?? '1') !== '0',
       maxFileMB: MAX_FILE_BYTES / 1024 / 1024,
       uploadRole: process.env.MATERIALS_UPLOAD_ROLE || 'student',
+      // 0 = 不限流（默认）
+      uploadPerHour: uploadHourlyLimit(),
       byStatus: Array.isArray(byStatus) ? byStatus : [],
       byType: Array.isArray(byType) ? byType : [],
       topDownloads: Array.isArray(topDownloads) ? topDownloads : [],
       topUploaders: Array.isArray(topUploaders) ? topUploaders : [],
+      uploaderByPath,
       dbCourses: courseCount?.[0]?.n ?? 0,
       repo,
     });

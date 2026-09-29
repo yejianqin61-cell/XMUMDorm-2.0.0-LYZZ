@@ -128,7 +128,6 @@ export default function MaterialDetail() {
                 {source && <span className="mat-pill mat-pill--ghost">{isZh ? source.labelZh : source.labelEn}</span>}
                 <span>{humanSize(item.size)}</span>
                 {item.updatedAt && <span>{formatDate(item.updatedAt)}</span>}
-                {item.uploaderNickname && <span>by {item.uploaderNickname}</span>}
               </div>
               {item.description && <div className="mat-sub">{item.description}</div>}
               {(item.tags || []).length > 0 && (
@@ -141,14 +140,7 @@ export default function MaterialDetail() {
             </div>
 
             <div className="mat-toolbar" style={{ marginTop: 0 }}>
-              <a
-                className="mat-btn"
-                href={item.cdnUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {isZh ? '在新窗口打开' : 'Open in new tab'}
-              </a>
+              {/* ⚠️ 不提供「在新窗口打开」直链：那会把文件真实地址暴露到地址栏与历史记录 */}
               <button type="button" className="mat-btn mat-btn--primary" onClick={doDownload}>
                 <Download size={15} /> {isZh ? '下载' : 'Download'}
               </button>
@@ -181,9 +173,9 @@ export default function MaterialDetail() {
         {item.kind === 'pdf' && !oversized && (
           <PdfViewer
             url={item.cdnUrl}
-            rawUrl={item.cdnUrl}
             title={item.title}
             fileName={item.name}
+            onDownload={doDownload}
           />
         )}
 

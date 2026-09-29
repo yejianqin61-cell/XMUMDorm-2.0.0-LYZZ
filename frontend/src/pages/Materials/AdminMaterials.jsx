@@ -94,6 +94,17 @@ export default function AdminMaterials() {
     return m;
   }, [stats]);
 
+  /**
+   * 上传者**只从本站 DB 取**（`/admin/stats` 的 `uploaderByPath`）。
+   * 公开的资料库 index.json 里已经不再写上传者，所以不能从列表项上读。
+   * 管理员手工加进仓库、没有 DB 行的文件会显示「—」，这是正确的。
+   */
+  const uploaderOf = (it) => {
+    const map = (stats && stats.uploaderByPath) || {};
+    const hit = it && it.path ? map[it.path] : null;
+    return (hit && hit.name) || '—';
+  };
+
   return (
     <div className="mat-page">
       <div className="mat-wrap">
@@ -101,10 +112,11 @@ export default function AdminMaterials() {
           <Link className="mat-btn mat-btn--sm" to="/materials"><ArrowLeft size={14} /> {isZh ? '资料库' : 'Library'}</Link>
           <h1 className="mat-title" style={{ marginTop: 10 }}>{isZh ? '学习资料管理' : 'Materials admin'}</h1>
           <div className="mat-sub">
-            {isZh ? '资料库：' : 'Repo: '}
-            <code>{(stats && stats.repoLabel) || '—'}</code>
-            {stats && !stats.configured ? (isZh ? '（未配置）' : ' (not configured)') : ''}
+            {stats && !stats.configured ? (isZh ? '资料库未配置' : 'Not configured') : (isZh ? '资料库已配置' : 'Configured')}
             {stats && !stats.enabled ? (isZh ? ' · 上传已暂停' : ' · uploads paused') : ''}
+            {stats && Number(stats.uploadPerHour) > 0
+              ? (isZh ? ` · 限流 ${stats.uploadPerHour} 次/小时` : ` · ${stats.uploadPerHour}/hour`)
+              : (isZh ? ' · 上传不限流' : ' · no upload limit')}
           </div>
         </header>
 
@@ -250,7 +262,7 @@ export default function AdminMaterials() {
                         <td>{it.courseName}{it.lecturer ? ` · ${it.lecturer}` : ''}</td>
                         <td>{meta.emoji} {isZh ? meta.labelZh : meta.labelEn}</td>
                         <td>{humanSize(it.size)}</td>
-                        <td>{it.uploaderNickname || '—'}</td>
+                        <td>{uploaderOf(it)}</td>
                         <td>{formatDate(it.updatedAt)}</td>
                         <td>
                           {it.id ? (
