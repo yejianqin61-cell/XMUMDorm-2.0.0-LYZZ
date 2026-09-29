@@ -587,12 +587,13 @@ async function publishMaterial({
       ],
     });
 
+    // ⚠️ commit message 会永久留在**公开**资料库里：
+    //    不写上传者（那是用户数据），也不写任何指向本项目的字样。
     const message = [
       `[materials] ${entry.title} (${entry.courseName || `c${courseId}`})`,
       '',
       `Course-Id: ${courseId}`,
       `Type: ${type}`,
-      `Uploaded by: ${entry.uploaderNickname || '匿名'}`,
       `Material-Id: ${materialId}`,
     ].join('\n');
 
@@ -619,7 +620,7 @@ async function publishMaterial({
           `**课时**：${entry.lesson ?? '—'}　**考试节点**：${entry.examNode ?? '—'}　**来源**：${entry.source ?? '—'}`,
           `**文件**：\`${filePath}\`（${(entry.size / 1024 / 1024).toFixed(2)} MB）`,
           '',
-          `> 由 XMUMDorm 学习资料模块自动提交。校验通过后将自动合并。`,
+          `> 自动提交。校验通过后将自动合并。`,
         ].join('\n'),
       });
     }
@@ -825,7 +826,8 @@ async function commitIndex({ mutate, message, slug = 'maint', title = '[material
     branchPrefix: 'upload/maint',
     slug,
     title,
-    body: '资料库索引维护变更。\n\n> 由 XMUMDorm 学习资料模块自动提交，校验通过后自动合并。',
+    // 不写项目名：这段文字会出现在公开资料库的 PR 里
+    body: '资料库索引维护变更。\n\n> 自动提交，校验通过后自动合并。',
     message,
     mutateIndex: mutate,
   });

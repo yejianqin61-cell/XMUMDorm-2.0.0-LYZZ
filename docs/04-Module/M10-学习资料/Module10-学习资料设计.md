@@ -876,6 +876,7 @@ tail -f <后端日志> | grep -i materials
 | — | v1.8 | **前端落地**（§18）：6 个页面 + 6 个组件 + 导航入口；纯逻辑抽到 `shared/utils` 并补 15 个用例；修复被既有守卫抓到的两个真 bug（`process` 未定义会让管理页整条路由崩溃、`mailto:` 字面量触发联系方式守卫）。全量 652 用例全绿 | — |
 | — | v1.9 | **生产迁移执行 + 上线后修复**（§17.9/§17.10）：`069_materials.sql` 已在 Railway 生产库执行（5/5 表 + 伪课程就绪）。上线探活发现 `GET /api/materials/courses` **500**，根因是 `LIMIT ?`（二进制预处理 + JS number → errno 1210），共 3 处；新增 `utils/sqlLimit.js` 内联整数 + 静态守卫测试（含阳性对照）。同时修正「尚未配置」横幅的误导文案（它声称"只能浏览缓存"，实际返回空列表） | — |
 | — | v1.10 | **敏感词误伤修复**（§17.11）：正文不再参与敏感词检查（词表含 `fk`/`sb` 两字母缩写，套到 1MB 课件正文上 7 个正常场景误杀 5 个）；拒绝时回传命中的词与字段；全局中间件的 ASCII 词改为**词边界**匹配（`USB`/`ISBN`/base64 不再误伤）。FR-07 同步修订 | — |
+| — | v1.11 | **三条策略裁定**（§17.12）：① 限流**默认放开**；② 上传者**公开侧零暴露**（不写 index.json / PR 正文 / commit message），管理端改读 `/admin/stats` 新增的 `uploaderByPath`（本站 DB）；③ **不暴露源仓库地址**——`.env.example` 改空值、删详情页「新窗口打开」、删 pdf.js 降级（避免把地址交给第三方域名）、删 `repoLabel` 与 `materialsRepoLabel()`、资料库侧删反向链接、CODEOWNERS 与 LICENSE 去账号化；新增地址守卫测试（含阳性对照）。顺带修掉 PdfViewer 里 3 个失效的 `<a download>`（跨域会被忽略），统一改走 blob 下载 | — |
 
 ---
 
@@ -1206,6 +1207,85 @@ if (lower.includes(w.toLowerCase())) return { hit: true, word: w };
 **遗留给运维的一条**：`fk` / `sb` 仍在词表里，因此**标题/简介/标签**里出现独立的
 `FK`、`SB` 仍会被拒（如标题「数据库外键（FK）」）。词表是 DB 驱动的，
 可在管理端 `sensitive_words` 里停用这两个词 —— **这是内容策略决定，交管理员判断**。
+
+### 17.12 三条上线后的策略裁定（限流 / 上传者 / 源仓库地址）
+
+用户裁定原文（2026-09-29）：
+
+> 1. 放开限流控制，因为有的用户会大批量上传
+> 2. 不要显示上传者
+> 3. **不要提供源仓库的地址！所有地方不允许跳转到源仓库的地址。你这是自报家门！**
+
+#### ① 限流：默认放开
+
+`checkUploadRate` 的默认值由 `5 次/小时` 改为**不限流**：
+
+- `MATERIALS_UPLOAD_PER_HOUR` 留空或 `0` → 不限（**新默认**）
+- 设正整数 → 恢复每小时上限（机制完整保留，随时可收紧）
+
+**仍然存在的一层**：全站 `express-rate-limit` 按 IP 限 `/api`（生产 2500 次/15 分钟）。
+校园网共用出口 IP 下，大批量上传 + 状态轮询可能触到这一层 —— 这是**全站**策略，
+不在本模块内改；若真被挡住，需在 `server.js` 单独给 `/api/materials` 放宽。
+
+**批量上传的真实瓶颈**（不是限流）：每次上传 = 1 个分支 + 1 个 PR + 一次 CI 校验 + auto-merge，
+且流程是串行的；另有 GitHub API 配额（PAT 5000 次/小时）与 20MB blob 约 8.5s 的写入耗时。
+真要一次性传几百份，应改造成「一次 PR 批量提交」而不是取消限流。
+
+#### ② 上传者：公开侧零暴露，管理端改读本站 DB
+
+`index.json` 在**公开资料库**里，所以写进去的任何用户信息都是公开的。改动：
+
+| 位置 | 处理 |
+|------|------|
+| `index.json` 的 `uploaderNickname` | **删除**（不再写入） |
+| GitHub PR 正文的 `Uploaded by: <昵称>` | **删除** |
+| commit message 的 `Uploaded by:` | **删除** |
+| `MaterialCard` / `MaterialDetail` 的「by 昵称」 | **删除**（两处 `it.uploaderNickname` 已无来源） |
+| `/admin/materials` 的上传者列 | **保留**，但改从 `/admin/stats` 新增的 **`uploaderByPath`**（本站 DB `materials.user_id → users`）读取 |
+| `/admin/stats` 的 `topUploaders` | 保留（DB 来源） |
+| 上传流程里那次「查昵称」的 DB 查询 | 顺带删除（原本只为写进 index.json） |
+
+管理员手工加进仓库、没有 DB 行的文件，管理端上传者列显示 `—`，这是**正确**的。
+
+#### ③ 源仓库地址：按方案 C 处理（只做「不主动暴露」）
+
+**为什么要先说清代价**：jsDelivr 的地址格式就是 `<域名>/gh/<owner>/<repo>@<ref>/<path>`。
+只要浏览器**直连** jsDelivr，仓库名就一定出现在 DevTools 的 Network 面板与 iframe/img 的 `src` 里。
+**去掉界面上所有链接也挡不住 F12。** 要真正藏住必须反代（Cloudflare Worker，或让后端接管字节流，
+后者会破坏「零服务器带宽」）。用户明确选择方案 C，接受这一点。
+
+**已消除的「主动提供」**：
+
+| # | 位置 | 处理 |
+|---|------|------|
+| 1 | `.env.example` 里真实的 `GITHUB_MATERIALS_OWNER` / `_REPO` | **改为空值** + 注释说明（该文件已入库，等于公开） |
+| 2 | 详情页「在新窗口打开」直链 `href={item.cdnUrl}` | **删除**（会把真实地址带进地址栏与浏览历史） |
+| 3 | `PdfViewer` 的「新窗口」链接 | **删除** |
+| 4 | `PdfViewer` 的 **pdf.js 在线查看器降级** | **删除** —— 它要把文件地址当 `?file=` 查询参数交给 `mozilla.github.io`，等于把地址送进第三方日志。降级链改为「内联预览 → 仅下载」两级 |
+| 5 | `PdfViewer` 文案「来源：jsDelivr CDN」 | 改为「在线预览」 |
+| 6 | 管理端展示的 `repoLabel`（`owner/repo`） | **删除**（接口字段与界面一起），改为展示「已配置 / 未配置 + 限流状态」 |
+| 7 | `shared/constants/materials.js` 的 `materialsRepoLabel()` | **删除**（死代码，且语义就是印 owner/repo） |
+| 8 | 资料库 `README.md` / `CONTRIBUTING.md` 里指向本站仓库的链接 | **删除**（反向暴露） |
+| 9 | 资料库 `CONTRIBUTING.md` 目录树里的 `Xmum-opensource/` 字面量 | 改为 `<repo-root>/` |
+| 10 | 资料库 `LICENSE` 的 `Copyright (c) XMUMDorm contributors` | 改为中性表述 |
+| 11 | 资料库 `CONTRIBUTING.md` 的 CODEOWNERS 示例含真实账号 | 改为 `<your-account>` 占位 |
+| 12 | PR 正文「由 XMUMDorm 学习资料模块自动提交」（两处） | 改为中性「自动提交」 |
+
+**新增守卫**：`__tests__/frontend/materialsRepoAddressGuard.test.js` 扫描
+`frontend/src`、`shared`、`routes`、`services`、`middleware`、`utils`、`materials-repo`
+与 `.env.example`，命中 `james898` / `xmum-opensource` / `yejianqin61` 即失败，
+并带阳性对照。目录树里那句 `Xmum-opensource/` 就是被它扫出来的。
+
+**有意接受的残留（不在守卫范围）**：
+
+1. **`docs/**` 仍写真实仓库标识** —— 设计/需求文档需要记录真实拓扑，否则后续维护者看不懂。
+   ⚠️ **注意我们的仓库本身是 public**，所以文档里的字样是公开的。若要一并抹掉，
+   把这些文档里的仓库名替换为「资料库仓库」即可（守卫加一行就能覆盖）。
+2. **浏览器 DevTools 仍能看到 CDN 地址里的 owner/repo** —— 方案 C 的既定代价。
+
+**⚠️ 已经来不及的部分**：`.env.example` 里的真实值**已经随 #65 进入 `main` 的 git 历史**。
+改掉当前文件不能让历史里的记录消失。要彻底清除需要改写历史并强推（受分支保护限制），
+或者把本站仓库改为 private。当前选择：接受。
 
 ---
 

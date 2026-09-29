@@ -1,14 +1,16 @@
 # 目录规范、命名规范与安全约定
 
-本仓库是 **XMUM 学习资料库**，由 [XMUMDorm（厦马小筑）](https://github.com/yejianqin61-cell/XMUMDorm-2.0.0-LYZZ)
-站点的「学习资料」模块（M10）驱动。所有写入都通过站点上传流程完成，普通用户不需要 GitHub 账号。
+本仓库是 **XMUM 学习资料库**，由校内同学共建。所有写入都通过站点上传流程完成，
+普通用户不需要 GitHub 账号。
+
+> 本仓库与站点之间**不互相标注**：这里不提站点地址，站点页面也不暴露本仓库地址。
 
 ---
 
 ## 一、目录结构
 
 ```
-Xmum-opensource/
+<repo-root>/
 ├── index.json                  ← 索引（前端唯一入口），由后端在上传 PR 内写入
 ├── README.md
 ├── CONTRIBUTING.md             ← 本文件
@@ -100,8 +102,9 @@ Xmum-opensource/
 
 ```
 # CI 配置与索引必须人工审查，禁止机器自动合并
-/.github/            @James898-boom
-/index.json          @James898-boom
+# ⚠️ 把下面的占位符替换成你自己的 GitHub 账号（不要写进任何公开文档）
+/.github/            @<your-account>
+/index.json          @<your-account>
 ```
 
 ### 其他
