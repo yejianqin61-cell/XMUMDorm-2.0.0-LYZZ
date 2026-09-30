@@ -3,7 +3,7 @@
 ## Project Identity
 
 - **Name**: XMUMDorm (厦马小筑 / Jack Dorm)
-- **Type**: Monorepo — Express Backend + React Web + React Native Mobile
+- **Type**: Monorepo — Express Backend + React Web（App 客户端已全盘废弃，待从零重建）
 - **Primary Directive**: Spec-Driven, Agent-Native, Documentation-Driven Development
 - **Version**: V3.0
 
@@ -48,11 +48,10 @@ See `docs/README.md` for the full documentation structure.
 - **API**: `frontend/src/api/` (20 files)
 - **Context**: `frontend/src/context/` (Auth, Toast, Language)
 
-### Frontend Mobile
-- **Tech**: Expo SDK 52+ + Expo Router + TanStack Query
-- **Pages**: `mobile/src/app/` (Expo Router file-based routing)
-- **Components**: `mobile/src/components/`
-- **API**: `mobile/src/api/` (reused from Web)
+### App 客户端
+- **状态**: 全盘废弃并从工作区移除 —— 旧 Expo RN 端（`mobile/`）与旧 Capacitor 端（`frontend-app/` + `android/` + `ios/` + `capacitor.config.ts`）均已删除，归档于 git tag `app-legacy-v1`
+- **设计哲学 / 设计宪法 / 前端风格**: 全部作废，待从零重写（重写前不得据旧文档写任何 App 代码）
+- **开工前提**: 先产出新的 App 设计宪法，再进入脚手架与模块铺开
 
 ### Testing
 - **Framework**: Jest 30 + Supertest

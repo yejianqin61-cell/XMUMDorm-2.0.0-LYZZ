@@ -1,8 +1,9 @@
 const fs = require('fs');
 const path = require('path');
 
+// App 客户端（旧 frontend-app）已全盘废弃并移出工作区（归档 tag app-legacy-v1），
+// 这里只守 Web 端 frontend/src 的 UserZone。
 const userZoneFiles = [
-  'frontend-app/src/pages/UserZone.jsx',
   'frontend/src/pages/UserZone.jsx',
 ];
 

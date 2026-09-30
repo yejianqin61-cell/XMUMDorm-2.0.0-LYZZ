@@ -11,6 +11,9 @@
  *
  * 决定：后缀从输入区彻底移除，改为输入框下方一行完整示例，用户照着自己写全。
  * 这里把这个约定钉住，避免哪天又被“优化”回输入框里。
+ *
+ * 现状：App 客户端（旧 frontend-app 的 Register.jsx）已全盘废弃并移出工作区
+ * （归档 tag app-legacy-v1），原先的「App 端保持一致」断言随之删除，只守 Web 端。
  */
 const fs = require('fs');
 const path = require('path');
@@ -19,7 +22,6 @@ const ROOT = path.resolve(__dirname, '..', '..');
 const read = (...segments) => fs.readFileSync(path.resolve(ROOT, ...segments), 'utf8');
 
 const WEB_REGISTER = read('frontend', 'src', 'pages', 'Register.jsx');
-const APP_REGISTER = read('frontend-app', 'src', 'pages', 'Register.jsx');
 
 const EXAMPLE = 'CST2509054@xmu.edu.my';
 
@@ -48,16 +50,5 @@ describe('注册页邮箱字段（Web）', () => {
     const exampleAt = WEB_REGISTER.indexOf(EXAMPLE);
     expect(inputEnd).toBeGreaterThan(-1);
     expect(exampleAt).toBeGreaterThan(inputEnd);
-  });
-});
-
-describe('注册页邮箱字段（App 端保持一致）', () => {
-  it('App 端同样移除了输入区里的后缀', () => {
-    expect(APP_REGISTER).not.toContain('pr-[7.5rem]');
-    expect(APP_REGISTER).not.toMatch(/pointer-events-none absolute inset-y-0 right-4[\s\S]{0,200}@xmu\.edu\.my/);
-  });
-
-  it('App 端同样给出完整邮箱示例', () => {
-    expect(APP_REGISTER).toContain(EXAMPLE);
   });
 });

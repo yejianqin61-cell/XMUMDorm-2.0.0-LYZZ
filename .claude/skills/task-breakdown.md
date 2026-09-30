@@ -1,6 +1,6 @@
 ---
 name: task-breakdown
-description: Break architecture designs into executable, ordered, dependency-aware development tasks for assignment to Backend/Frontend/Mobile agents.
+description: Break architecture designs into executable, ordered, dependency-aware development tasks for assignment to Backend/Frontend agents.
 ---
 
 # Task Breakdown
@@ -28,9 +28,9 @@ Transform architecture designs into granular, executable tasks with clear owners
 ## Process
 
 1. **Read Architecture**: Understand the full design
-2. **Identify Work Streams**: Backend stream (DB → API → tests), Frontend stream (pages → components → API integration), Mobile stream (screens → components → API integration)
+2. **Identify Work Streams**: Backend stream (DB → API → tests), Frontend stream (pages → components → API integration)
 3. **Order by Dependency**: Database first, then API, then UI
-4. **Assign Agents**: Each task to Backend/Frontend/Mobile agent
+4. **Assign Agents**: Each task to Backend/Frontend agent
 5. **Estimate Complexity**: ⭐ (trivial) to ⭐⭐⭐⭐⭐ (complex)
 6. **Define Acceptance**: Specific, testable completion criteria per task
 

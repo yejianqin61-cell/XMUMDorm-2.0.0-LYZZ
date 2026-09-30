@@ -1,11 +1,11 @@
 const fs = require('fs');
 const path = require('path');
 
+// App 客户端（旧 frontend-app）已全盘废弃并移出工作区（归档 tag app-legacy-v1），
+// 这里只检查 Web 端的同名组件。
 const treeholeCopyFiles = [
   'frontend/src/components/square/InterestRecommendationBlock.jsx',
   'frontend/src/components/square/RelatedCampusTopicsBlock.jsx',
-  'frontend-app/src/components/square/InterestRecommendationBlock.jsx',
-  'frontend-app/src/components/square/RelatedCampusTopicsBlock.jsx',
 ];
 
 const unsupportedRecommendationCopy = [

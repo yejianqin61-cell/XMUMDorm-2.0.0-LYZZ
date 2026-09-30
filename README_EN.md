@@ -43,7 +43,7 @@ XMUMDorm brings campus information, student conversation, and everyday services 
 
 ## Use XMUMDorm
 
-Visit [XMUMDorm on the web](https://xmumdorm-200-lyzz-production.up.railway.app). The Android app is being gradually made available to XMUM students.
+Visit [XMUMDorm on the web](https://xmumdorm-200-lyzz-production.up.railway.app). The previous Android app has been retired; a new app client is being rebuilt from scratch.
 
 ## Feedback
 

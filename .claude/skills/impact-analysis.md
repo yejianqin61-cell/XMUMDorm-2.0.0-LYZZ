@@ -21,7 +21,7 @@ Before implementing a change, analyze its impact across the codebase: what files
 - `docs/05-Tasks/<feature>-tasks.md` — The proposed changes
 - `docs/03-Architecture/` — Architecture context
 - `docs/04-Module/` — Module dependency graph
-- Source code in `routes/`, `frontend/src/`, `mobile/src/`
+- Source code in `routes/`, `frontend/src/`
 
 ## Outputs
 - `docs/06-Analyze/<feature>-impact-analysis.md` — Impact report

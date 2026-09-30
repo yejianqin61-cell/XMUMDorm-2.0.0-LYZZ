@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS <table_name> (
 
 ---
 
-## 四、组件 / 屏幕分解
+## 四、组件分解
 
 ### Web 端
 ```
@@ -77,15 +77,6 @@ CREATE TABLE IF NOT EXISTS <table_name> (
 ├── <ContentList>
 │   └── <ContentCard> (×N)
 └── <CreateButton>
-```
-
-### 移动端
-```
-<ScreenName>
-├── <Header />
-├── <FlatList>
-│   └── <ContentCard /> (renderItem)
-└── <FAB />
 ```
 
 ---
