@@ -52,9 +52,13 @@ See `docs/README.md` for the full documentation structure.
 
 ### App 客户端
 - **状态**: 全盘废弃并从工作区移除 —— 旧 Expo RN 端（`mobile/`）与旧 Capacitor 端（`frontend-app/` + `android/` + `ios/` + `capacitor.config.ts`）均已删除，归档于 git tag `app-legacy-v1`
-- **设计哲学 / 设计宪法 / 前端风格**: 全部作废，待从零重写（重写前不得据旧文档写任何 App 代码）
-- **已定方向**: 真原生 App；**以 React Native 为主，iOS 可混原生**；**Android 优先**；双端并重、各自最优（不追求 1:1）
-- **开工前提**: 先产出新的 App 设计宪法，再进入脚手架与模块铺开。设计阶段计划见 `docs/05-Tasks/App设计阶段/`
+- **设计哲学 / 设计宪法 / 前端风格**: **已从零重写** —— 旧版全部作废（归档 tag `app-legacy-v1`）。新产出：
+  - [App 设计哲学提案](docs/03-Architecture/app-design/App设计哲学提案.md)（方向已由所有者指定）
+  - [App 前端风格体系](docs/03-Architecture/app-design/App前端风格体系.md)
+  - [App 设计宪法](docs/00-Constitution/principles/App设计宪法.md)（**v1.0 草案 · 待批准**）
+- **已定方向**: 真原生 App；**以 React Native 为主，iOS 可混原生**；**Android 优先**；双端并重、各自最优（不追求 1:1）。设计语言 = **苹果的舒适感（质感标准）+ Discord 的社区感 + 一点点 Neo-Brutalism（限 CTA / Badge / 分区标题三类）**；**暗色优先**；吉祥物**仅图标与启动页**
+- **开工前提**: **先取得《App 设计宪法》批准**，再进入脚手架与模块铺开。宪法 §15 列有待决项。设计阶段计划见 `docs/05-Tasks/App设计阶段/`
+- **可执行尺子**: `node scripts/design-debt-report.js --path <app>/src --fail-on-zero`（14 项设计债）、`node scripts/contrast-check.js --fail`（WCAG 对比度）——两把都须接入 CI
 
 ### Testing
 - **Framework**: Jest 30 + Supertest
