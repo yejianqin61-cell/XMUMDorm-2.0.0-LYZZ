@@ -4,6 +4,7 @@
 
 | 目录 | 内容 |
 | --- | --- |
+| [app-design/](app-design/) | **App 端设计（当前主线）**：设计哲学、前端风格体系、App 设计宪法派生物 |
 | [api-data/](api-data/) | API、数据模型、评分算法与联通计划 |
 | [product-architecture/](product-architecture/) | 技术选型和产品能力设计 |
 | [frontend-design/](frontend-design/) | 前端设计体系 |
