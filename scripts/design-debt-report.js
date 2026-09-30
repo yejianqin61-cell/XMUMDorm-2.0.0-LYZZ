@@ -45,6 +45,8 @@ const METRICS = [
   { key: 'iconLib',            label: '图标库引用',                   src: 'lucide-react-native|@expo/vector-icons',     zeroTarget: false },
   { key: 'flatList',           label: 'FlatList / SectionList',       src: 'FlatList|SectionList',                       zeroTarget: false },
   { key: 'flashList',          label: 'FlashList',                    src: 'FlashList',                                  zeroTarget: false },
+  { key: 'i18nInlineTernary',  label: '内联双语三元 (isZh ?)',         src: 'isZh\\s*\\?',                                zeroTarget: true  },
+  { key: 'i18nKeyCalls',       label: "词条调用 t('key')",             src: "(?<![\\w.])t\\(\\s*['\"]",                    zeroTarget: false, minTarget: 1 },
 ];
 
 // 旧 App v1 实测基线
@@ -64,6 +66,8 @@ const V1_BASELINE = {
   iconLib: 4,
   flatList: 56,
   flashList: 0,
+  i18nInlineTernary: 39,
+  i18nKeyCalls: 0,
 };
 
 const CODE_EXT = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs']);
