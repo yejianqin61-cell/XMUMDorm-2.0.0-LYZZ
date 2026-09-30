@@ -11,3 +11,4 @@
 | [mobile/](mobile/) | Capacitor 与 App 审计材料 |
 | [notifications/](notifications/) | 通知系统验收记录 |
 | [content-research/](content-research/) | 内容运营与对外发布调研 |
+| [tech-research/](tech-research/) | 技术选型与商店上架调研 |
