@@ -36,27 +36,30 @@ See `docs/README.md` for the full documentation structure.
 
 ### Backend
 - **Entry**: `server.js`
-- **Routes** (17 modules): `routes/auth.js`, `posts.js`, `canteen.js`, `square.js`, `clubs.js`, `marketplace.js`, `errands.js`, `handbook.js`, `schedule.js`, `diary.js`, `todos.js`, `notifications.js`, `push.js`, `users.js`, `admin.js`, `reports.js`, `organizations.js`
-- **Middleware** (5): `auth.js`, `adminAuth.js`, `checkSanction.js`, `sensitiveWordFilter.js`, `upload.js`
-- **Services** (7): `objectStorage.js`, `auditLog.js`, `expService.js`, etc.
-- **Database**: `database.js` (MySQL pool), `init-db.sql`, `migrations/` (57 files)
+- **Routes** (20 modules, 273 endpoints): `admin`, `advertisements`, `auth`, `canteen`, `clubs`, `confessions`, `diary`, `errands`, `handbook`, `marketplace`, `materials`, `notifications`, `organizations`, `posts`, `push`, `reports`, `schedule`, `square`, `todos`, `users`
+- **Middleware** (6): `adminAuth`, `auth`, `checkSanction`, `materialUpload`, `sensitiveWordFilter`, `upload`
+- **Services** (16): `objectStorage`, `auditLog`, `expService`, `notificationService`, `pushSend`, `squareHomeService`, `squareRecommendationService`, `imageProcessing`, `email`, `githubMaterials`, `materialValidation`, `materialErrors`, `courseCatalog`, `rankingStats`, `advertisementTarget`, `classReminderPush`
+- **Database**: `database.js` (MySQL pool), `init-db.sql`, `migrations/` (73 files)
 
 ### Frontend Web
-- **Tech**: React 18 + Vite + React Router + TanStack Query
-- **Pages**: `frontend/src/pages/` (86 pages)
-- **Components**: `frontend/src/components/` (~60 components)
-- **API**: `frontend/src/api/` (20 files)
-- **Context**: `frontend/src/context/` (Auth, Toast, Language)
+- **Tech**: React 19 + Vite + React Router 7 + TanStack Query, Tailwind 4
+- **Pages**: `frontend/src/pages/` (103 `.jsx`)
+- **Components**: `frontend/src/components/` (124 `.jsx`)
+- **Shared logic**: 根目录 `shared/`（23 个 API 模块 + 常量/工具/query，Web 与客户端共用）
+- **Styles**: `frontend/src/styles/tokens.css`（265 个设计令牌；**Web 为纯亮色，无暗色模式**）
+- **Context**: `frontend/src/context/`（Auth、Toast、Language）
+- **注意**: `frontend/src/api/` 是**空目录**（0 文件），API 封装已收口到 `shared/api/`
 
 ### App 客户端
 - **状态**: 全盘废弃并从工作区移除 —— 旧 Expo RN 端（`mobile/`）与旧 Capacitor 端（`frontend-app/` + `android/` + `ios/` + `capacitor.config.ts`）均已删除，归档于 git tag `app-legacy-v1`
 - **设计哲学 / 设计宪法 / 前端风格**: 全部作废，待从零重写（重写前不得据旧文档写任何 App 代码）
-- **开工前提**: 先产出新的 App 设计宪法，再进入脚手架与模块铺开
+- **已定方向**: 真原生 App；**以 React Native 为主，iOS 可混原生**；**Android 优先**；双端并重、各自最优（不追求 1:1）
+- **开工前提**: 先产出新的 App 设计宪法，再进入脚手架与模块铺开。设计阶段计划见 `docs/05-Tasks/App设计阶段/`
 
 ### Testing
 - **Framework**: Jest 30 + Supertest
 - **Location**: `__tests__/`
-- **Current**: 5 suites, 108 cases, 100% pass rate
+- **Current**: **46 suites, 668 cases, 100% pass rate**（`npx jest` 实测；改动前请以实测为准，不要引用本行的历史快照）
 
 ### Documentation
 - **Structure**: `docs/` (10-layer lifecycle: 00-Constitution through 09-Deploy)
