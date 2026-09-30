@@ -14,26 +14,53 @@
 
 ---
 
-## 二、复测方法（任何人可复现）
+## 二、复测方法（一条命令精确复现）
+
+测量已固化为仓库脚本 **[`scripts/design-debt-report.js`](../../../scripts/design-debt-report.js)**，它是本基线的**权威测量方式**——任何人、任何时间跑同一条命令都必须得到同样的数字。
 
 ```powershell
-# 1) 从归档 tag 导出旧 App 代码（注意：必须 -o 落盘，不能用 PowerShell 管道，
-#    PowerShell 管道会破坏 tar 的二进制流）
+# 1) 从归档 tag 导出旧 App 代码
+#    注意：必须用 -o 落盘。PowerShell 管道会破坏 tar 的二进制流（实测会报 Damaged tar archive）
 $tmp = "$env:TEMP\dorm-v1-archive"
 git archive --format=tar -o "$tmp\mobile.tar" app-legacy-v1 mobile
 tar -xf "$tmp\mobile.tar" -C $tmp
 
-# 2) 统计范围：mobile/src + mobile/app 下全部 .ts/.tsx（共 120 个文件）
-#    逐文件统计下列正则命中数：
-#      hex 色值          #[0-9a-fA-F]{3,8}\b
-#      fontSize 字面量    fontSize\s*:
-#      StyleSheet.create  StyleSheet\.create
-#      动效库             react-native-reanimated / react-native-gesture-handler
-#      自有 UI 组件       components/ui/
-#      暗色外观 API       useColorScheme|Appearance\.
-#      模糊/渐变          expo-blur|BlurView / expo-linear-gradient|LinearGradient
-#      列表               FlatList|SectionList / FlashList
+# 2) 测量（两个目录分别传入后聚合，见下方“口径说明”）
+node scripts/design-debt-report.js --path "$tmp\mobile\src" --path "$tmp\mobile\app"
+
+# 实测输出（本文件所有数字均由此产生）：
+#   代码文件数 : 139
+#   硬编码色值 (#hex)             1437
+#   fontSize 字面量               645
+#   StyleSheet.create 调用        79
+#   引用自有 UI 组件              0
+#   暗色/外观 API 引用            0
+#   引用 react-native-reanimated  0
+#   引用 gesture-handler          0
+#   expo-blur / BlurView          9
+#   LinearGradient                7
+#   图标库引用                    4
+#   FlatList / SectionList        56
+#   FlashList                     0
 ```
+
+### 口径说明（重要，避免数字对不上）
+
+| 项 | 约定 |
+|---|---|
+| 统计扩展名 | `.ts` `.tsx` `.js` `.jsx` `.mjs` `.cjs` |
+| **统计范围** | **仅生产代码目录**（v1 为 `mobile/src` + `mobile/app` = **139 个文件**） |
+| **排除** | `__tests__`、`node_modules`、`dist`、`build`、`coverage`、`.expo`、`Pods` |
+| 单位 | 每个文件内正则命中**次数**（不是文件数） |
+
+> 为什么必须固定口径：单独测 `mobile/src` 得 1433/639，加 `mobile/app` 才是 1437/645；
+> 若把 `__tests__` 也算进去会得到 1476/661。三种口径都"不算错"，但**基线只能有一个**，
+> 否则脚本就无法作为宪法约束的验收工具。本文件采用「生产代码 139 文件」口径。
+
+### 与其他测量方式的关系
+
+本文件早期用临时 PowerShell 正则统计得到同样的 1437/645，脚本是对它的固化与可复现化。
+两者一致，说明数字可信；但**后续一律以脚本输出为准**。
 
 ---
 
@@ -43,7 +70,8 @@ tar -xf "$tmp\mobile.tar" -C $tmp
 
 | 项 | 数值 |
 |---|---|
-| `src` + `app` 下 `.ts/.tsx` 文件 | **120** |
+| **生产代码文件总数**（`src` + `app`，含 `.ts/.tsx/.js`） | **139**（`src` 120 + `app` 19） |
+| 其中 `src` 构成 | `.tsx` 88 · `.js` 19 · `.ts` 13 |
 | `src/screens/*.tsx` 屏幕文件 | **69** |
 | `mobile/app/` 路由文件 | 19（几乎全是转发到 `src/screens` 的薄壳） |
 
@@ -51,7 +79,7 @@ tar -xf "$tmp\mobile.tar" -C $tmp
 
 | 指标 | 实测值 | 分布 |
 |---|---|---|
-| **硬编码色值 `#hex`** | **1437 处** | 集中在 **79 个文件**（占 120 个文件的 66%） |
+| **硬编码色值 `#hex`** | **1437 处** | 集中在 **79 个文件**（占 139 个文件的 57%） |
 | **`fontSize` 字面量** | **645 处** | 分散于屏文件 |
 | `StyleSheet.create` 调用 | 79 次 | 与硬编码色值文件数一致 → 每屏各写各的样式 |
 | 引用自有 UI 组件（`components/ui/`） | **0 次** | 见 3.4 |
@@ -158,5 +186,12 @@ treehole.ts   (469 B)
 ## 六、本文件的使用方式
 
 - **引用**：新《App 设计宪法》的每一条硬约束，应能指回本文件的某个数字。
-- **复测**：新 App 开发过程中，应能在任意时点用同一套命令测新代码库的同类指标，与本文对照。
+- **强制**：用 [`scripts/design-debt-report.js`](../../../scripts/design-debt-report.js) 做守门。它已内置本文基线，输出会直接对比"实测 vs v1 基线"，并标出宪法级违规（`#hex` / `fontSize` 必须为 0、自有 UI 组件引用必须 ≥ 1）：
+
+  ```powershell
+  # 新 App 建好后（路径示例，按实际源码根调整）
+  node scripts/design-debt-report.js --path <app>/src --fail-on-zero
+  # 退出码 1 表示有宪法级违规 —— 这就是 CI 里的那道门
+  ```
+- **复测**：任意时点用同一命令测新代码库的同类指标，与本文对照。
 - **不适用**：本文只测量**旧代码**，不构成对新 App 的任何设计主张。设计主张在调研与提案之后另行产出。
