@@ -54,11 +54,13 @@ See `docs/README.md` for the full documentation structure.
 - **状态**: 全盘废弃并从工作区移除 —— 旧 Expo RN 端（`mobile/`）与旧 Capacitor 端（`frontend-app/` + `android/` + `ios/` + `capacitor.config.ts`）均已删除，归档于 git tag `app-legacy-v1`
 - **设计哲学 / 设计宪法 / 前端风格**: **已从零重写** —— 旧版全部作废（归档 tag `app-legacy-v1`）。新产出：
   - [App 设计哲学提案](docs/03-Architecture/app-design/App设计哲学提案.md)（方向已由所有者指定）
-  - [App 前端风格体系](docs/03-Architecture/app-design/App前端风格体系.md)
-  - [App 设计宪法](docs/00-Constitution/principles/App设计宪法.md)（**v1.0 草案 · 待批准**）
+  - [App 前端风格体系](docs/03-Architecture/app-design/App前端风格体系.md)（v1.1）
+  - [App 品牌主色提案](docs/03-Architecture/app-design/App品牌主色提案.md)（主色相与色阶的准入过程；**色相待选定**）
+  - [App 设计宪法](docs/00-Constitution/principles/App设计宪法.md)（**草案 · 待批准**）
 - **已定方向**: 真原生 App；**以 React Native 为主，iOS 可混原生**；**Android 优先**；双端并重、各自最优（不追求 1:1）。设计语言 = **苹果的舒适感（质感标准）+ Discord 的社区感 + 一点点 Neo-Brutalism（限 CTA / Badge / 分区标题三类）**；**暗色优先**；吉祥物**仅图标与启动页**
+- **2026-10-01 追加裁决**: ① **信箱不做 Tab，改为右上角小按钮** → 一级导航 = **四格**（广场/树洞/食堂/我的）+ 顶栏信箱动作 + 发布 FAB ② **品牌主色 App 自建，不照搬 Web**（Web 品牌蓝被本项目自己的尺子判不合格）③ **字体只用系统字体，不引入自有字体** ④ **无硬性上限，尽量 1 个月内** ⑤ 组件层自研/现成边界见 `docs/06-Analyze/tech-research/App组件层调研-现成组件库评估.md`
 - **开工前提**: **先取得《App 设计宪法》批准**，再进入脚手架与模块铺开。宪法 §15 列有待决项。设计阶段计划见 `docs/05-Tasks/App设计阶段/`
-- **可执行尺子**: `node scripts/design-debt-report.js --path <app>/src --fail-on-zero`（14 项设计债）、`node scripts/contrast-check.js --fail`（WCAG 对比度）——两把都须接入 CI
+- **可执行尺子**: `node scripts/design-debt-report.js --path <app>/src --fail-on-zero`（14 项设计债）、`node scripts/contrast-check.js --fail`（WCAG 对比度）、`node scripts/brand-ramp.js --compare`（品牌主色准入：6 条对比度门 + 3 条色相间距门；**CI 门用 `--hue <选定值> --fail`**，`--compare` 是探索用法、候选清单故意含未过门项）——三把都须接入 CI
 
 ### Testing
 - **Framework**: Jest 30 + Supertest
