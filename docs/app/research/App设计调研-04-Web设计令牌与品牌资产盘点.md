@@ -16,7 +16,7 @@
 >
 > **本文的全部事实仍然有效**（265 个令牌、无暗色、695 处硬编码、RetroUI 迁移在飞、`resources/icon.png` 品牌标识仍在等），但**"因此 App 应沿用 Web 的品牌 Foundation 层"这一推论作废**。
 >
-> 取而代之：[App品牌主色提案](../../03-Architecture/app-design/App品牌主色提案.md)（6 个候选 / 9 条门 / 推荐靛蓝 Indigo H≈272）+ `scripts/brand-ramp.js`。
+> 取而代之：[App品牌主色提案](../design/App品牌主色提案.md)（6 个候选 / 9 条门 / 推荐靛蓝 Indigo H≈272）+ `scripts/brand-ramp.js`。
 > **双端仍然共享的是**：后端、数据契约、纯逻辑与常量（`shared/{api,constants,utils,config,query}`）、以及**品牌标志与文案语气**。
 
 ---

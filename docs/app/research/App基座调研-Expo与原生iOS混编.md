@@ -1107,8 +1107,8 @@ npm view react-native-worklets@0.13.0 peerDependencies --json
 | 文件 | 用途 |
 | --- | --- |
 | [App端全盘废弃与归档清理记录.md](../../07-Implement/App端全盘废弃与归档清理记录.md) | 旧 `mobile/` = SDK 56 + RN 0.85.3，与官方配对一致 |
-| [设计阶段工作计划与验收门.md](../../05-Tasks/App设计阶段/设计阶段工作计划与验收门.md) | 已定方向（真原生 / RN 为主 / iOS 可混原生 / Android 优先） |
-| [06-Analyze/README.md](../README.md) | 已预留 `tech-research/` 目录位置 |
+| [设计阶段工作计划与验收门.md](../task/设计阶段工作计划与验收门.md) | 已定方向（真原生 / RN 为主 / iOS 可混原生 / Android 优先） |
+| [06-Analyze/README.md](../../06-Analyze/README.md) | 已预留 `tech-research/` 目录位置 |
 | `shared/`（实测目录：`api/ components/ config/ constants/ query/ utils/`） | S1–S4 候选条款依据（`shared/components/` 含 `.jsx`+`.css`） |
 
 ---

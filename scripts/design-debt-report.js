@@ -50,7 +50,7 @@ const METRICS = [
 ];
 
 // 旧 App v1 实测基线
-// 来源：docs/06-Analyze/ui-research/App设计调研-00-旧App设计债实测基线.md
+// 来源：docs/app/research/App设计调研-00-旧App设计债实测基线.md
 // 口径：mobile/src (120 文件) + mobile/app (19 文件) = 139 个生产代码文件，不含 __tests__
 const V1_BASELINE = {
   files: 139,
