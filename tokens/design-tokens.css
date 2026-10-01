@@ -236,8 +236,8 @@
   --color-border-subtle:  #21252f;   /* [usage=border] 分隔线 */
   --color-border-default: #2c3140;   /* [usage=border] 常规描边 */
   --color-border-strong:  #343a4b;   /* [usage=border] 强描边（Neo-Brutalism 2px）*/
-  --color-border-focus:   #5e90ea;   /* [usage=border] 焦点环 */
-  --color-border-brand:   #2452a6;   /* [usage=border] 品牌色描边 */
+  --color-border-focus:   #5e90ea;   /* [usage=border] 焦点环（brand-400，on 暗 canvas 5.83:1）*/
+  --color-border-brand:   #7fa9f3;   /* [usage=border] 品牌色描边（brand-300）。**不可**用 brand-600：见「已知冲突 C8」*/
 }
 
 
@@ -273,9 +273,9 @@
   --color-text-disabled:  #9ba1b2;   /* [usage=text] 禁用：纯装饰 */
   --color-text-brand:     #2452a6;   /* [usage=text][textSafe] 品牌文字（on 白 7.41；on brand-soft 6.52）*/
   --color-accent-text:    #6a5319;   /* [usage=text][textSafe] 亮色下唯一可作文字的黄色档（on 白 7.33）*/
-  --color-text-success:   #29845e;   /* [usage=text][textSafe][contrastOn=--color-bg-surface] */
-  --color-text-warning:   #af6226;   /* [usage=text][textSafe][contrastOn=--color-bg-surface]（H=55°），必须配图标 */
-  --color-text-danger:    #c35253;   /* [usage=text][textSafe][contrastOn=--color-bg-surface] */
+  --color-text-success:   #277e5a;   /* [usage=text][textSafe][contrastOn=--color-bg-canvas] 全部亮色底最低 4.54（见 C2 修订）*/
+  --color-text-warning:   #a75d24;   /* [usage=text][textSafe][contrastOn=--color-bg-canvas]（H=55°）全部亮色底最低 4.52，必须配图标 */
+  --color-text-danger:    #be484b;   /* [usage=text][textSafe][contrastOn=--color-bg-canvas] 全部亮色底最低 4.54（见 C2 修订）*/
   --color-text-on-fill:   #ffffff;   /* [usage=text][textSafe][minReason=白字只允许出现在 brand-fill / status-fill 上；美团黄一律用 text.on-accent] [contrastOn=--color-action-primary] */
   --color-text-on-accent: #201a00;   /* [usage=text][textSafe][minReason=美团黄只承载深墨，白字 on 它仅 1.61:1，属红线] [contrastOn=--color-action-accent] */
   --color-text-on-state:  #ffffff;   /* [usage=text][textSafe][minReason=亮色状态填充本身已达 4.51~4.61:1 载白字] [contrastOn=--color-state-success] */
@@ -387,21 +387,20 @@
  *     警告只用「图标 + 文字」形态，不用大面积纯色块形态。
  *   本条的最终判定必须真机复核后写回《App 前端风格体系》。
  *
- * C2 · 亮色主题的"软底容器"被对比度门倒逼成近白
- *   亮色状态文字档（#29845e / #af6226 / #c35253）对**纯白**只有 4.61 / 4.57 / 4.51:1
- *   —— 余量不足 0.11。任何有彩度的底都会把它们压到 4.5 线下：
- *     实测 #29845e on #eff8f4 = 4.26、#af6226 on #fdf6ee = 4.26、#c35253 on #fdf2f2 = 4.12
- *   因此这三个状态文字令牌的 `contrastOn` **声明为 `--color-bg-surface`（纯白）**，
- *   与其"实测基准 = 白"的来源一致；**它们不得放在任何软底容器上作正文**。
- *   若产品需要在 soft 底上放状态文字，**必须新解一档更深的文字色**，
- *   那需要所有者批准偏离 #29845e / #af6226 / #c35253 这三个已给定锚点。
- *   **本次不擅自改锚点**，因此如实登记该限制，而不是把软底调成纯白来"过关"。
- *
- * C3 · 亮色主题 canvas（#f7f8fa）上的状态色文字低于 4.5:1
- *   同上原因：实测 #29845e on #f7f8fa = 4.34、#af6226 = 4.30、#c35253 = 4.25。
- *   → 约束：**状态色文字只允许放在 surface（白）上**，不允许直接放在 canvas 上。
- *     （canvas 与 surface 的差只有 1.03:1，视觉上几乎不可分辨，实际落地风险低，
- *      但机器校验必须诚实：本规范的 contrastOn 就是 surface。）
+ * C2 · 亮色状态文字档 —— **已解决（2026-10-01 修订，原 C2/C3 合并）**
+ *   原问题：`#29845e / #af6226 / #c35253` 只对**纯白**达标（4.61 / 4.57 / 4.51），
+ *   余量不足 0.11 → 放到 canvas `#f7f8fa` 上降到 4.34 / 4.30 / 4.25 ❌，
+ *   放到软底上更低（4.26 / 4.26 / 4.12 ❌）。
+ *   原处置（限制"状态文字只准放 surface"）被**推翻**：它把一条脆弱约束推给每一屏实现者，
+ *   而 canvas 才是绝大多数页面的真实底。
+ *   现处置：**把这三档压暗到对全部六个亮色底都 ≥4.5:1**，`contrastOn` 改为 canvas：
+ *     text-success `#277e5a`（最低 4.54）· text-warning `#a75d24`（最低 4.52）
+ *     · text-danger `#be484b`（最低 4.54）
+ *   实测覆盖：canvas 4.68/4.67/4.69 · surface 4.98/4.96/4.98 · sunken 4.57/4.55/4.57
+ *             · success-soft 4.60/4.58/4.60 · warning-soft 4.64/4.63/4.65 · danger-soft 4.54/4.52/4.54
+ *   → **软底可以承载状态文字了**；原 C3（canvas 上的限制）随之作废。
+ *   ⚠️ 这三档是**我方推导的文字安全档**，不是所有者给定的锚点 ——
+ *      所有者给定的是厦大蓝 `#173874` 与美团黄 `#ffc300`，**两者均未改动**。
  *
  * C4 · 契约扩展（**多输出了字段，原有六项一个未删、一个未改名**）
  *   宪法 2.3 要求每个颜色令牌携带 6 项元数据。为了让「≥3:1 非文本」与
@@ -429,4 +428,20 @@
  *   警告色相已按所有者裁决移到 55°。用旧基准算出的间距（172.15°）比新基准
  *   （153.8°）更宽松，**结论不变（都远超 25° 门）**，但因为该脚本按指令**未被修改**，
  *   故把它登记为待办：**色相基准需要更新为 55°，否则这把尺子会与令牌源脱节。**
+ *
+ * C8 · 暗色主题下**品牌色不能同时充当"块"和"线"**
+ *   `brand-600 #2452a6` 作填充承载白字是 7.41:1（很好），但它作**描边**放在暗色 canvas 上
+ *   只有 **2.48:1**，低于宪法 2.3 的"非文本 ≥3:1"。
+ *   → 因此 `border-brand`（暗色）取 `brand-300 #7fa9f3`（on 暗 canvas **7.78:1**）。
+ *   这不是审美取舍，是宪法 2.1.1-1「暗色必须配同色相提亮档」的**第二个推论**：
+ *     品牌色在暗色主题里 **作块用 600 档、作线/字/图标用 300/400 档**。
+ *
+ * C9 · `border-subtle` / `border-default` / `border-strong` 低于 3:1 —— **刻意如此，不是缺陷**
+ *   它们**不是** SC 1.4.11 意义上的"UI 构件"：不带信息、不表示状态、不是控件边界，
+ *   只是**纯装饰分隔线**。若强行拉高到 3:1，就会得到一套刺眼的网格线，
+ *   恰好违反"用表面色而不是描边表达层级"（宪法 2.4.3）。
+ *   因此这三个令牌一律 `textSafe: false`，且**生成器不对它们施加 3:1 门**；
+ *   真正需要被看见的"线"（`border-focus` 焦点环、`border-brand` 品牌描边）
+ *   都已达标（暗色 5.83 / 7.78，亮色 4.73 / 6.98）。
+ *   ⛔ **后续不得把这套豁免推广到 `border-focus` / `border-brand`** —— 它们必须守住 3:1。
  * ========================================================================== */

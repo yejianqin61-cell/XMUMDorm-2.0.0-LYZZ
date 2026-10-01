@@ -160,31 +160,31 @@
     "generatedFrom": "tokens/design-tokens.css"
   },
   {
-    "label": "text-success #29845e on #ffffff (light·text)",
-    "fg": "#29845e",
-    "bg": "#ffffff",
+    "label": "text-success #277e5a on #f7f8fa (light·text)",
+    "fg": "#277e5a",
+    "bg": "#f7f8fa",
     "level": "AA",
-    "measuredRatio": 4.61,
+    "measuredRatio": 4.68,
     "requiredRatio": 4.5,
     "generatedBy": "scripts/gen-tokens.js",
     "generatedFrom": "tokens/design-tokens.css"
   },
   {
-    "label": "text-warning #af6226 on #ffffff (light·text)",
-    "fg": "#af6226",
-    "bg": "#ffffff",
+    "label": "text-warning #a75d24 on #f7f8fa (light·text)",
+    "fg": "#a75d24",
+    "bg": "#f7f8fa",
     "level": "AA",
-    "measuredRatio": 4.57,
+    "measuredRatio": 4.67,
     "requiredRatio": 4.5,
     "generatedBy": "scripts/gen-tokens.js",
     "generatedFrom": "tokens/design-tokens.css"
   },
   {
-    "label": "text-danger #c35253 on #ffffff (light·text)",
-    "fg": "#c35253",
-    "bg": "#ffffff",
+    "label": "text-danger #be484b on #f7f8fa (light·text)",
+    "fg": "#be484b",
+    "bg": "#f7f8fa",
     "level": "AA",
-    "measuredRatio": 4.51,
+    "measuredRatio": 4.69,
     "requiredRatio": 4.5,
     "generatedBy": "scripts/gen-tokens.js",
     "generatedFrom": "tokens/design-tokens.css"
