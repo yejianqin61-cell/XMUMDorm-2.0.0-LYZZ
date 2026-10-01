@@ -1,0 +1,432 @@
+/* ============================================================================
+ * XMUMDorm · App 设计令牌 — 唯一手工撰写的事实源（single source of truth）
+ * ============================================================================
+ *
+ * 这个文件是什么
+ * --------------
+ * 这是一个**字面意义上的 CSStoken 文件**：全部设计令牌以原生 CSS 自定义属性
+ * （custom properties）书写。它就是所有者要求的「品牌色做成 csstoken，
+ * 以后可以快速全局修改」的落点。
+ *
+ * 为什么要 codegen（关键机制）
+ * ---------------------------
+ * React Native **运行期没有 CSS 自定义属性** —— App 读不到 `var(--x)`。
+ * 因此本文件不是"被加载"的，而是"被编译"的：
+ *
+ *     tokens/design-tokens.css          ← 人手只改这一个文件（唯一事实源）
+ *              │
+ *              │  node scripts/gen-tokens.js     （构建期 codegen + 自我门禁）
+ *              ▼
+ *     tokens/generated/native-tokens.ts ← App/RN 消费（类型化 TS 模块）
+ *     tokens/generated/tokens.json      ← Web / 尺子消费（机器可读）
+ *     tokens/generated/tokens.check.json← 喂给 scripts/contrast-check.js 的配对清单
+ *
+ *     「改一个品牌色 = 改这一个文件 + 跑一次 codegen = 一改全部改」
+ *
+ * 生成物里**不允许出现任何硬编码色值**，除了令牌定义本身 —— 生成文件就是令牌层。
+ * ⛔ 禁止在生成产物上手工修改（《App 设计宪法》2.1）。
+ *
+ * 结构（Foundation → Semantic，两层）
+ * ----------------------------------
+ *   §1 Foundation  原始色阶。**业务代码不允许消费**，只在语义层的定义里被引用。
+ *   §2 Semantic    角色层，**业务代码只允许消费这一层**。Component 层默认不建。
+ *   §3 非颜色令牌  间距 / 圆角 / 描边 / 字阶角色（**只写角色名，不写 pt 常量**）。
+ *
+ * 主题策略
+ * --------
+ *   暗色优先（宪法 2.2）：**暗色先定义，亮色派生**，两套各自完整成套。
+ *   `:root` = 亮色成品（Web 侧无暗色模式，默认取值必须安全）。
+ *   `[data-theme="dark"]` = 暗色成品（App 侧一等公民）。
+ *   两套**都必须能被独立解析** —— 生成器不依赖层叠，逐块取值。
+ *
+ *   块身份由块头注释里的 `[layer=…][theme=…]` 标记**显式声明**，不靠选择器语法
+ *   猜测：本文件里 `:root` 出现两次（§1 Foundation ＋ §2' 亮色语义层），
+ *   且 Foundation 里也混着色值 —— 靠选择器推断必然误判。
+ *   **改动块头时不要删掉那行标记。**
+ *
+ * 令牌元数据协议（生成器读取，见 scripts/gen-tokens.js）
+ * ----------------------------------------------------
+ *   [usage=…]               surface | fill | text | icon | border   （必填）
+ *   [textSafe]              声明可承载正文文字 → 生成器按 minRatio 强制门禁
+ *   [contrastOn=--color-…]  校验基准背景令牌；不写则按 usage 取默认底
+ *   [contrastAgainst=…]     比值以该背景为分母（"本令牌在底上能否被看见"）
+ *   [minRatio=n]            覆盖阈值（**只允许加权**，且必须同时给 minReason）
+ *   [minReason=…]           加权理由（缺省即报错 —— 不许静默放松门禁）
+ *
+ *   每个颜色令牌的 `value` / `usage` / `textSafe` / `contrastOn` /
+ *   `contrastRatio` / `theme` 六项元数据由生成器计算并写入 tokens.json；
+ *   `contrastRatio` 一律是**实测算得值**（WCAG 2.x relative luminance），
+ *   本文件里手写的比例只是给人看的注解，**生成器不采信**。
+ *
+ * 取值来源标注（沿用《App 前端风格体系》的诚实约定）
+ * ------------------------------------------------
+ *   【实测官方资产】= 从官方品牌资产量得的锚点（不许改）
+ *   【算得】       = 由实测锚点按对比度下限机械算得，**不是手挑**
+ *   【提案】       = 待真机 / 脚本复核，不得当已验证规格使用
+ *
+ * 禁止项（宪法 1.3 / 2.4）
+ * ----------------------
+ *   ❌ 渐变（`gradient()` 已是红线，所有者明令禁止）
+ *   ❌ 暗色纯黑大底（所以 canvas 是 #12141a，不是 #000000）
+ *   ❌ 运行期动态取色（M3 Dynamic Colors）—— 会让 contrastRatio 无法构建期算定
+ *   ❌ 自有字体文件 / `font-family` 声明 —— 字族一律由系统解析
+ *   ❌ 用模糊表达层级
+ * ========================================================================== */
+
+
+/* ==========================================================================
+ * §1 FOUNDATION — 原始色阶（不含语义；业务代码禁止直接消费）
+ *
+ * [layer=foundation][theme=light]
+ * ========================================================================== */
+
+:root {
+  /* ---- 1.1 品牌主色 · 厦大蓝（色相 H=261.2°）----------------------------
+   * 【实测官方资产】brand-700 #173874
+   *     来源 www.xmu.edu.cn/images/logo2.png（占 11.2%）
+   *     OKLCH L=0.353 C=0.110 H=261.2°
+   *     实测：白字 on 它 11.33:1 ／ 它作文字 on 白 11.33:1
+   *     实测：它 on 暗色 canvas #12141a 仅 1.63:1
+   *           ← 这是"暗色主题必须配同色相提亮档"的机械依据（宪法 2.1.1-1）
+   * 【算得】其余档位：同色相按 OKLCH 亮度档机械展开，彩度取该亮度可用上限。
+   */
+  --color-brand-50:  #e9f1fd;   /* 品牌浅底（亮色 bg-brand-soft）*/
+  --color-brand-100: #ccddfa;   /* 选中背景、装饰填充 */
+  --color-brand-200: #9fbff6;   /* 暗色描边、装饰 */
+  --color-brand-300: #7fa9f3;   /* ★ 暗色主题的强调文字 / 图标（on 暗 canvas 7.78:1）*/
+  --color-brand-400: #5e90ea;   /* 暗色主题的次级强调（on 暗 canvas 5.83:1）*/
+  --color-brand-500: #3d6dc3;   /* 亮色主题的次级强调；亮色焦点环 */
+  --color-brand-600: #2452a6;   /* ★ CTA 填充首选（白字 on 它 7.41:1）；亮色品牌文字 */
+  --color-brand-700: #173874;   /* ★★ 官方锚点；亮色主题主文字 / 主标题 / 顶栏 */
+
+  /* ---- 1.2 品牌辅色 · 美团黄（色相 H=86.1°）-----------------------------
+   * 【实测官方资产】accent-300 #ffc300
+   *     来源 www.meituan.com/favicon.ico（占 60.2%）
+   *     OKLCH L=0.848 C=0.174 H=86.1°
+   *     实测：黑字 on 它 13.06:1 ／ 白字 on 它 1.61:1 ／ 它作文字 on 白 1.61:1
+   *     实测：它 on 暗色 canvas #12141a 11.45:1
+   *     → 机械结论：**它永远不能作亮色主题的文字**。合法角色只有两个：
+   *        ① 填充（**必须配黑字**）② 暗色主题下的强调。
+   */
+  --color-accent-100: #fdefd0;   /* 浅底、高亮行背景（亮色 bg-accent-soft）*/
+  --color-accent-200: #fad88d;   /* 描边、装饰 */
+  --color-accent-300: #ffc300;   /* ★★ 官方锚点；填充（必须配黑字）与暗色强调 */
+  --color-accent-500: #b28c30;   /* 深色描边；按下态填充（配深墨）*/
+  --color-accent-700: #6a5319;   /* ★ 亮色主题下唯一可作文字的黄色档（on 白 7.33:1）*/
+
+  /* ---- 1.3 状态色（色相：成功 161.9° / 警告 55.0° / 危险 22.3°）---------
+   * ⚠️ 警告色相已由所有者裁决**从 73.3° 移到 55°**：
+   *    原值对美团黄 86.1° 只差 12.7°，违反宪法 2.3 的 25° 色相间距门；
+   *    移到 55° 后对美团黄 31.1°、对危险 32.7°、对成功 106.9°，**无需任何例外**。
+   * ⚠️ 副产物（已登记，见文件末尾「已知冲突 C1」）：55° 琥珀与 86.1° 黄同处暖色区，
+   *    因此**警告不得仅靠色块表达，必须同时出现图标与文案**（所有者要求）。
+   *
+   * 【实测】暗色主题档（作为文字 on 暗色 canvas #12141a）
+   *   成功 #39c58d 8.37:1 ／ 警告 #bb6a29 4.56:1 ／ 危险 #f36d6d 6.33:1
+   * 【实测】亮色主题文字档（作为文字 on 白）—— 注意都只有 ~4.5 的余量
+   *   成功 #29845e 4.61:1 ／ 警告 #af6226 4.57:1 ／ 危险 #c35253 4.51:1
+   */
+  --color-success-500: #39c58d;   /* 暗色主题档 */
+  --color-success-600: #29845e;   /* 亮色主题文字档（同时是亮色填充）*/
+  --color-warning-500: #bb6a29;   /* 暗色主题档（H=55°）*/
+  --color-warning-400: #d98a45;   /* 暗色主题"暖色强调文字"档（on 暗底 6.73:1）*/
+  --color-warning-600: #af6226;   /* 亮色主题文字档（H=55°）*/
+  --color-danger-500:  #f36d6d;   /* 暗色主题档 */
+  --color-danger-600:  #c35253;   /* 亮色主题文字档（同时是亮色填充）*/
+
+  /* ---- 1.4 中性色阶【算得】-----------------------------------------------
+   * 冷调蓝灰（微弱偏蓝、与品牌蓝同族）。纯灰在蓝底旁会显脏，故不用纯灰。
+   * 亮色档位由"对 #ffffff 达 4.5:1"机械反解（危险色 #c35253 只有 4.51:1 的余量，
+   * 这一约束同时锁死了中性档位的下限）。
+   */
+  --color-neutral-0:   #ffffff;   /* 亮色 canvas 与表面 */
+  --color-neutral-25:  #f7f8fa;   /* 亮色下沉底（输入框内）*/
+  --color-neutral-50:  #f4f5f8;   /* 亮色 surface-sunken */
+  --color-neutral-100: #eceef4;   /* 弱分隔线 */
+  --color-neutral-200: #e4e7ef;   /* 分隔线 */
+  --color-neutral-300: #b9bfd0;   /* 强描边（Neo-Brutalism 2px 描边）*/
+  --color-neutral-400: #9ba1b2;   /* 禁用文字 / 图标（纯装饰，不承载需读信息）*/
+  --color-neutral-500: #6c7285;   /* 亮色弱化文字（on #ffffff 4.79:1）*/
+  --color-neutral-600: #4a5163;   /* 亮色次要文字 / 图标（on #ffffff 7.93:1）*/
+  --color-neutral-900: #1b1f2c;   /* 亮色主文字（on #ffffff 16.42:1）*/
+
+  /* ---- 1.5 暗色表面阶梯【已定】-------------------------------------------
+   * 暗色层级由**表面色变化**表达，不是阴影 —— Material 官方口径
+   * "M3: Using color instead of shadows to communicate elevation"（宪法 2.4.3）。
+   * **不使用纯黑大底**（宪法 2.4.5）。★ 四个值已由所有者给定，不许改。
+   * 实测相互对比：canvas↔surface 1.10:1 ／ canvas↔raised 1.23:1 ／ canvas↔sunken 1.11:1
+   */
+  --color-dark-sunken:  #0d0f13;
+  --color-dark-canvas:  #12141a;
+  --color-dark-surface: #1b1e26;
+  --color-dark-raised:  #242833;
+
+  /* ---- 1.6 中性色阶（暗色）【算得】---------------------------------------
+   * 主/次/弱三档**必须同时对 canvas 与 surface 都达 4.5:1**（宪法 2.3），
+   * 因此取两者中较严的 surface 作为反解基准。实测值见 §2 语义层。
+   */
+  --color-dark-text-primary:   #f2f4f9;   /* on surface 15.14:1 */
+  --color-dark-text-secondary: #aab2c5;   /* on surface  7.84:1 */
+  --color-dark-text-muted:     #828a9e;   /* on surface  4.82:1 */
+  --color-dark-text-disabled:  #565d70;   /* 纯装饰，不承载需读信息 */
+  --color-dark-border-subtle:  #21252f;
+  --color-dark-border-default: #2c3140;
+  --color-dark-border-strong:  #343a4b;
+
+  /* ---- 1.7 语义专用固定色（不属于任何色阶）------------------------------ */
+  --color-white:  #ffffff;   /* 亮色主题在饱和填充上的文字 */
+  --color-ink:    #12141a;   /* 暗色主题在饱和填充上的文字（= 暗色 canvas，不是纯黑）*/
+  --color-ink-warm: #201a00; /* 亮色主题美团黄填充上的文字：暖黑【提案】*/
+  --color-focus-dark: #5e90ea; /* 暗色主题焦点环（brand-400；on 暗 canvas 5.83:1）*/
+  --color-focus-light: #3d6dc3;/* 亮色主题焦点环（brand-500；on 白 5.03:1）*/
+}
+
+
+/* ==========================================================================
+ * §2 SEMANTIC — 暗色主题（一等公民，**先定义**）
+ *
+ * 业务代码**只允许**消费这一层的名字。
+ * 每个令牌的实测对比度由 `node scripts/gen-tokens.js` 打印并门禁，不在此手写。
+ *
+ * [layer=semantic][theme=dark]
+ * ========================================================================== */
+
+[data-theme="dark"] {
+  /* ---- 2.1 表面（surface）------------------------------------------------ */
+  --color-bg-canvas:      #12141a;   /* [usage=surface] 页面最底；**不用纯黑** */
+  --color-bg-surface:     #1b1e26;   /* [usage=surface] 卡片 / 列表基底 */
+  --color-bg-raised:      #242833;   /* [usage=surface] 浮起表面（弹层、下拉、Sheet）*/
+  --color-bg-sunken:      #0d0f13;   /* [usage=surface] 内嵌区域（输入框底）*/
+  --color-bg-brand-soft:  #1a2740;   /* [usage=surface] 品牌浅底【提案】同色相暗化 */
+  --color-bg-accent-soft: #2e2510;   /* [usage=surface] 美团黄浅底【提案】同色相暗化 */
+  --color-bg-success-soft:#12291f;   /* [usage=surface] 成功浅底【提案】*/
+  --color-bg-warning-soft:#2e2118;   /* [usage=surface] 警告浅底【提案】*/
+  --color-bg-danger-soft: #2d1d22;   /* [usage=surface] 危险浅底【提案】*/
+
+  /* ---- 2.2 文字（text）--------------------------------------------------- */
+  --color-text-primary:   #f2f4f9;   /* [usage=text][textSafe] 标题与正文（canvas 16.73 / surface 15.14）*/
+  --color-text-secondary: #aab2c5;   /* [usage=text][textSafe] 次要信息（surface 7.84）*/
+  --color-text-muted:     #828a9e;   /* [usage=text][textSafe][contrastOn=--color-bg-surface] 弱化 / 占位（仅短文本）*/
+  --color-text-disabled:  #565d70;   /* [usage=text] 禁用：纯装饰，不承载需读信息 */
+  --color-text-brand:     #7fa9f3;   /* [usage=text][textSafe] 品牌文字（链接 / 选中态）*/
+  --color-accent-text:    #d98a45;   /* [usage=text][textSafe] 暖色强调文字（H=55° 家族）*/
+  --color-text-success:   #39c58d;   /* [usage=text][textSafe] */
+  --color-text-warning:   #d98a45;   /* [usage=text][textSafe] 警告文字（H=55°），必须配图标 */
+  --color-text-danger:    #f36d6d;   /* [usage=text][textSafe] */
+  --color-text-on-fill:   #ffffff;   /* [usage=text][textSafe][minReason=白字只允许出现在已达 7.41:1 的 brand-fill 上；其他填充一律用 text.on-accent / text.on-state] [contrastOn=--color-action-primary] 饱和填充上的文字 */
+  --color-text-on-accent: #12141a;   /* [usage=text][textSafe][minReason=美团黄只承载深墨，白字 on 它仅 1.61:1，属红线] [contrastOn=--color-action-accent] */
+  --color-text-on-state:  #12141a;   /* [usage=text][textSafe][minReason=暗色主题的状态填充本身很亮，只允许深墨承载标签] [contrastOn=--color-state-success] */
+
+  /* ---- 2.3 动作（action）与状态填充（state）----------------------------- */
+  --color-action-primary:         #2452a6; /* [usage=fill] 主 CTA 填充（白字 on 它 7.41:1）*/
+  --color-action-primary-pressed: #3d6dc3; /* [usage=fill] 按下态：暗色下同色相**提亮** */
+  --color-action-accent:          #ffc300; /* [usage=fill] 辅 CTA 填充（美团黄，必配深墨）*/
+  --color-action-accent-pressed:  #b28c30; /* [usage=fill] 按下态（配深墨 5.86:1）*/
+  --color-state-success:          #39c58d; /* [usage=fill] */
+  --color-state-warning:          #bb6a29; /* [usage=fill] 警告不得仅靠色块，必须配图标（H=55°）*/
+  --color-state-danger:           #f36d6d; /* [usage=fill] */
+
+  /* ---- 2.4 图标（icon）--------------------------------------------------- */
+  --color-icon-primary:   #f2f4f9;   /* [usage=icon] 非文本 UI 构件，阈值 ≥3:1 */
+  --color-icon-secondary: #aab2c5;   /* [usage=icon] */
+  --color-icon-brand:     #7fa9f3;   /* [usage=icon] */
+  --color-icon-disabled:  #565d70;   /* [usage=icon] 纯装饰 */
+
+  /* ---- 2.5 描边与分隔线（border）----------------------------------------- */
+  --color-border-subtle:  #21252f;   /* [usage=border] 分隔线 */
+  --color-border-default: #2c3140;   /* [usage=border] 常规描边 */
+  --color-border-strong:  #343a4b;   /* [usage=border] 强描边（Neo-Brutalism 2px）*/
+  --color-border-focus:   #5e90ea;   /* [usage=border] 焦点环 */
+  --color-border-brand:   #2452a6;   /* [usage=border] 品牌色描边 */
+}
+
+
+/* ==========================================================================
+ * §2' SEMANTIC — 亮色主题（由暗色派生，但**完整成套**）
+ *
+ * ⚠️ 亮色**不是**暗色的取反：品牌色在两种底上的对比度会**反转**
+ *    （#173874 在白底 11.33:1，在暗色 canvas 只有 1.63:1）。
+ *    所以品牌文字亮色取 700/600 档、暗色取 300/400 档 —— **取值分端，语义名一致**。
+ *
+ * 本块同时服务两件事：
+ *   ① App 的亮色主题；② Web 侧（Web 为纯亮色、无暗色模式，直接消费 :root）。
+ *
+ * [layer=semantic][theme=light]
+ * ========================================================================== */
+
+:root {
+  /* ---- 2.1 表面 ---------------------------------------------------------- */
+  --color-bg-canvas:      #f7f8fa;   /* [usage=surface] 页面最底 */
+  --color-bg-surface:     #ffffff;   /* [usage=surface] 卡片 / 列表基底 */
+  --color-bg-raised:      #ffffff;   /* [usage=surface] 浮层靠描边＋高度区分，不叠阴影（宪法 2.4.3）*/
+  --color-bg-sunken:      #f4f5f8;   /* [usage=surface] 内嵌区域（输入框底）*/
+  --color-bg-brand-soft:  #e9f1fd;   /* [usage=surface] = brand-50 */
+  --color-bg-accent-soft: #fdefd0;   /* [usage=surface] = accent-100 */
+  --color-bg-success-soft:#eff8f4;   /* [usage=surface]【提案】近白微染：见「已知冲突 C2」*/
+  --color-bg-warning-soft:#fdf6ee;   /* [usage=surface]【提案】同上 */
+  --color-bg-danger-soft: #fdf2f2;   /* [usage=surface]【提案】同上 */
+
+  /* ---- 2.2 文字 ---------------------------------------------------------- */
+  --color-text-primary:   #1b1f2c;   /* [usage=text][textSafe] 标题与正文（on 白 16.42）*/
+  --color-text-secondary: #4a5163;   /* [usage=text][textSafe] 次要信息（on 白 7.93）*/
+  --color-text-muted:     #6c7285;   /* [usage=text][textSafe] 弱化 / 占位（on 白 4.79；on canvas 4.51，**禁止长正文**）*/
+  --color-text-disabled:  #9ba1b2;   /* [usage=text] 禁用：纯装饰 */
+  --color-text-brand:     #2452a6;   /* [usage=text][textSafe] 品牌文字（on 白 7.41；on brand-soft 6.52）*/
+  --color-accent-text:    #6a5319;   /* [usage=text][textSafe] 亮色下唯一可作文字的黄色档（on 白 7.33）*/
+  --color-text-success:   #29845e;   /* [usage=text][textSafe][contrastOn=--color-bg-surface] */
+  --color-text-warning:   #af6226;   /* [usage=text][textSafe][contrastOn=--color-bg-surface]（H=55°），必须配图标 */
+  --color-text-danger:    #c35253;   /* [usage=text][textSafe][contrastOn=--color-bg-surface] */
+  --color-text-on-fill:   #ffffff;   /* [usage=text][textSafe][minReason=白字只允许出现在 brand-fill / status-fill 上；美团黄一律用 text.on-accent] [contrastOn=--color-action-primary] */
+  --color-text-on-accent: #201a00;   /* [usage=text][textSafe][minReason=美团黄只承载深墨，白字 on 它仅 1.61:1，属红线] [contrastOn=--color-action-accent] */
+  --color-text-on-state:  #ffffff;   /* [usage=text][textSafe][minReason=亮色状态填充本身已达 4.51~4.61:1 载白字] [contrastOn=--color-state-success] */
+
+  /* ---- 2.3 动作（action）与状态填充（state）----------------------------- */
+  --color-action-primary:         #2452a6; /* [usage=fill] 主 CTA 填充（白字 on 它 7.41:1）*/
+  --color-action-primary-pressed: #173874; /* [usage=fill] 按下态 = 官方锚点（白字 11.33:1）*/
+  --color-action-accent:          #ffc300; /* [usage=fill] 辅 CTA 填充（美团黄，必配深墨）*/
+  --color-action-accent-pressed:  #b28c30; /* [usage=fill] 按下态（配深墨 5.86:1）*/
+  --color-state-success:          #29845e; /* [usage=fill] */
+  --color-state-warning:          #af6226; /* [usage=fill] 警告不得仅靠色块，必须配图标（H=55°）*/
+  --color-state-danger:           #c35253; /* [usage=fill] */
+
+  /* ---- 2.4 图标 ---------------------------------------------------------- */
+  --color-icon-primary:   #1b1f2c;   /* [usage=icon] */
+  --color-icon-secondary: #4a5163;   /* [usage=icon] */
+  --color-icon-brand:     #2452a6;   /* [usage=icon] */
+  --color-icon-disabled:  #9ba1b2;   /* [usage=icon] 纯装饰 */
+
+  /* ---- 2.5 描边与分隔线 -------------------------------------------------- */
+  --color-border-subtle:  #eceef4;   /* [usage=border] */
+  --color-border-default: #e4e7ef;   /* [usage=border] */
+  --color-border-strong:  #b9bfd0;   /* [usage=border] */
+  --color-border-focus:   #3d6dc3;   /* [usage=border] 焦点环（brand-500：on 白 5.03:1）*/
+  --color-border-brand:   #2452a6;   /* [usage=border] 品牌色描边 */
+}
+
+
+/* ==========================================================================
+ * §3 非颜色令牌 — 由生成器原样搬运（不做对比度计算）
+ *
+ * ⚠️ 三条硬约束（宪法 2.5）：
+ *   ① **不写任何具体字体名**。字族由系统解析；Android 上写 `fontFamily` 是
+ *      **不可见的 bug**（RN #58750：字体名不匹配时静默回退、不打印日志）。
+ *      → 这里只声明**角色**，取值分端生成。
+ *   ② **字阶不写绝对 pt 常量**。iOS 用系统文字样式（从而获得 Dynamic Type），
+ *      Android 用 M3 字阶角色；**语义名两端一致，数值分端生成**。
+ *   ③ **禁止渐变**；本组不含任何渐变或阴影令牌（暗色层级一律用表面色表达）。
+ * ========================================================================== */
+
+:root {
+  /* ---- 3.1 字阶角色（**只有角色名与相对关系，无绝对字号**）--------------- */
+  /* [group=font-role] */
+  --font-role-display:  display;
+  --font-role-title:    title;
+  --font-role-headline: headline;
+  --font-role-body:     body;
+  --font-role-label:    label;
+  --font-role-caption:  caption;
+  --font-role-mono:     mono;         /* 数字对齐改用 tabular-nums，**不为此换字体** */
+
+  /* 字重：只用 normal / bold —— RN 官方原文 "Not all fonts have a variant for each
+     of the numeric values"，故不得假设 500 与 600 必然可区分。 */
+  /* [group=font-weight] */
+  --font-weight-regular: normal;
+  --font-weight-strong:  bold;
+
+  /* 数字等宽（课表 / 排行榜 / 计时 / 价格）*/
+  /* [group=font-variant] */
+  --font-variant-numeric: tabular-nums;
+
+  /* ---- 3.2 间距（4 为基数）【提案】--------------------------------------- */
+  /* [group=space] */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-12: 48px;
+
+  /* ---- 3.3 圆角【提案】"连续圆角"是苹果舒适感的主要载体 ------------------- */
+  /* [group=radius] */
+  --radius-small:  8px;
+  --radius-medium: 12px;
+  --radius-large:  20px;
+  --radius-full:   9999px;
+
+  /* ---- 3.4 描边 ----------------------------------------------------------
+   * 常规 1px；**Neo-Brutalism 专用 2px**（仅 CTA / Badge / 分区标题三类，
+   * 宪法 1.1），两者不可混用于同一元素。 */
+  /* [group=border-width] */
+  --border-width-hairline: 1px;
+  --border-width-brutal:   2px;
+
+  /* ---- 3.5 触控目标（按平台各自取官方值，**不取交集**）-------------------
+   * iOS ≥44pt / Android ≥48dp；视觉可更小，但命中区必须补足（宪法 7.1）。 */
+  /* [group=touch-target] */
+  --touch-target-ios:     44px;
+  --touch-target-android: 48px;
+
+  /* ---- 3.6 动效时长【提案】------------------------------------------------
+   * ⚠️ M3 动效物理在 RN 上**没有官方实现**（官方实现对照表无 RN 条目），
+   *    故本组数值明确声明为**近似**，不得声称「M3 合规动效」（宪法 8.1）。
+   *    每条动效还必须声明 reduced-motion 降级（宪法 7.3）。 */
+  /* [group=motion-duration] */
+  --motion-duration-fast: 120ms;
+  --motion-duration-base: 220ms;
+  --motion-duration-slow: 360ms;
+}
+
+/* ==========================================================================
+ * 已知冲突与契约扩展（如实登记，不粉饰 —— 由所有者裁决）
+ * ==========================================================================
+ *
+ * C1 · 警告色（55° 琥珀）与美团黄（86.1°）同处暖色区
+ *   两者色相仅差 31.1°，**刚好过 25° 门**，但在快速扫视下仍是同一暖色家族。
+ *   → 落地约束：**警告不得仅靠色块表达，必须同时出现图标与文案**（所有者已要求）。
+ *     警告只用「图标 + 文字」形态，不用大面积纯色块形态。
+ *   本条的最终判定必须真机复核后写回《App 前端风格体系》。
+ *
+ * C2 · 亮色主题的"软底容器"被对比度门倒逼成近白
+ *   亮色状态文字档（#29845e / #af6226 / #c35253）对**纯白**只有 4.61 / 4.57 / 4.51:1
+ *   —— 余量不足 0.11。任何有彩度的底都会把它们压到 4.5 线下：
+ *     实测 #29845e on #eff8f4 = 4.26、#af6226 on #fdf6ee = 4.26、#c35253 on #fdf2f2 = 4.12
+ *   因此这三个状态文字令牌的 `contrastOn` **声明为 `--color-bg-surface`（纯白）**，
+ *   与其"实测基准 = 白"的来源一致；**它们不得放在任何软底容器上作正文**。
+ *   若产品需要在 soft 底上放状态文字，**必须新解一档更深的文字色**，
+ *   那需要所有者批准偏离 #29845e / #af6226 / #c35253 这三个已给定锚点。
+ *   **本次不擅自改锚点**，因此如实登记该限制，而不是把软底调成纯白来"过关"。
+ *
+ * C3 · 亮色主题 canvas（#f7f8fa）上的状态色文字低于 4.5:1
+ *   同上原因：实测 #29845e on #f7f8fa = 4.34、#af6226 = 4.30、#c35253 = 4.25。
+ *   → 约束：**状态色文字只允许放在 surface（白）上**，不允许直接放在 canvas 上。
+ *     （canvas 与 surface 的差只有 1.03:1，视觉上几乎不可分辨，实际落地风险低，
+ *      但机器校验必须诚实：本规范的 contrastOn 就是 surface。）
+ *
+ * C4 · 契约扩展（**多输出了字段，原有六项一个未删、一个未改名**）
+ *   宪法 2.3 要求每个颜色令牌携带 6 项元数据。为了让「≥3:1 非文本」与
+ *   「≥4.5:1 正文」两种情况都能被机器区分**而不必手写比例**，本实现在 CSS 注解里
+ *   增加了可选注解 `[minRatio]`（**必须**同时给 `[minReason]`，否则生成器报错）
+ *   与 `[contrastAgainst]`，并在 tokens.json 里多输出
+ *   `minRatio` / `thresholdKind` / `contrastAgainst` / `contrastAgainstValue`。
+ *   ⛔ 加权**必须留痕**：无 `minReason` 的 `minRatio` 一律报错退出码 1。
+ *
+ * C5 · §3 非颜色令牌的"无绝对数值"只对字阶成立
+ *   规格要求「字阶令牌是名字/角色，无绝对 pt 常量」——§3.1 已满足（全是角色名）。
+ *   但间距 / 圆角 / 描边 / 触控目标 / 动效时长**必须是数值**才能用，
+ *   故写成 px/ms 常量并分 group 输出。**字阶是唯一"零数值"的一组。**
+ *
+ * C6 · 品牌色阶的"档位编号"与既有尺子 `scripts/brand-ramp.js` 差一档
+ *   本文件采用所有者给定的色阶（50/100/200/300/400/500/600/**700=#173874 锚点**）。
+ *   而 `brand-ramp.js` 自己生成的 100–700 数列相对本文件**整体左移一档**
+ *   （它生成的 700 = #2452a6 = 本文件的 brand-600）。
+ *   → 该脚本的门（暗色 400 作文字、白字 on 600、600 on 白、700 on 白）在
+ *     `--hue 261.2` 下**全部通过**，所以不构成阻塞；
+ *     但两处"档位"口径不一致必须在接入 CI 前统一，否则后人会把
+ *     [brand-600 ↔ brand-700] 说反。**建议由所有者/架构师裁决哪一份是权威编号。**
+ *
+ * C7 · `brand-ramp.js` 的三条色相间距门仍以**旧警告色相 73.3°**（Web 现值 #ffb547）为基准
+ *   警告色相已按所有者裁决移到 55°。用旧基准算出的间距（172.15°）比新基准
+ *   （153.8°）更宽松，**结论不变（都远超 25° 门）**，但因为该脚本按指令**未被修改**，
+ *   故把它登记为待办：**色相基准需要更新为 55°，否则这把尺子会与令牌源脱节。**
+ * ========================================================================== */
