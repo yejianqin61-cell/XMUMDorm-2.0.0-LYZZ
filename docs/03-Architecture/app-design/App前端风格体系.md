@@ -405,7 +405,7 @@ Android 官方：离线优先＝**本地是唯一数据源**，UI 只读本地�
 |---|---|
 | 系统容器 | `react-native-screens`、原生 Tab 实现（宪法 4.3 三选一）、`expo-router` |
 | 手势 / 动效 | `react-native-gesture-handler`、`react-native-reanimated` + `worklets` |
-| **原生控件** | **优先 `@expo/ui`** —— SDK 57 已有 **49 个 Jetpack Compose / 43 个 SwiftUI / 18 个 universal** 组件与 **8 个 drop-in 替代** |
+| **原生控件** | **优先 `@expo/ui`** —— 官方自述为 **primitives library**（明确否认自己是"有主见的设计套件"），三入口（`swift-ui` / `jetpack-compose` / `universal`）组件面广，并自带 **8 个 drop-in 替代**（可直接换掉 `@gorhom/bottom-sheet`、datetimepicker、masked-view、menu、pager-view、picker、segmented-control、slider）|
 | 列表虚拟化 | `@shopify/flash-list` **或** `@legendapp/list`（**零原生代码，可 OTA**）—— 二者择一 |
 | 图片 / 触感 / 系统图标 | `expo-image`、`expo-haptics`、`expo-symbols` |
 | 安全区 / 绘图 | `react-native-safe-area-context`、`react-native-svg` |
@@ -434,7 +434,12 @@ ui/组合    约 20 个
 
 ### 12.4 必须自研的四条理由（每条可验证）
 
-1. **两把尺子只有自研才过得了**：零 `#hex` / `fontSize` 字面量、令牌必须携带**实测算出**的对比度、装饰色与状态色色相间距 ≥25°。
+1. **判据是"默认渲染"，不是"脚本是否变绿"**（这条最容易被误用）：
+   `design-debt-report.js` **只扫我们的 `src/`**，`node_modules` 里的硬编码色值**不会被计数、但运行时照样生效** → **"两把尺子全绿"不等于"视觉自主"**。
+   **唯一有效的判据**：**装上该库、不改它的主题，渲染一个 `Button`，得到的是不是我们的 CTA？**
+   实测：`react-native-paper@5.15.3` **1072 处色值 / 99 处 `fontSize` 字面量**且自带 M3 token 文件；`tamagui/themes` 1910 处；`react-native-magnus` 279 处；`react-native-elements` 148 处。
+   ⚠️ **反例**：`@rneui/themed` 实测 **0 色值 0 字号**，默认 theme 仍是外来视觉 → **"字面量为 0"既不充分也不必要**。
+   自研的令牌层则天然满足 2.3 条（每个颜色令牌携带实测算出的 `contrastRatio`）。
 2. **方向是三种来源的特定混合，没有库实现**：`react-native-paper` 官方 README 自述 "**by default are following and respecting the Google's Material Design guidelines**" → 两端都是 M3，与宪法 5.2（iOS 不得按 M3 做）冲突；Neo-Brutalism 组件库会把白名单**扩散成全局风格**（宪法 1.1）。
 3. **双端分叉是要求而不是妥协**（宪法 5.2）：导航壳、弹层形态、动效曲线、字阶取值都要分端生成 —— 而 UI kit 的核心价值恰恰是"两端统一"。
 4. **宪法 9.5 的"组件库必须被消费"这道门只对自研组件库有效**：买来的库"被消费"是自动满足的，门就失去了约束力。而旧 App 的病正是"组件库写了 **0 引用**"。
@@ -443,13 +448,21 @@ ui/组合    约 20 个
 
 1. **不重造**手势、动效、列表虚拟化、物理 —— 已被第①层买掉。
 2. **不引入样式引擎**（`nativewind` / `@shopify/restyle` / `react-native-unistyles` / `tamagui` 的 styling 部分）：RN 的 `StyleSheet` + 令牌层已经足够。本项目的问题从来不是"样式写得麻烦"，而是"**没有唯一的令牌来源**"——那是架构问题，不是语法问题。
-3. **不引入完整 UI kit**（`react-native-paper` / `@ui-kitten/components` / `react-native-ui-lib` / `@rneui/themed` / `@gluestack-ui/themed` / `react-native-magnus`）。
-   维护信号警示（2026-10-01 实测最后发布时间）：`react-native-magnus` **2022-09-22**、`dripsy` **2024-10-22**、`@gluestack-ui/themed` **2025-09-10**（距上次发布约 13 个月）。
+3. **不引入完整 UI kit**（`react-native-paper` / `tamagui` / `react-native-ui-lib` / `@ui-kitten/components` / `react-native-magnus` / `react-native-elements` / `@rneui/themed`）。
+   维护信号与发布日（含"**必须读版本自身时间戳、不得用 `time.modified`**"的取值纪律）见 [App组件层调研 §2.1 / §4.6](../../06-Analyze/tech-research/App组件层调研-现成组件库评估.md)。
 
-### 12.6 一条被否决的能力：M3 动态取色
+### 12.6 一条被限制的能力：M3 动态取色
 
-`@expo/ui` 的 `Material Colors` 暴露 **M3 Dynamic Colors**（由用户壁纸取色）。**本项目不启用。**
+`@expo/ui` 的 `Material Colors` 暴露 **M3 Dynamic Colors**（由用户壁纸取色）。**本项目不把系统动态色作为令牌层的取值来源。**
 
-理由是可验证的：**动态取色让表面 / 强调色在运行期才确定 → `contrastRatio` 无法在构建期预先算定 → 与宪法 2.3 条直接冲突**（令牌必须携带实测对比度、`textSafe` 由实测决定）。
+理由是可验证的：**动态取色让表面 / 强调色在运行期才确定 → `contrastRatio` 无法在构建期预先算定 → 与宪法 2.3 条直接冲突。**
 
 > 这是"每一屏都必须过对比度门"这条纪律的必然推论：**任何让颜色在运行期才确定的机制，都不能进入令牌层。**
+
+⚠️ **但"不当作令牌来源"≠"不能用 `@expo/ui`"**。三条不冲突的用法（宪法 9.12）：
+
+1. 给 `Host` 传 **`seedColor` = 本项目品牌主色** —— 把系统控件锚定到我们的色，而不是壁纸色；
+2. 用 `colorScheme` **显式 lock** 到 `light` / `dark`，不用 `'unspecified'`；
+3. 把 `@expo/ui` 原生控件当"**平台控件**"，我们自己的令牌层只管自绘组件，两者通过同一个 `seedColor` 在视觉上对齐。
+
+**待脚手架期实测（不得当已成立）**：`seedColor` 是否在所有 M3 组件上完全覆盖动态取色；`getMaterialColors` 返回的 8 位 `#RRGGBBAA` 能否直接进入 `contrast-check.js` 的解析路径。

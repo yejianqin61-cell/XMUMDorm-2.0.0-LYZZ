@@ -255,17 +255,27 @@ Android target API 36 上存在 **RN 返回事件失效、系统判定退出 Act
 
 **9.9 第①层采用清单（**不得重造**）**：系统容器（`react-native-screens` + 原生 Tab 实现〔4.3〕+ `expo-router`）、手势与动效（`gesture-handler` + `reanimated`/`worklets`）、**原生控件优先 `@expo/ui`**、列表虚拟化（`FlashList` **或** `LegendList`，二者择一）、`expo-image` / `expo-haptics` / `expo-symbols`、`safe-area-context` / `svg`。
 ⛔ **禁止重造**手势、动效、列表虚拟化与物理 —— 这是平台工程，不是设计工作。
+⚠️ **上列版本一律由 `npx expo install` 决定**（见 3.1）。**权威 pin 快照见[组件层调研 §4.6](../../06-Analyze/tech-research/App组件层调研-现成组件库评估.md)** —— 实测 `expo@57.0.26` 的 `bundledNativeModules.json` 把 reanimated 钉在 **4.5.1**（npm latest 4.7.0）、worklets **0.10.1**（0.13.0）、gesture-handler **`~2.32.0`**（3.3.0，**差一个大版本**）、screens **`~4.26.0`**、flash-list **2.0.2**、svg **15.15.4**。**"数值取自 npm latest"是本项目最容易立刻出事的一类错误。**
 
-**9.10 能换成官方实现的，优先换掉第三方原生依赖**：`@expo/ui` 自带 **8 个 drop-in 替代**（含 `@gorhom/bottom-sheet` 的兼容版、pager-view、segmented-control、datetimepicker 等）→ 优先用官方实现替换社区库，以降低 11.4 的 OTA 负担。
+**9.10 能换成官方实现的，优先换掉第三方原生依赖**：`@expo/ui` 自带 **8 个 drop-in 替代**（`@gorhom/bottom-sheet`、`@react-native-community/datetimepicker`、`@react-native-masked-view/masked-view`、`@react-native-menu/menu`、`react-native-pager-view`、`@react-native-picker/picker`、`@react-native-segmented-control/segmented-control`、`@react-native-community/slider`）→ 优先用官方实现替换社区库，以降低 11.4 的 OTA 负担。
 
 **9.11 第③层禁止作基座**
-1. ⛔ 禁止把**自带调色板与字阶**的 UI kit 作为组件基座（`react-native-paper`［官方自述 "by default are following … Material Design guidelines"］、`@ui-kitten/components`、`react-native-ui-lib`、`@rneui/themed`、`@gluestack-ui/themed` 等）—— 采用即接受其色值与字阶，**直接违反第 2 条**。
+1. ⛔ 禁止把**自带完整调色板与字阶**的 UI kit 作为组件基座（`react-native-paper`、`tamagui`、`react-native-ui-lib`、`@ui-kitten/components`、`react-native-magnus`、`react-native-elements`、`@rneui/themed` 等）。
 2. ⛔ 禁止引入**样式引擎**（`nativewind` / `@shopify/restyle` / `react-native-unistyles` / `tamagui` 的 styling 部分）：RN 的 `StyleSheet` + 令牌层已足够。本项目的问题不是"样式写得麻烦"，而是"**没有唯一令牌来源**"。
+3. **判据必须是"默认渲染"，不是"脚本是否变绿"**（v1.1 修正，这一点极易被误用）：
+   `design-debt-report.js` **只扫我们的 `src/`**，`node_modules` 里的硬编码色值**不会被计数、但运行时照样生效** —— 因此"两把尺子全绿"**不等于**"视觉自主"。
+   **唯一有效的判据**：**装上该库、不改它的主题，渲染一个 `Button`，得到的是不是我们的 CTA？**
+   实测（解包逐文件正则统计，口径与偏差见[组件层调研 §6.1](../../06-Analyze/tech-research/App组件层调研-现成组件库评估.md)）：`react-native-paper@5.15.3` **1072 处色值 / 99 处 `fontSize` 字面量**且自带 M3 token 文件；`tamagui/themes` 1910 处色值；`react-native-magnus` 279 处；`react-native-elements` 148 处。
+   ⚠️ **反例警告**：`@rneui/themed` 实测 **0 色值 0 字号**，但默认 theme 仍是外来视觉 —— **"字面量为 0"既不充分也不必要**。
 
-**9.12 ⛔ 禁止运行期动态取色**（含 M3 Dynamic Colors / Material You）
-颜色在**运行期**才确定 → `contrastRatio` 无法在构建期预先算定 → **违反 2.3 条**。→ 任何让颜色在运行期才确定的机制**不得进入令牌层**。这是"每屏必须过对比度门"的必然推论。
+**9.12 ⛔ 禁止把"运行期才确定的颜色"作为令牌层取值**（含 M3 Dynamic Colors / Material You）
+- 若开启动态取色，表面/强调色的实际取值由**用户壁纸**决定 → **`contrastRatio` 无法在构建期预先算定** → 违反 2.3 条。**因此系统动态色不得作为本项目令牌的取值来源。**
+- ⚠️ **这不等于不能用 `@expo/ui`（v1.1 精确化）**。三条不冲突的用法：① 给 `Host` 传 **`seedColor` = 本项目品牌主色**，把系统控件锚定到我们的色而不是壁纸；② 用 `colorScheme` **显式 lock** 到 light/dark，不用 `'unspecified'`；③ 把 `@expo/ui` 原生控件当"**平台控件**"，我们自己的令牌层只管自绘组件，两者通过同一 `seedColor` 对齐。
+- **待脚手架期实测**（不得当已成立）：`seedColor` 是否在所有 M3 组件上完全覆盖动态取色；`getMaterialColors` 返回的 8 位 `#RRGGBBAA` 能否直接进入 `contrast-check.js` 的解析路径。
 
-**9.13 依赖"最后发布时间"是准入项**：3.4 的依赖准入必须包含**最后一次发布时间的实测值**；停滞项须在 PR 中说明为何仍可用。（实测警示 @2026-10-01：`react-native-magnus` 2022-09-22、`dripsy` 2024-10-22、`@gluestack-ui/themed` 2025-09-10。）
+**9.13 依赖"最后发布时间"是准入项**：3.4 的依赖准入必须包含**最后一次发布时间的实测值**。
+- ⚠️ **取值方法**：必须读 **`npm view <pkg> time --json` 里该版本自己的时间戳**。**不得用 `time.modified`** —— 它是"元数据最后被修改的时间"，会被 dist-tag 变更或新版本发布污染（实测：`react-native-paper` 的 `time.modified` = 2026-06-16，那是 **alpha 版**发布的时刻，而 `latest` 版 `5.15.3` 实际发布于 **2026-05-26**）。
+- 各候选的实测发布日与维护信号见[组件层调研 §2.1](../../06-Analyze/tech-research/App组件层调研-现成组件库评估.md)，**本宪法不复述具体日期**（避免二次转述失真）。
 
 **依据**：[调研-03 §6](../../06-Analyze/ui-research/App设计调研-03-Dorm能力面与使用场景盘点.md)、[基座调研 §9.6](../../06-Analyze/tech-research/App基座调研-Expo与原生iOS混编.md)、[App组件层调研](../../06-Analyze/tech-research/App组件层调研-现成组件库评估.md)（含 `@expo/ui` 官方原文、`react-native-paper` 官方 README、各包 npm 一手实测）、旧 v1 实测。
 
@@ -307,7 +317,9 @@ Android target API 36 上存在 **RN 返回事件失效、系统判定退出 Act
 **11.7 原生代码写法**：原生 Swift **优先写成本地 Expo Module 放在 `modules/`**，**不放进 `ios/`**（`prebuild --clean` 会抹掉手改）；必须改 prebuild 产物时应写成 **config plugin**。
 
 **11.8 iOS 混编边界**：**凡 `@expo/ui` 已提供的原生组件，不允许自写原生实现**（iOS 用 `@expo/ui/swift-ui`，Android 用 `@expo/ui/jetpack-compose`，跨端用 `@expo/ui/universal`）。任何"为 iOS 单独写原生"的决定**必须附 ADR** 并说明为何 `@expo/ui` 不可用。
-- `@expo/ui` 内部**无 Yoga/Flexbox**：布局必须用 `HStack`/`VStack` 或 `Row`/`Column`，且必须包在 `Host` 内。
+- ⚠️ **必须配一条兜底（v1.1 修正）**：`swift-ui` 与 `jetpack-compose` 两个入口**互不相通**（同一份 UI 不能两端跑），`universal` 入口的组件面明显更窄（缺 Card / Chip / Tab 等）。→ **表现层组件（消费本项目令牌的那一层）仍然必须自研**。`@expo/ui` 的真实角色是「**原生控件地基 + 逃生舱 + 官方 drop-in 替代来源**」，不是表现层组件库。
+- ⚠️ **布局约束的准确范围（勿扩大，v1.1 修正）**：官方原文是 *"Flexbox styles apply to the `Host` component itself. **Once you are inside the native context**, Yoga is not available."* —— **限制只存在于原生 context 内**：`swift-ui` / `jetpack-compose` 入口内须用 `HStack`/`VStack` / `Row`/`Column` 并包在 `Host` 内；而 **`universal` 入口本身走 RN 的 `View` + Flexbox**（实测 `universal/Row` 即 `{flexDirection:'row'}`，见[组件层调研 §4.4.3](../../06-Analyze/tech-research/App组件层调研-现成组件库评估.md)）。
+  ⛔ **不得把本条写成"`@expo/ui` 不能当跨端布局基座"** —— 那会误杀 `universal` 路线。
 - Nitro Modules **仅在有明确性能测量证据时**引入（当前 0.37.x，<1.0，未声明 production-ready）。
 
 **依据**：[基座调研 §7/§9.3/§9.4](../../06-Analyze/tech-research/App基座调研-Expo与原生iOS混编.md)。
