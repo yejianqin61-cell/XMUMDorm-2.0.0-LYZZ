@@ -28,11 +28,8 @@ describe('标签页标题改成 Dorm，且不再出现 Jack 字样', () => {
     expect(html).not.toMatch(/Jack/i);
   });
 
-  it('App（Capacitor）的 index.html 标题也是 Dorm', () => {
-    const html = read('frontend-app', 'index.html');
-    expect(html).toContain('<title>Dorm</title>');
-    expect(html).not.toMatch(/Jack/i);
-  });
+  // App 客户端（旧 Capacitor 端 frontend-app）已全盘废弃并移出工作区
+  // （归档 tag app-legacy-v1），其 index.html 标题断言随之删除，不再有第二端可守。
 
   it('PWA manifest 名字保持 Dorm', () => {
     const manifest = JSON.parse(read('frontend', 'public', 'manifest.json'));
@@ -45,7 +42,6 @@ describe('标签页标题改成 Dorm，且不再出现 Jack 字样', () => {
     // .env 的 jack-dorm-assets 桶名属于内部标识，不在本次范围内。
     const userFacing = [
       ['frontend', 'index.html'],
-      ['frontend-app', 'index.html'],
       ['html', 'register.html'],
       ['server.js'],
       ['frontend', 'src', 'pages', 'PrivacyPolicy.jsx'],
@@ -133,8 +129,8 @@ describe('左侧栏「加入我们」', () => {
 /**
  * 联系方式收口（2026-09-26 / 2026-09-27 用户两次裁定）
  *
- * 第一次：站点上曾同时存在两个微信号 —— 老的「联系我们」页（Web / Capacitor App /
- * RN 移动端 About）写的是个人号 YEJIANQIN_git，新加的「加入我们」写的是官方号
+ * 第一次：站点上曾同时存在两个微信号 —— 老的「联系我们」页（当时的 Web、Capacitor App
+ * 与 RN 移动端 About）写的是个人号 YEJIANQIN_git，新加的「加入我们」写的是官方号
  * xmumdorm666。两个号同时对外，用户不知道该加哪个，所以统一到官方号。
  *
  * 第二次（本次收紧）：**全站只能出现 xmumdorm666 这一个联系方式**。
@@ -142,15 +138,15 @@ describe('左侧栏「加入我们」', () => {
  * 隐私政策 / 服务条款原本只有邮箱一种渠道，改为微信号。
  * 因此这里从「统一微信号」扩成「列出所有对外联系方式落点」，
  * 逐个断言：有官方号、没有历史号、没有邮箱、没有电话。
+ *
+ * 现状：App 客户端（旧 frontend-app / mobile）已全盘废弃并移出工作区
+ * （归档 tag app-legacy-v1），落点清单只保留 Web 端 + 公开静态页。
  */
 describe('全站联系方式只有官方微信号 xmumdorm666', () => {
   const contactSurfaces = [
     ['frontend', 'src', 'pages', 'JoinUs.jsx'],
     ['frontend', 'src', 'pages', 'PrivacyPolicy.jsx'],
     ['frontend', 'src', 'pages', 'TermsOfService.jsx'],
-    ['frontend-app', 'src', 'pages', 'PrivacyPolicy.jsx'],
-    ['frontend-app', 'src', 'pages', 'TermsOfService.jsx'],
-    ['mobile', 'src', 'screens', 'AboutInfoScreen.tsx'],
     ['public', 'privacy-policy.html'],
   ];
 
@@ -163,13 +159,5 @@ describe('全站联系方式只有官方微信号 xmumdorm666', () => {
       expect(src).not.toContain('mailto:');
       expect(src).not.toContain('01115078663');
     }
-  });
-
-  it('移动端 About 的联系信息测试读的是真实源码，不是拿常量自比', () => {
-    // 原测试写的是 const wechat = 'YEJIANQIN_git'; expect(wechat).toContain('YEJIANQIN');
-    // —— 页面改成任何内容它都不会红，等于没测。现在必须出现 readFileSync。
-    const spec = read('mobile', '__tests__', 'screens', 'AboutSystem.test.js');
-    expect(spec).toContain('readFileSync');
-    expect(spec).toContain('AboutInfoScreen.tsx');
   });
 });

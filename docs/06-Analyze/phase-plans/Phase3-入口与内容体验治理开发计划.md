@@ -1,12 +1,14 @@
 # Phase 3 - 入口与内容体验治理开发计划
 
+> ⚠️ **App 端范围已作废（2026-09-29）**：本计划中的 P3-15（底部 Tab 栏）及一切 App / Capacitor 相关验收项，随 App 客户端全盘废弃而失效（归档 tag `app-legacy-v1`）；广告系统（P3-10）与树洞推荐话术（P3-14）两项继续有效。
+
 ## 目标
 
 Phase3 聚焦三个明确范围：轮播图广告系统、树洞推荐话术清理、底部 Tab 体验优化。目标是建立可控的管理员广告投放闭环，移除未实现的算法暗示，并让 App 的主要导航更接近稳定、克制的原生体验。
 
-详细业务规格见 `docs/01-Requirement/Phase3-底部Tab轮播广告与树洞话术治理规格.md`。
+详细业务规格原见 `docs/01-Requirement/Phase3-底部Tab轮播广告与树洞话术治理规格.md`——**该文件已随 App 端全盘废弃一并删除**（归档 tag `app-legacy-v1`）。
 
-废弃的 `mobile/` RN 前端不在范围内。第 16 项 unspecified 暂不处理。
+App 客户端（旧 `mobile/` RN 端与旧 Capacitor 端）已全盘废弃并移出工作区，不在范围内。第 16 项 unspecified 暂不处理。
 
 ## 治理范围
 

@@ -2,7 +2,9 @@
  * 全站联系方式唯一性守卫（2026-09-27 用户裁定）
  *
  * 裁定原文：「加入我们，邮箱联系方式也要删掉。全站只能有 xmumdorm666 这个联系方式的出现」。
- * 范围（同一轮问答确认）：站点页面 + RN 移动端 + 仓库 README / 公众号模板 / 演示文稿。
+ * 范围（同一轮问答确认）：站点页面 + 仓库 README / 公众号模板 / 演示文稿。
+ * （App 客户端旧代码 frontend-app / mobile 已全盘废弃并移出工作区，
+ *  归档 tag app-legacy-v1，不再作为扫描范围。）
  *
  * 这个测试是一个**扫描器**，不是逐条断言已知文件 —— 只要有人在任何面向用户的源码里
  * 重新写进一个外部邮箱、电话或历史微信号，它就会红。这才是「全站只能有一个联系方式」
@@ -16,7 +18,7 @@ const path = require('path');
 const ROOT = path.resolve(__dirname, '..', '..');
 
 /** 面向用户的源码根目录（相对仓库根） */
-const SCAN_DIRS = ['frontend/src', 'frontend-app/src', 'mobile/src', 'public', 'marketing/wechat'];
+const SCAN_DIRS = ['frontend/src', 'public', 'marketing/wechat'];
 /** 单文件也要扫 */
 const SCAN_FILES = ['README.md', 'README_CN.md', 'README_EN.md'];
 
@@ -92,9 +94,6 @@ describe('全站只能出现 xmumdorm666 这一个联系方式', () => {
       'frontend/src/pages/JoinUs.jsx',
       'frontend/src/pages/PrivacyPolicy.jsx',
       'frontend/src/pages/TermsOfService.jsx',
-      'frontend-app/src/pages/PrivacyPolicy.jsx',
-      'frontend-app/src/pages/TermsOfService.jsx',
-      'mobile/src/screens/AboutInfoScreen.tsx',
       'public/privacy-policy.html',
     ];
     for (const file of mustContain) {

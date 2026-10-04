@@ -43,7 +43,7 @@
 
 ## 使用
 
-访问 [厦马小筑 Web 版](https://xmumdorm-200-lyzz-production.up.railway.app)，或使用面向 XMUM 学生逐步提供的 Android 应用。
+访问 [厦马小筑 Web 版](https://xmumdorm-200-lyzz-production.up.railway.app)。App 客户端已全盘推倒重来，正在从零重建；旧的 Android 应用不再更新与分发。
 
 ## 联系与反馈
 

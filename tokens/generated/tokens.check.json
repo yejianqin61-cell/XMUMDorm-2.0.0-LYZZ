@@ -1,0 +1,222 @@
+[
+  {
+    "label": "text-primary #f2f4f9 on #12141a (dark·text)",
+    "fg": "#f2f4f9",
+    "bg": "#12141a",
+    "level": "AA",
+    "measuredRatio": 16.73,
+    "requiredRatio": 4.5,
+    "generatedBy": "scripts/gen-tokens.js",
+    "generatedFrom": "tokens/design-tokens.css"
+  },
+  {
+    "label": "text-secondary #aab2c5 on #12141a (dark·text)",
+    "fg": "#aab2c5",
+    "bg": "#12141a",
+    "level": "AA",
+    "measuredRatio": 8.66,
+    "requiredRatio": 4.5,
+    "generatedBy": "scripts/gen-tokens.js",
+    "generatedFrom": "tokens/design-tokens.css"
+  },
+  {
+    "label": "text-muted #828a9e on #1b1e26 (dark·text)",
+    "fg": "#828a9e",
+    "bg": "#1b1e26",
+    "level": "AA",
+    "measuredRatio": 4.82,
+    "requiredRatio": 4.5,
+    "generatedBy": "scripts/gen-tokens.js",
+    "generatedFrom": "tokens/design-tokens.css"
+  },
+  {
+    "label": "text-brand #7fa9f3 on #12141a (dark·text)",
+    "fg": "#7fa9f3",
+    "bg": "#12141a",
+    "level": "AA",
+    "measuredRatio": 7.78,
+    "requiredRatio": 4.5,
+    "generatedBy": "scripts/gen-tokens.js",
+    "generatedFrom": "tokens/design-tokens.css"
+  },
+  {
+    "label": "accent-text #d98a45 on #12141a (dark·text)",
+    "fg": "#d98a45",
+    "bg": "#12141a",
+    "level": "AA",
+    "measuredRatio": 6.73,
+    "requiredRatio": 4.5,
+    "generatedBy": "scripts/gen-tokens.js",
+    "generatedFrom": "tokens/design-tokens.css"
+  },
+  {
+    "label": "text-success #39c58d on #12141a (dark·text)",
+    "fg": "#39c58d",
+    "bg": "#12141a",
+    "level": "AA",
+    "measuredRatio": 8.37,
+    "requiredRatio": 4.5,
+    "generatedBy": "scripts/gen-tokens.js",
+    "generatedFrom": "tokens/design-tokens.css"
+  },
+  {
+    "label": "text-warning #d98a45 on #12141a (dark·text)",
+    "fg": "#d98a45",
+    "bg": "#12141a",
+    "level": "AA",
+    "measuredRatio": 6.73,
+    "requiredRatio": 4.5,
+    "generatedBy": "scripts/gen-tokens.js",
+    "generatedFrom": "tokens/design-tokens.css"
+  },
+  {
+    "label": "text-danger #f36d6d on #12141a (dark·text)",
+    "fg": "#f36d6d",
+    "bg": "#12141a",
+    "level": "AA",
+    "measuredRatio": 6.33,
+    "requiredRatio": 4.5,
+    "generatedBy": "scripts/gen-tokens.js",
+    "generatedFrom": "tokens/design-tokens.css"
+  },
+  {
+    "label": "text-on-fill #ffffff on #2452a6 (dark·text)",
+    "fg": "#ffffff",
+    "bg": "#2452a6",
+    "level": "AA",
+    "measuredRatio": 7.41,
+    "requiredRatio": 4.5,
+    "generatedBy": "scripts/gen-tokens.js",
+    "generatedFrom": "tokens/design-tokens.css"
+  },
+  {
+    "label": "text-on-accent #12141a on #ffc300 (dark·text)",
+    "fg": "#12141a",
+    "bg": "#ffc300",
+    "level": "AA",
+    "measuredRatio": 11.45,
+    "requiredRatio": 4.5,
+    "generatedBy": "scripts/gen-tokens.js",
+    "generatedFrom": "tokens/design-tokens.css"
+  },
+  {
+    "label": "text-on-state #12141a on #39c58d (dark·text)",
+    "fg": "#12141a",
+    "bg": "#39c58d",
+    "level": "AA",
+    "measuredRatio": 8.37,
+    "requiredRatio": 4.5,
+    "generatedBy": "scripts/gen-tokens.js",
+    "generatedFrom": "tokens/design-tokens.css"
+  },
+  {
+    "label": "text-primary #1b1f2c on #f7f8fa (light·text)",
+    "fg": "#1b1f2c",
+    "bg": "#f7f8fa",
+    "level": "AA",
+    "measuredRatio": 15.45,
+    "requiredRatio": 4.5,
+    "generatedBy": "scripts/gen-tokens.js",
+    "generatedFrom": "tokens/design-tokens.css"
+  },
+  {
+    "label": "text-secondary #4a5163 on #f7f8fa (light·text)",
+    "fg": "#4a5163",
+    "bg": "#f7f8fa",
+    "level": "AA",
+    "measuredRatio": 7.46,
+    "requiredRatio": 4.5,
+    "generatedBy": "scripts/gen-tokens.js",
+    "generatedFrom": "tokens/design-tokens.css"
+  },
+  {
+    "label": "text-muted #6c7285 on #f7f8fa (light·text)",
+    "fg": "#6c7285",
+    "bg": "#f7f8fa",
+    "level": "AA",
+    "measuredRatio": 4.51,
+    "requiredRatio": 4.5,
+    "generatedBy": "scripts/gen-tokens.js",
+    "generatedFrom": "tokens/design-tokens.css"
+  },
+  {
+    "label": "text-brand #2452a6 on #f7f8fa (light·text)",
+    "fg": "#2452a6",
+    "bg": "#f7f8fa",
+    "level": "AA",
+    "measuredRatio": 6.98,
+    "requiredRatio": 4.5,
+    "generatedBy": "scripts/gen-tokens.js",
+    "generatedFrom": "tokens/design-tokens.css"
+  },
+  {
+    "label": "accent-text #6a5319 on #f7f8fa (light·text)",
+    "fg": "#6a5319",
+    "bg": "#f7f8fa",
+    "level": "AA",
+    "measuredRatio": 6.9,
+    "requiredRatio": 4.5,
+    "generatedBy": "scripts/gen-tokens.js",
+    "generatedFrom": "tokens/design-tokens.css"
+  },
+  {
+    "label": "text-success #277e5a on #f7f8fa (light·text)",
+    "fg": "#277e5a",
+    "bg": "#f7f8fa",
+    "level": "AA",
+    "measuredRatio": 4.68,
+    "requiredRatio": 4.5,
+    "generatedBy": "scripts/gen-tokens.js",
+    "generatedFrom": "tokens/design-tokens.css"
+  },
+  {
+    "label": "text-warning #a75d24 on #f7f8fa (light·text)",
+    "fg": "#a75d24",
+    "bg": "#f7f8fa",
+    "level": "AA",
+    "measuredRatio": 4.67,
+    "requiredRatio": 4.5,
+    "generatedBy": "scripts/gen-tokens.js",
+    "generatedFrom": "tokens/design-tokens.css"
+  },
+  {
+    "label": "text-danger #be484b on #f7f8fa (light·text)",
+    "fg": "#be484b",
+    "bg": "#f7f8fa",
+    "level": "AA",
+    "measuredRatio": 4.69,
+    "requiredRatio": 4.5,
+    "generatedBy": "scripts/gen-tokens.js",
+    "generatedFrom": "tokens/design-tokens.css"
+  },
+  {
+    "label": "text-on-fill #ffffff on #2452a6 (light·text)",
+    "fg": "#ffffff",
+    "bg": "#2452a6",
+    "level": "AA",
+    "measuredRatio": 7.41,
+    "requiredRatio": 4.5,
+    "generatedBy": "scripts/gen-tokens.js",
+    "generatedFrom": "tokens/design-tokens.css"
+  },
+  {
+    "label": "text-on-accent #201a00 on #ffc300 (light·text)",
+    "fg": "#201a00",
+    "bg": "#ffc300",
+    "level": "AA",
+    "measuredRatio": 10.8,
+    "requiredRatio": 4.5,
+    "generatedBy": "scripts/gen-tokens.js",
+    "generatedFrom": "tokens/design-tokens.css"
+  },
+  {
+    "label": "text-on-state #ffffff on #29845e (light·text)",
+    "fg": "#ffffff",
+    "bg": "#29845e",
+    "level": "AA",
+    "measuredRatio": 4.61,
+    "requiredRatio": 4.5,
+    "generatedBy": "scripts/gen-tokens.js",
+    "generatedFrom": "tokens/design-tokens.css"
+  }
+]

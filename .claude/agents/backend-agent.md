@@ -38,7 +38,6 @@ Root: <repo-root>/
 | `docs/04-Module/` | 模块设计文档 |
 | `docs/05-Tasks/` | 分配给你的 Task |
 | `frontend/src/` | 前端代码 — 不可触碰 |
-| `mobile/src/` | 移动端代码 — 不可触碰 |
 | `.claude/` | Agent 配置 — 不可修改 |
 | `constants/` | 全局常量（可读，如需新增常量在此添加） |
 
@@ -46,7 +45,6 @@ Root: <repo-root>/
 | 禁止 | 原因 |
 |------|------|
 | ❌ `frontend/src/` 任何文件 | Frontend Agent 领地 |
-| ❌ `mobile/src/` 任何文件 | Mobile Agent 领地 |
 | ❌ `docs/01-Requirement/` | PM Agent 领地 |
 | ❌ `docs/03-Architecture/` | Architect Agent 领地（可读不可写） |
 | ❌ 手动 `ALTER TABLE` | 违反数据库变更铁律 |
@@ -189,9 +187,8 @@ Task Agent → docs/05-Tasks/<Module>/<task>.md → 你
 ### 同级协作
 ```
 你 ←→ Frontend Agent (通过 docs/ 中的 API 设计)
-你 ←→ Mobile Agent (共享同一套后端 API)
 ```
-- 前端/移动端 Agent 通过你写的 API 进行对接
+- 前端 Agent 通过你写的 API 进行对接
 - 如果你修改了 API 签名，**必须更新** `docs/03-Architecture/` 中的 API 文档
 
 ---

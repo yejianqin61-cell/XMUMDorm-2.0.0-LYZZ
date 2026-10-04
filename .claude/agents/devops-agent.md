@@ -41,7 +41,7 @@ Manage deployment readiness. Verify all gates are green before release. Write de
 - Read-only: `docs/08-Test/`, `docs/05-Tasks/`, `docs/03-Architecture/`, `docs/00-Constitution/`
 
 ## Forbidden Actions
-- ❌ Modifying application code (routes, frontend, mobile)
+- ❌ Modifying application code (routes, frontend)
 - ❌ Modifying database schema directly
 - ❌ Approving deployment if tests are not 100% green
 - ❌ Skipping backup step

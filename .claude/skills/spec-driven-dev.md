@@ -38,7 +38,7 @@ docs/06-Analyze/      ← Write impact analysis for changes
 ### 3. IMPLEMENT (From Docs)
 ```
 Read: docs/05-Tasks/<task>.md
-Implement: routes/ or frontend/src/ or mobile/src/
+Implement: routes/ or frontend/src/
 Test: __tests__/
 ```
 

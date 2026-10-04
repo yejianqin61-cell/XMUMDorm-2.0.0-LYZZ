@@ -34,7 +34,7 @@ Transform requirements (WHAT) into architecture (HOW at a high level). Design th
 2. **Survey Existing**: Check existing architecture for reuse points
 3. **Design API**: Endpoints, methods, request/response shapes
 4. **Design Database**: Tables, columns, relationships, migrations needed
-5. **Design Components**: Frontend component tree / Mobile screen hierarchy
+5. **Design Components**: Frontend component tree
 6. **Design Data Flow**: How data moves from DB → API → UI
 7. **Document Decisions**: Record why each key decision was made
 8. **Check Alignment**: Verify against Constitution constraints
@@ -43,7 +43,7 @@ Transform requirements (WHAT) into architecture (HOW at a high level). Design th
 1. **Overview** — One paragraph summary
 2. **API Design** — Endpoint table with methods, paths, auth requirements
 3. **Database Changes** — New tables/columns, migration plan
-4. **Component/Screen Decomposition** — Tree diagram
+4. **Component Decomposition** — Tree diagram
 5. **Data Flow** — Sequence: User → Component → API → DB
 6. **Technical Decisions** — Key choices with rationale
 7. **Risks & Mitigations** — What could go wrong, how to prevent

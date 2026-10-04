@@ -51,7 +51,7 @@
 
 ## 使用方式
 
-访问 [厦马小筑](https://xmumdorm-200-lyzz-production.up.railway.app) 使用 Web 版；Android 应用正在逐步提供给 XMUM 学生。
+访问 [厦马小筑](https://xmumdorm-200-lyzz-production.up.railway.app) 使用 Web 版。App 客户端已全盘推倒重来，正在从零重建；旧的 Android 应用不再更新与分发。
 
 ## 联系与反馈
 

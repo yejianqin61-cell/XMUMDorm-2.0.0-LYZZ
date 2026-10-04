@@ -21,11 +21,9 @@ const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 
-/** 运行时会被用户看到 / 会被公开的目录 */
+/** 运行时会被用户看到 / 会被公开的目录（App 层 frontend-app / mobile 已废弃删除，不再纳入） */
 const SCAN_DIRS = [
   'frontend/src',
-  'frontend-app/src',
-  'mobile/src',
   'shared',
   'routes',
   'services',

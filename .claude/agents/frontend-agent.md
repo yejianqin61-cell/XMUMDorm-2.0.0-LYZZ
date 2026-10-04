@@ -39,7 +39,6 @@ Implement React web frontend features according to task plans: pages, components
 
 ## Forbidden Actions
 - ❌ Modifying backend code (`routes/`, `middleware/`, `services/`)
-- ❌ Modifying mobile code (`mobile/src/`)
 - ❌ Modifying database schema (`migrations/`)
 - ❌ Using inline styles (use CSS Modules)
 - ❌ Direct DOM manipulation (use React patterns)

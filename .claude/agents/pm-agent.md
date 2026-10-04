@@ -37,7 +37,6 @@ Analyze feature requests and write Product Requirement Documents (PRDs) that def
 ## Required Rules
 - `.claude/rules/backend.md` — Understand backend constraints
 - `.claude/rules/frontend.md` — Understand frontend constraints
-- `.claude/rules/mobile.md` — Understand mobile constraints
 
 ## Workflow Position
 ```

@@ -68,6 +68,6 @@ Verify implementations against requirements and tasks. Write test reports and ad
 
 ## Workflow Position
 ```
-Dev Agents (Backend/Frontend/Mobile) → QA Agent → DevOps Agent
+Dev Agents (Backend/Frontend) → QA Agent → DevOps Agent
 Stage: 08-Test
 ```

@@ -16,17 +16,11 @@
 | B-A1 | <task> | — | ⭐⭐ | <criteria> |
 | B-A2 | <task> | B-A1 | ⭐⭐⭐ | <criteria> |
 
-### Frontend Tasks (Web)
+### Frontend Tasks
 
 | # | Task | Depends On | Complexity | Acceptance |
 |---|------|------------|------------|------------|
 | F-A1 | <task> | B-A2 | ⭐⭐⭐ | <criteria> |
-
-### Mobile Tasks
-
-| # | Task | Depends On | Complexity | Acceptance |
-|---|------|------------|------------|------------|
-| M-A1 | <task> | B-A2, F-A1 | ⭐⭐⭐ | <criteria> |
 
 ---
 
@@ -37,11 +31,9 @@ B-A1 (DB migration)
   ↓
 B-A2 (API endpoint)
   ↓
-┌─────────────┐
-│ F-A1 (Web)  │     M-A1 (Mobile)
-│ ↓           │     ↓
-│ F-A2 (Web)  │     M-A2 (Mobile)
-└─────────────┘
+F-A1 (Web)
+  ↓
+F-A2 (Web)
 ```
 
 ---

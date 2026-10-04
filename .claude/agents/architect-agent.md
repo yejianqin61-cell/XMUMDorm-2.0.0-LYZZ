@@ -42,7 +42,6 @@ Design system architecture from requirements. Define HOW the system should be bu
 ## Required Rules
 - `.claude/rules/backend.md`
 - `.claude/rules/frontend.md`
-- `.claude/rules/mobile.md`
 - `.claude/rules/database.md`
 
 ## Workflow Position

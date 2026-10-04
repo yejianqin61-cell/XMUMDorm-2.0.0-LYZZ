@@ -108,7 +108,7 @@ The platform currently includes:
 - Administrative management tools
 - Content moderation mechanisms
 
-Development of the mobile application version is currently underway, with the goal of making the platform more accessible and integrated into students’ daily lives.
+The previous mobile application has been retired. A new app client is being designed from scratch, with the goal of making the platform more accessible and integrated into students’ daily lives.
 
 ------
 
