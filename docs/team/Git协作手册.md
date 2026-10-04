@@ -24,15 +24,35 @@ git config user.email "你的邮箱"
 
 **缩写一旦定下就别改**（PR 历史、分支保护都认这个名字）。
 
-## 二、每天的循环（四条命令）
+## 二、每天的循环（六条命令，**其中两条是硬性检查**）
 
 ```bash
+# ① 开工前：先同步（这一步不能省，否则你是在旧代码上干活）
 git fetch origin
 git switch dev-<缩写>
-git merge origin/main          # 开工前同步；契约指定用 merge，不用 rebase
+git merge origin/main
+git log --oneline HEAD..origin/main    # 应为空；非空说明还没同步完
+
 # …… 改代码 ……
-git status && git diff --check # 提交前必看：有没有多余文件、有没有空白错误
+
+# ② 提交前：看清自己改了什么
+git status && git diff --check
+
+# ③ push 前：再查一次远程（见下）
+git fetch origin
+git log --oneline HEAD..origin/dev-<缩写>   # 别人往你的分支推过什么
+git log --oneline origin/dev-<缩写>..HEAD   # 你将要推上去什么
+git push
+
+# ④ push 后：确认落地
+git status                                  # 应显示与 origin 一致
 ```
+
+> **⛔ 两条不可跳过的检查**
+> **开工前 pull**（`fetch` + `merge origin/main`）：否则你在别人已改掉的代码上接着写，冲突会成倍放大。
+> **push 前查远程**（`fetch` 后看 `HEAD..origin/dev-<缩写>`）：否则轻则 push 被拒，重则你以为推上去了、其实本地与远程已经分叉。
+>
+> **`git pull` = `fetch` + `merge`**（本仓库统一 merge，不用 rebase）。只看不动工作区用 `git fetch`；要落到本地就 `git merge origin/main`。
 
 ## 三、提交：一个 commit 只做一件事
 
@@ -104,7 +124,52 @@ git push
 2. **看不懂归属就停**：在 PR/Issue 里说明"这两个版本分别是谁的意图"，**不要猜着选一个**（契约 §2）。
 3. **想退出重来**：`git merge --abort`，然后找人一起看。
 
-## 六、出事了怎么办（对照表）
+## 六、别人动了代码怎么办（**本节是协作的核心**）
+
+**先分清三种"别人动了"**，处理方式完全不同：
+
+| 情形 | 你怎么发现 | 怎么做 |
+|---|---|---|
+| **① 别人动了 `main`**（最常见） | 开工前 `git fetch` 后 `git log --oneline HEAD..origin/main` 有输出 | **把 `origin/main` 合进自己的分支再继续**：`git merge origin/main`；冲突按 §五 处理。⛔ **不要因为"怕冲突"就继续在旧代码上写** |
+| **② 别人动了你也在用的分支**（共享分支，或你在另一台机器上提交过） | `git fetch` 后 `git log --oneline HEAD..origin/dev-<缩写>` 有输出 | **先 `git pull --no-rebase`**（= fetch + merge），再 push。⛔ **绝不 `push --force`** |
+| **③ 别人改了你正在改的同一个文件** | merge 时冲突；或打开文件发现自己没写过的东西 | 见下面固定五步 |
+
+**情形 ③ 的固定五步**（顺序不要改）：
+
+```bash
+git fetch origin
+git switch dev-<缩写>
+git stash push -m "我未提交的改动"   # 1) 先保住自己的改动（或先提交到临时分支）
+git merge origin/main               # 2) 合别人的
+git stash pop                       # 3) 把自己的改动放回来
+git status && git diff              # 4) 逐块看清：哪些是别人的、哪些是我的
+# 5) 只保留与当前任务有关的部分，其余保持 main 的版本
+```
+
+**这五步里的三条纪律**
+
+1. **只动与当前任务有关的部分**；别人在这个文件里的改动**原样保留**（哪怕你觉得他写得不好——那是另一个 PR 的事）。
+2. **看不懂归属就停**：把 `git log -p -- <文件>` 或冲突片段贴出来，问清楚"这两边分别是谁的意图"。⛔ **不许猜着选一个。**
+3. ⛔ **任何时候都不要用 `push --force` 去"解决"分叉** —— 那会把别人的提交从远程抹掉。
+
+**查明"这个文件最近被谁动过"**
+
+```bash
+git log --oneline -10 -- <文件>                  # 这个文件最近 10 次提交
+git log -p -3 -- <文件>                          # 看具体改了什么
+git log --oneline origin/main..HEAD -- <文件>     # 只有我改过它吗
+git blame -L 40,60 -- <文件>                     # 这 20 行分别是谁写的
+```
+
+**如果发现自己被别人覆盖了**（自己的提交不在远程了）
+
+1. **立即通知仓库管理员**，⛔ 不要自己再 force push"抢回来"（会把对方的提交也抹掉）。
+2. 用 `git reflog` 找到自己的提交：`git reflog | Select-String "<你的提交说明>"`。
+3. 先落到一个安全分支上：`git branch rescue-<日期> <sha>`，再由管理员决定怎么合回去。
+
+**同一个文件被两个 Agent 同时改**（本仓库发生过）：工具报"文件已被改动"**不是**让你覆盖写，而是让你**重新读、把自己的改动重做到新内容上**；收工前复查 `git diff`，确认只含自己的改动。
+
+## 七、出事了怎么办（对照表）
 
 | 事故 | 处置 | 注意 |
 |---|---|---|
@@ -119,11 +184,11 @@ git push
 | 分支落后太多、冲突面很大 | 先 `git merge origin/main` 把冲突变小，**分多次小提交**推进 | 不要攒一个巨型提交 |
 | 误删了分支 | `git reflog` 找到最后提交 → `git branch <名字> <sha>` | 未推送的删除越早救越容易 |
 
-## 七、禁令（与协助者守则一致）
+## 八、禁令（与协助者守则一致）
 
 ⛔ 不直接 `push` 到 `main` · ⛔ 不 `push --force`（任何分支） · ⛔ 不对别人的分支 `rebase`/`merge` · ⛔ 不 `reset --hard` 或 `clean -fd` 去"清理"别人的改动 · ⛔ 不删分支/删 tag（`app-legacy-v1` 是旧 App 的唯一归档） · ⛔ 不 `git add .` · ⛔ 不提交密钥、`.env`、`uploads/`、`node_modules/`、个人 IDE 配置。
 
-## 八、与既有文档的分工（别重复写）
+## 九、与既有文档的分工（别重复写）
 
 | 想知道的 | 看哪份 |
 |---|---|
@@ -133,7 +198,7 @@ git push
 | Git 原理与命令教程 | [`docs/09-Deploy/git/`](../09-Deploy/git/)：`Git与GitHub教程.md`、`Git命令速查.md`、`Git回滚教程.md`、`Git问题修复指南.md`、`合并到主分支指南.md` |
 | 环境怎么跑起来 | [本地开发环境手册](本地开发环境手册.md) |
 
-## 九、需要仓库管理员确认的三件事
+## 十、需要仓库管理员确认的三件事
 
 | # | 事项 | 我的建议 |
 |---|---|---|
