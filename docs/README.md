@@ -18,7 +18,7 @@
 | design | [App设计令牌规范.md](app/design/App设计令牌规范.md) | v1.0（厦大蓝 `#173874` + 美团黄 `#ffc300`） |
 | design | [App品牌主色提案.md](app/design/App品牌主色提案.md) | 历史记录（**色相已定案**） |
 | design | [App组件类型定义.md](app/design/App组件类型定义.md) | **v2.0**（82 组件 / 15 原型骨架 / 5 系统契约） |
-| task | [设计阶段工作计划与验收门.md](app/task/设计阶段工作计划与验收门.md) | 第 0–4 件已产出；第 5 件待启动 |
+| task | [设计阶段工作计划与验收门.md](app/task/设计阶段工作计划与验收门.md) · [生产开发计划-三周到内测.md](app/task/生产开发计划-三周到内测.md) | 设计阶段第 0–4 件已完成；**生产开发计划 v1.0 已出（3 周 / 3 人 / 40 页内测范围）** |
 | research | `app/research/` | **做决定前的调研**：设计调研 00–06、基座调研、组件层调研、图标方案、实时私聊（11 份） |
 | evaluation | `app/evaluation/` | **对已存在东西的评估判定**：基座事实核对（1 份） |
 | — | [TO-CONFIRM.md](app/TO-CONFIRM.md) · [TODO.md](app/TODO.md) | **待所有者拍板的问题（唯一入口）** · **我们的待办** |
