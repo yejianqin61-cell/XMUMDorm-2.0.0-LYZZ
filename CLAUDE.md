@@ -59,7 +59,7 @@ See `docs/README.md` for the full documentation structure.
   - [App 页面骨架与布局规范](./docs/app/design/App页面骨架与布局规范.md)（**五格骨架 / 二级顶部 Tab / 安全区 / 冻结边界**）
   - [App 设计令牌规范](./docs/app/design/App设计令牌规范.md)（**令牌清单**：逐令牌实测对比度与角色）
   - [App 品牌主色提案](./docs/app/design/App品牌主色提案.md)（色阶准入过程的历史记录；**色相已定案**，见下）
-  - [App 设计宪法](./docs/app/constitution/App设计宪法.md)（**v1.3 草案 · 待批准**，17 条）
+  - [App 设计宪法](./docs/app/constitution/App设计宪法.md)（**v1.4 · 已批准（2026-10-02）**，17 条）
   - 调研在 [`docs/app/research/`](./docs/app/research/)：设计调研 00–06、[基座调研](./docs/app/research/App基座调研-Expo与原生iOS混编.md)、[组件层调研](./docs/app/research/App组件层调研-现成组件库评估.md)、[图标方案](./docs/app/research/App图标方案-Lucide与平台图标.md)、[实时私聊](./docs/app/research/App实时私聊调研-技术难度与服务器开销.md)
   - **两个跨层登记册**：[待确认问题 TO-CONFIRM](./docs/app/TO-CONFIRM.md)（**唯一入口**，固定承接所有者待拍板事项）、[TODO](./docs/app/TODO.md)（我们的待办：拼车/问答 等）
 - **已定方向**: 真原生 App；**以 React Native 为主，iOS 可混原生**；**Android 优先**；双端并重、各自最优（不追求 1:1）。设计语言 = **苹果的舒适感（质感标准）+ Discord 的社区感 + 一点点 Neo-Brutalism（限 CTA / Badge / 分区标题三类）**；**暗色优先**；吉祥物**仅图标与启动页**
@@ -83,7 +83,7 @@ See `docs/README.md` for the full documentation structure.
   - **实时私聊**（所有者提问）：调研结论＝难度不高、低并发开销不大（成本在无游标整页读放大 + 写路径同步通知）、**不放 Tab**（归「我的」+ 信箱未读角标）；先做阶段 0 的游标与未读计数，实时通道列 v1.1（[调研文档](./docs/app/research/App实时私聊调研-技术难度与服务器开销.md)）
 - **✅ 第 4 件现为 v3.0（2026-10-02 按第三轮改骨架）**: [App 页面清单与结构盘点](./docs/app/product/App页面清单与结构盘点.md) —— **骨架已定死**（五格 + 二级顶部 Tab + 顶栏信箱），**页面级布局开发期再确认**（宪法 15.4）；页面口径仍 **88 页 / 首发 81 页**，已知需重切处登记为 §2.5 的 **D-1…D-6**。范围累计裁决：**不做管理后台、不做地图、不做推荐、学习资料/笔记整体出局**，课表导入改为**App 内登录校方系统抓取 HTML**（新增 T-03/T-04/T-05 校方系统模块）。[App 组件类型定义](./docs/app/design/App组件类型定义.md) 为 **v2.0**（**82 个组件**，按宪法 9.14 套壳审计删/降 20 项）
 - **📁 文档结构（2026-10-02）**: **App 全部设计层文档在 [`docs/app/`](./docs/app/README.md)**，分 **constitution / product / design / task / test / research / evaluation** **七层** + 2 个跨层登记册；**待确认问题只有一份**（TO-CONFIRM），**待办只有一份**（TODO）。旧的 `docs/03-Architecture/app-design/`、`docs/05-Tasks/App设计阶段/`、`docs/06-Analyze/{ui-research,tech-research}/App*` 已删除，相关路径全部失效
-- **开工前提**: **先取得《App 设计宪法》v1.3 批准**，再进入脚手架与模块铺开。**所有待所有者拍板的问题在 [TO-CONFIRM.md](./docs/app/TO-CONFIRM.md)** —— 当前最卡的三条：**C-01 宪法批准**、**C-02 开发者账号类型**（决定 1 个月是否成立）、**C-03/C-04 二级 Tab 集合与校方系统 URL**（卡工具 Tab）
+- **开工前提**: ✅ **已满足** —— 《App 设计宪法》**v1.4 已于 2026-10-02 获批准**，可以进入脚手架 + 首周 spike。**所有待所有者拍板的问题在 [TO-CONFIRM.md](./docs/app/TO-CONFIRM.md)** —— 当前最卡的两条：**C-02 开发者账号类型**（决定 1 个月是否成立）、**C-03/C-04 二级 Tab 集合**（卡广场/工具 Tab）
 - **可执行尺子**: `node scripts/design-debt-report.js --path <app>/src --fail-on-zero`（14 项设计债）、`node scripts/contrast-check.js --file tokens/generated/tokens.check.json --fail`（WCAG 对比度；**必须带 `--file`**，否则走内置候选预设会永远红）、`node scripts/brand-ramp.js --hue <选定色相> --fail`（品牌色阶准入：6 条对比度门 + 3 条色相间距门；⛔ `--compare --fail` 被脚本拒绝，退出码 2）、`node scripts/gen-tokens.js`（令牌生成 + `textSafe` 自校验）——四把都须接入 CI
 
 ### Testing

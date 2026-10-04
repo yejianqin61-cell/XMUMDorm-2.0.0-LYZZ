@@ -10,7 +10,7 @@
 
 | 层 | 文档 | 状态 |
 |---|---|---|
-| constitution | [App设计宪法.md](app/constitution/App设计宪法.md) | **v1.3 草案 · 待批准**（17 条） |
+| constitution | [App设计宪法.md](app/constitution/App设计宪法.md) | **v1.4 · 已批准（2026-10-02）**（17 条） |
 | product | [App页面清单与结构盘点.md](app/product/App页面清单与结构盘点.md) | **v3.0**（骨架已定；页面级布局开发期再确认） |
 | design | [App页面骨架与布局规范.md](app/design/App页面骨架与布局规范.md) | **v1.0**（五格骨架 / 二级顶部 Tab / 安全区） |
 | design | [App设计哲学提案.md](app/design/App设计哲学提案.md) | v1.2（方向已由所有者拍定） |
