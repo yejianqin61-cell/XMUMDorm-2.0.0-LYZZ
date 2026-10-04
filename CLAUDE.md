@@ -31,6 +31,7 @@ See `docs/README.md` for the full documentation structure.
 3. **Use** skills in `.claude/skills/` for common workflows
 4. **Reference** agent definitions in `.claude/agents/` for role boundaries
 5. **Apply** document templates from `.claude/templates/`
+6. **协作前先读** [`docs/team/`](./docs/team/README.md) 的四份手册：**团队协作契约**（规则）、**本地开发环境手册**（怎么跑起来）、**协助者 Agent 守则**（AI 的写作用域/验证门槛/汇报格式/停机条件）、**Git 协作手册**（具体命令与事故处置）
 
 ## Quick Reference
 

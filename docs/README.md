@@ -65,7 +65,7 @@ Constitution → Requirement → Clarify → Architecture → Module → Tasks �
 | 07 | [Implement/](./07-Implement) | 实施记录：开发公报、迁移清单、参考笔记 |
 | 08 | [Test/](./08-Test) | 测试报告：Web 端模块测试 |
 | 09 | [Deploy/](./09-Deploy) | 部署运维：Git 手册、生产环境 init-db 指南 |
-| Team | [team/](./team) | 团队协作契约、成员协作与变更流程 |
+| Team | [team/](./team) | 团队协作：**契约** · **本地开发环境手册** · **协助者 Agent 守则** · **Git 协作手册** |
 
 ---
 
@@ -75,7 +75,8 @@ Constitution → Requirement → Clarify → Architecture → Module → Tasks �
 
 | 角色 | 推荐阅读 |
 |------|----------|
-| **新成员入职** | 00-Constitution → 03-Architecture → 04-Module |
+| **新成员入职** | [team/团队协作契约](./team/团队协作契约.md) → [team/本地开发环境手册](./team/本地开发环境手册.md) → 00-Constitution → 03-Architecture → 04-Module |
+| **AI 协助者 Agent** | [team/协助者Agent守则](./team/协助者Agent守则.md) → [team/团队协作契约](./team/团队协作契约.md) → [team/Git协作手册](./team/Git协作手册.md) → 本任务所属层的 README |
 | **产品/需求** | 01-Requirement → 02-Clarify → 06-Analyze |
 | **架构师** | 03-Architecture → 04-Module |
 | **开发工程师** | 04-Module → 05-Tasks → 07-Implement |
