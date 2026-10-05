@@ -251,6 +251,16 @@ export type UseFormOptions = {
   onSubmitFieldErrors?: (errors: readonly { field: string; messageKey: MessageKey }[]) => void;
   /** 关掉草稿（默认开） */
   enableDraft?: boolean;
+  /**
+   * **跳过草稿恢复，但仍会保存**（P1-15 加）。
+   *
+   * ⚠️ 为什么需要它：`T-03` 的文本可能是**用户刚刚从别的页抓来的**（路由参数）。
+   *    草稿恢复是**异步**的，会在挂载后把 `setValues` 再跑一遍 ——
+   *    实测结果就是"刚抓来的长文本被昨天的旧草稿覆盖"，而且覆盖后连提交按钮都变灰
+   *    （旧草稿太短）。这类"外部初始值 vs 本地草稿"的冲突只能由调用方表态，
+   *    ⛔ 不能靠"谁先跑完"来定胜负。
+   */
+  skipDraftRestore?: boolean;
 };
 
 export type UseFormReturn = {
@@ -272,7 +282,7 @@ export type UseFormReturn = {
 };
 
 export function useForm(options: UseFormOptions): UseFormReturn {
-  const { formId, fields, initialValues, onSubmit, enableDraft = true } = options;
+  const { formId, fields, initialValues, onSubmit, enableDraft = true, skipDraftRestore = false } = options;
   const { t } = useI18n();
 
   const [values, setValues] = React.useState<FormValues>(
@@ -285,9 +295,9 @@ export function useForm(options: UseFormOptions): UseFormReturn {
 
   const draftAllowed = enableDraft && canPersistDraft(formId);
 
-  /* 草稿恢复：只在挂载时一次 */
+  /* 草稿恢复：只在挂载时一次（`skipDraftRestore` 时**整段跳过**） */
   React.useEffect(() => {
-    if (!draftAllowed) return;
+    if (!draftAllowed || skipDraftRestore) return;
     let cancelled = false;
     void (async () => {
       const saved = await getItem<FormValues>(draftKeyFor(formId));
@@ -300,7 +310,7 @@ export function useForm(options: UseFormOptions): UseFormReturn {
       cancelled = true;
     };
     // ⛔ 不依赖 values：那会在每次输入时重放草稿
-  }, [draftAllowed, formId]);
+  }, [draftAllowed, formId, skipDraftRestore]);
 
   /**
    * 草稿保存：每次值变化都写（输入不丢优先于写入次数；落盘层是 AsyncStorage 小对象）。

@@ -310,6 +310,27 @@ describe('TC-P1-10-6A · 草稿：凭据护栏 + 生命周期', () => {
     expect(await getItem(draftKeyFor(formId))).toBeNull();
   });
 
+  it('⚠️ `skipDraftRestore`：有**外部初始值**时跳过草稿恢复（否则旧草稿会把它覆盖）', async () => {
+    const formId = 'probe-skip-restore';
+    await setItem(draftKeyFor(formId), { title: '昨天的旧草稿' });
+    function Probe(): React.ReactElement {
+      const form = useForm({
+        formId,
+        fields: [field({ name: 'title', labelKey: 'topbar.mailbox' })],
+        // 外部初始值（如"刚从别的页抓来的文本"）
+        initialValues: { title: '外部初始值' },
+        skipDraftRestore: true,
+        onSubmit: async () => undefined,
+      });
+      return <Text role="body">{`v=${String(form.values.title)} restored=${form.draftRestored}`}</Text>;
+    }
+    const view = await renderApp(<Probe />);
+    // 值必须还是外部的；草稿**没有**被恢复
+    await waitFor(() => expect(view.getByText(/v=外部初始值/)).toBeTruthy());
+    expect(view.getByText(/restored=false/)).toBeTruthy();
+    await removeItem(draftKeyFor(formId));
+  });
+
   it('成功后清掉草稿（否则下次打开会"恢复"上一次已提交的内容）', async () => {
     const formId = 'probe-success';
     await removeItem(draftKeyFor(formId));
