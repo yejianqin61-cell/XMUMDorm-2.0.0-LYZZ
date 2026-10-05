@@ -5,7 +5,15 @@
 | 负责人 | 甲 |
 | 依赖 | P0-01 |
 | 写作用域 | `app/app.json`（仅 `android.predictiveBackGestureEnabled`）· `app/src/features/navigation/backPolicy.ts` · `docs/app/evaluation/R1-Android返回键结论.md` |
-| 状态 | ⏳ |
+| 状态 | ✅ 已完成（2026-10-02；真机 5 项见 R1 结论文档 §4） |
+
+## 0. 执行结果速览（详见 §8）
+
+- ✅ **实测证明字段落地**：`npx expo prebuild --platform android` 产物 manifest 含 `android:enableOnBackInvokedCallback="false"`
+- `features/navigation/backPolicy.ts`：返回策略纯逻辑（覆盖层 > 出栈 > 交给系统），⛔ 不含平台 API
+- `plugins/withDisablePredictiveBack.js`：**备用插件（刻意未启用）**
+- 结论文档：[R1 结论文档](../../evaluation/R1-Android返回键结论.md)（三态结论：**默认安全（已实测）/ 危险组合是 API 33–35 + predictive back 打开 / 5 项真机待办**）
+- 测试 **261 例全过**（本任务 +9）· `tsc --noEmit` exit 0 · 尺子 exit 0
 
 ## 1. 目标
 
@@ -83,4 +91,18 @@
 
 | 时间 | 动作 | 结果 |
 |---|---|---|
-| ⏳ | | |
+| 2026-10-02 | R1 证据核实（官方文档 + 上游 issue + RN 0.86 源码 + rns discussion） | ✅ 找出**真正的危险组合**是 API 33–35 + predictive back **被打开**（不是 Android 16）；`predictiveBackGestureEnabled` 是 manifest 属性的官方映射；⛔ **Expo Go 测不了**；SDK 54 曾预告翻转默认值 → **必须显式写死** |
+| 2026-10-02 | `npx expo prebuild --platform android --no-install` | ✅ **实测通过**：产物 `AndroidManifest.xml` 的 `<application>` 上确有 `android:enableOnBackInvokedCallback="false"` —— 这是"字段真的落地"的唯一客观证据 |
+| 2026-10-02 | `backPolicy.ts` | ✅ `resolveBackAction()` 四类状态：覆盖层内→关覆盖层（4.9.2-④ 底栏选中态不变）· 能出栈→出栈 · 栈底→交给系统；⛔ 无 `BackHandler` / 无 `react-native` 依赖（测试断言） |
+| 2026-10-02 | `plugins/withDisablePredictiveBack.js` | ✅ **备用不启用**：测试断言它**不在** `app.json` 的 `plugins` 里（挂着会掩盖未来默认值翻转） |
+| 2026-10-02 | `npx jest --ci` / `tsc` / 尺子 | ✅ 12 suites / **261 tests** · tsc exit 0 · 尺子 exit 0 |
+| 2026-10-02 | ⚠️ prebuild 暴露**真缺陷** → 独立修复提交 `80090e4` | Android 上 `userInterfaceStyle: automatic` **需要 `expo-system-ui`**（否则双主题在 Android 不生效）→ 已安装；同时把 prebuild 改写的 `expo run:*` 脚本**还原**（`android/`、`ios/` 是 gitignored，脚本不该依赖本地状态） |
+| 2026-10-02 | 1 处自我修正 | `backPolicy.ts` 注释里写了被禁的 API 名 → 自测扫描命中 → 改措辞 |
+
+### 7.1 与本文档原口径的差异
+
+| 项 | 文档原口径 | 实际做法 | 原因 |
+|---|---|---|---|
+| 结论形态 | 文档 §4 写"三态：成立/不成立/待真机" | R1 的实际结论是**"默认安全（已实测）+ 危险组合定位 + 5 项真机待办"** | 证据比预期更强：不只知道"默认关"，还**实测证明字段进了 manifest**；同时把危险范围收窄到 API 33–35 |
+| 逃生舱 | §4.3 写"保留，不启用" | 具体落成 `plugins/withDisablePredictiveBack.js` + 测试守住"未启用" | 让它"随时可用但不会误用" |
+| manifest 断言 | §5-I4 只要求"取值有书面理由" | 升级为**可复现命令 + 实测输出**（R1 结论文档 §3） | "文档默认值" ≠ "产物里写了属性"，必须实测 |
