@@ -17,6 +17,11 @@ module.exports = {
       '<rootDir>/node_modules/lucide-react-native/dist/cjs/icons/$1.js',
     '^lucide-react-native$':
       '<rootDir>/node_modules/lucide-react-native/dist/cjs/lucide-react-native.js',
+    // ⚠️ 试过把 `react-native-reanimated` 映射到官方 `mock.js` 来关掉
+    // "shared value's .value inside reanimated inline style" 的**误报**（它把令牌的 `.value`
+    // 当成 SharedValue），但 RN/`react-native-screens` 会调用 reanimated 的
+    // `getUseOfValueInStyleWarning`，官方 mock 没实现 → 全部渲染用例崩。
+    // 结论：**保留真实 reanimated，接受这条警告噪音**（它在开发期只影响日志，不影响渲染）。
   },
   clearMocks: true,
   restoreMocks: true,

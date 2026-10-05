@@ -60,6 +60,11 @@ export type ScreenProps = {
   tabBarHeight?: number;
   /** 内容是否可滚动（详情/列表骨架用）；默认 false，骨架由具体页面决定 */
   scroll?: boolean;
+  /**
+   * 覆盖层形态的自有顶栏（S7）：`topMode='overlay'` 时由本容器负责把 insets 注入给它，
+   * 覆盖层只提供 UI，⛔ 不自己读 insets。典型用法：发布中心的关闭行。
+   */
+  headerOverlay?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   children?: React.ReactNode;
   testID?: string;
@@ -74,6 +79,7 @@ export function Screen({
   onMailboxPress,
   tabBarHeight,
   scroll = false,
+  headerOverlay,
   style,
   children,
   testID,
@@ -122,6 +128,10 @@ export function Screen({
           unreadCount={unreadCount}
           onMailboxPress={onMailboxPress}
         />
+      ) : null}
+      {topMode === 'overlay' && headerOverlay ? (
+        // S7：覆盖层自己处理 insets —— 但**由本容器注入**，覆盖层不自己读（S2）
+        <View style={{ paddingTop: resolved.overlayPaddingTop }}>{headerOverlay}</View>
       ) : null}
       {scroll ? (
         <ScrollView
