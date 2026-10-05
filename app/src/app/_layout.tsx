@@ -18,12 +18,13 @@ import { StatusBar } from 'expo-status-bar';
 import { LucideProvider } from 'lucide-react-native';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as Localization from 'expo-localization';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemeProvider, useTheme } from '@/design-system/theme';
 import { I18nProvider, normalizeLocale } from '@/i18n';
 import { configureAppApi } from '@/shared/api';
 import { configureConnectivity, configureFocusTracking, getQueryClient } from '@/shared/queryClient';
+import { ToastHost, ToastProvider } from '@/components/ui/Toast';
 
 /**
  * P1-01：把后端地址与 token 来源交给 `shared/` 的请求层。
@@ -44,6 +45,20 @@ configureFocusTracking();
 
 /** 全局唯一描边宽度（宪法 16.5-2：1857 个图标全部按 24×24 网格 / stroke 2 设计，无例外） */
 export const ICON_STROKE_WIDTH = 2;
+
+/**
+ * 全局覆盖层宿主（P1-07）。
+ *
+ * ⚠️ **本组件是宪法 17.1-S2 允许的第二个 `useSafeAreaInsets()` 调用点**（另一个是 `Screen`），
+ *    依据是 `p0-04` 的用例标题本身："S2：**Screen 与根布局各一处**"。
+ *    为什么必须是它：Toast 要在**任何 Screen 之外**也能显示（全局回执），所以拿不到
+ *    `ScreenInsetsContext`；而它又**在 `SafeAreaProvider` 内部**，正好该由根布局取一次算好的值，
+ *    再**当普通 prop 传给展示层**（⛔ 展示层自己不许再调 hook，否则就成了第三个调用点）。
+ */
+function GlobalOverlays(): React.ReactElement {
+  const insets = useSafeAreaInsets();
+  return <ToastHost bottomInset={insets.bottom} testID="toast-host" />;
+}
 
 /** 需要主题才能决定的东西：状态栏图标颜色（17.3）与图标默认色 */
 function ThemedShell({ children }: { children: React.ReactNode }): React.ReactElement {
@@ -73,18 +88,23 @@ export default function RootLayout(): React.ReactElement {
       <SafeAreaProvider>
         <ThemeProvider source="system" systemScheme={scheme === 'dark' ? 'dark' : 'light'}>
           <I18nProvider systemLocale={systemLocale}>
-            <ThemedShell>
-              {/*
-                顶栏由我们自己的 TopBar 提供（标题 + 唯一动作），故 Stack 默认不显示原生 header。
-                ⚠️ 详情页的顶栏仍应交给原生导航栏（宪法 4.3）—— 那属于 Phase 2 的逐页口径。
-              */}
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="(tabs)" />
-                {/* 推入式全屏目的地：进入后隐藏 Tab 栏（宪法 4.7-2 / 4.9.2） */}
-                <Stack.Screen name="publish-center" options={{ presentation: 'modal' }} />
-                <Stack.Screen name="mailbox" />
-              </Stack>
-            </ThemedShell>
+            {/* ToastProvider 只提供 context，**不渲染展示层** —— 展示在 ThemedShell 里，
+                因为 insets 只能在 SafeAreaProvider 内部取到（见 GlobalOverlays 的注释） */}
+            <ToastProvider>
+              <ThemedShell>
+                {/*
+                  顶栏由我们自己的 TopBar 提供（标题 + 唯一动作），故 Stack 默认不显示原生 header。
+                  ⚠️ 详情页的顶栏仍应交给原生导航栏（宪法 4.3）—— 那属于 Phase 2 的逐页口径。
+                */}
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="(tabs)" />
+                  {/* 推入式全屏目的地：进入后隐藏 Tab 栏（宪法 4.7-2 / 4.9.2） */}
+                  <Stack.Screen name="publish-center" options={{ presentation: 'modal' }} />
+                  <Stack.Screen name="mailbox" />
+                </Stack>
+                <GlobalOverlays />
+              </ThemedShell>
+            </ToastProvider>
           </I18nProvider>
         </ThemeProvider>
       </SafeAreaProvider>

@@ -50,11 +50,11 @@ export type PressableProps = {
   accessibilityRole?: AccessibilityRole;
   /** 是否被选中（`tab` / `radio` / `checkbox` 角色用） */
   selected?: boolean;
-  /**
-   * 额外的无障碍状态（`checked` / `expanded` / `busy` / `checkedState` …）。
-   * 本组件只负责合并 `disabled` / `selected`，⛔ 不解释语义 —— 语义由调用方负责。
-   */
+  /** 额外的无障碍状态（`checked` / `expanded` / `busy` / `checkedState` …）。
+   * 本组件只负责合并 `disabled` / `selected`，⛔ 不解释语义 —— 语义由调用方负责。 */
   accessibilityState?: AccessibilityState;
+  /** Android 的实时播报级别（Toast / 行内提示这类"内容会变"的元素要用） */
+  accessibilityLiveRegion?: 'none' | 'polite' | 'assertive';
   /** 额外扩大命中区（在 `touchTarget` 下限之外的补充） */
   hitSlop?: number;
   style?: StyleProp<ViewStyle>;
@@ -72,6 +72,7 @@ export function Pressable({
   accessibilityRole = 'button',
   selected,
   accessibilityState,
+  accessibilityLiveRegion,
   hitSlop,
   style,
   children,
@@ -113,6 +114,7 @@ export function Pressable({
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}
       accessibilityState={mergedState}
+      accessibilityLiveRegion={accessibilityLiveRegion}
       hitSlop={hitSlop ?? theme.space('space_2')}
       style={({ pressed }) => [
         box,

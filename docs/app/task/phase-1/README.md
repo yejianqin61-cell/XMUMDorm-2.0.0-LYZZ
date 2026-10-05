@@ -46,7 +46,7 @@
 | **组件** | [P1-04](P1-04-A层组件.md) | A 层原子 **12 个**（`A01`–`A12`）＋补齐 `icon-size` 令牌组 | P1-03 | `app/src/components/ui/**`、`app/src/design-system/**`、`tokens/design-tokens.css`、`scripts/gen-tokens.js`、`tokens/generated/**` |
 | | [P1-05](P1-05-C层控件.md) | C 层控件 **11 个**（`C01 C04 C05 C06 C07 C09 C10 C12 C14 C19 C21`） | P1-04 | `app/src/components/ui/**` |
 | | [P1-06](P1-06-K层组合.md) | K 层**内容与列表组合** **5 个**（`K06 ListItem` · `K07 SectionHeader` · `K08 Card` · `K12 RankingRow` · `K17 EntityCard` 5 域变体） | P1-05 | `app/src/components/ui/**` |
-| | P1-07 | T 层 **6 个** + O 层 **5 个**（`T01`–`T06`；`O01 O02 O03 O05 O08`） | P1-04 | `app/src/components/ui/**` |
+| | [P1-07](P1-07-T层四态与O层覆盖层.md) | T 层**四态 6 个** + O 层**覆盖层 5 个**（`O01 O02 O03 O05 O08`） | P1-05/P1-06 | `app/src/components/ui/**`、`app/src/app/_layout.tsx`、`app/src/i18n/errors.ts` |
 | | P1-08 | **切片必经的域组件**（`K11 K18 D01 D02 D03 D10 D11 D18 D24 D27`） | P1-05…07 | `app/src/components/ui/**` |
 | **骨架** | P1-09 | 骨架 **`P2` 列表**（分页状态机 + 四态 + 位置/筛选保持） | P1-06/P1-07 | `app/src/components/ui/**` |
 | | P1-10 | 骨架 **`P4` 表单**（字段 DSL + 校验 + 草稿 + 离开确认） | P1-05/P1-07 | `app/src/components/ui/**` |
@@ -66,7 +66,7 @@
 > 现改为按**内聚性**切：**P1-06 只做内容/列表组合 5 个**；`K05` 归 P1-09；`K01`–`K04` 归 P1-10。
 > **合计仍是 K 层 10 个**，只是分布到 3 个任务（5 + 1 + 4）。
 
-> **进度**：**P1-01 ✅ · P1-02 ✅ · P1-03 ✅ · P1-04 ✅ · P1-05 ✅ · P1-06 ✅**（2026-10-02；19 suites / 465 tests · tsc 0 · 四把尺子 exit 0 · 另有 3 个独立 bug 修复提交）；P1-07…P1-17 ⏳。
+> **进度**：**P1-01 ✅ · P1-02 ✅ · P1-03 ✅ · P1-04 ✅ · P1-05 ✅ · P1-06 ✅ · P1-07 ✅**（2026-10-02；20 suites / 517 tests · tsc 0 · 四把尺子 exit 0 · 另有 5 个独立 bug 修复提交）；P1-08…P1-17 ⏳。
 > ⛔ 提交策略：**一个子任务一个提交**；测试没过先修 bug，**bug 修复也是独立提交**（所有者指令）。
 
 > **两个切片为什么各自需要 P1-08 的域组件**（组件调研结论，⛔ 不是可选项）：
