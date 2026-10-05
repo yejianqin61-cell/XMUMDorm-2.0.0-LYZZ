@@ -35,6 +35,16 @@ export type AppError = {
 
 export type ErrorCopy = {
   kind: AppErrorKind;
+  /**
+   * 10.4「可感知」的**具体对象**（有则必须显示）。
+   *
+   * ⚠️ **为什么不是把 target 拼进 `perceive` 模板里**：`zh`/`en` 两个词条表的句式不同，
+   *    用代码拼字符串会把语序写死在代码里；而**单独一行**在两种语言里都自然。
+   *    更关键的是：P1-07 发现原来的三段词条**完全没有引用 `target`**，
+   *    于是「网络没连上」这种不含对象的文案就通过了检查 —— 这正是 10.4 要防的。
+   *    → 所以由这里给出，由 `T02` / `K04` 负责显示（**同一个真源**）。
+   */
+  objectLabel?: string;
   perceive: string;
   understand: string;
   fix: string;
@@ -119,8 +129,11 @@ export function toErrorCopy(error: AppError, t: Translate): ErrorCopy {
     merged.field = merged.field || error.target;
     merged.action = merged.action || error.target;
   }
+  const target = error.target?.trim();
   return {
     kind: error.kind,
+    // 10.4「可感知」：有具体对象就必须显示出来（原实现的三段词条都不引用 target）
+    ...(target ? { objectLabel: target } : null),
     perceive: t(keys.perceive, merged),
     understand: t(keys.understand, merged),
     fix: t(keys.fix, merged),

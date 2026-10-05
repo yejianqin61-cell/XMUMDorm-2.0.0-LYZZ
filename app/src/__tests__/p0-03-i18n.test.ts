@@ -135,6 +135,21 @@ describe('P0-03 双语词条层与错误文案', () => {
       expect(copyEn.fix).toMatch(EN_VERB);
     });
 
+    it('10.4「可感知」：有具体对象时必须**单独给出**（三段词条本身不含对象）', () => {
+      const t = (k: Parameters<typeof translate>[1], p?: Parameters<typeof translate>[2]) =>
+        translate('zh', k, p);
+      const withTarget = toErrorCopy({ kind: 'offline', target: ' 课表导入 ' }, t);
+      expect(withTarget.objectLabel).toBe('课表导入');
+
+      const withoutTarget = toErrorCopy({ kind: 'offline' }, t);
+      expect(withoutTarget.objectLabel).toBeUndefined();
+
+      // ⚠️ **这个断言就是该字段存在的理由**：词条里的 perceive **不含**对象占位符，
+      //    所以只看 perceive 是拿不到"是哪个操作失败了"的 —— 那正是 10.4「可感知」要的
+      //    （P1-07 实现 T02 时发现的缺口：原来三段词条完全不引用 target）
+      expect(withTarget.perceive).not.toContain('课表导入');
+    });
+
     it('网络三类的 fix 必须两两不同（否则就是没区分，宪法 10.4）', () => {
       const fixes = (['offline', 'unreachable', 'timeout'] as AppErrorKind[]).map(
         (kind) => toErrorCopy({ kind }, (k, p) => translate('zh', k, p)).fix
