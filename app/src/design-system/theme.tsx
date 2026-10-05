@@ -19,6 +19,7 @@ import {
 } from './tokens';
 import {
   borderWidth,
+  iconSize,
   motionDuration,
   px,
   radius,
@@ -36,6 +37,8 @@ export type Theme = {
   /** 非颜色令牌（已转成 RN 需要的 number） */
   space: typeof space;
   radius: typeof radius;
+  /** 图标尺寸档位（P1-04：宪法 16.3 只接受档位，⛔ 不写裸数字） */
+  iconSize: typeof iconSize;
   borderWidth: typeof borderWidth;
   motionDuration: typeof motionDuration;
   /** 触控目标下限：iOS ≥44pt / Android ≥48dp（宪法 7.1，⛔ 不取交集） */
@@ -55,6 +58,7 @@ function buildTheme(scheme: TokenTheme, reduceMotion: boolean): Theme {
     color: colorsFor(scheme),
     space,
     radius,
+    iconSize,
     borderWidth,
     motionDuration,
     touchTarget: px(touchTargetByPlatform),

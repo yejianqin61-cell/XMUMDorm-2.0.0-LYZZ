@@ -651,12 +651,13 @@ function renderTs(tokens, scales, palette) {
   const groups = {};
   for (const s of scales) (groups[s.group || 'ungrouped'] = groups[s.group || 'ungrouped'] || []).push(s);
 
-  const groupOrder = ['font-role', 'font-metrics', 'font-weight', 'font-variant', 'space', 'radius', 'border-width', 'touch-target', 'motion-duration'];
+  const groupOrder = ['font-role', 'font-metrics', 'font-weight', 'font-variant', 'icon-size', 'space', 'radius', 'border-width', 'touch-target', 'motion-duration'];
   const groupConst = {
     'font-role': 'fontRole',
     'font-metrics': 'fontMetrics',
     'font-weight': 'fontWeight',
     'font-variant': 'fontVariant',
+    'icon-size': 'iconSize',
     space: 'space',
     radius: 'radius',
     'border-width': 'borderWidth',

@@ -13,11 +13,10 @@ import { Pressable, View, type ViewStyle } from 'react-native';
 
 import { useTheme } from '@/design-system/theme';
 import { Text } from './Text';
+import type { IconComponent } from './Icon';
 
-export type IconComponent = React.ComponentType<{
-  size?: number;
-  color?: string;
-}>;
+/** ⚠️ 兼容旧引用：类型现在统一来自 `A06 Icon`（原子层的唯一出口），此处只做再导出 */
+export type { IconComponent };
 
 export type IconButtonProps = {
   /** 已逐图标导入的 Lucide 组件 */

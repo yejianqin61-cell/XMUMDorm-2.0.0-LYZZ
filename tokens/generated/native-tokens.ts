@@ -1049,6 +1049,15 @@ export const fontVariant = {
   font_variant_numeric: "tabular-nums",
 } as const;
 
+/** icon-size */
+export const iconSize = {
+  icon_size_inline: "16px",
+  icon_size_body: "20px",
+  icon_size_default: "24px",
+  icon_size_large: "32px",
+  icon_size_hero: "48px",
+} as const;
+
 /** space */
 export const space = {
   space_1: "4px",
@@ -1093,6 +1102,7 @@ export const scale = {
   fontMetrics,
   fontWeight,
   fontVariant,
+  iconSize,
   space,
   radius,
   borderWidth,

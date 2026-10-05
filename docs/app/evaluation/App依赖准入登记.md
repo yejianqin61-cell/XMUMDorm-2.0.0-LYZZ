@@ -24,6 +24,7 @@
 | `expo-status-bar` | 57.0.1 | MIT | **有**（android/） | 有 | 2026-07-15 | 否 |
 | `expo-symbols` | 57.0.3 | MIT | **有**（android/ ios/） | 有 | 2026-09-11 | 否（提供**平台原生**图标，即宪法第 16 条第 2 层） |
 | `expo-system-ui` | 57.0.4 | MIT | **有**（android/ ios/） | 有 | 2026-09-11 | 否（**补齐登记**：Phase 0 为解决 `prebuild` 的 `userInterfaceStyle` 警告而安装，当时漏登；由 P1-02 的准入门禁测出来） |
+| `expo-image` | **~57.0.5** | MIT | **有**（android/ ios/） | **有**（变更须重建） | 2026-09-11 | 否（宪法 **9.9 第①层采用清单**里点名的图片加载器，⛔ 不重造）。P1-04 的 `A07 Avatar` 是它的首个消费者；`npx expo install` 同时往 `app.json` 的 `plugins` 里加了 `expo-image` |
 | `lucide-react-native` | 1.52.0 | **ISC ＋ 部分 MIT**（Feather 派生图标 © Cole Bemis；`npm view` 只报 ISC，**不完整**，宪法 16.5-3） | **无**（实测 0 原生文件） | **无** → 可 OTA | 2026-10-04 | 否（但它是**我们选定的**第 1 层图标体系，见 16.1） |
 | `react` | 19.2.3 | MIT | 无 | 无 | 2025-12-11 | 否 |
 | `react-dom` | 19.2.3 | MIT | 无 | 无 | 2025-12-11 | 否（仅 Web/工具链需要；本项目双端为原生） |

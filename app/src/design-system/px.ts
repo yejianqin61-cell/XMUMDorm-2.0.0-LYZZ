@@ -15,6 +15,14 @@ export type LengthTokenKey =
   | keyof typeof scale.borderWidth
   | keyof typeof scale.touchTarget;
 
+/** 各档位的**具名键类型** —— 组件 props 用它，⛔ 不用裸 `number`（否则魔法数字会溜回来） */
+export type SpaceKey = keyof typeof scale.space;
+export type RadiusKey = keyof typeof scale.radius;
+export type BorderWidthKey = keyof typeof scale.borderWidth;
+export type IconSizeKey = keyof typeof scale.iconSize;
+export type TouchTargetKey = keyof typeof scale.touchTarget;
+export type MotionDurationKey = keyof typeof scale.motionDuration;
+
 /**
  * `"16px"` → `16`；`"9999px"` → `9999`；非法输入 → `0`（**不抛**）。
  * ⛔ 返回 0 而不是抛异常：样式计算在渲染路径上，抛异常会让整屏白掉（宪法 10.1）。
@@ -61,6 +69,11 @@ export function space(key: keyof typeof scale.space): number {
 /** 圆角令牌 → number */
 export function radius(key: keyof typeof scale.radius): number {
   return px(scale.radius[key]);
+}
+
+/** 图标尺寸令牌 → number（P1-04 补齐：宪法 16.3 要求尺寸只接受档位令牌） */
+export function iconSize(key: keyof typeof scale.iconSize): number {
+  return px(scale.iconSize[key]);
 }
 
 /** 描边宽度令牌 → number */
