@@ -75,6 +75,7 @@ export const en: Record<MessageKey, string> = {
   'action.retry': 'Retry',
   'action.back': 'Back',
   'action.close': 'Close',
+  'action.clear': 'Clear',
   'action.refresh': 'Refresh',
   'action.openInBrowser': 'Open browser',
 };

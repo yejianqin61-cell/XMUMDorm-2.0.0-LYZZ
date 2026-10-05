@@ -77,6 +77,7 @@ export const zh = {
   'action.retry': '重试',
   'action.back': '返回',
   'action.close': '关闭',
+  'action.clear': '清除',
   'action.refresh': '刷新',
   'action.openInBrowser': '浏览器打开',
 } as const;

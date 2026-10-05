@@ -5,7 +5,15 @@
 | 负责人 | 甲 |
 | 依赖 | P0-04（容器）· P0-05（一级骨架） |
 | 写作用域 | `app/src/components/ui/TopTabStrip.tsx` · `app/src/features/navigation/secondaryTabs.ts` |
-| 状态 | ⏳ |
+| 状态 | ✅ 已完成（2026-10-02；真机冲突项见 §6 末条） |
+
+## 0. 执行结果速览（详见 §8）
+
+- `features/navigation/secondaryTabs.ts`：**集合声明 + 状态仓库 + 两条守卫**（纯逻辑）
+- `components/ui/TopTabStrip.tsx`：二级导航的**唯一**形态（tablist / tab / selected / 位置播报 / 溢出横滚 / reduced-motion）
+- `components/ui/FilterChips.tsx`：筛选的**另一个**组件（button + selected、可多选、可清除、⛔ 无指示器）
+- 测试 **201 例全过**（本任务 +15）· `tsc --noEmit` exit 0 · 尺子 exit 0
+- ⚠️ 「校园里」两项已落库；广场 / 工具 / 我的**按 C-03/C-04/C-05 留空**（⛔ 不猜）
 
 ## 1. 目标
 
@@ -82,4 +90,17 @@
 
 | 时间 | 动作 | 结果 |
 |---|---|---|
-| ⏳ | | |
+| 2026-10-02 | `secondaryTabs.ts` | ✅ `SECONDARY_TABS`（校园里=树洞/万能墙；其余留空）· `SecondaryTabStore` 按 `(一级格, 二级格)` 存状态 → **R2/R3 可被证明** · `assertNoOverflowMenu()` 让"加下拉"显式失败（R5）· `resolveTransitionDuration()` 的 reduced-motion 归零（7.3） |
+| 2026-10-02 | `TopTabStrip.tsx` | ✅ `tablist`/`tab`/`selected` + **位置播报**（"第 i 个，共 n 个"）· 溢出横向滚动 + 选中项自动滚入可见区 · 命中区用 `touchTarget` 令牌 · ⛔ 无横向滑动切 Tab（R6） |
+| 2026-10-02 | `FilterChips.tsx` | ✅ 与 Tab 条**两个文件两个组件**：角色 `button`、可多选、有"清除"、**无指示器**（R4） |
+| 2026-10-02 | i18n | ✅ 新增 `action.clear`（zh/en 同步，编译期保证不缺） |
+| 2026-10-02 | `npx jest --ci` / `tsc` / 尺子 | ✅ 9 suites / **201 tests** · tsc exit 0 · 尺子 exit 0（宪法级违规：无） |
+| 2026-10-02 | 4 处自我修正（**全是"测试抓到注释"**） | ① 注释里的 `更多 ▾` / `overflowMenu` 被自测扫描命中 → 改措辞 ② `showsHorizontalScrollIndicator` 里的 "Indicator" 被 R4 用例误判 → 改成**基于 import 的复用检查**（更准）③ R5 用例的正则把守卫函数名 `assertNoOverflowMenu` 自己也算命中 → 收窄为 `MoreMenu\|▾` |
+
+### 8.1 与本文档原口径的差异
+
+| 项 | 文档原口径 | 实际做法 | 原因 |
+|---|---|---|---|
+| 切换动效 | "淡入淡出 / 指示器位移 + reduced-motion" | Phase 0 **不做动画**：指示器是静态色块；`reduceMotion` 已接进"自动滚入可见区"的 `animated` 开关 | 视觉取值未冻结（宪法 15.4 / 骨架规范 §4.6 全为【提案】），现在编数值就是"凭感觉定规格" |
+| 二级集合 | 文档列了广场/工具 | **只落校园里**，其余留空 + 断言为空 | C-03/C-04/C-05 未拍板；15.1 明确"不得据推测实现" |
+| 真机项 | §6-8M 一条 | 未跑（无真机） | 见 P0-05 §4.8 的真机清单（同一批设备矩阵里一起验） |
