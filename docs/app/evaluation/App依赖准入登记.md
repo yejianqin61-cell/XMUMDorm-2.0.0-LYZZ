@@ -28,6 +28,8 @@
 | `react-dom` | 19.2.3 | MIT | 无 | 无 | 2025-12-11 | 否（仅 Web/工具链需要；本项目双端为原生） |
 | `react-native` | 0.86.3 | MIT | **有** | 有 | 2026-08-24 | 否 |
 | `react-native-safe-area-context` | 5.7.0 | MIT | **有**（android/ ios/ cpp/） | 有 | 2026-02-24 | 否（**宪法第 17 条的指定实现**，我们不用 RN 内置 `SafeAreaView`） |
+| `react-native-reanimated` | **4.5.1** | MIT | **有** | 有 | 2026-07-02 | 否（`expo-router` 的依赖；**版本曾被 npm 拉到 4.7.1，已钉回**，见 §3 问题 6） |
+| `react-native-worklets` | **0.10.1** | MIT | **有** | 有 | 2026-07-01 | 否（reanimated 的运行时；**曾被拉到 0.13.0 与 `expo-modules-core` 的 peer 上界冲突**，见 §3 问题 6） |
 | `react-native-screens` | 4.26.2 | MIT | **有**（android/ ios/ cpp/） | 有 | 2026-07-16 | 否（原生容器地基，宪法 4.3） |
 | `react-native-svg` | 15.15.4 | MIT | **有** | 有 | 2026-03-18 | 否（`lucide-react-native` 的 peer） |
 | `react-native-webview` | **13.16.1** | MIT | **有**（android/ ios/ podspec） | **有** | 2026-02-27 | 否（R3 内嵌校方系统的载体；**版本由 Expo SDK 57 的 `bundledNativeModules.json` 钉死**） |
@@ -71,6 +73,9 @@
 | 3 | TypeScript 6 弃用 `baseUrl` | `tsc --noEmit` 报 `TS5101` | 去掉 `baseUrl`，`paths` 直接写相对路径 `./src/*` |
 | 4 | `@types/jest` / `@types/node` 未被自动纳入 | 测试文件里 `describe`/`expect`/`fs` 全报 `TS2304/TS2591` | tsconfig 显式 `"types": ["jest", "node"]` |
 | 5 | `expo-symbols` 的 peer `expo-font` 未装 | `npx expo-doctor` 1/21 失败（"may crash outside of Expo Go"） | `npx expo install expo-font`（**与"只用系统字体"不冲突**：它是 peer 依赖，不是用来加载字体） |
+| 6 | **`react-native-reanimated` / `react-native-worklets` 被 npm 拉到超出 SDK 57 钉版** | `npm ls` 报 `react-native-worklets@0.13.0 invalid: "^0.7.4 \|\| … \|\| ^0.10.0" from expo-modules-core`；实际装成 reanimated **4.7.1** / worklets **0.13.0**（宪法 9.9 记的 SDK 57 钉版是 **4.5.1 / 0.10.1**）。`expo-doctor` **没抓到**（它不查传递依赖）——是**渲染测试**把它暴露出来的（worklets 原生模块在 Jest 里加载失败） | `npx expo install react-native-reanimated react-native-worklets` → 回到 4.5.1 / 0.10.1。**教训：`npx expo install` 只保证你点名的包，传递依赖要自己按 `bundledNativeModules.json` 核** |
+| 7 | `lucide-react-native` 在 Jest 下解析到 ESM | `SyntaxError: Cannot use import statement outside a module`（指向 `icons/mail`） | `moduleNameMapper` 显式指向包内 CJS 产物 `dist/cjs/icons/*.js` |
+| 8 | `react-native-worklets` 的 `.native.ts` 在 Jest 里拿不到 TurboModule | `TypeError: Cannot read properties of undefined (reading 'loadUnpackers')` | `app/jest/resolver.js`：**先做 worklets 的 `.native.*` 剥离，再交给 RN 官方解析器**（worklets 自带的 resolver 会丢掉 RN 解析器，不能直接用） |
 
 ---
 
