@@ -18,6 +18,8 @@ export type {
   TokenTheme,
   TokenUsage,
   ThemeColorTokens,
+  DarkColorTokenName,
+  LightColorTokenName,
 } from './tokens';
 
 export {

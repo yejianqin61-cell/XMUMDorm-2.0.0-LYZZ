@@ -32,7 +32,7 @@
 | [P0-01](P0-01-工程脚手架与依赖准入.md) | 工程脚手架与依赖准入 | — | `app/**`（除 `app/src/**`）、`.gitignore` | ✅ 2026-10-02 |
 | [P0-02](P0-02-令牌接入与主题层.md) | 令牌接入与主题层 | P0-01 | `app/src/design-system/**` | ✅ 2026-10-02（尺子 minTarget 两项留到 P0-03/P0-05） |
 | [P0-03](P0-03-双语词条层与错误文案渲染器.md) | 双语词条层与错误文案渲染器 | P0-02 | `app/src/i18n/**` | ⏳ |
-| [P0-04](P0-04-唯一安全区容器.md) | 唯一安全区容器（S1–S8） | P0-02 | `app/src/components/ui/Screen.tsx`、`app/src/design-system/safe-area.ts` | ⏳ |
+| [P0-04](P0-04-唯一安全区容器.md) | 唯一安全区容器（S1–S8） | P0-02 | `app/src/components/ui/Screen.tsx`、`app/src/design-system/safe-area.ts` | ✅ 2026-10-02 |
 | [P0-05](P0-05-五格底栏导航壳.md) | 五格底栏导航壳（含动作型第 5 格） | P0-02/03/04 | `app/src/app/**`、`app/src/features/navigation/**` | ⏳ |
 | [P0-06](P0-06-二级顶部Tab条.md) | 二级顶部 Tab 条 | P0-04/05 | `app/src/components/ui/TopTabStrip.tsx` | ⏳ |
 | [P0-07](P0-07-注册表驱动的发布中心.md) | 注册表驱动的发布中心 | P0-05 | `app/src/features/publish/**` | ⏳ |

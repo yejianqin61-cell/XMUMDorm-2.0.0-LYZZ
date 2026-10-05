@@ -28,4 +28,6 @@ export type {
   TokenTheme,
   TokenUsage,
   ThemeColorTokens,
+  DarkColorTokenName,
+  LightColorTokenName,
 } from '../../../tokens/generated/native-tokens';
