@@ -44,7 +44,7 @@
 | | [P1-02](P1-02-依赖准入与数据层.md) | 依赖准入与数据层（query / 落盘 / 列表容器 / Markdown） | P1-01 | `app/package.json`、`app/jest.*`、`app/src/shared/**`、[依赖准入登记](../../evaluation/App依赖准入登记.md) |
 | | [P1-03](P1-03-字阶落地.md) | 字阶落地（关 **TD-44**：M3 官方表 → 生成 `fontMetrics` + 三条生成期自校验） | — | `tokens/design-tokens.css`、`scripts/gen-tokens.js`、`scripts/design-debt-report.js`、`tokens/generated/**`、`app/src/design-system/typography.ts` |
 | **组件** | [P1-04](P1-04-A层组件.md) | A 层原子 **12 个**（`A01`–`A12`）＋补齐 `icon-size` 令牌组 | P1-03 | `app/src/components/ui/**`、`app/src/design-system/**`、`tokens/design-tokens.css`、`scripts/gen-tokens.js`、`tokens/generated/**` |
-| | P1-05 | C 层 **11 个**（`C01 C04 C05 C06 C07 C09 C10 C12 C14 C19 C21`） | P1-04 | `app/src/components/ui/**` |
+| | [P1-05](P1-05-C层控件.md) | C 层控件 **11 个**（`C01 C04 C05 C06 C07 C09 C10 C12 C14 C19 C21`） | P1-04 | `app/src/components/ui/**` |
 | | P1-06 | K 层 **10 个**（`K01`–`K08`、`K12`、`K17` 的 5 个域变体） | P1-04 | `app/src/components/ui/**` |
 | | P1-07 | T 层 **6 个** + O 层 **5 个**（`T01`–`T06`；`O01 O02 O03 O05 O08`） | P1-04 | `app/src/components/ui/**` |
 | | P1-08 | **切片必经的域组件**（`K11 K18 D01 D02 D03 D10 D11 D18 D24 D27`） | P1-05…07 | `app/src/components/ui/**` |
@@ -60,7 +60,7 @@
 
 > **为什么鉴权（P1-13）排在骨架之后、切片之前**：`T-04/T-05`（内嵌校方系统）与课表抓取**只依赖校方站点的 cookie**，与我们的 JWT 无关；只有 `T-02`（`GET /schedule/week`）与写操作需要 JWT。这样 P1-04…12 **完全不阻塞**。
 
-> **进度**：**P1-01 ✅ · P1-02 ✅ · P1-03 ✅ · P1-04 ✅**（2026-10-02；17 suites / 392 tests · tsc 0 · 四把尺子 exit 0 · expo-doctor 21/21 · expo export 0）；P1-05…P1-17 ⏳。
+> **进度**：**P1-01 ✅ · P1-02 ✅ · P1-03 ✅ · P1-04 ✅ · P1-05 ✅**（2026-10-02；18 suites / 439 tests · tsc 0 · 四把尺子 exit 0 · 另有 3 个独立 bug 修复提交）；P1-06…P1-17 ⏳。
 > ⛔ 提交策略：**一个子任务一个提交**；测试没过先修 bug，**bug 修复也是独立提交**（所有者指令）。
 
 > **两个切片为什么各自需要 P1-08 的域组件**（组件调研结论，⛔ 不是可选项）：

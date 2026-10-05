@@ -14,8 +14,10 @@
 
 import * as React from 'react';
 import { Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
+import X from 'lucide-react-native/icons/x';
 
 import { useTheme } from '@/design-system/theme';
+import { Icon } from './Icon';
 import { Text } from './Text';
 
 export type ChipVariant = 'static' | 'selectable' | 'removable';
@@ -89,9 +91,8 @@ export function Chip({
             justifyContent: 'center',
           }}
         >
-          <Text role="label" colorToken={textToken}>
-            ×
-          </Text>
+          {/* 删除叉用第 1 层图标（⛔ 不用 × 文本字符） */}
+          <Icon source={X} size="inline" tint={selected ? 'onFill' : 'secondary'} />
         </Pressable>
       ) : null}
     </View>
