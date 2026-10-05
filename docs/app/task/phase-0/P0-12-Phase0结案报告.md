@@ -73,7 +73,7 @@
 |---|---|---|
 | **R1** Android 返回键 | [R1-Android返回键结论.md](../../evaluation/R1-Android返回键结论.md) | **默认安全且已实测**：prebuild 产物 manifest 含 `enableOnBackInvokedCallback="false"`；**危险组合是 API 33–35 + predictive back 被打开**；⛔ Expo Go 测不出来 |
 | **R2** 原生 Tab 与动作格位 | [R2-原生Tab与动作格位结论.md](../../evaluation/R2-原生Tab与动作格位结论.md) | **选 (a) `unstable-native-tabs`，机制 = Trigger 的 `disabled`**；⛔ 无 `onPress`、`preventDefault()` 无效；稳定入口 (c) 在 SDK 57 **不存在** |
-| **R3** 校方系统内嵌 | [R3-校方系统内嵌可行性结论.md](../../evaluation/R3-校方系统内嵌可行性结论.md) | **成立（有条件）**：钉版 `react-native-webview@13.16.1`、cookie 默认持久；两个"静默摧毁会话"的开关已定位；**主风险是 Moodle/签到 是否走 Google SSO** |
+| **R3** 校方系统内嵌 | [R3-校方系统内嵌可行性结论.md](../../evaluation/R3-校方系统内嵌可行性结论.md) | **成立，且已由所有者裁决为硬需求（不做真机验证）**：钉版 `react-native-webview@13.16.1`、cookie 默认持久；两个"静默摧毁会话"的开关已定位且未启用；✅ **三个系统全部为学号登录（所有者 2026-10-02 确认）→ 三格全部内嵌，无任何例外** |
 | **R7** 安全区机型矩阵 | [安全区机型矩阵记录.md](../../test/安全区机型矩阵记录.md) | **规则级全过**（9 形态纯函数 + S1/S3/S4/S5/S6 源码扫描）；**10 台真机待跑**（记录表已就位） |
 
 ---
