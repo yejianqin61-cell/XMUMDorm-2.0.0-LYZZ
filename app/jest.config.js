@@ -26,4 +26,8 @@ module.exports = {
   clearMocks: true,
   restoreMocks: true,
   verbose: false,
+  // RNTL 14 用 concurrent root 渲染，单个渲染用例在本机上可以跑十几秒；
+  // 默认 5s 会在机器负载高时**随机超时**（实测 P0-06 出现过一次），因此放宽并限制并发。
+  testTimeout: 30000,
+  maxWorkers: '50%',
 };
