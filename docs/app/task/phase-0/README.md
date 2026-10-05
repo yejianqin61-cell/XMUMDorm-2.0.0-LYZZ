@@ -38,8 +38,8 @@
 | [P0-07](P0-07-注册表驱动的发布中心.md) | 注册表驱动的发布中心 | P0-05 | `app/src/features/publish/**` | ✅ 2026-10-02 |
 | [P0-08](P0-08-校方系统内嵌容器.md) | 校方系统内嵌容器（R3） | P0-04 | `app/src/features/tools/**` | ✅ 2026-10-02（6 项真机待办） |
 | [P0-09](P0-09-Android返回键spike.md) | Android 返回键 spike（R1） | P0-01 | `app/src/features/navigation/**`、`app/plugins/**` | ✅ 2026-10-02（manifest 已实测；真机 5 项待跑） |
-| [P0-10](P0-10-安全区与机型矩阵验收.md) | 安全区与机型矩阵验收（R7） | P0-04 | `docs/app/test/**` | ⏳ |
-| [P0-11](P0-11-四把尺子接入CI.md) | 四把尺子接入 CI | P0-01..08 | `.github/workflows/**` | ⏳ |
+| [P0-10](P0-10-安全区与机型矩阵验收.md) | 安全区与机型矩阵验收（R7） | P0-04 | `docs/app/test/**` | ✅ 部分成立（规则级全过；真机待跑） |
+| [P0-11](P0-11-四把尺子接入CI.md) | 四把尺子接入 CI | P0-01..08 | `.github/workflows/**` | ✅ 2026-10-02（本地 exit 0；CI 待首次推送） |
 | [P0-12](P0-12-Phase0结案报告.md) | Phase 0 结案报告 | 全部 | `docs/app/task/phase-0/P0-12-*.md` | ⏳ |
 
 ## 3. 测试用例
