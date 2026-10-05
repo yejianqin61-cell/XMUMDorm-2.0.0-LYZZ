@@ -22,4 +22,12 @@ config.watchFolders = [
   path.resolve(workspaceRoot, 'shared'),
 ];
 
+// P1-01：`shared/*.js` 由 app 的 babel 编译后会 require('@babel/runtime/helpers/*')，
+// 而该包只装在 app 下（仓库根 node_modules 里没有）→ Metro 从 shared/ 向上解析不到。
+// 显式指路。（jest 侧的同一问题由 app/jest.config.js 的 moduleNameMapper 处理。）
+config.resolver.extraNodeModules = {
+  ...(config.resolver.extraNodeModules ?? {}),
+  '@babel/runtime': path.resolve(projectRoot, 'node_modules', '@babel', 'runtime'),
+};
+
 module.exports = config;

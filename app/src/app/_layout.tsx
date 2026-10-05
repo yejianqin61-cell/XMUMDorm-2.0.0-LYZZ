@@ -21,6 +21,14 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ThemeProvider, useTheme } from '@/design-system/theme';
 import { I18nProvider, normalizeLocale } from '@/i18n';
+import { configureAppApi } from '@/shared/api';
+
+/**
+ * P1-01：把后端地址与 token 来源交给 `shared/` 的请求层。
+ * ⛔ **必须在任何数据请求之前**执行，且只执行一次（`configureAppApi` 幂等）。
+ * 放在模块顶层（而不是某个 effect 里）：路由模块可能在任何组件挂载前就发出请求。
+ */
+configureAppApi();
 
 /** 全局唯一描边宽度（宪法 16.5-2：1857 个图标全部按 24×24 网格 / stroke 2 设计，无例外） */
 export const ICON_STROKE_WIDTH = 2;

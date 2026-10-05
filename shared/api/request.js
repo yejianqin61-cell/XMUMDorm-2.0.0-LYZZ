@@ -6,12 +6,32 @@
  * Token 从 localStorage 读取（与 AuthContext 使用同一 key）
  */
 import { API_BASE_URL } from './config';
+import { getInjectedBaseUrl, readInjectedToken } from './platform';
 
 const STORAGE_TOKEN = 'token';
 
-/** 从 storage 读取 token（与 AuthContext 一致） */
+/** 请求实际使用的后端根地址：**注入优先**（App 运行时注入），否则历史值（Web） */
+function resolveBaseUrl() {
+  return getInjectedBaseUrl() ?? API_BASE_URL;
+}
+
+/**
+ * 读 token。
+ * - **宿主注入优先**（App：`expo-secure-store` 的内存镜像）→ 注入了就以它为准，
+ *   返回 `null` 也照样是 `null`，⛔ 不再回落 localStorage（RN 下它不存在）
+ * - 未注入 → 历史行为：Web 的 localStorage（与 AuthContext 同一 key）
+ */
 export function getToken() {
-  return typeof window !== 'undefined' ? localStorage.getItem(STORAGE_TOKEN) : null;
+  const injected = readInjectedToken();
+  if (injected !== undefined) return injected;
+  // ⚠️ 只判 `typeof window` **不够**：RN 里 `window` 存在但**没有 localStorage**
+  //    （实测 jest-expo 环境即如此，裸访问会 ReferenceError）→ 必须同时判 localStorage 本身。
+  if (typeof localStorage === 'undefined') return null;
+  try {
+    return localStorage.getItem(STORAGE_TOKEN);
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -34,7 +54,7 @@ export async function request(path, options = {}) {
     skipAuth = false,
   } = options;
 
-  const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
+  const url = path.startsWith('http') ? path : `${resolveBaseUrl()}${path}`;
   const headers = { ...extraHeaders };
 
   if (!headers['Content-Type'] && body != null && !(body instanceof FormData)) {
@@ -91,7 +111,7 @@ export async function request(path, options = {}) {
  */
 export async function requestRaw(path, options = {}) {
   const { method = 'GET', body, headers: extraHeaders = {}, token = getToken(), skipAuth = false } = options;
-  const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
+  const url = path.startsWith('http') ? path : `${resolveBaseUrl()}${path}`;
   const headers = { ...extraHeaders };
   if (!headers['Content-Type'] && body != null && !(body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';

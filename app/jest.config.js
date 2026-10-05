@@ -10,6 +10,10 @@ module.exports = {
     // ⚠️ 必须展开 preset 的映射，否则会连带丢掉它给 react-native / @/ 的映射
     ...expoPreset.moduleNameMapper,
     '^@/(.*)$': '<rootDir>/src/$1',
+    // P1-01：shared/*.js 由 app 的 babel 编译后会 require('@babel/runtime/helpers/*')，
+    // 而该包只装在 app 下（仓库根 node_modules 里没有）→ jest 从 shared/ 向上解析不到。
+    // 显式指到 app 自己的 node_modules（⛔ 不改根 package.json）。
+    '^@babel/runtime/(.*)$': '<rootDir>/node_modules/@babel/runtime/$1',
     // lucide-react-native 的 exports map 在 Jest 下会解析到 ESM（.mjs），
     // 而 jest-expo 的 transformIgnorePatterns 不含它 → "Cannot use import statement outside a module"。
     // 这里显式指向它自带的 CJS 产物（与运行时同一份代码，只是模块格式不同）。
