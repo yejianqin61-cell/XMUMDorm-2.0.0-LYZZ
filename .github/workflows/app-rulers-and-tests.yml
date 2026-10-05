@@ -1,0 +1,63 @@
+name: app-rulers-and-tests
+
+# 宪法 14.1：四把脚本必须接入 CI，作为**合并门**。
+# 本工作流只跑"不需要账号"的门：四把尺子 + 类型检查 + App 单测。
+# ⛔ 刻意**不**依赖 EXPO_TOKEN / EAS（把"能跑测试"与"能发构建"解耦）。
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'tokens/**'
+      - 'scripts/**'
+      - '.github/workflows/app-rulers-and-tests.yml'
+  pull_request:
+    paths:
+      - 'app/**'
+      - 'tokens/**'
+      - 'scripts/**'
+      - '.github/workflows/app-rulers-and-tests.yml'
+
+jobs:
+  rulers:
+    name: 四把尺子（宪法 14.1）
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: app/package-lock.json
+      - name: 安装依赖（npm ci，锁文件生效）
+        working-directory: app
+        run: npm ci
+      - name: 尺子 1/4 · 设计债
+        run: node scripts/design-debt-report.js --path app/src --fail-on-zero
+      - name: 尺子 2/4 · 对比度
+        run: node scripts/contrast-check.js --file tokens/generated/tokens.check.json --fail
+      - name: 尺子 3/4 · 品牌色阶准入
+        run: node scripts/brand-ramp.js --hue 261.2 --fail
+      - name: 尺子 4/4 · 令牌生成自校验
+        run: node scripts/gen-tokens.js --check
+
+  app-tests:
+    name: App 类型检查与单测
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: app/package-lock.json
+      - name: 安装依赖（npm ci，锁文件生效）
+        working-directory: app
+        run: npm ci
+      - name: 类型检查
+        working-directory: app
+        run: npm run typecheck
+      - name: 单测
+        working-directory: app
+        run: npm run test:ci
