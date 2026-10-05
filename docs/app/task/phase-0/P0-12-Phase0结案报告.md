@@ -63,7 +63,7 @@
 | 打包（Metro + Hermes 字节码） | `cd app && npx expo export --platform android` | ⚠️ Hermes 步骤**本机环境**拒绝（`hermesc … index.hbc … permission denied`，退出码 6）；**Metro 侧已完成（3269 模块）** → 用 `--no-bytecode` 复验 **成功** |
 | 打包（复验） | `cd app && npx expo export --platform android --no-bytecode` | ✅ 成功：`entry-*.js` **3.63 MB** |
 
-**测试分层与用例索引**：[docs/app/test/Phase0测试用例.md](../test/Phase0测试用例.md)（五层架构 + 宪法条款 → 用例追溯表 + 总门 T1–T5）。
+**测试分层与用例索引**：[docs/app/test/Phase0测试用例.md](../../test/Phase0测试用例.md)（五层架构 + 宪法条款 → 用例追溯表 + 总门 T1–T5）。
 
 ---
 
@@ -74,7 +74,7 @@
 | **R1** Android 返回键 | [R1-Android返回键结论.md](../../evaluation/R1-Android返回键结论.md) | **默认安全且已实测**：prebuild 产物 manifest 含 `enableOnBackInvokedCallback="false"`；**危险组合是 API 33–35 + predictive back 被打开**；⛔ Expo Go 测不出来 |
 | **R2** 原生 Tab 与动作格位 | [R2-原生Tab与动作格位结论.md](../../evaluation/R2-原生Tab与动作格位结论.md) | **选 (a) `unstable-native-tabs`，机制 = Trigger 的 `disabled`**；⛔ 无 `onPress`、`preventDefault()` 无效；稳定入口 (c) 在 SDK 57 **不存在** |
 | **R3** 校方系统内嵌 | [R3-校方系统内嵌可行性结论.md](../../evaluation/R3-校方系统内嵌可行性结论.md) | **成立（有条件）**：钉版 `react-native-webview@13.16.1`、cookie 默认持久；两个"静默摧毁会话"的开关已定位；**主风险是 Moodle/签到 是否走 Google SSO** |
-| **R7** 安全区机型矩阵 | [安全区机型矩阵记录.md](../test/安全区机型矩阵记录.md) | **规则级全过**（9 形态纯函数 + S1/S3/S4/S5/S6 源码扫描）；**10 台真机待跑**（记录表已就位） |
+| **R7** 安全区机型矩阵 | [安全区机型矩阵记录.md](../../test/安全区机型矩阵记录.md) | **规则级全过**（9 形态纯函数 + S1/S3/S4/S5/S6 源码扫描）；**10 台真机待跑**（记录表已就位） |
 
 ---
 
