@@ -28,7 +28,7 @@ import { IconButton } from '@/components/ui/IconButton';
 import { InlineNotice } from '@/components/ui/InlineNotice';
 import { useI18n } from '@/i18n';
 import { useTheme } from '@/design-system/theme';
-import { extractScheduleFromMessage } from '@/features/tools/extractSchedule';
+import { extractScheduleFromMessage, toTabSeparated } from '@/features/tools/extractSchedule';
 import {
   SchoolSystemWebView,
   type SchoolSystemWebViewHandle,
@@ -51,8 +51,8 @@ export default function SchoolSystemScreen(): React.ReactElement {
   const sessions = useSchoolSessions();
   const webRef = React.useRef<SchoolSystemWebViewHandle>(null);
 
-  /** `null` = 还没读过；数字 = 读到的行数（0 表示这一页没有表） */
-  const [scheduleRows, setScheduleRows] = React.useState<number | null>(null);
+  /** `null` = 还没读过；`rows` 为空 = 这一页没有表 */
+  const [schedule, setSchedule] = React.useState<{ rowCount: number; text: string } | null>(null);
 
   // 降级为系统浏览器：副作用放 effect 里，⛔ 不在渲染期调 Linking
   React.useEffect(() => {
@@ -108,15 +108,26 @@ export default function SchoolSystemScreen(): React.ReactElement {
       }
     >
       {/* 读表结果如实回显（⛔ 不弹对话框；成功不弹、失败也说清是哪一种） */}
-      {scheduleRows !== null ? (
+      {schedule !== null ? (
         <View style={{ paddingHorizontal: theme.space('space_4') }}>
           <InlineNotice
             testID="school-schedule-notice"
-            tone={scheduleRows > 1 ? 'success' : 'warning'}
+            tone={schedule.rowCount > 1 ? 'success' : 'warning'}
             message={
-              scheduleRows > 1
-                ? t('tools.schedule.scraped', { rows: scheduleRows })
+              schedule.rowCount > 1
+                ? t('tools.schedule.scraped', { rows: schedule.rowCount })
                 : t('tools.schedule.none')
+            }
+            /* 读到了就顺手给"去确认"——T-03 的父页正是本页（页面清单 `T-03` 父 = `T-02`/`T-05`） */
+            actionLabel={schedule.rowCount > 1 ? t('import.title') : undefined}
+            onAction={
+              schedule.rowCount > 1
+                ? () =>
+                    router.push({
+                      pathname: '/tools/schedule-import',
+                      params: { text: schedule.text },
+                    })
+                : undefined
             }
           />
         </View>
@@ -134,8 +145,12 @@ export default function SchoolSystemScreen(): React.ReactElement {
           }}
           onScheduleMessage={(raw) => {
             const extracted = extractScheduleFromMessage(raw);
-            setScheduleRows(extracted ? extracted.rows.length : 0);
-            // Phase 1（P1-15）：把 rows 交给 `POST /schedule/import/preview`
+            // 行 → 制表符文本（给 `T-03` 的预览接口用；⛔ 不在本页解析课程）
+            setSchedule(
+              extracted && extracted.rows.length > 1
+                ? { rowCount: extracted.rows.length, text: toTabSeparated(extracted.rows) }
+                : { rowCount: extracted ? extracted.rows.length : 0, text: '' }
+            );
           }}
         />
       ) : null}

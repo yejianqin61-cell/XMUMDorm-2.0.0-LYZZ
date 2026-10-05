@@ -246,6 +246,8 @@ describe('P0-03 双语词条层与错误文案', () => {
         'canteen.',
         'form.',
         'auth.',
+        'import.',
+        'weekday.',
         'error.',
         'action.',
       ];

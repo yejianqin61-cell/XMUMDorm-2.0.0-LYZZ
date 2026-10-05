@@ -59,6 +59,29 @@ export const en: Record<MessageKey, string> = {
   'tools.schedule.scraped': 'Read {rows} rows — confirm in Import',
   'tools.schedule.none': 'No timetable found on this page — try again on the timetable page',
 
+  // T-03 schedule import (P1-15)
+  'import.title': 'Import timetable',
+  'import.pasteLabel': 'Paste timetable text',
+  'import.pasteHelp': 'Use "Read timetable on this page" in AC, or paste the text directly',
+  'import.preview': 'Preview',
+  'import.commit': 'Import',
+  'import.tooShort': 'Too short — paste the whole timetable',
+  'import.summary': '{courses} courses · {meetings} sessions',
+  'import.errorsTitle': '{n} lines could not be parsed',
+  'import.overwriteTitle': 'Replace the whole timetable',
+  'import.overwriteBody': 'Your current timetable will be replaced and this cannot be undone',
+  'import.overwriteConfirm': 'Replace',
+  'import.done': 'Imported {courses} courses',
+
+  // Weekdays (backend `day_of_week`: 1=Mon … 7=Sun)
+  'weekday.1': 'Mon',
+  'weekday.2': 'Tue',
+  'weekday.3': 'Wed',
+  'weekday.4': 'Thu',
+  'weekday.5': 'Fri',
+  'weekday.6': 'Sat',
+  'weekday.7': 'Sun',
+
   // Form validation copy (K01/K03)
   'form.error.required': 'This field is required',
   'form.error.tooLong': 'Too long',
@@ -122,6 +145,7 @@ export const en: Record<MessageKey, string> = {
   'action.retry': 'Retry',
   'action.back': 'Back',
   'action.close': 'Close',
+  'action.cancel': 'Cancel',
   'action.clear': 'Clear',
   'action.refresh': 'Refresh',
   'action.openInBrowser': 'Open browser',

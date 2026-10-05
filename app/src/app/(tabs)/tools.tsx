@@ -66,6 +66,14 @@ export default function ToolsScreen(): React.ReactElement {
           variant="nav"
           onPress={() => router.push('/tools/school-systems')}
         />
+        {/* T-03 的另一个父页是 T-02（未建）；为了让路由现在就可进入，这里也给一个入口 */}
+        <ListItem
+          testID="tools-schedule-import"
+          title={t('import.title')}
+          subtitle={t('import.pasteHelp')}
+          variant="nav"
+          onPress={() => router.push('/tools/schedule-import')}
+        />
       </View>
     </Screen>
   );

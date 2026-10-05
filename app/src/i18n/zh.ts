@@ -64,6 +64,29 @@ export const zh = {
   'tools.schedule.scraped': '已读到 {rows} 行，去「课表导入」确认',
   'tools.schedule.none': '这一页没有读到课表，请在课表页再试一次',
 
+  // ── `T-03` 课表导入（P1-15）──────────────────────────────────────────
+  'import.title': '课表导入',
+  'import.pasteLabel': '粘贴课表文本',
+  'import.pasteHelp': '在「教务 AC」的课表页点「读取本页课表」，或直接粘贴文本',
+  'import.preview': '预览',
+  'import.commit': '确认导入',
+  'import.tooShort': '内容太短，请粘贴完整课表',
+  'import.summary': '{courses} 门课程 · {meetings} 段上课时间',
+  'import.errorsTitle': '有 {n} 行没能解析',
+  'import.overwriteTitle': '整表覆盖',
+  'import.overwriteBody': '现有课表会被这次导入的内容替换，无法撤销',
+  'import.overwriteConfirm': '覆盖',
+  'import.done': '已导入 {courses} 门课程',
+
+  // ── 星期（后端的 `day_of_week`：1=周一 … 7=周日）────────────────────
+  'weekday.1': '周一',
+  'weekday.2': '周二',
+  'weekday.3': '周三',
+  'weekday.4': '周四',
+  'weekday.5': '周五',
+  'weekday.6': '周六',
+  'weekday.7': '周日',
+
   // ── 表单校验文案（`K01`/`K03` 用；**只给词条 key**，文案在这里）──────────
   'form.error.required': '这一项不能为空',
   'form.error.tooLong': '内容超过上限',
@@ -129,6 +152,7 @@ export const zh = {
   'action.retry': '重试',
   'action.back': '返回',
   'action.close': '关闭',
+  'action.cancel': '取消',
   'action.clear': '清除',
   'action.refresh': '刷新',
   'action.openInBrowser': '浏览器打开',
