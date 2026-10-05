@@ -6,12 +6,32 @@
  * Token 从 localStorage 读取（与 AuthContext 使用同一 key）
  */
 import { API_BASE_URL } from './config';
+import { getInjectedBaseUrl, readInjectedToken } from './platform';
 
 const STORAGE_TOKEN = 'token';
 
-/** 从 storage 读取 token（与 AuthContext 一致） */
+/** 请求实际使用的后端根地址：**注入优先**（App 运行时注入），否则历史值（Web） */
+function resolveBaseUrl() {
+  return getInjectedBaseUrl() ?? API_BASE_URL;
+}
+
+/**
+ * 读 token。
+ * - **宿主注入优先**（App：`expo-secure-store` 的内存镜像）→ 注入了就以它为准，
+ *   返回 `null` 也照样是 `null`，⛔ 不再回落 localStorage（RN 下它不存在）
+ * - 未注入 → 历史行为：Web 的 localStorage（与 AuthContext 同一 key）
+ */
 export function getToken() {
-  return typeof window !== 'undefined' ? localStorage.getItem(STORAGE_TOKEN) : null;
+  const injected = readInjectedToken();
+  if (injected !== undefined) return injected;
+  // ⚠️ 只判 `typeof window` **不够**：RN 里 `window` 存在但**没有 localStorage**
+  //    （实测 jest-expo 环境即如此，裸访问会 ReferenceError）→ 必须同时判 localStorage 本身。
+  if (typeof localStorage === 'undefined') return null;
+  try {
+    return localStorage.getItem(STORAGE_TOKEN);
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -34,7 +54,7 @@ export async function request(path, options = {}) {
     skipAuth = false,
   } = options;
 
-  const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
+  const url = path.startsWith('http') ? path : `${resolveBaseUrl()}${path}`;
   const headers = { ...extraHeaders };
 
   if (!headers['Content-Type'] && body != null && !(body instanceof FormData)) {
@@ -72,6 +92,17 @@ export async function request(path, options = {}) {
     const err = new Error(data.error || data.message || '请求失败');
     err.status = res.status;
     err.apiStatus = data.status;
+    /**
+     * **把响应体一并带上**（仅新增字段，Web 侧不受影响）。
+     *
+     * 为什么必须带：后端用**两个**状态码表示鉴权失败 ——
+     *   · 没带令牌 → `401`（`middleware/auth.js`）
+     *   · 令牌无效/过期 → **`403`**（同上）
+     * 而 `403` 同时被 `checkSanction` 用来表示**被封禁 / 被禁言**，两者只靠
+     * **响应体里的 `banned` / `muted` 标记**区分。若把响应体丢掉，App 就无法分辨
+     * "会话过期该重新登录"与"账号被处罚"—— 前者要清令牌，后者**绝不能**清。
+     */
+    err.body = data;
     throw err;
   }
 
@@ -91,7 +122,7 @@ export async function request(path, options = {}) {
  */
 export async function requestRaw(path, options = {}) {
   const { method = 'GET', body, headers: extraHeaders = {}, token = getToken(), skipAuth = false } = options;
-  const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
+  const url = path.startsWith('http') ? path : `${resolveBaseUrl()}${path}`;
   const headers = { ...extraHeaders };
   if (!headers['Content-Type'] && body != null && !(body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';

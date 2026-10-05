@@ -962,8 +962,10 @@ export const palette = {
  * ⚠️ 字体（宪法 2.5）：
  *   ① 本模块**不导出任何 fontFamily** —— 字族由平台解析；Android 上把字体名
  *      拼错是静默回退的不可见 bug（RN #58750）。
- *   ② 字阶只导出**角色名**，不导出绝对 pt：iOS 用系统文字样式（获得
- *      Dynamic Type），Android 用 M3 字阶角色 —— 语义名一致、取值分端生成。
+ *   ② 字阶：**角色名**两边一致，**数值分端生成**（宪法 2.5-4）。
+ *      Android 侧走 M3 官方档位（`fontMetrics`，数值来自生成器内置校验表）；
+ *      ⚠️ iOS 的"系统文字样式 / Dynamic Type"RN 未暴露 `UIFontTextStyle`，
+ *      当前两端共用 M3 数值 + `allowFontScaling`（已登记为新债，见 P1-03 §7）。
  *   ③ 数字对齐用 tabular-nums，不为此换字体。
  * ------------------------------------------------------------------------- */
 
@@ -978,6 +980,64 @@ export const fontRole = {
   font_role_mono: "mono",
 } as const;
 
+/**
+ * font-metrics：角色 → M3 官方档位 + 该档位的官方数值。
+ * ⛔ 数值不是手写的：它逐字来自生成器内置的 M3 校验表（P1-03）。
+ * ⚠️ `m3Weight` 只作**说明**用 —— RN 的字重仍只走 scale.fontWeight
+ *    （宪法 2.5-5：不得假设 500/600 必然可区分）。
+ */
+export const fontMetrics = {
+  font_metric_display: {
+    m3: "displayLarge",
+    size: 57,
+    lineHeight: 64,
+    tracking: -0.2,
+    m3Weight: 400,
+  },
+  font_metric_title: {
+    m3: "headlineLarge",
+    size: 32,
+    lineHeight: 40,
+    tracking: 0,
+    m3Weight: 400,
+  },
+  font_metric_headline: {
+    m3: "headlineSmall",
+    size: 24,
+    lineHeight: 32,
+    tracking: 0,
+    m3Weight: 400,
+  },
+  font_metric_body: {
+    m3: "bodyMedium",
+    size: 14,
+    lineHeight: 20,
+    tracking: 0.2,
+    m3Weight: 400,
+  },
+  font_metric_label: {
+    m3: "titleMedium",
+    size: 16,
+    lineHeight: 24,
+    tracking: 0.2,
+    m3Weight: 500,
+  },
+  font_metric_caption: {
+    m3: "bodySmall",
+    size: 12,
+    lineHeight: 16,
+    tracking: 0.4,
+    m3Weight: 400,
+  },
+  font_metric_mono: {
+    m3: "bodyMedium",
+    size: 14,
+    lineHeight: 20,
+    tracking: 0.2,
+    m3Weight: 400,
+  },
+} as const;
+
 /** font-weight（角色，非数值） */
 export const fontWeight = {
   font_weight_regular: "normal",
@@ -987,6 +1047,15 @@ export const fontWeight = {
 /** font-variant（角色，非数值） */
 export const fontVariant = {
   font_variant_numeric: "tabular-nums",
+} as const;
+
+/** icon-size */
+export const iconSize = {
+  icon_size_inline: "16px",
+  icon_size_body: "20px",
+  icon_size_default: "24px",
+  icon_size_large: "32px",
+  icon_size_hero: "48px",
 } as const;
 
 /** space */
@@ -1030,8 +1099,10 @@ export const motionDuration = {
 /** 非颜色令牌总表 */
 export const scale = {
   fontRole,
+  fontMetrics,
   fontWeight,
   fontVariant,
+  iconSize,
   space,
   radius,
   borderWidth,

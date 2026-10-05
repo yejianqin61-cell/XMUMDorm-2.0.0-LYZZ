@@ -337,6 +337,36 @@
   /* [group=font-variant] */
   --font-variant-numeric: tabular-nums;
 
+  /* ---- 3.1b 字阶数值（**值是一个 M3 档位名，不是一个数字**）---------------
+     为什么值必须是"名字"：宪法 2.5-② 禁止在令牌源里写绝对字号；而 2.5-④ 要求
+     "Android 用 M3 字阶角色"。数值由 `scripts/gen-tokens.js` 内置的 **M3 官方校验表**
+     给出（表里每条带来源 URL 与访问日期，依据 15.2-1"不得凭记忆写官方数值"），
+     并在生成期逐条自校验。⛔ 在下面写 `16px` / `16` 会被 `\d+pt` 之外的规则与自校验拦下。
+     ⚠️ 角色映射的理由（不是随便挑的）：
+       · title → headlineLarge（32）而不是 M3 的 title*（16–22）：M3 的 title* 是
+         app bar / list title 的语义，做**页面标题**偏小；
+       · label → titleMedium（16）而不是 M3 的 label*（11–14）：CTA 文字必须**大于正文**；
+       · mono 复用 bodyMedium，靠 `tabular-nums` 区分（不为此换字体，2.5-6）。 */
+  /* [group=font-metrics] */
+  --font-metric-display:  displayLarge;
+  --font-metric-title:    headlineLarge;
+  --font-metric-headline: headlineSmall;
+  --font-metric-body:     bodyMedium;
+  --font-metric-label:    titleMedium;
+  --font-metric-caption:  bodySmall;
+  --font-metric-mono:     bodyMedium;
+
+  /* ---- 3.1c 图标尺寸（**第 1 层的 5 个档位**，宪法 16.3）------------------
+     为什么要有令牌：宪法 16.3 明令"尺寸只接受档位令牌、⛔ 不得屏内写魔法数字"，
+     而此前令牌源里**没有**这 5 个名字（组件类型定义 §2.1.1 写了档位、令牌规范 §四 未登记）
+     —— 该缺口由 P1-04 补齐。默认档 `default` = Lucide 原生的 24×24 网格。 */
+  /* [group=icon-size] */
+  --icon-size-inline:  16px;   /* 与正文同行的小图标（跟随 body 14 的视觉重量） */
+  --icon-size-body:    20px;   /* 列表行 / 表单内的常规图标 */
+  --icon-size-default: 24px;   /* **默认**：Lucide 原生网格 */
+  --icon-size-large:   32px;   /* 卡片头 / 分区 */
+  --icon-size-hero:    48px;   /* 空态 / 错误态 */
+
   /* ---- 3.2 间距（4 为基数）【提案】--------------------------------------- */
   /* [group=space] */
   --space-1:  4px;

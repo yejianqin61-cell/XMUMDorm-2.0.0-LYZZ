@@ -2,8 +2,16 @@
  * 后端 API 根地址
  * - 开发环境：优先用空字符串，走同源请求，依赖 Vite 代理把 /api、/uploads 转到后端（手机用电脑 IP 访问时也生效）
  * - 若设置了 VITE_API_BASE_URL 则用该值（如生产或单独指定后端地址）
+ *
+ * ⚠️ **RN/App 侧不要依赖这个常量**：它是 import 时求值的，而 App 的后端地址由
+ * 宿主在运行时注入（`configureApi`，见 `./platform`）。App 的请求与图片 URL 都走
+ * `platform.getInjectedBaseUrl()` 优先，本常量只是 Web 与"未注入时的回落"。
+ * ⚠️ `import.meta.env` 是 **Vite 专有**的；RN/Hermes 下它是 `undefined`
+ * → 必须带可选链，否则**模块初始化即抛**（实测 TypeError）。见 P1-01。
  */
-const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+import { getInjectedBaseUrl } from './platform';
+
+const configuredApiBaseUrl = import.meta.env?.VITE_API_BASE_URL?.trim();
 const nativeApiBaseUrl = 'https://xmumdorm-200-lyzz-production.up.railway.app';
 const isNativeApp =
   typeof window !== 'undefined' &&
@@ -12,7 +20,7 @@ const isNativeApp =
 
 export const API_BASE_URL = configuredApiBaseUrl || (isNativeApp ? nativeApiBaseUrl : '');
 
-const rawProductDefault = import.meta.env.VITE_DEFAULT_PRODUCT_IMAGE_PATH;
+const rawProductDefault = import.meta.env?.VITE_DEFAULT_PRODUCT_IMAGE_PATH;
 /** 商品默认图路径：frontend/public/products/ 下文件，不拼后端地址；可通过 VITE_DEFAULT_PRODUCT_IMAGE_PATH 覆盖 */
 export const DEFAULT_PRODUCT_IMAGE_PATH =
   typeof rawProductDefault === 'string' && rawProductDefault.trim() !== ''
@@ -48,7 +56,8 @@ export function getUploadUrl(path) {
     }
     return normalizedPath;
   }
-  const base = API_BASE_URL || '';
+  // 注入的后端地址优先（App）；未注入（Web）时用历史值
+  const base = getInjectedBaseUrl() ?? API_BASE_URL ?? '';
   if (!base) return normalizedPath;
   return base.replace(/\/$/, '') + normalizedPath;
 }

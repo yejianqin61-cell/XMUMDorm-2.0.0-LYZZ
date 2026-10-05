@@ -408,6 +408,9 @@ function main() {
     }
   }
 
+  // P1-03：字阶自校验（角色↔数值 1:1 / 值必须是 M3 官方档位名 / 单调性）
+  problems.push(...validateFontMetrics(scales));
+
   if (problems.length) {
     console.error('');
     console.error('令牌门禁失败 —— 下列问题必须修复（本脚本不允许静默降级）：');
@@ -537,6 +540,109 @@ function printTable(rows) {
 }
 
 // ── TS 渲染 ─────────────────────────────────────────────────────────────────
+// ── M3 官方字阶校验表（Android 侧字阶数值的**唯一来源**）────────────────────
+/**
+ * 依据：宪法 **2.5-4**（Android 用 M3 字阶角色）· **15.2-1**（**不得凭记忆写官方数值**）。
+ *
+ * **来源（一手）**：AndroidX `TypeScaleTokens.kt`，文件头标 `GENERATED CODE // VERSION: v0_103`
+ *   https://raw.githubusercontent.com/androidx/androidx/androidx-main/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/TypeScaleTokens.kt
+ * **交叉验证**：Flutter `material_design` 包 `M3TypeScale`（自述 Reference = m3.material.io）逐档一致
+ * **访问日期**：2026-10-02
+ *
+ * ⚠️ `m3.material.io` 是客户端渲染的 SPA，抓取只返回 `<title>`（宪法 15.2-1 已记录该现象），
+ *    因此改从上面两个**可机读**的官方实现对取 —— 这满足"不得凭记忆"，牺牲的是
+ *    "必须从该 URL 读"这种形式要求（已在 P1-03 文档里如实标注）。
+ *
+ * ⚠️ **两处与流传的二手表格不同，必须用本表**：
+ *   · `titleLarge` = 22 / **400**（不是 500）
+ *   · `bodyMedium` tracking = **0.2**（0.25 属 `BodyMediumEmphasized` 变体）
+ * 另有 15 个 `Emphasized` 变体（size/line-height 同、weight 提到 Medium/Bold）→ **本表不启用**
+ *   （宪法 2.5-5 只保证 normal/bold 两端可区分）。
+ */
+const M3_TYPE_SCALE = {
+  displayLarge: { size: 57, lineHeight: 64, weight: 400, tracking: -0.2 },
+  displayMedium: { size: 45, lineHeight: 52, weight: 400, tracking: 0 },
+  displaySmall: { size: 36, lineHeight: 44, weight: 400, tracking: 0 },
+  headlineLarge: { size: 32, lineHeight: 40, weight: 400, tracking: 0 },
+  headlineMedium: { size: 28, lineHeight: 36, weight: 400, tracking: 0 },
+  headlineSmall: { size: 24, lineHeight: 32, weight: 400, tracking: 0 },
+  titleLarge: { size: 22, lineHeight: 28, weight: 400, tracking: 0 },
+  titleMedium: { size: 16, lineHeight: 24, weight: 500, tracking: 0.2 },
+  titleSmall: { size: 14, lineHeight: 20, weight: 500, tracking: 0.1 },
+  bodyLarge: { size: 16, lineHeight: 24, weight: 400, tracking: 0.5 },
+  bodyMedium: { size: 14, lineHeight: 20, weight: 400, tracking: 0.2 },
+  bodySmall: { size: 12, lineHeight: 16, weight: 400, tracking: 0.4 },
+  labelLarge: { size: 14, lineHeight: 20, weight: 500, tracking: 0.1 },
+  labelMedium: { size: 12, lineHeight: 16, weight: 500, tracking: 0.5 },
+  labelSmall: { size: 11, lineHeight: 16, weight: 500, tracking: 0.5 },
+};
+
+/** 角色间的**单调性**要求（宪法 2.5 的层级可读性；`label ≥ body` 允许相等） */
+const FONT_ROLE_ORDER = [
+  ['display', 'title', 'strict'],
+  ['title', 'headline', 'strict'],
+  ['headline', 'label', 'strict'],
+  ['label', 'body', 'allowEqual'],
+  ['body', 'caption', 'strict'],
+];
+
+/**
+ * 字阶自校验 —— 把宪法 2.5-②/④ 与 15.2-1 变成**生成期的机器判据**。
+ * @returns {string[]} 问题列表（空数组 = 通过）
+ */
+function validateFontMetrics(scales) {
+  const out = [];
+  const roleEntries = scales.filter((s) => s.group === 'font-role');
+  const metricEntries = scales.filter((s) => s.group === 'font-metrics');
+
+  if (metricEntries.length === 0) {
+    out.push('令牌源缺少 [group=font-metrics] —— 字阶数值必须分端生成（宪法 2.5-4）。');
+    return out;
+  }
+
+  // ① 角色 ↔ 数值必须 1:1
+  const roleValues = roleEntries.map((s) => s.value).sort();
+  // ⚠️ `s.name` 在 scales 里已经剥掉前导 `--`（见 main 里 scales.push 的 name 字段）
+  const metricRoles = metricEntries.map((s) => s.name.replace(/^font-metric-/, '')).sort();
+  if (JSON.stringify(roleValues) !== JSON.stringify(metricRoles)) {
+    out.push(
+      `字阶角色与字阶数值不是 1:1 —— 角色 [${roleValues.join(', ')}] vs 数值 [${metricRoles.join(', ')}]。`
+    );
+  }
+
+  const byRole = {};
+  for (const s of metricEntries) {
+    const role = s.name.replace(/^font-metric-/, '');
+    // ② 值必须是 M3 官方档位名，且**不能是数字**（宪法 2.5-②）
+    if (/^[0-9]/.test(String(s.value))) {
+      out.push(`${s.name}（第 ${s.line} 行）：值看起来是字号数字 —— 令牌源禁止写绝对字号（2.5-②）。`);
+      continue;
+    }
+    if (!Object.prototype.hasOwnProperty.call(M3_TYPE_SCALE, s.value)) {
+      out.push(
+        `${s.name}（第 ${s.line} 行）：值 "${s.value}" 不在 M3 官方 15 档里。可选：${Object.keys(M3_TYPE_SCALE).join(' / ')}。`
+      );
+      continue;
+    }
+    byRole[role] = M3_TYPE_SCALE[s.value];
+  }
+
+  // ③ 单调性
+  for (const [a, b, mode] of FONT_ROLE_ORDER) {
+    const x = byRole[a];
+    const y = byRole[b];
+    if (!x || !y) continue;
+    const ok = mode === 'allowEqual' ? x.size >= y.size : x.size > y.size;
+    if (!ok) {
+      out.push(
+        `字阶单调性被破坏：${a}(${x.size}) 必须 ${mode === 'allowEqual' ? '≥' : '>'} ${b}(${y.size})。`
+      );
+    }
+  }
+
+  return out;
+}
+
 function renderTs(tokens, scales, palette) {
   const prop = (n) => (/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(n) ? n : JSON.stringify(n));
   const q = (v) => JSON.stringify(v);
@@ -545,11 +651,13 @@ function renderTs(tokens, scales, palette) {
   const groups = {};
   for (const s of scales) (groups[s.group || 'ungrouped'] = groups[s.group || 'ungrouped'] || []).push(s);
 
-  const groupOrder = ['font-role', 'font-weight', 'font-variant', 'space', 'radius', 'border-width', 'touch-target', 'motion-duration'];
+  const groupOrder = ['font-role', 'font-metrics', 'font-weight', 'font-variant', 'icon-size', 'space', 'radius', 'border-width', 'touch-target', 'motion-duration'];
   const groupConst = {
     'font-role': 'fontRole',
+    'font-metrics': 'fontMetrics',
     'font-weight': 'fontWeight',
     'font-variant': 'fontVariant',
+    'icon-size': 'iconSize',
     space: 'space',
     radius: 'radius',
     'border-width': 'borderWidth',
@@ -680,12 +788,38 @@ function renderTs(tokens, scales, palette) {
   o.push(' * ⚠️ 字体（宪法 2.5）：');
   o.push(' *   ① 本模块**不导出任何 fontFamily** —— 字族由平台解析；Android 上把字体名');
   o.push(' *      拼错是静默回退的不可见 bug（RN #58750）。');
-  o.push(' *   ② 字阶只导出**角色名**，不导出绝对 pt：iOS 用系统文字样式（获得');
-  o.push(' *      Dynamic Type），Android 用 M3 字阶角色 —— 语义名一致、取值分端生成。');
+  o.push(' *   ② 字阶：**角色名**两边一致，**数值分端生成**（宪法 2.5-4）。');
+  o.push(' *      Android 侧走 M3 官方档位（`fontMetrics`，数值来自生成器内置校验表）；');
+  o.push(' *      ⚠️ iOS 的"系统文字样式 / Dynamic Type"RN 未暴露 `UIFontTextStyle`，');
+  o.push(' *      当前两端共用 M3 数值 + `allowFontScaling`（已登记为新债，见 P1-03 §7）。');
   o.push(' *   ③ 数字对齐用 tabular-nums，不为此换字体。');
   o.push(' * ------------------------------------------------------------------------- */');
   o.push('');
   for (const g of orderedGroups) {
+    if (g === 'font-metrics') {
+      // 特殊形态：每个角色展开成对象。数值**只能**取自 M3_TYPE_SCALE
+      //（validateFontMetrics 已保证值合法；这里不再做二次判断，避免两处口径）。
+      o.push('/**');
+      o.push(' * font-metrics：角色 → M3 官方档位 + 该档位的官方数值。');
+      o.push(' * ⛔ 数值不是手写的：它逐字来自生成器内置的 M3 校验表（P1-03）。');
+      o.push(' * ⚠️ `m3Weight` 只作**说明**用 —— RN 的字重仍只走 scale.fontWeight');
+      o.push(' *    （宪法 2.5-5：不得假设 500/600 必然可区分）。');
+      o.push(' */');
+      o.push('export const fontMetrics = {');
+      for (const s of groups[g]) {
+        const m = M3_TYPE_SCALE[s.value];
+        o.push(`  ${prop(s.name.replace(/-/g, '_'))}: {`);
+        o.push(`    m3: ${q(s.value)},`);
+        o.push(`    size: ${m.size},`);
+        o.push(`    lineHeight: ${m.lineHeight},`);
+        o.push(`    tracking: ${m.tracking},`);
+        o.push(`    m3Weight: ${m.weight},`);
+        o.push('  },');
+      }
+      o.push('} as const;');
+      o.push('');
+      continue;
+    }
     o.push(`/** ${g}${g.startsWith('font') ? '（角色，非数值）' : ''} */`);
     o.push(`export const ${groupConst[g] || constName(g)} = {`);
     for (const s of groups[g]) o.push(`  ${prop(s.name.replace(/-/g, '_'))}: ${q(s.value)},`);
