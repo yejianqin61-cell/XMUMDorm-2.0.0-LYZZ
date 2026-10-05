@@ -337,6 +337,25 @@
   /* [group=font-variant] */
   --font-variant-numeric: tabular-nums;
 
+  /* ---- 3.1b 字阶数值（**值是一个 M3 档位名，不是一个数字**）---------------
+     为什么值必须是"名字"：宪法 2.5-② 禁止在令牌源里写绝对字号；而 2.5-④ 要求
+     "Android 用 M3 字阶角色"。数值由 `scripts/gen-tokens.js` 内置的 **M3 官方校验表**
+     给出（表里每条带来源 URL 与访问日期，依据 15.2-1"不得凭记忆写官方数值"），
+     并在生成期逐条自校验。⛔ 在下面写 `16px` / `16` 会被 `\d+pt` 之外的规则与自校验拦下。
+     ⚠️ 角色映射的理由（不是随便挑的）：
+       · title → headlineLarge（32）而不是 M3 的 title*（16–22）：M3 的 title* 是
+         app bar / list title 的语义，做**页面标题**偏小；
+       · label → titleMedium（16）而不是 M3 的 label*（11–14）：CTA 文字必须**大于正文**；
+       · mono 复用 bodyMedium，靠 `tabular-nums` 区分（不为此换字体，2.5-6）。 */
+  /* [group=font-metrics] */
+  --font-metric-display:  displayLarge;
+  --font-metric-title:    headlineLarge;
+  --font-metric-headline: headlineSmall;
+  --font-metric-body:     bodyMedium;
+  --font-metric-label:    titleMedium;
+  --font-metric-caption:  bodySmall;
+  --font-metric-mono:     bodyMedium;
+
   /* ---- 3.2 间距（4 为基数）【提案】--------------------------------------- */
   /* [group=space] */
   --space-1:  4px;

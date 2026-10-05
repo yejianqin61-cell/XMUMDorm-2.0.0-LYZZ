@@ -26,7 +26,11 @@ import { TEXT_ROLES } from '@/design-system/typography';
 
 const SRC_ROOT = path.resolve(__dirname, '..');
 const HEX_RE = /#[0-9a-fA-F]{3,8}\b/;
-const FONT_SIZE_RE = /fontSize\s*:/;
+// P1-03 口径修正：与 scripts/design-debt-report.js 的 fontSizeLiterals **成对**放宽为
+// "只拦数值字面量"。依据：宪法 2.5-② 禁的是**写绝对字号常量**，不是"出现这个键"；
+// 而 P1-03 起 Text 必须消费生成期分端生成的字号（数值只能来自 M3 官方表）。
+// ⛔ 裸数字仍必须被拦（见 p1-03-font-scale.test.ts 的反向用例）。
+const FONT_SIZE_RE = /fontSize\s*:\s*[0-9]/;
 
 function walkSource(dir: string, out: string[] = []): string[] {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {

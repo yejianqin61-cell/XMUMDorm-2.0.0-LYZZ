@@ -1,19 +1,18 @@
 /**
  * 字阶角色层
  *
- * ⚠️ **本层 Phase 0 不含任何绝对字号 —— 这是刻意的，不是遗漏。**
+ * **P1-03（关 TD-44）**：角色名与**数值**现在是分开的两层 ——
+ *   · `TEXT_ROLES` / `scale.fontRole`：**语义名**，两端一致（宪法 2.5-4）；
+ *   · `resolveFontMetrics(role)`：数值，**由生成器内置的 M3 官方校验表产出**
+ *     （`tokens/generated/native-tokens.ts` 的 `fontMetrics`）。
+ *   ⛔ 调用方（含 `Text`）**不得自己写字号数字**：`design-debt-report.js` 的
+ *      `fontSize 数值字面量` 指标会拦（P1-03 已把口径从"出现键名"收紧为"写数字"）。
  *
- * 宪法 2.5-② 原文：**"字阶不写绝对 pt 常量"** —— iOS 用系统文字样式（从而获得
- * Dynamic Type），Android 用 M3 字阶角色；**语义名两端一致，数值分端生成**。
- * 而 M3 官方字阶数值**必须人工读取**（宪法 15.2-1：`m3.material.io` 是客户端渲染的
- * SPA，抓取只能得到标题）。
- *
- * → 因此 Phase 0 **不发明数值**：`Text` 走平台默认字号，层级只由**字重 + 颜色令牌**表达。
- *   缺口登记为 [TODO TD-44](../../../docs/app/TODO.md)，
- *   **归属 Phase 1**（生产计划 §3 甲的"设计系统内测子集"）。
- *   ⛔ 不允许的"解法"：在 `app/src` 里硬写一个字号数值来凑绿尺子
- *   —— 那正是 `design-debt-report.js` 的 `fontSize` 字面量指标要拦的东西
- *   （宪法 9.11-3 的判据是"默认渲染是不是我们的视觉"，不是"脚本是否变绿"）。
+ * ⚠️ **iOS 侧的已知缺口（新债）**：宪法 2.5-4 要求 iOS 用**系统文字样式**
+ *    （`UIFontTextStyle`）以获得真正的 Dynamic Type，而 **RN 未暴露它**。
+ *    当前两端共用 M3 数值 + `allowFontScaling`（用户的系统字号设置**仍会**放大文字，
+ *    只是不按各文字样式的语义曲线）。真正的 iOS Dynamic Type 需要本地原生模块
+ *    （宪法 11.7）+ ADR → 已登记为新债（见 P1-03 文档 §7），⛔ 不假装已满足。
  */
 
 import { scale } from './tokens';
@@ -26,6 +25,36 @@ export type TextEmphasis = 'regular' | 'strong';
 
 /** 角色全集（供测试断言"角色集合 = 令牌源的角色集合"） */
 export const TEXT_ROLES: readonly TextRole[] = Object.values(scale.fontRole);
+
+/** 已解析的字阶数值（来自生成物 `fontMetrics`，数值来自 M3 官方表） */
+export type FontMetrics = {
+  /** M3 官方档位名（审计用：一眼看出这个角色挂在哪一档） */
+  m3: string;
+  /** 字号（Android sp / iOS pt；两端当前同值，见文件头 ⚠️） */
+  size: number;
+  lineHeight: number;
+  /** 字距（M3 的 tracking） */
+  tracking: number;
+  /** M3 名义字重 —— **只作说明**，RN 的字重仍走 `resolveFontWeight`（宪法 2.5-5） */
+  m3Weight: number;
+};
+
+/** 角色 → 该角色的 M3 档位数值 */
+export function resolveFontMetrics(role: TextRole): FontMetrics {
+  const key = `font_metric_${role}` as keyof typeof scale.fontMetrics;
+  return scale.fontMetrics[key];
+}
+
+/**
+ * **关键布局**（按钮 / Tab / 表单标签）的字号放大上限（宪法 2.5-7）。
+ *
+ * 为什么必须有上限：这三类文字的容器高度是**固定**的（按钮高度、Tab 栏高度 56），
+ * 无上限放大会把标签挤出容器 —— 而 2.5-7 又明令**不得靠关掉缩放**来解决。
+ * 取值 **1.5** 的理由：Android 的字体缩放档通常到 1.3–2.0；1.5 覆盖"大"档、
+ * 不到"最大"档，是"不裁切"与"尊重放大"之间的折中。
+ * ⚠️ **【提案】值**，须真机复验后定稿（P1-03 已登记真机项）。
+ */
+export const LABEL_MAX_FONT_SCALE = 1.5;
 
 /** 角色 → 平台字重令牌值（不产生任何数字） */
 export function resolveFontWeight(emphasis: TextEmphasis): string {

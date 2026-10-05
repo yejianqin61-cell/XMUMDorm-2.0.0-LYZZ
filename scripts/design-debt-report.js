@@ -34,7 +34,12 @@ const path = require('path');
 // minTarget:  表示“至少要被引用到这个次数”，用于防止组件库写成死代码。
 const METRICS = [
   { key: 'hexLiterals',        label: '硬编码色值 (#hex)',            src: '#[0-9a-fA-F]{3,8}\\b',                       zeroTarget: true  },
-  { key: 'fontSizeLiterals',   label: 'fontSize 字面量',              src: 'fontSize\\s*:',                              zeroTarget: true  },
+  // P1-03 口径修正：**只拦"数值字面量"**，不再拦键名本身。
+  // 依据宪法 2.5-② 禁的是"写绝对字号常量"，不是"出现 fontSize 这个键"；
+  // 而 P1-03 起 `Text` 必须消费**生成期分端生成**的字号（数值只能来自 M3 官方表），
+  // 此时 `fontSize: metrics.size` 是**合规写法**，旧正则会把合规写法也判违规。
+  // ⛔ 不可退让点：`fontSize: 16`（裸数字）仍必须被拦 —— 见 app/src/__tests__/p1-03-font-scale.test.ts 的反向用例。
+  { key: 'fontSizeLiterals',   label: 'fontSize 数值字面量',          src: 'fontSize\\s*:\\s*[0-9]',                     zeroTarget: true  },
   { key: 'styleSheetCreate',   label: 'StyleSheet.create 调用',       src: 'StyleSheet\\.create',                        zeroTarget: false },
   { key: 'ownUiComponentRefs', label: '引用自有 UI 组件',             src: 'components/ui/',                             zeroTarget: false, minTarget: 1 },
   { key: 'darkModeApi',        label: '暗色/外观 API 引用',           src: 'useColorScheme|Appearance\\.',               zeroTarget: false },
