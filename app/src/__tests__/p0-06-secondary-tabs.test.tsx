@@ -118,8 +118,13 @@ describe('P0-06 二级顶部 Tab 条', () => {
     });
 
     it('⛔ 0 处下拉菜单式溢出（R5）', () => {
+      // ⚠️ **先剥注释再判**（P1-05 修复）：宪法与骨架规范里这条规则本身就用「更多 ▾」描述，
+      //    注释里写明它是在**记录规则**，不是"用了下拉菜单"。
+      //    扫描类断言的判据必须落在**代码用法**上，否则规则一旦被写进注释就无法表达。
+      const stripComments = (s: string): string =>
+        s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
       const hits = walkSource(SRC_ROOT).filter((f) =>
-        /(MoreMenu|▾)/.test(fs.readFileSync(f, 'utf8'))
+        /(MoreMenu|▾)/.test(stripComments(fs.readFileSync(f, 'utf8')))
       );
       expect(hits.map((f) => path.relative(SRC_ROOT, f))).toEqual([]);
     });
