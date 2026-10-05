@@ -219,10 +219,21 @@ describe('P0-05 五格底栏导航壳', () => {
       expect(layout).toContain('<StatusBar style=');
     });
 
-    it('strokeWidth 只在根布局的 Provider 设一次（宪法 16.5-2：⛔ 调用点不得传）', () => {
+    it('描边宽度只在根布局的 Provider 设一次（宪法 16.5-2：⛔ 调用点不得传给 Lucide 图标）', () => {
       // 只看"传值"（JSX prop / 对象字段赋值），类型声明 `strokeWidth?: number` 不算调用点
       const passing = /strokeWidth\s*[=:]\s*[^?\s]/;
-      const hits = files.filter((f) => passing.test(fs.readFileSync(f, 'utf8')));
+      // ⚠️ 两类**误判**必须排除（P1-04 修复）：
+      //   ① 注释里为了写明这条规则会提到该标识符 → **先剥注释**再判；
+      //   ② `react-native-svg` 的 `strokeWidth` 是 **SVG 属性**（画线宽），
+      //      与 Lucide 图标的描边 prop 是两回事 → 允许渲染 SVG 的文件使用它。
+      const stripComments = (s: string): string =>
+        s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+      const hits = files.filter((f) => {
+        const code = stripComments(fs.readFileSync(f, 'utf8'));
+        if (!passing.test(code)) return false;
+        if (/from ['"]react-native-svg['"]/.test(code)) return false;
+        return true;
+      });
       expect(hits.map((f) => path.relative(SRC_ROOT, f))).toEqual([
         path.join('app', '_layout.tsx'),
       ]);
