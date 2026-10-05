@@ -12,6 +12,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
+import { readCode } from './helpers/sourceScan';
+
 import {
   ACTION_TAB_KEY,
   MAX_TAB_SLOTS,
@@ -223,13 +225,11 @@ describe('P0-05 五格底栏导航壳', () => {
       // 只看"传值"（JSX prop / 对象字段赋值），类型声明 `strokeWidth?: number` 不算调用点
       const passing = /strokeWidth\s*[=:]\s*[^?\s]/;
       // ⚠️ 两类**误判**必须排除（P1-04 修复）：
-      //   ① 注释里为了写明这条规则会提到该标识符 → **先剥注释**再判；
+      //   ① 注释里为了写明这条规则会提到该标识符 → 统一走 `readCode`（先剥注释）；
       //   ② `react-native-svg` 的 `strokeWidth` 是 **SVG 属性**（画线宽），
       //      与 Lucide 图标的描边 prop 是两回事 → 允许渲染 SVG 的文件使用它。
-      const stripComments = (s: string): string =>
-        s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
       const hits = files.filter((f) => {
-        const code = stripComments(fs.readFileSync(f, 'utf8'));
+        const code = readCode(f);
         if (!passing.test(code)) return false;
         if (/from ['"]react-native-svg['"]/.test(code)) return false;
         return true;

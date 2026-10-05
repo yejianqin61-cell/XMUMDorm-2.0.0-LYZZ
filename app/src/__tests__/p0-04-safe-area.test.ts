@@ -9,6 +9,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
+import { readCode, walkSource } from './helpers/sourceScan';
+
 import {
   LARGE_SCREEN_MIN_WIDTH,
   buildEmbeddedInsetCss,
@@ -18,19 +20,6 @@ import {
 } from '@/design-system/safe-area';
 
 const SRC_ROOT = path.resolve(__dirname, '..');
-
-function walkSource(dir: string, out: string[] = []): string[] {
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (entry.name === '__tests__') continue;
-    const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      walkSource(full, out);
-    } else if (/\.(ts|tsx|js|jsx)$/.test(entry.name)) {
-      out.push(full);
-    }
-  }
-  return out;
-}
 
 /** 机型矩阵的真实 insets 取值（骨架规范 §6.4 的十项形态抽象） */
 const DEVICES: Array<{ name: string; insets: Insets }> = [
@@ -212,12 +201,14 @@ describe('P0-04 安全区解析（唯一 insets 计算点）', () => {
 
     it('⛔ 0 处 RN 内置 SafeAreaView 导入（S3）', () => {
       const importRe = /(?:import|require)\b[^;\n]*\bSafeAreaView\b/;
-      const hits = files.filter((f) => importRe.test(fs.readFileSync(f, 'utf8')));
+      const hits = files.filter((f) => importRe.test(readCode(f)));
       expect(hits.map((f) => path.relative(SRC_ROOT, f))).toEqual([]);
     });
 
+    // ⚠️ 下面两条**先剥注释**（P1-07 修复；见 helpers/sourceScan.ts 的说明）：
+    //    组件注释里写"本文件不调 useSafeAreaInsets()"是在**记录规则**，不是在调用它。
     it('SafeAreaProvider 出现 ≤1 次，且**不在** components/ui 里（S4：只在根布局挂一次）', () => {
-      const hits = files.filter((f) => /SafeAreaProvider/.test(fs.readFileSync(f, 'utf8')));
+      const hits = files.filter((f) => /SafeAreaProvider/.test(readCode(f)));
       expect(hits.length).toBeLessThanOrEqual(1);
       expect(hits.map((f) => path.relative(SRC_ROOT, f))).not.toContain(
         path.join('components', 'ui', 'Screen.tsx')
@@ -225,7 +216,7 @@ describe('P0-04 安全区解析（唯一 insets 计算点）', () => {
     });
 
     it('useSafeAreaInsets() 调用点 ≤2（S2：Screen 与根布局各一处）', () => {
-      const hits = files.filter((f) => /useSafeAreaInsets\s*\(/.test(fs.readFileSync(f, 'utf8')));
+      const hits = files.filter((f) => /useSafeAreaInsets\s*\(/.test(readCode(f)));
       expect(hits.length).toBeLessThanOrEqual(2);
       expect(hits.map((f) => path.relative(SRC_ROOT, f))).toContain(
         path.join('components', 'ui', 'Screen.tsx')
@@ -234,12 +225,12 @@ describe('P0-04 安全区解析（唯一 insets 计算点）', () => {
 
     it('⛔ 0 处写死的 paddingXxx: <数字>（S1）', () => {
       const re = /padding(Top|Bottom|Left|Right)\s*:\s*\d/;
-      const hits = files.filter((f) => re.test(fs.readFileSync(f, 'utf8')));
+      const hits = files.filter((f) => re.test(readCode(f)));
       expect(hits.map((f) => path.relative(SRC_ROOT, f))).toEqual([]);
     });
 
     it('⛔ 0 处 StatusBar.currentHeight 当布局依据（S1）', () => {
-      const hits = files.filter((f) => /StatusBar\.currentHeight/.test(fs.readFileSync(f, 'utf8')));
+      const hits = files.filter((f) => /StatusBar\.currentHeight/.test(readCode(f)));
       expect(hits.map((f) => path.relative(SRC_ROOT, f))).toEqual([]);
     });
 
