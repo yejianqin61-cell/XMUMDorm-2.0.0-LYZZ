@@ -322,6 +322,22 @@ L7 域专用    15 个 ← CommentThread / CommentItem / CommentComposer / Reply
 | **P18 内嵌网页容器【建议·待评审】** | **原生导航栏 + 平台 WebView + 页面级动作** | 见 §3.5：会话记忆、导航拦截、「读取本页课表」注入、失败降级 | `T-05` | **1** |
 **本轮未用原型**：`P8 后台表格`（管理后台整体出局，宪法 4.2.2-2）· `P12 地图`（**本轮不做地图**）· `P17 纯转发`（**已废除，禁止新增**，宪法 9.4）。
 **P18 的处理纪律（宪法 9.1）**：一个页面**不命中任何现有原型**时，**触发的是"是否新增原型"的评审，不是新写一个页面** → `T-05` 因此**不新增页面 ID**，它属于 `P18`。
+
+**⭐ 原型落点（2026-10-02 Phase 1 收尾回写，宪法 15.4-3 / 任务包 README §5-3）**
+"原型"在不同情况下落成的东西**不一样**，必须写清，否则后来者会去 `src/proto/` 找一个并不存在的模块：
+
+| 原型 | 落点（实际代码位置） | 交付于 |
+|---|---|---|
+| **P2 列表** | **组件层** `app/src/components/ui/ListScreen.tsx`（`K05`）+ `EmptyState`/`ErrorState`/`LoadingState`/`ListFooter`/`PullToRefresh` | P1-09 |
+| **P4 表单/发布** | **组件层** `app/src/components/ui/Form.tsx`（`K01`）+ `FormSection`/`FormField`/`ErrorSummary` + `C05 TextArea` | P1-10 |
+| **P3 详情** | **`app/src/proto/P3/`**（`DetailScreen` + 纯函数 `resolveDetailState`） | P1-11 |
+| **P16 静态说明** | **`app/src/proto/P16/`**（`StaticPage` + 三级降级 `resolveStaticContent`：远端 → 缓存 → 内置） | P1-12 |
+| **P11 课表网格** | **`app/src/proto/P11/`**（`TimetableGrid` + 行键=开始时间，见任务包 README §7-12） | P1-16 |
+| **P18 内嵌网页容器** | `app/src/features/tools/SchoolSystemWebView.tsx`（容器 + 注入）+ `app/src/app/system/[id].tsx`（宿主页与工具栏） | P0-08 / P1-14 |
+| **P7 仪表盘** | **未单独成模块**：页面级组合。已落地的是 `S-07` 的"区域网格 + 今天吃什么"（`app/src/features/square/CanteenHome.tsx`）；其余区块（摘要卡/统计块/按角色隐藏）随各页交付 | P1-17（部分） |
+| `P1` `P5` `P6` `P9` `P10` `P13` `P14` `P15` | **本包未落地**（用它们的页面不在 Phase 1 范围） | — |
+
+> ⚠️ 两个**不落 `src/proto/`** 的情形是有意的：`P2`/`P4` 的"骨架"本质上就是**组件层**的列表/表单系统（`K05`/`K01`），把它们再包一层 `src/proto/P2` 就是**套壳**（9.14-②）。反过来，`P3`/`P11`/`P16` **没有**对应的组件层 ID（骨架不计入组件数），所以按 §1.2 的豁免落 `src/proto/`。
 ### 2.8 系统契约（5，不是组件但必须定义）
 | ID | 名称 | 定义内容 | v2.0 更新 |
 |---|---|---|---|
