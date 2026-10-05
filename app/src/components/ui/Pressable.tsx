@@ -14,7 +14,13 @@
  */
 
 import * as React from 'react';
-import { Pressable as RNPressable, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  Pressable as RNPressable,
+  type AccessibilityRole,
+  type AccessibilityState,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 
 import { useTheme } from '@/design-system/theme';
 
@@ -40,9 +46,15 @@ export type PressableProps = {
   /** 读屏标签；⛔ 纯图标 / 纯色块可点元素**必须**给 */
   accessibilityLabel?: string;
   accessibilityHint?: string;
-  accessibilityRole?: 'button' | 'link' | 'tab' | 'radio' | 'checkbox' | 'none';
+  /** ⛔ 用 RN 的完整角色联合，而不是自定义子集 —— 免得控件层因为缺一个角色就去改原子 */
+  accessibilityRole?: AccessibilityRole;
   /** 是否被选中（`tab` / `radio` / `checkbox` 角色用） */
   selected?: boolean;
+  /**
+   * 额外的无障碍状态（`checked` / `expanded` / `busy` / `checkedState` …）。
+   * 本组件只负责合并 `disabled` / `selected`，⛔ 不解释语义 —— 语义由调用方负责。
+   */
+  accessibilityState?: AccessibilityState;
   /** 额外扩大命中区（在 `touchTarget` 下限之外的补充） */
   hitSlop?: number;
   style?: StyleProp<ViewStyle>;
@@ -59,6 +71,7 @@ export function Pressable({
   accessibilityHint,
   accessibilityRole = 'button',
   selected,
+  accessibilityState,
   hitSlop,
   style,
   children,
@@ -81,6 +94,15 @@ export function Pressable({
     style,
   ];
 
+  /**
+   * 合并无障碍状态。
+   * ⚠️ **不能写成 `{...accessibilityState, disabled, selected}`**：`selected` 默认是
+   *    `undefined`，那样会把调用方通过 `accessibilityState` 传进来的 `selected`
+   *    **静默抹掉**（P1-05 实现期实测到的真 bug）。只有显式传了才覆盖。
+   */
+  const mergedState: AccessibilityState = { ...accessibilityState, disabled };
+  if (selected !== undefined) mergedState.selected = selected;
+
   return (
     <RNPressable
       testID={testID}
@@ -90,7 +112,7 @@ export function Pressable({
       accessibilityRole={accessibilityRole === 'none' ? undefined : accessibilityRole}
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}
-      accessibilityState={{ disabled, selected }}
+      accessibilityState={mergedState}
       hitSlop={hitSlop ?? theme.space('space_2')}
       style={({ pressed }) => [
         box,
