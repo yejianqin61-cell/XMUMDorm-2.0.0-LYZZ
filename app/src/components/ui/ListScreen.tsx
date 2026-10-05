@@ -272,11 +272,26 @@ export type ListScreenProps<T> = {
   /**
    * 二级 Tab 条（`K22 SegmentedTabs` / `TopTabStrip`）。
    * ⚠️ **与 `filterChips` 是两个独立的 props**（宪法 4.8.1-R4：导航 Tab ≠ 筛选 Chips）。
-   * 合成一个 `header` 只有省一次传参的好处，代价是"把筛选当成导航"这类错误无法被发现。
+   * 合成**一个槽位**只有省一次传参的好处，代价是"把筛选当成导航"这类错误无法被发现。
    */
   tabs?: React.ReactNode;
   /** 筛选 chips（`K20 FilterChips`）—— ⛔ 不得与 `tabs` 合并 */
   filterChips?: React.ReactNode;
+  /**
+   * 列表上方的**内容区**（⭐ P1-17 加）：随列表一起滚动。
+   *
+   * 与上面两个的区别（三者**各司其职**，⛔ 不合并成一个槽位了事）：
+   *   · `tabs`        = **导航**（切换数据源/路由，`K22`）
+   *   · `filterChips` = **筛选**（同一数据源收窄，`K20`）
+   *   · `listHeader`  = **普通内容**（榜单、店铺信息、分区标题…）
+   * ⚠️ 为什么需要它：`S-08`/`S-09` 这类页面在列表上方有**榜单/店头信息**，
+   *    而"内容"既不是导航也不是筛选 —— 塞进 `tabs` 就是把语义说错。
+   * ⚠️ 为什么不叫 `header`：P1-09 的用例**明确禁止**这个名字
+   *    （`expect(code).not.toMatch(/header\??:/)`），它当时就是用来防止
+   *    "把 `tabs`/`filterChips` 合成一个 header"的 —— 该口径继续有效，
+   *    所以新槽位换一个**不会与它混淆**的名字。
+   */
+  listHeader?: React.ReactNode;
   /** 网格列数（`P2` 默认单列等宽行） */
   numColumns?: number;
   /** 从仓库恢复的滚动位置（`useListPagination().restoredScrollOffset`） */
@@ -301,6 +316,7 @@ export function ListScreen<T>({
   onRetryRefresh,
   tabs,
   filterChips,
+  listHeader,
   numColumns = 1,
   restoredScrollOffset = 0,
   onScrollOffset,
@@ -335,6 +351,7 @@ export function ListScreen<T>({
       <View testID={testID} style={[{ flex: 1 }, style]}>
         {tabs}
         {filterChips}
+        {listHeader}
         <LoadingState variant="skeleton" rows={skeletonRows} testID={testID ? `${testID}-loading` : undefined} />
       </View>
     );
@@ -345,6 +362,7 @@ export function ListScreen<T>({
       <View testID={testID} style={[{ flex: 1 }, style]}>
         {tabs}
         {filterChips}
+        {listHeader}
         <ErrorState
           error={pagination.error ?? { kind: 'unknown' }}
           onAction={onRetryRefresh ?? onRefresh}
@@ -359,6 +377,8 @@ export function ListScreen<T>({
       <View testID={testID} style={[{ flex: 1 }, style]}>
         {tabs}
         {filterChips}
+        {/* 空态也保留 `listHeader`：例如店里没上架菜品时，店头信息与分类仍应可见 */}
+        {listHeader}
         <EmptyState
           kind={labels.empty.kind}
           title={labels.empty.title}
@@ -381,6 +401,7 @@ export function ListScreen<T>({
         renderItem={({ item, index }) => renderItem(item, index)}
         keyExtractor={keyExtractor}
         numColumns={numColumns}
+        ListHeaderComponent={listHeader === undefined || listHeader === null ? null : <>{listHeader}</>}
         refreshControl={
           <PullToRefresh refreshing={pagination.refresh === 'loading'} onRefresh={onRefresh} />
         }

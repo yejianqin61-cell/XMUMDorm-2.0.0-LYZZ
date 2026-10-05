@@ -422,3 +422,46 @@ describe('TC-P1-09-8A · 结构约束', () => {
     expect(code).toContain('filterChips?:');
   });
 });
+
+describe('TC-P1-09-9A · `listHeader`（P1-17 加的内容区槽位）', () => {
+  const base = {
+    data: ['a'] as string[],
+    keyExtractor: (item: string) => item,
+    renderItem: (item: string) => <Text role="body">{item}</Text>,
+    pagination: { refresh: 'idle', append: 'idle', error: null, errorScope: null, hasMore: false } as const,
+    onRefresh: () => undefined,
+    onEndReached: () => undefined,
+    labels: {
+      empty: {
+        kind: 'noResult' as const,
+        title: 'empty',
+        actionLabel: 'retry',
+        onAction: () => undefined,
+      },
+      endLabel: undefined,
+    },
+  };
+
+  it('有数据时 `listHeader` 渲染在列表上方（内容区，非导航非筛选）', async () => {
+    const view = await renderApp(
+      <ListScreen<string> {...base} testID="list" listHeader={<Text role="body" testID="list-header">rank</Text>} />
+    );
+    await waitFor(() => expect(view.getByText('a')).toBeTruthy());
+    expect(view.getByTestId('list-header')).toBeTruthy();
+  });
+
+  it('空态也保留 `listHeader`（店里没上架菜品时，店头信息仍应可见）', async () => {
+    const view = await renderApp(
+      <ListScreen<string> {...base} data={[]} testID="list" listHeader={<Text role="body" testID="list-header">shop</Text>} />
+    );
+    expect(view.getByTestId('list-header')).toBeTruthy();
+  });
+
+  it('⛔ 仍然禁止把三个槽位合成一个 `header`（P1-09 的既有口径继续有效）', () => {
+    const code = stripComments(readUi('ListScreen.tsx'));
+    expect(code).not.toMatch(/header\??:/);
+    expect(code).toContain('tabs?:');
+    expect(code).toContain('filterChips?:');
+    expect(code).toContain('listHeader?:');
+  });
+});
