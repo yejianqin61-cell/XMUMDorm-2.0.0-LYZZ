@@ -1,4 +1,4 @@
-# App 依赖准入登记（Phase 0 首批）
+# App 依赖准入登记（Phase 0 首批 + Phase 1 第二批）
 
 **日期**：2026-10-02　**版本**：v1.0
 **性质**：**evaluation 层**（判定记录）。承接 [生产开发计划 §Phase 0](../task/phase-0/P0-01-工程脚手架与依赖准入.md) 与 **P0-11**。
@@ -23,6 +23,7 @@
 | `expo-secure-store` | 57.0.4 | MIT | **有** | 有 | 2026-09-11 | 否 |
 | `expo-status-bar` | 57.0.1 | MIT | **有**（android/） | 有 | 2026-07-15 | 否 |
 | `expo-symbols` | 57.0.3 | MIT | **有**（android/ ios/） | 有 | 2026-09-11 | 否（提供**平台原生**图标，即宪法第 16 条第 2 层） |
+| `expo-system-ui` | 57.0.4 | MIT | **有**（android/ ios/） | 有 | 2026-09-11 | 否（**补齐登记**：Phase 0 为解决 `prebuild` 的 `userInterfaceStyle` 警告而安装，当时漏登；由 P1-02 的准入门禁测出来） |
 | `lucide-react-native` | 1.52.0 | **ISC ＋ 部分 MIT**（Feather 派生图标 © Cole Bemis；`npm view` 只报 ISC，**不完整**，宪法 16.5-3） | **无**（实测 0 原生文件） | **无** → 可 OTA | 2026-10-04 | 否（但它是**我们选定的**第 1 层图标体系，见 16.1） |
 | `react` | 19.2.3 | MIT | 无 | 无 | 2025-12-11 | 否 |
 | `react-dom` | 19.2.3 | MIT | 无 | 无 | 2025-12-11 | 否（仅 Web/工具链需要；本项目双端为原生） |
@@ -33,6 +34,16 @@
 | `react-native-screens` | 4.26.2 | MIT | **有**（android/ ios/ cpp/） | 有 | 2026-07-16 | 否（原生容器地基，宪法 4.3） |
 | `react-native-svg` | 15.15.4 | MIT | **有** | 有 | 2026-03-18 | 否（`lucide-react-native` 的 peer） |
 | `react-native-webview` | **13.16.1** | MIT | **有**（android/ ios/ podspec） | **有** | 2026-02-27 | 否（R3 内嵌校方系统的载体；**版本由 Expo SDK 57 的 `bundledNativeModules.json` 钉死**） |
+
+**Phase 1 第二批（P1-02：依赖准入与数据层，采集于 2026-10-02）**
+
+| 包 | 版本 | 许可证 | 含原生代码 | OTA 影响 | 该版本发布时间 | 是否强加视觉身份 |
+|---|---|---|---|---|---|---|
+| `@tanstack/react-query` | **5.96.2** | MIT | **无**（实测 0 原生文件） | **无** → 可 OTA | 2026-04-03 | 否（**版本刻意与 Web 的 lock 对齐**，见 §3 问题 9） |
+| `@shopify/flash-list` | **2.0.2** | MIT | **无**（实测 0 原生文件） | **无** → 可 OTA | 2025-08-05 | 否（渲染样式全部由我们传入）。**版本由 SDK 57 的 `bundledNativeModules.json` 钉死**；宪法 9.9 的"列表虚拟化二者择一"选它（另一候选 `LegendList` 不在 SDK 钉版表里） |
+| `@react-native-async-storage/async-storage` | **2.2.0** | MIT | **有**（android/ ios/ `RNCAsyncStorage.podspec`） | **有**（变更须重建） | 2025-06-05 | 否（只做落盘）。⛔ **凭据禁止入内**（宪法 4.1.2-2），由 `app/src/shared/storage.ts` 的护栏 + 单测守着 |
+| `@react-native-community/netinfo` | **12.0.1** | MIT | **有**（android/ ios/ `react-native-netinfo.podspec`） | **有** | 2026-02-14 | 否（只提供连通性布尔，用来驱动 TanStack 的 `onlineManager`）。**版本由 SDK 57 钉死** |
+| `@ronradtke/react-native-markdown-display` | **9.0.3** | MIT | **无**（实测 0 原生文件） | **无** → 可 OTA | 2026-06-29 | 否（样式全由 props 传入）；⚠️ **必须显式覆盖它的默认主题**，否则等于引入第二套排版（宪法 1.4 / 2.5）。选它而非原版 `react-native-markdown-display@7.0.2`（后者 2023-12-11 起停更） |
 
 ### 1.2 开发依赖（不进 App 包）
 
@@ -76,6 +87,8 @@
 | 6 | **`react-native-reanimated` / `react-native-worklets` 被 npm 拉到超出 SDK 57 钉版** | `npm ls` 报 `react-native-worklets@0.13.0 invalid: "^0.7.4 \|\| … \|\| ^0.10.0" from expo-modules-core`；实际装成 reanimated **4.7.1** / worklets **0.13.0**（宪法 9.9 记的 SDK 57 钉版是 **4.5.1 / 0.10.1**）。`expo-doctor` **没抓到**（它不查传递依赖）——是**渲染测试**把它暴露出来的（worklets 原生模块在 Jest 里加载失败） | `npx expo install react-native-reanimated react-native-worklets` → 回到 4.5.1 / 0.10.1。**教训：`npx expo install` 只保证你点名的包，传递依赖要自己按 `bundledNativeModules.json` 核** |
 | 7 | `lucide-react-native` 在 Jest 下解析到 ESM | `SyntaxError: Cannot use import statement outside a module`（指向 `icons/mail`） | `moduleNameMapper` 显式指向包内 CJS 产物 `dist/cjs/icons/*.js` |
 | 8 | `react-native-worklets` 的 `.native.ts` 在 Jest 里拿不到 TurboModule | `TypeError: Cannot read properties of undefined (reading 'loadUnpackers')` | `app/jest/resolver.js`：**先做 worklets 的 `.native.*` 剥离，再交给 RN 官方解析器**（worklets 自带的 resolver 会丢掉 RN 解析器，不能直接用） |
+| 9 | **`@tanstack/react-query` 的版本在两端漂移**（P1-02） | `npx expo install @tanstack/react-query` 装到 **5.104.1**（当天发布），而 Web 的 lock 解析为 **5.96.2** → 同一份 `shared/query/queryKeys.js` 契约会被**两个版本**解释；这类差异只在行为上显现（缓存/重试语义），排查成本极高 | **把 App 钉到 `5.96.2`**（与 Web 完全一致）：`npx expo install @tanstack/react-query@5.96.2`。**升级时两端一起升** —— 这条对任何"shared 契约 + 宿主各自装包"的组合都适用 |
+| 10 | P1-02 引入的两个含原生代码依赖需要 **Jest 官方 mock** | 不 mock 则在 Jest 里加载原生模块失败 | `app/jest.setup.js` 里用**包自带**的 mock（`.../jest/async-storage-mock`、`.../jest/netinfo-mock`）；⚠️ `jest.config.js` 的 `setupFiles` **必须展开 preset 的值**，否则会把 jest-expo 自己的 setup 丢掉 |
 
 ---
 
@@ -85,7 +98,7 @@
 |---|---|---|
 | 1 | `app/LICENSE` 是 Expo 模板自带的 MIT（© 650 Industries） | 仓库根无 LICENSE；`app/LICENSE` 会被误读为"本 App 由 Expo 授权"。**建议所有者决定**：删除 / 换成项目自己的许可证 / 保留并注明来源（登记为待所有者） |
 | 2 | `app/assets/*.png` 仍是模板占位图标（含模板的浅蓝 `adaptiveIcon.backgroundColor`） | 与品牌无关；**启动页与图标属品牌资产**，Phase 3 前替换（不阻塞 Phase 0） |
-| 3 | `runtimeVersion` 策略（`fingerprint` vs `appVersion`）**未写进 `eas.json`** | 宪法 11.3 的待定项 **C-17**，"阻塞首次构建配置"；本轮只落 `eas.json` 骨架，首次 `eas build` 前必须定 |
+| 3 | `runtimeVersion` 策略（`fingerprint` vs `appVersion`）**未写进 `eas.json`** | ⚠️ **2026-10-02 复检修正**：`expo-updates` **未安装** → 本项目**没有 OTA 层**，而 `runtimeVersion` 的语义是"构建的**原生层** ↔ **update** 的兼容性" → **当前没有消费者，不阻塞首次构建**。改为"**采纳 OTA 时再定**"（宪法 11.3 的倾向仍是 `fingerprint`） |
 | 4 | `jest@29.7.0` 发布于 2023-09-12（明显老旧） | 由 `jest-expo@57.0.5` 的 peer 决定；⛔ 不自行升到 30（会把 `jest-expo` 的 transform 搞坏）。风险：与仓库根 Jest 30 并存的认知成本，已在 §1.2 注明 |
 
 ---
@@ -95,3 +108,4 @@
 | 版本 | 日期 | 变更 |
 |---|---|---|
 | v1.0 | 2026-10-02 | 首次建立。17 个直接依赖 + 9 个开发依赖逐条登记五项判据；登记 7 项被拒依赖、5 项已解决问题的排障记录、4 项未闭合 |
+| **v1.1** | **2026-10-02** | **Phase 1 第二批 5 个直接依赖**（P1-02）：`@tanstack/react-query@5.96.2` · `@shopify/flash-list@2.0.2` · `@react-native-async-storage/async-storage@2.2.0` · `@react-native-community/netinfo@12.0.1` · `@ronradtke/react-native-markdown-display@9.0.3`，逐条登记五项判据（采集方式不变，`.scratch/collect-deps.js`）。新增排障记录 **#9**（react-query 两端版本漂移 → 钉到与 Web 一致）与 **#10**（原生依赖的官方 Jest mock + `setupFiles` 必须展开 preset）。修正 §4-3：`runtimeVersion` 经复检**当前无消费者**（`expo-updates` 未安装 → 无 OTA 层），不再写"阻塞首次构建" |

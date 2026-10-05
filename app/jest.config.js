@@ -4,6 +4,9 @@ module.exports = {
   preset: 'jest-expo/android',
   // 见 app/jest/resolver.js 的注释：串起 worklets 的扩展名过滤与 RN 官方解析器
   resolver: '<rootDir>/jest/resolver.js',
+  // P1-02：AsyncStorage / NetInfo 需要官方 mock。⛔ 必须展开 preset 的 setupFiles，
+  // 否则会把 jest-expo 自己的 setup 丢掉。
+  setupFiles: [...(expoPreset.setupFiles ?? []), '<rootDir>/jest.setup.js'],
   roots: ['<rootDir>/src'],
   testMatch: ['**/__tests__/**/*.test.ts', '**/__tests__/**/*.test.tsx'],
   moduleNameMapper: {

@@ -41,7 +41,7 @@
 | 批次 | 编号 | 子任务 | 依赖 | 写作用域 |
 |---|---|---|---|---|
 | **地基** | [P1-01](P1-01-平台接线App消费根shared.md) | **平台接线：让 App 消费仓库根 `shared/`** | — | `shared/api/**`、`app/jest.config.js`、`app/tsconfig.json`、`app/src/shared/**` |
-| | P1-02 | 依赖准入与数据层（query / 落盘 / 列表容器 / Markdown） | P1-01 | `app/package.json`、`app/src/shared/**`、[依赖准入登记](../../evaluation/App依赖准入登记.md) |
+| | [P1-02](P1-02-依赖准入与数据层.md) | 依赖准入与数据层（query / 落盘 / 列表容器 / Markdown） | P1-01 | `app/package.json`、`app/jest.*`、`app/src/shared/**`、[依赖准入登记](../../evaluation/App依赖准入登记.md) |
 | | P1-03 | 字阶落地（关 **TD-44**） | — | `tokens/design-tokens.css`、`scripts/gen-tokens.js`、`tokens/generated/**`、`app/src/design-system/typography.ts` |
 | **组件** | P1-04 | A 层 **12 个**（`A01`–`A12`） | P1-03 | `app/src/components/ui/**` |
 | | P1-05 | C 层 **11 个**（`C01 C04 C05 C06 C07 C09 C10 C12 C14 C19 C21`） | P1-04 | `app/src/components/ui/**` |
@@ -60,7 +60,7 @@
 
 > **为什么鉴权（P1-13）排在骨架之后、切片之前**：`T-04/T-05`（内嵌校方系统）与课表抓取**只依赖校方站点的 cookie**，与我们的 JWT 无关；只有 `T-02`（`GET /schedule/week`）与写操作需要 JWT。这样 P1-04…12 **完全不阻塞**。
 
-> **进度**：**P1-01 ✅ 2026-10-02**（14 suites / 286 tests · tsc 0 · 四把尺子 exit 0 · expo export 0 · vite build 0）；P1-02…P1-17 ⏳。
+> **进度**：**P1-01 ✅ · P1-02 ✅**（2026-10-02；15 suites / 314 tests · tsc 0 · 四把尺子 exit 0 · expo-doctor 21/21 · expo export 0）；P1-03…P1-17 ⏳。
 > ⛔ 提交策略：**一个子任务一个提交**；测试没过先修 bug，**bug 修复也是独立提交**（所有者指令）。
 
 > **两个切片为什么各自需要 P1-08 的域组件**（组件调研结论，⛔ 不是可选项）：

@@ -16,12 +16,14 @@ import { useColorScheme } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { LucideProvider } from 'lucide-react-native';
+import { QueryClientProvider } from '@tanstack/react-query';
 import * as Localization from 'expo-localization';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ThemeProvider, useTheme } from '@/design-system/theme';
 import { I18nProvider, normalizeLocale } from '@/i18n';
 import { configureAppApi } from '@/shared/api';
+import { configureConnectivity, configureFocusTracking, getQueryClient } from '@/shared/queryClient';
 
 /**
  * P1-01：把后端地址与 token 来源交给 `shared/` 的请求层。
@@ -29,6 +31,16 @@ import { configureAppApi } from '@/shared/api';
  * 放在模块顶层（而不是某个 effect 里）：路由模块可能在任何组件挂载前就发出请求。
  */
 configureAppApi();
+
+/**
+ * P1-02：数据层与连通性。
+ * - `getQueryClient()` 是惰性单例 → 全 App 一个缓存；
+ * - ⛔ 连通性必须**接到 TanStack 的 onlineManager**，否则 RN 里永远"在线"，
+ *   "离线用缓存 + 标 stale"（宪法 10.6 / T04）永远不会触发。
+ */
+const appQueryClient = getQueryClient();
+configureConnectivity();
+configureFocusTracking();
 
 /** 全局唯一描边宽度（宪法 16.5-2：1857 个图标全部按 24×24 网格 / stroke 2 设计，无例外） */
 export const ICON_STROKE_WIDTH = 2;
@@ -57,23 +69,25 @@ export default function RootLayout(): React.ReactElement {
   );
 
   return (
-    <SafeAreaProvider>
-      <ThemeProvider source="system" systemScheme={scheme === 'dark' ? 'dark' : 'light'}>
-        <I18nProvider systemLocale={systemLocale}>
-          <ThemedShell>
-            {/*
-              顶栏由我们自己的 TopBar 提供（标题 + 唯一动作），故 Stack 默认不显示原生 header。
-              ⚠️ 详情页的顶栏仍应交给原生导航栏（宪法 4.3）—— 那属于 Phase 2 的逐页口径。
-            */}
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="(tabs)" />
-              {/* 推入式全屏目的地：进入后隐藏 Tab 栏（宪法 4.7-2 / 4.9.2） */}
-              <Stack.Screen name="publish-center" options={{ presentation: 'modal' }} />
-              <Stack.Screen name="mailbox" />
-            </Stack>
-          </ThemedShell>
-        </I18nProvider>
-      </ThemeProvider>
-    </SafeAreaProvider>
+    <QueryClientProvider client={appQueryClient}>
+      <SafeAreaProvider>
+        <ThemeProvider source="system" systemScheme={scheme === 'dark' ? 'dark' : 'light'}>
+          <I18nProvider systemLocale={systemLocale}>
+            <ThemedShell>
+              {/*
+                顶栏由我们自己的 TopBar 提供（标题 + 唯一动作），故 Stack 默认不显示原生 header。
+                ⚠️ 详情页的顶栏仍应交给原生导航栏（宪法 4.3）—— 那属于 Phase 2 的逐页口径。
+              */}
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="(tabs)" />
+                {/* 推入式全屏目的地：进入后隐藏 Tab 栏（宪法 4.7-2 / 4.9.2） */}
+                <Stack.Screen name="publish-center" options={{ presentation: 'modal' }} />
+                <Stack.Screen name="mailbox" />
+              </Stack>
+            </ThemedShell>
+          </I18nProvider>
+        </ThemeProvider>
+      </SafeAreaProvider>
+    </QueryClientProvider>
   );
 }
