@@ -49,6 +49,15 @@ export const en: Record<MessageKey, string> = {
   'tools.session.signedIn': 'Signed in',
   'tools.session.expired': 'Session expired',
   'tools.session.clear': 'Clear session',
+  'tools.systems.title': 'School systems',
+  'tools.systems.empty': 'No systems configured',
+  'tools.open': 'Open',
+  'tools.sessions.notice':
+    'Session state is what this device observed; clearing removes the local record only — the school site may still remember you',
+  'tools.sessions.short': 'View and clear session state',
+  'tools.readSchedule': 'Read timetable on this page',
+  'tools.schedule.scraped': 'Read {rows} rows — confirm in Import',
+  'tools.schedule.none': 'No timetable found on this page — try again on the timetable page',
 
   // Form validation copy (K01/K03)
   'form.error.required': 'This field is required',

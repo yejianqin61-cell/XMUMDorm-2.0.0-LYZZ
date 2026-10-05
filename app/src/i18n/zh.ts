@@ -52,6 +52,17 @@ export const zh = {
   'tools.session.signedIn': '已登录',
   'tools.session.expired': '会话已过期',
   'tools.session.clear': '清除会话',
+  // `T-04` 校方系统与会话（P1-14）
+  'tools.systems.title': '校方系统',
+  'tools.systems.empty': '没有可用的系统',
+  'tools.open': '打开',
+  // ⚠️ 如实说明：我们只能看到"本机观察到什么"，看不到校方系统的权威状态
+  'tools.sessions.notice': '会话状态由本机观察得出；清除会话只删除本机记录，校方站点可能仍记得登录',
+  'tools.sessions.short': '查看与清除会话状态',
+  // `T-05` 工具栏（P1-14）
+  'tools.readSchedule': '读取本页课表',
+  'tools.schedule.scraped': '已读到 {rows} 行，去「课表导入」确认',
+  'tools.schedule.none': '这一页没有读到课表，请在课表页再试一次',
 
   // ── 表单校验文案（`K01`/`K03` 用；**只给词条 key**，文案在这里）──────────
   'form.error.required': '这一项不能为空',

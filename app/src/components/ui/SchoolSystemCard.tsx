@@ -137,7 +137,13 @@ export function SchoolSystemCard({
       </View>
 
       <View style={{ flexDirection: 'row', gap: theme.space('space_2') }}>
-        <Button label={openLabel} variant="primary" onPress={onOpen} disabled={disabled} />
+        <Button
+          testID={testID ? `${testID}-open` : undefined}
+          label={openLabel}
+          variant="primary"
+          onPress={onOpen}
+          disabled={disabled}
+        />
         {canClear ? (
           <Button
             testID={testID ? `${testID}-clear` : undefined}
