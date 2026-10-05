@@ -4,8 +4,9 @@
  * 能自动判的部分：配置不变量、注入脚本结构、**用假 DOM 真跑一遍读表脚本**、
  * 纯函数抽取链路（消息 → 行 → 制表符文本）、容器源码上的必需 props 与禁令。
  *
- * ⛔ 不能自动判的（必须真机，见 R3 结论文档）：三个系统是否反 WebView、
- *    会话能否跨重启保持、课表页是否异步渲染、Moodle/签到 是否走 Google SSO。
+ * ⛔ 不能自动判的（形态已由所有者裁决，见 R3 结论文档 §4 / §4.1）：三个系统是否反 WebView、
+ *    会话能否跨重启保持、课表页是否异步渲染。
+ * ✅ 已定：**三个系统全部为学号登录**（所有者 2026-10-02 确认，⛔ 不涉及 Google）→ 三格全部内嵌。
  */
 import * as fs from 'fs';
 import * as path from 'path';
@@ -90,17 +91,29 @@ describe('P0-08 校方系统内嵌容器（R3）', () => {
       expect(getSchoolSystem('checkin')?.startUrl).toBe('https://acad.xmu.edu.my/mobile');
     });
 
-    it('AC = 学号登录（主链路可行）；Moodle / 签到 仍为 unknown（⛔ 不得当已成立）', () => {
-      expect(getSchoolSystem('ac')?.loginMethod).toBe('studentId');
-      expect(getSchoolSystem('moodle')?.loginMethod).toBe('unknown');
-      expect(getSchoolSystem('checkin')?.loginMethod).toBe('unknown');
+    it('三个系统全部为学号登录（所有者 2026-10-02 确认，不涉及 Google）', () => {
+      expect(SCHOOL_SYSTEMS.map((s) => s.loginMethod)).toEqual([
+        'studentId',
+        'studentId',
+        'studentId',
+      ]);
+    });
+
+    it('因此三格全部内嵌（⛔ 没有任何"降级为系统浏览器"的例外）', () => {
+      expect(SCHOOL_SYSTEMS.map((s) => resolveEmbedMode(s))).toEqual([
+        'webview',
+        'webview',
+        'webview',
+      ]);
     });
 
     it('课表在 AC（头号功能主链路）', () => {
       expect(SCHEDULE_SYSTEM_ID).toBe('ac');
     });
 
-    it('⛔ 走 Google SSO 的系统必须降级为系统浏览器（Google 禁止嵌入 webview 做 OAuth）', () => {
+    it('⛔ 防御性规则：**若将来**某系统改走 Google SSO，必须降级为系统浏览器', () => {
+      // 当前三个系统都不是 googleSso（见上一条）→ 这里用**构造输入**守住规则本身，
+      // 规则依据是 Google《OAuth 2.0 Policies》「Use secure browsers」（见 R3 结论 §5-2）
       const sso: SchoolSystem = {
         ...(SCHOOL_SYSTEMS[0] as SchoolSystem),
         id: 'moodle',
