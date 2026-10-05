@@ -35,7 +35,7 @@
 | [P0-04](P0-04-唯一安全区容器.md) | 唯一安全区容器（S1–S8） | P0-02 | `app/src/components/ui/Screen.tsx`、`app/src/design-system/safe-area.ts` | ✅ 2026-10-02 |
 | [P0-05](P0-05-五格底栏导航壳.md) | 五格底栏导航壳（含动作型第 5 格） | P0-02/03/04 | `app/src/app/**`、`app/src/features/navigation/**` | ✅ 2026-10-02（真机 6 条待跑） |
 | [P0-06](P0-06-二级顶部Tab条.md) | 二级顶部 Tab 条 | P0-04/05 | `app/src/components/ui/TopTabStrip.tsx` | ✅ 2026-10-02 |
-| [P0-07](P0-07-注册表驱动的发布中心.md) | 注册表驱动的发布中心 | P0-05 | `app/src/features/publish/**` | ⏳ |
+| [P0-07](P0-07-注册表驱动的发布中心.md) | 注册表驱动的发布中心 | P0-05 | `app/src/features/publish/**` | ✅ 2026-10-02 |
 | [P0-08](P0-08-校方系统内嵌容器.md) | 校方系统内嵌容器（R3） | P0-04 | `app/src/features/tools/**` | ⏳ |
 | [P0-09](P0-09-Android返回键spike.md) | Android 返回键 spike（R1） | P0-01 | `app/src/features/navigation/**`、`docs/app/evaluation/**` | ⏳ |
 | [P0-10](P0-10-安全区与机型矩阵验收.md) | 安全区与机型矩阵验收（R7） | P0-04 | `docs/app/test/**` | ⏳ |

@@ -34,6 +34,10 @@ export const zh = {
   'publish.entry.errand': '跑腿',
   'publish.entry.carpool': '拼车',
   'publish.entry.qa': '问答',
+  // A-05 合规门禁（宪法 12.2）：这三条挂在**每个发布表单的提交链路**上
+  'publish.gate.terms.perceive': '发布前要先接受条款',
+  'publish.gate.terms.understand': '发布属于用户内容，需先接受用户政策',
+  'publish.gate.terms.fix': '打开条款并接受',
 
   // ── 四个目的地占位（Phase 1 起填内容；⛔ 不写"建设中"这类旁白）──
   'screen.square': '广场',

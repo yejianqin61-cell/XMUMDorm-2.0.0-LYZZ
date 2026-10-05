@@ -33,6 +33,9 @@ export const en: Record<MessageKey, string> = {
   'publish.entry.errand': 'Errands',
   'publish.entry.carpool': 'Carpool',
   'publish.entry.qa': 'Q&A',
+  'publish.gate.terms.perceive': 'Accept the terms first',
+  'publish.gate.terms.understand': 'Posting is user content, so the user policy applies',
+  'publish.gate.terms.fix': 'Open the terms and accept',
 
   // ── Destination placeholders ─────────────────────────────────
   'screen.square': 'Square',
