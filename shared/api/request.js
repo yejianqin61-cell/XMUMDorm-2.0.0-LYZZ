@@ -92,6 +92,17 @@ export async function request(path, options = {}) {
     const err = new Error(data.error || data.message || '请求失败');
     err.status = res.status;
     err.apiStatus = data.status;
+    /**
+     * **把响应体一并带上**（仅新增字段，Web 侧不受影响）。
+     *
+     * 为什么必须带：后端用**两个**状态码表示鉴权失败 ——
+     *   · 没带令牌 → `401`（`middleware/auth.js`）
+     *   · 令牌无效/过期 → **`403`**（同上）
+     * 而 `403` 同时被 `checkSanction` 用来表示**被封禁 / 被禁言**，两者只靠
+     * **响应体里的 `banned` / `muted` 标记**区分。若把响应体丢掉，App 就无法分辨
+     * "会话过期该重新登录"与"账号被处罚"—— 前者要清令牌，后者**绝不能**清。
+     */
+    err.body = data;
     throw err;
   }
 
