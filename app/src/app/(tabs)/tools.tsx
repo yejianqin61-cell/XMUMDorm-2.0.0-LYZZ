@@ -57,6 +57,14 @@ export default function ToolsScreen(): React.ReactElement {
       tabBarHeight={TAB_BAR_CLEARANCE}
     >
       <View style={{ padding: theme.space('space_4'), gap: theme.space('space_4') }}>
+        {/* 课程表是这个 Tab 的主功能，排第一 */}
+        <ListItem
+          testID="tools-timetable"
+          title={t('tools.timetable')}
+          subtitle={t('timetable.semesterNote')}
+          variant="nav"
+          onPress={() => router.push('/tools/timetable')}
+        />
         <SectionHeader title={t('tools.systems.title')} />
         <QuickActionGrid testID="tools-school-actions" actions={actions} />
         <ListItem

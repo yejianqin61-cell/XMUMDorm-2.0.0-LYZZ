@@ -248,6 +248,7 @@ describe('P0-03 双语词条层与错误文案', () => {
         'auth.',
         'import.',
         'weekday.',
+        'timetable.',
         'error.',
         'action.',
       ];

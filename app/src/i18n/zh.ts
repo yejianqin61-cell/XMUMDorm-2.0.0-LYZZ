@@ -78,6 +78,17 @@ export const zh = {
   'import.overwriteConfirm': '覆盖',
   'import.done': '已导入 {courses} 门课程',
 
+  // ── `T-02` 课表周视图（P1-16）────────────────────────────────────────
+  'tools.timetable': '课程表',
+  'timetable.weekLabel': '第 {n} 周',
+  'timetable.prevWeek': '上一段',
+  'timetable.nextWeek': '下一段',
+  'timetable.stale': '显示的是上次同步的课表',
+  'timetable.empty': '这一周还没有课',
+  'timetable.importHint': '课表不对？可以重新导入',
+  'timetable.semesterNote': '周次按学校所在地时区计算',
+  'timetable.courseInfo': '{name} · {when} · {venue}',
+
   // ── 星期（后端的 `day_of_week`：1=周一 … 7=周日）────────────────────
   'weekday.1': '周一',
   'weekday.2': '周二',

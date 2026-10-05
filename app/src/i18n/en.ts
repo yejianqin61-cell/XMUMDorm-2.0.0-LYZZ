@@ -73,6 +73,17 @@ export const en: Record<MessageKey, string> = {
   'import.overwriteConfirm': 'Replace',
   'import.done': 'Imported {courses} courses',
 
+  // T-02 timetable (P1-16)
+  'tools.timetable': 'Timetable',
+  'timetable.weekLabel': 'W{n}',
+  'timetable.prevWeek': 'Earlier',
+  'timetable.nextWeek': 'Later',
+  'timetable.stale': 'Showing the last synced timetable',
+  'timetable.empty': 'No classes this week',
+  'timetable.importHint': 'Timetable wrong? Import it again',
+  'timetable.semesterNote': 'Weeks follow the campus time zone',
+  'timetable.courseInfo': '{name} · {when} · {venue}',
+
   // Weekdays (backend `day_of_week`: 1=Mon … 7=Sun)
   'weekday.1': 'Mon',
   'weekday.2': 'Tue',
