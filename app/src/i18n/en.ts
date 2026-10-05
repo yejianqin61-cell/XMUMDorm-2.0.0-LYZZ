@@ -55,6 +55,16 @@ export const en: Record<MessageKey, string> = {
   'form.error.tooLong': 'Too long',
   'form.error.submit': 'Submit failed',
 
+  // Minimal login chain (P1-13)
+  'auth.title': 'Sign in',
+  'auth.identifier': 'Student ID or email',
+  'auth.password': 'Password',
+  'auth.login': 'Sign in',
+  'auth.failed': 'Sign-in failed',
+  'auth.signedOut': 'Not signed in',
+  'auth.expired': 'Session expired',
+  'auth.logout': 'Sign out',
+
   // Canteen rating tiers (non-linear weights 10/7/4/1/-1; D11 only)
   'canteen.rating.hot': 'Legendary',
   'canteen.rating.top': 'Great',

@@ -58,6 +58,16 @@ export const zh = {
   'form.error.tooLong': '内容超过上限',
   'form.error.submit': '提交没有成功',
 
+  // ── 登录最小链路（P1-13；`P15` 完整鉴权原型属后续任务）──────────────
+  'auth.title': '登录',
+  'auth.identifier': '学号或邮箱',
+  'auth.password': '密码',
+  'auth.login': '登录',
+  'auth.failed': '登录没有成功',
+  'auth.signedOut': '未登录',
+  'auth.expired': '登录已过期',
+  'auth.logout': '退出登录',
+
   // ── 食堂评级的 5 档（**非线性权重** 10/7/4/1/−1，`D11 RatingScale` 专用）──
   // ⛔ 不得被 `D10 StarRating` 代替：语义与权重都不是线性的（组件定义 §2.6）
   'canteen.rating.hot': '夯爆了',

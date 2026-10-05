@@ -25,6 +25,7 @@ import { I18nProvider, normalizeLocale } from '@/i18n';
 import { configureAppApi } from '@/shared/api';
 import { configureConnectivity, configureFocusTracking, getQueryClient } from '@/shared/queryClient';
 import { ToastHost, ToastProvider } from '@/components/ui/Toast';
+import { SessionProvider } from '@/features/auth/session';
 
 /**
  * P1-01：把后端地址与 token 来源交给 `shared/` 的请求层。
@@ -91,19 +92,24 @@ export default function RootLayout(): React.ReactElement {
             {/* ToastProvider 只提供 context，**不渲染展示层** —— 展示在 ThemedShell 里，
                 因为 insets 只能在 SafeAreaProvider 内部取到（见 GlobalOverlays 的注释） */}
             <ToastProvider>
-              <ThemedShell>
-                {/*
-                  顶栏由我们自己的 TopBar 提供（标题 + 唯一动作），故 Stack 默认不显示原生 header。
-                  ⚠️ 详情页的顶栏仍应交给原生导航栏（宪法 4.3）—— 那属于 Phase 2 的逐页口径。
-                */}
-                <Stack screenOptions={{ headerShown: false }}>
-                  <Stack.Screen name="(tabs)" />
-                  {/* 推入式全屏目的地：进入后隐藏 Tab 栏（宪法 4.7-2 / 4.9.2） */}
-                  <Stack.Screen name="publish-center" options={{ presentation: 'modal' }} />
-                  <Stack.Screen name="mailbox" />
-                </Stack>
-                <GlobalOverlays />
-              </ThemedShell>
+              {/* 会话（P1-13）：注入同步 token 读取器 + 冷启动水合；页面用 useSession() */}
+              <SessionProvider>
+                <ThemedShell>
+                  {/*
+                    顶栏由我们自己的 TopBar 提供（标题 + 唯一动作），故 Stack 默认不显示原生 header。
+                    ⚠️ 详情页的顶栏仍应交给原生导航栏（宪法 4.3）—— 那属于 Phase 2 的逐页口径。
+                  */}
+                  <Stack screenOptions={{ headerShown: false }}>
+                    <Stack.Screen name="(tabs)" />
+                    {/* 推入式全屏目的地：进入后隐藏 Tab 栏（宪法 4.7-2 / 4.9.2） */}
+                    <Stack.Screen name="publish-center" options={{ presentation: 'modal' }} />
+                    <Stack.Screen name="mailbox" />
+                    {/* 登录最小链路（P1-13）；完整 `P15` 鉴权原型属后续任务 */}
+                    <Stack.Screen name="login" />
+                  </Stack>
+                  <GlobalOverlays />
+                </ThemedShell>
+              </SessionProvider>
             </ToastProvider>
           </I18nProvider>
         </ThemeProvider>

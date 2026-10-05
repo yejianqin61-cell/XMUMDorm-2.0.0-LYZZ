@@ -91,6 +91,7 @@
 | 9 | **`@tanstack/react-query` 的版本在两端漂移**（P1-02） | `npx expo install @tanstack/react-query` 装到 **5.104.1**（当天发布），而 Web 的 lock 解析为 **5.96.2** → 同一份 `shared/query/queryKeys.js` 契约会被**两个版本**解释；这类差异只在行为上显现（缓存/重试语义），排查成本极高 | **把 App 钉到 `5.96.2`**（与 Web 完全一致）：`npx expo install @tanstack/react-query@5.96.2`。**升级时两端一起升** —— 这条对任何"shared 契约 + 宿主各自装包"的组合都适用 |
 | 10 | P1-02 引入的两个含原生代码依赖需要 **Jest 官方 mock** | 不 mock 则在 Jest 里加载原生模块失败 | `app/jest.setup.js` 里用**包自带**的 mock（`.../jest/async-storage-mock`、`.../jest/netinfo-mock`）；⚠️ `jest.config.js` 的 `setupFiles` **必须展开 preset 的值**，否则会把 jest-expo 自己的 setup 丢掉 |
 | 11 | **`@ronradtke/react-native-markdown-display` 的 `dist/` 带着未编译的 JSX**（P1-08） | `SyntaxError: Unexpected token '<'`，指向 `dist/index.js` 的行内 JSX。Metro 会编它，**Jest 不会**（`node_modules` 默认不进 `transform`） | 在 `jest.config.js` 的 `transformIgnorePatterns` 里给它开例外：**展开 preset 自己的正则、只追加一项**（`…|@ronradtke/react-native-markdown-display))`）。⛔ 不要手写一份完整名单 —— 那会随 `jest-expo` 升级静默过期。**教训：准入时"0 原生文件"只说明能 OTA，不代表测试工具链开箱可用** |
+| 12 | **`expo-secure-store` 没有自带 jest mock**（P1-13） | 它的方法全走原生桥，Jest 里直接崩 | ⚠️ 这是**唯一**一个我们自写替身的依赖（实测 `57.0.4` 目录下无任何 `*mock*` 文件）→ 在 `app/jest.setup.js` 里给一个**内存实现**，并写明与原生语义一致的边界（读不到返回 `null`、删不存在的 key 不抛）。将来该包若补上官方 mock，应换回官方的 |
 
 ---
 
