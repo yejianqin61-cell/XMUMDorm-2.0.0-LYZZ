@@ -15,7 +15,7 @@
 | [App依赖准入登记](App依赖准入登记.md) | **Phase 0 首批 17 个直接依赖 + 9 个开发依赖**的五项准入（许可证 / 原生代码 / OTA 影响 / 该版本发布时间 / 是否强加视觉身份） | 采集于 2026-10-02：**17 个直接依赖全部通过**；7 项依赖被明确拒绝入库；8 项依赖层面的坑与解法留档；4 项未闭合（含 C-17 `runtimeVersion`） |
 | [R1-Android返回键结论](R1-Android返回键结论.md) | Android target 36 上"返回键直接退出 App"的传闻 | **不能直接否定**：SDK 57 默认（`predictiveBackGestureEnabled: false`）下走传统 `onBackPressed` 链路，且**本仓库已实测** prebuild 产物 manifest 含 `enableOnBackInvokedCallback="false"`；**真正的危险组合是 API 33–35 + predictive back 被打开**；⛔ **Expo Go 测不出来**，必须 development build |
 | [R2-原生Tab与动作格位结论](R2-原生Tab与动作格位结论.md) | SDK 57 的原生 Tab 容器能否承载**动作型格位**（点了不切页） | **能**：选 `expo-router/unstable-native-tabs`，机制是 Trigger 的 **`disabled`**（被挡下时仍 emit `tabPress` 且带 `isPrevented`，不 dispatch `JUMP_TO` → 选中态与返回栈不变）。⛔ `Trigger` 无 `onPress`；`tabPress` 的 `canPreventDefault: false` → `preventDefault()` 无效；**稳定入口 (c) 在 SDK 57 不存在**（58.0.1 才有） |
-| [R3-校方系统内嵌可行性结论](R3-校方系统内嵌可行性结论.md) | 三个校方系统（AC / Moodle / 签到）的**内嵌 WebView + 会话保持 + 注入读表**方案 | 判定：**成立（有条件）**。钉版 `react-native-webview@13.16.1`；iOS/Android **cookie 默认持久**；两个会静默摧毁会话的开关已定位；`X-Frame-Options` 不约束顶层导航；**主风险是 Moodle/签到 是否走 Google SSO**；6 项真机待办 |
+| [R3-校方系统内嵌可行性结论](R3-校方系统内嵌可行性结论.md) | 三个校方系统（AC / Moodle / 签到）的**内嵌 WebView + 会话保持 + 注入读表**方案 | 判定：**成立，且已由所有者裁决为硬需求（不做真机验证）**。钉版 `react-native-webview@13.16.1`；iOS/Android **cookie 默认持久**；两个会摧毁会话的开关已定位且未启用；`X-Frame-Options` 不约束顶层导航；**6 项原真机待办已转为实现期观察项并预置默认值（§4.1）**；Google SSO 一条**已取到官方逐字原文**，属政策强制 → 那两个系统走系统浏览器 |
 
 > 该文档是"**核对别人的结论**"这一类评估，因此留在 `evaluation/`，而 [基座调研](../research/App基座调研-Expo与原生iOS混编.md) 本身（取证过程）已归入 `research/`。
 
