@@ -9,6 +9,15 @@ module.exports = {
   setupFiles: [...(expoPreset.setupFiles ?? []), '<rootDir>/jest.setup.js'],
   roots: ['<rootDir>/src'],
   testMatch: ['**/__tests__/**/*.test.ts', '**/__tests__/**/*.test.tsx'],
+  // ⚠️ P1-08：`@ronradtke/react-native-markdown-display` 的 `dist/` **带着未编译的 JSX**
+  //    （Metro 会编，Jest 不会）→ 必须把它加进 preset 的**例外**名单，否则
+  //    `SyntaxError: Unexpected token '<'`。⛔ 必须展开 preset 自己的正则，
+  //    只追加一项；手写一份完整名单会随 preset 升级静默过期。
+  transformIgnorePatterns: [
+    '/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@sentry/react-native|native-base|standard-navigation|@ronradtke/react-native-markdown-display))',
+    '/node_modules/react-native-reanimated/plugin/',
+    '/node_modules/@react-native/babel-preset/',
+  ],
   moduleNameMapper: {
     // ⚠️ 必须展开 preset 的映射，否则会连带丢掉它给 react-native / @/ 的映射
     ...expoPreset.moduleNameMapper,
