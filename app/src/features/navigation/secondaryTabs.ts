@@ -101,6 +101,13 @@ export function resolveTransitionDuration(reduceMotion: boolean, baseDuration: n
 }
 
 /**
+ * **应用级实例**（P1-09 补）：R2（切走再切回位置/筛选还在）只有在**所有页面共享同一个实例**时
+ * 才成立。⛔ 不要在页面里 `new SecondaryTabStore()` —— 各持一份 = 位置永远丢。
+ * `K05 ListScreen` 通过 `scope` 读写它，⛔ 不新建第二套状态仓库（任务包纪律 4）。
+ */
+export const secondaryTabStore = new SecondaryTabStore();
+
+/**
  * ⛔ R5：溢出时**必须**横向滚动，**不得**用下拉菜单把子栏目藏起来。
  * 这个守卫让"想加下拉"这件事在代码里变成显式失败。
  */
