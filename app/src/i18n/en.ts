@@ -23,6 +23,9 @@ export const en: Record<MessageKey, string> = {
 
   // ── Accessibility ────────────────────────────────────────────
   'a11y.tabPosition': 'Tab {i} of {n}',
+  'a11y.ratingTier': '{label}, weight {weight}',
+  'a11y.starRating': '{label}, {filled} of {max}',
+  'a11y.starRatingBare': '{filled} stars',
 
   // ── Publish center ───────────────────────────────────────────
   'publish.title': 'Publish',
@@ -41,6 +44,18 @@ export const en: Record<MessageKey, string> = {
   'tools.system.ac': 'AC System',
   'tools.system.moodle': 'Moodle',
   'tools.system.checkin': 'Check-in',
+  // School-system session states (D27; states must be announced, not colour-only)
+  'tools.session.signedOut': 'Not signed in',
+  'tools.session.signedIn': 'Signed in',
+  'tools.session.expired': 'Session expired',
+  'tools.session.clear': 'Clear session',
+
+  // Canteen rating tiers (non-linear weights 10/7/4/1/-1; D11 only)
+  'canteen.rating.hot': 'Legendary',
+  'canteen.rating.top': 'Great',
+  'canteen.rating.above': 'Decent',
+  'canteen.rating.npc': 'Mid',
+  'canteen.rating.dead': 'Avoid',
 
   // ── Destination placeholders ─────────────────────────────────
   'screen.square': 'Square',

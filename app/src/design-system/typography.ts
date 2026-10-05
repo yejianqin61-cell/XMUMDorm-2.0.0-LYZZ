@@ -46,6 +46,26 @@ export function resolveFontMetrics(role: TextRole): FontMetrics {
 }
 
 /**
+ * 角色 → RN 文本样式三件套（**唯一的映射实现**）。
+ *
+ * 为什么抽出来：`A02 Text` 与 `D18 MarkdownReader` 都要把字阶落到 RN 的
+ * `fontSize/lineHeight/letterSpacing` 上。⛔ 两处各写一份，迟早有一处忘了跟令牌走
+ * （而 `design-debt-report.js` 只查"有没有数字字号"，查不出"少映射了一个字段"）。
+ */
+export function textStyleForRole(role: TextRole): {
+  fontSize: number;
+  lineHeight: number;
+  letterSpacing: number;
+} {
+  const metrics = resolveFontMetrics(role);
+  return {
+    fontSize: metrics.size,
+    lineHeight: metrics.lineHeight,
+    letterSpacing: metrics.tracking,
+  };
+}
+
+/**
  * **关键布局**（按钮 / Tab / 表单标签）的字号放大上限（宪法 2.5-7）。
  *
  * 为什么必须有上限：这三类文字的容器高度是**固定**的（按钮高度、Tab 栏高度 56），

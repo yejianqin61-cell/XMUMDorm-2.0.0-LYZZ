@@ -24,6 +24,10 @@ export const zh = {
 
   // ── 无障碍（宪法 7.2：读屏要播报位置）────────────────────────
   'a11y.tabPosition': '第 {i} 个，共 {n} 个',
+  // 组合式无障碍标签：**必须走词条**，否则英文界面会出现中文（P1-08 的实现期发现）
+  'a11y.ratingTier': '{label}，权重 {weight}',
+  'a11y.starRating': '{label}，{filled} 分，共 {max} 分',
+  'a11y.starRatingBare': '{filled} 分',
 
   // ── 发布中心（宪法 4.9.5：注册表驱动，新增一类 = 加一行）──────
   'publish.title': '发布',
@@ -43,6 +47,19 @@ export const zh = {
   'tools.system.ac': '教务 AC',
   'tools.system.moodle': 'Moodle',
   'tools.system.checkin': '签到',
+  // 校方系统会话三态（`D27 SchoolSystemCard`；状态**必须可播报且不只靠色块**）──
+  'tools.session.signedOut': '未登录',
+  'tools.session.signedIn': '已登录',
+  'tools.session.expired': '会话已过期',
+  'tools.session.clear': '清除会话',
+
+  // ── 食堂评级的 5 档（**非线性权重** 10/7/4/1/−1，`D11 RatingScale` 专用）──
+  // ⛔ 不得被 `D10 StarRating` 代替：语义与权重都不是线性的（组件定义 §2.6）
+  'canteen.rating.hot': '夯爆了',
+  'canteen.rating.top': '顶级',
+  'canteen.rating.above': '人上人',
+  'canteen.rating.npc': 'NPC',
+  'canteen.rating.dead': '拉完了',
 
   // ── 四个目的地占位（Phase 1 起填内容；⛔ 不写"建设中"这类旁白）──
   'screen.square': '广场',

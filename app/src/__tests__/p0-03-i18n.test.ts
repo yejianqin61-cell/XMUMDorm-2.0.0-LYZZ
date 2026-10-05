@@ -243,6 +243,7 @@ describe('P0-03 双语词条层与错误文案', () => {
         'screen.',
         'secondary.',
         'tools.',
+        'canteen.',
         'error.',
         'action.',
       ];

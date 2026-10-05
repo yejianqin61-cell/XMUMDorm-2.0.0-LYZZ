@@ -88,6 +88,7 @@
 | TD-43 | 页面清单 §3 页面总表按新骨架重切 | 开发期（所有者 2026-10-02：**不一次性全部规定好**，见页面清单 §1.3） |
 | TD-44 | **字阶绝对值的唯一来源**：`tokens/design-tokens.css` §3.1 只声明角色名，绝对字号按宪法 2.5-② 应"分端生成"，而 **M3 官方字阶数值必须人工读取**（宪法 15.2-1）。Phase 0 因此**不发明数值**，`Text` 走平台默认字号 + 字重/颜色令牌区分层级，**登记为设计债** | ✅ **已完成（P1-03，2026-10-02）**：M3 官方 15 档取自 **AndroidX `TypeScaleTokens.kt`（`VERSION: v0_103`）**，表内置在 `gen-tokens.js`（带来源 URL + 访问日期，满足 15.2-1"不得凭记忆写"）；新增 `[group=font-metrics]`，**值只写 M3 档位名、⛔ 不写数字** → 生成 `fontMetrics`；**三条生成期自校验**（角色↔数值 1:1 / 值必须是官方档位名 / 单调性）。`Text` 改为消费生成值 + `allowFontScaling` + label 上限。⚠️ 尺子口径**成对**放宽为"只拦**数字**字号"（依据与不可退让点见 P1-03 §5） |
 | TD-45 | **iOS 真正的 Dynamic Type**：宪法 2.5-4 要求 iOS 用**系统文字样式**（`UIFontTextStyle`）以获得 Dynamic Type，而 **RN 未暴露它**（`Text` 只有数值 `fontSize`）。当前是"两端共用 M3 数值 + `allowFontScaling`"——用户的系统字号设置**仍会**放大文字，但**不按各文字样式的语义曲线**（`largeTitle` 与 `body` 的曲线不同） | **待排期**（P1-03 发现并登记）。真正合规需**本地原生模块**（宪法 11.7：本地 Expo Module + ADR，设 `UIFont.preferredFont(forTextStyle:)` + `adjustsFontForContentSizeCategory`）。**不阻塞内测**（Android 优先且放大已生效），影响 iOS 精修质量 |
+| TD-46 | **P1-05 控件里的"组合式中文 a11y 标签"**：`C04`/`C05` 的 `'必填'`、`C06`/`C04` 的 `'清除'`、`A09 Chip` 与 `C09` 的 `移除${name}`、`C21` 的 `移除标签 ${tag}` 等**在代码里拼中文** → 英文界面下读屏会读出中文（宪法 6.x 双语）。P1-08 在 `D11`/`D10` 上已改为走词条（`a11y.ratingTier` 等） | **待排期**（P1-08 发现并登记）。做法与 P1-08 相同：抽 `a11y.*` 词条 + `t()`；`Chip`/`MultiSelect`/`TagPicker` 的"移除X"宜用 `a11y.removeItem` 一类的**带参词条**。**不阻塞内测**（中文界面正确；英文界面属精修） |
 
 ---
 

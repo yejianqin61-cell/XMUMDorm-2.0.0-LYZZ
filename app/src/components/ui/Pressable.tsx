@@ -55,6 +55,10 @@ export type PressableProps = {
   accessibilityState?: AccessibilityState;
   /** Android 的实时播报级别（Toast / 行内提示这类"内容会变"的元素要用） */
   accessibilityLiveRegion?: 'none' | 'polite' | 'assertive';
+  /** Android 的子树隐藏（与 `accessibilityElementsHidden` 配对使用才两端都生效） */
+  importantForAccessibility?: 'auto' | 'yes' | 'no' | 'no-hide-descendants';
+  /** iOS 的子树隐藏（与 `importantForAccessibility` 配对） */
+  accessibilityElementsHidden?: boolean;
   /** 额外扩大命中区（在 `touchTarget` 下限之外的补充） */
   hitSlop?: number;
   style?: StyleProp<ViewStyle>;
@@ -73,6 +77,8 @@ export function Pressable({
   selected,
   accessibilityState,
   accessibilityLiveRegion,
+  importantForAccessibility,
+  accessibilityElementsHidden,
   hitSlop,
   style,
   children,
@@ -115,6 +121,8 @@ export function Pressable({
       accessibilityHint={accessibilityHint}
       accessibilityState={mergedState}
       accessibilityLiveRegion={accessibilityLiveRegion}
+      importantForAccessibility={importantForAccessibility}
+      accessibilityElementsHidden={accessibilityElementsHidden}
       hitSlop={hitSlop ?? theme.space('space_2')}
       style={({ pressed }) => [
         box,
