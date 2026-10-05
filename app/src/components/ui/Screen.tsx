@@ -27,9 +27,25 @@ import { useTheme } from '@/design-system/theme';
 import {
   resolveInsets,
   type BottomMode,
+  type ResolvedInsets,
   type TopMode,
 } from '@/design-system/safe-area';
 import { TopBar } from './TopBar';
+
+/**
+ * Screen 把**算好的 insets** 通过上下文交给子树（S2 + S7 的接缝）：
+ * 覆盖层（模态 / Sheet / Toast / 全屏 WebView）**需要** insets，但 ⛔ 不得再调用
+ * `useSafeAreaInsets()`（那会让"唯一容器"名存实亡）→ 从本上下文取。
+ */
+const ScreenInsetsContext = React.createContext<ResolvedInsets | null>(null);
+
+export function useScreenInsets(): ResolvedInsets {
+  const value = React.useContext(ScreenInsetsContext);
+  if (value === null) {
+    throw new Error('useScreenInsets 必须在 Screen 内使用：insets 只能由唯一安全区容器提供（宪法 17.1-S2）');
+  }
+  return value;
+}
 
 /** 键盘高度（S6 的输入来源）。⛔ 不使用 `KeyboardAvoidingView` 的隐式行为，避免两端不一致 */
 function useKeyboardHeight(): number {
@@ -116,10 +132,11 @@ export function Screen({
   );
 
   return (
-    <View
-      testID={testID}
-      style={[{ flex: 1, backgroundColor: theme.color['bg-canvas'].value }, style]}
-    >
+    <ScreenInsetsContext.Provider value={resolved}>
+      <View
+        testID={testID}
+        style={[{ flex: 1, backgroundColor: theme.color['bg-canvas'].value }, style]}
+      >
       {topMode === 'topbar' && titleKey ? (
         <TopBar
           titleKey={titleKey}
@@ -133,18 +150,19 @@ export function Screen({
         // S7：覆盖层自己处理 insets —— 但**由本容器注入**，覆盖层不自己读（S2）
         <View style={{ paddingTop: resolved.overlayPaddingTop }}>{headerOverlay}</View>
       ) : null}
-      {scroll ? (
-        <ScrollView
-          // S8：两端默认行为不同（iOS 会自动调整内容内边距）→ 显式统一
-          contentInsetAdjustmentBehavior="never"
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{ flexGrow: 1 }}
-        >
-          {content}
-        </ScrollView>
-      ) : (
-        content
-      )}
-    </View>
+        {scroll ? (
+          <ScrollView
+            // S8：两端默认行为不同（iOS 会自动调整内容内边距）→ 显式统一
+            contentInsetAdjustmentBehavior="never"
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={{ flexGrow: 1 }}
+          >
+            {content}
+          </ScrollView>
+        ) : (
+          content
+        )}
+      </View>
+    </ScreenInsetsContext.Provider>
   );
 }

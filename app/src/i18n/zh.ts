@@ -39,6 +39,11 @@ export const zh = {
   'publish.gate.terms.understand': '发布属于用户内容，需先接受用户政策',
   'publish.gate.terms.fix': '打开条款并接受',
 
+  // ── 工具 Tab：三个校方系统（**只有这三个是网页**，宪法 4.1.2-1）──────
+  'tools.system.ac': '教务 AC',
+  'tools.system.moodle': 'Moodle',
+  'tools.system.checkin': '签到',
+
   // ── 四个目的地占位（Phase 1 起填内容；⛔ 不写"建设中"这类旁白）──
   'screen.square': '广场',
   'screen.tools': '工具',

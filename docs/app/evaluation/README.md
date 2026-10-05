@@ -7,13 +7,14 @@
 
 ---
 
-## 一、当前收录（3 份）
+## 一、当前收录（4 份）
 
 | 文档 | 判定对象 | 结论 |
 |---|---|---|
 | [基座事实核对-版本线与上架门槛](App基座事实核对-版本线与上架门槛.md) | 基座调研给出的**版本线与上架门槛**（是否可作决策依据） | 核实于 2026-09-30：**SDK 57.0.26 仍是最新稳定**，SDK 58 只在 `next` 且处于 Beta；RN/React 不可用 npm `latest`；**Play 新应用 target API 36 自 2026-08-31 已生效** |
-| [App依赖准入登记](App依赖准入登记.md) | **Phase 0 首批 17 个直接依赖 + 9 个开发依赖**的五项准入（许可证 / 原生代码 / OTA 影响 / 该版本发布时间 / 是否强加视觉身份） | 采集于 2026-10-02：**17 个直接依赖全部通过**；7 项依赖被明确拒绝入库；5 项依赖层面的坑与解法留档；4 项未闭合（含 C-17 `runtimeVersion`） |
-| [R1-Android返回键结论](R1-Android返回键结论.md) | Android target 36 上"返回键直接退出 App"的传闻 | 见该文档（P0-09 产物） |
+| [App依赖准入登记](App依赖准入登记.md) | **Phase 0 首批 17 个直接依赖 + 9 个开发依赖**的五项准入（许可证 / 原生代码 / OTA 影响 / 该版本发布时间 / 是否强加视觉身份） | 采集于 2026-10-02：**17 个直接依赖全部通过**；7 项依赖被明确拒绝入库；8 项依赖层面的坑与解法留档；4 项未闭合（含 C-17 `runtimeVersion`） |
+| [R1-Android返回键结论](R1-Android返回键结论.md) | Android target 36 上"返回键直接退出 App"的传闻 | **不能直接否定**：SDK 57 默认（`predictiveBackGestureEnabled: false`）下走传统 `onBackPressed` 链路；**真正的危险组合是 API 33–35 + predictive back 被打开**；⛔ **Expo Go 测不出来**，必须 development build |
+| [R3-校方系统内嵌可行性结论](R3-校方系统内嵌可行性结论.md) | 三个校方系统（AC / Moodle / 签到）的**内嵌 WebView + 会话保持 + 注入读表**方案 | 判定：**成立（有条件）**。钉版 `react-native-webview@13.16.1`；iOS/Android **cookie 默认持久**；两个会静默摧毁会话的开关已定位；`X-Frame-Options` 不约束顶层导航；**主风险是 Moodle/签到 是否走 Google SSO**；6 项真机待办 |
 
 > 该文档是"**核对别人的结论**"这一类评估，因此留在 `evaluation/`，而 [基座调研](../research/App基座调研-Expo与原生iOS混编.md) 本身（取证过程）已归入 `research/`。
 

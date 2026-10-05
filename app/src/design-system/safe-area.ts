@@ -38,6 +38,8 @@ export type ResolveInsetsInput = {
 };
 
 export type ResolvedInsets = {
+  /** 本次计算用的**真实 insets 原值**（已钳到非负）。覆盖层/内嵌页要拿原始值时必须从这里取（S7）。 */
+  insets: Insets;
   /** 顶栏内容相对屏幕顶边的偏移（顶栏背景仍铺满到屏幕顶边） */
   headerPaddingTop: number;
   /** 内容区底部留白（S5：`tabbar` 模式下**不含** insets.bottom） */
@@ -87,6 +89,12 @@ export function resolveInsets(input: ResolveInsetsInput): ResolvedInsets {
       : null;
 
   return {
+    insets: {
+      top: clampNonNegative(insets.top),
+      bottom: clampNonNegative(insets.bottom),
+      left: clampNonNegative(insets.left),
+      right: clampNonNegative(insets.right),
+    },
     headerPaddingTop,
     contentBottomPadding,
     contentPaddingLeft: clampNonNegative(insets.left),

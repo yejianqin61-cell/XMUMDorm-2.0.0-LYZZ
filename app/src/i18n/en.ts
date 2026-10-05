@@ -37,6 +37,11 @@ export const en: Record<MessageKey, string> = {
   'publish.gate.terms.understand': 'Posting is user content, so the user policy applies',
   'publish.gate.terms.fix': 'Open the terms and accept',
 
+  // ── Tools tab: the three school systems ──────────────────────
+  'tools.system.ac': 'AC System',
+  'tools.system.moodle': 'Moodle',
+  'tools.system.checkin': 'Check-in',
+
   // ── Destination placeholders ─────────────────────────────────
   'screen.square': 'Square',
   'screen.tools': 'Tools',
