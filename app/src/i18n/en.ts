@@ -50,6 +50,11 @@ export const en: Record<MessageKey, string> = {
   'tools.session.expired': 'Session expired',
   'tools.session.clear': 'Clear session',
 
+  // Form validation copy (K01/K03)
+  'form.error.required': 'This field is required',
+  'form.error.tooLong': 'Too long',
+  'form.error.submit': 'Submit failed',
+
   // Canteen rating tiers (non-linear weights 10/7/4/1/-1; D11 only)
   'canteen.rating.hot': 'Legendary',
   'canteen.rating.top': 'Great',

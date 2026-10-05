@@ -53,6 +53,11 @@ export const zh = {
   'tools.session.expired': '会话已过期',
   'tools.session.clear': '清除会话',
 
+  // ── 表单校验文案（`K01`/`K03` 用；**只给词条 key**，文案在这里）──────────
+  'form.error.required': '这一项不能为空',
+  'form.error.tooLong': '内容超过上限',
+  'form.error.submit': '提交没有成功',
+
   // ── 食堂评级的 5 档（**非线性权重** 10/7/4/1/−1，`D11 RatingScale` 专用）──
   // ⛔ 不得被 `D10 StarRating` 代替：语义与权重都不是线性的（组件定义 §2.6）
   'canteen.rating.hot': '夯爆了',

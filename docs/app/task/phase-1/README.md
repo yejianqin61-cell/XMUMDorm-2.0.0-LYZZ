@@ -49,7 +49,7 @@
 | | [P1-07](P1-07-T层四态与O层覆盖层.md) | T 层**四态 6 个** + O 层**覆盖层 5 个**（`O01 O02 O03 O05 O08`） | P1-05/P1-06 | `app/src/components/ui/**`、`app/src/app/_layout.tsx`、`app/src/i18n/errors.ts` |
 | | [P1-08](P1-08-切片必经域组件.md) | **切片必经的域组件** **10 个**（`K11 K18 D01 D02 D03 D10 D11 D18 D24 D27`） | P1-05…07 | `app/src/components/ui/**`、`app/src/i18n/**`、`app/src/design-system/typography.ts` |
 | **骨架** | [P1-09](P1-09-骨架P2列表.md) | 骨架 **`P2` 列表**（= **`K05 ListScreen`**：分页状态机 + 四态 + 位置/筛选保持） | P1-06/P1-07/P0-06 | `app/src/components/ui/**`、`app/src/features/navigation/secondaryTabs.ts` |
-| | P1-10 | 骨架 **`P4` 表单**（字段 DSL + 校验 + 草稿 + 离开确认） | P1-05/P1-07 | `app/src/components/ui/**` |
+| | [P1-10](P1-10-骨架P4表单.md) | 骨架 **`P4` 表单**（= **`K01 Form` + `K02`/`K03`/`K04`**：字段 DSL + 校验 + 草稿 + 离开确认） | P1-05/P1-07/P1-02 | `app/src/components/ui/**`、`app/src/i18n/**` |
 | | P1-11 | 骨架 **`P3` 详情**（作者投影 + 互动条 + 评论区） | P1-06/P1-08 | `app/src/components/ui/**` |
 | | P1-12 | 骨架 **`P16` 静态**（离线优先富文本 + 回落本地） | P1-02/P1-04 | `app/src/components/ui/**` |
 | **鉴权** | P1-13 | **token 供给与登录最小链路**（`expo-secure-store` + 401 口径） | P1-01/P1-02 | `app/src/features/auth/**`、`app/src/app/**` |
@@ -66,7 +66,7 @@
 > 现改为按**内聚性**切：**P1-06 只做内容/列表组合 5 个**；`K05` 归 P1-09；`K01`–`K04` 归 P1-10。
 > **合计仍是 K 层 10 个**，只是分布到 3 个任务（5 + 1 + 4）。
 
-> **进度**：**P1-01 ✅ · P1-02 ✅ · P1-03 ✅ · P1-04 ✅ · P1-05 ✅ · P1-06 ✅ · P1-07 ✅ · P1-08 ✅ · P1-09 ✅**（2026-10-02；22 suites / 611 tests · tsc 0 · 四把尺子 exit 0 · 另有 6 个独立 bug 修复提交）；P1-10…P1-17 ⏳。
+> **进度**：**P1-01 ✅ · P1-02 ✅ · P1-03 ✅ · P1-04 ✅ · P1-05 ✅ · P1-06 ✅ · P1-07 ✅ · P1-08 ✅ · P1-09 ✅ · P1-10 ✅**（2026-10-02；23 suites / 656 tests · tsc 0 · 四把尺子 exit 0 · 另有 6 个独立 bug 修复提交）；P1-11…P1-17 ⏳。
 > ⛔ 提交策略：**一个子任务一个提交**；测试没过先修 bug，**bug 修复也是独立提交**（所有者指令）。
 
 > **两个切片为什么各自需要 P1-08 的域组件**（组件调研结论，⛔ 不是可选项）：
@@ -84,6 +84,7 @@
 3. **界面视觉只能来自令牌或消费令牌的组件**（宪法 1.4）；⛔ 自有 UI 组件**必须**落 `app/src/components/ui/**`（`design-debt-report.js` 的 `ownUiComponentRefs` 硬编码统计这个路径，放别处尺子永远红）。
 4. **不新建第二套机制**：安全区只用 `Screen`/`useScreenInsets`；状态保持只用 `SecondaryTabStore`；错误文案只用 `i18n/errors.ts` 的 `toErrorResponse`/`toErrorCopy`；分页状态只在骨架里实现一处。
 5. **改动必须回写文档**（宪法 15.4-3）：凡与本包或上游文档口径不一致的，改完在对应文档加注记，⛔ 不留"文档说 A、代码做 B"。
+6. **⛔ 不要用 shell 传非 ASCII 文本去改文件**（P1-10 实测事故：PowerShell 命令行按本地代码页编解码，`Get-Content -Raw` + `WriteAllText` 会把整个文件的中文写成乱码）。改文件一律用编辑器工具（`write`/`edit`），它们不经过 shell；需要批量文本处理时，写成**脚本文件**再跑，⛔ 不要把中文放在命令行参数里。
 
 ---
 

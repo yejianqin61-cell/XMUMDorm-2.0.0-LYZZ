@@ -68,7 +68,11 @@ export async function renderApp(
     </ThemeProvider>
   );
 
-  return render(
-    inScreen ? <SafeAreaProvider initialMetrics={TEST_METRICS}>{tree}</SafeAreaProvider> : tree
-  );
+  /**
+   * ⚠️ `SafeAreaProvider` **总是**包上（不只是 `inScreen` 时）：
+   *    有些骨架**自己在内部挂了 `Screen`**（如 `K01 Form`），
+   *    它们在 `useScreenInsets()` 里需要 provider —— 少了就会直接抛。
+   *    对不需要它的组件多包一层是无害的。
+   */
+  return render(<SafeAreaProvider initialMetrics={TEST_METRICS}>{tree}</SafeAreaProvider>);
 }
