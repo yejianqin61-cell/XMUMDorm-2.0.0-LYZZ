@@ -14,12 +14,12 @@
 
 | # | 出口门 | 判据 | 状态 |
 |---|---|---|---|
-| G1 | **脚手架成立** | `app/` 在 SDK 57 线上装得上、TypeScript 编译过、`npx expo-doctor` 无致命项 | ⏳ |
-| G2 | **导航壳成立** | 五格底栏（第 5 格＝动作型格位）· 二级顶部 Tab 条 · 唯一安全区容器，**在真机上跑起空壳** | ⏳ |
-| G3 | **令牌已生效** | 界面视觉**只能**来自 `tokens/generated/native-tokens.ts`；`app/src` 内 0 个 hex 字面量、0 个 `fontSize:` 字面量 | ⏳ |
-| G4 | **四个 spike 有书面结论** | R1 返回键 · R2 原生 Tab 与动作格位 · R3 校方系统内嵌 · R7 安全区机型矩阵，**每条都有"成立/不成立/待真机"三态结论** | ⏳ |
-| G5 | **四把尺子绿且进 CI** | `design-debt-report --path app/src --fail-on-zero` · `contrast-check --file ... --fail` · `brand-ramp --hue 261.2 --fail` · `gen-tokens --check` 全部 exit 0，并写进 `.github/workflows/` | ⏳ |
-| G6 | **可安装构建通道成立** | `eas.json` + 构建命令已落库；**真机构建由所有者执行**（需要 Expo 账号） | ⏳ |
+| G1 | **脚手架成立** | `app/` 在 SDK 57 线上装得上、TypeScript 编译过、`npx expo-doctor` 无致命项 | ✅ tsc 0 · doctor **21/21** · 打包成功（3.63 MB / 3269 模块） |
+| G2 | **导航壳成立** | 五格底栏（第 5 格＝动作型格位）· 二级顶部 Tab 条 · 唯一安全区容器，**在真机上跑起空壳** | ✅ 代码与打包级成立；⛔ **真机空壳未跑**（无设备，见 P0-12 §5） |
+| G3 | **令牌已生效** | 界面视觉**只能**来自 `tokens/generated/native-tokens.ts`；`app/src` 内 0 个 hex 字面量、0 个 `fontSize:` 字面量 | ✅ 尺子 exit 0（宪法级违规：无） |
+| G4 | **四个 spike 有书面结论** | R1 返回键 · R2 原生 Tab 与动作格位 · R3 校方系统内嵌 · R7 安全区机型矩阵，**每条都有"成立/不成立/待真机"三态结论** | ⚠️ **部分成立**：R1 ✅（含 manifest 实测）· R2 ✅（源码级）· R3 ✅ · **R7 规则级全过、真机待跑** |
+| G5 | **四把尺子绿且进 CI** | 四把 exit 0，并写进 `.github/workflows/` | ✅ 本地 `npm run rulers` exit 0；工作流已建（⛔ 无 `\|\| true`、不用 secret） |
+| G6 | **可安装构建通道成立** | `eas.json` + 构建命令已落库；**真机构建由所有者执行** | ⚠️ 接口就绪；实机构建需 Expo 账号（C-02 未定）→ 归所有者 |
 
 > ⛔ **不属于 Phase 0 的出口门**：EAS 真机构建**必须实际发出**（需要账号 + 真机，归所有者）；灰度的"孤岛"是本文档无法代替真机验证的四项（G4 中标注"待真机"的部分）。
 
@@ -40,7 +40,11 @@
 | [P0-09](P0-09-Android返回键spike.md) | Android 返回键 spike（R1） | P0-01 | `app/src/features/navigation/**`、`app/plugins/**` | ✅ 2026-10-02（manifest 已实测；真机 5 项待跑） |
 | [P0-10](P0-10-安全区与机型矩阵验收.md) | 安全区与机型矩阵验收（R7） | P0-04 | `docs/app/test/**` | ✅ 部分成立（规则级全过；真机待跑） |
 | [P0-11](P0-11-四把尺子接入CI.md) | 四把尺子接入 CI | P0-01..08 | `.github/workflows/**` | ✅ 2026-10-02（本地 exit 0；CI 待首次推送） |
-| [P0-12](P0-12-Phase0结案报告.md) | Phase 0 结案报告 | 全部 | `docs/app/task/phase-0/P0-12-*.md` | ⏳ |
+| [P0-12](P0-12-Phase0结案报告.md) | Phase 0 结案报告 | 全部 | `docs/app/task/phase-0/P0-12-*.md` | ✅ 2026-10-02 结案 |
+
+> **Phase 0 判定**：**G1/G2/G3/G5 成立 · G4 部分成立（真机项待跑）· G6 接口就绪**。
+> 全部证据、16 个提交、未闭合项与 Phase 1 移交见 [P0-12 结案报告](P0-12-Phase0结案报告.md)。
+> ⛔ **未 push**（所有者要求）。
 
 ## 3. 测试用例
 
