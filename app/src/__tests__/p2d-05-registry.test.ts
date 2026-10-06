@@ -76,7 +76,7 @@ describe('登记册守卫（TODO / TO-CONFIRM）', () => {
     const tally = (state: string): number => rows.filter((row) => row.state === state).length;
     const statusLine = todo
       .split('\n')
-      .find((line) => line.includes('**现在（2026-10-06）**：本节')) as string;
+      .find((line) => /\*\*现在（\d{4}-\d{2}-\d{2}）\*\*：本节/.test(line)) as string;
     expect(statusLine).toBeTruthy();
     expect(statusLine).toContain(`**${rows.length} 条**`);
     for (const state of TODO_STATES) {
