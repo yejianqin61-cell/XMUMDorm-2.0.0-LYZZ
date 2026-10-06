@@ -328,5 +328,6 @@ export const en: Record<MessageKey, string> = {
   'square.guides.delete': 'Delete',
   'square.guides.reply': 'Reply',
   'square.guides.collapse': 'Collapse',
+  'square.guides.refreshFailed': 'Refresh failed. Tap to retry',
   'square.guides.end': 'End',
 };

@@ -335,6 +335,7 @@ export const zh = {
   'square.guides.delete': '删除',
   'square.guides.reply': '回复',
   'square.guides.collapse': '收起',
+  'square.guides.refreshFailed': '刷新失败，点此重试',
   'square.guides.end': '已读完',
 } as const;
 
