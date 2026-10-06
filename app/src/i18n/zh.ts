@@ -309,6 +309,14 @@ export const zh = {
   'error.unknown.fix': '返回上一页后重试',
 
   // ── 通用动作（动词开头；宪法 10.4 要求可执行）──────────────────
+  'canteen.review.title': '写点评',
+  'canteen.review.rating': '评级',
+  'canteen.review.chooseRating': '请选择一个评级档位',
+  'canteen.review.content': '正文',
+  'canteen.review.contentHelp': '写下用餐体验，最多300字；点评匿名展示',
+  'canteen.review.tooLong': '正文最多300字，请删减后再提交',
+  'canteen.review.images': '图片',
+  'canteen.review.tooManyImages': '最多添加3张图片',
   'action.retry': '重试',
   'action.back': '返回',
   'action.close': '关闭',

@@ -302,6 +302,14 @@ export const en: Record<MessageKey, string> = {
   'error.unknown.fix': 'Go back, then retry',
 
   // ── Actions (verb first) ─────────────────────────────────────
+  'canteen.review.title': 'Write review',
+  'canteen.review.rating': 'Rating',
+  'canteen.review.chooseRating': 'Choose a rating tier',
+  'canteen.review.content': 'Review',
+  'canteen.review.contentHelp': 'Describe your meal in up to 300 characters. Reviews are anonymous',
+  'canteen.review.tooLong': 'Keep the review within 300 characters, then submit again',
+  'canteen.review.images': 'Images',
+  'canteen.review.tooManyImages': 'Add up to 3 images',
   'action.retry': 'Retry',
   'action.back': 'Back',
   'action.close': 'Close',
