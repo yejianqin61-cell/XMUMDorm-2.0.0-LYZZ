@@ -834,6 +834,74 @@ router.get('/items/:id/chat/threads', authenticateToken, async (req, res) => {
   }
 });
 
+// ============================================
+// 我的全部私信会话（买家 + 卖家两侧合并）
+// GET /api/marketplace/chat/threads?limit=
+// ------------------------------------------------------------
+// 为什么需要它（P2B-02）：原有的线程列表是**per-item 且仅卖家**（上面那条），
+// 于是"买家/卖家都看不到自己所有的会话"——买家只能重新点开商品才能找到旧会话。
+// migrations/029 已经把两侧索引建好了（seller_user_id / buyer_user_id + last_message_at），
+// 所以这里只是一条查询，**不需要迁移**。
+// ============================================
+router.get('/chat/threads', authenticateToken, async (req, res) => {
+  try {
+    const userId = Number(req.user.id);
+    const limitNum = clamp(toInt(req.query.limit, 50), 1, 100);
+
+    const rows = await query(
+      `SELECT t.id, t.item_id, t.seller_user_id, t.buyer_user_id, t.last_message_at,
+              t.seller_last_read_at, t.buyer_last_read_at,
+              i.title AS item_title, i.deleted_at AS item_deleted_at,
+              sb.username AS seller_username, sb.nickname AS seller_nickname, sb.avatar AS seller_avatar,
+              bb.username AS buyer_username, bb.nickname AS buyer_nickname, bb.avatar AS buyer_avatar,
+              (SELECT m.content FROM marketplace_chat_messages m
+                WHERE m.thread_id = t.id ORDER BY m.created_at DESC, m.id DESC LIMIT 1) AS last_content,
+              (SELECT COUNT(*) FROM marketplace_chat_messages m3
+                WHERE m3.thread_id = t.id
+                  AND (
+                    (t.seller_user_id = ? AND m3.sender_user_id = t.buyer_user_id
+                      AND (t.seller_last_read_at IS NULL OR m3.created_at > t.seller_last_read_at))
+                    OR
+                    (t.buyer_user_id = ? AND m3.sender_user_id = t.seller_user_id
+                      AND (t.buyer_last_read_at IS NULL OR m3.created_at > t.buyer_last_read_at))
+                  )) AS unread_count
+         FROM marketplace_chat_threads t
+         JOIN marketplace_items i ON i.id = t.item_id
+         LEFT JOIN users sb ON sb.id = t.seller_user_id
+         LEFT JOIN users bb ON bb.id = t.buyer_user_id
+        WHERE t.seller_user_id = ? OR t.buyer_user_id = ?
+        ORDER BY t.last_message_at DESC, t.id DESC
+        LIMIT ${limitNum}`,
+      [userId, userId, userId, userId]
+    );
+
+    const list = (rows || []).map((r) => {
+      const iAmSeller = Number(r.seller_user_id) === userId;
+      const peer = iAmSeller
+        ? { id: r.buyer_user_id, username: r.buyer_username, nickname: r.buyer_nickname, avatar: r.buyer_avatar }
+        : { id: r.seller_user_id, username: r.seller_username, nickname: r.seller_nickname, avatar: r.seller_avatar };
+      return {
+        thread_id: r.id,
+        item: { id: r.item_id, title: r.item_title || null, available: !r.item_deleted_at },
+        role: iAmSeller ? 'seller' : 'buyer',
+        peer: {
+          id: peer.id,
+          name: formatUserDisplayName(peer),
+          avatar: peer.avatar ? assetUrl(peer.avatar) : null,
+        },
+        last_message_at: r.last_message_at || null,
+        last_content: r.last_content || null,
+        unread_count: Number(r.unread_count || 0),
+      };
+    });
+
+    res.status(200).json({ status: 0, message: 'ok', data: { list } });
+  } catch (e) {
+    console.error('marketplace my chat threads error:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
 // 获取某线程消息（买家或卖家可访问）
 router.get('/chat/threads/:threadId/messages', authenticateToken, async (req, res) => {
   try {
