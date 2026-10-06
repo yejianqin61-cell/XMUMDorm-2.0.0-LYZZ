@@ -8,7 +8,7 @@ jest.mock('../../../shared/api/canteen', () => ({ getProduct: jest.fn(), getProd
 const api = require('../../../shared/api/canteen') as Record<string, jest.Mock>;
 beforeEach(async () => {
   await clearNamespace(); jest.clearAllMocks();
-  api.getProduct.mockResolvedValue({ product: { id: 7, shop_id: 2, name: 'Rice', images: [] }, comments: { list: [], page: 1, pageSize: 10, hasMore: true } });
+  api.getProduct.mockResolvedValue({ id: 7, shop_id: 2, name: 'Rice', images: [], comments: { list: [], page: 1, pageSize: 10, hasMore: true } });
 });
 it('keeps the detail visible and offers retry when a comment page fails', async () => {
   api.getProductCommentsRaw.mockRejectedValue({ kind: 'offline' });

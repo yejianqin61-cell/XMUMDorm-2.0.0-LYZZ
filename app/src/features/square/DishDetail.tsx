@@ -45,7 +45,11 @@ import {
   type CanteenComment,
   type CanteenProductDetail,
 } from './canteen';
-import { useCanteenResource } from './useCanteenResource';
+import { useCanteenResource, toResourceError } from './useCanteenResource';
+import type { AppError } from '@/i18n/errors';
+import { canteenCacheKey } from './canteen';
+import { OfflineBanner } from '@/components/ui/OfflineBanner';
+import { canteenRevision } from './canteenCache';
 
 /** 翻页追加的评论（首屏那一页由详情接口给） */
 type ExtraComments = {
@@ -68,16 +72,25 @@ export function DishDetail(): React.ReactElement {
   const detail = useCanteenResource<CanteenProductDetail>(
     () => (validId ? getProduct(productId) : Promise.resolve(null)),
     normalizeProductDetail,
-    [productId, validId]
+    [productId, validId],
+    { key: canteenCacheKey('product', productId), ttlMs: 60000 }
   );
 
   const [extra, setExtra] = React.useState<ExtraComments>(NO_EXTRA);
   const [loadingMore, setLoadingMore] = React.useState(false);
+  const [moreError, setMoreError] = React.useState<AppError | null>(null);
+  const pagingVersion = React.useRef(0);
+  const pagingBusy = React.useRef(false);
 
   // 换菜品要清掉上一道菜的追加页（否则会把两道菜的评论混在一起）
   React.useEffect(() => {
+    pagingVersion.current += 1;
+    pagingBusy.current = false;
+    setLoadingMore(false);
+    setMoreError(null);
     setExtra(NO_EXTRA);
-  }, [productId]);
+    return () => { pagingVersion.current += 1; pagingBusy.current = false; };
+  }, [productId, detail.data]);
 
   const firstPage = detail.data?.comments ?? null;
   const comments = React.useMemo(
@@ -89,28 +102,37 @@ export function DishDetail(): React.ReactElement {
   const canLoadMore = firstPage !== null && (extra.page === 0 ? firstPage.hasMore : extra.hasMore);
 
   const loadMore = async (): Promise<void> => {
-    if (firstPage === null || loadingMore) return;
+    if (firstPage === null || pagingBusy.current) return;
+    pagingBusy.current = true;
     setLoadingMore(true);
+    setMoreError(null);
+    const version = canteenRevision();
+    const request = pagingVersion.current;
+    const active = () => request === pagingVersion.current && version === canteenRevision();
     try {
       const nextPage = (extra.page === 0 ? firstPage.page : extra.page) + 1;
       const { page, pageSize } = commentPageParams(nextPage, firstPage.pageSize || 10);
       const raw = await getProductCommentsRaw(productId, { page, pageSize });
       const parsed = normalizeCommentPage(raw);
-      if (parsed !== null) {
+      if (parsed === null) throw { kind: 'unknown' };
+      if (active()) {
         // ⚠️ 合并时**按 id 去重**：`created_at ASC` 的列表在有新评论时会整体后移
         setExtra({ list: mergeCommentPages(extra.list, parsed.list), page: parsed.page, hasMore: parsed.hasMore });
       }
+    } catch (error) {
+      if (active()) setMoreError(toResourceError(error));
     } finally {
-      setLoadingMore(false);
+      if (request === pagingVersion.current) { pagingBusy.current = false; setLoadingMore(false); }
     }
   };
 
   return (
     <Screen testID="screen-dish" titleKey="canteen.dishTitle" bottomMode="own">
       <View style={{ flex: 1, padding: theme.space('space_4'), gap: theme.space('space_4') }}>
-        {detail.loading ? (
+        {detail.stale ? <OfflineBanner testID="dish-stale" variant="stale" message={t('canteen.cache.stale')} actionLabel={t('action.refresh')} onAction={detail.reload} /> : null}
+        {detail.loading && detail.data === null ? (
           <LoadingState testID="dish-loading" />
-        ) : detail.error !== null ? (
+        ) : detail.error !== null && detail.data === null ? (
           <ErrorState testID="dish-error" error={detail.error} onAction={detail.reload} />
         ) : detail.data === null ? (
           <EmptyState
@@ -234,6 +256,7 @@ export function DishDetail(): React.ReactElement {
               </View>
             )}
 
+            {moreError ? <ErrorState testID="dish-comments-error" error={moreError} onAction={() => void loadMore()} /> : null}
             {canLoadMore ? (
               <Button
                 testID="dish-load-more"

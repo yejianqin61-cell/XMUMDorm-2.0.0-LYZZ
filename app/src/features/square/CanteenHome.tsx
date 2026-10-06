@@ -28,12 +28,13 @@ import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { LoadingState } from '@/components/ui/LoadingState';
+import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import { QuickActionGrid, type QuickAction } from '@/components/ui/QuickActionGrid';
 import { Screen } from '@/components/ui/Screen';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { useToast } from '@/components/ui/Toast';
 import { getRegions, pickRandomMeal } from '../../../../shared/api/canteen';
-import { normalizeRegions } from './canteen';
+import { normalizeRegions, canteenCacheKey, CANTEEN_CACHE_TTL_MS } from './canteen';
 import { useCanteenResource } from './useCanteenResource';
 
 export function CanteenHome(): React.ReactElement {
@@ -43,7 +44,7 @@ export function CanteenHome(): React.ReactElement {
   const toast = useToast();
   const [picking, setPicking] = React.useState(false);
 
-  const regions = useCanteenResource(getRegions, normalizeRegions, []);
+  const regions = useCanteenResource(getRegions, normalizeRegions, [], { key: canteenCacheKey('regions'), ttlMs: CANTEEN_CACHE_TTL_MS.regions });
 
   const actions = React.useMemo<readonly QuickAction[]>(
     () =>
@@ -80,9 +81,10 @@ export function CanteenHome(): React.ReactElement {
     <Screen testID="screen-canteen" titleKey="canteen.title" bottomMode="own">
       <View style={{ flex: 1, padding: theme.space('space_4'), gap: theme.space('space_4') }}>
         <Button testID="canteen-search-entry" label={t('canteen.search.title')} variant="secondary" onPress={() => router.push('/canteen/search')} />
-        {regions.loading ? (
+        {regions.stale ? <OfflineBanner testID="canteen-stale" variant="stale" message={t('canteen.cache.stale')} actionLabel={t('action.refresh')} onAction={regions.reload} /> : null}
+        {regions.loading && regions.data === null ? (
           <LoadingState testID="canteen-loading" />
-        ) : regions.error !== null ? (
+        ) : regions.error !== null && regions.data === null ? (
           <ErrorState testID="canteen-error" error={regions.error} onAction={regions.reload} />
         ) : actions.length === 0 ? (
           <EmptyState

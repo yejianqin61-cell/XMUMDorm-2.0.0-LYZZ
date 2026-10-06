@@ -35,6 +35,8 @@ import {
   type CanteenProduct,
 } from './canteen';
 import { useCanteenResource } from './useCanteenResource';
+import { canteenCacheKey, CANTEEN_CACHE_TTL_MS } from './canteen';
+import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import { normalizeRanked, type RankedProduct } from './RegionShops';
 
 export function ShopMenu(): React.ReactElement {
@@ -52,7 +54,8 @@ export function ShopMenu(): React.ReactElement {
   const shop = useCanteenResource(
     () => (validId ? getShop(shopId) : Promise.resolve(null)),
     normalizeShopDetail,
-    [shopId, validId]
+    [shopId, validId],
+    { key: canteenCacheKey('shop', shopId), ttlMs: 60000 }
   );
   const products = useCanteenResource(
     () =>
@@ -60,12 +63,14 @@ export function ShopMenu(): React.ReactElement {
         ? getProducts(shopId, categoryId === null ? {} : { category_id: categoryId })
         : Promise.resolve([]),
     normalizeProducts,
-    [shopId, validId, categoryId]
+    [shopId, validId, categoryId],
+    { key: canteenCacheKey('products', `${shopId}:${categoryId ?? 'all'}`), ttlMs: 60000 }
   );
   const hot = useCanteenResource<readonly RankedProduct[]>(
     () => (validId ? getShopHotProducts(shopId) : Promise.resolve([])),
     normalizeRanked,
-    [shopId, validId]
+    [shopId, validId],
+    { key: canteenCacheKey('shop-hot', shopId), ttlMs: CANTEEN_CACHE_TTL_MS.rankings }
   );
 
   const categories = shop.data?.categories ?? [];
@@ -73,9 +78,10 @@ export function ShopMenu(): React.ReactElement {
   return (
     <Screen testID="screen-shop-menu" titleKey="canteen.menuTitle" bottomMode="own">
       <View style={{ flex: 1 }}>
-        {shop.loading ? (
+        {shop.stale || products.stale || hot.stale ? <OfflineBanner testID="shop-stale" variant="stale" message={t('canteen.cache.stale')} actionLabel={t('action.refresh')} onAction={() => { shop.reload(); products.reload(); hot.reload(); }} /> : null}
+        {shop.loading && shop.data === null ? (
           <LoadingState testID="shop-loading" />
-        ) : shop.error !== null ? (
+        ) : shop.error !== null && shop.data === null ? (
           <ErrorState testID="shop-error" error={shop.error} onAction={shop.reload} />
         ) : (
           <ListScreen<CanteenProduct>
@@ -99,10 +105,10 @@ export function ShopMenu(): React.ReactElement {
               />
             )}
             pagination={{
-              refresh: 'idle',
+              refresh: products.loading ? 'loading' : products.error ? 'error' : 'idle',
               append: 'idle',
-              error: null,
-              errorScope: null,
+              error: products.error,
+              errorScope: products.error ? 'refresh' : null,
               hasMore: false,
             }}
             onRefresh={products.reload}
