@@ -242,8 +242,18 @@ L7 域专用    15 个 ← CommentThread / CommentItem / CommentComposer / Reply
 | **K17** | `EntityCard` | **域卡片唯一实现** | **13 个域变体**：`post` `trending` `campus` `confession` `review` `food` `shop` `listing` `club` `activity` `errand` `article` `notification` | **22** | `S-01`–`S-06` `S-09` `S-12` `S-15` `S-17` `S-21` `S-22` `S-26` `S-30` `T-09` `C-01` `C-02` `C-04` `M-03` `M-04` |
 | **K18** | `MediaGrid` | 图片网格（1/2/3/4/9 宫格） | `grid` `hero`（头图） | **11** | `C-02` `S-04` `S-06` `S-10` `S-20` `S-21` `S-23` `S-32` `M-03` `P-02` `F-01` |
 | **K20** | `FilterChips` | 可横滑筛选 chips（标签/分类/年份） | `single` `multi` `withCount` | **6** | `S-22` `S-26` `T-09` `C-03` `C-04` `C-06` |
-| **K22** | `SegmentedTabs` | 页内分段切换（**2–3 项，等宽**） | `text` `textWithCount` | **14** | `S-02` `S-05` `S-12`–`S-15` `S-17` `S-22` `S-24`（×2）`S-26` `T-06` `T-09` `C-01` `F-01` |
-**已移除**：`K19 ImageCarousel`（轮播由 `D24 BannerSlot` 承担；帖内多图由 `K18` + `D21` 承担 → **0 消费者**）、`K21 Tabs`（**>5 项 underline tab 本轮无消费者**，所有剩余 tab 集合 ≤3 且都用 `SegmentedTabs`）。
+| **K22** | `SegmentedTabs` | 页内**数据切换**（`tab` 角色 + 指示器）—— **⛔ 本轮不建**（与 `C14` 的分工见本节末的 P2B-05 裁决） | `text` `textWithCount` | **0（本轮）** | P2B-05 裁决 |
+**已移除**：`K19 ImageCarousel`（轮播由 `D24 BannerSlot` 承担；帖内多图由 `K18` + `D21` 承担 → **0 消费者**）、`K21 Tabs`（**>5 项 underline tab 本轮无消费者**，所有剩余 tab 集合 ≤3，改用页内段控 —— 本轮即 `C14 SegmentedControl`，见下方裁决）。
+
+> ### ⚠️ `K22 SegmentedTabs` 与 `C14 SegmentedControl` 的分工（**P2B-05 裁决**，2026-10-06）
+> **问题**：`C14` 已经具备 `withCount`（`app/src/components/ui/SegmentedControl.tsx:29-36`），与 `K22` 声明的 `text`/`textWithCount` 形态**重叠** —— 再建一个 `K22` 就是 **9.14-① 同语义多层**（本表第 1–15 行删掉的那些组件，一半是这么来的）。
+> **裁决**：
+> 1. **`C14` = 控件**：`radio` 角色、值参与提交或查询参数；页内**筛选/数据切换**（如 `F-01` 的 互动/交易/系统）用它。
+> 2. **`K22` = 页面级数据切换**：`tab` 角色 + 指示器形态。**本轮不建** —— 无消费者就抽象正是 9.14-③ 要拦的"为复用而抽象"。
+> 3. `F-01` 的分类切换 **本轮用 `C14 withCount`**，且 ⛔ **不进 `K22` 的位子、也不进 `ListScreen` 的 `tabs` 槽位**（宪法 4.8.1-R4：导航 Tab ≠ 筛选组件）。
+> 4. 一级 Tab **内部子栏目**仍然只能用 `TopTabStrip`（宪法 4.8 / 骨架规范 §4）→ 三者不得互相冒充。
+> **状态**：**【提案·需所有者签字】**。本节是**裁决记录**，不是已批准规格；所有者追认后，`K22` 的 14 个引用页按同一判据逐页选型，并把本行的"本轮不建"改成正式规格。
+> **配套用例**：`app/src/__tests__/p2b-05-segmented-ruling.test.ts` —— 它同时盯着"`K22` 没有被偷偷建出来"和"`C14` 的 `withCount` 还在"（本裁决的**前提**）。
 > **`K17 EntityCard` 是"组件库必须被消费"的关键设计**：Web 侧同一原型在不同域被重复手写（`SquareCampusFeed`、`ConfessionWall`、`ClubPostDetail` 各写一套卡），且 `square/` 下 11 个组件里 7 个是死代码。App 侧**一个 `EntityCard` + 13 个域变体**，**不允许为某个域另写卡片**。
 > **`K14` 与 `K13` 不得互换、不得混用**（宪法 4.1.1）：万能墙匿名是后端写死的不变量，`AnonAuthorLabel` **断开头像、昵称、等级、跳转四个出口**。
 ### 2.4 L5 状态与四态（6，**不变**）
