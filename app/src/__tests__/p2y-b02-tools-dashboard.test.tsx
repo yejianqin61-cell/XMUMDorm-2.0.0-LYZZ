@@ -43,5 +43,5 @@ it('renders useful empty sections with routes to import and add todos', async ()
 it('renders the same dashboard in English', async () => {
   const view = await renderApp(<ToolsDashboardContent />, { locale: 'en' });
   await waitFor(() => expect(view.getByText('Today’s schedule')).toBeTruthy());
-  expect(view.getByText('School systems')).toBeTruthy();
+  expect(view.getAllByText('School systems')).toHaveLength(2);
 });
