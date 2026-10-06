@@ -199,6 +199,17 @@ export const zh = {
   'me.posts.empty.title': '还没有帖子',
   'me.posts.empty.description': '发布后就会出现在这里',
   'me.posts.empty.action': '去发布',
+  // ── 设置与法务（M-13/M-18/M-19/M-20；P2C-05 起）────────────────────
+  'me.settings.title': '设置',
+  'me.settings.language': '语言',
+  'me.settings.language.zh': '中文',
+  'me.settings.language.en': 'English',
+  'me.settings.more': '更多',
+  'me.legal.docs': '法律文本',
+  'me.legal.privacy': '隐私政策',
+  'me.legal.terms': '服务条款',
+  'me.legal.stale': '显示的是内置版本',
+  'me.legal.empty': '这一页没有内容',
   'screen.mailbox': '信箱',
   // ── 私信（M-11 / M-12；P2B-03 起）────────────────────────────────────
   'mailbox.conversations.title': '私信',

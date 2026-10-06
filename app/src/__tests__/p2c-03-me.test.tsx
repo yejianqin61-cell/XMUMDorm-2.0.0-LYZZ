@@ -204,8 +204,16 @@ describe('P2C-03 M-01 我的仪表盘', () => {
 
     it('每个 `available: true` 的入口，路由文件**真的在磁盘上**（⛔ 不做 404 入口）', () => {
       for (const entry of ME_ENTRIES.filter((item) => item.available)) {
-        const file = path.join(APP_DIR, `${entry.route.replace(/^\//, '')}.tsx`);
-        expect({ route: entry.route, exists: fs.existsSync(file) }).toEqual({ route: entry.route, exists: true });
+        const rel = entry.route.replace(/^\//, '');
+        const candidates = [
+          path.join(APP_DIR, `${rel}.tsx`),
+          // ⚠️ 也要认 index 路由（`/me/legal` 落在 `me/legal/index.tsx`）
+          path.join(APP_DIR, rel, 'index.tsx'),
+        ];
+        expect({ route: entry.route, exists: candidates.some((file) => fs.existsSync(file)) }).toEqual({
+          route: entry.route,
+          exists: true,
+        });
       }
     });
 

@@ -8,6 +8,9 @@
  *
  * 依据：`docs/app/task/phase-2/P2C-04-M04我的帖子.md`。
  */
+import * as fs from 'fs';
+import * as path from 'path';
+
 import * as React from 'react';
 import { fireEvent, waitFor } from '@testing-library/react-native';
 
@@ -184,7 +187,11 @@ describe('P2C-04 M-04 我的帖子', () => {
   describe('TC-P2C-04-6A · 入口账本随本任务更新', () => {
     it('`posts` 已落地 → 从缺口账本里删掉；路由文件真的在磁盘上', () => {
       expect(ME_ENTRIES.find((entry) => entry.key === 'posts')?.available).toBe(true);
-      expect([...EXPECTED_UNAVAILABLE]).toEqual(['settings', 'about']);
+      // ⛔ 不写死"账本里还剩谁"（那是快照，后续任务落地时必过期）—— 只断言本任务的相关项已移出
+      expect(EXPECTED_UNAVAILABLE).not.toContain('posts');
+      expect(
+        fs.existsSync(path.resolve(__dirname, '..', 'app', 'me', 'posts.tsx'))
+      ).toBe(true);
     });
   });
 });

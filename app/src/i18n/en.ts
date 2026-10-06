@@ -193,6 +193,17 @@ export const en: Record<MessageKey, string> = {
   'me.posts.empty.title': 'No posts yet',
   'me.posts.empty.description': 'Your posts will show up here',
   'me.posts.empty.action': 'Write one',
+  // Settings & legal (M-13/M-18/M-19/M-20; from P2C-05)
+  'me.settings.title': 'Settings',
+  'me.settings.language': 'Language',
+  'me.settings.language.zh': '中文',
+  'me.settings.language.en': 'English',
+  'me.settings.more': 'More',
+  'me.legal.docs': 'Legal',
+  'me.legal.privacy': 'Privacy Policy',
+  'me.legal.terms': 'Terms of Service',
+  'me.legal.stale': 'Showing the built-in version',
+  'me.legal.empty': 'This page has no content',
   'screen.mailbox': 'Mailbox',
   // Direct messages (M-11 / M-12; from P2B-03)
   'mailbox.conversations.title': 'Messages',
