@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>社团信息大全 · UI 设计原型</title>
+<style>
+  /* ===== 真实令牌（取自 frontend/src/lib/retroui-theme.css）===== */
+  :root{
+    --ru-bg:#F5EFEA; --ru-fg:#122E8A; --ru-card:#FFF; --ru-muted:#D6DDF0;
+    --ru-muted-fg:#4A5A8A; --ru-primary:#122E8A; --ru-primary-hover:#0F2570;
+    --ru-destructive:#E63946;
+    --wa:#128C7E; --wa-bg:#E7F9EE;
+    --ig:#C13584; --ig-bg:#FDEBF3;
+    --xhs:#FF2442; --xhs-bg:#FFECEF;
+    --warn-bg:#FFF4D6;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; padding:0 0 60px;
+    background:var(--ru-bg); color:var(--ru-fg);
+    font-family:"PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .page{max-width:860px; margin:0 auto; padding:20px 12px 0;}
+
+  /* ===== 标题 ===== */
+  .title{font-size:22px; font-weight:900; letter-spacing:-.03em; text-transform:uppercase;}
+  .sub{margin-top:6px; font-size:13px; color:var(--ru-muted-fg); font-weight:600;}
+
+  /* ===== 工具条（吸顶）===== */
+  .toolbar{
+    position:sticky; top:0; z-index:10;
+    background:var(--ru-bg);
+    padding:12px 0 10px; margin-top:12px;
+    border-bottom:2px solid var(--ru-fg);
+  }
+  .search{
+    display:flex; align-items:center; gap:8px;
+    border:2px solid var(--ru-fg); background:#fff;
+    box-shadow:4px 4px 0 0 var(--ru-fg);
+    padding:8px 12px;
+  }
+  .search input{
+    border:0; outline:0; background:transparent; width:100%;
+    font:inherit; font-size:14px; font-weight:600; color:var(--ru-fg);
+  }
+  .search input::placeholder{color:var(--ru-muted-fg); font-weight:500;}
+  .chips{display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;}
+  .chip{
+    font:inherit; font-size:12px; font-weight:700; cursor:pointer;
+    border:2px solid var(--ru-fg); background:#fff; color:var(--ru-fg);
+    padding:3px 9px; transition:transform .12s, box-shadow .12s;
+    box-shadow:2px 2px 0 0 var(--ru-fg);
+  }
+  .chip:hover{transform:translate(1px,1px); box-shadow:none;}
+  .chip.on{background:var(--ru-fg); color:#fff;}
+
+  .countline{
+    display:flex; justify-content:space-between; align-items:baseline;
+    margin:14px 0 10px; font-size:12px; font-weight:700; color:var(--ru-muted-fg);
+  }
+
+  /* ===== 列表行 ===== */
+  .list{display:flex; flex-direction:column; gap:10px;}
+  .row{
+    display:grid; grid-template-columns:52px 1fr; gap:12px;
+    border:2px solid var(--ru-fg); background:var(--ru-card);
+    box-shadow:4px 4px 0 0 var(--ru-fg);
+    padding:12px; transition:transform .12s, box-shadow .12s;
+  }
+  .row:hover{transform:translate(1px,1px); box-shadow:2px 2px 0 0 var(--ru-fg);}
+  .mono{
+    width:52px; height:52px;
+    display:flex; align-items:center; justify-content:center;
+    border:2px solid var(--ru-fg); background:var(--ru-muted);
+    font-size:13px; font-weight:900; letter-spacing:-.02em; text-align:center;
+    line-height:1.05; padding:2px; word-break:break-all;
+  }
+  .row-top{display:flex; align-items:flex-start; gap:8px; flex-wrap:wrap;}
+  .name-wrap{flex:1 1 auto; min-width:0;}
+  .row-top .badge{flex:0 0 auto;}
+  .name{font-size:15px; font-weight:900; letter-spacing:-.01em; line-height:1.3;}
+  .name-en{font-size:12px; font-weight:600; color:var(--ru-muted-fg); margin-top:1px;}
+  .badge{
+    border:2px solid var(--ru-fg); background:var(--ru-muted);
+    font-size:11px; font-weight:800; padding:1px 7px; white-space:nowrap;
+  }
+  .badge.warn{background:var(--warn-bg);}
+  .badge--spacer{margin-left:auto;}
+
+  .chans{display:flex; flex-wrap:wrap; gap:6px; margin-top:9px;}
+  .chan{
+    display:inline-flex; align-items:stretch;
+    border:2px solid var(--ru-fg);
+    box-shadow:2px 2px 0 0 var(--ru-fg);
+    font-size:12px; font-weight:700; overflow:hidden;
+    transition:transform .12s, box-shadow .12s;
+  }
+  .chan:hover{transform:translate(1px,1px); box-shadow:none;}
+  .chan a{display:inline-flex; align-items:center; gap:5px; padding:3px 8px;
+    text-decoration:none; color:var(--ru-fg);}
+  .chan button{
+    border:0; border-left:2px solid var(--ru-fg); cursor:pointer;
+    background:transparent; color:var(--ru-fg); padding:0 6px; font-size:12px;
+  }
+  .chan button:hover{background:var(--ru-fg); color:#fff;}
+  .chan--wa{background:var(--wa-bg);} .chan--wa .dot{background:var(--wa);}
+  .chan--ig{background:var(--ig-bg);} .chan--ig .dot{background:var(--ig);}
+  .chan--xhs{background:var(--xhs-bg);} .chan--xhs .dot{background:var(--xhs);}
+  .chan--todo{background:#fff; box-shadow:none; border-style:dashed; color:var(--ru-muted-fg);}
+  .chan--todo a{color:var(--ru-muted-fg);}
+  .dot{width:8px; height:8px; display:inline-block; border:1px solid var(--ru-fg); flex:0 0 auto;}
+  .role{font-weight:600; color:var(--ru-muted-fg);}
+
+  /* ===== 底部 CTA ===== */
+  .cta{
+    margin-top:20px; border:2px solid var(--ru-fg); background:#fff;
+    box-shadow:4px 4px 0 0 var(--ru-fg); padding:14px;
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  }
+  .cta-txt{font-size:13px; font-weight:700; flex:1; min-width:200px;}
+  .cta-txt span{display:block; font-size:12px; font-weight:600; color:var(--ru-muted-fg); margin-top:3px;}
+  .btn{
+    font:inherit; font-size:13px; font-weight:800; cursor:pointer;
+    border:2px solid var(--ru-fg); background:var(--ru-primary); color:#fff;
+    padding:6px 14px; box-shadow:4px 4px 0 0 var(--ru-fg);
+    transition:transform .12s, box-shadow .12s; text-decoration:none; display:inline-block;
+  }
+  .btn:hover{transform:translate(2px,2px); box-shadow:none; background:var(--ru-primary-hover);}
+
+  .note{
+    margin-top:16px; font-size:12px; font-weight:600; color:var(--ru-muted-fg);
+    border-left:4px solid var(--ru-fg); padding-left:10px; line-height:1.7;
+  }
+
+  /* 窄屏：底部 CTA 由横排改竖排，按钮占满整行 */
+  @media (max-width:520px){
+    .cta{flex-direction:column; align-items:stretch;}
+    .cta .btn{width:100%; text-align:center;}
+    .mono{width:44px; height:44px; font-size:11px;}
+    .row{grid-template-columns:44px 1fr; gap:10px;}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="title">社团信息大全</div>
+  <div class="sub">全校 22 个社团的联系方式 · 点一下直接联系，不用再到处问人</div>
+
+  <div class="toolbar">
+    <label class="search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#122E8A" stroke-width="2.5" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" placeholder="搜社团名 / 联系人 / IG 账号…" autocomplete="off" />
+    </label>
+    <div class="chips" id="chips"></div>
+  </div>
+
+  <div class="countline">
+    <span id="count"></span>
+    <span>按名称 A→Z</span>
+  </div>
+
+  <div class="list" id="list"></div>
+
+  <div class="cta">
+    <div class="cta-txt">
+      没找到你的社团？或者上面的信息过期了？
+      <span>社团换届后联系方式经常变，欢迎随时告诉我们更新</span>
+    </div>
+    <a class="btn" href="#">联系我们补充</a>
+  </div>
+
+  <div class="note">
+    原型说明：数据来自你给的那份名单，电话已归一化成 wa.me 格式。<br />
+    标 <b>待确认 / 待核实</b> 的是原始数据本身有问题的地方（IG 只给了显示名、号码位数不对），没有替你猜。
+  </div>
+</div>
+
+<script>
+/* ===== 分类 ===== */
+const CATS = [
+  { key:'all',      zh:'全部',   n:22 },
+  { key:'sports',   zh:'运动',   n:8  },
+  { key:'music',    zh:'音乐',   n:3  },
+  { key:'arts',     zh:'艺术',   n:3  },
+  { key:'academic', zh:'学术商科', n:3 },
+  { key:'hobby',    zh:'兴趣',   n:2  },
+  { key:'culture',  zh:'文化',   n:2  },
+  { key:'volunteer',zh:'志愿',   n:1  },
+];
+
+/* ===== 真实数据（22 个社团，电话已归一化）=====
+   wa      = wa.me 用的纯数字（去掉 + / 空格 / 横杠）
+   igPending = 原文只给了 IG 显示名、不是 handle，需人工确认
+   review  = 原始数据存疑的说明
+*/
+const CLUBS = [
+  { mono:'AI', name:'AIESEC in XMUM', cat:'academic',
+    wa:[{n:null, num:'60147327720', show:'+60 14-732 7720'}], ig:'aiesec_xmum', xhs:null },
+
+  { mono:'XMPO', name:'XMUM Philharmonic Orchestra', cat:'music',
+    wa:[{n:'Ye Lun', num:'60175769681', show:'+60 17 576 9681'},
+        {n:'Wei Ning', num:'601155031393', show:'+60 11 5503 1393'},
+        {n:'Weng Lok', num:'60174597068', show:'+60 17 459 7068'}], ig:'xmum_philharmonic', xhs:null },
+
+  { mono:'FC', name:'Xiamen University Malaysia Football Club', cat:'sports',
+    wa:[{n:'Nikolai', num:'60104347831', show:'+60 10-434 7831'},
+        {n:'Dong Yanzhe', num:'60177957076', show:'+60 17-795 7076'}], ig:'XMUMFC', xhs:null },
+
+  { mono:'KD', name:'XMUM Kendo Club', cat:'sports',
+    wa:[{n:null, num:'60189841808', show:'+60 18-984 1808'}], ig:'xmum_kendo', xhs:null },
+
+  { mono:'BDM', name:'XMUM Badminton Club', cat:'sports',
+    wa:[{n:'Sherry', num:'60176211470', show:'+60 17-621 1470'}], ig:'xmumbadminton_club', xhs:null },
+
+  { mono:'BGS', name:'Board Game Society', cat:'hobby',
+    wa:[{n:null, num:'601111004421', show:'+60 11-1100 4421'}], ig:'xmum_boardgameclub', xhs:null },
+
+  { mono:'TT', name:'XMUM Table Tennis Club', cat:'sports',
+    wa:[{n:null, num:'60174011982', show:'+60 17-401 1982'}], ig:'xmum.tabletennis', xhs:null },
+
+  { mono:'UF', name:'XMUM Ultimate Frisbee Club', cat:'sports',
+    wa:[{n:null, num:'60165383509', show:'+60 16-538 3509'}], ig:'xmum_krakens', xhs:null },
+
+  { mono:'VA', name:'Visual Art Club', cat:'arts',
+    wa:[{n:null, num:'60129824134', show:'+60 12-982 4134'}], ig:'xmumvisualartclub', xhs:null },
+
+  { mono:'雅南', name:'Xiamen University Malaysia Yanan Chinese Orchestra', nameZh:'厦门大学马校雅南华乐团', cat:'music',
+    wa:[{n:'Sabreena', num:'6016411123', show:'016-411 123', review:'号码只有 9 位，马来西亚手机号应为 10–11 位'}],
+    ig:'xmum_yco', xhs:'https://xhslink.cn/m/42x97Ehhmrn', review:'WhatsApp 号码待核实' },
+
+  { mono:'DC', name:'XMUM Dance Club', cat:'arts',
+    wa:[{n:null, num:'601111996732', show:'+60 11-1199 6732'}], ig:'xmum_danceclub', xhs:null },
+
+  { mono:'CF', name:'XMUM Coffee Club', nameZh:'The Brewix', cat:'hobby',
+    wa:[{n:null, num:'601110809358', show:'+60 11-1080 9358'}], ig:'xmumcoffeeclub', xhs:null },
+
+  { mono:'OIC', name:'Origin Investment Club', cat:'academic',
+    wa:[{n:'Leong Yew Hoong', role:'President', num:'60173278793', show:'+60 17-327 8793'},
+        {n:'Sherly Patricia Salim', role:'VP', num:'62895392153888', show:'+62 895 3921 53888'},
+        {n:'Marina Novina Putri Bellina', role:'Secretary', num:'60143648226', show:'+60 14-364 8226'}],
+    ig:'xmumoic', xhs:null },
+
+  { mono:'MS', name:'Muslim Society XMUM', cat:'culture',
+    wa:[{n:'Faisal Fareed Bukhari', num:'923457080076', show:'+92 345 7080076'}],
+    ig:'xmum.muslims', xhs:null, review:'原文标注联系人为「Former President」，可能已换届' },
+
+  { mono:'SA', name:'XMUM Student Art Troupe', cat:'arts',
+    wa:[{n:null, num:'60125925613', show:'+60 12-592 5613'}], ig:'xmum_student.arttroupe', xhs:null },
+
+  { mono:'AC', name:'Acrux Cheerleading Club', cat:'sports',
+    wa:[{n:null, num:'60122290327', show:'+60 12-229 0327'}], ig:'xmum_acrux', xhs:null },
+
+  { mono:'24', name:'XMUM 24 Festive Drums Club', cat:'music',
+    wa:[{n:'Nichole', num:'60105599692', show:'+60 10-559 9692'}], ig:'xmum24fd', xhs:null },
+
+  { mono:'DB', name:'Xiamen University Malaysia Diabolo Club', cat:'culture',
+    wa:[{n:'Ng Wu Chuan', num:'60179910306', show:'+60 17-991 0306'}],
+    ig:null, igPending:'Xmum Diabolo Club', xhs:null, review:'Instagram 待确认' },
+
+  { mono:'FT', name:'Fitness Club', cat:'sports',
+    wa:[{n:'Hugo', num:'60103865789', show:'+60 10-386 5789'}],
+    ig:null, igPending:'Xmum Fitness | Gym Club', xhs:null, review:'Instagram 待确认' },
+
+  { mono:'ST', name:'XMUM Speak-T Society', cat:'academic',
+    wa:[{n:'Chiam Hui Yu', num:'60162604567', show:'+60 16-260 4567'}], ig:'xmum_speaktsociety', xhs:null },
+
+  { mono:'YG', name:'XMUM Yoga Club', cat:'sports',
+    wa:[{n:'Teo Ai Wern', num:'60122884929', show:'+60 12-288 4929'},
+        {n:'Tan Yinxin', num:'601159783302', show:'+60 11-5978 3302'},
+        {n:'Loh Ying Li', num:'60102150921', show:'+60 10-215 0921'}], ig:'xmum_yogaclub', xhs:null },
+
+  { mono:'OL', name:'XMUM Omega Leo Club', cat:'volunteer',
+    wa:[{n:'Teoh Sze Thou', num:'60124533539', show:'+60 12-453 3539'}], ig:'omegaleo_xmum', xhs:null },
+];
+
+let cat = 'all';
+let kw = '';
+
+/* ===== 渲染 ===== */
+const chipsEl = document.getElementById('chips');
+const listEl  = document.getElementById('list');
+const countEl = document.getElementById('count');
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function renderChips(){
+  chipsEl.innerHTML = CATS.map((c)=>
+    `<button class="chip${cat===c.key?' on':''}" data-cat="${c.key}">${c.zh} ${c.n}</button>`
+  ).join('');
+}
+function match(c){
+  if (cat !== 'all' && c.cat !== cat) return false;
+  if (!kw) return true;
+  const k = kw.toLowerCase();
+  const hay = [
+    c.name, c.nameZh, c.mono, c.ig, c.igPending,
+    ...(c.wa||[]).map(w=>[w.n,w.role,w.num,w.show].filter(Boolean).join(' ')),
+  ].filter(Boolean).join(' ').toLowerCase();
+  return hay.includes(k);
+}
+/* 复制图标（内联 SVG，比 ⧉ 这种字符可靠）*/
+const COPY_SVG = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="9" y="9" width="11" height="11"/><path d="M5 15V5a1 1 0 0 1 1-1h10"/></svg>';
+
+function chanWa(w){
+  // 名单里有些社团只给了号码、没给联系人。这时显示号码本身，
+  // 比显示一个「WhatsApp」按钮有用得多 —— 用户至少要能核对号码对不对。
+  const label = w.n ? esc(w.n) : esc(w.show);
+  const role  = w.role ? ` <span class="role">${esc(w.role)}</span>` : '';
+  return `<span class="chan chan--wa" title="WhatsApp ${esc(w.show)}">
+      <a href="https://wa.me/${esc(w.num)}" target="_blank" rel="noreferrer noopener">
+        <i class="dot"></i>${label}${role}
+      </a>
+      <button type="button" data-copy="${esc(w.num)}" title="复制号码">${COPY_SVG}</button>
+    </span>`;
+}
+function chanIg(c){
+  if (c.ig){
+    return `<span class="chan chan--ig">
+        <a href="https://instagram.com/${esc(c.ig)}" target="_blank" rel="noreferrer noopener">
+          <i class="dot"></i>@${esc(c.ig)}
+        </a>
+        <button type="button" data-copy="${esc(c.ig)}" title="复制账号">${COPY_SVG}</button>
+      </span>`;
+  }
+  if (c.igPending){
+    return `<span class="chan chan--todo" title="原文只给了显示名「${esc(c.igPending)}」，不是账号 handle">
+        <a><i class="dot"></i>IG 待确认</a>
+      </span>`;
+  }
+  return `<span class="chan chan--todo"><a><i class="dot"></i>暂无 Instagram</a></span>`;
+}
+function chanXhs(c){
+  if (!c.xhs) return '';
+  return `<span class="chan chan--xhs">
+      <a href="${esc(c.xhs)}" target="_blank" rel="noreferrer noopener"><i class="dot"></i>小红书</a>
+    </span>`;
+}
+
+function render(){
+  const rows = CLUBS.filter(match).sort((a,b)=>a.name.localeCompare(b.name,'en'));
+  countEl.textContent = kw || cat!=='all' ? `找到 ${rows.length} 个社团` : `共 ${rows.length} 个社团`;
+  if (!rows.length){
+    listEl.innerHTML = `<div class="row" style="grid-template-columns:1fr;text-align:center">
+        <div style="padding:24px 0">
+          <div style="font-weight:900;font-size:15px">没找到这个社团</div>
+          <div style="font-size:12px;color:var(--ru-muted-fg);font-weight:600;margin-top:6px">
+            换个关键词，或者拉到底部联系我们补充
+          </div>
+        </div></div>`;
+    return;
+  }
+  listEl.innerHTML = rows.map((c)=>{
+    const catZh = (CATS.find(x=>x.key===c.cat)||{}).zh || '';
+    const reviewBadge = c.review ? `<span class="badge warn badge--spacer">⚠ 待核实</span>` : '';
+    const nameHtml = c.nameZh
+      ? `<div class="name">${esc(c.name)}</div><div class="name-en">${esc(c.nameZh)}</div>`
+      : `<div class="name">${esc(c.name)}</div>`;
+    return `<article class="row">
+        <div class="mono">${esc(c.mono)}</div>
+        <div>
+          <div class="row-top">
+            <div class="name-wrap">${nameHtml}</div>
+            <span class="badge">${catZh}</span>
+            ${reviewBadge}
+          </div>
+          <div class="chans">
+            ${(c.wa||[]).map(chanWa).join('')}
+            ${chanIg(c)}
+            ${chanXhs(c)}
+          </div>
+        </div>
+      </article>`;
+  }).join('');
+}
+
+/* ===== 交互 ===== */
+chipsEl.addEventListener('click',(e)=>{
+  const b = e.target.closest('[data-cat]'); if(!b) return;
+  cat = b.dataset.cat; renderChips(); render();
+});
+document.getElementById('q').addEventListener('input',(e)=>{ kw = e.target.value.trim(); render(); });
+listEl.addEventListener('click',(e)=>{
+  const b = e.target.closest('[data-copy]'); if(!b) return;
+  e.preventDefault();
+  const v = b.dataset.copy;
+  (navigator.clipboard?.writeText(v) ?? Promise.reject()).then(()=>{
+    const old = b.textContent; b.textContent='✓';
+    setTimeout(()=>{ b.textContent = old; }, 1200);
+  }).catch(()=>{});
+});
+
+renderChips(); render();
+</script>
+</body>
+</html>

@@ -91,6 +91,15 @@ function ClubsHome() {
             <div className="club-feature-art club-feature-art--mega" aria-hidden />
           </NeoCard>
         </Link>
+        <Link to="/about/club/directory" className="club-feature-link">
+          <NeoCard className="club-feature club-feature--amber w-full">
+            <div className="club-feature-left">
+              <div className="club-feature-title">{isZh ? '社团信息页' : 'Club Info'}</div>
+              <div className="club-feature-sub">{isZh ? '全校社团联系方式' : 'Contacts of all clubs'}</div>
+            </div>
+            <div className="club-feature-art club-feature-art--badge" aria-hidden />
+          </NeoCard>
+        </Link>
         <Link to="/about/club/my" className="club-feature-link">
           <NeoCard className="club-feature club-feature--blue w-full">
             <div className="club-feature-left">

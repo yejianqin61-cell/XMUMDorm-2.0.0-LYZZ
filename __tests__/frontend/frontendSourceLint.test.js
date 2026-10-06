@@ -31,8 +31,12 @@ describe('RetroUI Avatar：头像渲染不得引用未定义变量', () => {
     avatar.slice(avatar.indexOf('function AvatarImage'), avatar.indexOf('function AvatarFallback'))
   );
 
-  it('AvatarImage 作用域里不出现 shape（它只在 NeoAvatar 的 props 里存在）', () => {
-    expect(imageCode).not.toMatch(/\bshape\b/);
+  it('AvatarImage 不得用 shape 当值判断形状（历史 bug：shape === \'circle\' ? ... 抛 ReferenceError）', () => {
+    // 注意：后续 AvatarImage 合法地接收了一个 shape prop（默认 'circle'），
+    // 所以不能再笼统断言「不出现 shape」——那样连合法的解构都会误报。
+    // 真正要防的是把 shape 当值用（当初崩站的写法）。
+    expect(imageCode).not.toMatch(/\bshape\s*===/);
+    expect(imageCode).not.toMatch(/\bshape\s*\?/);
   });
 
   it('圆形裁切由外层 NeoAvatar 负责（rounded-full + overflow-hidden），不靠 img 自己', () => {
@@ -41,7 +45,8 @@ describe('RetroUI Avatar：头像渲染不得引用未定义变量', () => {
   });
 
   it('没有 src 或加载失败时安全返回 null（头像缺失不崩页面）', () => {
-    expect(imageCode).toContain('if (error || !src) return null;');
+    // 变量后来从 src 改名为 imageSrc（为了给 /uploads/default-avatar.* 换成站内默认图）
+    expect(imageCode).toContain('if (error || !imageSrc) return null;');
   });
 });
 

@@ -19,6 +19,7 @@ import { useI18n } from '@/i18n';
 import type { AppError } from '@/i18n/errors';
 import { Button } from '@/components/ui/Button';
 import { ErrorSummary } from '@/components/ui/ErrorSummary';
+import { InlineNotice } from '@/components/ui/InlineNotice';
 import { Input } from '@/components/ui/Input';
 import { Screen } from '@/components/ui/Screen';
 import { Text } from '@/components/ui/Text';
@@ -68,6 +69,11 @@ export default function LoginScreen(): React.ReactElement {
 
         <ErrorSummary testID="login-summary" title={t('auth.failed')} formError={error} />
 
+        {/* 会话过期被送到这里的（`A-01` 的门）：要说清**为什么**，⛔ 不是普通的"未登录" */}
+        {session.status === 'expired' ? (
+          <InlineNotice testID="login-expired" tone="warning" message={t('auth.expired')} />
+        ) : null}
+
         <Input
           testID="login-identifier"
           label={t('auth.identifier')}
@@ -95,6 +101,19 @@ export default function LoginScreen(): React.ReactElement {
             onPress={() => {
               void submit();
             }}
+          />
+          {/* 页面清单：A-03/A-04 的入口就是 A-02（本页）—— ⛔ 不做"藏在设置里的注册" */}
+          <Button
+            testID="login-to-register"
+            label={t('auth.toRegister')}
+            variant="ghost"
+            onPress={() => router.push('/register')}
+          />
+          <Button
+            testID="login-to-reset"
+            label={t('auth.toReset')}
+            variant="ghost"
+            onPress={() => router.push('/reset-password')}
           />
         </View>
       </ScrollView>

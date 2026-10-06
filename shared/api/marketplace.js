@@ -77,3 +77,14 @@ export function markMarketplaceThreadRead(threadId) {
   return post(`/api/marketplace/chat/threads/${threadId}/read`, {});
 }
 
+/**
+ * 我的**全部**私信会话（买家 + 卖家两侧合并，P2B-02）
+ * 返回 `{ list: [{ thread_id, item:{id,title,available}, role, peer:{id,name,avatar}, last_message_at, last_content, unread_count }] }`
+ */
+export function listMyChatThreads(params = {}) {
+  const qs = new URLSearchParams();
+  if (params.limit) qs.set('limit', String(params.limit));
+  const query = qs.toString();
+  return get(`/api/marketplace/chat/threads${query ? `?${query}` : ''}`);
+}
+

@@ -9,12 +9,14 @@ on:
     branches: [main]
     paths:
       - 'app/**'
+      - 'shared/**'
       - 'tokens/**'
       - 'scripts/**'
       - '.github/workflows/app-rulers-and-tests.yml'
   pull_request:
     paths:
       - 'app/**'
+      - 'shared/**'
       - 'tokens/**'
       - 'scripts/**'
       - '.github/workflows/app-rulers-and-tests.yml'
@@ -61,3 +63,22 @@ jobs:
       - name: 单测
         working-directory: app
         run: npm run test:ci
+
+  shared-tests:
+    name: 共享层单测（Web 与 App 共用）
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+      - name: 安装依赖（npm ci，锁文件生效）
+        run: npm ci
+      # ⚠️ 为什么需要这个 job（P2D-01 补漏）：
+      #   `shared/**` 是 Web 与 App **共用**的代码（例如 `shared/api/auth.js`），
+      #   而上面两个 job 的 paths 都不含它 → 改共享层**一个门都不会触发**。
+      #   App 侧的 `MessageKey`/类型检查管不到这里，所以单列一个 job。
+      - name: 共享层单测
+        run: npx jest __tests__/shared --ci

@@ -252,6 +252,10 @@ describe('P0-03 双语词条层与错误文案', () => {
         'timetable.',
         'error.',
         'action.',
+        // 私信 / 信箱（P2B-03 起由甲引入；⛔ 新增命名空间要在这里登记，否则就是"无归属的散 key"）
+        'mailbox.',
+        // 我的 / 仪表盘（P2C-03 起由甲引入）
+        'me.',
       ];
       const stray = Object.keys(zh).filter((k) => !knownPrefixes.some((p) => k.startsWith(p)));
       expect(stray).toEqual([]);

@@ -480,9 +480,9 @@ T-01 工具首页
 | ID | 页面（中 / 英） | 入口 | 原型 | 关键端点 | 关键组件 | 层 |
 |---|---|---|---|---|---|---|
 | **M-01** | 我的 / Me | **Tab 4** | P7 | `GET /api/users/me`、`/users/me/level`、`GET /api/todos/today`、`GET /api/schedule/week` | `MetricRow` `ExpBar` `LevelBadge` `Avatar` `QuickActionGrid` `ListItem` | P0 |
-| **M-02** | 资料编辑 / Edit Profile | M-01、M-03 | P4 `模态式` | `PUT /api/users/me`、`POST /api/users/me/avatar` | `Form` `Input` `TextArea` `MediaPicker`（头像 ≤8MB，gif 允许） | P0 |
+| **M-02** | 资料编辑 / Edit Profile | M-01、M-03 | P4 `模态式` | `PATCH /api/users/me`、`PATCH /api/users/me/avatar` ⚠️ 原写 `PUT`/`POST`，**2026-10-06 按 `routes/users.js:297,351` 更正**（P2C-06 实测） | `Form` `Input` `TextArea` `MediaPicker`（头像 ≤8MB，gif 允许） | P0 |
 | **M-03** | 他人主页 / User Profile | 任意作者行、评论 | P7 | `GET /api/users/:id` | `Avatar` `LevelBadge` `StatTile` `EntityCard` `ActionSheet`（举报用户 / 屏蔽用户） | P0 |
-| **M-04** | 我的帖子 / My Posts | M-01 | P2 | `GET /api/posts?mine` | `EntityCard` `ConfirmDialog` `EmptyState`（首次无数据 → 引导发布） | P0 |
+| **M-04** | 我的帖子 / My Posts | M-01 | P2 | ⚠️ **无 `GET /api/posts?mine`**（2026-10-06 更正，P2C-04 实测）→ 实际走 `GET /api/users/me` 取 id + `GET /api/users/:id/profile?page&pageSize`（≤30/页，排除 `hidden_by_admin`，10s 进程内缓存） | `EntityCard` `ConfirmDialog` `EmptyState`（首次无数据 → 引导发布） | P0 |
 | **M-05** | 我的点评 / My Reviews | M-01 | P2 | `GET /api/canteen/me/reviews`（≤30/页）、`DELETE /reviews/:id` | `EntityCard(review)` `ConfirmDialog` | P1 |
 | **M-06** | 我的收藏 / My Favorites | M-01 | P2 | `GET /api/canteen/me/favorites`（≤50/页） | `ListItem` `EntityCard(food)` `EmptyState` | P1 |
 | **M-07** | 我的想要 / My Wants | M-01 | P2 | `GET /api/marketplace/me/wants` | `ListItem` `EmptyState` | P1 |
