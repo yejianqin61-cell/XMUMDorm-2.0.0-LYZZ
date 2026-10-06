@@ -39,6 +39,7 @@ const ActivityDetail = lazy(() => import('../pages/Clubs/ActivityDetail'));
 const ClubPostDetail = lazy(() => import('../pages/Clubs/ClubPostDetail'));
 const PublishClubPost = lazy(() => import('../pages/Clubs/PublishClubPost'));
 const ClubListPage = lazy(() => import('../pages/Clubs/ClubListPage'));
+const ClubDirectoryPage = lazy(() => import('../pages/Clubs/ClubDirectoryPage'));
 const MyClubs = lazy(() => import('../pages/Clubs/MyClubs'));
 const PublishActivity = lazy(() => import('../pages/Clubs/PublishActivity'));
 const CreateClub = lazy(() => import('../pages/Clubs/CreateClub'));
@@ -121,6 +122,8 @@ export const layoutRoutes = (
     <Route path="about/disclaimer" element={renderLazyRoute(Disclaimer)} />
     <Route path="about/club" element={renderLazyRoute(SquareClub)} />
     <Route path="about/club/list" element={renderLazyRoute(ClubListPage)} />
+    {/* 具体路径必须排在 about/club/:id 前面，否则 :id 会把 directory 吃掉 */}
+    <Route path="about/club/directory" element={renderLazyRoute(ClubDirectoryPage)} />
     <Route path="about/club/my" element={renderLazyRoute(MyClubs)} />
     <Route path="about/club/new" element={renderLazyRoute(CreateClub)} />
     <Route path="about/club/:id/members" element={renderLazyRoute(ClubMembersPage)} />
