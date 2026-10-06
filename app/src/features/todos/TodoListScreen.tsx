@@ -10,17 +10,18 @@ import { IconButton } from '@/components/ui/IconButton';
 import { ListItem } from '@/components/ui/ListItem';
 import { ListScreen, useListPagination } from '@/components/ui/ListScreen';
 import { Screen } from '@/components/ui/Screen';
+import { useMailboxBadge } from '@/features/mailbox/useUnread';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { useTheme } from '@/design-system/theme';
 import { useI18n } from '@/i18n';
 import type { AppError } from '@/i18n/errors';
 import { useSession } from '@/features/auth/session';
 import { timetableIdentity } from '@/features/tools/cacheIdentity';
-import { toToolsError } from '@/features/tools/requestError';
 import { getTodos, toggleTodo, deleteTodo } from '../../../../shared/api/todos';
-import { normalizeTodos, mergeTodos, notifyTodosChanged, TODO_PRIORITY_KEYS, type Todo } from './todos';
+import { normalizeTodos, mergeTodos, notifyTodosChanged, TODO_PRIORITY_KEYS, toTodoError, type Todo } from './todos';
 
 export function TodoListScreen(): React.ReactElement {
+  const badge = useMailboxBadge();
   const { t } = useI18n();
   const theme = useTheme();
   const router = useRouter();
@@ -55,11 +56,12 @@ export function TodoListScreen(): React.ReactElement {
       setRows((previous) => mode === 'refresh' ? result.list : mergeTodos(previous, result.list));
       dispatch({ type: mode === 'refresh' ? 'refresh:success' : 'append:success', hasMore: result.hasMore });
     } catch (error) {
+      if (request !== version.current || owner !== timetableIdentity().epoch) return;
       const auth = await authRef.current(error);
       if (request !== version.current || owner !== timetableIdentity().epoch) return;
-      dispatch({ type: mode === 'refresh' ? 'refresh:failure' : 'append:failure', error: toToolsError(error, auth) });
+      dispatch({ type: mode === 'refresh' ? 'refresh:failure' : 'append:failure', error: toTodoError(error, auth, t) });
     } finally { if (request === version.current) loading.current = false; }
-  }, [dispatch]);
+  }, [dispatch, t]);
 
   useFocusEffect(React.useCallback(() => {
     setRows([]); setWriteError(null); void load('refresh');
@@ -75,13 +77,14 @@ export function TodoListScreen(): React.ReactElement {
       if (owner !== timetableIdentity().epoch) return;
       retryWrite.current = null; notifyTodosChanged(); await load('refresh');
     } catch (error) {
+      if (owner !== timetableIdentity().epoch) return;
       const auth = await authRef.current(error);
-      if (owner === timetableIdentity().epoch) setWriteError(toToolsError(error, auth));
+      if (owner === timetableIdentity().epoch) setWriteError(toTodoError(error, auth, t));
     } finally { busyRef.current = false; setBusy(false); }
   };
   const visible = filter === 'all' ? rows : rows.filter((row) => row.priority === Number(filter));
   return (
-    <Screen titleKey="tools.todos.title" testID="screen-todos" bottomMode="own">
+    <Screen titleKey="tools.todos.title" testID="screen-todos" bottomMode="own" {...badge}>
       <View style={{ flex: 1, padding: theme.space('space_4'), gap: theme.space('space_3') }}>
         <Button testID="todos-create" label={t('tools.todos.create')} onPress={() => router.push('/tools/todos/new')} />
         <SegmentedControl testID="todos-filter" value={filter} onChange={setFilter} options={[

@@ -337,7 +337,7 @@ describe('TC-P1-16-7A · T-02 页面', () => {
 
   it('`T-01` 有课程表入口（出口门 E2：路由可进入）', async () => {
     const ToolsScreen = require('../app/(tabs)/tools').default as () => React.ReactElement;
-    const view = await renderApp(<ToolsScreen />);
+    const view = await renderApp(withProviders(<ToolsScreen />));
     await waitFor(() => expect(view.getByTestId('tools-timetable')).toBeTruthy());
     const user = require('@testing-library/react-native').userEvent.setup();
     await user.press(view.getByTestId('tools-timetable'));

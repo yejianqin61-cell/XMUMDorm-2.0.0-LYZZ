@@ -13,7 +13,7 @@
 import * as React from 'react';
 
 import type { AppError } from '@/i18n/errors';
-import { onlineManager } from '@tanstack/react-query';
+import { toToolsError } from '@/features/tools/requestError';
 import { canteenRevision, subscribeCanteen, readCanteenCache, writeCanteenCache, requestCanteen } from './canteenCache';
 
 export type ResourceState<T> = {
@@ -25,16 +25,7 @@ export type ResourceState<T> = {
 
 /** 把捕获到的东西归到 `AppError`（兼容"已经是 AppError"与"抛出的原始错误"） */
 export function toResourceError(error: unknown): AppError {
-  if (error !== null && typeof error === 'object' && 'kind' in error) {
-    return error as AppError;
-  }
-  const failure = error as { name?: string; status?: number } | null;
-  if (failure?.status === undefined) {
-    if (!onlineManager.isOnline()) return { kind: 'offline' };
-    if (failure?.name === 'AbortError' || failure?.name === 'TimeoutError') return { kind: 'timeout' };
-    if (error instanceof TypeError) return { kind: 'unreachable' };
-  }
-  return { kind: 'unknown' };
+  return toToolsError(error);
 }
 
 export type CanteenCacheOptions = { key: string; ttlMs: number; revalidate?: boolean };

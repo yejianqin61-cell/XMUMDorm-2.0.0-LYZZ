@@ -362,7 +362,7 @@ describe('TC-P1-15-4A · T-03 页面：粘贴 → 预览 → 覆盖确认', () =
 describe('TC-P1-15-5A · 入口与接线', () => {
   it('`T-01` 有课表导入入口（T-02 未建时也要可达）', async () => {
     const ToolsScreen = require('../app/(tabs)/tools').default as () => React.ReactElement;
-    const view = await renderApp(<ToolsScreen />);
+    const view = await renderApp(withProviders(<ToolsScreen />));
     await waitFor(() => expect(view.getByTestId('tools-schedule-import')).toBeTruthy());
     const user = require('@testing-library/react-native').userEvent.setup();
     await user.press(view.getByTestId('tools-schedule-import'));

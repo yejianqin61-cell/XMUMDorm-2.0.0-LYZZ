@@ -2,10 +2,16 @@ import { parseYmd } from '../../../../shared/config/semesters';
 import { getTodos } from '../../../../shared/api/todos';
 import type { FormValues } from '@/components/ui/FormField';
 import type { MessageKey } from '@/i18n/zh';
+import type { AppError } from '@/i18n/errors';
+import { toToolsError } from '@/features/tools/requestError';
 
 export type Todo = { id: number; title: string; description: string; priority: number; dueDate: string | null; dueTime: string | null; completed: boolean; listType: string };
 export type TodoPage = { list: readonly Todo[]; hasMore: boolean };
 export const TODO_PRIORITY_KEYS = ['tools.todos.priority.0', 'tools.todos.priority.1', 'tools.todos.priority.2', 'tools.todos.priority.3'] as const;
+export function toTodoError(error: unknown, auth: AppError | undefined, t: (key: MessageKey) => string): AppError {
+  const classified = toToolsError(error, auth);
+  return classified.kind === 'validation' ? { ...classified, target: t('tools.todos.title'), params: { rule: t('tools.todos.serverRule') } } : { ...classified, target: t('tools.todos.title') };
+}
 export function normalizeTodos(raw: unknown): TodoPage | null {
   if (!raw || typeof raw !== 'object' || !Array.isArray((raw as { list?: unknown }).list)) return null;
   const page = raw as { list: unknown[]; hasMore?: boolean };
@@ -13,7 +19,7 @@ export function normalizeTodos(raw: unknown): TodoPage | null {
     if (!entry || typeof entry !== 'object') return [];
     const row = entry as Record<string, unknown>;
     if (typeof row.id !== 'number' || !Number.isSafeInteger(row.id) || row.id <= 0 || typeof row.title !== 'string') return [];
-    return [{ id: row.id, title: row.title, description: typeof row.description === 'string' ? row.description : '', priority: typeof row.priority === 'number' ? Math.max(0, Math.min(3, Math.trunc(row.priority))) : 0,
+    return [{ id: row.id, title: row.title, description: typeof row.description === 'string' ? row.description : '', priority: typeof row.priority === 'number' && Number.isFinite(row.priority) ? Math.max(0, Math.min(3, Math.trunc(row.priority))) : 0,
       dueDate: typeof row.due_date === 'string' ? row.due_date : null, dueTime: typeof row.due_time === 'string' ? row.due_time.slice(0, 5) : null,
       completed: row.is_completed === true || row.is_completed === 1, listType: typeof row.list_type === 'string' ? row.list_type : 'personal' }];
   }) };

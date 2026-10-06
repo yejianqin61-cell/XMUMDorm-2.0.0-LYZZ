@@ -33,6 +33,7 @@ import { ErrorSummary } from '@/components/ui/ErrorSummary';
 import { FormSection } from '@/components/ui/FormSection';
 import { FormField } from '@/components/ui/FormField';
 import { Screen } from '@/components/ui/Screen';
+import { useMailboxBadge } from '@/features/mailbox/useUnread';
 import { Text } from '@/components/ui/Text';
 import { useToast } from '@/components/ui/Toast';
 import { useForm } from '@/components/ui/Form';
@@ -74,6 +75,14 @@ const TEXT_FIELD = {
 };
 
 export default function ScheduleImportScreen(): React.ReactElement {
+  useSession();
+  const epoch = timetableIdentity().epoch;
+  const enteredEpoch = React.useRef(epoch);
+  return <ScheduleImportForm key={epoch} acceptScrapedText={enteredEpoch.current === epoch} />;
+}
+
+function ScheduleImportForm({ acceptScrapedText }: { acceptScrapedText: boolean }): React.ReactElement {
+  const badge = useMailboxBadge();
   const theme = useTheme();
   const { t } = useI18n();
   const router = useRouter();
@@ -90,7 +99,7 @@ export default function ScheduleImportScreen(): React.ReactElement {
   const mounted = React.useRef(true);
   React.useEffect(() => { mounted.current = true; return () => { mounted.current = false; previewVersion.current += 1; }; }, []);
 
-  const scrapedText = typeof params.text === 'string' ? params.text : '';
+  const scrapedText = acceptScrapedText && typeof params.text === 'string' ? params.text : '';
 
   /**
    * ⭐ 文本字段走 `K01 useForm`：**草稿落盘**（宪法 4.4.3）。
@@ -101,6 +110,7 @@ export default function ScheduleImportScreen(): React.ReactElement {
    */
   const form = useForm({
     formId: 'schedule-import',
+    draftScope: timetableIdentity().scope.startsWith('user') ? timetableIdentity().scope : undefined,
     fields: [TEXT_FIELD],
     initialValues: { text: scrapedText },
     skipDraftRestore: scrapedText.trim() !== '',
@@ -138,6 +148,7 @@ export default function ScheduleImportScreen(): React.ReactElement {
       previewText.current = text;
       dispatch({ type: 'preview:success', preview });
     } catch (error) {
+      if (!active()) return;
       const appError = await session.handleAuthFailure(error);
       if (!active()) return;
       dispatch({
@@ -171,6 +182,7 @@ export default function ScheduleImportScreen(): React.ReactElement {
       if (router.canGoBack()) router.back();
       else router.replace('/tools');
     } catch (error) {
+      if (!mounted.current || owner !== timetableIdentity().epoch) return;
       const appError = await session.handleAuthFailure(error);
       if (!mounted.current || owner !== timetableIdentity().epoch) return;
       dispatch({
@@ -185,7 +197,7 @@ export default function ScheduleImportScreen(): React.ReactElement {
   const busy = state.phase === 'previewing' || state.phase === 'committing';
 
   return (
-    <Screen testID="screen-schedule-import" titleKey="import.title" bottomMode="own">
+    <Screen testID="screen-schedule-import" titleKey="import.title" bottomMode="own" {...badge}>
       <View style={{ flex: 1, padding: theme.space('space_4'), gap: theme.space('space_4') }}>
         <ErrorSummary
           testID="import-summary"

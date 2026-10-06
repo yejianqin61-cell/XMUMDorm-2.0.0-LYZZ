@@ -15,6 +15,8 @@ import { waitFor, within } from '@testing-library/react-native';
 import { renderApp } from './helpers/renderApp';
 import { stripComments } from './helpers/sourceScan';
 import { ToastProvider } from '@/components/ui/Toast';
+import { clearNamespace } from '@/shared/storage';
+jest.mock('@/features/auth/session', () => ({ useSession: () => ({ status: 'signedOut', handleAuthFailure: async () => ({ kind: 'unknown' }) }) }));
 import { Text } from '@/components/ui/Text';
 
 import {
@@ -120,7 +122,8 @@ const PRODUCT = {
   images: [{ url: 'https://cdn.example.com/p.png', sort_order: 0 }],
 };
 
-beforeEach(() => {
+beforeEach(async () => {
+  await clearNamespace();
   for (const key of Object.keys(api)) api[key].mockReset();
   routerState.pushed.length = 0;
   routerState.params = {};
@@ -389,7 +392,9 @@ describe('TC-P1-17-5A · S-09 店铺菜品：分类是**筛选**不是导航', (
     await user.press(view.getByTestId('shop-category-2'));
     await waitFor(() => expect(api.getProducts).toHaveBeenLastCalledWith(2, { category_id: 2 }));
     await user.press(view.getByTestId('shop-category-all'));
-    await waitFor(() => expect(api.getProducts).toHaveBeenLastCalledWith(2, {}));
+    await waitFor(() => expect(view.getByTestId('shop-product-7')).toBeTruthy());
+    expect(api.getProducts).toHaveBeenNthCalledWith(1, 2, {});
+    expect(api.getProducts).toHaveBeenCalledTimes(2);
   });
 
   it('本店热门用 `/hot-products`，且分数 `null` → "暂无评分"', async () => {

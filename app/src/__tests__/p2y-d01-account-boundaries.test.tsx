@@ -7,14 +7,20 @@ import { useTodayTodos } from '@/features/todos/useTodayTodos';
 import { useSession } from '@/features/auth/session';
 import { clearNamespace, getItem } from '@/shared/storage';
 import { resetTokenMirrorForTests, saveToken } from '@/features/auth/tokenStore';
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn(), canGoBack: () => false }) }));
+import { timetableIdentity } from '@/features/tools/cacheIdentity';
+import ImportScreen from '@/app/tools/schedule-import';
+import { ToastProvider } from '@/components/ui/Toast';
+jest.mock('expo-router', () => ({ useLocalSearchParams: () => ({ text: 'Course\tCS101\tAlgorithms\tMonday\t08:00' }), useNavigation: () => ({ dispatch: jest.fn() }), useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn(), canGoBack: () => false }) }));
 jest.mock('@/features/auth/session', () => {
   const context = require('react').createContext(null);
   return { __context: context, useSession: () => require('react').useContext(context) };
 });
 jest.mock('../../../shared/api/todos', () => ({ getTodayTodos: jest.fn() }));
 jest.mock('../../../shared/api/canteen', () => ({ postProductComment: jest.fn() }));
+jest.mock('../../../shared/api/schedule', () => ({ previewScheduleImport: jest.fn(), commitScheduleImport: jest.fn() }));
 const api = require('../../../shared/api/todos') as Record<string, jest.Mock>;
+jest.mock('expo-router/react-navigation', () => ({ usePreventRemove: jest.fn() }));
+jest.mock('@/features/mailbox/useUnread', () => ({ useMailboxBadge: () => ({ unreadCount: 0, onMailboxPress: jest.fn() }) }));
 const token = (id: number) => `header.${btoa(JSON.stringify({ id }))}.signature`;
 const failures: number[] = [];
 function Harness({ child }: { child: React.ReactElement }) {
@@ -34,7 +40,7 @@ it('remounts review form on a session change without moving the old draft', asyn
   await fireEvent.press(view.getByTestId('switch'));
   await waitFor(() => expect(view.queryByDisplayValue('A private draft')).toBeNull());
   await act(async () => { await new Promise((resolve) => setTimeout(resolve, 650)); });
-  const draft = await getItem<{ content: string }>('draft:canteen-review-user8:semesterbetween-9');
+  const draft = await getItem<{ content: string }>(`draft:canteen-review-${timetableIdentity().scope}-9`);
   expect(draft?.content).not.toBe('A private draft');
 });
 it('ignores the old account unauthorized response before auth side effects', async () => {
@@ -46,4 +52,16 @@ it('ignores the old account unauthorized response before auth side effects', asy
   await waitFor(() => expect(view.getByTestId('count').props.children).toBe(1));
   await act(async () => reject({ status: 401 }));
   expect(failures).toEqual([]);
+});
+it('clears a completed import preview and its scraped text on account change', async () => {
+  const schedule = require('../../../shared/api/schedule') as Record<string, jest.Mock>;
+  schedule.previewScheduleImport.mockResolvedValue({ courses: [{ course_code: 'CS101', course_name: 'Algorithms' }], meetings: [], errors: [] });
+  const view = await renderApp(<ToastProvider><Harness child={<ImportScreen />} /></ToastProvider>);
+  await fireEvent.press(view.getByTestId('import-preview'));
+  await waitFor(() => expect(view.getByTestId('import-preview-list')).toBeTruthy());
+  await fireEvent.press(view.getByTestId('switch'));
+  await waitFor(() => expect(view.queryByTestId('import-preview-list')).toBeNull());
+  expect(view.queryByDisplayValue('Course\tCS101\tAlgorithms\tMonday\t08:00')).toBeNull();
+  expect(view.getByTestId('import-commit').props.accessibilityState.disabled).toBe(true);
+  expect(schedule.commitScheduleImport).not.toHaveBeenCalled();
 });
