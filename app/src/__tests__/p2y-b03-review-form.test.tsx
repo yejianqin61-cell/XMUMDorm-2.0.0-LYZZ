@@ -14,7 +14,7 @@ it('does not submit without a rating', async () => {
   await fireEvent.changeText(view.getByLabelText(/正文/), 'Good');
   await fireEvent.press(view.getByTestId('review-form-submit'));
   expect(api.postProductComment).not.toHaveBeenCalled();
-  expect(view.getAllByText('请选择一个评级档位').length).toBeGreaterThan(0);
+  expect(view.getAllByText(/评级：这一项不能为空/).length).toBeGreaterThan(0);
 });
 it('submits the five-tier value then invalidates and navigates to the product', async () => {
   const start = canteenRevision();
@@ -33,7 +33,7 @@ it('retains the text and does not invalidate when submission fails', async () =>
   await fireEvent.press(view.getByTestId('review-rating-top'));
   await fireEvent.changeText(view.getByLabelText(/正文/), 'Keep this');
   await fireEvent.press(view.getByTestId('review-form-submit'));
-  await waitFor(() => expect(view.getByText('没连上网络')).toBeTruthy());
+  await waitFor(() => expect(view.getByText('网络没连上')).toBeTruthy());
   expect(view.getByDisplayValue('Keep this')).toBeTruthy();
   expect(canteenRevision()).toBe(start);
 });
