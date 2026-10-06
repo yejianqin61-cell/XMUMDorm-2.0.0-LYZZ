@@ -26,6 +26,7 @@ import { configureAppApi } from '@/shared/api';
 import { configureConnectivity, configureFocusTracking, getQueryClient } from '@/shared/queryClient';
 import { ToastHost, ToastProvider } from '@/components/ui/Toast';
 import { SessionProvider } from '@/features/auth/session';
+import { SessionGate } from '@/features/auth/SessionGate';
 
 /**
  * P1-01：把后端地址与 token 来源交给 `shared/` 的请求层。
@@ -58,7 +59,17 @@ export const ICON_STROKE_WIDTH = 2;
  */
 function GlobalOverlays(): React.ReactElement {
   const insets = useSafeAreaInsets();
-  return <ToastHost bottomInset={insets.bottom} testID="toast-host" />;
+  return (
+    <>
+      <ToastHost bottomInset={insets.bottom} testID="toast-host" />
+      {/*
+        `A-01` 的启动位与会话门（P2C2-01）：**挂在这里且只挂一次**。
+        insets 由本层（宪法 17.1-S2 允许的第二处调用点）算好后当 prop 传入 ——
+        ⛔ 门自己不许再调 `useSafeAreaInsets()`（否则就是第三个调用点）。
+      */}
+      <SessionGate topInset={insets.top} bottomInset={insets.bottom} />
+    </>
+  );
 }
 
 /** 需要主题才能决定的东西：状态栏图标颜色（17.3）与图标默认色 */

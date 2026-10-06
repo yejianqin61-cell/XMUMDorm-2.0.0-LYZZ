@@ -19,6 +19,7 @@ import { useI18n } from '@/i18n';
 import type { AppError } from '@/i18n/errors';
 import { Button } from '@/components/ui/Button';
 import { ErrorSummary } from '@/components/ui/ErrorSummary';
+import { InlineNotice } from '@/components/ui/InlineNotice';
 import { Input } from '@/components/ui/Input';
 import { Screen } from '@/components/ui/Screen';
 import { Text } from '@/components/ui/Text';
@@ -67,6 +68,11 @@ export default function LoginScreen(): React.ReactElement {
         </Text>
 
         <ErrorSummary testID="login-summary" title={t('auth.failed')} formError={error} />
+
+        {/* 会话过期被送到这里的（`A-01` 的门）：要说清**为什么**，⛔ 不是普通的"未登录" */}
+        {session.status === 'expired' ? (
+          <InlineNotice testID="login-expired" tone="warning" message={t('auth.expired')} />
+        ) : null}
 
         <Input
           testID="login-identifier"

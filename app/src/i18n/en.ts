@@ -111,6 +111,7 @@ export const en: Record<MessageKey, string> = {
   'form.leave.cancel': 'Keep editing',
 
   // Minimal login chain (P1-13)
+  'auth.splash': 'Jack Dorm',
   'auth.title': 'Sign in',
   'auth.identifier': 'Student ID or email',
   'auth.password': 'Password',
