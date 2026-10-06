@@ -13,6 +13,7 @@
  */
 
 import type { MessageKey } from '@/i18n';
+import { getTabDefinition, type TabKey } from './tabConfig';
 
 export type SecondaryTabKey = string;
 
@@ -40,6 +41,53 @@ export const SECONDARY_TABS: SecondaryTabRegistry = {
 
 export function getSecondaryTabs(primaryTab: string): readonly SecondaryTabDefinition[] {
   return SECONDARY_TABS[primaryTab] ?? [];
+}
+
+/**
+ * 这个一级格有没有二级 Tab（P2A-03）。
+ * 空集合 ⇒ **不显示 Tab 条**（骨架规范 §2.1：「有子栏目才有它，没有就不占位」）。
+ * `TopTabStrip` 自己已经 `return null`，这个纯函数是给**页面**判断用的
+ * （页面据此决定要不要占顶部空间），⛔ 两处判断必须同源。
+ */
+export function hasSecondaryTabs(primaryTab: string): boolean {
+  return getSecondaryTabs(primaryTab).length > 0;
+}
+
+/**
+ * 二级 Tab 集合的不变量（P2A-03）——**"改集合不用动页面"的机器判据**。
+ *
+ * 四条：
+ *   1. 同一一级格下 key 唯一（重复会让"选中哪个"歧义）；
+ *   2. `labelKey` 必须在词条表里（否则界面上出现 key 本身）；
+ *   3. 集合只能挂**存在的一级格**上（防拼错格名后静默变成"没有二级 Tab"）；
+ *   4. ⛔ **动作型格位（第 5 格"发布"）不得有二级 Tab** —— 它没有内容区（宪法 4.9.1）。
+ *
+ * `registry` 可注入，只为让用例能验证"坏集合会抛"（⛔ 生产调用不传第二个参数）。
+ */
+export function assertSecondaryTabInvariants(
+  dictionaryKeys: readonly string[],
+  registry: SecondaryTabRegistry = SECONDARY_TABS
+): void {
+  for (const [primaryTab, tabs] of Object.entries(registry)) {
+    const def = getTabDefinition(primaryTab as TabKey);
+    if (!def) {
+      throw new Error(`二级 Tab 挂在不存在的格上：${primaryTab}`);
+    }
+    if (def.isAction) {
+      throw new Error(`⛔ 动作型格位不得有二级 Tab（宪法 4.9.1）：${primaryTab}`);
+    }
+
+    const keys = tabs.map((tab) => tab.key);
+    if (new Set(keys).size !== keys.length) {
+      throw new Error(`二级 Tab 的 key 重复：${primaryTab}`);
+    }
+
+    for (const tab of tabs) {
+      if (!dictionaryKeys.includes(tab.labelKey)) {
+        throw new Error(`二级 Tab 的 labelKey 不在词条表：${primaryTab}/${tab.key} → ${tab.labelKey}`);
+      }
+    }
+  }
 }
 
 /** 单个二级 Tab 的独立状态（R2） */
