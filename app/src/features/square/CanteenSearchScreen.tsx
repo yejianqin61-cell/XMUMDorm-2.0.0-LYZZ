@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { EntityCard } from '@/components/ui/EntityCard';
 import { ListScreen, useListPagination } from '@/components/ui/ListScreen';
 import { Screen } from '@/components/ui/Screen';
+import { useMailboxBadge } from '@/features/mailbox/useUnread';
 import { SearchField } from '@/components/ui/SearchField';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Surface } from '@/components/ui/Surface';
@@ -17,6 +18,7 @@ import { getUploadUrl } from '../../../../shared/api/config';
 import { mergeSearchRows, normalizeSearchPage, validateSearchQuery, type SearchRow, type SearchType } from './canteenSearch';
 
 export function CanteenSearchScreen(): React.ReactElement {
+  const badge = useMailboxBadge();
   const { t } = useI18n();
   const theme = useTheme();
   const router = useRouter();
@@ -61,7 +63,7 @@ export function CanteenSearchScreen(): React.ReactElement {
     generation.current += 1; loading.current = false; queryRef.current = ''; setInput(next); setRows([]);
     setProblem(validateSearchQuery(next) ?? 'empty'); dispatch({ type: 'refresh:success', hasMore: false });
   };
-  return <Screen titleKey="canteen.search.title" testID="screen-canteen-search" bottomMode="own">
+  return <Screen titleKey="canteen.search.title" testID="screen-canteen-search" bottomMode="own" {...badge}>
     <View style={{ flex: 1, padding: theme.space('space_4'), gap: theme.space('space_3') }}>
       <SearchField testID="canteen-search-field" appearance="full" value={input} onChangeText={edit} onSubmit={submit} placeholder={t('canteen.search.placeholder')} clearLabel={t('action.clear')} />
       <Button testID="canteen-search-submit" label={t('canteen.search.submit')} onPress={submit} />

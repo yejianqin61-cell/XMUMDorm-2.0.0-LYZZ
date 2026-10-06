@@ -26,6 +26,7 @@ import { LoadingState } from '@/components/ui/LoadingState';
 import { ListScreen } from '@/components/ui/ListScreen';
 import { RankingRow } from '@/components/ui/RankingRow';
 import { Screen } from '@/components/ui/Screen';
+import { useMailboxBadge } from '@/features/mailbox/useUnread';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Text } from '@/components/ui/Text';
 import { getProducts, getShop, getShopHotProducts } from '../../../../shared/api/canteen';
@@ -40,6 +41,7 @@ import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import { normalizeRanked, type RankedProduct } from './RegionShops';
 
 export function ShopMenu(): React.ReactElement {
+  const badge = useMailboxBadge();
   const params = useLocalSearchParams<{ id?: string }>();
   const router = useRouter();
   const { t } = useI18n();
@@ -76,7 +78,7 @@ export function ShopMenu(): React.ReactElement {
   const categories = shop.data?.categories ?? [];
 
   return (
-    <Screen testID="screen-shop-menu" titleKey="canteen.menuTitle" bottomMode="own">
+    <Screen testID="screen-shop-menu" titleKey="canteen.menuTitle" bottomMode="own" {...badge}>
       <View style={{ flex: 1 }}>
         {shop.stale || products.stale || hot.stale ? <OfflineBanner testID="shop-stale" variant="stale" message={t('canteen.cache.stale')} actionLabel={t('action.refresh')} onAction={() => { shop.reload(); products.reload(); hot.reload(); }} /> : null}
         {shop.loading && shop.data === null ? (

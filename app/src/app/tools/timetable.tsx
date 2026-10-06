@@ -25,6 +25,7 @@ import { InlineNotice } from '@/components/ui/InlineNotice';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import { Screen } from '@/components/ui/Screen';
+import { useMailboxBadge } from '@/features/mailbox/useUnread';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Text } from '@/components/ui/Text';
 import { useToast } from '@/components/ui/Toast';
@@ -42,6 +43,7 @@ import {
 import { FALLBACK_TOTAL_WEEKS, clampWeek } from '../../../../shared/config/semesters';
 
 export default function TimetableScreen(): React.ReactElement {
+  const badge = useMailboxBadge();
   const theme = useTheme();
   const { t } = useI18n();
   const router = useRouter();
@@ -93,7 +95,7 @@ export default function TimetableScreen(): React.ReactElement {
   const hasData = timetable.week !== null && weekHasMeetings(timetable.week);
 
   return (
-    <Screen testID="screen-timetable" titleKey="tools.timetable" bottomMode="own">
+    <Screen testID="screen-timetable" titleKey="tools.timetable" bottomMode="own" {...badge}>
       <View style={{ flex: 1, padding: theme.space('space_4'), gap: theme.space('space_3') }}>
         {/* 周切换：窗口 ≤5 项（`C14` 的硬上限），左右平移一整屏 */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.space('space_2') }}>

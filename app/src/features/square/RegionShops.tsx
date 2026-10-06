@@ -21,6 +21,7 @@ import { ListScreen } from '@/components/ui/ListScreen';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { RankingRow } from '@/components/ui/RankingRow';
 import { Screen } from '@/components/ui/Screen';
+import { useMailboxBadge } from '@/features/mailbox/useUnread';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { getRegionTopProducts, getShopsByRegion } from '../../../../shared/api/canteen';
 import { normalizeProducts, normalizeShops, type CanteenProduct, type CanteenShop } from './canteen';
@@ -45,6 +46,7 @@ function normalizeRanked(data: unknown): readonly RankedProduct[] {
 }
 
 export function RegionShops(): React.ReactElement {
+  const badge = useMailboxBadge();
   const params = useLocalSearchParams<{ id?: string; name?: string }>();
   const router = useRouter();
   const { t } = useI18n();
@@ -69,6 +71,7 @@ export function RegionShops(): React.ReactElement {
 
   return (
     <Screen
+      {...badge}
       testID="screen-region-shops"
       titleKey="canteen.shopsTitle"
       bottomMode="own"
