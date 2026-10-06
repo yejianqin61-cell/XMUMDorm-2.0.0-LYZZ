@@ -102,6 +102,19 @@ export default function LoginScreen(): React.ReactElement {
               void submit();
             }}
           />
+          {/* 页面清单：A-03/A-04 的入口就是 A-02（本页）—— ⛔ 不做"藏在设置里的注册" */}
+          <Button
+            testID="login-to-register"
+            label={t('auth.toRegister')}
+            variant="ghost"
+            onPress={() => router.push('/register')}
+          />
+          <Button
+            testID="login-to-reset"
+            label={t('auth.toReset')}
+            variant="ghost"
+            onPress={() => router.push('/reset-password')}
+          />
         </View>
       </ScrollView>
     </Screen>
