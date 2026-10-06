@@ -18,22 +18,22 @@ import { Text } from '@/components/ui/Text';
 import { IconButton } from '@/components/ui/IconButton';
 import { useTheme } from '@/design-system/theme';
 import { useI18n } from '@/i18n';
-import { formRouteFor, visibleEntries, type Viewer } from '@/features/publish/registry';
+import { formRouteFor, visibleEntries } from '@/features/publish/registry';
 import { getPublishIcon } from '@/features/publish/icons';
-
-/**
- * ⚠️ **Phase 0 占位观看者**：登录态与后端布尔字段尚未接入（A-02/A-05 在 Phase 2）。
- * `canManageClub: false` 是**刻意的**：它让"权限过滤真的在生效"这件事在内测前就可见。
- * Phase 2 起改为从 auth 上下文读，⛔ 不得改成"UI 自行推断权限"（4.9.5-3）。
- */
-const PHASE0_VIEWER: Viewer = { signedIn: true, canManageClub: false };
+import { useViewer } from '@/features/publish/useViewer';
 
 export default function PublishCenterScreen(): React.ReactElement {
   const router = useRouter();
   const { t } = useI18n();
   const theme = useTheme();
 
-  const entries = React.useMemo(() => visibleEntries(PHASE0_VIEWER), []);
+  /**
+   * viewer 真源（P2A-02）：登录态取会话，能力布尔取后端列表字段，**拿不到就 fail-closed**。
+   * ⛔ 本文件**不做任何权限推断**（4.9.5-3）—— 判断只允许出现在 `features/publish/viewer.ts`。
+   */
+  const { viewer } = useViewer();
+
+  const entries = React.useMemo(() => visibleEntries(viewer), [viewer]);
 
   const openForm = React.useCallback(
     (id: string) => {
