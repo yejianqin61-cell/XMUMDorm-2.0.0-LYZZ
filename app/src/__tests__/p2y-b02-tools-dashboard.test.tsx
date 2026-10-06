@@ -7,6 +7,7 @@ jest.mock('expo-router', () => ({ __state: { targets: [] as unknown[] }, useRout
 jest.mock('../../../shared/api/schedule', () => ({ getScheduleWeek: jest.fn() }));
 jest.mock('../../../shared/api/todos', () => ({ getTodayTodos: jest.fn() }));
 const api = require('../../../shared/api/schedule') as { getScheduleWeek: jest.Mock };
+jest.mock('@/features/auth/session', () => ({ useSession: () => ({ handleAuthFailure: async () => ({ kind: 'unknown' }) }) }));
 const todos = require('../../../shared/api/todos') as { getTodayTodos: jest.Mock };
 beforeEach(async () => {
   await clearNamespace();
@@ -20,6 +21,7 @@ it('renders all three real-data blocks and preserves tool entry points', async (
   await waitFor(() => expect(view.getByText('Read paper')).toBeTruthy());
   expect(view.getByText('今日4项，已完成2项')).toBeTruthy();
   expect(view.getByTestId('tools-school-actions')).toBeTruthy();
+  expect(view.getByTestId('tools-holidays')).toBeTruthy();
   expect(view.getByTestId('tools-timetable')).toBeTruthy();
   expect(view.getByTestId('tools-schedule-import')).toBeTruthy();
   await fireEvent.press(view.getByTestId('tools-todos'));

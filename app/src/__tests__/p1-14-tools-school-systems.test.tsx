@@ -39,6 +39,9 @@ import {
 import { SchoolSystemList } from '@/features/tools/SchoolSystemList';
 import { SchoolSystemWebView } from '@/features/tools/SchoolSystemWebView';
 import { assertNotCredential } from '@/shared/storage';
+jest.mock('@/features/auth/session', () => ({ useSession: () => ({ handleAuthFailure: async () => ({ kind: 'unknown' }) }) }));
+jest.mock('../../../shared/api/schedule', () => ({ getScheduleWeek: jest.fn(async () => ({ week: 1, days: {} })) }));
+jest.mock('../../../shared/api/todos', () => ({ getTodayTodos: jest.fn(async () => ({ total: 0, completed: 0, active: 0, topItems: [] })) }));
 
 /* ── 原生 WebView 替身：Jest 里没有原生桥 ─────────────────────────────── */
 jest.mock('react-native-webview', () => {

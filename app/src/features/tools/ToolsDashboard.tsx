@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import BookOpen from 'lucide-react-native/icons/book-open';
 import ListChecks from 'lucide-react-native/icons/list-checks';
 import ShieldCheck from 'lucide-react-native/icons/shield-check';
-import { currentTeachingWeek, clampWeek } from '../../../../shared/config/semesters';
+import { currentTeachingWeek, clampWeek, kualaLumpurCalendarParts } from '../../../../shared/config/semesters';
 import { getScheduleWeek } from '../../../../shared/api/schedule';
 import { Button } from '@/components/ui/Button';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -18,6 +18,8 @@ import { SectionHeader } from '@/components/ui/SectionHeader';
 import { StatTile } from '@/components/ui/StatTile';
 import { Text } from '@/components/ui/Text';
 import { useSession } from '@/features/auth/session';
+import { useMailboxBadge } from '@/features/mailbox/useUnread';
+import { timetableIdentity } from './cacheIdentity';
 import { meetingsOf, formatClockTime } from '@/features/me/dashboard';
 import { useTodayTodos } from '@/features/todos/useTodayTodos';
 import { useTheme } from '@/design-system/theme';
@@ -26,22 +28,36 @@ import type { AppError } from '@/i18n/errors';
 import { SCHOOL_SYSTEMS } from './schoolSystems';
 import { todayWeekday, useTimetableWeek } from './timetable';
 import { toToolsError } from './requestError';
+import { nextHoliday, schoolClockMinutes, selectCoursesNow } from './todaySummary';
 
 const SYSTEM_ICONS = { ac: ListChecks, moodle: BookOpen, checkin: ShieldCheck } as const;
 export function ToolsDashboardContent({ onRequestError }: { onRequestError?: (error: unknown) => Promise<AppError> }): React.ReactElement {
-  const { t } = useI18n();
+  const session = useSession();
+  const handleError = onRequestError ?? session.handleAuthFailure;
+  const { t, locale } = useI18n();
   const theme = useTheme();
   const router = useRouter();
-  const week = clampWeek(currentTeachingWeek() ?? 1);
+  const [now, setNow] = React.useState(() => new Date());
+  React.useEffect(() => { const timer = setInterval(() => setNow(new Date()), 60_000); return () => clearInterval(timer); }, []);
+  const day = kualaLumpurCalendarParts(now).ymd;
+  const week = clampWeek(currentTeachingWeek(now) ?? 1);
   const timetable = useTimetableWeek(week, async (target) => {
+    const owner = timetableIdentity().epoch;
     try { return await getScheduleWeek(target); }
-    catch (error) { throw toToolsError(error, await onRequestError?.(error)); }
+    catch (error) {
+      if (owner !== timetableIdentity().epoch) throw error;
+      throw toToolsError(error, await handleError(error));
+    }
   });
-  const todos = useTodayTodos(onRequestError);
-  const courses = meetingsOf(timetable.week, timetable.week?.currentWeek == null ? null : todayWeekday());
+  const todos = useTodayTodos(handleError, day);
+  const courses = meetingsOf(timetable.week, timetable.week?.currentWeek == null ? null : todayWeekday(now));
+  const { current, next } = selectCoursesNow(courses, schoolClockMinutes(now));
+  const holiday = nextHoliday(day);
   return <View style={{ padding: theme.space('space_4'), gap: theme.space('space_4') }}>
     <View testID="tools-courses" style={{ gap: theme.space('space_2') }}>
       <SectionHeader title={t('tools.dashboard.schedule')} />
+      {current ? <Text role="caption" testID="tools-current-course">{t('tools.dashboard.current', { name: current.courseName ?? current.courseCode })}</Text> : null}
+      {next ? <Text role="caption" testID="tools-next-course">{t('tools.dashboard.next', { name: next.courseName ?? next.courseCode })}</Text> : null}
       {timetable.source === 'cache' ? <OfflineBanner testID="tools-courses-stale" variant="stale" message={t('timetable.stale')} actionLabel={t('action.refresh')} onAction={timetable.reload} /> : null}
       {timetable.loading && !timetable.week ? <LoadingState testID="tools-courses-loading" /> : timetable.error && !timetable.week ? <ErrorState testID="tools-courses-error" error={timetable.error} onAction={timetable.reload} /> : courses.length === 0 ? <Text role="body" colorToken="text-secondary">{t('tools.dashboard.noCourses')}</Text> :
         courses.slice(0, 3).map((course, index) => <ListItem key={`${course.courseCode}:${index}`} title={course.courseName ?? course.courseCode} subtitle={t('tools.dashboard.courseLine', { start: formatClockTime(course.startTime), end: formatClockTime(course.endTime), venue: course.venue ?? t('tools.dashboard.noVenue') })} onPress={() => router.push('/tools/timetable')} />)}
@@ -56,6 +72,10 @@ export function ToolsDashboardContent({ onRequestError }: { onRequestError?: (er
       </> : null}
       <ListItem testID="tools-todos" title={t('tools.todos.title')} onPress={() => router.push('/tools/todos')} />
     </View>
+    <View testID="tools-holidays" style={{ gap: theme.space('space_2') }}>
+      <SectionHeader title={t('tools.dashboard.holiday')} />
+      <Text role="body" colorToken="text-secondary">{holiday ? t('tools.dashboard.holidayLine', { name: { zh: holiday.nameZh, en: holiday.nameEn }[locale], start: holiday.start, end: holiday.end }) : t('tools.dashboard.noHoliday')}</Text>
+    </View>
     <View style={{ gap: theme.space('space_2') }}>
       <SectionHeader title={t('tools.systems.title')} />
       <QuickActionGrid testID="tools-school-actions" actions={SCHOOL_SYSTEMS.map((system) => ({ key: system.id, label: t(system.titleKey), icon: SYSTEM_ICONS[system.id], onPress: () => router.push({ pathname: '/system/[id]', params: { id: system.id } }) }))} />
@@ -68,7 +88,8 @@ export function ToolsDashboardContent({ onRequestError }: { onRequestError?: (er
 
 export function ToolsDashboardScreen(): React.ReactElement {
   const session = useSession();
-  return <Screen testID="screen-tools-dashboard" titleKey="screen.tools" bottomMode="own" scroll>
+  const badge = useMailboxBadge();
+  return <Screen testID="screen-tools-dashboard" titleKey="screen.tools" bottomMode="own" scroll {...badge}>
     <ToolsDashboardContent onRequestError={session.handleAuthFailure} />
   </Screen>;
 }
