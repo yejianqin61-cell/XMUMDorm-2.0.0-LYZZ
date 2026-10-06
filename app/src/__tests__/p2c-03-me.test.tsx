@@ -25,6 +25,8 @@ import {
   visibleEntries,
 } from '@/features/me/profile';
 import {
+  courseLineParams,
+  formatClockTime,
   meetingsOf,
   normalizeTodayTodos,
   summarizeTodayCourses,
@@ -155,6 +157,30 @@ describe('P2C-03 M-01 我的仪表盘', () => {
       const empty = summarizeTodayCourses([]);
       expect(empty.hasAny).toBe(false);
       expect(empty.first).toBeNull();
+    });
+
+    it('⏱ 时段去秒：真后端给的是 `"14:00:00"`（打真服务实测），⛔ 界面不许显示 `14:00:00`', () => {
+      // 这条是"打真服务"逼出来的：mock 里我写的是 '08:00'，真数据带秒
+      expect(formatClockTime('14:00:00')).toBe('14:00');
+      expect(formatClockTime('08:05:30')).toBe('08:05');
+      expect(formatClockTime('9:05:00')).toBe('09:05');
+      expect(formatClockTime('14:00')).toBe('14:00');
+      expect(formatClockTime(null)).toBe('');
+      expect(formatClockTime('')).toBe('');
+      expect(formatClockTime('上午')).toBe('上午'); // 认不出来就原样返回，⛔ 不猜
+
+      const line = courseLineParams({
+        courseCode: 'BSC129',
+        courseName: '离散数学',
+        credit: 4,
+        lecturer: null,
+        dayOfWeek: 1,
+        startTime: '14:00:00',
+        endTime: '16:00:00',
+        venue: 'A4#G01',
+      });
+      expect(line.time).toBe('14:00');
+      expect(line.time).not.toContain(':00:00');
     });
   });
 
