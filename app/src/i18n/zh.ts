@@ -33,6 +33,10 @@ export const zh = {
   'publish.title': '发布',
   'publish.submit': '发布',
   'publish.submitted': '已发布',
+  // 描述符还没交的发布类型（P2A-05 的临时业务空态；账本变短即消失）
+  'publish.unavailable.title': '暂未开放',
+  'publish.unavailable.action': '返回',
+  'publish.gate.terms.button': '去看条款',
   'publish.entry.wall': '万能墙',
   'publish.entry.confession': '树洞',
   'publish.entry.clubActivity': '社团活动',

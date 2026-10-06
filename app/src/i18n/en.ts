@@ -31,6 +31,10 @@ export const en: Record<MessageKey, string> = {
   'publish.title': 'Publish',
   'publish.submit': 'Publish',
   'publish.submitted': 'Published',
+  // Publish types whose descriptor has not landed yet (P2A-05 temporary empty state)
+  'publish.unavailable.title': 'Not available yet',
+  'publish.unavailable.action': 'Back',
+  'publish.gate.terms.button': 'Open terms',
   'publish.entry.wall': 'Wall',
   'publish.entry.confession': 'Confessions',
   'publish.entry.clubActivity': 'Club activity',
