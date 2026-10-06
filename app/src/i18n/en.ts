@@ -204,6 +204,19 @@ export const en: Record<MessageKey, string> = {
   'me.legal.terms': 'Terms of Service',
   'me.legal.stale': 'Showing the built-in version',
   'me.legal.empty': 'This page has no content',
+  // Edit profile (M-02; from P2C-06)
+  'me.edit.title': 'Edit profile',
+  'me.edit.section': 'Basics',
+  'me.edit.entry': 'Edit profile',
+  'me.edit.nickname': 'Nickname',
+  'me.edit.college': 'College',
+  'me.edit.grade': 'Grade',
+  'me.edit.major': 'Major',
+  'me.edit.showCollege': 'Show college',
+  'me.edit.showGrade': 'Show grade',
+  'me.edit.showMajor': 'Show major',
+  'me.edit.avatar': 'Avatar',
+  'me.edit.avatarUnavailable': 'Picking is not available',
   'screen.mailbox': 'Mailbox',
   // Direct messages (M-11 / M-12; from P2B-03)
   'mailbox.conversations.title': 'Messages',
@@ -277,4 +290,5 @@ export const en: Record<MessageKey, string> = {
   'action.clear': 'Clear',
   'action.refresh': 'Refresh',
   'action.openInBrowser': 'Open browser',
+  'action.save': 'Save',
 };

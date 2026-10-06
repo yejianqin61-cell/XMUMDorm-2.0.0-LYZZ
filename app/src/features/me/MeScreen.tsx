@@ -22,6 +22,7 @@ import CalendarDays from 'lucide-react-native/icons/calendar-days';
 import ListChecks from 'lucide-react-native/icons/list-checks';
 
 import { Avatar } from '@/components/ui/Avatar';
+import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ExpBar } from '@/components/ui/ExpBar';
 import { InlineNotice } from '@/components/ui/InlineNotice';
@@ -174,6 +175,16 @@ export function MeScreen(): React.ReactElement {
               onAction={reload}
             />
           ) : null}
+          {/* `M-02` 资料编辑的入口就在资料卡上（页面清单：M-02 的入口 = M-01 / M-03） */}
+          <View style={{ marginTop: theme.space('space_3') }}>
+            <Button
+              testID="me-edit-entry"
+              label={t('me.edit.entry')}
+              variant="secondary"
+              size="small"
+              onPress={() => router.push('/me/edit')}
+            />
+          </View>
         </Card>
 
         {/* ── 指标行：未读 / 今日待办 / 今日课程 ───────────────────── */}

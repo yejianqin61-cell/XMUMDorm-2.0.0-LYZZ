@@ -210,6 +210,19 @@ export const zh = {
   'me.legal.terms': '服务条款',
   'me.legal.stale': '显示的是内置版本',
   'me.legal.empty': '这一页没有内容',
+  // ── 资料编辑（M-02；P2C-06 起）──────────────────────────────────────
+  'me.edit.title': '编辑资料',
+  'me.edit.section': '基本资料',
+  'me.edit.entry': '编辑资料',
+  'me.edit.nickname': '昵称',
+  'me.edit.college': '学院',
+  'me.edit.grade': '年级',
+  'me.edit.major': '专业',
+  'me.edit.showCollege': '公开学院',
+  'me.edit.showGrade': '公开年级',
+  'me.edit.showMajor': '公开专业',
+  'me.edit.avatar': '头像',
+  'me.edit.avatarUnavailable': '选图暂不可用',
   'screen.mailbox': '信箱',
   // ── 私信（M-11 / M-12；P2B-03 起）────────────────────────────────────
   'mailbox.conversations.title': '私信',
@@ -284,6 +297,7 @@ export const zh = {
   'action.clear': '清除',
   'action.refresh': '刷新',
   'action.openInBrowser': '浏览器打开',
+  'action.save': '保存',
 } as const;
 
 /** 词条 key 的联合类型 —— `t()` 只接受它，**缺词条是编译期错误** */
