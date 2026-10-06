@@ -29,3 +29,22 @@ it('keeps the old value and offers retry when a favorite write fails', async () 
   await waitFor(() => expect(view.getByTestId('dish-favorite-error')).toBeTruthy());
   expect(view.getByText('收藏')).toBeTruthy();
 });
+it('removes a favorite and rereads instead of guessing the result', async () => {
+  api.getProductFavoriteStatus.mockResolvedValueOnce({ favorited: true }).mockResolvedValue({ favorited: false });
+  const view = await renderApp(<DishActions productId={7} />);
+  await waitFor(() => expect(view.getByText('取消收藏')).toBeTruthy());
+  await fireEvent.press(view.getByTestId('dish-favorite'));
+  await waitFor(() => expect(api.getProductFavoriteStatus).toHaveBeenCalledTimes(2));
+  await waitFor(() => expect(view.getByTestId('dish-favorite').props.accessibilityState.disabled).toBe(false));
+  expect(api.removeFavoriteProduct).toHaveBeenCalledWith(7);
+});
+it('prevents another write while the post-write status is unknown', async () => {
+  api.getProductFavoriteStatus.mockResolvedValueOnce({ favorited: false }).mockReturnValue(new Promise(() => undefined));
+  const view = await renderApp(<DishActions productId={7} />);
+  await waitFor(() => expect(view.getByTestId('dish-favorite').props.accessibilityState.disabled).toBe(false));
+  await fireEvent.press(view.getByTestId('dish-favorite'));
+  await waitFor(() => expect(api.getProductFavoriteStatus).toHaveBeenCalledTimes(2));
+  await fireEvent.press(view.getByTestId('dish-favorite'));
+  expect(api.addFavoriteProduct).toHaveBeenCalledTimes(1);
+  expect(api.removeFavoriteProduct).not.toHaveBeenCalled();
+});

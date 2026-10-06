@@ -3,6 +3,7 @@ import { act, fireEvent, waitFor } from '@testing-library/react-native';
 import { renderApp } from './helpers/renderApp';
 import { clearNamespace } from '@/shared/storage';
 import { DishDetail } from '@/features/square/DishDetail';
+jest.mock('@/features/auth/session', () => ({ useSession: () => ({ status: 'signedOut', handleAuthFailure: async () => ({ kind: 'unknown' }) }) }));
 jest.mock('expo-router', () => ({ useLocalSearchParams: () => ({ id: '7' }), useRouter: () => ({ push: jest.fn(), back: jest.fn(), canGoBack: () => false }) }));
 jest.mock('../../../shared/api/canteen', () => ({ getProduct: jest.fn(), getProductCommentsRaw: jest.fn() }));
 const api = require('../../../shared/api/canteen') as Record<string, jest.Mock>;

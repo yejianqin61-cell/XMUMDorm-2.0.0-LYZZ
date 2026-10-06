@@ -32,6 +32,7 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { MediaGrid } from '@/components/ui/MediaGrid';
 import { Screen } from '@/components/ui/Screen';
+import { useMailboxBadge } from '@/features/mailbox/useUnread';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Surface } from '@/components/ui/Surface';
 import { Text } from '@/components/ui/Text';
@@ -50,6 +51,7 @@ import type { AppError } from '@/i18n/errors';
 import { canteenCacheKey } from './canteen';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import { canteenRevision } from './canteenCache';
+import { DishActions } from './DishActions';
 
 /** 翻页追加的评论（首屏那一页由详情接口给） */
 type ExtraComments = {
@@ -62,6 +64,7 @@ type ExtraComments = {
 const NO_EXTRA: ExtraComments = { list: [], page: 0, hasMore: false };
 
 export function DishDetail(): React.ReactElement {
+  const badge = useMailboxBadge();
   const params = useLocalSearchParams<{ id?: string }>();
   const { t } = useI18n();
   const theme = useTheme();
@@ -127,7 +130,7 @@ export function DishDetail(): React.ReactElement {
   };
 
   return (
-    <Screen testID="screen-dish" titleKey="canteen.dishTitle" bottomMode="own">
+    <Screen testID="screen-dish" titleKey="canteen.dishTitle" bottomMode="own" scroll {...badge}>
       <View style={{ flex: 1, padding: theme.space('space_4'), gap: theme.space('space_4') }}>
         {detail.stale ? <OfflineBanner testID="dish-stale" variant="stale" message={t('canteen.cache.stale')} actionLabel={t('action.refresh')} onAction={detail.reload} /> : null}
         {detail.loading && detail.data === null ? (
@@ -204,6 +207,7 @@ export function DishDetail(): React.ReactElement {
             </Surface>
 
             <SectionHeader title={t('canteen.comments')} />
+            <DishActions productId={productId} />
             {comments.length === 0 ? (
               <Text role="caption" colorToken="text-muted" testID="dish-no-comments">
                 {t('canteen.noComments')}
