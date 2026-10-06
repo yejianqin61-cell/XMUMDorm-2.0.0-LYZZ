@@ -78,16 +78,16 @@ export type MeEntry = {
 };
 
 export const ME_ENTRIES: readonly MeEntry[] = [
-  { key: 'posts', labelKey: 'me.entry.posts', route: '/me/posts', available: false },
+  { key: 'posts', labelKey: 'me.entry.posts', route: '/me/posts', available: true },
   { key: 'settings', labelKey: 'me.entry.settings', route: '/me/settings', available: false },
   { key: 'about', labelKey: 'me.entry.about', route: '/me/legal', available: false },
 ];
 
 /**
  * **缺口账本**：当前还没落地的入口。
- * ⛔ 落地一个就要从这里删一个（`P2C-04`/`P2C-05` 负责），漏删或假删都会让用例变红。
+ * ⛔ 落地一个就要从这里删一个（`P2C-05`/`P2C-06` 负责），漏删或假删都会让用例变红。
  */
-export const EXPECTED_UNAVAILABLE: readonly MeEntryKey[] = ['posts', 'settings', 'about'];
+export const EXPECTED_UNAVAILABLE: readonly MeEntryKey[] = ['settings', 'about'];
 
 /** 界面上真正显示的入口（只显示已经能进去的） */
 export function visibleEntries(entries: readonly MeEntry[] = ME_ENTRIES): MeEntry[] {

@@ -183,6 +183,16 @@ export const en: Record<MessageKey, string> = {
   'me.entry.posts': 'My posts',
   'me.entry.settings': 'Settings',
   'me.entry.about': 'About & legal',
+  // My posts (M-04; from P2C-04)
+  'me.posts.noText': 'No content',
+  'me.posts.meta': '{likes} likes · {comments} comments',
+  'me.posts.delete': 'Delete',
+  'me.posts.delete.title': 'Delete this post',
+  'me.posts.delete.body': 'This cannot be undone',
+  'me.posts.delete.confirm': 'Delete',
+  'me.posts.empty.title': 'No posts yet',
+  'me.posts.empty.description': 'Your posts will show up here',
+  'me.posts.empty.action': 'Write one',
   'screen.mailbox': 'Mailbox',
   // Direct messages (M-11 / M-12; from P2B-03)
   'mailbox.conversations.title': 'Messages',

@@ -209,8 +209,13 @@ describe('P2C-03 M-01 我的仪表盘', () => {
       }
     });
 
-    it('当前一个入口都没落地 → 列表整体不渲染（⛔ 不是空列表标题）', () => {
-      expect(visibleEntries()).toEqual([]);
+    it('只有 `available` 的入口会显示；账本里还没落地的**一个都不出现**', () => {
+      const shown = visibleEntries().map((entry) => entry.key);
+      const available = ME_ENTRIES.filter((entry) => entry.available).map((entry) => entry.key);
+      expect(shown).toEqual(available);
+      for (const key of EXPECTED_UNAVAILABLE) {
+        expect(shown).not.toContain(key);
+      }
     });
   });
 });

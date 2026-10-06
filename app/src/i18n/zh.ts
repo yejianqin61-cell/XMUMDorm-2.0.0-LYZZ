@@ -189,6 +189,16 @@ export const zh = {
   'me.entry.posts': '我的帖子',
   'me.entry.settings': '设置',
   'me.entry.about': '关于与法律',
+  // ── 我的帖子（M-04；P2C-04 起）──────────────────────────────────────
+  'me.posts.noText': '没有正文',
+  'me.posts.meta': '{likes} 赞 · {comments} 评论',
+  'me.posts.delete': '删除',
+  'me.posts.delete.title': '删除这条帖子',
+  'me.posts.delete.body': '删除后无法恢复',
+  'me.posts.delete.confirm': '删除',
+  'me.posts.empty.title': '还没有帖子',
+  'me.posts.empty.description': '发布后就会出现在这里',
+  'me.posts.empty.action': '去发布',
   'screen.mailbox': '信箱',
   // ── 私信（M-11 / M-12；P2B-03 起）────────────────────────────────────
   'mailbox.conversations.title': '私信',
