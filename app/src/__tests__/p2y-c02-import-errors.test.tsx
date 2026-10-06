@@ -1,0 +1,42 @@
+import * as React from 'react';
+import { act, fireEvent, waitFor } from '@testing-library/react-native';
+import { renderApp } from './helpers/renderApp';
+import { ToastProvider } from '@/components/ui/Toast';
+import { clearNamespace } from '@/shared/storage';
+import ImportScreen from '@/app/tools/schedule-import';
+import { writeCachedWeek, readCachedWeek, normalizeTimetableWeek } from '@/features/tools/timetable';
+jest.mock('expo-router', () => ({ useRouter: () => ({ back: jest.fn(), canGoBack: () => true, replace: jest.fn() }), useLocalSearchParams: () => ({ text: 'Course\tCS101\tAlgorithms\tMonday\t08:00' }) }));
+jest.mock('@/features/auth/session', () => ({ useSession: () => ({ handleAuthFailure: async (error: unknown) => (error as { kind?: string })?.kind ? error : { kind: 'unknown' } }) }));
+jest.mock('../../../shared/api/schedule', () => ({ previewScheduleImport: jest.fn(), commitScheduleImport: jest.fn() }));
+const api = require('../../../shared/api/schedule') as Record<string, jest.Mock>;
+const preview = { courses: [{ course_code: 'CS101', course_name: 'Algorithms' }], meetings: [], errors: [] };
+beforeEach(async () => { await clearNamespace(); api.previewScheduleImport.mockReset().mockResolvedValue(preview); api.commitScheduleImport.mockReset().mockResolvedValue({}); });
+it.each(['zh', 'en'] as const)('shows an actionable import 400 rule in %s', async (locale) => {
+  api.previewScheduleImport.mockRejectedValue({ status: 400, message: 'no courses parsed' });
+  const view = await renderApp(<ToastProvider><ImportScreen /></ToastProvider>, { locale });
+  await fireEvent.press(view.getByTestId('import-preview'));
+  const rule = locale === 'zh' ? /保留课程表表头和完整课程行/ : /Keep the timetable header and complete course rows/;
+  await waitFor(() => expect(view.getAllByText(rule).length).toBeGreaterThan(0));
+  expect(view.queryByText('import.pasteLabel')).toBeNull();
+});
+it('does not restore a stale preview after the text changes', async () => {
+  let finish!: (value: unknown) => void;
+  api.previewScheduleImport.mockReturnValue(new Promise((resolve) => { finish = resolve; }));
+  const view = await renderApp(<ToastProvider><ImportScreen /></ToastProvider>);
+  await fireEvent.press(view.getByTestId('import-preview'));
+  await fireEvent.changeText(view.getByLabelText(/粘贴/), 'A different timetable with complete rows');
+  await act(async () => { finish(preview); });
+  expect(view.queryByTestId('import-preview-list')).toBeNull();
+  expect(view.getByTestId('import-commit').props.accessibilityState.disabled).toBe(true);
+});
+it('does not invalidate a timetable when commit fails', async () => {
+  await writeCachedWeek(3, normalizeTimetableWeek({ week: 3, days: { 1: [{ course_code: 'OLD', course_name: 'Existing' }] } })!);
+  api.commitScheduleImport.mockRejectedValue({ kind: 'offline' });
+  const view = await renderApp(<ToastProvider><ImportScreen /></ToastProvider>);
+  await fireEvent.press(view.getByTestId('import-preview'));
+  await waitFor(() => expect(view.getByTestId('import-preview-list')).toBeTruthy());
+  await fireEvent.press(view.getByTestId('import-commit'));
+  await fireEvent.press(view.getByText('确认覆盖'));
+  await waitFor(() => expect(api.commitScheduleImport).toHaveBeenCalledTimes(1));
+  expect((await readCachedWeek(3))?.days[1][0].courseName).toBe('Existing');
+});
