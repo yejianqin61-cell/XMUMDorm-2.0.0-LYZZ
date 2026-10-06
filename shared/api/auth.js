@@ -54,7 +54,12 @@ export async function register(body) {
 /**
  * 发送邮箱验证码（学生注册用）
  * @param {string} email
- * @returns {Promise<{ success: boolean, message?: string }>}
+ * @returns {Promise<{ success: boolean, message?: string, verificationCode?: string }>}
+ *
+ * ⚠️ **只增字段**（P2C2-02）：后端在 `NODE_ENV=development` 时会把验证码放在**响应体顶层**
+ * （`routes/auth.js:110-114`），而这里以前把它丢掉了 —— App 在开发期就永远拿不到码。
+ * 现在原样带回来（生产环境后端根本不返回该字段，所以这里会是 `undefined`）。
+ * Web 侧不使用这个字段，行为不变。
  */
 export async function sendVerificationCode(email) {
   const data = await requestRaw('/api/auth/send-verification-code', {
@@ -63,7 +68,11 @@ export async function sendVerificationCode(email) {
     skipAuth: true,
   });
   if (data.status === 0) {
-    return { success: true, message: data.message || '验证码已发送' };
+    return {
+      success: true,
+      message: data.message || '验证码已发送',
+      verificationCode: typeof data.verification_code === 'string' ? data.verification_code : undefined,
+    };
   }
   return { success: false, message: messageFromRaw(data) };
 }
@@ -71,6 +80,8 @@ export async function sendVerificationCode(email) {
 /**
  * 发送重置密码验证码
  * @param {string} email
+ * @returns {Promise<{ success: boolean, message?: string, verificationCode?: string }>}
+ * （同上：只增 `verificationCode`，Web 不受影响）
  */
 export async function sendResetCode(email) {
   const data = await requestRaw('/api/auth/send-reset-code', {
@@ -79,7 +90,11 @@ export async function sendResetCode(email) {
     skipAuth: true,
   });
   if (data.status === 0) {
-    return { success: true, message: data.message || '重置验证码已发送' };
+    return {
+      success: true,
+      message: data.message || '重置验证码已发送',
+      verificationCode: typeof data.verification_code === 'string' ? data.verification_code : undefined,
+    };
   }
   return { success: false, message: messageFromRaw(data) };
 }
