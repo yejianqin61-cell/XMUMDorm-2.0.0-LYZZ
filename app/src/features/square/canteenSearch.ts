@@ -25,7 +25,7 @@ export function normalizeSearchPage(raw: unknown): SearchPage | null {
   return { rows, hasMore: { products: more?.products === true, articles: more?.articles === true } };
 }
 export function mergeSearchRows(previous: readonly SearchRow[], incoming: readonly SearchRow[]): readonly SearchRow[] {
-  const entries = new Map(previous.map((row) => [`${row.kind}:${row.id}`, row]));
-  for (const row of incoming) entries.set(`${row.kind}:${row.id}`, row);
+  const entries = new Map(previous.map((row) => [row.kind + ':' + row.id, row]));
+  for (const row of incoming) entries.set(row.kind + ':' + row.id, row);
   return [...entries.values()];
 }

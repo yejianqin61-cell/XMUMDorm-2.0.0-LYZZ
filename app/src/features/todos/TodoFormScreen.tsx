@@ -13,7 +13,7 @@ import { toToolsError } from '@/features/tools/requestError';
 import { useI18n } from '@/i18n';
 import type { AppError } from '@/i18n/errors';
 import { createTodo, updateTodo } from '../../../../shared/api/todos';
-import { findTodo, notifyTodosChanged, todoPayload, validateTodoDate, validateTodoTime, type Todo } from './todos';
+import { findTodo, notifyTodosChanged, todoPayload, validateTodoDate, validateTodoTime, TODO_PRIORITY_KEYS, type Todo } from './todos';
 
 function TodoEditor({ todo }: { todo: Todo | null }): React.ReactElement {
   const { t } = useI18n();
@@ -23,7 +23,7 @@ function TodoEditor({ todo }: { todo: Todo | null }): React.ReactElement {
     { name: 'title', kind: 'text', labelKey: 'tools.todos.field.title', required: true, maxLength: 500, validate: (value) => typeof value === 'string' && value.trim() ? undefined : 'form.error.required' },
     { name: 'description', kind: 'textarea', labelKey: 'tools.todos.field.description' },
     { name: 'priority', kind: 'custom', labelKey: 'tools.todos.field.priority', validate: (value) => ['0', '1', '2', '3'].includes(String(value)) ? undefined : 'form.error.required',
-      render: ({ value, onChange, disabled }) => <SegmentedControl testID="todo-priority" value={String(value)} disabled={disabled} onChange={onChange} options={[0, 1, 2, 3].map((priority) => ({ value: String(priority), label: t(`tools.todos.priority.${priority}` as 'tools.todos.priority.0') }))} /> },
+      render: ({ value, onChange, disabled }) => <SegmentedControl testID="todo-priority" value={String(value)} disabled={disabled} onChange={onChange} options={TODO_PRIORITY_KEYS.map((key, priority) => ({ value: String(priority), label: t(key) }))} /> },
     { name: 'dueDate', kind: 'text', labelKey: 'tools.todos.field.date', helpKey: 'tools.todos.dateHelp', validate: validateTodoDate },
     { name: 'dueTime', kind: 'text', labelKey: 'tools.todos.field.time', helpKey: 'tools.todos.timeHelp', validate: validateTodoTime },
   ], [t]);

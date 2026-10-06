@@ -18,7 +18,7 @@ import { useSession } from '@/features/auth/session';
 import { timetableIdentity } from '@/features/tools/cacheIdentity';
 import { toToolsError } from '@/features/tools/requestError';
 import { getTodos, toggleTodo, deleteTodo } from '../../../../shared/api/todos';
-import { normalizeTodos, mergeTodos, notifyTodosChanged, type Todo } from './todos';
+import { normalizeTodos, mergeTodos, notifyTodosChanged, TODO_PRIORITY_KEYS, type Todo } from './todos';
 
 export function TodoListScreen(): React.ReactElement {
   const { t } = useI18n();
@@ -85,14 +85,14 @@ export function TodoListScreen(): React.ReactElement {
       <View style={{ flex: 1, padding: theme.space('space_4'), gap: theme.space('space_3') }}>
         <Button testID="todos-create" label={t('tools.todos.create')} onPress={() => router.push('/tools/todos/new')} />
         <SegmentedControl testID="todos-filter" value={filter} onChange={setFilter} options={[
-          { value: 'all', label: t('tools.todos.all') }, ...[3, 2, 1, 0].map((priority) => ({ value: String(priority), label: t(`tools.todos.priority.${priority}` as 'tools.todos.priority.0') })),
+          { value: 'all', label: t('tools.todos.all') }, ...[3, 2, 1, 0].map((priority) => ({ value: String(priority), label: t(TODO_PRIORITY_KEYS[priority]) })),
         ]} />
         {writeError ? <ErrorState testID="todos-write-error" error={writeError} onAction={() => { if (retryWrite.current) void mutate(retryWrite.current); }} /> : null}
         <ListScreen testID="todos-list" data={visible} keyExtractor={(row) => String(row.id)} pagination={pagination}
           onRefresh={() => void load('refresh')} onEndReached={() => void load('append')} onRetryRefresh={() => void load('refresh')} onRetryAppend={() => void load('append')}
           labels={{ empty: { kind: 'firstRun', title: t('tools.todos.empty'), description: t('tools.todos.emptyHelp'), actionLabel: t('tools.todos.create'), onAction: () => router.push('/tools/todos/new') }, retryLabel: t('action.retry'), endLabel: t('tools.todos.end') }}
           renderItem={(row) => <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.space('space_1') }}>
-            <View style={{ flex: 1 }}><ListItem testID={`todo-toggle-${row.id}`} title={row.title} subtitle={[t(`tools.todos.priority.${row.priority}` as 'tools.todos.priority.0'), row.dueDate, row.dueTime].filter(Boolean).join(' · ')} variant="select" selected={row.completed} disabled={busy} onToggleSelect={() => void mutate(() => toggleTodo(row.id))} /></View>
+            <View style={{ flex: 1 }}><ListItem testID={`todo-toggle-${row.id}`} title={row.title} subtitle={[t(TODO_PRIORITY_KEYS[row.priority]), row.dueDate, row.dueTime].filter(Boolean).join(' · ')} variant="select" selected={row.completed} disabled={busy} onToggleSelect={() => void mutate(() => toggleTodo(row.id))} /></View>
             <IconButton testID={`todo-edit-${row.id}`} Icon={Pencil} accessibilityLabel={t('tools.todos.edit')} disabled={busy} onPress={() => router.push({ pathname: '/tools/todos/[id]', params: { id: String(row.id) } })} />
             <IconButton testID={`todo-delete-${row.id}`} Icon={Trash} accessibilityLabel={t('tools.todos.delete')} disabled={busy} onPress={() => setDeleting(row)} />
           </View>} />

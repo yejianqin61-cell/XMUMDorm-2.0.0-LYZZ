@@ -370,7 +370,7 @@ export const zh = {
   'canteen.search.enterQuery': '输入关键词后搜索',
   'canteen.search.tooLong': '搜索词最多50字符',
   'canteen.search.noResults': '没有匹配的菜品或文章',
-  'canteen.search.emptyHelp': '试试菜名、店名或更短的关键词',
+  'canteen.search.emptyHelp': '试试菜名或更短的关键词',
   'canteen.search.end': '已显示全部搜索结果',
   'canteen.cache.stale': '显示的是上次同步的食堂内容',
   'import.parseRule': '保留课程表表头和完整课程行，复制制表符分隔的文本（至少10字），再预览',

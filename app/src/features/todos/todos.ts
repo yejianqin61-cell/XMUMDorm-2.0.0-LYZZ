@@ -5,6 +5,7 @@ import type { MessageKey } from '@/i18n/zh';
 
 export type Todo = { id: number; title: string; description: string; priority: number; dueDate: string | null; dueTime: string | null; completed: boolean; listType: string };
 export type TodoPage = { list: readonly Todo[]; hasMore: boolean };
+export const TODO_PRIORITY_KEYS = ['tools.todos.priority.0', 'tools.todos.priority.1', 'tools.todos.priority.2', 'tools.todos.priority.3'] as const;
 export function normalizeTodos(raw: unknown): TodoPage | null {
   if (!raw || typeof raw !== 'object' || !Array.isArray((raw as { list?: unknown }).list)) return null;
   const page = raw as { list: unknown[]; hasMore?: boolean };
