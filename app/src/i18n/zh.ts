@@ -326,6 +326,16 @@ export const zh = {
   'action.refresh': '刷新',
   'action.openInBrowser': '浏览器打开',
   'action.save': '保存',
+  'square.guides.title': '新生指南',
+  'square.guides.empty': '还没有指南',
+  'square.guides.author': '作者',
+  'square.guides.like': '赞',
+  'square.guides.comments': '评论',
+  'square.guides.more': '更多',
+  'square.guides.delete': '删除',
+  'square.guides.reply': '回复',
+  'square.guides.collapse': '收起',
+  'square.guides.end': '已读完',
 } as const;
 
 /** 词条 key 的联合类型 —— `t()` 只接受它，**缺词条是编译期错误** */
