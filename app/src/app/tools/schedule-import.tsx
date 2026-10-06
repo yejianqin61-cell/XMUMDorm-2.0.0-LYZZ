@@ -39,6 +39,7 @@ import { useForm } from '@/components/ui/Form';
 import { useSession } from '@/features/auth/session';
 import { commitScheduleImport, previewScheduleImport } from '../../../../shared/api/schedule';
 import { ImportPreviewList } from '@/features/tools/ImportPreviewList';
+import { invalidateTimetable } from '@/features/tools/timetable';
 import {
   IMPORT_MIN_TEXT_LENGTH,
   canCommit,
@@ -127,6 +128,8 @@ export default function ScheduleImportScreen(): React.ReactElement {
     dispatch({ type: 'commit:start' });
     try {
       await commitScheduleImport(text);
+      // Import is already committed; a disk error must never invite a second commit.
+      await invalidateTimetable().catch(() => undefined);
       dispatch({ type: 'commit:success' });
       // 成功**不弹对话框**（宪法 10.4）：给一条回执 + 返回
       toast.show({

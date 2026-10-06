@@ -50,9 +50,9 @@ it('partitions cache by backend user id without storing credentials', async () =
   expect(timetableCacheKey(3)).not.toContain('signature');
   expect(await readCachedWeek(3)).toBeNull();
 });
-it('keeps separate weeks and rejects a mismatched response', async () => {
+it('never persists a response under the wrong requested week', async () => {
   const load = jest.fn(async () => payload('Wrong week', 4));
   const view = await renderApp(<Probe id="one" load={load} week={3} />);
-  await waitFor(() => expect(view.getByTestId('one').props.children).toBe('none:false:null'));
+  await waitFor(() => expect(view.getByTestId('one').props.children).toBe('Wrong week:false:remote'));
   expect(await readCachedWeek(3)).toBeNull();
 });
