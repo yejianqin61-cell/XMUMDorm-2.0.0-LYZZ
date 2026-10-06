@@ -175,6 +175,23 @@ export const en: Record<MessageKey, string> = {
   'mailbox.conversations.empty.title': 'No messages yet',
   'mailbox.conversations.empty.description': 'Contact the seller from a listing',
   'mailbox.conversations.empty.action': 'Browse listings',
+  // Mailbox (F-01; from P2B-04)
+  'mailbox.category.interaction': 'Social',
+  'mailbox.category.transaction': 'Trade',
+  'mailbox.category.system': 'System',
+  'mailbox.kind.like': 'New like',
+  'mailbox.kind.comment': 'New comment',
+  'mailbox.kind.chat': 'New message',
+  'mailbox.kind.announcement': 'Announcement',
+  'mailbox.kind.other': 'Notification',
+  'mailbox.unread': 'Unread',
+  'mailbox.markAllRead': 'Mark all read',
+  'mailbox.empty.title': 'Nothing here yet',
+  'mailbox.empty.description': 'New likes and trades land here',
+  'mailbox.clear.action': 'Clear',
+  'mailbox.clear.title': 'Clear this category',
+  'mailbox.clear.body': 'Announcements are never cleared',
+  'mailbox.clear.confirm': 'Clear',
 
   // ── Secondary tabs ───────────────────────────────────────────
   'secondary.confession': 'Confessions',

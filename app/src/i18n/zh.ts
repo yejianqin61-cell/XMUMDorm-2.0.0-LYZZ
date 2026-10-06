@@ -181,6 +181,23 @@ export const zh = {
   'mailbox.conversations.empty.title': '还没有私信',
   'mailbox.conversations.empty.description': '在二手详情里联系卖家',
   'mailbox.conversations.empty.action': '去看二手',
+  // ── 信箱（F-01；P2B-04 起）──────────────────────────────────────────
+  'mailbox.category.interaction': '互动',
+  'mailbox.category.transaction': '交易',
+  'mailbox.category.system': '系统',
+  'mailbox.kind.like': '收到了赞',
+  'mailbox.kind.comment': '收到了评论',
+  'mailbox.kind.chat': '收到私信',
+  'mailbox.kind.announcement': '公告',
+  'mailbox.kind.other': '通知',
+  'mailbox.unread': '未读',
+  'mailbox.markAllRead': '全部已读',
+  'mailbox.empty.title': '这里还没有消息',
+  'mailbox.empty.description': '新的互动与交易会出现在这里',
+  'mailbox.clear.action': '清空',
+  'mailbox.clear.title': '清空这一类',
+  'mailbox.clear.body': '公告不会被清空',
+  'mailbox.clear.confirm': '清空',
 
   // ── 二级 Tab（宪法 4.8；校园里两项已定，广场/工具待 C-03/C-04）──
   'secondary.confession': '树洞',
