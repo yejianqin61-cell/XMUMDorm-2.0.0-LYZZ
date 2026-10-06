@@ -23,7 +23,7 @@
 import * as React from 'react';
 
 import { clearNamespace } from '@/shared/storage';
-import { login as loginApi } from '../../../../shared/api/auth';
+import { login as loginApi, register as registerApi } from '../../../../shared/api/auth';
 import { setTokenGetter } from '@/shared/api';
 import {
   authFailureToAppError,
@@ -84,6 +84,17 @@ export type SessionValue = {
   isSignedIn: boolean;
   /** 登录：成功即写令牌 + 进 `signedIn` */
   login: (identifier: string, password: string) => Promise<LoginResult>;
+  /**
+   * 注册（`A-03`，P2C2-02）：成功后后端**直接返回 token** → 与登录同一条落地路径
+   * （写令牌 + 进 `signedIn`）。⛔ 不复用 `login()`：那是另一条端点与另一套错误口径。
+   */
+  register: (body: {
+    role: string;
+    email: string;
+    username: string;
+    password: string;
+    verification_code: string;
+  }) => Promise<LoginResult>;
   logout: () => Promise<void>;
   /** 任何请求捕获到会话失效时调用（401 / 403 令牌类） */
   markExpired: () => Promise<void>;
@@ -152,6 +163,35 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
     []
   );
 
+  const register = React.useCallback(
+    async (body: {
+      role: string;
+      email: string;
+      username: string;
+      password: string;
+      verification_code: string;
+    }): Promise<LoginResult> => {
+      try {
+        const result = await registerApi(body);
+        if (!result.success || !result.token) {
+          // 后端把业务失败放在 200 + message 里（`requestRaw` 不抛）→ 按校验失败处理
+          return {
+            ok: false,
+            failure: 'badCredentials',
+            error: authFailureToAppError('badCredentials'),
+          };
+        }
+        await saveToken(result.token);
+        dispatch({ type: 'login:success', identifier: body.username });
+        return { ok: true };
+      } catch (error) {
+        const failure = classifyAuthFailure(error, 'login');
+        return { ok: false, failure, error: authFailureToAppError(failure) };
+      }
+    },
+    []
+  );
+
   const handleAuthFailure = React.useCallback(
     async (error: unknown, phase: AuthPhase = 'request'): Promise<AppError> => {
       const failure = classifyAuthFailure(error, phase);
@@ -167,11 +207,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
       identifier: state.identifier,
       isSignedIn: state.status === 'signedIn',
       login,
+      register,
       logout,
       markExpired,
       handleAuthFailure,
     }),
-    [state.status, state.identifier, login, logout, markExpired, handleAuthFailure]
+    [state.status, state.identifier, login, register, logout, markExpired, handleAuthFailure]
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
