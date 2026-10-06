@@ -41,6 +41,12 @@ export type InputSheetProps = {
   replyCancelLabel?: string;
   onCancelReply?: () => void;
   disabled?: boolean;
+  /**
+   * 只禁**发送键**，输入框仍可编辑（P2B-06 发现：用 `disabled` 表达"内容为空不让发"
+   * 会把整个输入条变成不可编辑 —— 用户连字都打不进去）。
+   * 场景：私信的"空文本/超限时不能发"，但输入本身当然要能打字。
+   */
+  sendDisabled?: boolean;
   /** 发送失败时置位：**输入内容保持不动**，只换发送键的状态 */
   sending?: boolean;
   style?: StyleProp<ViewStyle>;
@@ -59,6 +65,7 @@ export function InputSheet({
   replyCancelLabel,
   onCancelReply,
   disabled = false,
+  sendDisabled = false,
   sending = false,
   style,
   testID,
@@ -67,6 +74,8 @@ export function InputSheet({
   // S7：覆盖层从唯一安全区容器取 insets（⛔ 本文件不调 useSafeAreaInsets）
   const insets = useScreenInsets();
   const state = counterState(value.length, maxLength);
+  /** 发送键的禁用：三种原因合一（整体禁用 / 本次不给发 / 正在发） */
+  const sendBlocked = disabled || sendDisabled || sending;
 
   return (
     <View
@@ -138,10 +147,10 @@ export function InputSheet({
           }}
         />
         <Pressable
-          onPress={disabled || sending ? undefined : onSend}
-          disabled={disabled || sending}
+          onPress={sendBlocked ? undefined : onSend}
+          disabled={sendBlocked}
           accessibilityLabel={sendLabel}
-          accessibilityState={{ disabled: disabled || sending, busy: sending }}
+          accessibilityState={{ disabled: sendBlocked, busy: sending }}
           testID={testID ? `${testID}-send` : undefined}
           style={{
             minHeight: theme.touchTarget,
@@ -153,7 +162,7 @@ export function InputSheet({
           <Text
             role="label"
             emphasis="strong"
-            colorToken={disabled || sending ? 'text-disabled' : 'text-brand'}
+            colorToken={sendBlocked ? 'text-disabled' : 'text-brand'}
           >
             {sendLabel}
           </Text>

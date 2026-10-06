@@ -198,6 +198,11 @@ export const zh = {
   'mailbox.clear.title': '清空这一类',
   'mailbox.clear.body': '公告不会被清空',
   'mailbox.clear.confirm': '清空',
+  // ── 私信会话（M-12；P2B-06 起）──────────────────────────────────────
+  'mailbox.chat.placeholder': '写点什么',
+  'mailbox.chat.send': '发送',
+  'mailbox.chat.empty.description': '先打个招呼',
+  'mailbox.chat.read': '已读',
 
   // ── 二级 Tab（宪法 4.8；校园里两项已定，广场/工具待 C-03/C-04）──
   'secondary.confession': '树洞',

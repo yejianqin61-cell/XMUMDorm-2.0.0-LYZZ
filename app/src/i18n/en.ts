@@ -192,6 +192,11 @@ export const en: Record<MessageKey, string> = {
   'mailbox.clear.title': 'Clear this category',
   'mailbox.clear.body': 'Announcements are never cleared',
   'mailbox.clear.confirm': 'Clear',
+  // Chat thread (M-12; from P2B-06)
+  'mailbox.chat.placeholder': 'Write something',
+  'mailbox.chat.send': 'Send',
+  'mailbox.chat.empty.description': 'Say hello first',
+  'mailbox.chat.read': 'Read',
 
   // ── Secondary tabs ───────────────────────────────────────────
   'secondary.confession': 'Confessions',
