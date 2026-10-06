@@ -27,6 +27,21 @@ const api = require('../../../shared/api/notifications') as { getUnreadSummary: 
 const SRC_ROOT = path.resolve(__dirname, '..');
 const TAB_PAGES = ['index.tsx', 'tools.tsx', 'campus.tsx', 'me.tsx'];
 
+/**
+ * 一个一级 Tab 的**屏幕源码**：路由文件本身，或它一行转发到的页面组合。
+ * ⚠️ 为什么需要：本仓约定"路由文件只做转发"（`me.tsx` 就是这样），
+ *    而"四屏一致"这条不变量盯的是**屏幕**，不是文件名 —— 否则把逻辑搬进 `features/`
+ *    就会让这条守卫假红（它曾经就红过一次）。
+ */
+function tabScreenSource(file: string): string {
+  const routeFile = path.join(SRC_ROOT, 'app', '(tabs)', file);
+  const routeText = fs.readFileSync(routeFile, 'utf8');
+  const forwarded = routeText.match(/from '@\/([^']+)'/);
+  if (!forwarded) return routeText;
+  const target = path.join(SRC_ROOT, `${forwarded[1]}.tsx`);
+  return fs.existsSync(target) ? `${routeText}\n${fs.readFileSync(target, 'utf8')}` : routeText;
+}
+
 let probe: { current: (UnreadState & { refresh: () => void }) | null } = { current: null };
 
 function UnreadProbe(): React.ReactElement {
@@ -117,11 +132,9 @@ describe('P2B-01 未读真源与顶栏角标', () => {
   });
 
   describe('TC-P2B-01-5A · 源码扫描：四屏一致', () => {
-    it('四个一级 Tab 页都接了同一个 hook', () => {
+    it('四个一级 Tab 页都接了同一个 hook（含"一行转发壳"的写法）', () => {
       for (const file of TAB_PAGES) {
-        const code = stripComments(
-          fs.readFileSync(path.join(SRC_ROOT, 'app', '(tabs)', file), 'utf8')
-        );
+        const code = stripComments(tabScreenSource(file));
         expect({ file, uses: code.includes('useMailboxBadge') }).toEqual({ file, uses: true });
         expect({ file, spreads: code.includes('{...badge}') }).toEqual({ file, spreads: true });
       }
