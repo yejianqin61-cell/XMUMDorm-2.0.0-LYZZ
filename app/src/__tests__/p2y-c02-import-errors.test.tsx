@@ -36,7 +36,7 @@ it('does not invalidate a timetable when commit fails', async () => {
   await fireEvent.press(view.getByTestId('import-preview'));
   await waitFor(() => expect(view.getByTestId('import-preview-list')).toBeTruthy());
   await fireEvent.press(view.getByTestId('import-commit'));
-  await fireEvent.press(view.getByText('确认覆盖'));
+  await fireEvent.press(view.getByText('覆盖'));
   await waitFor(() => expect(api.commitScheduleImport).toHaveBeenCalledTimes(1));
   expect((await readCachedWeek(3))?.days[1][0].courseName).toBe('Existing');
 });
