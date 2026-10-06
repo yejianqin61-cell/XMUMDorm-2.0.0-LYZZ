@@ -72,7 +72,7 @@ function ClubsHome() {
               </NeoButton>
             </Link>
           ) : null}
-          <Link to="/publish">
+          <Link to="/publish?entry=club">
             <NeoButton variant="outline" size="sm">
               {isZh ? '去发布' : 'Publish'}
             </NeoButton>

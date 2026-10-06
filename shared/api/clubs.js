@@ -1,4 +1,4 @@
-import { get, post, patch, del } from './request';
+import { download, get, post, patch, del } from './request';
 
 /** 删除社团活动（社团管理员 / 站管理员） */
 export function deleteClubActivity(activityId) {
@@ -57,6 +57,10 @@ export function getActivityDetail(id) {
 
 export function getActivityRegistrationStatus(id) {
   return get(`/api/clubs/activities/${id}/registration-status`);
+}
+
+export function exportClubActivityRegistrations(id) {
+  return download(`/api/clubs/activities/${id}/registrations/export`);
 }
 
 export function registerClubActivity(id) {

@@ -170,3 +170,34 @@ export function patch(path, body, options = {}) {
 export function del(path, options = {}) {
   return request(path, { ...options, method: 'DELETE' });
 }
+
+/** 下载二进制响应，沿用与普通 API 请求相同的鉴权逻辑。 */
+export async function download(path, options = {}) {
+  const { method = 'GET', headers: extraHeaders = {}, token = getToken(), skipAuth = false } = options;
+  const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
+  const headers = { ...extraHeaders };
+  if (!skipAuth && token) headers.Authorization = `Bearer ${token}`;
+
+  const res = await fetch(url, { method, headers });
+  if (!res.ok) {
+    const contentType = res.headers.get('content-type') || '';
+    let message = `请求失败 ${res.status}`;
+    if (contentType.includes('application/json')) {
+      try {
+        const body = await res.json();
+        message = body?.error || body?.message || message;
+      } catch {}
+    }
+    const err = new Error(message);
+    err.status = res.status;
+    throw err;
+  }
+
+  const disposition = res.headers.get('content-disposition') || '';
+  const encodedName = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
+  let filename = 'download';
+  if (encodedName) {
+    try { filename = decodeURIComponent(encodedName); } catch { filename = encodedName; }
+  }
+  return { blob: await res.blob(), filename };
+}
