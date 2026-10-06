@@ -80,13 +80,13 @@ export function normalizeTimetableWeek(data: unknown): TimetableWeek | null {
       days[day] = list.map((item) => {
         const meeting = (item ?? {}) as Record<string, unknown>;
         return {
-          courseCode: asString(meeting.course_code) ?? '',
-          courseName: asString(meeting.course_name),
+          courseCode: asString(meeting.course_code ?? meeting.courseCode) ?? '',
+          courseName: asString(meeting.course_name ?? meeting.courseName),
           credit: asNumber(meeting.credit),
           lecturer: asString(meeting.lecturer),
-          dayOfWeek: asNumber(meeting.day_of_week) ?? day,
-          startTime: asString(meeting.start_time),
-          endTime: asString(meeting.end_time),
+          dayOfWeek: asNumber(meeting.day_of_week ?? meeting.dayOfWeek) ?? day,
+          startTime: asString(meeting.start_time ?? meeting.startTime),
+          endTime: asString(meeting.end_time ?? meeting.endTime),
           venue: asString(meeting.venue),
         };
       });
