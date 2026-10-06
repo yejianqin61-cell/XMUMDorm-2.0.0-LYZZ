@@ -164,6 +164,17 @@ export const en: Record<MessageKey, string> = {
   'screen.campus': 'Campus',
   'screen.me': 'Me',
   'screen.mailbox': 'Mailbox',
+  // Direct messages (M-11 / M-12; from P2B-03)
+  'mailbox.conversations.title': 'Messages',
+  'mailbox.conversations.untitled': 'Listing removed',
+  'mailbox.conversations.noMessage': 'No messages yet',
+  'mailbox.conversations.peerFallback': 'Them',
+  'mailbox.conversations.roleSeller': 'I am selling',
+  'mailbox.conversations.roleBuyer': 'I am buying',
+  'mailbox.conversations.end': 'No more',
+  'mailbox.conversations.empty.title': 'No messages yet',
+  'mailbox.conversations.empty.description': 'Contact the seller from a listing',
+  'mailbox.conversations.empty.action': 'Browse listings',
 
   // ── Secondary tabs ───────────────────────────────────────────
   'secondary.confession': 'Confessions',

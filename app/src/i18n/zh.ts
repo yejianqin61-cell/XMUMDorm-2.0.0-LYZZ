@@ -170,6 +170,17 @@ export const zh = {
   'screen.campus': '校园里',
   'screen.me': '我的',
   'screen.mailbox': '信箱',
+  // ── 私信（M-11 / M-12；P2B-03 起）────────────────────────────────────
+  'mailbox.conversations.title': '私信',
+  'mailbox.conversations.untitled': '商品已下架',
+  'mailbox.conversations.noMessage': '还没有消息',
+  'mailbox.conversations.peerFallback': '对方',
+  'mailbox.conversations.roleSeller': '我是卖家',
+  'mailbox.conversations.roleBuyer': '我是买家',
+  'mailbox.conversations.end': '没有更多了',
+  'mailbox.conversations.empty.title': '还没有私信',
+  'mailbox.conversations.empty.description': '在二手详情里联系卖家',
+  'mailbox.conversations.empty.action': '去看二手',
 
   // ── 二级 Tab（宪法 4.8；校园里两项已定，广场/工具待 C-03/C-04）──
   'secondary.confession': '树洞',
