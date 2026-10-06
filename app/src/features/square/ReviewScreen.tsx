@@ -8,7 +8,7 @@ import { RatingScale, type RatingTierKey } from '@/components/ui/RatingScale';
 import { Screen } from '@/components/ui/Screen';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useSession } from '@/features/auth/session';
-import { useMailboxBadge } from '@/features/mailbox/useUnread';
+import { useMailboxBadge, type MailboxBadge } from '@/features/mailbox/useUnread';
 import { timetableIdentity } from '@/features/tools/cacheIdentity';
 import { toToolsError } from '@/features/tools/requestError';
 import { useI18n } from '@/i18n';
@@ -16,11 +16,10 @@ import { postProductComment } from '../../../../shared/api/canteen';
 import { REVIEW_CONTENT_FIELD, REVIEW_IMAGES_FIELD, reviewRating } from './review';
 import { invalidateCanteen } from './canteenCache';
 
-function ReviewForm({ productId, pickImage }: { productId: number; pickImage?: () => Promise<PickResult> }): React.ReactElement {
+function ReviewForm({ productId, pickImage, badge }: { productId: number; pickImage?: () => Promise<PickResult>; badge: MailboxBadge }): React.ReactElement {
   const { t } = useI18n();
   const router = useRouter();
   const session = useSession();
-  const badge = useMailboxBadge();
   const fields = React.useMemo<readonly FormFieldDescriptor[]>(() => [
     { name: 'rating', kind: 'custom', labelKey: 'canteen.review.rating', required: true,
       validate: (value) => reviewRating(value) === null ? 'canteen.review.chooseRating' : undefined,
@@ -58,10 +57,11 @@ function ReviewForm({ productId, pickImage }: { productId: number; pickImage?: (
 
 export function ReviewScreen({ productId, pickImage }: { productId: number; pickImage?: () => Promise<PickResult> }): React.ReactElement {
   useSession();
+  const badge = useMailboxBadge();
   const { t } = useI18n();
   const router = useRouter();
-  if (!Number.isSafeInteger(productId) || productId <= 0) return <Screen titleKey="canteen.review.title" bottomMode="own">
+  if (!Number.isSafeInteger(productId) || productId <= 0) return <Screen titleKey="canteen.review.title" bottomMode="own" {...badge}>
     <EmptyState testID="review-product-missing" kind="noResult" title={t('canteen.dishMissing')} actionLabel={t('action.back')} onAction={() => router.replace('/canteen')} />
   </Screen>;
-  return <ReviewForm key={`${timetableIdentity().epoch}:${productId}`} productId={productId} pickImage={pickImage} />;
+  return <ReviewForm key={`${timetableIdentity().epoch}:${productId}`} productId={productId} pickImage={pickImage} badge={badge} />;
 }

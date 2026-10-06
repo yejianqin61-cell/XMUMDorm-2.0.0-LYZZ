@@ -41,6 +41,7 @@ import {
   weekWindow,
 } from '@/features/tools/timetable';
 import { FALLBACK_TOTAL_WEEKS, clampWeek } from '../../../../shared/config/semesters';
+import { timetableIdentity } from '@/features/tools/cacheIdentity';
 
 export default function TimetableScreen(): React.ReactElement {
   const badge = useMailboxBadge();
@@ -62,9 +63,11 @@ export default function TimetableScreen(): React.ReactElement {
    */
   const fetchWeek = React.useCallback(
     async (target: number) => {
+      const owner = timetableIdentity().epoch;
       try {
         return await getScheduleWeek(target);
       } catch (error) {
+        if (owner !== timetableIdentity().epoch) throw error;
         throw await session.handleAuthFailure(error);
       }
     },

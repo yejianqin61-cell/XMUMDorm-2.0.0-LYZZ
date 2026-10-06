@@ -9,6 +9,7 @@ import { clearNamespace, getItem } from '@/shared/storage';
 import { resetTokenMirrorForTests, saveToken } from '@/features/auth/tokenStore';
 import { timetableIdentity } from '@/features/tools/cacheIdentity';
 import ImportScreen from '@/app/tools/schedule-import';
+import TimetableScreen from '@/app/tools/timetable';
 import { ToastProvider } from '@/components/ui/Toast';
 jest.mock('expo-router', () => ({ useLocalSearchParams: () => ({ text: 'Course\tCS101\tAlgorithms\tMonday\t08:00' }), useNavigation: () => ({ dispatch: jest.fn() }), useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn(), canGoBack: () => false }) }));
 jest.mock('@/features/auth/session', () => {
@@ -17,7 +18,7 @@ jest.mock('@/features/auth/session', () => {
 });
 jest.mock('../../../shared/api/todos', () => ({ getTodayTodos: jest.fn() }));
 jest.mock('../../../shared/api/canteen', () => ({ postProductComment: jest.fn() }));
-jest.mock('../../../shared/api/schedule', () => ({ previewScheduleImport: jest.fn(), commitScheduleImport: jest.fn() }));
+jest.mock('../../../shared/api/schedule', () => ({ getScheduleWeek: jest.fn(), previewScheduleImport: jest.fn(), commitScheduleImport: jest.fn() }));
 const api = require('../../../shared/api/todos') as Record<string, jest.Mock>;
 jest.mock('expo-router/react-navigation', () => ({ usePreventRemove: jest.fn() }));
 jest.mock('@/features/mailbox/useUnread', () => ({ useMailboxBadge: () => ({ unreadCount: 0, onMailboxPress: jest.fn() }) }));
@@ -64,4 +65,15 @@ it('clears a completed import preview and its scraped text on account change', a
   expect(view.queryByDisplayValue('Course\tCS101\tAlgorithms\tMonday\t08:00')).toBeNull();
   expect(view.getByTestId('import-commit').props.accessibilityState.disabled).toBe(true);
   expect(schedule.commitScheduleImport).not.toHaveBeenCalled();
+});
+it('ignores an old account 401 from the timetable screen before auth side effects', async () => {
+  const schedule = require('../../../shared/api/schedule') as Record<string, jest.Mock>;
+  let reject!: (error: unknown) => void;
+  schedule.getScheduleWeek.mockReturnValueOnce(new Promise((_, fail) => { reject = fail; })).mockResolvedValue({ week: 1, currentWeek: 1, days: {} });
+  const view = await renderApp(<ToastProvider><Harness child={<TimetableScreen />} /></ToastProvider>);
+  await waitFor(() => expect(schedule.getScheduleWeek).toHaveBeenCalledTimes(1));
+  await fireEvent.press(view.getByTestId('switch'));
+  await waitFor(() => expect(schedule.getScheduleWeek).toHaveBeenCalledTimes(2));
+  await act(async () => reject({ status: 401 }));
+  expect(failures).toEqual([]);
 });

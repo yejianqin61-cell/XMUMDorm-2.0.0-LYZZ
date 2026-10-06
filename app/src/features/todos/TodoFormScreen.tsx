@@ -9,18 +9,17 @@ import { LoadingState } from '@/components/ui/LoadingState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useSession } from '@/features/auth/session';
-import { useMailboxBadge } from '@/features/mailbox/useUnread';
+import { useMailboxBadge, type MailboxBadge } from '@/features/mailbox/useUnread';
 import { timetableIdentity } from '@/features/tools/cacheIdentity';
 import { useI18n } from '@/i18n';
 import type { AppError } from '@/i18n/errors';
 import { createTodo, updateTodo } from '../../../../shared/api/todos';
 import { findTodo, notifyTodosChanged, todoPayload, validateTodoDate, validateTodoTime, TODO_PRIORITY_KEYS, toTodoError, type Todo } from './todos';
 
-function TodoEditor({ todo }: { todo: Todo | null }): React.ReactElement {
+function TodoEditor({ todo, badge }: { todo: Todo | null; badge: MailboxBadge }): React.ReactElement {
   const { t } = useI18n();
   const router = useRouter();
   const session = useSession();
-  const badge = useMailboxBadge();
   const fields = React.useMemo<readonly FormFieldDescriptor[]>(() => [
     { name: 'title', kind: 'text', labelKey: 'tools.todos.field.title', required: true, maxLength: 500, validate: (value) => typeof value === 'string' && value.trim() ? undefined : 'form.error.required' },
     { name: 'description', kind: 'textarea', labelKey: 'tools.todos.field.description' },
@@ -51,6 +50,11 @@ function TodoEditor({ todo }: { todo: Todo | null }): React.ReactElement {
 }
 
 export function TodoFormScreen({ id }: { id?: number }): React.ReactElement {
+  useSession();
+  return <OwnedTodoFormScreen key={`${timetableIdentity().epoch}:${id ?? 'new'}`} id={id} />;
+}
+function OwnedTodoFormScreen({ id }: { id?: number }): React.ReactElement {
+  const badge = useMailboxBadge();
   const { t } = useI18n();
   const router = useRouter();
   const session = useSession();
@@ -70,9 +74,9 @@ export function TodoFormScreen({ id }: { id?: number }): React.ReactElement {
     });
     return () => { cancelled = true; };
   }, [id, nonce, epoch]);
-  if (id === undefined) return <TodoEditor key={epoch} todo={null} />;
-  if (!state.loading && state.todo) return <TodoEditor key={`${epoch}:${id}`} todo={state.todo} />;
-  return <Screen testID="todo-editor-state" titleKey="tools.todos.edit" bottomMode="own">
+  if (id === undefined) return <TodoEditor key={epoch} todo={null} badge={badge} />;
+  if (!state.loading && state.todo) return <TodoEditor key={`${epoch}:${id}`} todo={state.todo} badge={badge} />;
+  return <Screen testID="todo-editor-state" titleKey="tools.todos.edit" bottomMode="own" {...badge}>
     {state.loading ? <LoadingState /> : state.error ? <ErrorState error={state.error} onAction={() => setNonce((value) => value + 1)} /> : <EmptyState kind="noResult" title={t('tools.todos.notFound')} actionLabel={t('action.back')} onAction={() => router.replace('/tools/todos')} />}
   </Screen>;
 }
