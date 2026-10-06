@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { Button } from '@/components/ui/Button';
 import * as Linking from 'expo-linking';
 import { act, fireEvent, waitFor } from '@testing-library/react-native';
 import { renderApp } from './helpers/renderApp';
@@ -9,7 +10,14 @@ const mockPush = jest.fn();
 const mockBack = jest.fn();
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, back: mockBack, canGoBack: () => true }) }));
 jest.mock('../../../shared/api/handbook', () => ({ listHandbookArticles: jest.fn(), getHandbookArticleDetail: jest.fn() }));
-import { ListScreen } from '@/components/ui/ListScreen';
+import type { ListScreenProps } from '@/components/ui/ListScreen';
+let mockListProps: ListScreenProps<unknown>;
+jest.mock('@/components/ui/ListScreen', () => {
+ const actual = jest.requireActual('@/components/ui/ListScreen');
+ const React = require('react');
+ return {...actual, ListScreen: (props: ListScreenProps<unknown>) => {mockListProps = props; return React.createElement(actual.ListScreen, {...props, onEndReached: () => undefined});}};
+});
+afterEach(() => getQueryClient().clear());
 import { getQueryClient } from '@/shared/queryClient';
 import { secondaryTabStore } from '@/features/navigation/secondaryTabs';
 const list = listHandbookArticles as jest.Mock;
@@ -86,26 +94,26 @@ it('追加失败保留列表，重试同一页，去重后末页停止', async (
  list.mockResolvedValueOnce(firstPage).mockRejectedValueOnce(new TypeError('network')).mockResolvedValueOnce(lastPage);
  const v = await renderApp(<GuidesListScreen />);
  await waitFor(() => expect(v.getByText('第一页文章')).toBeTruthy());
- await act(async () => v.UNSAFE_getByType(ListScreen).props.onEndReached());
+ await act(async () => mockListProps.onEndReached());
  await waitFor(() => expect(v.getByTestId('guides-list-footer')).toBeTruthy());
  expect(v.getByText('第一页文章')).toBeTruthy();
  await fireEvent.press(v.getByText('重试'));
  await waitFor(() => expect(v.getByText('第二页文章')).toBeTruthy());
  expect(list.mock.calls.map(x => x[0].page)).toEqual([1, 2, 2]);
  expect(v.getAllByText('第一页文章')).toHaveLength(1);
- await act(async () => v.UNSAFE_getByType(ListScreen).props.onEndReached());
+ await act(async () => mockListProps.onEndReached());
  expect(list).toHaveBeenCalledTimes(3);
 });
 it('刷新回第一页，清除旧页，之后追加第二页', async () => {
  list.mockResolvedValueOnce(firstPage).mockResolvedValueOnce(lastPage).mockResolvedValueOnce({list:[{id:3,title:'更新文章'}],hasMore:true}).mockResolvedValueOnce({list:[{id:4,title:'更新第二页'}],hasMore:false});
  const v = await renderApp(<GuidesListScreen />);
  await waitFor(() => expect(v.getByText('第一页文章')).toBeTruthy());
- await act(async () => v.UNSAFE_getByType(ListScreen).props.onEndReached());
+ await act(async () => mockListProps.onEndReached());
  await waitFor(() => expect(v.getByText('第二页文章')).toBeTruthy());
- await act(async () => v.UNSAFE_getByType(ListScreen).props.onRefresh());
+ await act(async () => mockListProps.onRefresh());
  await waitFor(() => expect(v.getByText('更新文章')).toBeTruthy());
  expect(v.queryByText('第二页文章')).toBeNull();
- await act(async () => v.UNSAFE_getByType(ListScreen).props.onEndReached());
+ await act(async () => mockListProps.onEndReached());
  await waitFor(() => expect(v.getByText('更新第二页')).toBeTruthy());
  expect(list.mock.calls.map(x => x[0].page)).toEqual([1,2,1,2]);
 });
@@ -118,15 +126,48 @@ it('列表首次无网后可重试恢复', async () => {
 });
 it('卸载后返回恢复数据、页码和滚动位置', async () => {
  list.mockResolvedValueOnce(firstPage).mockResolvedValueOnce(lastPage);
- function Host({show}:{show:boolean}) {return show ? <GuidesListScreen /> : null;}
- const v = await renderApp(<Host show />);
+ function Host() {const [show,setShow] = React.useState(true);return <><Button label="切换列表" onPress={() => setShow(value => !value)} />{show ? <GuidesListScreen /> : null}</>;}
+ const v = await renderApp(<Host />);
  await waitFor(() => expect(v.getByText('第一页文章')).toBeTruthy());
- await act(async () => v.UNSAFE_getByType(ListScreen).props.onEndReached());
+ await act(async () => mockListProps.onEndReached());
  await waitFor(() => expect(v.getByText('第二页文章')).toBeTruthy());
- await act(async () => v.UNSAFE_getByType(ListScreen).props.onScrollOffset(280));
- await v.rerender(<Host show={false} />);
- await v.rerender(<Host show />);
+ await act(async () => mockListProps.onScrollOffset?.(280));
+ await fireEvent.press(v.getByText('切换列表'));
+ await fireEvent.press(v.getByText('切换列表'));
  expect(v.getByText('第二页文章')).toBeTruthy();
- expect(v.UNSAFE_getByType(ListScreen).props.restoredScrollOffset).toBe(280);
+ expect(mockListProps.restoredScrollOffset).toBe(280);
  expect(list).toHaveBeenCalledTimes(2);
+});
+
+it('重复触底只发一个追加请求', async () => {
+ let finish!: (value: typeof lastPage) => void;
+ list.mockResolvedValueOnce(firstPage).mockReturnValueOnce(new Promise(resolve => {finish = resolve;}));
+ const v = await renderApp(<GuidesListScreen />);
+ await waitFor(() => expect(v.getByText('第一页文章')).toBeTruthy());
+ await act(async () => {mockListProps.onEndReached(); mockListProps.onEndReached();});
+ expect(list).toHaveBeenCalledTimes(2);
+ await act(async () => finish(lastPage));
+ await waitFor(() => expect(v.getByText('第二页文章')).toBeTruthy());
+});
+it('刷新成功后忽略先前追加请求的迟到响应', async () => {
+ let finish!: (value: typeof lastPage) => void;
+ list.mockResolvedValueOnce(firstPage).mockReturnValueOnce(new Promise(resolve => {finish = resolve;})).mockResolvedValueOnce({list:[{id:3,title:'刷新文章'}],hasMore:false});
+ const v = await renderApp(<GuidesListScreen />);
+ await waitFor(() => expect(v.getByText('第一页文章')).toBeTruthy());
+ await act(async () => mockListProps.onEndReached());
+ await act(async () => mockListProps.onRefresh());
+ await waitFor(() => expect(v.getByText('刷新文章')).toBeTruthy());
+ await act(async () => finish(lastPage));
+ expect(v.queryByText('第二页文章')).toBeNull();
+ expect(mockListProps.pagination.hasMore).toBe(false);
+});
+it('刷新失败保留旧内容并提供可见的重试', async () => {
+ list.mockResolvedValueOnce(firstPage).mockRejectedValueOnce(new TypeError('network')).mockResolvedValueOnce({list:[{id:3,title:'恢复内容'}],hasMore:false});
+ const v = await renderApp(<GuidesListScreen />);
+ await waitFor(() => expect(v.getByText('第一页文章')).toBeTruthy());
+ await act(async () => mockListProps.onRefresh());
+ expect(v.getByText('第一页文章')).toBeTruthy();
+ await fireEvent.press(v.getByText('刷新失败，点此重试'));
+ await waitFor(() => expect(v.getByText('恢复内容')).toBeTruthy());
+ expect(v.queryByText('第一页文章')).toBeNull();
 });
