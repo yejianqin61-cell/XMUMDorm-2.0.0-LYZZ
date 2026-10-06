@@ -1,16 +1,19 @@
 import * as React from 'react';
 import { fireEvent, waitFor } from '@testing-library/react-native';
 import { renderApp } from './helpers/renderApp';
-import { clearNamespace } from '@/shared/storage';
+import { clearNamespace, setItem } from '@/shared/storage';
+import { timetableIdentity } from '@/features/tools/cacheIdentity';
 import { TodoListScreen } from '@/features/todos/TodoListScreen';
 import { TodoFormScreen } from '@/features/todos/TodoFormScreen';
 import { validateTodoDate, validateTodoTime, todoPayload } from '@/features/todos/todos';
 
 jest.mock('expo-router', () => ({
+  useNavigation: () => ({ dispatch: jest.fn() }),
   __state: { targets: [] as unknown[] },
   useRouter: () => ({ push: (target: unknown) => require('expo-router').__state.targets.push(target), replace: (target: unknown) => require('expo-router').__state.targets.push(target), back: jest.fn(), canGoBack: () => false }),
   useFocusEffect: (callback: () => void) => require('react').useEffect(callback, [callback]),
 }));
+jest.mock('expo-router/react-navigation', () => ({ usePreventRemove: jest.fn() }));
 jest.mock('@/features/auth/session', () => ({ useSession: () => ({ handleAuthFailure: async (error: unknown) => error ?? { kind: 'unknown' }, status: 'signedIn' }) }));
 jest.mock('../../../shared/api/todos', () => ({ getTodos: jest.fn(), createTodo: jest.fn(), updateTodo: jest.fn(), toggleTodo: jest.fn(), deleteTodo: jest.fn() }));
 const api = require('../../../shared/api/todos') as Record<string, jest.Mock>;
@@ -73,10 +76,11 @@ it('loads and updates an existing todo', async () => {
   await waitFor(() => expect(api.updateTodo).toHaveBeenCalledWith(7, expect.objectContaining({ title: 'Updated', priority: 3 })));
 });
 it('does not write an invalid date', async () => {
+  await setItem(`draft:todo-${timetableIdentity().scope}-new`, { title: 'Task', dueDate: '2027-02-29' });
   const view = await renderApp(<TodoFormScreen />);
-  await fireEvent.changeText(view.getByLabelText(/标题/), 'Task');
-  await fireEvent.changeText(view.getByLabelText(/日期/), '2027-02-29');
+  await waitFor(() => expect(view.getByDisplayValue('Task')).toBeTruthy());
   await fireEvent.press(view.getByTestId('todo-form-submit'));
   expect(api.createTodo).not.toHaveBeenCalled();
-  expect(view.getAllByText('请输入有效日期，例如2026-10-06').length).toBeGreaterThan(0);
+  await waitFor(() => expect(view.getAllByText(/请输入有效日期，例如2026-10-06/).length).toBeGreaterThan(0));
 });
+jest.mock('@react-native-community/datetimepicker', () => ({ __esModule: true, default: () => null }));

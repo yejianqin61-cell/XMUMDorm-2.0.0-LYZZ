@@ -4,10 +4,12 @@ import { renderApp } from './helpers/renderApp';
 import { clearNamespace } from '@/shared/storage';
 import { ReviewScreen } from '@/features/square/ReviewScreen';
 import { canteenRevision } from '@/features/square/canteenCache';
-jest.mock('expo-router', () => ({ __state: { targets: [] as unknown[] }, useRouter: () => ({ replace: (target: unknown) => require('expo-router').__state.targets.push(target), back: jest.fn(), canGoBack: () => false }) }));
+jest.mock('expo-router', () => ({ __state: { targets: [] as unknown[] }, useNavigation: () => ({ dispatch: jest.fn() }), useRouter: () => ({ replace: (target: unknown) => require('expo-router').__state.targets.push(target), back: jest.fn(), canGoBack: () => false }) }));
 jest.mock('@/features/auth/session', () => ({ useSession: () => ({ handleAuthFailure: async (error: unknown) => error ?? { kind: 'unknown' } }) }));
 jest.mock('../../../shared/api/canteen', () => ({ postProductComment: jest.fn() }));
 const api = require('../../../shared/api/canteen') as { postProductComment: jest.Mock };
+jest.mock('expo-router/react-navigation', () => ({ usePreventRemove: jest.fn() }));
+jest.mock('@/features/mailbox/useUnread', () => ({ useMailboxBadge: () => ({ unreadCount: 0, onMailboxPress: jest.fn() }) }));
 beforeEach(async () => { await clearNamespace(); api.postProductComment.mockReset().mockResolvedValue({ id: 42 }); require('expo-router').__state.targets.length = 0; });
 it('does not submit without a rating', async () => {
   const view = await renderApp(<ReviewScreen productId={9} />);
@@ -53,4 +55,13 @@ it('blocks duplicate submission while the first request is pending', async () =>
   expect(api.postProductComment).toHaveBeenCalledTimes(1);
   finish({ id: 42 });
   await waitFor(() => expect(require('expo-router').__state.targets).toHaveLength(1));
+});
+it('submits three selected images with native multipart metadata', async () => {
+  const pick = jest.fn().mockResolvedValue({ ok: true, image: { uri: 'file:///dish.png', mimeType: 'image/png', sizeBytes: 100 } });
+  const view = await renderApp(<ReviewScreen productId={9} pickImage={pick} />);
+  await fireEvent.press(view.getByTestId('review-rating-hot'));
+  await fireEvent.changeText(view.getByLabelText(/正文/), 'Good');
+  for (const index of [0, 1, 2]) await fireEvent.press(view.getByTestId(`review-image-${index}-pick`));
+  await fireEvent.press(view.getByTestId('review-form-submit'));
+  await waitFor(() => expect(api.postProductComment).toHaveBeenCalledWith(9, expect.objectContaining({ imageFiles: [0, 1, 2].map((index) => ({ uri: 'file:///dish.png', type: 'image/png', name: `review-${index}.png` })) })));
 });

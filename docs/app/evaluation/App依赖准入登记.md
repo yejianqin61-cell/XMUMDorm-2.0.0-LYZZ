@@ -1,6 +1,6 @@
-# App 依赖准入登记（Phase 0 首批 + Phase 1 第二批）
+# App 依赖准入登记（Phase 0–2）
 
-**日期**：2026-10-02　**版本**：v1.0
+**日期**：2026-10-07　**版本**：v1.2
 **性质**：**evaluation 层**（判定记录）。承接 [生产开发计划 §Phase 0](../task/phase-0/P0-01-工程脚手架与依赖准入.md) 与 **P0-11**。
 **判据来源**：App 设计宪法 **3.4**（准入五项）· **9.13**（最后发布时间必须读**该版本自己的时间戳**，⛔ 不用 `time.modified`）· **11.4**（含原生代码的变更**必须重建**，不能 OTA）· **9.11**（⛔ 自带调色板/样式引擎不得作基座）· **16.2**（⛔ 不得引入第二套图标库）
 
@@ -107,9 +107,28 @@
 
 ---
 
-## 5. 变更记录
+## 5. Phase 2 乙 · 已批准的新增依赖
+
+所有者已回答“授权按方案收尾”，依据 [冲突处理方案-乙](../task/phase-2/冲突处理方案-乙.md)。原生版本由 SDK57 bundledNativeModules 与版本文档核对；UTC 发布时间取 npm 的对应版本 time 字段。
+
+| 包 | 安装版本 | 许可证 | 原生代码 | OTA影响 | 发布时间UTC | 视觉身份 |
+|---|---|---|---|---|---|---|
+| `expo-image-picker` | 57.0.20 | MIT，Expo LICENSE | 有 | 必须新原生构建 | 2026-09-24 10:14:14 | 系统相册，无品牌 UI |
+| `@react-native-community/datetimepicker` | 9.1.0 | MIT，项目 LICENSE.md | 有 | 必须新原生构建 | 2026-03-17 14:17:07 | 系统日期／时间控件 |
+| `eslint` | 9.39.5 | MIT，项目 LICENSE | 无 | 仅开发工具 | 2026-07-10 20:41:47 | 无 UI |
+| `eslint-config-expo` | 57.0.2 | MIT，Expo LICENSE | 无 | 仅开发工具 | 2026-08-26 19:58:58 | 无 UI |
+
+相册仅开放图片选择，配置关闭相机和麦克风权限；日期／时间默认24小时，支持取消、确认及清除。Lint 两项列在 devDependencies。本轮不构建、不发布、不改变 OTA 策略。依赖准入不等于 M02 头像上传已实现，TD-60 仍待甲接线。
+
+复现：`npx --no-install expo install --check`；发布时间可用 `npm view <包>@<版本> time --json` 核对。
+来源：[SDK57 ImagePicker](https://docs.expo.dev/versions/v57.0.0/sdk/imagepicker/)、[SDK57 DateTimePicker](https://docs.expo.dev/versions/v57.0.0/sdk/date-time-picker/)、[Expo MIT](https://raw.githubusercontent.com/expo/expo/main/LICENSE)、[DateTimePicker MIT](https://raw.githubusercontent.com/react-native-datetimepicker/datetimepicker/master/LICENSE.md)、[ESLint MIT](https://raw.githubusercontent.com/eslint/eslint/main/LICENSE)。
+
+Lint：标准 Expo flat config。当前未启用 React Compiler，refs／set-state-in-effect／globals 的迁移诊断保留为 warning；测试探针的 immutability 同样为 warning。其他 hooks 正确性错误仍阻断。首次完整检查为0 error、217 warning，后续清偿登记 TD-70。
+
+## 6. 变更记录
 
 | 版本 | 日期 | 变更 |
 |---|---|---|
 | v1.0 | 2026-10-02 | 首次建立。17 个直接依赖 + 9 个开发依赖逐条登记五项判据；登记 7 项被拒依赖、5 项已解决问题的排障记录、4 项未闭合 |
+| v1.2 | 2026-10-07 | 按所有者授权登记 SDK57 选图、平台日期时间与 ESLint；保留真机构建验证和 lint warning 待办 |
 | **v1.1** | **2026-10-02** | **Phase 1 第二批 5 个直接依赖**（P1-02）：`@tanstack/react-query@5.96.2` · `@shopify/flash-list@2.0.2` · `@react-native-async-storage/async-storage@2.2.0` · `@react-native-community/netinfo@12.0.1` · `@ronradtke/react-native-markdown-display@9.0.3`，逐条登记五项判据（采集方式不变，`.scratch/collect-deps.js`）。新增排障记录 **#9**（react-query 两端版本漂移 → 钉到与 Web 一致）与 **#10**（原生依赖的官方 Jest mock + `setupFiles` 必须展开 preset）。修正 §4-3：`runtimeVersion` 经复检**当前无消费者**（`expo-updates` 未安装 → 无 OTA 层），不再写"阻塞首次构建" |
