@@ -23,11 +23,11 @@ beforeEach(async () => {
 });
 it('uses the canonical calendar to reject nonexistent dates', () => {
   expect(validateTodoDate('2028-02-29')).toBeUndefined();
-  expect(validateTodoDate('2027-02-29')).toBe('todos.dateInvalid');
+  expect(validateTodoDate('2027-02-29')).toBe('tools.todos.dateInvalid');
   expect(validateTodoDate('')).toBeUndefined();
 });
 it('bounds a time and permits clearing it', () => {
-  expect(validateTodoTime('23:59')).toBeUndefined(); expect(validateTodoTime('24:00')).toBe('todos.timeInvalid'); expect(validateTodoTime('')).toBeUndefined();
+  expect(validateTodoTime('23:59')).toBeUndefined(); expect(validateTodoTime('24:00')).toBe('tools.todos.timeInvalid'); expect(validateTodoTime('')).toBeUndefined();
 });
 it('creates the exact backend payload with null optional dates', () => {
   expect(todoPayload({ title: '  Task ', description: 'Hi', priority: '3', dueDate: '', dueTime: '', listType: 'course' })).toEqual({ title: 'Task', description: 'Hi', priority: 3, due_date: null, due_time: null, list_type: 'course' });
