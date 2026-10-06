@@ -79,6 +79,7 @@ export function CanteenHome(): React.ReactElement {
   return (
     <Screen testID="screen-canteen" titleKey="canteen.title" bottomMode="own">
       <View style={{ flex: 1, padding: theme.space('space_4'), gap: theme.space('space_4') }}>
+        <Button testID="canteen-search-entry" label={t('canteen.search.title')} variant="secondary" onPress={() => router.push('/canteen/search')} />
         {regions.loading ? (
           <LoadingState testID="canteen-loading" />
         ) : regions.error !== null ? (
