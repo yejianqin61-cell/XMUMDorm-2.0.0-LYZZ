@@ -21,6 +21,28 @@ export const JWT_STORAGE_KEY = 'xmumdorm.jwt';
 
 let memoryToken: string | null = null;
 
+/**
+ * 令牌变化的订阅（P2B-01 加）。
+ *
+ * 为什么需要它：未读角标要在**冷启动水合完成**后才知道该不该拉数据，而
+ * `hydrateToken()` 是异步的 —— 页面 effect 只在挂载时跑一次，错过了这一次就永远拉不到。
+ * ⛔ 不让未读那层去 import `SessionProvider`：四个一级 Tab 页在**没有 Provider** 的
+ *    渲染里也要能跑（既有的切片用例就是这么渲染它们的）。
+ */
+const tokenListeners = new Set<(token: string | null) => void>();
+
+function notifyTokenChanged(): void {
+  for (const listener of tokenListeners) listener(memoryToken);
+}
+
+/** 订阅令牌变化（返回退订函数）。⛔ 生产代码只应有一处订阅者：未读真源 */
+export function subscribeToken(listener: (token: string | null) => void): () => void {
+  tokenListeners.add(listener);
+  return () => {
+    tokenListeners.delete(listener);
+  };
+}
+
 /** 请求层用的**同步**读取器（⛔ 不要拿它当"是否已登录"的唯一依据，见 `session.tsx`） */
 export function readTokenSync(): string | null {
   return memoryToken;
@@ -35,9 +57,11 @@ export async function hydrateToken(): Promise<string | null> {
   try {
     const stored = await SecureStore.getItemAsync(JWT_STORAGE_KEY);
     memoryToken = stored ?? null;
+    notifyTokenChanged();
     return memoryToken;
   } catch {
     memoryToken = null;
+    notifyTokenChanged();
     return null;
   }
 }
@@ -45,6 +69,7 @@ export async function hydrateToken(): Promise<string | null> {
 /** 登录成功后写入（同时更新内存镜像，登录后的第一个请求就能带上它） */
 export async function saveToken(token: string): Promise<void> {
   memoryToken = token;
+  notifyTokenChanged();
   try {
     await SecureStore.setItemAsync(JWT_STORAGE_KEY, token);
   } catch {
@@ -55,6 +80,7 @@ export async function saveToken(token: string): Promise<void> {
 /** 登出 / 会话失效时清除（**先清内存**：清完立刻生效，⛔ 不给"清了一半"的中间态） */
 export async function clearToken(): Promise<void> {
   memoryToken = null;
+  notifyTokenChanged();
   try {
     await SecureStore.deleteItemAsync(JWT_STORAGE_KEY);
   } catch {
@@ -65,4 +91,5 @@ export async function clearToken(): Promise<void> {
 /** 测试辅助：把镜像重置（生产代码不调用） */
 export function resetTokenMirrorForTests(): void {
   memoryToken = null;
+  notifyTokenChanged();
 }

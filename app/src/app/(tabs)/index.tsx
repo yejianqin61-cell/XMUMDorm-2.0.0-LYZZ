@@ -16,12 +16,15 @@ import { SectionHeader } from '@/components/ui/SectionHeader';
 import { QuickActionGrid, type QuickAction } from '@/components/ui/QuickActionGrid';
 import { useTheme } from '@/design-system/theme';
 import { useI18n } from '@/i18n';
+import { useMailboxBadge } from '@/features/mailbox/useUnread';
 import { TAB_BAR_CLEARANCE } from './_layout';
 
 export default function SquareScreen(): React.ReactElement {
   const theme = useTheme();
   const { t } = useI18n();
   const router = useRouter();
+  // 顶栏信箱动作 + 未读角标：**四个一级 Tab 必须同源**（宪法 4.7-3/4）
+  const badge = useMailboxBadge();
 
   const actions = React.useMemo<readonly QuickAction[]>(
     () => [
@@ -42,6 +45,7 @@ export default function SquareScreen(): React.ReactElement {
       titleKey="screen.square"
       bottomMode="tabbar"
       tabBarHeight={TAB_BAR_CLEARANCE}
+      {...badge}
     >
       <View style={{ padding: theme.space('space_4'), gap: theme.space('space_4') }}>
         <SectionHeader title={t('square.services')} />

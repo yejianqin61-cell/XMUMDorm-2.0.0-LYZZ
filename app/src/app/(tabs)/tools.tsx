@@ -24,6 +24,7 @@ import { QuickActionGrid, type QuickAction } from '@/components/ui/QuickActionGr
 import { useTheme } from '@/design-system/theme';
 import { useI18n } from '@/i18n';
 import { SCHOOL_SYSTEMS } from '@/features/tools/schoolSystems';
+import { useMailboxBadge } from '@/features/mailbox/useUnread';
 import { TAB_BAR_CLEARANCE } from './_layout';
 
 /** 三个系统各自的图标（第 1 层 Lucide；语义不同就换图标，⛔ 不用同一个糊过去） */
@@ -37,6 +38,8 @@ export default function ToolsScreen(): React.ReactElement {
   const theme = useTheme();
   const { t } = useI18n();
   const router = useRouter();
+  // 顶栏信箱动作 + 未读角标：**四个一级 Tab 必须同源**（宪法 4.7-3/4）
+  const badge = useMailboxBadge();
 
   const actions = React.useMemo<readonly QuickAction[]>(
     () =>
@@ -55,6 +58,7 @@ export default function ToolsScreen(): React.ReactElement {
       titleKey="screen.tools"
       bottomMode="tabbar"
       tabBarHeight={TAB_BAR_CLEARANCE}
+      {...badge}
     >
       <View style={{ padding: theme.space('space_4'), gap: theme.space('space_4') }}>
         {/* 课程表是这个 Tab 的主功能，排第一 */}
