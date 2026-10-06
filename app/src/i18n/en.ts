@@ -29,6 +29,8 @@ export const en: Record<MessageKey, string> = {
 
   // ── Publish center ───────────────────────────────────────────
   'publish.title': 'Publish',
+  'publish.submit': 'Publish',
+  'publish.submitted': 'Published',
   'publish.entry.wall': 'Wall',
   'publish.entry.confession': 'Confessions',
   'publish.entry.clubActivity': 'Club activity',
@@ -97,6 +99,12 @@ export const en: Record<MessageKey, string> = {
   'form.error.required': 'This field is required',
   'form.error.tooLong': 'Too long',
   'form.error.submit': 'Submit failed',
+  // Fixed form-skeleton labels (P2A-04: the host supplies them once)
+  'form.summary.title': 'Check these fields',
+  'form.leave.title': 'Discard edits?',
+  'form.leave.body': 'What you filled in is not saved',
+  'form.leave.confirm': 'Discard',
+  'form.leave.cancel': 'Keep editing',
 
   // Minimal login chain (P1-13)
   'auth.title': 'Sign in',

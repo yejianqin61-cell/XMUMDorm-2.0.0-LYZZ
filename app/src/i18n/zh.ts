@@ -31,6 +31,8 @@ export const zh = {
 
   // ── 发布中心（宪法 4.9.5：注册表驱动，新增一类 = 加一行）──────
   'publish.title': '发布',
+  'publish.submit': '发布',
+  'publish.submitted': '已发布',
   'publish.entry.wall': '万能墙',
   'publish.entry.confession': '树洞',
   'publish.entry.clubActivity': '社团活动',
@@ -102,6 +104,12 @@ export const zh = {
   'form.error.required': '这一项不能为空',
   'form.error.tooLong': '内容超过上限',
   'form.error.submit': '提交没有成功',
+  // 表单骨架的固定标签（P2A-04：宿主统一给，⛔ 页面不再各写一份）
+  'form.summary.title': '请检查以下内容',
+  'form.leave.title': '放弃这次编辑',
+  'form.leave.body': '已填的内容不会保存',
+  'form.leave.confirm': '放弃',
+  'form.leave.cancel': '继续编辑',
 
   // ── 登录最小链路（P1-13；`P15` 完整鉴权原型属后续任务）──────────────
   'auth.title': '登录',

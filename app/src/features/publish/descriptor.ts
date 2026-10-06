@@ -54,6 +54,8 @@ export type PublishFormDescriptor = {
   formId?: string;
   /** 提交按钮文案（默认 `publish.submit`） */
   submitLabelKey?: MessageKey;
+  /** 提交成功回执文案（默认 `publish.submitted`；域可给更准的，如"已发布"） */
+  successKey?: MessageKey;
 };
 
 /** 草稿 key：⛔ 不许用形如 `…password…` 的 id（落盘层会拒绝，见 `canPersistDraft`） */
