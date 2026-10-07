@@ -97,7 +97,7 @@ export function CampusFeed({kind,query}:{kind:CampusKind;query?:string}):React.R
    const unique=new Map<number,Post>();
    for(const row of mode==='refresh'?[]:snapshot.current.rows)unique.set(row.id,row);
    for(const row of incoming)unique.set(row.id,row);
-   const next={rows:Array.from(unique.values()),page,cursor,hasMore};snapshot.current=next;
+   const next={rows:Array.from(unique.values()),page,cursor,hasMore,scrollOffset:mode==='refresh'?0:snapshot.current.scrollOffset};snapshot.current=next;
    client.setQueryData(key,next);setRows(next.rows);setCursor(kind==='wall'?cursor==null?null:String(cursor):String(page));
    if(mode==='refresh'){persistScrollOffset(0);setRevision(value=>value+1);}
    dispatch({type:mode==='refresh'?'refresh:success':'append:success',hasMore});
