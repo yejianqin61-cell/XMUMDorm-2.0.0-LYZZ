@@ -329,5 +329,9 @@ export const en: Record<MessageKey, string> = {
   'square.guides.reply': 'Reply',
   'square.guides.collapse': 'Collapse',
   'square.guides.refreshFailed': 'Refresh failed. Tap to retry',
+  'square.guides.contents': 'Contents',
+  'square.guides.linkFailed': 'Link could not open. Please retry.',
+  'square.guides.linkBlocked': 'This link cannot be opened',
+  'square.guides.linkRetry': 'Retry opening link',
   'square.guides.end': 'End',
 };

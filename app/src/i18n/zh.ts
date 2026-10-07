@@ -336,6 +336,10 @@ export const zh = {
   'square.guides.reply': '回复',
   'square.guides.collapse': '收起',
   'square.guides.refreshFailed': '刷新失败，点此重试',
+  'square.guides.contents': '目录',
+  'square.guides.linkFailed': '链接未打开，请重试',
+  'square.guides.linkBlocked': '无法打开这个链接',
+  'square.guides.linkRetry': '重试打开链接',
   'square.guides.end': '已读完',
 } as const;
 

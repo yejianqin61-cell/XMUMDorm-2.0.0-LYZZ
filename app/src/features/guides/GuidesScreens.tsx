@@ -1,11 +1,13 @@
 import * as React from 'react';
 import * as Linking from 'expo-linking';
+import { View } from 'react-native';
+import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
 import { useRouter } from 'expo-router';
 import { ListScreen, useListPagination } from '@/components/ui/ListScreen';
 import { ListItem } from '@/components/ui/ListItem';
 import { Screen } from '@/components/ui/Screen';
-import { MarkdownReader } from '@/components/ui/MarkdownReader';
+import { MarkdownReader, extractToc } from '@/components/ui/MarkdownReader';
 import { DetailScreen } from '@/proto/P3';
 import { useI18n } from '@/i18n';
 import { getQueryClient } from '@/shared/queryClient';
@@ -105,10 +107,13 @@ export function GuideDetailScreen({ articleId }: { articleId: string }): React.R
  const [article, setArticle] = React.useState<Article | null>(null);
  const [error, setError] = React.useState<AppError | null>(null);
  const [loading, setLoading] = React.useState(true);
+ const [linkIssue, setLinkIssue] = React.useState<{ url: string; retry: boolean } | null>(null);
+ const opening = React.useRef(false);
+ const toc = React.useMemo(() => article?.contentType === 'markdown' ? extractToc(article.content ?? '') : [], [article]);
  const generation = React.useRef(0);
  const load = React.useCallback(async () => {
   const request = ++generation.current;
-  setArticle(null); setError(null); setLoading(true);
+  setArticle(null); setError(null); setLinkIssue(null); setLoading(true);
   try {
    if (!/^[1-9]\d*$/.test(articleId) || !Number.isSafeInteger(Number(articleId))) throw { kind: 'content' };
    const row = asArticle(await getHandbookArticleDetail(Number(articleId)));
@@ -121,15 +126,38 @@ export function GuideDetailScreen({ articleId }: { articleId: string }): React.R
  }, [articleId]);
  React.useEffect(() => { void load(); return () => { generation.current++; }; }, [load]);
  const openExternal = async (url: string) => {
-  try { const target = new URL(url); if (!['https:', 'http:'].includes(target.protocol)) throw { kind: 'content' }; await Linking.openURL(url); }
-  catch (failure) { setError(errorFor(failure)); }
+  if (opening.current) return;
+  try {
+   const target = new URL(url);
+   if (!['https:', 'http:'].includes(target.protocol)) throw new Error('unsupported');
+  } catch { setLinkIssue({ url, retry: false }); return; }
+  opening.current = true;
+  const request = generation.current;
+  try {
+   await Linking.openURL(url);
+   if (request === generation.current) setLinkIssue(null);
+  } catch {
+   if (request === generation.current) setLinkIssue({ url, retry: true });
+  } finally { opening.current = false; }
  };
+ // The installed Markdown library opens the URL itself when the callback returns true.
+ // Return false after handling it here to suppress that second, unchecked open.
+ const onLinkPress = (url: string) => { void openExternal(url); return false; };
  const back = () => router.canGoBack() ? router.back() : router.replace('/guides' as never);
  return <DetailScreen testID="guide-detail" title={article?.title ?? t('square.guides.title')}
   author={article?.authorInfo ? { kind: 'named', name: article.authorInfo.nickname || article.authorInfo.username || t('square.guides.author') } : { kind: 'anonymous' }}
   interactions={{}} onBack={back} onRetry={() => error?.kind === 'unknown' || error?.kind === 'content' ? back() : void load()} error={error}
   state={loading ? 'loading' : error ? 'error' : article ? 'content' : 'empty'}
-  body={article?.contentType === 'markdown' ? <MarkdownReader testID="guide-markdown" content={article.content ?? ''} /> : <Button label={t('action.openInBrowser')} onPress={() => void openExternal(article?.externalUrl ?? '')} />}
+  body={<View>
+   {linkIssue ? <View>
+    <Text role="body">{t(linkIssue.retry ? 'square.guides.linkFailed' : 'square.guides.linkBlocked')}</Text>
+    {linkIssue.retry ? <Button label={t('square.guides.linkRetry')} onPress={() => void openExternal(linkIssue.url)} /> : null}
+   </View> : null}
+   {article?.contentType === 'markdown' ? <>
+    {toc.length > 0 ? <Text role="headline">{t('square.guides.contents')}</Text> : null}
+    <MarkdownReader testID="guide-markdown" content={article.content ?? ''} toc={toc} onLinkPress={onLinkPress} />
+   </> : <Button label={t('action.openInBrowser')} onPress={() => void openExternal(article?.externalUrl ?? '')} />}
+  </View>}
   labels={{ back: t('action.back'), like: t('square.guides.like'), favorite: t('action.save'), comment: t('square.guides.comments'), report: t('square.guides.more'), countPlaceholder: '—', anonymous: t('square.guides.author'),
    comments: { anonymous: t('square.guides.author'), deleteLabel: t('square.guides.delete'), replyLabel: t('square.guides.reply'), likeLabel: t('square.guides.like'), moreReplies: n => String(n), collapse: t('square.guides.collapse') }, commentsEnd: t('square.guides.end'), commentsRetry: t('action.retry') }} />;
 }
