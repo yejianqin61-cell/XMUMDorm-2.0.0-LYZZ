@@ -111,3 +111,24 @@ it('换词再返回原搜索恢复滚动位置且不污染浏览状态',async()=
  await fireEvent.press(v.getByTestId('campus-search-submit'));
  await waitFor(()=>expect(mockListProps.restoredScrollOffset).toBe(480));
 });
+
+it('追加下一页后返回原关键词仍恢复滚动位置',async()=>{
+ list.mockResolvedValueOnce({list:[{id:1,content:'词A首屏'}],hasMore:true})
+ .mockResolvedValueOnce({list:[{id:2,content:'词A下一页'}],hasMore:false})
+ .mockResolvedValueOnce({list:[{id:3,content:'词B'}],hasMore:false});
+ const v=await renderApp(<CampusSearchScreen/>);
+ await fireEvent.changeText(v.getByPlaceholderText('搜索树洞'),'词A');
+ await fireEvent.press(v.getByTestId('campus-search-submit'));
+ await waitFor(()=>expect(v.getByTestId('campus-row-1')).toBeTruthy());
+ await act(async()=>mockListProps.onScrollOffset?.(480));
+ await act(async()=>mockListProps.onEndReached?.());
+ await waitFor(()=>expect(v.getByTestId('campus-row-2')).toBeTruthy());
+ await fireEvent.changeText(v.getByPlaceholderText('搜索树洞'),'词B');
+ await fireEvent.press(v.getByTestId('campus-search-submit'));
+ await waitFor(()=>expect(v.getByTestId('campus-row-3')).toBeTruthy());
+ await fireEvent.changeText(v.getByPlaceholderText('搜索树洞'),'词A');
+ await fireEvent.press(v.getByTestId('campus-search-submit'));
+ await waitFor(()=>expect(mockListProps.restoredScrollOffset).toBe(480));
+ expect(v.getByTestId('campus-row-2')).toBeTruthy();
+ expect(list).toHaveBeenCalledTimes(3);
+});
