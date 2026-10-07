@@ -19,6 +19,7 @@ const post=()=>createPostPublishDescriptor(t,options);
 const ev={title:'Pickup',description:'Package',reward:'5.50',type:'delivery',contactInfo:'Phone',location:'Gate',deadline:''};
 const mv={title:'Book',description:'Used',price:'12.50',category:'books',delivery_method:'pickup',dorm_area:'LY1',tags:[],images:[]};
 const pv={title:'Study',content:'Looking for a group',tagIds:['7'],images:[]};
+afterEach(()=>getQueryClient().clear());
 beforeEach(()=>{jest.clearAllMocks();getQueryClient().clear();});
 it('三份描述符符合公共契约且媒体禁止落草稿',()=>{
  const ds=[post(),market(),errand()];expect(()=>assertDescriptorInvariants(ds,Object.keys(zh))).not.toThrow();
@@ -36,11 +37,33 @@ it('二手价格、远程分类、宿舍与图片格式限制',async()=>{
  const d=market();for(const values of [{...mv,price:'Infinity'},{...mv,category:'unknown'},{...mv,dorm_area:'LY3'},{...mv,images:[{uri:'file:///a.gif',name:'a.gif',type:'image/gif',size:20}]}])await expect(d.submit(values)).rejects.toMatchObject({kind:'validation'});expect(createMarketplaceItem).not.toHaveBeenCalled();
 });
 it('二手提交multipart白名单并返回详情',async()=>{
- (createMarketplaceItem as jest.Mock).mockResolvedValue({id:21});const d=market();expect(await d.submit({...mv,seller_user_id:99})).toEqual({id:21});const data=(createMarketplaceItem as jest.Mock).mock.calls[0][0] as FormData;expect(data.getParts().find((p:any)=>p.fieldName==='price')?.string).toBe('12.5');expect(data.getParts().some((p:any)=>p.fieldName==='seller_user_id')).toBe(false);expect(d.routeAfterSubmit?.({id:21})).toBe('/market/21');
+ (createMarketplaceItem as jest.Mock).mockResolvedValue({id:21});const d=market();expect(await d.submit({...mv,seller_user_id:99})).toEqual({id:21});const data=(createMarketplaceItem as jest.Mock).mock.calls[0][0] as FormData;expect(data.get('price')).toBe('12.5');expect(data.has('seller_user_id')).toBe(false);expect(d.routeAfterSubmit?.({id:21})).toBe('/market/21');
 });
 it('树洞普通帖固定type并校验标签与标题',async()=>{
  const d=post();await expect(d.submit({...pv,tagIds:['99']})).rejects.toMatchObject({kind:'validation'});await expect(d.submit({...pv,title:''})).rejects.toMatchObject({kind:'validation'});(createPost as jest.Mock).mockResolvedValue({id:23});await d.submit({...pv,type:'announcement'});expect(createPost).toHaveBeenCalledWith({...pv,type:'normal',tagIds:[7]});expect(d.routeAfterSubmit?.({id:23})).toBe('/post/23');
 });
 it('提交失败不清缓存且无效返回id不宣称成功',async()=>{
  getQueryClient().setQueryData(['bing-errand','list',{}],{old:true});(createErrand as jest.Mock).mockRejectedValue({kind:'unreachable'});await expect(errand().submit(ev)).rejects.toMatchObject({kind:'unreachable'});expect(getQueryClient().getQueryData(['bing-errand','list',{}])).toEqual({old:true});(createErrand as jest.Mock).mockResolvedValue({id:0});await expect(errand().submit(ev)).rejects.toMatchObject({kind:'unknown'});
+});
+
+it('二手零元可发布，但指数、小数超精度和超量标签不可发布',async()=>{
+ const d=market();expect(validateAll(fieldsOf(d),{...mv,price:'0'})).toEqual({});
+ for(const values of [{...mv,price:'1e3'},{...mv,price:'1.234'},{...mv,tags:Array(11).fill('tag')},{...mv,tags:['x'.repeat(21)]}])await expect(d.submit(values)).rejects.toMatchObject({kind:'validation'});
+});
+it('图片数量与大小遵循不同域限制',async()=>{
+ const image={uri:'file:///x.png',name:'x.png',type:'image/png',size:8*1024*1024};
+ expect(validateAll(fieldsOf(market()),{...mv,images:Array(4).fill(image)})).toEqual({});
+ await expect(market().submit({...mv,images:Array(5).fill(image)})).rejects.toMatchObject({kind:'validation'});
+ await expect(post().submit({...pv,images:Array(4).fill(image)})).rejects.toMatchObject({kind:'validation'});
+ await expect(post().submit({...pv,images:[{...image,size:image.size+1}]})).rejects.toMatchObject({kind:'validation'});
+});
+it('树洞成功清理列表与搜索快照，失败不清理',async()=>{
+ getQueryClient().setQueryData(['posts','infinite','_guest',10,'_all','campusReadSnapshot'],{old:true});
+ (createPost as jest.Mock).mockRejectedValueOnce({kind:'unreachable'}).mockResolvedValue({id:42});
+ await expect(post().submit(pv)).rejects.toMatchObject({kind:'unreachable'});expect(getQueryClient().getQueryData(['posts','infinite','_guest',10,'_all','campusReadSnapshot'])).toEqual({old:true});
+ await post().submit(pv);expect(getQueryClient().getQueryData(['posts','infinite','_guest',10,'_all','campusReadSnapshot'])).toBeUndefined();
+});
+it('跑腿期限明确时区后规范化提交，联系方式不落草稿',async()=>{
+ (createErrand as jest.Mock).mockResolvedValue({id:44});const d=errand();await d.submit({...ev,deadline:'2026-10-09T12:00+08:00'});
+ expect(createErrand).toHaveBeenCalledWith({...ev,reward:5.5,deadline:'2026-10-09T04:00:00.000Z'});expect(fieldsOf(d).find(f=>f.name==='contactInfo')?.neverDraft).toBe(true);
 });
