@@ -445,6 +445,48 @@ export type FormProps = {
   testID?: string;
 };
 
+/** Share discard confirmation and defer removal until the navigation guard is disabled. */
+export function useFormLeaveGuard({ dirty, busy, discardDraft }: {
+  dirty: boolean;
+  busy: boolean;
+  discardDraft: () => Promise<void>;
+}) {
+  const [pendingLeave, setPendingLeave] = React.useState<(() => void) | null>(null);
+  const [allowLeave, setAllowLeave] = React.useState(false);
+  const [confirmedLeave, setConfirmedLeave] = React.useState<(() => void) | null>(null);
+  const mounted = React.useRef(true);
+  React.useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  React.useEffect(() => { if (confirmedLeave) confirmedLeave(); }, [confirmedLeave]);
+
+  const complete = React.useCallback((resume: () => void) => {
+    if (!mounted.current) return;
+    setPendingLeave(null);
+    setAllowLeave(true);
+    setConfirmedLeave(() => resume);
+  }, []);
+  const requestLeave = React.useCallback((resume: () => void) => {
+    if (busy) return;
+    if (dirty) setPendingLeave(() => resume);
+    else resume();
+  }, [busy, dirty]);
+  const confirm = React.useCallback(async () => {
+    if (!pendingLeave) return;
+    const resume = pendingLeave;
+    setPendingLeave(null);
+    await discardDraft().catch(() => undefined);
+    complete(resume);
+  }, [pendingLeave, discardDraft, complete]);
+
+  return {
+    prevent: !allowLeave && (dirty || busy),
+    visible: pendingLeave !== null,
+    requestLeave,
+    cancel: () => setPendingLeave(null),
+    confirm,
+    complete,
+  };
+}
+
 export function Form({
   titleKey,
   unreadCount,
@@ -462,12 +504,7 @@ export function Form({
 }: FormProps): React.ReactElement {
   const theme = useTheme();
   const { t } = useI18n();
-  const [leaveOpen, setLeaveOpen] = React.useState(false);
-  const [pendingLeave, setPendingLeave] = React.useState<(() => void) | null>(null);
-  const [allowLeave, setAllowLeave] = React.useState(false);
-  const [confirmedLeave, setConfirmedLeave] = React.useState<(() => void) | null>(null);
   const settledRef = React.useRef(false);
-  React.useEffect(() => { if (confirmedLeave) confirmedLeave(); }, [confirmedLeave]);
 
   /* 成功 → 按提交语义交回页面（⛔ 不弹成功对话框：`postSubmitPlan` 里没有这个选项） */
   React.useEffect(() => {
@@ -478,13 +515,11 @@ export function Form({
 
   const busy = form.state.status === 'submitting';
   const validating = form.state.status === 'validating';
+  const leaveGuard = useFormLeaveGuard({ dirty: form.shouldConfirmLeave, busy, discardDraft: form.discardDraft });
 
   return (
     <Screen bottomMode="own" testID={testID} titleKey={titleKey} unreadCount={unreadCount} onMailboxPress={onMailboxPress}>
-      {guardNavigation ? <FormNavigationGuard prevent={!allowLeave && (form.shouldConfirmLeave || busy)} onBlocked={(resume) => {
-        if (busy) return;
-        setPendingLeave(() => resume); setLeaveOpen(true);
-      }} /> : null}
+      {guardNavigation ? <FormNavigationGuard prevent={leaveGuard.prevent} onBlocked={leaveGuard.requestLeave} /> : null}
       <ScrollView
         // ⛔ 提交中**不得**整屏变灰（§3.2.5-④）：表单保持可用，只有主按钮 loading
         keyboardShouldPersistTaps="handled"
@@ -539,8 +574,7 @@ export function Form({
               disabled={busy}
               onPress={() => {
                 // 有未保存内容就先确认（DirtyGuard）
-                if (form.shouldConfirmLeave) { setPendingLeave(() => onCancel ?? null); setLeaveOpen(true); }
-                else onCancel?.();
+                leaveGuard.requestLeave(onCancel ?? (() => undefined));
               }}
             />
           ) : null}
@@ -549,27 +583,21 @@ export function Form({
 
       {/* DirtyGuard：仅在**真有**未保存内容时触发（§3.2.1） */}
       <AlertDialog
-        visible={leaveOpen}
+        visible={leaveGuard.visible}
         variant="danger"
         title={labels.leaveTitle}
         body={labels.leaveBody}
         confirmLabel={labels.leaveConfirm}
         cancelLabel={labels.leaveCancel}
-        onCancel={() => { setPendingLeave(null); setLeaveOpen(false); }}
-        onConfirm={() => {
-          setLeaveOpen(false);
-          void form.discardDraft().catch(() => undefined).then(() => {
-            setAllowLeave(true);
-            setConfirmedLeave(() => pendingLeave ?? onCancel ?? null);
-          });
-        }}
+        onCancel={leaveGuard.cancel}
+        onConfirm={() => { void leaveGuard.confirm(); }}
         testID={testID ? `${testID}-leave` : undefined}
       />
     </Screen>
   );
 }
 
-function FormNavigationGuard({ prevent, onBlocked }: { prevent: boolean; onBlocked: (resume: () => void) => void }): null {
+export function FormNavigationGuard({ prevent, onBlocked }: { prevent: boolean; onBlocked: (resume: () => void) => void }): null {
   const navigation = useNavigation();
   usePreventRemove(prevent, ({ data }) => onBlocked(() => navigation.dispatch(data.action)));
   return null;

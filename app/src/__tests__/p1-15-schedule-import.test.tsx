@@ -44,6 +44,7 @@ jest.mock('expo-router', () => {
   const state = { pushed: [] as unknown[], backCount: 0, text: '' as string };
   return {
     __state: state,
+    useNavigation: () => ({ dispatch: jest.fn() }),
     useRouter: () => ({
       push: (target: unknown) => state.pushed.push(target),
       back: () => {
@@ -55,6 +56,7 @@ jest.mock('expo-router', () => {
     useLocalSearchParams: () => ({ text: state.text }),
   };
 });
+jest.mock('expo-router/react-navigation', () => ({ usePreventRemove: jest.fn() }));
 
 const api = require('../../../shared/api/schedule') as {
   previewScheduleImport: jest.Mock;

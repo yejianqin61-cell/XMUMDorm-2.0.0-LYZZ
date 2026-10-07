@@ -36,7 +36,7 @@ import { Screen } from '@/components/ui/Screen';
 import { useMailboxBadge } from '@/features/mailbox/useUnread';
 import { Text } from '@/components/ui/Text';
 import { useToast } from '@/components/ui/Toast';
-import { useForm } from '@/components/ui/Form';
+import { FormNavigationGuard, useForm, useFormLeaveGuard } from '@/components/ui/Form';
 import { useSession } from '@/features/auth/session';
 import { commitScheduleImport, previewScheduleImport } from '../../../../shared/api/schedule';
 import { ImportPreviewList } from '@/features/tools/ImportPreviewList';
@@ -50,7 +50,6 @@ import {
   INITIAL_IMPORT_STATE,
   normalizeImportPreview,
   validateImportText,
-  type ScheduleImportPreview,
 } from '@/features/tools/scheduleImport';
 import type { MessageKey } from '@/i18n/zh';
 
@@ -73,6 +72,7 @@ const TEXT_FIELD = {
   required: true,
   maxLength: 20000,
 };
+const IMPORT_FIELDS = [TEXT_FIELD];
 
 export default function ScheduleImportScreen(): React.ReactElement {
   useSession();
@@ -111,7 +111,7 @@ function ScheduleImportForm({ acceptScrapedText }: { acceptScrapedText: boolean 
   const form = useForm({
     formId: 'schedule-import',
     draftScope: timetableIdentity().scope.startsWith('user') ? timetableIdentity().scope : undefined,
-    fields: [TEXT_FIELD],
+    fields: IMPORT_FIELDS,
     initialValues: { text: scrapedText },
     skipDraftRestore: scrapedText.trim() !== '',
     // 本页自己管提交（两步：先预览再覆盖），所以 `onSubmit` 不会被调用
@@ -119,6 +119,10 @@ function ScheduleImportForm({ acceptScrapedText }: { acceptScrapedText: boolean 
   });
 
   const text = typeof form.values.text === 'string' ? form.values.text : '';
+  const busy = state.phase === 'previewing' || state.phase === 'committing';
+  const discardDraft = form.discardDraft;
+  const leaveGuard = useFormLeaveGuard({ dirty: form.shouldConfirmLeave || text.trim().length > 0, busy, discardDraft });
+  const completeLeave = leaveGuard.complete;
   const textRef = React.useRef(text); textRef.current = text;
   const previousText = React.useRef(text);
   React.useEffect(() => {
@@ -171,6 +175,9 @@ function ScheduleImportForm({ acceptScrapedText }: { acceptScrapedText: boolean 
       if (!mounted.current || owner !== timetableIdentity().epoch) return;
       // Import is already committed; a disk error must never invite a second commit.
       await invalidateTimetable().catch(() => undefined);
+      if (!mounted.current || owner !== timetableIdentity().epoch) return;
+      await discardDraft().catch(() => undefined);
+      if (!mounted.current || owner !== timetableIdentity().epoch) return;
       dispatch({ type: 'commit:success' });
       // 成功**不弹对话框**（宪法 10.4）：给一条回执 + 返回
       toast.show({
@@ -179,8 +186,10 @@ function ScheduleImportForm({ acceptScrapedText }: { acceptScrapedText: boolean 
         }),
         tone: 'success',
       });
-      if (router.canGoBack()) router.back();
-      else router.replace('/tools');
+      completeLeave(() => {
+        if (router.canGoBack()) router.back();
+        else router.replace('/tools');
+      });
     } catch (error) {
       if (!mounted.current || owner !== timetableIdentity().epoch) return;
       const appError = await session.handleAuthFailure(error);
@@ -192,12 +201,11 @@ function ScheduleImportForm({ acceptScrapedText }: { acceptScrapedText: boolean 
     } finally {
       commitBusy.current = false;
     }
-  }, [text, session, toast, t, state, router]);
-
-  const busy = state.phase === 'previewing' || state.phase === 'committing';
+  }, [text, session, toast, t, state, router, discardDraft, completeLeave]);
 
   return (
     <Screen testID="screen-schedule-import" titleKey="import.title" bottomMode="own" {...badge}>
+      <FormNavigationGuard prevent={leaveGuard.prevent} onBlocked={leaveGuard.requestLeave} />
       <View style={{ flex: 1, padding: theme.space('space_4'), gap: theme.space('space_4') }}>
         <ErrorSummary
           testID="import-summary"
@@ -258,6 +266,17 @@ function ScheduleImportForm({ acceptScrapedText }: { acceptScrapedText: boolean 
         ) : null}
       </View>
 
+      <AlertDialog
+        testID="import-leave"
+        visible={leaveGuard.visible}
+        variant="danger"
+        title={t('form.leave.title')}
+        body={t('form.leave.body')}
+        confirmLabel={t('form.leave.confirm')}
+        cancelLabel={t('form.leave.cancel')}
+        onCancel={leaveGuard.cancel}
+        onConfirm={() => { void leaveGuard.confirm(); }}
+      />
       {/* 整表覆盖：服务端会**删旧写新**，所以必须二次确认（§2.5 `O03 danger`） */}
       <AlertDialog
         testID="import-overwrite"

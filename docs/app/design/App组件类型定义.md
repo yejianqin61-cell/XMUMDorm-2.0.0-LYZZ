@@ -884,7 +884,7 @@ Android 有一个**系统级**的 "full-screen intent"（可在锁屏上全屏�
 | 15 | **Android 系统级 full-screen intent 的允许场景清单** | **须在浏览器人工读取 AOSP《全屏 intent 限制》并记录访问日期**（宪法 15.2） | 不阻塞（但影响"最重通知"的边界） |
 ### 8.4 本文件的边界
 
-Phase2乙实现记录（2026-10-07）：K01 Form新增可选titleKey、信箱属性与guardNavigation，继续唯一Screen；未保存内容确认后才dispatch原移除动作。C20支持注入系统图库、图片预览、取消无错误、失败文案与大小/GIF校验；原生依赖见 [准入登记](../evaluation/App依赖准入登记.md) §5，设备验证见 [乙逐屏记录](../test/乙-逐屏13.1验收记录.md)。
+Phase2乙实现记录（2026-10-07）：K01 Form新增可选titleKey、信箱属性与guardNavigation，继续唯一Screen；Form与T03共用useFormLeaveGuard，确认丢弃后才dispatch原移除动作，导入成功清草稿并在保护禁用后返回。C20支持注入系统图库、图片预览、取消无错误、失败文案与大小/GIF校验；原生依赖见 [准入登记](../evaluation/App依赖准入登记.md) §5，设备验证见 [乙逐屏记录](../test/乙-逐屏13.1验收记录.md)。
 1. **本文件不定义配色与字阶数值**（在[令牌规范](./App设计令牌规范.md)与[风格体系](./App前端风格体系.md)）；
 2. **本文件不定义页面与 IA**（在[页面清单 v2.0](../product/App页面清单与结构盘点.md)）——**页号空间以它为准**；
 3. **本文件不承诺排期**；
