@@ -10,11 +10,11 @@ it('树洞及匿名墙映射正确目标，修剪说明',async()=>{
  api.mockResolvedValue({id:1});
  const h=await renderHook(()=>useCampusReport(target,true,auth));
  await act(async()=>{await h.result.current.submit('spam','  evidence  ');});
- expect(api).toHaveBeenCalledWith({target_type:'post',target_id:7,reason:'spam',detail:'evidence'});
+ expect(api).toHaveBeenCalledWith({target_type:'post',target_id:7,reason:'spam',detail:'evidence',screenshots:undefined});
  expect(h.result.current.state).toBe('success');
  const w=await renderHook(()=>useCampusReport({id:8,kind:'wall'},true,auth));
  await act(async()=>{await w.result.current.submit('privacy','');});
- expect(api).toHaveBeenLastCalledWith({target_type:'confession',target_id:8,reason:'privacy',detail:''});
+ expect(api).toHaveBeenLastCalledWith({target_type:'confession',target_id:8,reason:'privacy',detail:'',screenshots:undefined});
 });
 it('游客和非法目标不发送请求',async()=>{
  const h=await renderHook(()=>useCampusReport(target,false,auth));
@@ -34,7 +34,7 @@ it('网络失败可重试，成功后不会重复提交',async()=>{
 });
 it('请求进行中不重复提交，切换目标忽略旧结果',async()=>{
  let finish:(x:unknown)=>void=()=>{};api.mockReturnValue(new Promise(r=>{finish=r;}));
- const h=await renderHook(({id})=>useCampusReport({id,kind:'wall'},true,auth),{initialProps:{id:7}});
+ const h=await renderHook((props:unknown)=>useCampusReport({id:(props as {id:number}).id,kind:'wall'},true,auth),{initialProps:{id:7}});
  let pending:Promise<void>;
  await act(async()=>{pending=h.result.current.submit('spam','');void h.result.current.submit('spam','');});
  expect(api).toHaveBeenCalledTimes(1);

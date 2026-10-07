@@ -1,4 +1,5 @@
 import * as React from 'react';
+import {useCampusReport} from './useCampusReport';
 import {useRouter} from 'expo-router';
 import {CommentComposer} from '@/components/ui/CommentComposer';
 import type {CommentNode} from '@/components/ui/CommentThread';
@@ -35,6 +36,7 @@ function comments(value:unknown,kind:Kind):CommentNode[] {
 /** Read and write failures stay inside the detail; no public shell or UI changes. */
 export function useCampusActions(post:InteractionPost|null,kind:Kind){
  const {t}=useI18n();const router=useRouter();const session=useSession();
+ const report=useCampusReport(post?{id:post.id,kind}:null,session.isSignedIn,session.handleAuthFailure);
  const [nodes,setNodes]=React.useState<CommentNode[]>([]),[draft,setDraft]=React.useState('');
  const [reply,setReply]=React.useState<CommentNode|null>(null),[sending,setSending]=React.useState(false);
  const [liked,setLiked]=React.useState(false),[likeCount,setLikeCount]=React.useState<number|null>(null);
@@ -109,7 +111,7 @@ export function useCampusActions(post:InteractionPost|null,kind:Kind){
     ?{kind:'anonymous',anonymousLabel:t('screen.campus.write.replying'),cancelLabel:t('action.cancel'),onCancel:()=>setReply(null)}
     :{kind:'named',label:t('screen.campus.write.namedReply',{name:reply.author.name}),cancelLabel:t('action.cancel'),onCancel:()=>setReply(null)}):undefined}/>
  </>;
- return {body,interactions:{liked,likeCount,commentCount},onToggleLike:()=>void like(),
+ return {body,report,interactions:{liked,likeCount,commentCount},onToggleLike:()=>void like(),
   comments:{nodes,pagination,onLoadMore:()=>undefined,onRetry:()=>void loadComments(),title:t('screen.campus.read.comments'),
    onReply:(id:string)=>{const node=nodes.find(item=>item.id===id&&item.depth===0);if(node)setReply(node);}}};
 }
