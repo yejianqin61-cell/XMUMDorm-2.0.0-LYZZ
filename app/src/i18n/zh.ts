@@ -376,6 +376,9 @@ export const zh = {
   'screen.campus.search.results': '帖子结果',
   'screen.campus.search.history': '最近搜索',
   'screen.campus.search.clearHistory': '清除搜索记录',
+  'screen.campus.write.namedReply': '正在回复 @{name}',
+  'screen.campus.read.unavailable': '内容不存在或已删除',
+  'screen.campus.read.backToList': '返回列表',
 } as const;
 
 /** 词条 key 的联合类型 —— `t()` 只接受它，**缺词条是编译期错误** */

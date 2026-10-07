@@ -40,7 +40,7 @@ function errorFor(failure:unknown):AppError {
 }
 
 type CampusKind='confession'|'wall';
-type Snapshot={rows:readonly Post[];page:number;cursor:number|null;hasMore:boolean};
+type Snapshot={rows:readonly Post[];page:number;cursor:number|null;hasMore:boolean;scrollOffset?:number};
 function asWall(value:unknown):Post {
  const row=asPost(value);
  // Never retain raw identity, title or images from an anonymous response.
@@ -69,7 +69,11 @@ export function CampusFeed({kind,query}:{kind:CampusKind;query?:string}):React.R
  const initial=React.useRef(client.getQueryData<Snapshot>(key));
  const snapshot=React.useRef<Snapshot>(initial.current??{rows:[],page:0,cursor:null,hasMore:true});
  const [rows,setRows]=React.useState(snapshot.current.rows),[revision,setRevision]=React.useState(0);
- const {pagination,dispatch,restoredScrollOffset,persistScrollOffset,setCursor}=useListPagination({scope:query?undefined:{primaryTab:'campus',secondaryTab:kind},initial:{hasMore:snapshot.current.hasMore}});
+ const {pagination,dispatch,restoredScrollOffset,persistScrollOffset: persistTabScrollOffset,setCursor}=useListPagination({scope:query?undefined:{primaryTab:'campus',secondaryTab:kind},initial:{hasMore:snapshot.current.hasMore}});
+ const persistScrollOffset=React.useCallback((offset:number)=>{
+  if(query){snapshot.current={...snapshot.current,scrollOffset:offset};client.setQueryData(key,snapshot.current);}
+  else persistTabScrollOffset(offset);
+ },[query,client,key,persistTabScrollOffset]);
  const generation=React.useRef(0),pending=React.useRef<'refresh'|'append'|null>(null);
  const load=React.useCallback(async(mode:'refresh'|'append')=>{
   if(pending.current==='refresh'||(mode==='append'&&(pending.current||!snapshot.current.hasMore)))return;
@@ -105,7 +109,7 @@ export function CampusFeed({kind,query}:{kind:CampusKind;query?:string}):React.R
  return <>
   {rows.length>0&&pagination.errorScope==='refresh'?<Button label={t('screen.campus.read.refreshFailed')} onPress={refresh}/>:null}
   <ListScreen key={revision} testID="campus-list" data={rows} keyExtractor={row=>String(row.id)} pagination={pagination}
-   restoredScrollOffset={revision===0&&initial.current?restoredScrollOffset:0} onScrollOffset={persistScrollOffset}
+   restoredScrollOffset={revision===0&&initial.current?(query?initial.current.scrollOffset??0:restoredScrollOffset):0} onScrollOffset={persistScrollOffset}
    onRefresh={refresh} onEndReached={append} onRetryRefresh={refresh} onRetryAppend={append}
    labels={{retryLabel:t('action.retry'),endLabel:t('screen.campus.read.listEnd'),empty:{kind:'noResult',title:t(query?'screen.campus.search.empty':'screen.campus.read.empty'),actionLabel:t('action.retry'),onAction:refresh}}}
    renderItem={row=>query?<Pressable testID={`campus-row-${row.id}`} accessibilityRole="button"
@@ -138,7 +142,8 @@ export function CampusDetailScreen({postId,kind='confession'}:{postId:string;kin
  const images=Array.isArray(post?.images)?post.images.filter(image=>image&&typeof image.url==='string').map(image=>image.url):[];
  return <DetailScreen testID="campus-detail" title={kind==='wall'?t('screen.campus.read.wallTitle'):post?.title||t('screen.campus.read.title')}
   author={post?.author ? {kind:'named',name:post.author.nickname||post.author.username||t('screen.campus.read.author')} : {kind:'anonymous'}}
-  interactions={actions.interactions} onToggleLike={post?actions.onToggleLike:undefined} comments={post?actions.comments:undefined} state={loading?'loading':error?'error':post?'content':'empty'} error={error}
+  interactions={actions.interactions} onToggleLike={post?actions.onToggleLike:undefined} comments={post?actions.comments:undefined} state={loading?'loading':error?.kind==='content'?'empty':error?'error':post?'content':'empty'} error={error}
+  empty={{kind:'noResult',title:t('screen.campus.read.unavailable'),actionLabel:t('screen.campus.read.backToList'),onAction:back}}
   onBack={back} onRetry={()=>error?.kind==='content'?back():void load()}
   hero={images.length>0?<MediaGrid testID="campus-media" uris={images} variant="hero"/>:undefined}
   body={<><Text role="body">{post?.content}</Text>{post?actions.body:null}</>}

@@ -47,12 +47,12 @@ it('详情失败重试保留安全提示',async()=>{
 });
 it('无效 id 不请求详情',async()=>{
  const v=await renderApp(<CampusDetailScreen postId="abc"/>);
- await waitFor(()=>expect(v.getByTestId('campus-detail-error')).toBeTruthy());expect(detail).not.toHaveBeenCalled();
+ await waitFor(()=>expect(v.getByTestId('campus-detail-empty')).toBeTruthy());expect(detail).not.toHaveBeenCalled();
 });
 it('不显示错配 id 的正文',async()=>{
  detail.mockResolvedValue({id:8,content:'错配正文'});
  const v=await renderApp(<CampusDetailScreen postId="7"/>);
- await waitFor(()=>expect(v.getByTestId('campus-detail-error')).toBeTruthy());expect(v.queryByText('错配正文')).toBeNull();
+ await waitFor(()=>expect(v.getByTestId('campus-detail-empty')).toBeTruthy());expect(v.queryByText('错配正文')).toBeNull();
 });
 it('英文空列表显示业务空态',async()=>{
  list.mockResolvedValue({list:[],hasMore:false});
@@ -67,7 +67,7 @@ it('未完成请求显示加载态',async()=>{
 it('隐藏帖不显示正文',async()=>{
  detail.mockResolvedValue({id:7,content:'隐藏正文',hidden:true});
  const v=await renderApp(<CampusDetailScreen postId="7"/>);
- await waitFor(()=>expect(v.getByTestId('campus-detail-error')).toBeTruthy());expect(v.queryByText('隐藏正文')).toBeNull();
+ await waitFor(()=>expect(v.getByTestId('campus-detail-empty')).toBeTruthy());expect(v.queryByText('隐藏正文')).toBeNull();
 });
 it('切换帖子后旧请求不能覆盖新正文',async()=>{
  let finish:(row:unknown)=>void=()=>undefined;

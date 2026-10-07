@@ -368,4 +368,7 @@ export const en: Record<MessageKey, string> = {
   'screen.campus.search.results': 'Post results',
   'screen.campus.search.history': 'Recent searches',
   'screen.campus.search.clearHistory': 'Clear search history',
+  'screen.campus.write.namedReply': 'Replying to @{name}',
+  'screen.campus.read.unavailable': 'Content is unavailable',
+  'screen.campus.read.backToList': 'Back to list',
 };

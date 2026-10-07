@@ -8,7 +8,7 @@ import {useListPagination} from '@/components/ui/ListScreen';
 import {useSession} from '@/features/auth/session';
 import {classifyAuthFailure,isSessionInvalid} from '@/features/auth/authFailure';
 import {useI18n} from '@/i18n';
-import {toggleLike,getPostComments,createComment} from '../../../../shared/api/posts';
+import {toggleLike,getPostComments,createComment,getPostDetail} from '../../../../shared/api/posts';
 import {toggleConfessionLike,getConfessionComments,createConfessionComment} from '../../../../shared/api/confessions';
 
 type InteractionPost={id:number;user_liked?:boolean;liked?:boolean;like_count?:number;comment_count?:number};
@@ -76,6 +76,13 @@ export function useCampusActions(post:InteractionPost|null,kind:Kind){
    setLiked(data.liked);
    // Treehole responses omit counts. Preserve the last server count instead of inventing one.
    if(count(data.like_count)!==null)setLikeCount(data.like_count);
+   else if(kind==='confession'){
+    // The mutation succeeded. A failed count refresh must never retry the toggle.
+    setLikeCount(null);
+    try{const fresh=await getPostDetail(post.id);
+     if(request===epoch.current&&fresh?.id===post.id)setLikeCount(count(fresh.like_count));
+    }catch{/* Unknown count stays as a placeholder; liked still reflects the successful mutation. */}
+   }
   }catch(error){await fail(error,request,'like');}
   finally{if(request===epoch.current)locks.current.like=false;}
  };
@@ -98,7 +105,9 @@ export function useCampusActions(post:InteractionPost|null,kind:Kind){
   {notice==='login'?<Button label={t('screen.campus.write.login')} onPress={()=>router.push('/login')}/>:null}
   <CommentComposer testID="campus-composer" value={draft} onChangeText={setDraft} placeholder={t('screen.campus.write.placeholder')}
    sendLabel={t('screen.campus.write.send')} sending={sending} disabled={pagination.append==='loading'} maxLength={kind==='wall'?500:undefined} onSend={()=>void send()}
-   replyContext={reply?{kind:'anonymous',anonymousLabel:t('screen.campus.write.replying'),cancelLabel:t('action.cancel'),onCancel:()=>setReply(null)}:undefined}/>
+   replyContext={reply?(kind==='wall'||reply.author.kind==='anonymous'
+    ?{kind:'anonymous',anonymousLabel:t('screen.campus.write.replying'),cancelLabel:t('action.cancel'),onCancel:()=>setReply(null)}
+    :{kind:'named',label:t('screen.campus.write.namedReply',{name:reply.author.name}),cancelLabel:t('action.cancel'),onCancel:()=>setReply(null)}):undefined}/>
  </>;
  return {body,interactions:{liked,likeCount,commentCount},onToggleLike:()=>void like(),
   comments:{nodes,pagination,onLoadMore:()=>undefined,onRetry:()=>void loadComments(),title:t('screen.campus.read.comments'),
