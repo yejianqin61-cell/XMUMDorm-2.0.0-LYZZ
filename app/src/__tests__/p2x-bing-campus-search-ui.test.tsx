@@ -96,3 +96,18 @@ it('关键词标点按字面高亮',async()=>{
  await waitFor(()=>expect(v.getAllByTestId('campus-search-match')).toHaveLength(2));
  expect(v.getAllByTestId('campus-search-match').map(item=>item.props.children)).toEqual(['a.b','a.b']);
 });
+
+it('换词再返回原搜索恢复滚动位置且不污染浏览状态',async()=>{
+ list.mockResolvedValue({list:[{id:7,content:'搜索结果'}],hasMore:false});
+ const v=await renderApp(<CampusSearchScreen/>);
+ await fireEvent.changeText(v.getByPlaceholderText('搜索树洞'),'词A');
+ await fireEvent.press(v.getByTestId('campus-search-submit'));
+ await waitFor(()=>expect(v.getByTestId('campus-row-7')).toBeTruthy());
+ await act(async()=>mockListProps.onScrollOffset?.(480));
+ await fireEvent.changeText(v.getByPlaceholderText('搜索树洞'),'词B');
+ await fireEvent.press(v.getByTestId('campus-search-submit'));
+ await waitFor(()=>expect(list).toHaveBeenCalledWith({page:1,pageSize:10,q:'词B'}));
+ await fireEvent.changeText(v.getByPlaceholderText('搜索树洞'),'词A');
+ await fireEvent.press(v.getByTestId('campus-search-submit'));
+ await waitFor(()=>expect(mockListProps.restoredScrollOffset).toBe(480));
+});

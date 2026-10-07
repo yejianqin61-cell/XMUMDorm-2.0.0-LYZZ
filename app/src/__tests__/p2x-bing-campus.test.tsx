@@ -302,3 +302,30 @@ for(const locale of ['zh','en'] as const){
   expect(v.getByText(locale==='zh'?'匿名':'Anonymous')).toBeTruthy();expect(v.queryByText('不应显示')).toBeNull();
  });
 }
+
+it('树洞点赞成功后重读服务端计数，重读失败不重复点赞',async()=>{
+ detail.mockResolvedValueOnce({id:7,content:'正文',user_liked:false,like_count:4})
+ .mockResolvedValueOnce({id:7,content:'正文',user_liked:true,like_count:5}).mockRejectedValueOnce(new TypeError('offline'));
+ (toggleLike as jest.Mock).mockResolvedValueOnce({post_id:7,liked:true}).mockResolvedValueOnce({post_id:7,liked:false});
+ const v=await renderApp(<CampusDetailScreen postId="7"/>);
+ await waitFor(()=>expect(v.getByText('正文')).toBeTruthy());
+ await fireEvent.press(v.getByTestId('campus-detail-like'));
+ await waitFor(()=>expect(v.getByText('5')).toBeTruthy());
+ await fireEvent.press(v.getByTestId('campus-detail-like'));
+ await waitFor(()=>expect(detail).toHaveBeenCalledTimes(3));
+ expect(toggleLike).toHaveBeenCalledTimes(2);expect(v.queryByText('5')).toBeNull();
+});
+it('实名树洞回复显示被回复者昵称',async()=>{
+ detail.mockResolvedValue({id:7,content:'正文'});
+ (getPostComments as jest.Mock).mockResolvedValue([{id:50,content:'原评论',author:{nickname:'小林'}}]);
+ const v=await renderApp(<CampusDetailScreen postId="7"/>);
+ await waitFor(()=>expect(v.getByText('原评论')).toBeTruthy());
+ await fireEvent.press(v.getByText('回复'));
+ expect(v.getByText('正在回复 @小林')).toBeTruthy();
+});
+it('已删除帖子显示内容不可用并返回列表',async()=>{
+ detail.mockRejectedValue({status:404});
+ const v=await renderApp(<CampusDetailScreen postId="7"/>);
+ await waitFor(()=>expect(v.getByText('内容不存在或已删除')).toBeTruthy());
+ await fireEvent.press(v.getByText('返回列表'));expect(mockBack).toHaveBeenCalled();
+});
