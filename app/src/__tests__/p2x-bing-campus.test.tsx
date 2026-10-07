@@ -265,3 +265,40 @@ it('切换帖子后旧点赞请求不能覆盖新帖子',async()=>{
  await fireEvent.press(v.getByText('切换帖子'));await waitFor(()=>expect(v.getByText('新正文')).toBeTruthy());
  await act(async()=>finish({post_id:7,liked:true}));expect(v.getByTestId('campus-detail-like').props.accessibilityState.selected).toBe(false);
 });
+
+for(const locale of ['zh','en'] as const){
+ it(`${locale}树洞未返回请求显示加载态`,async()=>{
+  list.mockReturnValue(new Promise(()=>undefined));const v=await renderApp(<CampusListScreen/>,{locale});
+  expect(v.getByTestId('campus-list-loading')).toBeTruthy();expect(v.queryByTestId('campus-list-empty')).toBeNull();
+ });
+ it(`${locale}树洞空列表是业务空态`,async()=>{
+  list.mockResolvedValue({list:[],hasMore:false});const v=await renderApp(<CampusListScreen/>,{locale});
+  await waitFor(()=>expect(v.getByText(locale==='zh'?'还没有帖子':'No posts yet')).toBeTruthy());
+  expect(v.queryByTestId('campus-list-error')).toBeNull();
+ });
+ it(`${locale}树洞有数据显示正文与末页`,async()=>{
+  list.mockResolvedValue({list:[{id:7,content:'阅读内容'}],hasMore:false});const v=await renderApp(<CampusListScreen/>,{locale});
+  await waitFor(()=>expect(v.getByText('阅读内容')).toBeTruthy());expect(v.getByText(locale==='zh'?'没有更多帖子':'No more posts')).toBeTruthy();
+ });
+ for(const [failure,perceive,fix] of [
+  [{kind:'offline'},locale==='zh'?'网络没连上':'No connection',locale==='zh'?'打开网络后重试':'Turn on network, then retry'],
+  [new TypeError('secret-endpoint'),locale==='zh'?'服务连不上':'Service unreachable',locale==='zh'?'连上校园网后重试':'Join campus network, then retry'],
+  [{name:'AbortError'},locale==='zh'?'等待超时':'Timed out',locale==='zh'?'稍后重试一次':'Retry once in a moment'],
+ ] as const){
+  it(`${locale}${perceive}给出恢复入口`,async()=>{
+   list.mockRejectedValueOnce(failure).mockResolvedValueOnce({list:[{id:7,content:'已恢复'}],hasMore:false});
+   const v=await renderApp(<CampusListScreen/>,{locale});await waitFor(()=>expect(v.getByText(perceive)).toBeTruthy());
+   expect(v.queryByText('secret-endpoint')).toBeNull();await fireEvent.press(v.getByText(fix));
+   await waitFor(()=>expect(v.getByText('已恢复')).toBeTruthy());expect(list).toHaveBeenLastCalledWith({page:1,pageSize:10});
+  });
+ }
+ it(`${locale}万能墙空态不变成技术错误`,async()=>{
+  wall.mockResolvedValue({items:[],has_older:false,oldest_cursor:null});const v=await renderApp(<CampusListScreen initialTab="wall"/>,{locale});
+  await waitFor(()=>expect(v.getByTestId('campus-list-empty')).toBeTruthy());expect(v.queryByTestId('campus-list-error')).toBeNull();
+ });
+ it(`${locale}万能墙有数据保持匿名`,async()=>{
+  wall.mockResolvedValue({items:[{id:40,content:'匿名正文',author:{nickname:'不应显示'}}],has_older:false,oldest_cursor:40});
+  const v=await renderApp(<CampusListScreen initialTab="wall"/>,{locale});await waitFor(()=>expect(v.getByText('匿名正文')).toBeTruthy());
+  expect(v.getByText(locale==='zh'?'匿名':'Anonymous')).toBeTruthy();expect(v.queryByText('不应显示')).toBeNull();
+ });
+}
