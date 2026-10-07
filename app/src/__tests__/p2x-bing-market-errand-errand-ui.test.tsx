@@ -2,15 +2,15 @@ import * as React from 'react';
 import {act,fireEvent,waitFor} from '@testing-library/react-native';
 import {renderApp} from './helpers/renderApp';
 import {ErrandListScreen,ErrandDetailScreen} from '@/features/errand/ErrandScreens';
-import {listErrands,getErrandDetail,takeErrand,doneErrand} from '../../../shared/api/errands';
+import {listErrands,getErrandDetail,takeErrand,doneErrand,deleteErrand} from '../../../shared/api/errands';
 import {getMe} from '../../../shared/api/users';
 import {getQueryClient} from '@/shared/queryClient';
 import type {ListScreenProps} from '@/components/ui/ListScreen';
-const mockPush=jest.fn();const mockSession={isSignedIn:true,handleAuthFailure:jest.fn()};let mockListProps:ListScreenProps<unknown>;
-jest.mock('expo-router',()=>({useRouter:()=>({push:mockPush,back:jest.fn(),replace:jest.fn(),canGoBack:()=>false})}));
+const mockReplace=jest.fn();const mockPush=jest.fn();const mockSession={isSignedIn:true,handleAuthFailure:jest.fn()};let mockListProps:ListScreenProps<unknown>;
+jest.mock('expo-router',()=>({useRouter:()=>({push:mockPush,back:jest.fn(),replace:mockReplace,canGoBack:()=>false})}));
 jest.mock('@/features/auth/session',()=>({useSession:()=>mockSession}));
 jest.mock('../../../shared/api/users',()=>({getMe:jest.fn()}));
-jest.mock('../../../shared/api/errands',()=>({listErrands:jest.fn(),getErrandDetail:jest.fn(),takeErrand:jest.fn(),doneErrand:jest.fn()}));
+jest.mock('../../../shared/api/errands',()=>({listErrands:jest.fn(),getErrandDetail:jest.fn(),takeErrand:jest.fn(),doneErrand:jest.fn(),deleteErrand:jest.fn()}));
 jest.mock('@/components/ui/ListScreen',()=>{const actual=jest.requireActual('@/components/ui/ListScreen'),React=require('react');return {...actual,ListScreen:(p:ListScreenProps<unknown>)=>{mockListProps=p;return React.createElement(actual.ListScreen,{...p,onEndReached:()=>undefined});}};});
 const list=listErrands as jest.Mock,detail=getErrandDetail as jest.Mock,take=takeErrand as jest.Mock,done=doneErrand as jest.Mock,me=getMe as jest.Mock;
 const row={id:2,title:'Pickup',reward:5,type:'delivery',status:'open',owner:{id:3,username:'Owner'}};
@@ -61,4 +61,16 @@ it('服务端业务403权限拒绝不清除登录会话',async()=>{
  const v=await renderApp(<ErrandDetailScreen errandId="2"/>);await waitFor(()=>expect(v.getByTestId('errand-take')).toBeTruthy());
  await fireEvent.press(v.getByTestId('errand-take'));await fireEvent.press(v.getByText('确认'));
  await waitFor(()=>expect(v.getByText('当前账号没有操作权限')).toBeTruthy());expect(mockSession.handleAuthFailure).not.toHaveBeenCalled();
+});
+
+it('发布者删除需确认，成功后清缓存并返回列表',async()=>{
+ detail.mockResolvedValue(full);me.mockResolvedValue({id:3,role:'student'});(deleteErrand as jest.Mock).mockResolvedValue(undefined);
+ getQueryClient().setQueryData(['bing-errand','list',{}],{rows:[row]});
+ const v=await renderApp(<ErrandDetailScreen errandId="2"/>);await waitFor(()=>expect(v.getByTestId('errand-delete')).toBeTruthy());
+ await fireEvent.press(v.getByTestId('errand-delete'));expect(deleteErrand).not.toHaveBeenCalled();await fireEvent.press(v.getByText('确认'));
+ await waitFor(()=>expect(mockReplace).toHaveBeenCalledWith('/errand'));expect(deleteErrand).toHaveBeenCalledWith(2);expect(getQueryClient().getQueryData(['bing-errand','list',{}])).toBeUndefined();
+});
+it('非发布者不能删除任务',async()=>{
+ detail.mockResolvedValue(full);me.mockResolvedValue({id:9,role:'student'});
+ const v=await renderApp(<ErrandDetailScreen errandId="2"/>);await waitFor(()=>expect(v.getByText('test contact')).toBeTruthy());expect(v.queryByTestId('errand-delete')).toBeNull();
 });
