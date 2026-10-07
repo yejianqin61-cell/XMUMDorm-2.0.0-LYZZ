@@ -1,5 +1,11 @@
 import * as React from 'react';
 import {useRouter} from 'expo-router';
+import {Button} from '@/components/ui/Button';
+import {TopTabStrip} from '@/components/ui/TopTabStrip';
+import {getSecondaryTabs} from '@/features/navigation/secondaryTabs';
+import {getQueryClient} from '@/shared/queryClient';
+import {QK} from '../../../../shared/query/queryKeys';
+import {getConfessionWindow,getConfession} from '../../../../shared/api/confessions';
 import {Screen} from '@/components/ui/Screen';
 import {ListScreen, useListPagination} from '@/components/ui/ListScreen';
 import {ListItem} from '@/components/ui/ListItem';
@@ -30,34 +36,80 @@ function errorFor(failure:unknown):AppError {
  return {kind:'unknown'};
 }
 
-/** 首项只接阅读；两栏分页和缓存在下一项使用既有公开接缝。 */
-export function CampusListScreen():React.ReactElement {
- const {t}=useI18n();const router=useRouter();
- const [rows,setRows]=React.useState<readonly Post[]>([]);
- const {pagination,dispatch}=useListPagination();
- const generation=React.useRef(0);
- const load=React.useCallback(async()=>{
-  const request=++generation.current;dispatch({type:'refresh:start'});
-  try {
-   const payload=await getPostList({page:1,pageSize:10});
-   if(request!==generation.current)return;
-   if(!Array.isArray(payload?.list)||typeof payload.hasMore!=='boolean')throw {kind:'content'};
-   const unique=new Map<number,Post>();for(const row of payload.list.map(asPost))unique.set(row.id,row);
-   setRows(Array.from(unique.values()));dispatch({type:'refresh:success',hasMore:false});
-  }catch(error){if(request===generation.current)dispatch({type:'refresh:failure',error:errorFor(error)});}
- },[dispatch]);
- React.useEffect(()=>{void load();return()=>{generation.current++;};},[load]);
- const refresh=()=>void load();
+type CampusKind='confession'|'wall';
+type Snapshot={rows:readonly Post[];page:number;cursor:number|null;hasMore:boolean};
+function asWall(value:unknown):Post {
+ const row=asPost(value);
+ // Never retain raw identity, title or images from an anonymous response.
+ return {id:row.id,content:row.content};
+}
+function snapshotKey(kind:CampusKind){
+ return [...(kind==='wall'?QK.confessionWindow('_guest'):QK.postsInfinite('_guest',10)), 'campusReadSnapshot'];
+}
+
+export function CampusListScreen({initialTab='confession'}:{initialTab?:CampusKind}={}):React.ReactElement {
+ const router=useRouter();const [selected,setSelected]=React.useState<CampusKind>(initialTab);
  return <Screen titleKey="screen.campus" showMailbox={false} testID="campus-screen">
-  <ListScreen testID="campus-list" data={rows} keyExtractor={row=>String(row.id)} pagination={pagination}
-   onRefresh={refresh} onEndReached={()=>undefined} onRetryRefresh={refresh} onRetryAppend={refresh}
-   labels={{retryLabel:t('action.retry'),endLabel:t('screen.campus.read.firstPage'),empty:{kind:'noResult',title:t('screen.campus.read.empty'),actionLabel:t('action.retry'),onAction:refresh}}}
-   renderItem={row=><ListItem testID={`campus-row-${row.id}`} title={row.title||t('screen.campus.read.title')} subtitle={row.content}
-    onPress={()=>router.push(`/campus/${row.id}` as never)}/>}/>
+  <TopTabStrip tabs={getSecondaryTabs('campus')} selectedKey={selected} onSelect={key=>{
+   if(key!=='confession'&&key!=='wall')return;
+   setSelected(key);router.setParams({tab:key});
+  }}/>
+  <CampusFeed key={selected} kind={selected}/>
  </Screen>;
 }
 
-export function CampusDetailScreen({postId}:{postId:string}):React.ReactElement {
+/** A keyed child owns one fixed scope; switching tabs unmounts its pending requests. */
+function CampusFeed({kind}:{kind:CampusKind}):React.ReactElement {
+ const {t}=useI18n();const router=useRouter();const client=getQueryClient();
+ const key=React.useMemo(()=>snapshotKey(kind),[kind]);
+ const initial=React.useRef(client.getQueryData<Snapshot>(key));
+ const snapshot=React.useRef<Snapshot>(initial.current??{rows:[],page:0,cursor:null,hasMore:true});
+ const [rows,setRows]=React.useState(snapshot.current.rows),[revision,setRevision]=React.useState(0);
+ const {pagination,dispatch,restoredScrollOffset,persistScrollOffset,setCursor}=useListPagination({scope:{primaryTab:'campus',secondaryTab:kind},initial:{hasMore:snapshot.current.hasMore}});
+ const generation=React.useRef(0),pending=React.useRef<'refresh'|'append'|null>(null);
+ const load=React.useCallback(async(mode:'refresh'|'append')=>{
+  if(pending.current==='refresh'||(mode==='append'&&(pending.current||!snapshot.current.hasMore)))return;
+  const request=++generation.current,page=mode==='refresh'?1:snapshot.current.page+1;
+  pending.current=mode;dispatch({type:mode==='refresh'?'refresh:start':'append:start'});
+  try {
+   let incoming:Post[],hasMore:boolean,cursor:number|null=null;
+   if(kind==='wall'){
+    const data=await getConfessionWindow({cursor:mode==='refresh'?null:snapshot.current.cursor,direction:'older',limit:5});
+    if(request!==generation.current)return;
+    if(!Array.isArray(data?.items)||typeof data.has_older!=='boolean')throw {kind:'content'};
+    incoming=data.items.map(asWall);hasMore=data.has_older;
+    cursor=typeof data.oldest_cursor==='number'&&Number.isSafeInteger(data.oldest_cursor)&&data.oldest_cursor>0?data.oldest_cursor:null;
+    if(hasMore&&(!Number.isSafeInteger(cursor)||Number(cursor)<=0||cursor===snapshot.current.cursor&&mode==='append'))throw {kind:'content'};
+   }else{
+    const data=await getPostList({page,pageSize:10});
+    if(request!==generation.current)return;
+    if(!Array.isArray(data?.list)||typeof data.hasMore!=='boolean')throw {kind:'content'};
+    incoming=data.list.map(asPost);hasMore=data.hasMore;
+   }
+   const unique=new Map<number,Post>();
+   for(const row of mode==='refresh'?[]:snapshot.current.rows)unique.set(row.id,row);
+   for(const row of incoming)unique.set(row.id,row);
+   const next={rows:Array.from(unique.values()),page,cursor,hasMore};snapshot.current=next;
+   client.setQueryData(key,next);setRows(next.rows);setCursor(kind==='wall'?cursor==null?null:String(cursor):String(page));
+   if(mode==='refresh'){persistScrollOffset(0);setRevision(value=>value+1);}
+   dispatch({type:mode==='refresh'?'refresh:success':'append:success',hasMore});
+  }catch(error){if(request===generation.current)dispatch({type:mode==='refresh'?'refresh:failure':'append:failure',error:errorFor(error)});}
+  finally{if(request===generation.current)pending.current=null;}
+ },[kind,key,client,dispatch,setCursor,persistScrollOffset]);
+ React.useEffect(()=>{if(!initial.current)void load('refresh');return()=>{generation.current++;pending.current=null;};},[load]);
+ const refresh=()=>void load('refresh'),append=()=>void load('append');
+ return <>
+  {rows.length>0&&pagination.errorScope==='refresh'?<Button label={t('screen.campus.read.refreshFailed')} onPress={refresh}/>:null}
+  <ListScreen key={revision} testID="campus-list" data={rows} keyExtractor={row=>String(row.id)} pagination={pagination}
+   restoredScrollOffset={revision===0&&initial.current?restoredScrollOffset:0} onScrollOffset={persistScrollOffset}
+   onRefresh={refresh} onEndReached={append} onRetryRefresh={refresh} onRetryAppend={append}
+   labels={{retryLabel:t('action.retry'),endLabel:t('screen.campus.read.listEnd'),empty:{kind:'noResult',title:t('screen.campus.read.empty'),actionLabel:t('action.retry'),onAction:refresh}}}
+   renderItem={row=><ListItem testID={`campus-row-${row.id}`} title={kind==='wall'?t('screen.campus.read.anonymous'):row.title||t('screen.campus.read.post')} subtitle={row.content}
+    onPress={()=>router.push((kind==='wall'?`/campus/wall/${row.id}`:`/campus/${row.id}`) as never)}/>}/>
+ </>;
+}
+
+export function CampusDetailScreen({postId,kind='confession'}:{postId:string;kind?:CampusKind}):React.ReactElement {
  const {t}=useI18n();const router=useRouter();
  const [post,setPost]=React.useState<Post|null>(null),[error,setError]=React.useState<AppError|null>(null);
  const [loading,setLoading]=React.useState(true);const generation=React.useRef(0);
@@ -65,16 +117,16 @@ export function CampusDetailScreen({postId}:{postId:string}):React.ReactElement 
   const request=++generation.current;setPost(null);setError(null);setLoading(true);
   try {
    if(!/^[1-9]\d*$/.test(postId)||!Number.isSafeInteger(Number(postId)))throw {kind:'content'};
-   const row=asPost(await getPostDetail(Number(postId)));
+   const row=kind==='wall'?asWall(await getConfession(Number(postId))):asPost(await getPostDetail(Number(postId)));
    if(row.id!==Number(postId))throw {kind:'content'};
    if(request===generation.current)setPost(row);
   }catch(failure){if(request===generation.current)setError(errorFor(failure));}
   finally{if(request===generation.current)setLoading(false);}
- },[postId]);
+ },[postId,kind]);
  React.useEffect(()=>{void load();return()=>{generation.current++;};},[load]);
- const back=()=>router.canGoBack()?router.back():router.replace('/campus' as never);
+ const back=()=>router.canGoBack()?router.back():router.replace((kind==='wall'?'/campus?tab=wall':'/campus') as never);
  const images=Array.isArray(post?.images)?post.images.filter(image=>image&&typeof image.url==='string').map(image=>image.url):[];
- return <DetailScreen testID="campus-detail" title={post?.title||t('screen.campus.read.title')}
+ return <DetailScreen testID="campus-detail" title={kind==='wall'?t('screen.campus.read.wallTitle'):post?.title||t('screen.campus.read.title')}
   author={post?.author ? {kind:'named',name:post.author.nickname||post.author.username||t('screen.campus.read.author')} : {kind:'anonymous'}}
   interactions={{}} state={loading?'loading':error?'error':post?'content':'empty'} error={error}
   onBack={back} onRetry={()=>error?.kind==='content'?back():void load()}

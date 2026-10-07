@@ -9,6 +9,10 @@
  * 5. ⛔ 屏内**不得**用内联三元按语言选串（`isZh` 加问号那种写法，尺子会拦）—— 一律走本表。
  */
 export const zh = {
+  'screen.campus.read.post': '帖子',
+  'screen.campus.read.wallTitle': '万能墙',
+  'screen.campus.read.listEnd': '没有更多帖子',
+  'screen.campus.read.refreshFailed': '刷新失败，重试',
   'screen.campus.read.title': '树洞',
   'screen.campus.read.empty': '还没有帖子',
   'screen.campus.read.firstPage': '已显示首批帖子',

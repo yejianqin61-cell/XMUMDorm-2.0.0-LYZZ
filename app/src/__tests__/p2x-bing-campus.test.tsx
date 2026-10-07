@@ -93,7 +93,7 @@ it('树洞分页失败重试同一页，去重并在末页停止',async()=>{
  list.mockResolvedValueOnce({list:[{id:7,content:'首篇'}],hasMore:true}).mockRejectedValueOnce(new TypeError('retry')).mockResolvedValueOnce({list:[{id:7,content:'首篇'},{id:8,content:'次篇'}],hasMore:false});
  const v=await renderApp(<CampusListScreen/>);await waitFor(()=>expect(v.getByText('首篇')).toBeTruthy());
  await act(async()=>mockListProps.onEndReached());await waitFor(()=>expect(mockListProps.pagination?.errorScope).toBe('append'));
- await act(async()=>mockListProps.onRetryAppend());await waitFor(()=>expect(v.getByText('次篇')).toBeTruthy());
+ await act(async()=>mockListProps.onRetryAppend?.());await waitFor(()=>expect(v.getByText('次篇')).toBeTruthy());
  expect(list.mock.calls.map(call=>call[0].page)).toEqual([1,2,2]);expect(v.getAllByText('首篇')).toHaveLength(1);
  await act(async()=>mockListProps.onEndReached());expect(list).toHaveBeenCalledTimes(3);
 });
@@ -136,4 +136,25 @@ it('刷新一栏归零位置且不清另一栏缓存',async()=>{
  await fireEvent.press(v.getByText('万能墙'));await waitFor(()=>expect(v.getByText('墙正文')).toBeTruthy());await act(async()=>mockListProps.onScrollOffset?.(120));
  await fireEvent.press(v.getByText('树洞'));await waitFor(()=>expect(v.getByText('旧树洞')).toBeTruthy());await act(async()=>mockListProps.onRefresh());await waitFor(()=>expect(v.getByText('新树洞')).toBeTruthy());expect(v.queryByText('旧树洞')).toBeNull();
  expect(mockListProps.restoredScrollOffset).toBe(0);await fireEvent.press(v.getByText('万能墙'));await waitFor(()=>expect(v.getByText('墙正文')).toBeTruthy());expect(mockListProps.restoredScrollOffset).toBe(120);expect(wall).toHaveBeenCalledTimes(1);
+});
+
+it('从墙详情返回重新挂载时恢复墙位置与缓存',async()=>{
+ wall.mockResolvedValue({items:[{id:40,content:'墙正文'}],has_older:false,oldest_cursor:40});
+ function Harness(){const [reading,setReading]=React.useState(false);return <><Button label={reading?'回列表':'读详情'} onPress={()=>setReading(!reading)}/>{reading?<></>:<CampusListScreen initialTab="wall"/>}</>;}
+ const v=await renderApp(<Harness/>);await waitFor(()=>expect(v.getByText('墙正文')).toBeTruthy());await act(async()=>mockListProps.onScrollOffset?.(240));
+ await fireEvent.press(v.getByText('读详情'));await fireEvent.press(v.getByText('回列表'));await waitFor(()=>expect(v.getByText('墙正文')).toBeTruthy());
+ expect(wall).toHaveBeenCalledTimes(1);expect(mockListProps.restoredScrollOffset).toBe(240);
+});
+it('刷新抢占追加，迟到旧页不覆盖刷新结果',async()=>{
+ let finish:(data:unknown)=>void=()=>undefined;
+ list.mockResolvedValueOnce({list:[{id:7,content:'旧首篇'}],hasMore:true}).mockReturnValueOnce(new Promise(resolve=>{finish=resolve;})).mockResolvedValueOnce({list:[{id:9,content:'刷新结果'}],hasMore:false});
+ const v=await renderApp(<CampusListScreen/>);await waitFor(()=>expect(v.getByText('旧首篇')).toBeTruthy());
+ await act(async()=>mockListProps.onEndReached());await act(async()=>mockListProps.onEndReached());expect(list).toHaveBeenCalledTimes(2);
+ await act(async()=>mockListProps.onRefresh());await waitFor(()=>expect(v.getByText('刷新结果')).toBeTruthy());
+ await act(async()=>finish({list:[{id:8,content:'旧追加'}],hasMore:false}));expect(v.queryByText('旧追加')).toBeNull();expect(v.queryByText('旧首篇')).toBeNull();
+});
+it('墙窗口声称有下一页但缺游标时显示错误，不循环请求',async()=>{
+ wall.mockResolvedValue({items:[{id:40,content:'错误窗口'}],has_older:true,oldest_cursor:null});
+ const v=await renderApp(<CampusListScreen initialTab="wall"/>);await waitFor(()=>expect(v.getByTestId('campus-list-error')).toBeTruthy());
+ expect(v.queryByText('错误窗口')).toBeNull();expect(wall).toHaveBeenCalledTimes(1);
 });

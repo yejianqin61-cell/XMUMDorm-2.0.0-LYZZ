@@ -9,6 +9,10 @@
 import type { MessageKey } from './zh';
 
 export const en: Record<MessageKey, string> = {
+  'screen.campus.read.post': 'Post',
+  'screen.campus.read.wallTitle': 'Wall',
+  'screen.campus.read.listEnd': 'No more posts',
+  'screen.campus.read.refreshFailed': 'Refresh failed. Retry',
   'screen.campus.read.title': 'Posts',
   'screen.campus.read.empty': 'No posts yet',
   'screen.campus.read.firstPage': 'First posts shown',
