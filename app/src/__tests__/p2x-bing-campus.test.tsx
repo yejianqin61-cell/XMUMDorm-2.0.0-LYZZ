@@ -6,7 +6,7 @@ import {CampusListScreen, CampusDetailScreen} from '@/features/campus/CampusScre
 import {getPostList, getPostDetail} from '../../../shared/api/posts';
 const mockPush=jest.fn(), mockBack=jest.fn(), mockReplace=jest.fn(), mockSetParams=jest.fn();
 jest.mock('expo-router',()=>({useRouter:()=>({setParams:mockSetParams,push:mockPush,back:mockBack,replace:mockReplace,canGoBack:()=>true})}));
-jest.mock('../../../shared/api/posts',()=>({getPostList:jest.fn(),getPostDetail:jest.fn()}));
+jest.mock('../../../shared/api/posts',()=>({getPostList:jest.fn(),getPostDetail:jest.fn(),toggleLike:jest.fn(),getPostComments:jest.fn(),createComment:jest.fn()}));
 import {getConfessionWindow, getConfession} from '../../../shared/api/confessions';
 import {getQueryClient} from '@/shared/queryClient';
 import {secondaryTabStore} from '@/features/navigation/secondaryTabs';
@@ -16,7 +16,7 @@ jest.mock('@/components/ui/ListScreen',()=>{
  const actual=jest.requireActual('@/components/ui/ListScreen'), React=require('react');
  return {...actual,ListScreen:(props:ListScreenProps<unknown>)=>{mockListProps=props;return React.createElement(actual.ListScreen,{...props,onEndReached:()=>undefined});}};
 });
-jest.mock('../../../shared/api/confessions',()=>({getConfessionWindow:jest.fn(),getConfession:jest.fn()}));
+jest.mock('../../../shared/api/confessions',()=>({getConfessionWindow:jest.fn(),getConfession:jest.fn(),toggleConfessionLike:jest.fn(),getConfessionComments:jest.fn(),createConfessionComment:jest.fn()}));
 const wall=getConfessionWindow as jest.Mock, wallDetail=getConfession as jest.Mock;
 afterEach(()=>getQueryClient().clear());
 const list=getPostList as jest.Mock, detail=getPostDetail as jest.Mock;
@@ -157,4 +157,63 @@ it('墙窗口声称有下一页但缺游标时显示错误，不循环请求',as
  wall.mockResolvedValue({items:[{id:40,content:'错误窗口'}],has_older:true,oldest_cursor:null});
  const v=await renderApp(<CampusListScreen initialTab="wall"/>);await waitFor(()=>expect(v.getByTestId('campus-list-error')).toBeTruthy());
  expect(v.queryByText('错误窗口')).toBeNull();expect(wall).toHaveBeenCalledTimes(1);
+});
+
+import {toggleLike,getPostComments,createComment} from '../../../shared/api/posts';
+import {toggleConfessionLike,getConfessionComments,createConfessionComment} from '../../../shared/api/confessions';
+const mockAuthFailure=jest.fn(),mockSession={isSignedIn:true,handleAuthFailure:mockAuthFailure};
+jest.mock('@/features/auth/session',()=>({useSession:()=>mockSession}));
+beforeEach(()=>{
+ mockSession.isSignedIn=true;mockAuthFailure.mockResolvedValue({kind:'permission'});
+ for(const fn of [toggleLike,createComment,toggleConfessionLike,createConfessionComment]) (fn as jest.Mock).mockReset();
+ (getPostComments as jest.Mock).mockReset().mockResolvedValue([]);
+ (getConfessionComments as jest.Mock).mockReset().mockResolvedValue([]);
+});
+it('点赞按响应状态更新，缺少计数不虚构新计数',async()=>{
+ detail.mockResolvedValue({id:7,content:'正文',user_liked:false,like_count:4});
+ (toggleLike as jest.Mock).mockResolvedValue({post_id:7,liked:true});
+ const v=await renderApp(<CampusDetailScreen postId="7"/>);
+ await waitFor(()=>expect(v.getByText('正文')).toBeTruthy());
+ await fireEvent.press(v.getByTestId('campus-detail-like'));
+ await waitFor(()=>expect(v.getByTestId('campus-detail-like').props.accessibilityState.selected).toBe(true));
+ expect(toggleLike).toHaveBeenCalledWith(7);expect(v.getByText('4')).toBeTruthy();
+});
+it('评论失败保留草稿，重试成功显示评论',async()=>{
+ detail.mockResolvedValue({id:7,content:'正文'});
+ (createComment as jest.Mock).mockRejectedValueOnce(new TypeError('secret')).mockResolvedValueOnce({id:90,content:'一起运动',author:{nickname:'我'}});
+ const v=await renderApp(<CampusDetailScreen postId="7"/>);
+ await waitFor(()=>expect(v.getByLabelText('写评论')).toBeTruthy());
+ await fireEvent.changeText(v.getByLabelText('写评论'),'一起运动');
+ await fireEvent.press(v.getByTestId('campus-composer-send'));
+ await waitFor(()=>expect(v.getByText('操作失败，请重试')).toBeTruthy());
+ expect(v.getByLabelText('写评论').props.value).toBe('一起运动');expect(v.getByText('正文')).toBeTruthy();
+ await fireEvent.press(v.getByTestId('campus-composer-send'));
+ await waitFor(()=>expect(v.getByText('一起运动')).toBeTruthy());
+ expect(v.getByLabelText('写评论').props.value).toBe('');expect(createComment).toHaveBeenLastCalledWith(7,{content:'一起运动'});
+});
+it('游客操作不写入接口，显示登录入口',async()=>{
+ mockSession.isSignedIn=false;detail.mockResolvedValue({id:7,content:'正文'});
+ const v=await renderApp(<CampusDetailScreen postId="7"/>);await waitFor(()=>expect(v.getByText('正文')).toBeTruthy());
+ await fireEvent.press(v.getByTestId('campus-detail-like'));expect(toggleLike).not.toHaveBeenCalled();
+ await fireEvent.press(v.getByText('登录后参与'));expect(mockPush).toHaveBeenCalledWith('/login');
+});
+it('万能墙评论及回复隐藏服务端身份',async()=>{
+ wallDetail.mockResolvedValue({id:40,content:'墙正文',liked:false,like_count:1});
+ (getConfessionComments as jest.Mock).mockResolvedValue([{id:50,content:'匿名评论',author:{nickname:'秘密姓名'},replies:[{id:51,content:'匿名回复',author:{nickname:'回复姓名'}}]}]);
+ (createConfessionComment as jest.Mock).mockResolvedValue({id:52,parent_id:50,content:'新回复',author:{nickname:'泄露姓名'}});
+ (toggleConfessionLike as jest.Mock).mockResolvedValue({confession_id:40,liked:true,like_count:2});
+ const v=await renderApp(<CampusDetailScreen postId="40" kind="wall"/>);
+ await waitFor(()=>expect(v.getByText('匿名回复')).toBeTruthy());
+ expect(v.queryByText('秘密姓名')).toBeNull();expect(v.queryByText('回复姓名')).toBeNull();
+ await fireEvent.press(v.getByText('回复'));expect(v.getByText('正在回复某条评论')).toBeTruthy();
+ await fireEvent.changeText(v.getByLabelText('写评论'),'新回复');await fireEvent.press(v.getByTestId('campus-composer-send'));
+ await waitFor(()=>expect(v.getByText('新回复')).toBeTruthy());expect(v.queryByText('泄露姓名')).toBeNull();
+ expect(createConfessionComment).toHaveBeenCalledWith(40,{content:'新回复',parent_id:50});
+ await fireEvent.press(v.getByTestId('campus-detail-like'));
+ await waitFor(()=>expect(v.getByTestId('campus-detail-like').props.accessibilityState.selected).toBe(true));
+});
+it('空白评论不能提交',async()=>{
+ detail.mockResolvedValue({id:7,content:'正文'});const v=await renderApp(<CampusDetailScreen postId="7"/>);
+ await waitFor(()=>expect(v.getByLabelText('写评论')).toBeTruthy());await fireEvent.changeText(v.getByLabelText('写评论'),'   ');
+ await fireEvent.press(v.getByTestId('campus-composer-send'));expect(createComment).not.toHaveBeenCalled();
 });
