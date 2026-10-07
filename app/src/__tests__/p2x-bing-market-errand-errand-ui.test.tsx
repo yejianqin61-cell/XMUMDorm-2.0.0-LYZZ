@@ -36,12 +36,29 @@ it('详情展示联系信息，非所有者不出现状态操作',async()=>{
 it('发布者确认接单后重读详情，完成操作也二次确认',async()=>{
  detail.mockResolvedValueOnce(full).mockResolvedValueOnce({...full,status:'taken'}).mockResolvedValue({...full,status:'done'});me.mockResolvedValue({id:3,role:'student'});take.mockResolvedValue(undefined);done.mockResolvedValue(undefined);
  const v=await renderApp(<ErrandDetailScreen errandId="2"/>);await waitFor(()=>expect(v.getByTestId('errand-take')).toBeTruthy());
- await fireEvent.press(v.getByTestId('errand-take'));expect(take).not.toHaveBeenCalled();await fireEvent.press(v.getByTestId('errand-confirm-confirm'));
+ await fireEvent.press(v.getByTestId('errand-take'));expect(take).not.toHaveBeenCalled();await fireEvent.press(v.getByText('确认'));
  await waitFor(()=>expect(v.getByText('取消接单')).toBeTruthy());expect(take).toHaveBeenCalledWith(2);
- await fireEvent.press(v.getByTestId('errand-done'));await fireEvent.press(v.getByTestId('errand-confirm-confirm'));
+ await fireEvent.press(v.getByTestId('errand-done'));await fireEvent.press(v.getByText('确认'));
  await waitFor(()=>expect(v.getByText('撤销完成')).toBeTruthy());expect(done).toHaveBeenCalledWith(2);expect(v.queryByTestId('errand-take')).toBeNull();
 });
 it('游客不读取我的身份也没有写按钮，英文404可返回',async()=>{
  mockSession.isSignedIn=false;detail.mockRejectedValue({status:404});const v=await renderApp(<ErrandDetailScreen errandId="999"/>,{locale:'en'});
  await waitFor(()=>expect(v.getByText('Task is unavailable')).toBeTruthy());expect(me).not.toHaveBeenCalled();expect(take).not.toHaveBeenCalled();
+});
+it('接单成功但重读失败时要求刷新，不允许再次切换',async()=>{
+ detail.mockResolvedValueOnce(full).mockRejectedValueOnce(new TypeError('private')).mockResolvedValue({...full,status:'taken'});me.mockResolvedValue({id:3,role:'student'});take.mockResolvedValue(undefined);
+ const v=await renderApp(<ErrandDetailScreen errandId="2"/>);await waitFor(()=>expect(v.getByTestId('errand-take')).toBeTruthy());
+ await fireEvent.press(v.getByTestId('errand-take'));await fireEvent.press(v.getByText('确认'));
+ await waitFor(()=>expect(v.getByText('操作未确认，请刷新后重试')).toBeTruthy());await fireEvent.press(v.getByTestId('errand-take'));expect(take).toHaveBeenCalledTimes(1);expect(v.queryByText('private')).toBeNull();
+ await fireEvent.press(v.getByText('刷新详情'));await waitFor(()=>expect(v.getByText('取消接单')).toBeTruthy());
+});
+it('管理员能切换接单但不能替非本人非接单者标记完成',async()=>{
+ detail.mockResolvedValue(full);me.mockResolvedValue({id:9,role:'admin'});
+ const v=await renderApp(<ErrandDetailScreen errandId="2"/>);await waitFor(()=>expect(v.getByTestId('errand-take')).toBeTruthy());expect(v.queryByTestId('errand-done')).toBeNull();
+});
+it('服务端业务403权限拒绝不清除登录会话',async()=>{
+ detail.mockResolvedValue(full);me.mockResolvedValue({id:3,role:'student'});take.mockRejectedValue({status:403,body:{message:'仅发布者或管理员可切换接单状态'}});
+ const v=await renderApp(<ErrandDetailScreen errandId="2"/>);await waitFor(()=>expect(v.getByTestId('errand-take')).toBeTruthy());
+ await fireEvent.press(v.getByTestId('errand-take'));await fireEvent.press(v.getByText('确认'));
+ await waitFor(()=>expect(v.getByText('当前账号没有操作权限')).toBeTruthy());expect(mockSession.handleAuthFailure).not.toHaveBeenCalled();
 });

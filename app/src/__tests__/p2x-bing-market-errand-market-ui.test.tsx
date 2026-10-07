@@ -59,3 +59,15 @@ it('游客想要只提示登录，不调用写接口',async()=>{
  const v=await renderApp(<MarketDetailScreen itemId="1"/>);await waitFor(()=>expect(v.getByTestId('market-want')).toBeTruthy());
  await fireEvent.press(v.getByTestId('market-want'));expect(v.getByText('登录后操作')).toBeTruthy();expect(want).not.toHaveBeenCalled();
 });
+it('切换分类后旧请求晚到不会覆盖新分类',async()=>{
+ let finish:(x:unknown)=>void=()=>{};list.mockReturnValueOnce(new Promise(r=>{finish=r;})).mockResolvedValue({list:[{...row,id:2}],hasMore:false});
+ const v=await renderApp(<MarketListScreen/>);await waitFor(()=>expect(list).toHaveBeenCalledTimes(1));
+ await fireEvent.press(v.getByTestId('filter-chip-books'));await waitFor(()=>expect(v.getByTestId('market-row-2')).toBeTruthy());
+ await act(async()=>finish({list:[row],hasMore:false}));expect(v.queryByTestId('market-row-1')).toBeNull();
+});
+it('连续点击想要只发送一次写请求',async()=>{
+ let finish:(x:unknown)=>void=()=>{};detail.mockResolvedValue(full);want.mockReturnValue(new Promise(r=>{finish=r;}));
+ const v=await renderApp(<MarketDetailScreen itemId="1"/>);await waitFor(()=>expect(v.getByTestId('market-want')).toBeTruthy());
+ await fireEvent.press(v.getByTestId('market-want'));await fireEvent.press(v.getByTestId('market-want'));
+ expect(want).toHaveBeenCalledTimes(1);await act(async()=>finish({want:true,wants_count:3}));await waitFor(()=>expect(v.getByText('已想要 · 3')).toBeTruthy());
+});
