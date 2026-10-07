@@ -1,4 +1,5 @@
 import * as React from 'react';
+import * as Linking from 'expo-linking';
 import {useRouter} from 'expo-router';
 import {Screen} from '@/components/ui/Screen';
 import {ListScreen,useListPagination} from '@/components/ui/ListScreen';
@@ -12,7 +13,7 @@ import type {AppError} from '@/i18n/errors';
 import {getQueryClient} from '@/shared/queryClient';
 import {useSession} from '@/features/auth/session';
 import {classifyAuthFailure,isSessionInvalid} from '@/features/auth/authFailure';
-import {listErrands,getErrandDetail,takeErrand,doneErrand} from '../../../../shared/api/errands';
+import {listErrands,getErrandDetail,takeErrand,doneErrand,deleteErrand} from '../../../../shared/api/errands';
 import {getMe} from '../../../../shared/api/users';
 import {AlertDialog} from '@/components/ui/AlertDialog';
 import {readErrandPage,readErrandDetail,type ErrandItem} from './model';
@@ -73,7 +74,7 @@ type Viewer={id:number;role:string};
 export function ErrandDetailScreen({errandId}:{errandId:string}):React.ReactElement {
  const {t}=useI18n();const router=useRouter();const session=useSession();
  const [item,setItem]=React.useState<Detail|null>(null),[viewer,setViewer]=React.useState<Viewer|null>(null),[identityError,setIdentityError]=React.useState(false);
- const [loading,setLoading]=React.useState(true),[error,setError]=React.useState<AppError|null>(null),[busy,setBusy]=React.useState(false),[confirm,setConfirm]=React.useState<'take'|'done'|null>(null),[notice,setNotice]=React.useState<'failed'|'login'|'denied'|'conflict'|null>(null);
+ const [loading,setLoading]=React.useState(true),[error,setError]=React.useState<AppError|null>(null),[busy,setBusy]=React.useState(false),[confirm,setConfirm]=React.useState<'take'|'done'|'delete'|null>(null),[notice,setNotice]=React.useState<'failed'|'login'|'denied'|'conflict'|null>(null);
  const epoch=React.useRef(0),lock=React.useRef(false),uncertain=React.useRef(false);
  const load=React.useCallback(async()=>{
   const request=++epoch.current;lock.current=false;uncertain.current=false;setBusy(false);setItem(null);setViewer(null);setConfirm(null);setNotice(null);setIdentityError(false);setError(null);setLoading(true);
@@ -87,19 +88,25 @@ export function ErrandDetailScreen({errandId}:{errandId:string}):React.ReactElem
  },[errandId,session.isSignedIn,session.handleAuthFailure]);
  React.useEffect(()=>{void load();return()=>{epoch.current++;};},[load]);
  const canTake=!!(item&&viewer&&(viewer.id===item.ownerId||viewer.role==='admin')&&item.status!=='done');
+ const canDelete=!!(item&&viewer&&(viewer.id===item.ownerId||viewer.role==='admin'));
+ const phone=item?.contactInfo.trim();
+ const dialNumber=phone&&/^\+?[\d ()-]{5,24}$/.test(phone)?phone.replace(/[ ()-]/g,''):null;
+ const [contactError,setContactError]=React.useState(false);
+ const dial=async()=>{if(!dialNumber)return;setContactError(false);try{await Linking.openURL(`tel:${dialNumber}`);}catch{setContactError(true);}};
  const canDone=!!(item&&viewer&&(viewer.id===item.ownerId||viewer.id===item.takerId));
- const action=async(operation:'take'|'done')=>{
+ const action=async(operation:'take'|'done'|'delete')=>{
   setConfirm(null);if(!item||lock.current||uncertain.current)return;
-  if(!session.isSignedIn){setNotice('login');return;}if(operation==='take'?!canTake:!canDone){setNotice('denied');return;}
+  if(!session.isSignedIn){setNotice('login');return;}if(operation==='take'?!canTake:operation==='delete'?!canDelete:!canDone){setNotice('denied');return;}
   lock.current=true;setBusy(true);setNotice(null);const request=epoch.current;
   try{
+   if(operation==='delete'){await deleteErrand(item.id);if(request===epoch.current){getQueryClient().removeQueries({queryKey:['bing-errand','list']});router.replace('/errand' as never);}return;}
    if(operation==='take')await takeErrand(item.id);else await doneErrand(item.id);
    if(request!==epoch.current)return;
    uncertain.current=true;
    const fresh=readErrandDetail(await getErrandDetail(item.id));if(fresh.id!==item.id)throw new Error('Wrong errand');
    if(request===epoch.current){setItem(fresh);uncertain.current=false;}
   }catch(failure){if(request!==epoch.current)return;const rejected=failure as {status?:number;body?:{message?:string}};
-   const businessDenied=rejected?.status===403&&['无权限操作','仅发布者或管理员可切换接单状态'].includes(rejected.body?.message??'');
+   const businessDenied=rejected?.status===403&&['无权限操作','无权限删除','仅发布者或管理员可切换接单状态'].includes(rejected.body?.message??'');
    const auth=businessDenied?'other':classifyAuthFailure(failure);
    if(isSessionInvalid(auth))await session.handleAuthFailure(failure);
    if(request===epoch.current){const status=(failure as {status?:number})?.status;setNotice(isSessionInvalid(auth)?'login':status===403?'denied':status===409?'conflict':'failed');uncertain.current=true;}
@@ -111,11 +118,14 @@ export function ErrandDetailScreen({errandId}:{errandId:string}):React.ReactElem
   body={item?<><Text role="body">{item.description}</Text><Text role="body">{`RM ${item.reward.toFixed(2)} · ${t(statusKeys[item.status as 'open'|'taken'|'done'])}`}</Text>
    <Text role="body">{item.location}</Text>{item.deadline?<Text role="body">{item.deadline}</Text>:null}
    <Text role="label">{t('screen.errand.contact')}</Text><Text role="body">{item.contactInfo}</Text>
+   {dialNumber?<Button testID="errand-dial" label={t('screen.errand.dial')} onPress={()=>void dial()}/>:null}
+   {contactError?<Text role="body">{t('screen.errand.dialFailed')}</Text>:null}
+   {canDelete?<Button testID="errand-delete" disabled={busy||uncertain.current} label={t('screen.errand.delete')} onPress={()=>setConfirm('delete')}/>:null}
    {identityError?<Button label={t('screen.errand.identityFailed')} onPress={()=>void load()}/>:null}
    {canTake?<Button testID="errand-take" disabled={busy||uncertain.current} label={t(item.status==='taken'?'screen.errand.untake':'screen.errand.take')} onPress={()=>setConfirm('take')}/>:null}
    {canDone?<Button testID="errand-done" disabled={busy||uncertain.current} label={t(item.status==='done'?'screen.errand.undo':'screen.errand.complete')} onPress={()=>setConfirm('done')}/>:null}
    {notice?<><Text role="body">{t(noticeKeys[notice])}</Text><Button label={t('screen.errand.refresh')} onPress={()=>void load()}/></>:null}
-   <AlertDialog testID="errand-confirm" visible={confirm!==null} title={t('screen.errand.detail')} body={t('screen.errand.confirmBody')} confirmLabel={t('screen.errand.confirm')} cancelLabel={t('action.cancel')} onCancel={()=>setConfirm(null)} onConfirm={()=>{if(confirm)void action(confirm);}}/>
+   <AlertDialog testID="errand-confirm" visible={confirm!==null} title={t('screen.errand.detail')} body={t(confirm==='delete'?'screen.errand.deleteConfirm':'screen.errand.confirmBody')} confirmLabel={t('screen.errand.confirm')} cancelLabel={t('action.cancel')} onCancel={()=>setConfirm(null)} onConfirm={()=>{if(confirm)void action(confirm);}}/>
   </>:null}
   labels={{back:t('action.back'),like:t('screen.campus.read.like'),favorite:t('action.save'),comment:t('screen.campus.read.comments'),report:t('screen.campus.read.report'),countPlaceholder:'—',anonymous:t('screen.campus.read.anonymous'),comments:{anonymous:t('screen.campus.read.anonymous'),deleteLabel:t('screen.campus.read.delete'),replyLabel:t('screen.campus.read.reply'),likeLabel:t('screen.campus.read.like'),moreReplies:n=>String(n),collapse:t('screen.campus.read.collapse')},commentsEnd:t('screen.campus.read.end'),commentsRetry:t('action.retry')}}/>;
 }

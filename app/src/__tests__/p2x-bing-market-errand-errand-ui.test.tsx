@@ -1,4 +1,5 @@
 import * as React from 'react';
+import * as Linking from 'expo-linking';
 import {act,fireEvent,waitFor} from '@testing-library/react-native';
 import {renderApp} from './helpers/renderApp';
 import {ErrandListScreen,ErrandDetailScreen} from '@/features/errand/ErrandScreens';
@@ -7,6 +8,7 @@ import {getMe} from '../../../shared/api/users';
 import {getQueryClient} from '@/shared/queryClient';
 import type {ListScreenProps} from '@/components/ui/ListScreen';
 const mockReplace=jest.fn();const mockPush=jest.fn();const mockSession={isSignedIn:true,handleAuthFailure:jest.fn()};let mockListProps:ListScreenProps<unknown>;
+jest.mock('expo-linking',()=>({openURL:jest.fn()}));
 jest.mock('expo-router',()=>({useRouter:()=>({push:mockPush,back:jest.fn(),replace:mockReplace,canGoBack:()=>false})}));
 jest.mock('@/features/auth/session',()=>({useSession:()=>mockSession}));
 jest.mock('../../../shared/api/users',()=>({getMe:jest.fn()}));
@@ -73,4 +75,19 @@ it('发布者删除需确认，成功后清缓存并返回列表',async()=>{
 it('非发布者不能删除任务',async()=>{
  detail.mockResolvedValue(full);me.mockResolvedValue({id:9,role:'student'});
  const v=await renderApp(<ErrandDetailScreen errandId="2"/>);await waitFor(()=>expect(v.getByText('test contact')).toBeTruthy());expect(v.queryByTestId('errand-delete')).toBeNull();
+});
+
+it('电话号码打开拨号器，启动失败显示可理解提示',async()=>{
+ detail.mockResolvedValue({...full,contactInfo:'+60 12-345 6789'});me.mockResolvedValue({id:9,role:'student'});(Linking.openURL as jest.Mock).mockRejectedValue(new Error('private'));
+ const v=await renderApp(<ErrandDetailScreen errandId="2"/>);await waitFor(()=>expect(v.getByTestId('errand-dial')).toBeTruthy());await fireEvent.press(v.getByTestId('errand-dial'));
+ await waitFor(()=>expect(v.getByText('电话未打开，可再次尝试')).toBeTruthy());expect(Linking.openURL).toHaveBeenCalledWith('tel:+60123456789');expect(v.queryByText('private')).toBeNull();
+});
+it('联系文本不伪装成电话号码',async()=>{
+ detail.mockResolvedValue(full);me.mockResolvedValue({id:9,role:'student'});
+ const v=await renderApp(<ErrandDetailScreen errandId="2"/>);await waitFor(()=>expect(v.getByText('test contact')).toBeTruthy());expect(v.queryByTestId('errand-dial')).toBeNull();
+});
+it('删除响应失败保留详情并禁止重复删除',async()=>{
+ detail.mockResolvedValue(full);me.mockResolvedValue({id:3,role:'student'});(deleteErrand as jest.Mock).mockRejectedValue(new TypeError('private'));
+ const v=await renderApp(<ErrandDetailScreen errandId="2"/>);await waitFor(()=>expect(v.getByTestId('errand-delete')).toBeTruthy());await fireEvent.press(v.getByTestId('errand-delete'));await fireEvent.press(v.getByText('确认'));
+ await waitFor(()=>expect(v.getByText('操作未确认，请刷新后重试')).toBeTruthy());await fireEvent.press(v.getByTestId('errand-delete'));expect(deleteErrand).toHaveBeenCalledTimes(1);expect(mockReplace).not.toHaveBeenCalled();
 });
