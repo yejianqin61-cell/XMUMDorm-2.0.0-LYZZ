@@ -4,11 +4,23 @@ import {act, fireEvent, waitFor} from '@testing-library/react-native';
 import {renderApp} from './helpers/renderApp';
 import {CampusListScreen, CampusDetailScreen} from '@/features/campus/CampusScreens';
 import {getPostList, getPostDetail} from '../../../shared/api/posts';
-const mockPush=jest.fn(), mockBack=jest.fn(), mockReplace=jest.fn();
-jest.mock('expo-router',()=>({useRouter:()=>({push:mockPush,back:mockBack,replace:mockReplace,canGoBack:()=>true})}));
+const mockPush=jest.fn(), mockBack=jest.fn(), mockReplace=jest.fn(), mockSetParams=jest.fn();
+jest.mock('expo-router',()=>({useRouter:()=>({setParams:mockSetParams,push:mockPush,back:mockBack,replace:mockReplace,canGoBack:()=>true})}));
 jest.mock('../../../shared/api/posts',()=>({getPostList:jest.fn(),getPostDetail:jest.fn()}));
+import {getConfessionWindow, getConfession} from '../../../shared/api/confessions';
+import {getQueryClient} from '@/shared/queryClient';
+import {secondaryTabStore} from '@/features/navigation/secondaryTabs';
+import type {ListScreenProps} from '@/components/ui/ListScreen';
+let mockListProps:ListScreenProps<unknown>;
+jest.mock('@/components/ui/ListScreen',()=>{
+ const actual=jest.requireActual('@/components/ui/ListScreen'), React=require('react');
+ return {...actual,ListScreen:(props:ListScreenProps<unknown>)=>{mockListProps=props;return React.createElement(actual.ListScreen,{...props,onEndReached:()=>undefined});}};
+});
+jest.mock('../../../shared/api/confessions',()=>({getConfessionWindow:jest.fn(),getConfession:jest.fn()}));
+const wall=getConfessionWindow as jest.Mock, wallDetail=getConfession as jest.Mock;
+afterEach(()=>getQueryClient().clear());
 const list=getPostList as jest.Mock, detail=getPostDetail as jest.Mock;
-beforeEach(()=>{jest.clearAllMocks();list.mockReset();detail.mockReset();});
+beforeEach(()=>{getQueryClient().clear();secondaryTabStore.clear();jest.clearAllMocks();list.mockReset();detail.mockReset();wall.mockReset();wallDetail.mockReset();});
 it('树洞从第一页读取，点击进入帖子',async()=>{
  list.mockResolvedValue({list:[{id:7,title:'校内交流',content:'周末运动'}],hasMore:false});
  const v=await renderApp(<CampusListScreen/>);
@@ -75,4 +87,53 @@ it('列表请求失败可以重试第一页',async()=>{
  await fireEvent.press(v.getByText('连上校园网后重试'));
  await waitFor(()=>expect(v.getByText('恢复列表')).toBeTruthy());
  expect(list.mock.calls.map(call=>call[0].page)).toEqual([1,1]);
+});
+
+it('树洞分页失败重试同一页，去重并在末页停止',async()=>{
+ list.mockResolvedValueOnce({list:[{id:7,content:'首篇'}],hasMore:true}).mockRejectedValueOnce(new TypeError('retry')).mockResolvedValueOnce({list:[{id:7,content:'首篇'},{id:8,content:'次篇'}],hasMore:false});
+ const v=await renderApp(<CampusListScreen/>);await waitFor(()=>expect(v.getByText('首篇')).toBeTruthy());
+ await act(async()=>mockListProps.onEndReached());await waitFor(()=>expect(mockListProps.pagination?.errorScope).toBe('append'));
+ await act(async()=>mockListProps.onRetryAppend());await waitFor(()=>expect(v.getByText('次篇')).toBeTruthy());
+ expect(list.mock.calls.map(call=>call[0].page)).toEqual([1,2,2]);expect(v.getAllByText('首篇')).toHaveLength(1);
+ await act(async()=>mockListProps.onEndReached());expect(list).toHaveBeenCalledTimes(3);
+});
+it('切栏互斥并恢复树洞位置与已加载页',async()=>{
+ list.mockResolvedValueOnce({list:[{id:7,content:'树洞首篇'}],hasMore:true}).mockResolvedValueOnce({list:[{id:8,content:'树洞次篇'}],hasMore:false});
+ wall.mockResolvedValue({items:[{id:40,content:'墙正文'}],has_older:false,oldest_cursor:40});
+ const v=await renderApp(<CampusListScreen/>);await waitFor(()=>expect(v.getByText('树洞首篇')).toBeTruthy());
+ await act(async()=>mockListProps.onEndReached());await waitFor(()=>expect(v.getByText('树洞次篇')).toBeTruthy());
+ await act(async()=>mockListProps.onScrollOffset?.(480));
+ await fireEvent.press(v.getByText('万能墙'));await waitFor(()=>expect(v.getByText('墙正文')).toBeTruthy());
+ expect(v.queryByText('树洞首篇')).toBeNull();
+ await fireEvent.press(v.getByText('树洞'));await waitFor(()=>expect(v.getByText('树洞次篇')).toBeTruthy());
+ expect(mockListProps.restoredScrollOffset).toBe(480);expect(list).toHaveBeenCalledTimes(2);
+});
+it('万能墙用服务端窗口游标且不展示身份',async()=>{
+ wall.mockResolvedValueOnce({items:[{id:40,content:'墙首篇',author:{nickname:'泄漏作者'}}],has_older:true,oldest_cursor:40}).mockResolvedValueOnce({items:[{id:35,content:'墙次篇'}],has_older:false,oldest_cursor:35});
+ list.mockResolvedValue({list:[],hasMore:false});
+ const v=await renderApp(<CampusListScreen/>);await fireEvent.press(v.getByText('万能墙'));
+ await waitFor(()=>expect(v.getByText('墙首篇')).toBeTruthy());expect(v.queryByText('泄漏作者')).toBeNull();
+ await act(async()=>mockListProps.onEndReached());await waitFor(()=>expect(v.getByText('墙次篇')).toBeTruthy());
+ expect(wall.mock.calls.map(call=>call[0])).toEqual([{cursor:null,direction:'older',limit:5},{cursor:40,direction:'older',limit:5}]);
+ await fireEvent.press(v.getByTestId('campus-row-35'));expect(mockPush).toHaveBeenCalledWith('/campus/wall/35');
+});
+it('万能墙详情只投影匿名作者',async()=>{
+ wallDetail.mockResolvedValue({id:40,content:'匿名正文',title:'身份标题',author:{nickname:'泄漏作者'},images:[{url:'https://example.com/leak'}]});
+ const v=await renderApp(<CampusDetailScreen postId="40" kind="wall"/>);
+ await waitFor(()=>expect(v.getByText('匿名正文')).toBeTruthy());expect(v.queryByText('泄漏作者')).toBeNull();expect(v.queryByText('身份标题')).toBeNull();expect(v.getByText('匿名')).toBeTruthy();expect(detail).not.toHaveBeenCalled();
+});
+it('慢树洞请求在切栏后不污染墙及其缓存',async()=>{
+ let finish:(data:unknown)=>void=()=>undefined;list.mockReturnValueOnce(new Promise(resolve=>{finish=resolve;})).mockResolvedValueOnce({list:[{id:9,content:'新树洞'}],hasMore:false});
+ wall.mockResolvedValue({items:[{id:40,content:'墙正文'}],has_older:false,oldest_cursor:40});
+ const v=await renderApp(<CampusListScreen/>);await fireEvent.press(v.getByText('万能墙'));await waitFor(()=>expect(v.getByText('墙正文')).toBeTruthy());
+ await act(async()=>finish({list:[{id:7,content:'过期树洞'}],hasMore:false}));expect(v.queryByText('过期树洞')).toBeNull();
+ await fireEvent.press(v.getByText('树洞'));await waitFor(()=>expect(v.getByText('新树洞')).toBeTruthy());expect(v.queryByText('过期树洞')).toBeNull();
+});
+it('刷新一栏归零位置且不清另一栏缓存',async()=>{
+ list.mockResolvedValueOnce({list:[{id:7,content:'旧树洞'}],hasMore:true}).mockResolvedValueOnce({list:[{id:8,content:'新树洞'}],hasMore:false});
+ wall.mockResolvedValue({items:[{id:40,content:'墙正文'}],has_older:false,oldest_cursor:40});
+ const v=await renderApp(<CampusListScreen/>);await waitFor(()=>expect(v.getByText('旧树洞')).toBeTruthy());
+ await fireEvent.press(v.getByText('万能墙'));await waitFor(()=>expect(v.getByText('墙正文')).toBeTruthy());await act(async()=>mockListProps.onScrollOffset?.(120));
+ await fireEvent.press(v.getByText('树洞'));await waitFor(()=>expect(v.getByText('旧树洞')).toBeTruthy());await act(async()=>mockListProps.onRefresh());await waitFor(()=>expect(v.getByText('新树洞')).toBeTruthy());expect(v.queryByText('旧树洞')).toBeNull();
+ expect(mockListProps.restoredScrollOffset).toBe(0);await fireEvent.press(v.getByText('万能墙'));await waitFor(()=>expect(v.getByText('墙正文')).toBeTruthy());expect(mockListProps.restoredScrollOffset).toBe(120);expect(wall).toHaveBeenCalledTimes(1);
 });
