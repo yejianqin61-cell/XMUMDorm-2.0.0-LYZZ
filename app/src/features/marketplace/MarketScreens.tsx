@@ -26,7 +26,8 @@ function errorFor(error:unknown):AppError {
  if(e?.name==='AbortError')return {kind:'timeout'};
  return {kind:error instanceof TypeError?'unreachable':'unknown'};
 }
-const categories=['all','electronics','transport','dailyuse','books','others'] as const;
+const categories=[{key:'all',labelKey:'screen.market.all'},{key:'electronics',labelKey:'screen.market.electronics'},{key:'transport',labelKey:'screen.market.transport'},{key:'dailyuse',labelKey:'screen.market.dailyuse'},{key:'books',labelKey:'screen.market.books'},{key:'others',labelKey:'screen.market.others'}] as const;
+const statusKeys={all:'screen.market.all',on_sale:'screen.market.on_sale',sold:'screen.market.sold'} as const;
 export function MarketListScreen():React.ReactElement {
  const {t}=useI18n();const client=getQueryClient();
  const [filters,setFilters]=React.useState<Filters>(()=>client.getQueryData<Filters>(['bing-market','selected'])??{});
@@ -38,8 +39,8 @@ export function MarketListScreen():React.ReactElement {
   setInvalid(false);select({...filters,q:q.trim()||undefined,priceMin,priceMax});
  };
  return <Screen titleKey="screen.market.title" showMailbox={false} testID="market-screen">
-  <FilterChips testID="market-categories" options={categories.map(key=>({key,labelKey:`screen.market.${key}` as const}))} selected={[filters.category??'all']} onToggle={key=>select({...filters,category:key==='all'?undefined:key})}/>
-  <SegmentedControl testID="market-status" value={filters.status??'all'} options={['all','on_sale','sold'].map(value=>({value,label:t(`screen.market.${value as 'all'|'on_sale'|'sold'}`)}))} onChange={status=>select({...filters,status:status==='all'?undefined:status})}/>
+  <FilterChips testID="market-categories" options={categories} selected={[filters.category??'all']} onToggle={key=>select({...filters,category:key==='all'?undefined:key})}/>
+  <SegmentedControl testID="market-status" value={filters.status??'all'} options={['all','on_sale','sold'].map(value=>({value,label:t(statusKeys[value as keyof typeof statusKeys])}))} onChange={status=>select({...filters,status:status==='all'?undefined:status})}/>
   <Input testID="market-query-input" value={q} onChangeText={setQ} label={t('screen.market.query')} maxLength={80}/>
   <Input testID="market-min-input" value={min} onChangeText={setMin} label={t('screen.market.min')} kind="number"/>
   <Input testID="market-max-input" value={max} onChangeText={setMax} label={t('screen.market.max')} kind="number"/>

@@ -11,4 +11,4 @@ export function readErrandPage(value:unknown){const r=record(value);
  const rows=r.list.map(value=>{const row=record(value);if('contactInfo' in row||'contact_info' in row)throw new Error('Contact exposed in errand list');return item(row);});
  return {rows,hasMore:Number(r.page)*Number(r.pageSize)<Number(r.total)};
 }
-export function readErrandDetail(value:unknown){const r=record(value);if(typeof r.contactInfo!=='string'||typeof r.description!=='string')throw new Error('Invalid errand detail');return {...item(r),contactInfo:r.contactInfo,description:r.description};}
+export function readErrandDetail(value:unknown){const r=record(value);if(typeof r.contactInfo!=='string'||typeof r.description!=='string')throw new Error('Invalid errand detail');const taker=r.taker==null?null:record(r.taker);if(taker&&(!Number.isSafeInteger(taker.id)||Number(taker.id)<=0))throw new Error('Invalid taker');return {...item(r),contactInfo:r.contactInfo,description:r.description,takerId:taker?taker.id as number:null};}

@@ -29,7 +29,7 @@ it('无效价格不请求，分类切换独立',async()=>{
  list.mockResolvedValue({list:[row],hasMore:false});const v=await renderApp(<MarketListScreen/>);
  await waitFor(()=>expect(list).toHaveBeenCalledTimes(1));
  await fireEvent.changeText(v.getByTestId('market-min-input'),'20');await fireEvent.changeText(v.getByTestId('market-max-input'),'10');
- await fireEvent.press(v.getByTestId('market-apply'));expect(v.getByText('请输入有效价格，最低价不能高于最高价')).toBeTruthy();expect(list).toHaveBeenCalledTimes(1);
+ await fireEvent.press(v.getByTestId('market-apply'));expect(v.getByText('价格非负，最低不高于最高')).toBeTruthy();expect(list).toHaveBeenCalledTimes(1);
  await fireEvent.press(v.getByTestId('filter-chip-books'));
  await waitFor(()=>expect(list).toHaveBeenCalledWith({page:1,pageSize:10,category:'books'}));
 });
