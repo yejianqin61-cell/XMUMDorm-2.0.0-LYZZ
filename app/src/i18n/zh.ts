@@ -9,6 +9,19 @@
  * 5. ⛔ 屏内**不得**用内联三元按语言选串（`isZh` 加问号那种写法，尺子会拦）—— 一律走本表。
  */
 export const zh = {
+  'screen.campus.read.title': '树洞',
+  'screen.campus.read.empty': '还没有帖子',
+  'screen.campus.read.firstPage': '已显示首批帖子',
+  'screen.campus.read.author': '用户',
+  'screen.campus.read.anonymous': '匿名',
+  'screen.campus.read.like': '赞',
+  'screen.campus.read.comments': '评论',
+  'screen.campus.read.report': '举报',
+  'screen.campus.read.delete': '删除',
+  'screen.campus.read.reply': '回复',
+  'screen.campus.read.collapse': '收起',
+  'screen.campus.read.end': '没有更多评论',
+
   // 丙：万能墙投稿
   'publish.wall.template': '版式',
   'publish.wall.content': '正文',

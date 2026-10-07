@@ -9,6 +9,19 @@
 import type { MessageKey } from './zh';
 
 export const en: Record<MessageKey, string> = {
+  'screen.campus.read.title': 'Posts',
+  'screen.campus.read.empty': 'No posts yet',
+  'screen.campus.read.firstPage': 'First posts shown',
+  'screen.campus.read.author': 'User',
+  'screen.campus.read.anonymous': 'Anonymous',
+  'screen.campus.read.like': 'Like',
+  'screen.campus.read.comments': 'Comments',
+  'screen.campus.read.report': 'Report',
+  'screen.campus.read.delete': 'Delete',
+  'screen.campus.read.reply': 'Reply',
+  'screen.campus.read.collapse': 'Collapse',
+  'screen.campus.read.end': 'No more comments',
+
   // 丙：万能墙投稿
   'publish.wall.template': 'Template',
   'publish.wall.content': 'Content',

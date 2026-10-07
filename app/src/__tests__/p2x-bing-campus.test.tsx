@@ -1,5 +1,6 @@
 import * as React from 'react';
-import {fireEvent, waitFor} from '@testing-library/react-native';
+import {Button} from '@/components/ui/Button';
+import {act, fireEvent, waitFor} from '@testing-library/react-native';
 import {renderApp} from './helpers/renderApp';
 import {CampusListScreen, CampusDetailScreen} from '@/features/campus/CampusScreens';
 import {getPostList, getPostDetail} from '../../../shared/api/posts';
@@ -20,7 +21,7 @@ it('详情显示正文作者和图片，返回原页',async()=>{
  detail.mockResolvedValue({id:7,title:'校内交流',content:'一起打球',author:{nickname:'小林'},images:[{url:'https://example.com/photo.jpg'}]});
  const v=await renderApp(<CampusDetailScreen postId="7"/>);
  await waitFor(()=>expect(v.getByText('一起打球')).toBeTruthy());
- expect(v.getByText('小林')).toBeTruthy();expect(v.getByTestId('campus-media-0')).toBeTruthy();
+ expect(v.getByText('小林')).toBeTruthy();expect(v.getByTestId('campus-media-0', {includeHiddenElements:true})).toBeTruthy();
  expect(detail).toHaveBeenCalledWith(7);
  await fireEvent.press(v.getByTestId('campus-detail-back'));expect(mockBack).toHaveBeenCalled();
 });
@@ -49,4 +50,29 @@ it('英文空列表显示业务空态',async()=>{
 it('未完成请求显示加载态',async()=>{
  detail.mockReturnValue(new Promise(()=>undefined));
  const v=await renderApp(<CampusDetailScreen postId="7"/>);expect(v.getByTestId('campus-detail-loading')).toBeTruthy();
+});
+
+it('隐藏帖不显示正文',async()=>{
+ detail.mockResolvedValue({id:7,content:'隐藏正文',hidden:true});
+ const v=await renderApp(<CampusDetailScreen postId="7"/>);
+ await waitFor(()=>expect(v.getByTestId('campus-detail-error')).toBeTruthy());expect(v.queryByText('隐藏正文')).toBeNull();
+});
+it('切换帖子后旧请求不能覆盖新正文',async()=>{
+ let finish:(row:unknown)=>void=()=>undefined;
+ detail.mockReturnValueOnce(new Promise(resolve=>{finish=resolve;})).mockResolvedValueOnce({id:8,content:'新帖子'});
+ function Harness(){const [id,setId]=React.useState("7");return <><Button label="切换帖子" onPress={()=>setId("8")}/><CampusDetailScreen postId={id}/></>;}
+ const v=await renderApp(<Harness/>);
+ await fireEvent.press(v.getByText("切换帖子"));
+ await waitFor(()=>expect(v.getByText('新帖子')).toBeTruthy());
+ await act(async()=>finish({id:7,content:'旧帖子'}));
+ expect(v.getByText('新帖子')).toBeTruthy();expect(v.queryByText('旧帖子')).toBeNull();
+});
+it('列表请求失败可以重试第一页',async()=>{
+ list.mockRejectedValueOnce(new TypeError('internal-secret')).mockResolvedValueOnce({list:[{id:7,content:'恢复列表'}],hasMore:false});
+ const v=await renderApp(<CampusListScreen/>);
+ await waitFor(()=>expect(v.getByTestId('campus-list-error')).toBeTruthy());
+ expect(v.queryByText('internal-secret')).toBeNull();
+ await fireEvent.press(v.getByText('连上校园网后重试'));
+ await waitFor(()=>expect(v.getByText('恢复列表')).toBeTruthy());
+ expect(list.mock.calls.map(call=>call[0].page)).toEqual([1,1]);
 });
