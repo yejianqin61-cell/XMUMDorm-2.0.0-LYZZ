@@ -185,7 +185,7 @@ it('评论失败保留草稿，重试成功显示评论',async()=>{
  await waitFor(()=>expect(v.getByLabelText('写评论')).toBeTruthy());
  await fireEvent.changeText(v.getByLabelText('写评论'),'一起运动');
  await fireEvent.press(v.getByTestId('campus-composer-send'));
- await waitFor(()=>expect(v.getByText('操作失败，请重试')).toBeTruthy());
+ await waitFor(()=>expect(v.getByText('评论未发送，请重试')).toBeTruthy());
  expect(v.getByLabelText('写评论').props.value).toBe('一起运动');expect(v.getByText('正文')).toBeTruthy();
  await fireEvent.press(v.getByTestId('campus-composer-send'));
  await waitFor(()=>expect(v.getByText('一起运动')).toBeTruthy());
@@ -216,4 +216,52 @@ it('空白评论不能提交',async()=>{
  detail.mockResolvedValue({id:7,content:'正文'});const v=await renderApp(<CampusDetailScreen postId="7"/>);
  await waitFor(()=>expect(v.getByLabelText('写评论')).toBeTruthy());await fireEvent.changeText(v.getByLabelText('写评论'),'   ');
  await fireEvent.press(v.getByTestId('campus-composer-send'));expect(createComment).not.toHaveBeenCalled();
+});
+
+it('连续点赞只发一次请求，失败不移除正文',async()=>{
+ detail.mockResolvedValue({id:7,content:'正文',user_liked:false});let reject:(e:unknown)=>void=()=>undefined;
+ (toggleLike as jest.Mock).mockReturnValueOnce(new Promise((_,fail)=>{reject=fail;})).mockResolvedValueOnce({post_id:7,liked:true});
+ const v=await renderApp(<CampusDetailScreen postId="7"/>);await waitFor(()=>expect(v.getByText('正文')).toBeTruthy());
+ await fireEvent.press(v.getByTestId('campus-detail-like'));await fireEvent.press(v.getByTestId('campus-detail-like'));expect(toggleLike).toHaveBeenCalledTimes(1);
+ await act(async()=>reject(new TypeError('internal-secret')));expect(v.getByText('正文')).toBeTruthy();expect(v.queryByText('internal-secret')).toBeNull();
+ expect(v.getByTestId('campus-detail-like').props.accessibilityState.selected).toBe(false);
+ await fireEvent.press(v.getByTestId('campus-detail-like'));await waitFor(()=>expect(v.getByTestId('campus-detail-like').props.accessibilityState.selected).toBe(true));
+});
+it('评论读取失败独立重试，不影响正文',async()=>{
+ detail.mockResolvedValue({id:7,content:'正文'});
+ (getPostComments as jest.Mock).mockRejectedValueOnce(new TypeError('secret')).mockResolvedValueOnce([{id:80,content:'恢复评论',author:{nickname:'小林'}}]);
+ const v=await renderApp(<CampusDetailScreen postId="7"/>);
+ await waitFor(()=>expect(v.getByText('重试')).toBeTruthy());expect(v.getByText('正文')).toBeTruthy();
+ await fireEvent.press(v.getByText('重试'));await waitFor(()=>expect(v.getByText('恢复评论')).toBeTruthy());
+});
+it('发送中编辑的新草稿不会被成功响应清空',async()=>{
+ detail.mockResolvedValue({id:7,content:'正文'});let finish:(v:unknown)=>void=()=>undefined;
+ (createComment as jest.Mock).mockReturnValue(new Promise(resolve=>{finish=resolve;}));
+ const v=await renderApp(<CampusDetailScreen postId="7"/>);await waitFor(()=>expect(v.getByLabelText('写评论').props.editable).not.toBe(false));
+ await fireEvent.changeText(v.getByLabelText('写评论'),'第一条');await fireEvent.press(v.getByTestId('campus-composer-send'));
+ await fireEvent.changeText(v.getByLabelText('写评论'),'第二条');await fireEvent.press(v.getByTestId('campus-composer-send'));expect(createComment).toHaveBeenCalledTimes(1);
+ await act(async()=>finish({id:90,content:'第一条'}));expect(v.getByText('第一条')).toBeTruthy();expect(v.getByLabelText('写评论').props.value).toBe('第二条');
+});
+it('墙评论超过500字不能提交',async()=>{
+ wallDetail.mockResolvedValue({id:40,content:'墙正文'});const v=await renderApp(<CampusDetailScreen postId="40" kind="wall"/>);
+ await waitFor(()=>expect(v.getByLabelText('写评论').props.editable).not.toBe(false));
+ await fireEvent.changeText(v.getByLabelText('写评论'),'字'.repeat(501));await fireEvent.press(v.getByTestId('campus-composer-send'));expect(createConfessionComment).not.toHaveBeenCalled();
+});
+it('被禁言提示权限拒绝，不清除会话',async()=>{
+ detail.mockResolvedValue({id:7,content:'正文'});(toggleLike as jest.Mock).mockRejectedValue({status:403,body:{muted:true}});
+ const v=await renderApp(<CampusDetailScreen postId="7"/>);await waitFor(()=>expect(v.getByText('正文')).toBeTruthy());await fireEvent.press(v.getByTestId('campus-detail-like'));
+ await waitFor(()=>expect(v.getByText('当前账号不能进行此操作')).toBeTruthy());expect(mockAuthFailure).not.toHaveBeenCalled();
+});
+it('失效令牌交给现有会话处理并给出登录入口',async()=>{
+ detail.mockResolvedValue({id:7,content:'正文'});(toggleLike as jest.Mock).mockRejectedValue({status:403,body:{}});
+ const v=await renderApp(<CampusDetailScreen postId="7"/>);await waitFor(()=>expect(v.getByText('正文')).toBeTruthy());await fireEvent.press(v.getByTestId('campus-detail-like'));
+ await waitFor(()=>expect(v.getByText('登录后参与')).toBeTruthy());expect(mockAuthFailure).toHaveBeenCalled();
+});
+it('切换帖子后旧点赞请求不能覆盖新帖子',async()=>{
+ detail.mockResolvedValueOnce({id:7,content:'旧正文'}).mockResolvedValueOnce({id:8,content:'新正文',user_liked:false});
+ let finish:(v:unknown)=>void=()=>undefined;(toggleLike as jest.Mock).mockReturnValue(new Promise(resolve=>{finish=resolve;}));
+ function Harness(){const [id,setId]=React.useState('7');return <><Button label="切换帖子" onPress={()=>setId('8')}/><CampusDetailScreen postId={id}/></>;}
+ const v=await renderApp(<Harness/>);await waitFor(()=>expect(v.getByText('旧正文')).toBeTruthy());await fireEvent.press(v.getByTestId('campus-detail-like'));
+ await fireEvent.press(v.getByText('切换帖子'));await waitFor(()=>expect(v.getByText('新正文')).toBeTruthy());
+ await act(async()=>finish({post_id:7,liked:true}));expect(v.getByTestId('campus-detail-like').props.accessibilityState.selected).toBe(false);
 });

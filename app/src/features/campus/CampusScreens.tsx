@@ -1,3 +1,4 @@
+import {useCampusActions} from './useCampusActions';
 import * as React from 'react';
 import {useRouter} from 'expo-router';
 import {Button} from '@/components/ui/Button';
@@ -16,7 +17,7 @@ import {useI18n} from '@/i18n';
 import type {AppError} from '@/i18n/errors';
 import {getPostList, getPostDetail} from '../../../../shared/api/posts';
 
-type Post={id:number;title?:string|null;content:string;author?:{nickname?:string;username?:string}|null;images?:{url:string}[]};
+type Post={id:number;liked?:boolean;user_liked?:boolean;like_count?:number;comment_count?:number;title?:string|null;content:string;author?:{nickname?:string;username?:string}|null;images?:{url:string}[]};
 function asPost(value:unknown):Post {
  if(!value || typeof value!=='object') throw {kind:'content'};
  const row=value as Post & {hidden?:boolean;deleted_at?:unknown;hidden_by_admin?:boolean};
@@ -41,7 +42,7 @@ type Snapshot={rows:readonly Post[];page:number;cursor:number|null;hasMore:boole
 function asWall(value:unknown):Post {
  const row=asPost(value);
  // Never retain raw identity, title or images from an anonymous response.
- return {id:row.id,content:row.content};
+ return {id:row.id,content:row.content,liked:row.liked,like_count:row.like_count,comment_count:row.comment_count};
 }
 function snapshotKey(kind:CampusKind){
  return [...(kind==='wall'?QK.confessionWindow('_guest'):QK.postsInfinite('_guest',10)), 'campusReadSnapshot'];
@@ -124,14 +125,15 @@ export function CampusDetailScreen({postId,kind='confession'}:{postId:string;kin
   finally{if(request===generation.current)setLoading(false);}
  },[postId,kind]);
  React.useEffect(()=>{void load();return()=>{generation.current++;};},[load]);
+ const actions=useCampusActions(post,kind);
  const back=()=>router.canGoBack()?router.back():router.replace((kind==='wall'?'/campus?tab=wall':'/campus') as never);
  const images=Array.isArray(post?.images)?post.images.filter(image=>image&&typeof image.url==='string').map(image=>image.url):[];
  return <DetailScreen testID="campus-detail" title={kind==='wall'?t('screen.campus.read.wallTitle'):post?.title||t('screen.campus.read.title')}
   author={post?.author ? {kind:'named',name:post.author.nickname||post.author.username||t('screen.campus.read.author')} : {kind:'anonymous'}}
-  interactions={{}} state={loading?'loading':error?'error':post?'content':'empty'} error={error}
+  interactions={actions.interactions} onToggleLike={post?actions.onToggleLike:undefined} comments={post?actions.comments:undefined} state={loading?'loading':error?'error':post?'content':'empty'} error={error}
   onBack={back} onRetry={()=>error?.kind==='content'?back():void load()}
   hero={images.length>0?<MediaGrid testID="campus-media" uris={images} variant="hero"/>:undefined}
-  body={<Text role="body">{post?.content}</Text>}
+  body={<><Text role="body">{post?.content}</Text>{post?actions.body:null}</>}
   labels={{back:t('action.back'),like:t('screen.campus.read.like'),favorite:t('action.save'),comment:t('screen.campus.read.comments'),report:t('screen.campus.read.report'),countPlaceholder:'—',anonymous:t('screen.campus.read.anonymous'),
    comments:{anonymous:t('screen.campus.read.anonymous'),deleteLabel:t('screen.campus.read.delete'),replyLabel:t('screen.campus.read.reply'),likeLabel:t('screen.campus.read.like'),moreReplies:n=>String(n),collapse:t('screen.campus.read.collapse')},commentsEnd:t('screen.campus.read.end'),commentsRetry:t('action.retry')}}/>;
 }

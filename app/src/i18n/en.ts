@@ -9,6 +9,13 @@
 import type { MessageKey } from './zh';
 
 export const en: Record<MessageKey, string> = {
+  'screen.campus.write.placeholder': 'Write a comment',
+  'screen.campus.write.send': 'Send',
+  'screen.campus.write.login': 'Sign in to join',
+  'screen.campus.write.likeFailed': 'Like not confirmed. Tap again to retry.',
+  'screen.campus.write.sendFailed': 'Comment not sent. Please retry.',
+  'screen.campus.write.denied': 'Your account cannot perform this action',
+  'screen.campus.write.replying': 'Replying to a comment',
   'screen.campus.read.post': 'Post',
   'screen.campus.read.wallTitle': 'Wall',
   'screen.campus.read.listEnd': 'No more posts',
