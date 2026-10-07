@@ -21,10 +21,13 @@ import { ListScreen } from '@/components/ui/ListScreen';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { RankingRow } from '@/components/ui/RankingRow';
 import { Screen } from '@/components/ui/Screen';
+import { useMailboxBadge } from '@/features/mailbox/useUnread';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { getRegionTopProducts, getShopsByRegion } from '../../../../shared/api/canteen';
 import { normalizeProducts, normalizeShops, type CanteenProduct, type CanteenShop } from './canteen';
 import { useCanteenResource } from './useCanteenResource';
+import { canteenCacheKey, CANTEEN_CACHE_TTL_MS } from './canteen';
+import { OfflineBanner } from '@/components/ui/OfflineBanner';
 
 /** 榜单接口返回的项带 `rank`（1 起）与 `shop_name`（见 `shared/api/canteen.js:19`） */
 type RankedProduct = CanteenProduct & { rank: number; shopName: string | null };
@@ -43,6 +46,7 @@ function normalizeRanked(data: unknown): readonly RankedProduct[] {
 }
 
 export function RegionShops(): React.ReactElement {
+  const badge = useMailboxBadge();
   const params = useLocalSearchParams<{ id?: string; name?: string }>();
   const router = useRouter();
   const { t } = useI18n();
@@ -55,24 +59,28 @@ export function RegionShops(): React.ReactElement {
   const shops = useCanteenResource(
     () => (validId ? getShopsByRegion(regionId) : Promise.resolve([])),
     normalizeShops,
-    [regionId, validId]
+    [regionId, validId],
+    { key: canteenCacheKey('region-shops', regionId), ttlMs: 60000 }
   );
   const ranking = useCanteenResource(
     () => (validId ? getRegionTopProducts(regionId, { limit: 10 }) : Promise.resolve([])),
     normalizeRanked,
-    [regionId, validId]
+    [regionId, validId],
+    { key: canteenCacheKey('region-top', regionId), ttlMs: CANTEEN_CACHE_TTL_MS.rankings }
   );
 
   return (
     <Screen
+      {...badge}
       testID="screen-region-shops"
       titleKey="canteen.shopsTitle"
       bottomMode="own"
     >
       <View style={{ flex: 1 }}>
-        {shops.loading ? (
+        {shops.stale || ranking.stale ? <OfflineBanner testID="region-stale" variant="stale" message={t('canteen.cache.stale')} actionLabel={t('action.refresh')} onAction={() => { shops.reload(); ranking.reload(); }} /> : null}
+        {shops.loading && shops.data === null ? (
           <LoadingState testID="region-shops-loading" />
-        ) : shops.error !== null ? (
+        ) : shops.error !== null && shops.data === null ? (
           <ErrorState testID="region-shops-error" error={shops.error} onAction={shops.reload} />
         ) : (
           <ListScreen<CanteenShop>

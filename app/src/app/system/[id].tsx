@@ -39,12 +39,14 @@ import {
   type SchoolSystemId,
 } from '@/features/tools/schoolSystems';
 import { useSchoolSessions } from '@/features/tools/schoolSession';
+import { useMailboxBadge } from '@/features/mailbox/useUnread';
 
 export default function SchoolSystemScreen(): React.ReactElement {
   const params = useLocalSearchParams<{ id?: string }>();
   const router = useRouter();
   const { t } = useI18n();
   const theme = useTheme();
+  const badge = useMailboxBadge();
 
   const system = getSchoolSystem(params.id as SchoolSystemId);
   const mode = system ? resolveEmbedMode(system) : 'webview';
@@ -71,42 +73,48 @@ export default function SchoolSystemScreen(): React.ReactElement {
   return (
     <Screen
       testID={`screen-school-system-${system.id}`}
-      topMode="overlay"
+      titleKey="screen.tools"
       bottomMode="own"
-      headerOverlay={
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingLeft: theme.space('space_4'),
-            gap: theme.space('space_2'),
-          }}
-        >
-          <Text role="headline" emphasis="strong" colorToken="text-primary" numberOfLines={1}>
-            {t(system.titleKey)}
-          </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.space('space_2') }}>
-            {/* 只在课表系统上给这个动作（其余系统没有表可读） */}
-            {isScheduleSystem && mode === 'webview' ? (
-              <Button
-                testID="school-read-schedule"
-                label={t('tools.readSchedule')}
-                variant="link"
-                size="small"
-                onPress={() => webRef.current?.readSchedule()}
-              />
-            ) : null}
-            <IconButton
-              testID="school-system-close"
-              Icon={X}
-              accessibilityLabel={t('action.close')}
-              onPress={close}
-            />
-          </View>
-        </View>
-      }
+      {...badge}
     >
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingLeft: theme.space('space_4'),
+          gap: theme.space('space_2'),
+        }}
+      >
+        <Text
+          role="headline"
+          emphasis="strong"
+          colorToken="text-primary"
+          numberOfLines={1}
+          style={{ flex: 1 }}
+        >
+          {t(system.titleKey)}
+        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.space('space_2') }}>
+          {/* 只在课表系统上给这个动作（其余系统没有表可读） */}
+          {isScheduleSystem && mode === 'webview' ? (
+            <Button
+              testID="school-read-schedule"
+              label={t('tools.readSchedule')}
+              variant="link"
+              size="small"
+              onPress={() => webRef.current?.readSchedule()}
+            />
+          ) : null}
+          <IconButton
+            testID="school-system-close"
+            Icon={X}
+            accessibilityLabel={t('action.close')}
+            onPress={close}
+          />
+        </View>
+      </View>
+
       {/* 读表结果如实回显（⛔ 不弹对话框；成功不弹、失败也说清是哪一种） */}
       {schedule !== null ? (
         <View style={{ paddingHorizontal: theme.space('space_4') }}>

@@ -13,32 +13,39 @@
 import * as React from 'react';
 
 import type { AppError } from '@/i18n/errors';
+import { toToolsError } from '@/features/tools/requestError';
+import { canteenRevision, subscribeCanteen, readCanteenCache, writeCanteenCache, requestCanteen } from './canteenCache';
 
 export type ResourceState<T> = {
   data: T | null;
   loading: boolean;
   error: AppError | null;
+  stale: boolean;
 };
 
 /** 把捕获到的东西归到 `AppError`（兼容"已经是 AppError"与"抛出的原始错误"） */
 export function toResourceError(error: unknown): AppError {
-  if (error !== null && typeof error === 'object' && 'kind' in error) {
-    return error as AppError;
-  }
-  return { kind: 'unknown' };
+  return toToolsError(error);
 }
+
+export type CanteenCacheOptions = { key: string; ttlMs: number; revalidate?: boolean };
 
 export function useCanteenResource<T>(
   load: () => Promise<unknown>,
   normalize: (raw: unknown) => T | null,
-  deps: readonly unknown[]
+  deps: readonly unknown[],
+  cache?: CanteenCacheOptions
 ): ResourceState<T> & { reload: () => void } {
   const [state, setState] = React.useState<ResourceState<T>>({
     data: null,
     loading: true,
     error: null,
+    stale: false,
   });
   const [nonce, setNonce] = React.useState(0);
+  const force = React.useRef(false);
+  const resourceKey = cache?.key ?? deps.map(String).join(':');
+  const [stateKey, setStateKey] = React.useState(resourceKey);
 
   // ⛔ 用 ref 存函数/规范化器：否则调用方每次渲染传新引用就会无限重取
   const loadRef = React.useRef(load);
@@ -48,29 +55,46 @@ export function useCanteenResource<T>(
 
   React.useEffect(() => {
     let cancelled = false;
-    setState({ data: null, loading: true, error: null });
+    const version = canteenRevision();
+    const forced = force.current; force.current = false;
+    const active = () => !cancelled && version === canteenRevision();
+    setStateKey(resourceKey);
+    setState((previous) => ({ data: stateKey === resourceKey ? previous.data : null, loading: true, error: null, stale: stateKey === resourceKey && previous.data !== null }));
+    const unsubscribe = subscribeCanteen(() => { cancelled = true; force.current = true; setNonce((n) => n + 1); });
     void (async () => {
       try {
-        const raw = await loadRef.current();
-        if (cancelled) return;
+        if (cache) {
+          const cached = await readCanteenCache(cache.key, cache.ttlMs);
+          if (!active()) return;
+          const data = cached ? normalizeRef.current(cached.raw) : null;
+          if (data !== null && cached) {
+            const needsRead = forced || !cached.fresh || cache.revalidate === true;
+            setState({ data, loading: needsRead, error: null, stale: needsRead });
+            if (!needsRead) return;
+          }
+        }
+        const raw = cache ? await requestCanteen(cache.key, () => loadRef.current()) : await loadRef.current();
+        if (!active()) return;
         const data = normalizeRef.current(raw);
         if (data === null) {
           // 规范化失败 = 响应不是我们认识的形状（⛔ 不画半截页面）
-          setState({ data: null, loading: false, error: { kind: 'unknown' } });
+          setState((previous) => ({ ...previous, loading: false, error: { kind: 'unknown' }, stale: previous.data !== null }));
           return;
         }
-        setState({ data, loading: false, error: null });
+        if (cache) await writeCanteenCache(cache.key, raw, version).catch(() => undefined);
+        if (active()) setState({ data, loading: false, error: null, stale: false });
       } catch (error) {
-        if (cancelled) return;
-        setState({ data: null, loading: false, error: toResourceError(error) });
+        if (!active()) return;
+        setState((previous) => ({ ...previous, loading: false, error: toResourceError(error), stale: previous.data !== null }));
       }
     })();
     return () => {
       cancelled = true;
+      unsubscribe();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [...deps, nonce]);
+  }, [...deps, resourceKey, cache?.ttlMs, cache?.revalidate, nonce]);
 
-  const reload = React.useCallback(() => setNonce((n) => n + 1), []);
-  return { ...state, reload };
+  const reload = React.useCallback(() => { force.current = true; setNonce((n) => n + 1); }, []);
+  return { ...(stateKey === resourceKey ? state : { data: null, loading: true, error: null, stale: false }), reload };
 }

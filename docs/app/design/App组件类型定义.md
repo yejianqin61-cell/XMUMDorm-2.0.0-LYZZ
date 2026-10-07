@@ -213,7 +213,7 @@ L7 域专用    15 个 ← CommentThread / CommentItem / CommentComposer / Reply
 | **C10** | `Checkbox` | 选择（布尔/多选） | `single` `group`；`indeterminate` | 原语（`@expo/ui` Checkbox） | **5** | `A-05`（ToS 勾选）`T-06` `M-04` `P-02` `P-09` |
 | **C12** | `Switch` | 选择（即时生效布尔） | — | 原语 | **4** | `M-13` `M-14` `C-06` `M-15` |
 | **C14** | `SegmentedControl` | 选择（2–5 项互斥、平级切换） | `text` `textWithCount` | 原语（M3 SegmentedButton / iOS SegmentedControl） | **4** | `T-02`（周切换）`M-13`（语言）`P-06`（类型）`C-05`（三版式，就地实现） |
-| **C15 / C16** | `DatePicker` / `TimePicker` | 选择（日期/时间） | 单选；`min`/`max`；24h（默认，马来西亚） | 原语（`@expo/ui` DateTimePicker 替代） | **5** | `T-06` `T-07` `T-08` `P-08`；**一律走平台选择器，不自绘日历** |
+| **C15 / C16** | `DatePicker` / `TimePicker` | 选择（日期/时间） | 单选；`min`/`max`；24h；清除/取消；iOS确认 | 原语，当前DateTimeField消费已准入`@react-native-community/datetimepicker` | **5** | `T-06` `T-07` `T-08` `P-08`；**一律走平台选择器，不自绘日历**；Phase2乙已接T06，其他消费者待各轨道接线 |
 | **C17** | `MonthPicker` | 选择（年月 / 学期） | 年份范围可配（课评 `2016–今`）；**`allowedMonths` 受限月份**（课评**仅 `02/04/09`**） | 自研 + 原语 | **2** | `T-09`（筛选）`P-09`（学期，**`D14` 已并入**）；⛔ **不得用通用 `C15` 代替**——它会放行非法月份 |
 | **C18 / C19** | `Stepper` / `OtpInput` | 选择（数值增减）/ 文本输入（定长码） | `compact` `withInput`；4/6 位 + `paste` | 自研 | **4** | `T-06`（优先级）`P-09`（难度）`A-03` `A-04`（验证码） |
 | **C20** | `MediaPicker` | 媒体输入 | `single` `multi`（**上限由页面注入**）；`allowGif`（**二手为 false**） | 原语（系统相册/相机）+ `expo-image` | **6** | `M-02`（头像 1）`S-11` `S-19` `P-02` `P-05` `P-08` |
@@ -883,6 +883,8 @@ Android 有一个**系统级**的 "full-screen intent"（可在锁屏上全屏�
 | 14 | **是否引入样式引擎** | **不引入**；本项目的问题是"没有唯一令牌来源"，不是"样式写得麻烦" | 不阻塞 |
 | 15 | **Android 系统级 full-screen intent 的允许场景清单** | **须在浏览器人工读取 AOSP《全屏 intent 限制》并记录访问日期**（宪法 15.2） | 不阻塞（但影响"最重通知"的边界） |
 ### 8.4 本文件的边界
+
+Phase2乙实现记录（2026-10-07）：K01 Form新增可选titleKey、信箱属性与guardNavigation，继续唯一Screen；Form与T03共用useFormLeaveGuard，确认丢弃后才dispatch原移除动作，导入成功清草稿并在保护禁用后返回。C20支持注入系统图库、图片预览、取消无错误、失败文案与大小/GIF校验；原生依赖见 [准入登记](../evaluation/App依赖准入登记.md) §5，设备验证见 [乙逐屏记录](../test/乙-逐屏13.1验收记录.md)。
 1. **本文件不定义配色与字阶数值**（在[令牌规范](./App设计令牌规范.md)与[风格体系](./App前端风格体系.md)）；
 2. **本文件不定义页面与 IA**（在[页面清单 v2.0](../product/App页面清单与结构盘点.md)）——**页号空间以它为准**；
 3. **本文件不承诺排期**；

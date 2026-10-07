@@ -33,12 +33,16 @@ import { ErrorSummary } from '@/components/ui/ErrorSummary';
 import { FormSection } from '@/components/ui/FormSection';
 import { FormField } from '@/components/ui/FormField';
 import { Screen } from '@/components/ui/Screen';
+import { useMailboxBadge } from '@/features/mailbox/useUnread';
 import { Text } from '@/components/ui/Text';
 import { useToast } from '@/components/ui/Toast';
-import { useForm } from '@/components/ui/Form';
+import { FormNavigationGuard, useForm, useFormLeaveGuard } from '@/components/ui/Form';
 import { useSession } from '@/features/auth/session';
 import { commitScheduleImport, previewScheduleImport } from '../../../../shared/api/schedule';
 import { ImportPreviewList } from '@/features/tools/ImportPreviewList';
+import { invalidateTimetable } from '@/features/tools/timetable';
+import { timetableIdentity } from '@/features/tools/cacheIdentity';
+import { toToolsError } from '@/features/tools/requestError';
 import {
   IMPORT_MIN_TEXT_LENGTH,
   canCommit,
@@ -46,18 +50,17 @@ import {
   INITIAL_IMPORT_STATE,
   normalizeImportPreview,
   validateImportText,
-  type ScheduleImportPreview,
 } from '@/features/tools/scheduleImport';
 import type { MessageKey } from '@/i18n/zh';
 
 /** 把请求失败归到统一错误模型（鉴权类交给 P1-13 的接缝） */
-function toAppError(error: unknown): AppError {
+function toAppError(error: unknown, label: string, rule: string): AppError {
   const status = (error as { status?: number } | null)?.status;
   if (status === 400) {
     // 服务端 400 = "文本太短 / 没解析到课程" → 是"这一项要改"，不是权限问题
-    return { kind: 'validation', target: 'import.pasteLabel' };
+    return { kind: 'validation', target: label, params: { rule } };
   }
-  return { kind: 'unknown' };
+  return toToolsError(error);
 }
 
 /** 唯一的字段描述符（⛔ 不在两处各写一份，否则迟早不一致） */
@@ -69,8 +72,17 @@ const TEXT_FIELD = {
   required: true,
   maxLength: 20000,
 };
+const IMPORT_FIELDS = [TEXT_FIELD];
 
 export default function ScheduleImportScreen(): React.ReactElement {
+  useSession();
+  const epoch = timetableIdentity().epoch;
+  const enteredEpoch = React.useRef(epoch);
+  return <ScheduleImportForm key={epoch} acceptScrapedText={enteredEpoch.current === epoch} />;
+}
+
+function ScheduleImportForm({ acceptScrapedText }: { acceptScrapedText: boolean }): React.ReactElement {
+  const badge = useMailboxBadge();
   const theme = useTheme();
   const { t } = useI18n();
   const router = useRouter();
@@ -80,8 +92,14 @@ export default function ScheduleImportScreen(): React.ReactElement {
 
   const [state, dispatch] = React.useReducer(importReducer, INITIAL_IMPORT_STATE);
   const [overwriteOpen, setOverwriteOpen] = React.useState(false);
+  const previewVersion = React.useRef(0);
+  const previewText = React.useRef<string | null>(null);
+  const previewBusy = React.useRef(false);
+  const commitBusy = React.useRef(false);
+  const mounted = React.useRef(true);
+  React.useEffect(() => { mounted.current = true; return () => { mounted.current = false; previewVersion.current += 1; }; }, []);
 
-  const scrapedText = typeof params.text === 'string' ? params.text : '';
+  const scrapedText = acceptScrapedText && typeof params.text === 'string' ? params.text : '';
 
   /**
    * ⭐ 文本字段走 `K01 useForm`：**草稿落盘**（宪法 4.4.3）。
@@ -92,7 +110,8 @@ export default function ScheduleImportScreen(): React.ReactElement {
    */
   const form = useForm({
     formId: 'schedule-import',
-    fields: [TEXT_FIELD],
+    draftScope: timetableIdentity().scope.startsWith('user') ? timetableIdentity().scope : undefined,
+    fields: IMPORT_FIELDS,
     initialValues: { text: scrapedText },
     skipDraftRestore: scrapedText.trim() !== '',
     // 本页自己管提交（两步：先预览再覆盖），所以 `onSubmit` 不会被调用
@@ -100,33 +119,65 @@ export default function ScheduleImportScreen(): React.ReactElement {
   });
 
   const text = typeof form.values.text === 'string' ? form.values.text : '';
+  const busy = state.phase === 'previewing' || state.phase === 'committing';
+  const discardDraft = form.discardDraft;
+  const leaveGuard = useFormLeaveGuard({ dirty: form.shouldConfirmLeave || text.trim().length > 0, busy, discardDraft });
+  const completeLeave = leaveGuard.complete;
+  const textRef = React.useRef(text); textRef.current = text;
+  const previousText = React.useRef(text);
+  React.useEffect(() => {
+    if (previousText.current === text) return;
+    previousText.current = text;
+    if (commitBusy.current) return;
+    previewVersion.current += 1; previewBusy.current = false; previewText.current = null;
+    setOverwriteOpen(false); dispatch({ type: 'text:changed' });
+  }, [text]);
   const localProblem = validateImportText(text);
 
   const runPreview = React.useCallback(async () => {
-    if (validateImportText(text) !== null) return;
+    if (validateImportText(text) !== null || previewBusy.current || commitBusy.current) return;
+    previewBusy.current = true;
+    const version = ++previewVersion.current;
+    const owner = timetableIdentity().epoch;
+    const active = () => mounted.current && version === previewVersion.current && textRef.current === text && owner === timetableIdentity().epoch;
     dispatch({ type: 'preview:start' });
     try {
       const data = await previewScheduleImport(text);
+      if (!active()) return;
       const preview = normalizeImportPreview(data);
       if (preview === null) {
         dispatch({ type: 'preview:failure', error: { kind: 'unknown' } });
         return;
       }
+      previewText.current = text;
       dispatch({ type: 'preview:success', preview });
     } catch (error) {
+      if (!active()) return;
       const appError = await session.handleAuthFailure(error);
+      if (!active()) return;
       dispatch({
         type: 'preview:failure',
-        error: appError.kind === 'unknown' ? toAppError(error) : appError,
+        error: appError.kind === 'unknown' ? toAppError(error, t('import.pasteLabel'), t('import.parseRule')) : appError,
       });
+    } finally {
+      if (version === previewVersion.current) previewBusy.current = false;
     }
-  }, [text, session]);
+  }, [text, session, t]);
 
   const runCommit = React.useCallback(async () => {
+    if (commitBusy.current || !canCommit(state) || previewText.current !== text) return;
+    commitBusy.current = true;
+    const owner = timetableIdentity().epoch;
     setOverwriteOpen(false);
     dispatch({ type: 'commit:start' });
     try {
       await commitScheduleImport(text);
+      if (!mounted.current || owner !== timetableIdentity().epoch) return;
+      // Import is already committed; a disk error must never invite a second commit.
+      await invalidateTimetable().catch(() => undefined);
+      if (!mounted.current || owner !== timetableIdentity().epoch) return;
+      await discardDraft().catch(() => undefined);
+      if (!mounted.current || owner !== timetableIdentity().epoch) return;
       dispatch({ type: 'commit:success' });
       // 成功**不弹对话框**（宪法 10.4）：给一条回执 + 返回
       toast.show({
@@ -135,35 +186,44 @@ export default function ScheduleImportScreen(): React.ReactElement {
         }),
         tone: 'success',
       });
-      if (router.canGoBack()) router.back();
-      else router.replace('/tools');
+      completeLeave(() => {
+        if (router.canGoBack()) router.back();
+        else router.replace('/tools');
+      });
     } catch (error) {
+      if (!mounted.current || owner !== timetableIdentity().epoch) return;
       const appError = await session.handleAuthFailure(error);
+      if (!mounted.current || owner !== timetableIdentity().epoch) return;
       dispatch({
         type: 'commit:failure',
-        error: appError.kind === 'unknown' ? toAppError(error) : appError,
+        error: appError.kind === 'unknown' ? toAppError(error, t('import.pasteLabel'), t('import.parseRule')) : appError,
       });
+    } finally {
+      commitBusy.current = false;
     }
-  }, [text, session, toast, t, state.preview, router]);
-
-  const busy = state.phase === 'previewing' || state.phase === 'committing';
+  }, [text, session, toast, t, state, router, discardDraft, completeLeave]);
 
   return (
-    <Screen testID="screen-schedule-import" titleKey="import.title" bottomMode="own">
+    <Screen testID="screen-schedule-import" titleKey="import.title" bottomMode="own" {...badge}>
+      <FormNavigationGuard prevent={leaveGuard.prevent} onBlocked={leaveGuard.requestLeave} />
       <View style={{ flex: 1, padding: theme.space('space_4'), gap: theme.space('space_4') }}>
         <ErrorSummary
           testID="import-summary"
-          title={t('auth.failed')}
+          title={t('import.failed')}
           formError={state.error}
         />
 
         <FormSection title={t('import.pasteLabel')} description={t('import.pasteHelp')}>
           <FormField
             testID="import-text"
-            field={TEXT_FIELD}
+            field={{ ...TEXT_FIELD, disabledWhen: () => state.phase === 'committing' }}
             value={text}
             values={form.values}
-            onChange={form.setValue}
+            onChange={(name, value) => {
+              if (commitBusy.current) return;
+              previewVersion.current += 1; previewBusy.current = false; previewText.current = null;
+              setOverwriteOpen(false); dispatch({ type: 'text:changed' }); form.setValue(name, value);
+            }}
             // 客户端镜像校验（服务端另有 10 字门槛，且它才是权威）
             errorText={localProblem === 'tooShort' && text !== '' ? t('import.tooShort') : undefined}
           />
@@ -206,6 +266,17 @@ export default function ScheduleImportScreen(): React.ReactElement {
         ) : null}
       </View>
 
+      <AlertDialog
+        testID="import-leave"
+        visible={leaveGuard.visible}
+        variant="danger"
+        title={t('form.leave.title')}
+        body={t('form.leave.body')}
+        confirmLabel={t('form.leave.confirm')}
+        cancelLabel={t('form.leave.cancel')}
+        onCancel={leaveGuard.cancel}
+        onConfirm={() => { void leaveGuard.confirm(); }}
+      />
       {/* 整表覆盖：服务端会**删旧写新**，所以必须二次确认（§2.5 `O03 danger`） */}
       <AlertDialog
         testID="import-overwrite"

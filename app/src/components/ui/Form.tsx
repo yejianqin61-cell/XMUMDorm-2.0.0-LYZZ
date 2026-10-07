@@ -30,6 +30,8 @@
  */
 
 import * as React from 'react';
+import { useNavigation } from 'expo-router';
+import { usePreventRemove } from 'expo-router/react-navigation';
 import {
   ScrollView,
   View,
@@ -54,7 +56,7 @@ import {
   type FormValues,
 } from './FormField';
 import { FormSection } from './FormSection';
-import { Screen } from './Screen';
+import { Screen, type ScreenProps } from './Screen';
 
 /* ────────────────────────── 状态机（纯函数） ────────────────────────── */
 
@@ -244,6 +246,8 @@ export function canPersistDraft(formId: string): boolean {
 export type UseFormOptions = {
   /** 表单 id：草稿 key 用它；⛔ 不要用形如 `…password…` 的 id（护栏会拒绝落盘） */
   formId: string;
+  /** 调用方提供账号/学期分区；更换分区时须重挂表单，不能迁移旧 values。 */
+  draftScope?: string;
   fields: readonly FormFieldDescriptor[];
   initialValues?: FormValues;
   /** 提交：⛔ 客户端校验通过后才调用；失败时抛/返回结构化错误 */
@@ -282,7 +286,8 @@ export type UseFormReturn = {
 };
 
 export function useForm(options: UseFormOptions): UseFormReturn {
-  const { formId, fields, initialValues, onSubmit, enableDraft = true, skipDraftRestore = false } = options;
+  const { formId: baseId, draftScope, fields, initialValues, onSubmit, enableDraft = true, skipDraftRestore = false } = options;
+  const formId = draftScope ? `${baseId}-${draftScope}` : baseId;
   const { t } = useI18n();
 
   const [values, setValues] = React.useState<FormValues>(
@@ -422,6 +427,11 @@ export type FormLabels = {
 };
 
 export type FormProps = {
+  titleKey?: MessageKey;
+  unreadCount?: ScreenProps['unreadCount'];
+  onMailboxPress?: ScreenProps['onMailboxPress'];
+  /** 路由宿主启用系统返回保护；非导航环境的原语消费者不挂导航 hook。 */
+  guardNavigation?: boolean;
   form: UseFormReturn;
   sections: readonly FormSectionDescriptor[];
   labels: FormLabels;
@@ -435,7 +445,53 @@ export type FormProps = {
   testID?: string;
 };
 
+/** Share discard confirmation and defer removal until the navigation guard is disabled. */
+export function useFormLeaveGuard({ dirty, busy, discardDraft }: {
+  dirty: boolean;
+  busy: boolean;
+  discardDraft: () => Promise<void>;
+}) {
+  const [pendingLeave, setPendingLeave] = React.useState<(() => void) | null>(null);
+  const [allowLeave, setAllowLeave] = React.useState(false);
+  const [confirmedLeave, setConfirmedLeave] = React.useState<(() => void) | null>(null);
+  const mounted = React.useRef(true);
+  React.useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  React.useEffect(() => { if (confirmedLeave) confirmedLeave(); }, [confirmedLeave]);
+
+  const complete = React.useCallback((resume: () => void) => {
+    if (!mounted.current) return;
+    setPendingLeave(null);
+    setAllowLeave(true);
+    setConfirmedLeave(() => resume);
+  }, []);
+  const requestLeave = React.useCallback((resume: () => void) => {
+    if (busy) return;
+    if (dirty) setPendingLeave(() => resume);
+    else resume();
+  }, [busy, dirty]);
+  const confirm = React.useCallback(async () => {
+    if (!pendingLeave) return;
+    const resume = pendingLeave;
+    setPendingLeave(null);
+    await discardDraft().catch(() => undefined);
+    complete(resume);
+  }, [pendingLeave, discardDraft, complete]);
+
+  return {
+    prevent: !allowLeave && (dirty || busy),
+    visible: pendingLeave !== null,
+    requestLeave,
+    cancel: () => setPendingLeave(null),
+    confirm,
+    complete,
+  };
+}
+
 export function Form({
+  titleKey,
+  unreadCount,
+  onMailboxPress,
+  guardNavigation = false,
   form,
   sections,
   labels,
@@ -448,7 +504,6 @@ export function Form({
 }: FormProps): React.ReactElement {
   const theme = useTheme();
   const { t } = useI18n();
-  const [leaveOpen, setLeaveOpen] = React.useState(false);
   const settledRef = React.useRef(false);
 
   /* 成功 → 按提交语义交回页面（⛔ 不弹成功对话框：`postSubmitPlan` 里没有这个选项） */
@@ -460,9 +515,11 @@ export function Form({
 
   const busy = form.state.status === 'submitting';
   const validating = form.state.status === 'validating';
+  const leaveGuard = useFormLeaveGuard({ dirty: form.shouldConfirmLeave, busy, discardDraft: form.discardDraft });
 
   return (
-    <Screen bottomMode="own" testID={testID}>
+    <Screen bottomMode="own" testID={testID} titleKey={titleKey} unreadCount={unreadCount} onMailboxPress={onMailboxPress}>
+      {guardNavigation ? <FormNavigationGuard prevent={leaveGuard.prevent} onBlocked={leaveGuard.requestLeave} /> : null}
       <ScrollView
         // ⛔ 提交中**不得**整屏变灰（§3.2.5-④）：表单保持可用，只有主按钮 loading
         keyboardShouldPersistTaps="handled"
@@ -517,8 +574,7 @@ export function Form({
               disabled={busy}
               onPress={() => {
                 // 有未保存内容就先确认（DirtyGuard）
-                if (form.shouldConfirmLeave) setLeaveOpen(true);
-                else onCancel?.();
+                leaveGuard.requestLeave(onCancel ?? (() => undefined));
               }}
             />
           ) : null}
@@ -527,20 +583,22 @@ export function Form({
 
       {/* DirtyGuard：仅在**真有**未保存内容时触发（§3.2.1） */}
       <AlertDialog
-        visible={leaveOpen}
+        visible={leaveGuard.visible}
         variant="danger"
         title={labels.leaveTitle}
         body={labels.leaveBody}
         confirmLabel={labels.leaveConfirm}
         cancelLabel={labels.leaveCancel}
-        onCancel={() => setLeaveOpen(false)}
-        onConfirm={() => {
-          setLeaveOpen(false);
-          void form.discardDraft();
-          onCancel?.();
-        }}
+        onCancel={leaveGuard.cancel}
+        onConfirm={() => { void leaveGuard.confirm(); }}
         testID={testID ? `${testID}-leave` : undefined}
       />
     </Screen>
   );
+}
+
+export function FormNavigationGuard({ prevent, onBlocked }: { prevent: boolean; onBlocked: (resume: () => void) => void }): null {
+  const navigation = useNavigation();
+  usePreventRemove(prevent, ({ data }) => onBlocked(() => navigation.dispatch(data.action)));
+  return null;
 }
