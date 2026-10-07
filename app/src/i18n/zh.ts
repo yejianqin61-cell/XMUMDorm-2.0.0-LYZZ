@@ -366,6 +366,16 @@ export const zh = {
   'square.guides.linkBlocked': '无法打开这个链接',
   'square.guides.linkRetry': '重试打开链接',
   'square.guides.end': '已读完',
+  'screen.campus.search.title': '搜索树洞',
+  'screen.campus.search.placeholder': '搜索树洞',
+  'screen.campus.search.clear': '清除关键词',
+  'screen.campus.search.submit': '搜索',
+  'screen.campus.search.change': '更换关键词',
+  'screen.campus.search.hint': '输入关键词搜索帖子',
+  'screen.campus.search.empty': '无匹配帖子，试试其他词',
+  'screen.campus.search.results': '帖子结果',
+  'screen.campus.search.history': '最近搜索',
+  'screen.campus.search.clearHistory': '清除搜索记录',
 } as const;
 
 /** 词条 key 的联合类型 —— `t()` 只接受它，**缺词条是编译期错误** */

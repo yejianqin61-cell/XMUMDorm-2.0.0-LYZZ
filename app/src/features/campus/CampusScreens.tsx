@@ -11,6 +11,8 @@ import {Screen} from '@/components/ui/Screen';
 import {ListScreen, useListPagination} from '@/components/ui/ListScreen';
 import {ListItem} from '@/components/ui/ListItem';
 import {Text} from '@/components/ui/Text';
+import {Pressable} from '@/components/ui/Pressable';
+import {SearchHighlight} from './SearchHighlight';
 import {MediaGrid} from '@/components/ui/MediaGrid';
 import {DetailScreen} from '@/proto/P3';
 import {useI18n} from '@/i18n';
@@ -49,24 +51,25 @@ function snapshotKey(kind:CampusKind){
 }
 
 export function CampusListScreen({initialTab='confession'}:{initialTab?:CampusKind}={}):React.ReactElement {
- const router=useRouter();const [selected,setSelected]=React.useState<CampusKind>(initialTab);
+ const {t}=useI18n();const router=useRouter();const [selected,setSelected]=React.useState<CampusKind>(initialTab);
  return <Screen titleKey="screen.campus" showMailbox={false} testID="campus-screen">
   <TopTabStrip tabs={getSecondaryTabs('campus')} selectedKey={selected} onSelect={key=>{
    if(key!=='confession'&&key!=='wall')return;
    setSelected(key);router.setParams({tab:key});
   }}/>
+  {selected==='confession'?<Button label={t('screen.campus.search.title')} onPress={()=>router.push('/campus/search' as never)}/>:null}
   <CampusFeed key={selected} kind={selected}/>
  </Screen>;
 }
 
 /** A keyed child owns one fixed scope; switching tabs unmounts its pending requests. */
-function CampusFeed({kind}:{kind:CampusKind}):React.ReactElement {
+export function CampusFeed({kind,query}:{kind:CampusKind;query?:string}):React.ReactElement {
  const {t}=useI18n();const router=useRouter();const client=getQueryClient();
- const key=React.useMemo(()=>snapshotKey(kind),[kind]);
+ const key=React.useMemo(()=>query?[...snapshotKey(kind),'search',query]:snapshotKey(kind),[kind,query]);
  const initial=React.useRef(client.getQueryData<Snapshot>(key));
  const snapshot=React.useRef<Snapshot>(initial.current??{rows:[],page:0,cursor:null,hasMore:true});
  const [rows,setRows]=React.useState(snapshot.current.rows),[revision,setRevision]=React.useState(0);
- const {pagination,dispatch,restoredScrollOffset,persistScrollOffset,setCursor}=useListPagination({scope:{primaryTab:'campus',secondaryTab:kind},initial:{hasMore:snapshot.current.hasMore}});
+ const {pagination,dispatch,restoredScrollOffset,persistScrollOffset,setCursor}=useListPagination({scope:query?undefined:{primaryTab:'campus',secondaryTab:kind},initial:{hasMore:snapshot.current.hasMore}});
  const generation=React.useRef(0),pending=React.useRef<'refresh'|'append'|null>(null);
  const load=React.useCallback(async(mode:'refresh'|'append')=>{
   if(pending.current==='refresh'||(mode==='append'&&(pending.current||!snapshot.current.hasMore)))return;
@@ -82,7 +85,7 @@ function CampusFeed({kind}:{kind:CampusKind}):React.ReactElement {
     cursor=typeof data.oldest_cursor==='number'&&Number.isSafeInteger(data.oldest_cursor)&&data.oldest_cursor>0?data.oldest_cursor:null;
     if(hasMore&&(!Number.isSafeInteger(cursor)||Number(cursor)<=0||cursor===snapshot.current.cursor&&mode==='append'))throw {kind:'content'};
    }else{
-    const data=await getPostList({page,pageSize:10});
+    const data=await getPostList({page,pageSize:10,...(query?{q:query}:{})});
     if(request!==generation.current)return;
     if(!Array.isArray(data?.list)||typeof data.hasMore!=='boolean')throw {kind:'content'};
     incoming=data.list.map(asPost);hasMore=data.hasMore;
@@ -96,7 +99,7 @@ function CampusFeed({kind}:{kind:CampusKind}):React.ReactElement {
    dispatch({type:mode==='refresh'?'refresh:success':'append:success',hasMore});
   }catch(error){if(request===generation.current)dispatch({type:mode==='refresh'?'refresh:failure':'append:failure',error:errorFor(error)});}
   finally{if(request===generation.current)pending.current=null;}
- },[kind,key,client,dispatch,setCursor,persistScrollOffset]);
+ },[kind,query,key,client,dispatch,setCursor,persistScrollOffset]);
  React.useEffect(()=>{if(!initial.current)void load('refresh');return()=>{generation.current++;pending.current=null;};},[load]);
  const refresh=()=>void load('refresh'),append=()=>void load('append');
  return <>
@@ -104,8 +107,13 @@ function CampusFeed({kind}:{kind:CampusKind}):React.ReactElement {
   <ListScreen key={revision} testID="campus-list" data={rows} keyExtractor={row=>String(row.id)} pagination={pagination}
    restoredScrollOffset={revision===0&&initial.current?restoredScrollOffset:0} onScrollOffset={persistScrollOffset}
    onRefresh={refresh} onEndReached={append} onRetryRefresh={refresh} onRetryAppend={append}
-   labels={{retryLabel:t('action.retry'),endLabel:t('screen.campus.read.listEnd'),empty:{kind:'noResult',title:t('screen.campus.read.empty'),actionLabel:t('action.retry'),onAction:refresh}}}
-   renderItem={row=><ListItem testID={`campus-row-${row.id}`} title={kind==='wall'?t('screen.campus.read.anonymous'):row.title||t('screen.campus.read.post')} subtitle={row.content}
+   labels={{retryLabel:t('action.retry'),endLabel:t('screen.campus.read.listEnd'),empty:{kind:'noResult',title:t(query?'screen.campus.search.empty':'screen.campus.read.empty'),actionLabel:t('action.retry'),onAction:refresh}}}
+   renderItem={row=>query?<Pressable testID={`campus-row-${row.id}`} accessibilityRole="button"
+    accessibilityLabel={`${row.title||t('screen.campus.read.post')}: ${row.content}`}
+    onPress={()=>router.push(`/campus/${row.id}` as never)}>
+    <SearchHighlight value={row.title||t('screen.campus.read.post')} query={query}/>
+    <SearchHighlight value={row.content} query={query}/>
+   </Pressable>:<ListItem testID={`campus-row-${row.id}`} title={kind==='wall'?t('screen.campus.read.anonymous'):row.title||t('screen.campus.read.post')} subtitle={row.content}
     onPress={()=>router.push((kind==='wall'?`/campus/wall/${row.id}`:`/campus/${row.id}`) as never)}/>}/>
  </>;
 }
