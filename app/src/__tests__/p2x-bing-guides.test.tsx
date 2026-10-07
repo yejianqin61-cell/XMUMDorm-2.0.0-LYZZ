@@ -22,7 +22,7 @@ import { getQueryClient } from '@/shared/queryClient';
 import { secondaryTabStore } from '@/features/navigation/secondaryTabs';
 const list = listHandbookArticles as jest.Mock;
 const detail = getHandbookArticleDetail as jest.Mock;
-beforeEach(() => { getQueryClient().clear(); secondaryTabStore.clear(); jest.clearAllMocks(); list.mockReset(); detail.mockReset(); });
+beforeEach(() => { getQueryClient().clear(); secondaryTabStore.clear(); jest.clearAllMocks(); (Linking.openURL as jest.Mock).mockReset(); list.mockReset(); detail.mockReset(); });
 it('列表从第一页读取，点击进入正确文章', async () => {
  list.mockResolvedValue({ list: [{ id: 7, title: '入学流程', summary: '带齐材料' }], hasMore: false });
  const v = await renderApp(<GuidesListScreen />);
@@ -79,7 +79,7 @@ it('危险外链不交给系统打开', async () => {
  await waitFor(() => expect(v.getByText('浏览器打开')).toBeTruthy());
  await fireEvent.press(v.getByText('浏览器打开'));
  expect(Linking.openURL).not.toHaveBeenCalled();
- await waitFor(() => expect(v.getByTestId('guide-detail-error')).toBeTruthy());
+ await waitFor(() => expect(v.getByText('无法打开这个链接')).toBeTruthy());
 });
 it('请求未完成时显示公共加载态', async () => {
  detail.mockReturnValue(new Promise(() => undefined));
@@ -170,4 +170,57 @@ it('刷新失败保留旧内容并提供可见的重试', async () => {
  await fireEvent.press(v.getByText('刷新失败，点此重试'));
  await waitFor(() => expect(v.getByText('恢复内容')).toBeTruthy());
  expect(v.queryByText('第一页文章')).toBeNull();
+});
+
+it('正文 https 链接由页面打开一次', async () => {
+ (Linking.openURL as jest.Mock).mockResolvedValue(undefined);
+ detail.mockResolvedValue({id:7,title:'安全链接',contentType:'markdown',content:'[学校网站](https://example.com/welcome)'});
+ const v = await renderApp(<GuideDetailScreen articleId="7" />);
+ await waitFor(() => expect(v.getByRole('link')).toBeTruthy());
+ await fireEvent.press(v.getByRole('link'));
+ expect(Linking.openURL).toHaveBeenCalledTimes(1);
+ expect(Linking.openURL).toHaveBeenCalledWith('https://example.com/welcome');
+});
+it('正文不允许的协议不打开，正文仍可读', async () => {
+ detail.mockResolvedValue({id:7,title:'正文保留',contentType:'markdown',content:'[联系链接](mailto:test@example.com)\n\n继续阅读'});
+ const v = await renderApp(<GuideDetailScreen articleId="7" />);
+ await waitFor(() => expect(v.getByRole('link')).toBeTruthy());
+ await fireEvent.press(v.getByRole('link'));
+ expect(Linking.openURL).not.toHaveBeenCalled();
+ expect(v.getByText('继续阅读')).toBeTruthy();
+ expect(v.getByText('无法打开这个链接')).toBeTruthy();
+});
+it('正文链接打开失败不丢文章，可以重试同一链接', async () => {
+ (Linking.openURL as jest.Mock).mockRejectedValueOnce(new Error('internal-secret')).mockResolvedValueOnce(undefined);
+ detail.mockResolvedValue({id:7,title:'阅读中',contentType:'markdown',content:'[网站](https://example.com)\n\n阅读内容'});
+ const v = await renderApp(<GuideDetailScreen articleId="7" />);
+ await waitFor(() => expect(v.getByRole('link')).toBeTruthy());
+ await fireEvent.press(v.getByRole('link'));
+ await waitFor(() => expect(v.getByText('链接未打开，请重试')).toBeTruthy());
+ expect(v.queryByText('internal-secret')).toBeNull();
+ expect(v.getByText('阅读内容')).toBeTruthy();
+ await fireEvent.press(v.getByText('重试打开链接'));
+ await waitFor(() => expect(v.queryByText('链接未打开，请重试')).toBeNull());
+ expect((Linking.openURL as jest.Mock).mock.calls).toEqual([['https://example.com'],['https://example.com']]);
+});
+it('外链文章打开失败后保留打开入口，可以原地重试', async () => {
+ (Linking.openURL as jest.Mock).mockRejectedValueOnce(new Error('failed')).mockResolvedValueOnce(undefined);
+ detail.mockResolvedValue({id:7,title:'外链文章',contentType:'external_link',externalUrl:'https://example.com/welcome'});
+ const v = await renderApp(<GuideDetailScreen articleId="7" />);
+ await waitFor(() => expect(v.getByText('浏览器打开')).toBeTruthy());
+ await fireEvent.press(v.getByText('浏览器打开'));
+ await waitFor(() => expect(v.getByText('重试打开链接')).toBeTruthy());
+ expect(v.getByText('浏览器打开')).toBeTruthy();
+ await fireEvent.press(v.getByText('重试打开链接'));
+ await waitFor(() => expect(v.queryByText('重试打开链接')).toBeNull());
+ expect(mockBack).not.toHaveBeenCalled();
+});
+it('中英长文的首尾和目录均渲染', async () => {
+ const content = '# 入学材料\n\n' + '长文段落。\n\n'.repeat(60) + '## 最后一步\n\nEnd of article';
+ detail.mockResolvedValue({id:7,title:'长文',contentType:'markdown',content});
+ const v = await renderApp(<GuideDetailScreen articleId="7" />, {locale:'en'});
+ await waitFor(() => expect(v.getByText('End of article')).toBeTruthy());
+ expect(v.getByText('Contents')).toBeTruthy();
+ expect(v.getAllByText('入学材料').length).toBe(2);
+ expect(v.getAllByText('最后一步').length).toBe(2);
 });
