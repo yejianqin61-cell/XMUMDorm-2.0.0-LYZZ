@@ -1,0 +1,32 @@
+import * as React from 'react';
+import {fireEvent, waitFor} from '@testing-library/react-native';
+import {renderApp} from './helpers/renderApp';
+import {CampusSearchScreen} from '@/features/campus/CampusSearchScreen';
+import {getPostList} from '../../../shared/api/posts';
+import {getQueryClient} from '@/shared/queryClient';
+const mockPush=jest.fn();
+jest.mock('expo-router',()=>({useRouter:()=>({push:mockPush,back:jest.fn(),replace:jest.fn(),canGoBack:()=>true})}));
+jest.mock('../../../shared/api/posts',()=>({getPostList:jest.fn()}));
+const list=getPostList as jest.Mock;
+beforeEach(()=>{getQueryClient().clear();list.mockReset();mockPush.mockClear();});
+afterEach(()=>getQueryClient().clear());
+it('空关键词不请求，提交修剪后的关键词并进入详情',async()=>{
+ list.mockResolvedValue({list:[{id:7,title:'运动',content:'打球'}],hasMore:false});
+ const v=await renderApp(<CampusSearchScreen/>);
+ expect(list).not.toHaveBeenCalled();
+ await fireEvent.changeText(v.getByPlaceholderText('搜索树洞'), '  运动  ');
+ await fireEvent.press(v.getByTestId('campus-search-submit'));
+ await waitFor(()=>expect(list).toHaveBeenCalledWith({page:1,pageSize:10,q:'运动'}));
+ await waitFor(()=>expect(v.getByTestId('campus-row-7')).toBeTruthy());
+ await fireEvent.press(v.getByTestId('campus-row-7'));
+ expect(mockPush).toHaveBeenCalledWith('/campus/7');
+});
+it('英文无结果给出更换关键词入口',async()=>{
+ list.mockResolvedValue({list:[],hasMore:false});
+ const v=await renderApp(<CampusSearchScreen/>,{locale:'en'});
+ await fireEvent.changeText(v.getByPlaceholderText('Search Treehole'),'unknown');
+ await fireEvent.press(v.getByTestId('campus-search-submit'));
+ await waitFor(()=>expect(v.getByText('No matching posts. Try another keyword.')).toBeTruthy());
+ await fireEvent.press(v.getByText('Change keyword'));
+ expect(v.getByText('Enter a keyword to search posts')).toBeTruthy();
+});
