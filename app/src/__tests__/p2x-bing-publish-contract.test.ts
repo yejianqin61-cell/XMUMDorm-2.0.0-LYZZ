@@ -40,7 +40,7 @@ it('二手提交multipart白名单并返回详情',async()=>{
  (createMarketplaceItem as jest.Mock).mockResolvedValue({id:21});const d=market();expect(await d.submit({...mv,seller_user_id:99})).toEqual({id:21});const data=(createMarketplaceItem as jest.Mock).mock.calls[0][0] as FormData;expect(data.get('price')).toBe('12.5');expect(data.has('seller_user_id')).toBe(false);expect(d.routeAfterSubmit?.({id:21})).toBe('/market/21');
 });
 it('树洞普通帖固定type并校验标签与标题',async()=>{
- const d=post();await expect(d.submit({...pv,tagIds:['99']})).rejects.toMatchObject({kind:'validation'});await expect(d.submit({...pv,title:''})).rejects.toMatchObject({kind:'validation'});(createPost as jest.Mock).mockResolvedValue({id:23});await d.submit({...pv,type:'announcement'});expect(createPost).toHaveBeenCalledWith({...pv,type:'normal',tagIds:[7]});expect(d.routeAfterSubmit?.({id:23})).toBe('/post/23');
+ const d=post();await expect(d.submit({...pv,tagIds:['99']})).rejects.toMatchObject({kind:'validation'});await expect(d.submit({...pv,title:''})).rejects.toMatchObject({kind:'validation'});(createPost as jest.Mock).mockResolvedValue({id:23});await d.submit({...pv,type:'announcement'});expect(createPost).toHaveBeenCalledWith({...pv,type:'normal',tagIds:[7]});expect(d.routeAfterSubmit?.({id:23})).toBe('/campus/23');
 });
 it('提交失败不清缓存且无效返回id不宣称成功',async()=>{
  getQueryClient().setQueryData(['bing-errand','list',{}],{old:true});(createErrand as jest.Mock).mockRejectedValue({kind:'unreachable'});await expect(errand().submit(ev)).rejects.toMatchObject({kind:'unreachable'});expect(getQueryClient().getQueryData(['bing-errand','list',{}])).toEqual({old:true});(createErrand as jest.Mock).mockResolvedValue({id:0});await expect(errand().submit(ev)).rejects.toMatchObject({kind:'unknown'});
