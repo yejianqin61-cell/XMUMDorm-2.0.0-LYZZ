@@ -25,6 +25,10 @@ import { useTheme } from '@/design-system/theme';
 import { useI18n, type MessageKey } from '@/i18n';
 import { TERMS_ROUTE, type SubmitGate } from './complianceGate';
 import type { PublishFormDescriptor } from './descriptor';
+import { PUBLISH_DESCRIPTORS } from './descriptors';
+import { useResolvedDescriptor } from './resolveDescriptor';
+import { LoadingState } from '@/components/ui/LoadingState';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { usePublishForm } from './usePublishForm';
 
 export type PublishFormHostProps = {
@@ -33,6 +37,17 @@ export type PublishFormHostProps = {
 
 /** 发布表单宿主：门禁优先，其次才是表单本身 */
 export function PublishFormHost({ descriptor }: PublishFormHostProps): React.ReactElement {
+  if (PUBLISH_DESCRIPTORS?.[descriptor.id] !== descriptor) return <ResolvedPublishFormHost descriptor={descriptor} />;
+  return <RegisteredPublishFormHost descriptor={descriptor} />;
+}
+function RegisteredPublishFormHost({descriptor}: PublishFormHostProps): React.ReactElement {
+  const resolved = useResolvedDescriptor(descriptor, true);
+  if (resolved.loading || resolved.error) return <Screen titleKey="publish.title" showMailbox={false}>
+    {resolved.error ? <ErrorState error={{kind:'unreachable'}} onAction={() => void resolved.retry()} /> : <LoadingState variant="skeleton" />}
+  </Screen>;
+  return <ResolvedPublishFormHost descriptor={resolved.descriptor} />;
+}
+function ResolvedPublishFormHost({descriptor}: PublishFormHostProps): React.ReactElement {
   const host = usePublishForm(descriptor);
 
   // A-05：门禁是**拦截点**，不是字段错误 —— 所以不渲染表单，只给三要素 + 一个动作

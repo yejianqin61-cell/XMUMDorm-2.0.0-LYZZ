@@ -9,6 +9,7 @@
  * 5. ⛔ 屏内**不得**用内联三元按语言选串（`isZh` 加问号那种写法，尺子会拦）—— 一律走本表。
  */
 export const zh = {
+  'publish.media.unavailable': '图片选择暂未开放，可先发布文字',
   'screen.campus.write.placeholder': '写评论',
   'screen.campus.write.send': '发送',
   'screen.campus.write.login': '登录后参与',

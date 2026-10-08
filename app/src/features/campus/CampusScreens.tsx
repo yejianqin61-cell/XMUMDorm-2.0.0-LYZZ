@@ -7,7 +7,7 @@ import {getSecondaryTabs} from '@/features/navigation/secondaryTabs';
 import {getQueryClient} from '@/shared/queryClient';
 import {QK} from '../../../../shared/query/queryKeys';
 import {getConfessionWindow,getConfession} from '../../../../shared/api/confessions';
-import {Screen} from '@/components/ui/Screen';
+import {Screen, type ScreenProps} from '@/components/ui/Screen';
 import {ListScreen, useListPagination} from '@/components/ui/ListScreen';
 import {ListItem} from '@/components/ui/ListItem';
 import {Text} from '@/components/ui/Text';
@@ -50,9 +50,9 @@ function snapshotKey(kind:CampusKind){
  return [...(kind==='wall'?QK.confessionWindow('_guest'):QK.postsInfinite('_guest',10)), 'campusReadSnapshot'];
 }
 
-export function CampusListScreen({initialTab='confession'}:{initialTab?:CampusKind}={}):React.ReactElement {
+export function CampusListScreen({initialTab='confession', ...screenProps}:{initialTab?:CampusKind} & Omit<ScreenProps, 'children' | 'titleKey'>={}):React.ReactElement {
  const {t}=useI18n();const router=useRouter();const [selected,setSelected]=React.useState<CampusKind>(initialTab);
- return <Screen titleKey="screen.campus" showMailbox={false} testID="campus-screen">
+ return <Screen titleKey="screen.campus" showMailbox={false} testID="campus-screen" {...screenProps}>
   <TopTabStrip tabs={getSecondaryTabs('campus')} selectedKey={selected} onSelect={key=>{
    if(key!=='confession'&&key!=='wall')return;
    setSelected(key);router.setParams({tab:key});

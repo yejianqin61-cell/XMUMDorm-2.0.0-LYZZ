@@ -9,6 +9,7 @@
 import type { MessageKey } from './zh';
 
 export const en: Record<MessageKey, string> = {
+  'publish.media.unavailable': 'Image selection is unavailable. You can publish text.',
   'screen.campus.write.placeholder': 'Write a comment',
   'screen.campus.write.send': 'Send',
   'screen.campus.write.login': 'Sign in to join',
