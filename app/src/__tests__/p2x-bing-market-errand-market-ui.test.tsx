@@ -71,3 +71,16 @@ it('连续点击想要只发送一次写请求',async()=>{
  await fireEvent.press(v.getByTestId('market-want'));await fireEvent.press(v.getByTestId('market-want'));
  expect(want).toHaveBeenCalledTimes(1);await act(async()=>finish({want:true,wants_count:3}));await waitFor(()=>expect(v.getByText('已想要 · 3')).toBeTruthy());
 });
+
+it('发布清除缓存后已挂载二手列表重新读取新内容',async()=>{
+ list.mockResolvedValueOnce({list:[row],hasMore:false}).mockResolvedValue({list:[{...row,id:9,title:'New'}],hasMore:false});
+ const v=await renderApp(<MarketListScreen/>);await waitFor(()=>expect(v.getByTestId('market-row-1')).toBeTruthy());
+ await act(async()=>getQueryClient().removeQueries({queryKey:['bing-market','list']}));
+ await waitFor(()=>expect(v.getByTestId('market-row-9')).toBeTruthy());expect(v.queryByTestId('market-row-1')).toBeNull();
+});
+it('想要响应丢失后下一次操作先读权威状态，不能反向切换',async()=>{
+ detail.mockResolvedValueOnce(full).mockResolvedValue({...full,viewer:{want:true},wants_count:3});want.mockRejectedValue(new TypeError('response lost'));
+ const v=await renderApp(<MarketDetailScreen itemId="1"/>);await waitFor(()=>expect(v.getByTestId('market-want')).toBeTruthy());
+ await fireEvent.press(v.getByTestId('market-want'));await waitFor(()=>expect(want).toHaveBeenCalledTimes(1));
+ await fireEvent.press(v.getByTestId('market-want'));await waitFor(()=>expect(v.getByText('已想要 · 3')).toBeTruthy());expect(want).toHaveBeenCalledTimes(1);
+});

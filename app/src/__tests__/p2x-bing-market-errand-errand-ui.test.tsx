@@ -91,3 +91,10 @@ it('删除响应失败保留详情并禁止重复删除',async()=>{
  const v=await renderApp(<ErrandDetailScreen errandId="2"/>);await waitFor(()=>expect(v.getByTestId('errand-delete')).toBeTruthy());await fireEvent.press(v.getByTestId('errand-delete'));await fireEvent.press(v.getByText('确认'));
  await waitFor(()=>expect(v.getByText('操作未确认，请刷新后重试')).toBeTruthy());await fireEvent.press(v.getByTestId('errand-delete'));expect(deleteErrand).toHaveBeenCalledTimes(1);expect(mockReplace).not.toHaveBeenCalled();
 });
+
+it('发布清除缓存后已挂载跑腿列表重新读取新内容',async()=>{
+ list.mockResolvedValueOnce({list:[row],page:1,pageSize:5,total:1}).mockResolvedValue({list:[{...row,id:9}],page:1,pageSize:5,total:1});
+ const v=await renderApp(<ErrandListScreen/>);await waitFor(()=>expect(v.getByTestId('errand-row-2')).toBeTruthy());
+ await act(async()=>getQueryClient().removeQueries({queryKey:['bing-errand','list']}));
+ await waitFor(()=>expect(v.getByTestId('errand-row-9')).toBeTruthy());expect(v.queryByTestId('errand-row-2')).toBeNull();
+});
