@@ -19,6 +19,6 @@ export function createPostPublishDescriptor(_t:Translate,options:{tags:readonly 
  {kind:'textarea',name:'content',labelKey:'publish.bing.content',required:true,validate:v=>typeof v==='string'?undefined:invalid},
  {kind:'multiselect',name:'tagIds',labelKey:'publish.bing.tags',max:3,source:{kind:'remote',options:options.tags},validate:v=>Array.isArray(v)&&v.length<=3&&new Set(v).size===v.length&&v.every(x=>options.tags.some(o=>o.value===x)&&/^[1-9]\d*$/.test(String(x)))?undefined:invalid},
  {kind:'custom',name:'images',labelKey:'publish.bing.images',neverDraft:true,render:options.renderMedia,validate:v=>imagesValid(v,3,true)},
- ]}],submit:async values=>{validate(d,values);const id=idOf(await createPost({title:String(values.title).trim(),content:String(values.content).trim(),type:'normal',tagIds:(values.tagIds as string[]).map(Number),images:Array.isArray(values.images)?values.images.map(({uri,name,type})=>({uri,name,type})):[]}));getQueryClient().removeQueries({queryKey:['posts','infinite']});return {id};},routeAfterSubmit:r=>r?.id?`/post/${r.id}`:'/(tabs)/campus'};
+ ]}],submit:async values=>{validate(d,values);const id=idOf(await createPost({title:String(values.title).trim(),content:String(values.content).trim(),type:'normal',tagIds:(values.tagIds as string[]).map(Number),images:Array.isArray(values.images)?values.images.map(({uri,name,type})=>({uri,name,type})):[]}));getQueryClient().removeQueries({queryKey:['posts','infinite']});return {id};},routeAfterSubmit:r=>r?.id?`/campus/${r.id}`:'/(tabs)/campus'};
  return d;
 }
