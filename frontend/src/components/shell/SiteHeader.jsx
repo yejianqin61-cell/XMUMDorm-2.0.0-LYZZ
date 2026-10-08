@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Languages, Mail, PenLine, Shield } from 'lucide-react';
-import { useLanguage } from '../../context/LanguageContext';
-import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContextState';
+import { useAuth } from '../../context/AuthContextState';
 
 function joinClassNames(...parts) {
   return parts.filter(Boolean).join(' ');

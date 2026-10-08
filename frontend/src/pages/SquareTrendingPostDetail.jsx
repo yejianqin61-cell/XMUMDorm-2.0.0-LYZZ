@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContextState';
+import { useLanguage } from '../context/LanguageContextState';
 import {
   getTrendingPostDetail,
   getTrendingPostComments,
@@ -10,8 +10,8 @@ import {
   likeTrendingPost,
 } from '@shared/api/square';
 import { API_BASE_URL } from '@shared/api/config';
-import { Toast } from '../context/ToastContext';
-import { useExpFeedback } from '../context/ExpFeedbackContext';
+import { Toast } from '../context/toast';
+import { useExpFeedback } from '../context/ExpFeedbackContextState';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { QK } from '@shared/query/queryKeys';
 import PostDetailShell from '../components/PostDetailShell';

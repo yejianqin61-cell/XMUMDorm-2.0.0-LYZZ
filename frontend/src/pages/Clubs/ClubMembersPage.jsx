@@ -1,7 +1,7 @@
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
-import { useLanguage } from '../../context/LanguageContext';
+import { useLanguage } from '../../context/LanguageContextState';
 import { QK } from '@shared/query/queryKeys';
 import { getClubProfile } from '@shared/api/clubs';
 import NeoCard from '../../components/retroui/Card';

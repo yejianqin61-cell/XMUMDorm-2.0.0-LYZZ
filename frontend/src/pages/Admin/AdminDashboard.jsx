@@ -12,7 +12,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { getDashboard } from '@shared/api/admin';
-import { useLanguage } from '../../context/LanguageContext';
+import { useLanguage } from '../../context/LanguageContextState';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';

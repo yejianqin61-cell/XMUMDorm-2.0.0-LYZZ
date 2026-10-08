@@ -3,8 +3,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Hand, MapPin, Phone, Trash2 } from 'lucide-react';
 import ReportButton from '../../components/ReportButton';
-import { useLanguage } from '../../context/LanguageContext';
-import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContextState';
+import { useAuth } from '../../context/AuthContextState';
 import { QK } from '@shared/query/queryKeys';
 import { queryClient } from '@shared/query/queryClient';
 import { deleteErrand, getErrandDetail, takeErrand } from '@shared/api/errands';
@@ -32,7 +32,7 @@ function ErrandDetail() {
     const isOwner = Number(e.owner?.id) === Number(user.id);
     if (e.status === 'done') return false;
     return isAdmin || isOwner;
-  }, [e, user?.id]);
+  }, [e, user?.id, user?.role]);
 
   const takeMut = useMutation({
     mutationFn: async () => await takeErrand(errandId),

@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { AuthContext } from './AuthContextState';
+import {   useState, useCallback, useEffect } from 'react';
 import { API_BASE_URL } from '@shared/api/config';
 import { getMe } from '@shared/api/users';
 import { getApiErrorMessage, apiFailureFromResponse } from '@shared/utils/apiError';
@@ -22,7 +23,7 @@ function normalizeAvatar(url) {
   return url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
 }
 
-const AuthContext = createContext(null);
+
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
@@ -35,16 +36,14 @@ export function AuthProvider({ children }) {
   });
   const [token, setToken] = useState(() => localStorage.getItem(STORAGE_TOKEN));
   const [profile, setProfile] = useState(getStoredProfile);
-  const [userLoading, setUserLoading] = useState(false);
+  const [userLoading, setUserLoading] = useState(() => !!localStorage.getItem(STORAGE_TOKEN));
   const [userError, setUserError] = useState(null);
 
   const isLoggedIn = !!token;
 
   /** 登录后从 API 拉取当前用户（/me），用于头像、昵称、本周点评数等 */
-  const refreshUser = useCallback(() => {
+  const fetchUser = useCallback(() => {
     if (!token) return Promise.resolve();
-    setUserLoading(true);
-    setUserError(null);
     return getMe()
       .then((data) => {
         const u = {
@@ -54,7 +53,7 @@ export function AuthProvider({ children }) {
         setUser(u);
         try {
           localStorage.setItem(STORAGE_USER, JSON.stringify(u));
-        } catch (_) {}
+        } catch { /* Best-effort operation: keep the existing fallback when this fails. */ }
         return u;
       })
       .catch((err) => {
@@ -64,10 +63,16 @@ export function AuthProvider({ children }) {
       .finally(() => setUserLoading(false));
   }, [token]);
 
+  const refreshUser = useCallback(() => {
+    setUserLoading(!!token);
+    setUserError(null);
+    return fetchUser();
+  }, [token, fetchUser]);
+
   useEffect(() => {
     if (!token) return;
-    refreshUser();
-  }, [token, refreshUser]);
+    fetchUser().catch(() => { /* Error is exposed through userError. */ });
+  }, [token, fetchUser]);
 
   /** 是否为商家（后端 user.role === 'merchant'） */
   const isMerchant = user?.role === 'merchant' || user?.is_merchant === true;
@@ -127,6 +132,8 @@ export function AuthProvider({ children }) {
     if (data && data.status === 0 && data.token) {
       localStorage.setItem(STORAGE_TOKEN, data.token);
       if (data.data) localStorage.setItem(STORAGE_USER, JSON.stringify(data.data));
+      setUserLoading(true);
+      setUserError(null);
       setToken(data.token);
       setUser(data.data || null);
       return { success: true, exp: data.exp || null };
@@ -141,6 +148,8 @@ export function AuthProvider({ children }) {
   const logout = useCallback(() => {
     localStorage.removeItem(STORAGE_TOKEN);
     localStorage.removeItem(STORAGE_USER);
+    setUserLoading(false);
+    setUserError(null);
     setToken(null);
     setUser(null);
   }, []);
@@ -184,8 +193,4 @@ export function AuthProvider({ children }) {
   );
 }
 
-export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
-  return ctx;
-}
+

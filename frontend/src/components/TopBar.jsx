@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useLanguage } from '../context/LanguageContext';
+import { useLanguage } from '../context/LanguageContextState';
 
 /** 微信风格顶部栏：标题居中，可选左侧返回、右侧语言切换+信箱 */
 function TopBar({ title, showBack }) {

@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Toast } from '../context/ToastContext';
+import { Toast } from '../context/toast';
 import EmptyState from '../components/ui/EmptyState';
 import { getProduct, postProductComment } from '@shared/api/canteen';
 import { getApiErrorMessage } from '@shared/utils/apiError';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContextState';
 import './FoodReviewPublish.css';
 
 /** 评级选项：与后端 RATING_ENUM 一致 */
@@ -47,16 +47,21 @@ function FoodReviewPublish() {
     }
   }, [id, isAdmin, isLoggedIn, isMerchant, navigate]);
 
+  const requestKey = id;
+  const [previousRequestKey, setPreviousRequestKey] = useState(requestKey);
+  if (previousRequestKey !== requestKey) {
+    setPreviousRequestKey(requestKey);
+    setLoading(!!(id && parseInt(id, 10)));
+    setError(null);
+    if (!(id && parseInt(id, 10))) { setFood(null); }
+  }
+
   useEffect(() => {
     const productId = id ? parseInt(id, 10) : 0;
     if (!productId) {
-      setFood(null);
-      setLoading(false);
       return;
     }
     let cancelled = false;
-    setLoading(true);
-    setError(null);
     getProduct(productId)
       .then((data) => {
         if (cancelled) return;

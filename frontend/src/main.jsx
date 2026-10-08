@@ -15,7 +15,7 @@ window.addEventListener('vite:preloadError', (event) => {
   const storage = (() => {
     try {
       return window.sessionStorage;
-    } catch (_) {
+    } catch {
       return null;
     }
   })();
@@ -66,5 +66,5 @@ setTimeout(function () {
         }
       }).catch(function () {});
     }
-  } catch (_) {}
+  } catch { /* Best-effort operation: keep the existing fallback when this fails. */ }
 }, 500);

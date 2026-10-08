@@ -2,9 +2,9 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ExternalLink, MapPin, ArrowLeft, UserPlus, PlusCircle, Save, UserRoundPlus, Pencil, MessageSquarePlus, Trash2 } from 'lucide-react';
-import { useLanguage } from '../../context/LanguageContext';
-import { useAuth } from '../../context/AuthContext';
-import { Toast } from '../../context/ToastContext';
+import { useLanguage } from '../../context/LanguageContextState';
+import { useAuth } from '../../context/AuthContextState';
+import { Toast } from '../../context/toast';
 import { QK } from '@shared/query/queryKeys';
 import {
   addClubMember,

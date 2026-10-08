@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Plus, Trash2, Loader2, AlertTriangle, ToggleLeft, ToggleRight } from 'lucide-react';
 import { get, post, del, patch } from '@shared/api/request';
-import { useLanguage } from '../../context/LanguageContext';
+import { useLanguage } from '../../context/LanguageContextState';
 
 const PAGE_SIZE = 50;
 

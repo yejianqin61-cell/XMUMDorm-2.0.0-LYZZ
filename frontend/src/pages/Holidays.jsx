@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { CalendarDays } from 'lucide-react';
-import { useLanguage } from '../context/LanguageContext';
+import { useLanguage } from '../context/LanguageContextState';
 import { upcomingHolidays, daysUntil, formatHolidayDate } from '../data/holidays';
 import './Holidays.css';
 

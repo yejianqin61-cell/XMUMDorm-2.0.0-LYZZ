@@ -3,9 +3,9 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { SendHorizonal, PenLine } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/AuthContextState';
 import { API_BASE_URL } from '@shared/api/config';
-import { Toast } from '../../context/ToastContext';
+import { Toast } from '../../context/toast';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import NeoButton from '../retroui/Button';
 import NeoInput from '../retroui/Input';
@@ -80,7 +80,7 @@ export default function ClubCommentsSection({ targetType, targetId, isZh, floati
     staleTime: 20 * 1000,
   });
 
-  const comments = commentsQuery.data ?? [];
+  const comments = useMemo(() => commentsQuery.data ?? [], [commentsQuery.data]);
   const totalCount = useMemo(
     () => comments.reduce((sum, c) => sum + 1 + (c.replies?.length || 0), 0),
     [comments]
@@ -152,7 +152,6 @@ export default function ClubCommentsSection({ targetType, targetId, isZh, floati
 
   useEffect(() => {
     if (!floatingComposer || !sheetOpen) {
-      setKeyboardInset(0);
       return undefined;
     }
     const vv = window.visualViewport;
@@ -161,10 +160,11 @@ export default function ClubCommentsSection({ targetType, targetId, isZh, floati
       const inset = Math.max(0, window.innerHeight - vv.height - (vv.offsetTop || 0));
       setKeyboardInset(inset);
     };
-    update();
+    const frame = requestAnimationFrame(update);
     vv.addEventListener('resize', update);
     vv.addEventListener('scroll', update);
     return () => {
+      cancelAnimationFrame(frame);
       vv.removeEventListener('resize', update);
       vv.removeEventListener('scroll', update);
     };
@@ -253,7 +253,7 @@ export default function ClubCommentsSection({ targetType, targetId, isZh, floati
             <div
               className="club-comment-sheet"
               style={{
-                paddingBottom: `calc(14px + ${keyboardInset}px + env(safe-area-inset-bottom, 0px))`,
+                paddingBottom: `calc(14px + ${floatingComposer && sheetOpen ? keyboardInset : 0}px + env(safe-area-inset-bottom, 0px))`,
               }}
               role="dialog"
               aria-modal="true"

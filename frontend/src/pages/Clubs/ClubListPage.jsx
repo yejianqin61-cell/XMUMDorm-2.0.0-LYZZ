@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Search } from 'lucide-react';
-import { useLanguage } from '../../context/LanguageContext';
+import { useLanguage } from '../../context/LanguageContextState';
 import { listClubs } from '@shared/api/clubs';
 import NeoInput from '../../components/retroui/Input';
 import NeoCard from '../../components/retroui/Card';

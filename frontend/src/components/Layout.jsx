@@ -4,14 +4,14 @@ import { Link } from 'react-router-dom';
 import { PenLine } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import TabBar from './TabBar';
-import { getTabIndex } from './TabBar';
+import { getTabIndex } from './tabRoutes';
 import TreeHole from '../pages/TreeHole';
 import CanteenHome from '../pages/CanteenHome';
 import SquareHome from '../pages/SquareHome';
 import MyZone from '../pages/MyZone';
-import { useLanguage } from '../context/LanguageContext';
+import { useLanguage } from '../context/LanguageContextState';
 import { enterFullscreen } from '../utils/fullscreen';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContextState';
 import { getUnreadAnnouncements, markNotificationRead, markNotificationsReadBatch } from '@shared/api/notifications';
 import { QK } from '@shared/query/queryKeys';
 import { BACKGROUND_IMAGES } from '../config/backgrounds';
@@ -73,14 +73,9 @@ function Layout({ mode = 'mobile' }) {
   const activeTabIndex = useMemo(() => getTabIndex(pathname), [pathname]);
   // 性能：Tab 常驻模式下，未访问过的 Tab 不挂载，避免无关页面的 Query 同时触发
   const [mountedTabs, setMountedTabs] = useState(() => new Set([getTabIndex(pathname)]));
-  useEffect(() => {
-    setMountedTabs((prev) => {
-      if (prev.has(activeTabIndex)) return prev;
-      const next = new Set(prev);
-      next.add(activeTabIndex);
-      return next;
-    });
-  }, [activeTabIndex]);
+  if (!mountedTabs.has(activeTabIndex)) {
+    setMountedTabs(new Set([...mountedTabs, activeTabIndex]));
+  }
 
   useEffect(() => {
     if (isDesktopShell) return;
@@ -132,7 +127,7 @@ function Layout({ mode = 'mobile' }) {
     enterFullscreen();
   };
 
-  const title = resolvePageTitle(pathname, isZh);
+  resolvePageTitle(pathname, isZh);
   const showTreeHoleFab = !isDesktopShell && (pathname === '/' || pathname === '/treehole') && activeTabIndex === 1;
   const desktopRootRoute = isDesktopShell ? renderDesktopRootRoute(pathname) : null;
   const routeContent = isDesktopShell

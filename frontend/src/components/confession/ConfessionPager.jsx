@@ -19,7 +19,7 @@
  * 无障碍：容器 role=region，翻页按钮为真实 button（键盘与鼠标等价），
  * 当前篇通过 aria-live 播报。
  */
-import { useLanguage } from '../../context/LanguageContext';
+import { useLanguage } from '../../context/LanguageContextState';
 
 /** 与 CSS 中 --cf-pager-height 保持一致，供内联样式计算位移 */
 export const PAGER_PANE_HEIGHT = 'var(--cf-pager-height, 88vh)';

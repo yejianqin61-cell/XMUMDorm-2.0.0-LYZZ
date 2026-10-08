@@ -1,4 +1,4 @@
-import { useLanguage } from '../context/LanguageContext';
+import { useLanguage } from '../context/LanguageContextState';
 import './Disclaimer.css';
 
 function Disclaimer() {

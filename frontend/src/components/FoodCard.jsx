@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Card from './ui/Card';
-import { useLanguage } from '../context/LanguageContext';
+import { useLanguage } from '../context/LanguageContextState';
 import ImagePreview from './ImagePreview';
 import { productImageUrl } from '@shared/api/config';
 import './FoodCard.css';

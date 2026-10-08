@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContextState';
+import { useLanguage } from '../context/LanguageContextState';
 import EmptyState from '../components/ui/EmptyState';
 import ErrorState from '../components/ui/ErrorState';
 import PageSkeleton from '../components/ui/PageSkeleton';
@@ -103,15 +103,20 @@ function Mailbox() {
     { key: 'system', label: '系统', labelEn: 'System' },
   ];
 
+  const requestKey = `${isLoggedIn}:${tab}`;
+  const [previousRequestKey, setPreviousRequestKey] = useState(requestKey);
+  if (previousRequestKey !== requestKey) {
+    setPreviousRequestKey(requestKey);
+    setLoading(isLoggedIn);
+    setError(null);
+    if (!(isLoggedIn)) { setData({ list: [], hasMore: false }); }
+  }
+
   useEffect(() => {
     if (!isLoggedIn) {
-      setData({ list: [], hasMore: false });
-      setLoading(false);
       return;
     }
     let cancelled = false;
-    setLoading(true);
-    setError(null);
 
     const opts = { page: 1, pageSize: 50 };
     if (tab !== 'all') opts.category = tab;
@@ -191,7 +196,7 @@ function Mailbox() {
         };
       })
       .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-  }, [data?.list]);
+  }, [data]);
 
   const handleGroupClick = (g) => {
     const unread = (g?.sorted || []).filter((x) => !x.is_read);

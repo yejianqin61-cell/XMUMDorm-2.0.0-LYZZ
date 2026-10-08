@@ -2,7 +2,7 @@ import { memo, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Clock3 } from 'lucide-react';
-import { useLanguage } from '../../context/LanguageContext';
+import { useLanguage } from '../../context/LanguageContextState';
 import '../../pages/Marketplace/Marketplace.css';
 
 function formatRelativeTime(createdAt, isZh) {
@@ -37,11 +37,11 @@ function MarketplaceItemCard({ item }) {
   const delivery = deliveryLabel(it.delivery_method, isZh);
   const viewsLabel = isZh ? `${Number(it.views_count || 0)}查看` : `${Number(it.views_count || 0)} views`;
 
-  const tags = useMemo(() => {
+  useMemo(() => {
     const raw = Array.isArray(it.tags) ? it.tags : [];
     const picked = raw.map((t) => String(t || '').trim()).filter(Boolean).slice(0, 2);
     return picked;
-  }, [it.tags, it.delivery_method, isZh]);
+  }, [it.tags]);
 
   const title = String(it.title || '').trim();
   const sellerName = String(it.sellerName || (isZh ? '匿名卖家' : 'Seller'));

@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
-import { useLanguage } from '../context/LanguageContext';
+import { useLanguage } from '../context/LanguageContextState';
 import { getCampusFeed } from '@shared/api/square';
 import { getUploadUrl } from '@shared/api/config';
 import ErrorState from '../components/ui/ErrorState';

@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Search, ChevronLeft, ChevronRight, Loader2, AlertTriangle } from 'lucide-react';
 import { getAdminUsers } from '@shared/api/admin';
-import { useLanguage } from '../../context/LanguageContext';
+import { useLanguage } from '../../context/LanguageContextState';
 
 const PAGE_SIZE = 20;
 

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useLanguage } from '../../context/LanguageContext';
+import { useLanguage } from '../../context/LanguageContextState';
 
 export default function TodayCampusTrendingBoard({ topics = [], compact = false }) {
   const { lang } = useLanguage();

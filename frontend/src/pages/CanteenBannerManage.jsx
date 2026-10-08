@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useLanguage } from '../context/LanguageContext';
-import { useAuth } from '../context/AuthContext';
-import { Toast } from '../context/ToastContext';
+import { useLanguage } from '../context/LanguageContextState';
+import { useAuth } from '../context/AuthContextState';
+import { Toast } from '../context/toast';
 import { getCanteenStrings } from '../i18n/canteenStrings';
 import {
   getCanteenBannersAdmin,

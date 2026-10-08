@@ -8,12 +8,12 @@ import {
   getOrganizationMembers,
   addOrganizationMember,
   removeOrganizationMember,
-  searchUsersByEmail,
+  
 } from '@shared/api/organizations';
 import {
   getTrendingTopics,
   createTrendingTopic,
-  updateTrendingTopic,
+  
   deleteTrendingTopic,
   getSquareBannersAdmin,
   createSquareBannerForm,
@@ -76,7 +76,7 @@ export default function SquareOrgAdmin() {
 
 // ========== 组织管理 ==========
 function OrgManager() {
-  const queryClient = useQueryClient();
+  useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: QK.organizationsList(''),
     queryFn: () => getOrganizations(),
@@ -194,7 +194,7 @@ function MemberManager({ org, onClose }) {
       queryClient.invalidateQueries({ queryKey: QK.organizationMembers(org.id) });
       setEmail('');
       setTitle('');
-    } catch {}
+    } catch { /* Best-effort operation: keep the existing fallback when this fails. */ }
     setAdding(false);
   };
 
@@ -203,7 +203,7 @@ function MemberManager({ org, onClose }) {
     try {
       await removeOrganizationMember(org.id, mid);
       queryClient.invalidateQueries({ queryKey: QK.organizationMembers(org.id) });
-    } catch {}
+    } catch { /* Best-effort operation: keep the existing fallback when this fails. */ }
   };
 
   return (
@@ -420,7 +420,7 @@ function BannerForm({ banner, advertisements = [], onClose }) {
       }
       queryClient.invalidateQueries({ queryKey: QK.squareBanners() });
       onClose();
-    } catch {} finally { setSaving(false); }
+    } catch { /* Best-effort operation: keep the existing fallback when this fails. */ } finally { setSaving(false); }
   };
 
   return (

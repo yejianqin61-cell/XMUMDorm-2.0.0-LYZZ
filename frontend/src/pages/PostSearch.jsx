@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContextState';
+import { useLanguage } from '../context/LanguageContextState';
 import PostCard from '../components/PostCard';
 import PageSkeleton from '../components/ui/PageSkeleton';
 import ListPageLayout from '../components/templates/ListPageLayout';

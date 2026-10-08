@@ -2,8 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Filter, Search, UserCircle } from 'lucide-react';
-import { useLanguage } from '../../context/LanguageContext';
-import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContextState';
+import { useAuth } from '../../context/AuthContextState';
 import { getMarketplaceCategories, listMarketplaceItems } from '@shared/api/marketplace';
 import { QK } from '@shared/query/queryKeys';
 import MarketplaceItemCard from '../../components/marketplace/MarketplaceItemCard';
@@ -14,10 +14,7 @@ function statusLabel(s, isZh) {
   return isZh ? '在售' : 'On sale';
 }
 
-function deliveryLabel(v, isZh) {
-  if (v === 'delivery') return isZh ? '配送' : 'Delivery';
-  return isZh ? '自提' : 'Pickup';
-}
+
 
 function MarketplaceHome() {
   const { lang } = useLanguage();
@@ -70,7 +67,7 @@ function MarketplaceHome() {
 
   const categories = useMemo(() => catQuery.data || [], [catQuery.data]);
   const list = useMemo(() => itemsQuery.data?.list || [], [itemsQuery.data]);
-  const isLoading = itemsQuery.isFetching && !itemsQuery.data;
+  itemsQuery.isFetching && !itemsQuery.data;
   const showSkeletons = itemsQuery.isFetching && (itemsQuery.data?.list || []).length === 0;
 
   return (

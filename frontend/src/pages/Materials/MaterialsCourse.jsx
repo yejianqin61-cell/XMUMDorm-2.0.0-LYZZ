@@ -11,7 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, GraduationCap, Upload } from 'lucide-react';
 import { listCourses, listMaterials } from '@shared/api/materials';
 import { QK } from '@shared/query/queryKeys';
-import { useLanguage } from '../../context/LanguageContext';
+import { useLanguage } from '../../context/LanguageContextState';
 import MaterialCard from '../../components/materials/MaterialCard';
 import { TYPES, TYPE_META, EXAM_NODES, EXAM_NODE_META } from '@shared/constants/materials';
 import './Materials.css';

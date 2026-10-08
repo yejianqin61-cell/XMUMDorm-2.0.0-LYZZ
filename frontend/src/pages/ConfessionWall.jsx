@@ -11,9 +11,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
-import { Toast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContextState';
+import { useLanguage } from '../context/LanguageContextState';
+import { Toast } from '../context/toast';
 import { QK } from '@shared/query/queryKeys';
 import {
   getConfessionWindow,
@@ -118,7 +118,7 @@ export default function ConfessionWall() {
           const next = direction === 'older' ? appendOlder(prev, page) : prependNewer(prev, page);
           return trimWindow(next);
         });
-      } catch (err) {
+      } catch {
         Toast.error(isZh ? '加载失败，请稍后重试' : 'Failed to load');
       } finally {
         setLoadingEdge(null);

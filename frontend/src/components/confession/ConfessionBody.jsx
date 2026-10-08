@@ -4,7 +4,7 @@
  * 版式契约见 docs/04-Module/M09-万能墙/Module09-万能墙模块设计.md §5.2。
  * 三款版式共用同一个卡片外壳（ConfessionCard），差异只在这里的正文排布。
  */
-import { getTemplate, normalizeTemplateKey } from '@shared/constants/confessionTemplates';
+import {  normalizeTemplateKey } from '@shared/constants/confessionTemplates';
 
 /** 大字卡：短句心意，居中大字 */
 function BigTypeBody({ content }) {
@@ -75,4 +75,4 @@ export default function ConfessionBody({ templateKey, content, anonymousLabel = 
   }
 }
 
-export { getTemplate };
+

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useLanguage } from '../../context/LanguageContext';
+import { useLanguage } from '../../context/LanguageContextState';
 import { getCanteenStrings } from '../../i18n/canteenStrings';
 import Card from '../../components/ui/Card';
 

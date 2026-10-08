@@ -34,11 +34,10 @@ export default function MarkdownViewer({ text, baseUrl = '', dir = '', showToc =
       h2: heading('h2'),
       h3: heading('h3'),
       h4: heading('h4'),
-      img: ({ node, src, alt, ...rest }) => (
-        // eslint-disable-next-line jsx-a11y/alt-text
+      img: ({ node: _node, src, alt, ...rest }) => (
         <img src={resolveRepoUrl(src, baseUrl, dir)} alt={alt || ''} loading="lazy" {...rest} />
       ),
-      a: ({ node, href, children, ...rest }) => (
+      a: ({ node: _node, href, children, ...rest }) => (
         <a href={resolveRepoUrl(href, baseUrl, dir)} target="_blank" rel="noopener noreferrer" {...rest}>
           {children}
         </a>

@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { BookOpen, ChevronLeft, ChevronRight, Coffee, MapPin, RefreshCw, Upload, X } from 'lucide-react';
-import { useLanguage } from '../context/LanguageContext';
-import { useAuth } from '../context/AuthContext';
-import { Toast } from '../context/ToastContext';
+import { useLanguage } from '../context/LanguageContextState';
+import { useAuth } from '../context/AuthContextState';
+import { Toast } from '../context/toast';
 import { commitScheduleImport, getScheduleWeek, previewScheduleImport } from '@shared/api/schedule';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { QK } from '@shared/query/queryKeys';
@@ -187,7 +187,7 @@ function Schedule() {
       const reg = await navigator.serviceWorker.ready;
       const sub = await reg.pushManager.getSubscription();
       setPushOn(!!sub);
-    } catch (_) {
+    } catch {
       setPushOn(false);
     }
   }, [pushSupported]);
@@ -306,7 +306,7 @@ function Schedule() {
         await sub.unsubscribe();
         try {
           await unsubscribePushEndpoint(ep);
-        } catch (_) {
+        } catch {
           /* 仍取消本地订阅 */
         }
       }

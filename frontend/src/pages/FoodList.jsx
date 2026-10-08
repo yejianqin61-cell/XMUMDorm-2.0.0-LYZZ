@@ -8,8 +8,8 @@ import CategorySidebar from '../components/CategorySidebar';
 import CategorySection from '../components/CategorySection';
 import PageSkeleton from '../components/ui/PageSkeleton';
 import EmptyState from '../components/ui/EmptyState';
-import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContextState';
+import { useLanguage } from '../context/LanguageContextState';
 import { getShop, getCategories, getProducts } from '@shared/api/canteen';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { getUploadUrl, productImageUrl } from '@shared/api/config';
@@ -128,17 +128,13 @@ function FoodList() {
     prodsQ.isPending,
   ]);
 
-  useEffect(() => {
+  const [previousShopId, setPreviousShopId] = useState(shopId);
+  if (previousShopId !== shopId) {
+    setPreviousShopId(shopId);
     setActiveId(null);
-  }, [shopId]);
-
-  useEffect(() => {
-    if (categories.length === 0) return;
-    setActiveId((prev) => {
-      if (prev != null && categories.some((c) => String(c.id) === String(prev))) return prev;
-      return categories[0].id;
-    });
-  }, [categories]);
+  } else if (categories.length && !categories.some((c) => String(c.id) === String(activeId))) {
+    setActiveId(categories[0].id);
+  }
 
   const handleCategorySelect = (catId) => {
     scrollTargetRef.current = catId;

@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContextState';
+import { useLanguage } from '../context/LanguageContextState';
 import { listMyClubs } from '@shared/api/clubs';
 import RouteTransition from '../components/ui/RouteTransition';
 import './PublishCenter.css';
@@ -13,7 +13,7 @@ function PublishCenter() {
   const { isLoggedIn, isAdmin } = useAuth();
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
-  const [activeEntry, setActiveEntry] = useState('treehole');
+  const [activeEntry, setActiveEntry] = useState(() => searchParams.get('entry') === 'club' ? 'club' : 'treehole');
 
   const entries = [
     { key: 'treehole', title: isZh ? '发树洞' : 'TreeHole', to: '/post/new' },
@@ -28,14 +28,14 @@ function PublishCenter() {
     enabled: isLoggedIn && activeEntry === 'club',
   });
 
-  const openEntry = (path) => {
+  const openEntry = useCallback((path) => {
     if (!isLoggedIn) {
       const target = new URL(path, window.location.origin);
       navigate('/login', { state: { from: { pathname: target.pathname, search: target.search } } });
       return;
     }
     navigate(path);
-  };
+  }, [isLoggedIn, navigate]);
 
   useEffect(() => {
     const entryPath = {
@@ -46,8 +46,7 @@ function PublishCenter() {
     }[searchParams.get('entry')];
 
     if (entryPath) openEntry(entryPath);
-    if (searchParams.get('entry') === 'club') setActiveEntry('club');
-  }, [searchParams, isLoggedIn, navigate]);
+  }, [searchParams, openEntry]);
 
   const selectedEntry = entries.find((entry) => entry.key === activeEntry) || entries[0];
 

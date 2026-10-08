@@ -12,8 +12,8 @@ import LikeBurst from '../components/LikeBurst';
 import PageHeader from '../components/templates/PageHeader';
 import SectionHeader from '../components/templates/SectionHeader';
 import DetailPageLayout from '../components/templates/DetailPageLayout';
-import { useAuth } from '../context/AuthContext';
-import { Toast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContextState';
+import { Toast } from '../context/toast';
 import {
   getProduct,
   getProductComments,
@@ -107,7 +107,7 @@ export default function FoodDetail() {
   const foodLoading = productId > 0 && productQuery.isPending;
   const foodError = productQuery.error ? getApiErrorMessage(productQuery.error) : null;
   const food = productQuery.data ?? null;
-  const reviews = commentsQuery.data ?? [];
+  const reviews = useMemo(() => commentsQuery.data ?? [], [commentsQuery.data]);
   const reviewsLoading = productId > 0 && commentsQuery.isPending;
   const reviewError = commentsQuery.error ? getApiErrorMessage(commentsQuery.error) : null;
   const favorited = !isLoggedIn ? false : favoriteQuery.data ?? false;
@@ -121,7 +121,7 @@ export default function FoodDetail() {
       if (first) return first;
     }
     return DEFAULT_PRODUCT_IMAGE_PATH;
-  }, [food?.image, reviews]);
+  }, [food, reviews]);
 
   const requireLogin = () => {
     if (!isLoggedIn) {
@@ -250,7 +250,7 @@ export default function FoodDetail() {
 
   const totalReviews = reviews.length;
   const ratingDisplay = food.comprehensiveScore != null ? ((Number(food.comprehensiveScore) / 10) * 5).toFixed(1) : null;
-  const metaItems = [
+  [
     { key: 'price', label: `RM ${typeof food.price === 'number' ? food.price.toFixed(2) : String(food.price ?? '-')}` },
     { key: 'rating', label: ratingDisplay != null ? `⭐ ${ratingDisplay}` : '暂无评分' },
     { key: 'reviews', label: `${totalReviews} Reviews` },

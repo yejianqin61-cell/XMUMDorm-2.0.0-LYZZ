@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContextState';
+import { useLanguage } from '../context/LanguageContextState';
 import { API_BASE_URL } from '@shared/api/config';
 import { formatPostTime } from '@shared/utils/formatTime';
 import { toggleLike } from '@shared/api/posts';
-import { useExpFeedback } from '../context/ExpFeedbackContext';
+import { useExpFeedback } from '../context/ExpFeedbackContextState';
 import UserLevelBadge from './UserLevelBadge';
 import ImagePreview from './ImagePreview';
 import Tag from './ui/Tag';
@@ -80,10 +80,13 @@ function PostCard({ post, variant = 'list' }) {
   const [likeNum, setLikeNum] = useState(initialLike);
   const [liked, setLiked] = useState(!!post.user_liked);
 
-  useEffect(() => {
-    setLikeNum(like_count ?? likeCount ?? 0);
+  const serverKey = `${post.id}:${initialLike}:${!!post.user_liked}`;
+  const [previousServerKey, setPreviousServerKey] = useState(serverKey);
+  if (previousServerKey !== serverKey) {
+    setPreviousServerKey(serverKey);
+    setLikeNum(initialLike);
     setLiked(!!post.user_liked);
-  }, [post.id, post.user_liked, post.like_count, post.likeCount, like_count, likeCount]);
+  }
 
   const handleLikeClick = async (e) => {
     e.preventDefault();

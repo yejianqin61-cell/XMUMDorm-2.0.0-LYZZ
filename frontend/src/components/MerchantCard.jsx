@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import Card from './ui/Card';
-import { useLanguage } from '../context/LanguageContext';
+import { useLanguage } from '../context/LanguageContextState';
 import './MerchantCard.css';
 import { DEFAULT_PRODUCT_IMAGE_PATH, DEFAULT_SHOP_LOGO_PATH } from '@shared/api/config';
 
@@ -35,7 +35,7 @@ function MerchantCard({ merchant }) {
             className="merchant-card-logo"
             onError={(e) => {
               // 如果你尚未把默认商家 logo 放到 frontend/public，那么回退到商品默认图，避免坏图
-              // eslint-disable-next-line no-param-reassign
+               
               e.currentTarget.src = DEFAULT_PRODUCT_IMAGE_PATH;
             }}
           />

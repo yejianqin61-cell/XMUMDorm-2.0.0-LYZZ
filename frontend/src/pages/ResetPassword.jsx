@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { sendResetCode, resetPassword } from '@shared/api/auth';
 import { getApiErrorMessage } from '@shared/utils/apiError';
-import { useLanguage } from '../context/LanguageContext';
+import { useLanguage } from '../context/LanguageContextState';
 import AuthPageShell from '../components/auth/AuthPageShell';
 import MascotHero from '../components/auth/MascotHero';
 import LoginCard from '../components/auth/LoginCard';

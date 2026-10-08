@@ -8,7 +8,7 @@ import { getUploadUrl, DEFAULT_PRODUCT_IMAGE_PATH } from '@shared/api/config';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { AREA_LABELS } from '../components/AreaCard';
 import { findRegionByCode, normalizeAreaCodeParam } from '@shared/utils/regionCode';
-import { useLanguage } from '../context/LanguageContext';
+import { useLanguage } from '../context/LanguageContextState';
 import { getCanteenAreaRankingStrings } from '../i18n/canteenAreaRanking';
 import { QK } from '@shared/query/queryKeys';
 import './Rankings.css';

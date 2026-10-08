@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContextState';
+import { useLanguage } from '../context/LanguageContextState';
 import { getMyProductReviews } from '@shared/api/canteen';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import ReviewCard from '../components/ReviewCard';
@@ -15,15 +15,20 @@ function MyReviews() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const requestKey = token;
+  const [previousRequestKey, setPreviousRequestKey] = useState(requestKey);
+  if (previousRequestKey !== requestKey) {
+    setPreviousRequestKey(requestKey);
+    setLoading(!!token);
+    setError(null);
+    if (!token) { setList([]); }
+  }
+
   useEffect(() => {
     if (!token) {
-      setLoading(false);
-      setList([]);
       return;
     }
     let cancelled = false;
-    setLoading(true);
-    setError(null);
     getMyProductReviews({ page: 1, pageSize: 30 }, token)
       .then((data) => {
         if (!cancelled) setList(data?.list ?? []);

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { useLanguage } from '../../context/LanguageContext';
+import { useLanguage } from '../../context/LanguageContextState';
 import { getCanteenStrings } from '../../i18n/canteenStrings';
 import {
   getRankingsHotProducts,
@@ -103,7 +103,7 @@ export default function CanteenHomeRankings({ title, showTabs = true, footer }) 
     );
   };
 
-  const tabValues = TABS.map((_, i) => String(i));
+  TABS.map((_, i) => String(i));
   const currentTabValue = String(tab);
 
   return (

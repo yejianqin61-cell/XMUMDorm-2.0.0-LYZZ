@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Check, Copy, Search, TriangleAlert } from 'lucide-react';
-import { useLanguage } from '../../context/LanguageContext';
-import { Toast } from '../../context/ToastContext';
+import { useLanguage } from '../../context/LanguageContextState';
+import { Toast } from '../../context/toast';
 import NeoCard from '../../components/retroui/Card';
 import NeoBadge from '../../components/retroui/Badge';
 import NeoInput from '../../components/retroui/Input';

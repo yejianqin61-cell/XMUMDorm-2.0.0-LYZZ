@@ -6,7 +6,7 @@ function NeoPopover({ children, ...props }) {
   return <div className="relative inline-block" {...props}>{children}</div>;
 }
 
-function PopoverTrigger({ className = '', children, asChild, ...props }) {
+function PopoverTrigger({ className = '', children, asChild: _asChild, ...props }) {
   return (
     <span className={cn('inline-flex', className)} {...props}>
       {children}
@@ -29,6 +29,7 @@ function PopoverContent({
   const [pos, setPos] = useState({ top: 0, left: 0 });
 
   useEffect(() => {
+    const frame = requestAnimationFrame(() => {
     if (open && triggerRef?.current && contentRef.current) {
       const triggerRect = triggerRef.current.getBoundingClientRect();
       const contentRect = contentRef.current.getBoundingClientRect();
@@ -48,6 +49,8 @@ function PopoverContent({
 
       setPos({ top: top + window.scrollY, left: left + window.scrollX });
     }
+    });
+    return () => cancelAnimationFrame(frame);
   }, [open, triggerRef, align, side, sideOffset]);
 
   useEffect(() => {

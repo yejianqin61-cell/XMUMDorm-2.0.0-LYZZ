@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
-import { Toast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContextState';
+import { useLanguage } from '../context/LanguageContextState';
+import { Toast } from '../context/toast';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { getTodos, createTodo, updateTodo, toggleTodo, deleteTodo } from '@shared/api/todos';
 import { QK } from '@shared/query/queryKeys';
@@ -73,7 +73,7 @@ export default function TodoList() {
       : {}),
   });
 
-  const rawTodos = data?.data?.list || data?.list || data?.data || [];
+  const rawTodos = useMemo(() => data?.data?.list || data?.list || data?.data || [], [data]);
   useEffect(() => {
     if (userId && listType === undefined && status === 'active' && Array.isArray(rawTodos)) {
       writePersistedTodos(userId, rawTodos);

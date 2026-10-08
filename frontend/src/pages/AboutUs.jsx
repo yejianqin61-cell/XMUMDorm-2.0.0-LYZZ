@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useLanguage } from '../context/LanguageContext';
+import { useLanguage } from '../context/LanguageContextState';
 import './AboutUs.css';
 
 /** 广场 Square：背景图铺满 + 贴图入口（默认开启编辑模式，说明文字为英文） */
@@ -157,22 +157,22 @@ function AboutUs() {
         if (!localStorage.getItem(storageKey)) {
           try {
             localStorage.setItem(storageKey, JSON.stringify(normalized));
-          } catch {}
+          } catch { /* Best-effort operation: keep the existing fallback when this fails. */ }
         } else {
           // 若已存在新 key，但 label 仍为旧文案，则同步修正一次
           try {
             localStorage.setItem(storageKey, JSON.stringify(normalized));
-          } catch {}
+          } catch { /* Best-effort operation: keep the existing fallback when this fails. */ }
         }
       }
-    } catch {}
+    } catch { /* Best-effort operation: keep the existing fallback when this fails. */ }
   }, [legacyStorageKey, storageKey]);
 
   useEffect(() => {
     if (!editMode) return;
     try {
       localStorage.setItem(storageKey, JSON.stringify(stickers));
-    } catch {}
+    } catch { /* Best-effort operation: keep the existing fallback when this fails. */ }
   }, [editMode, stickers]);
 
   // Second-hand：Treasure pop-up emitter（随机 1.5~3s 冒泡一次）
@@ -290,7 +290,7 @@ function AboutUs() {
     if (changed) {
       try {
         localStorage.setItem(storageKey, JSON.stringify(stickers));
-      } catch {}
+      } catch { /* Best-effort operation: keep the existing fallback when this fails. */ }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [imgSize.w, imgSize.h, cover.scale, cover.offsetX, cover.offsetY]);
@@ -313,7 +313,7 @@ function AboutUs() {
     };
     try {
       ev.currentTarget.setPointerCapture(ev.pointerId);
-    } catch {}
+    } catch { /* Best-effort operation: keep the existing fallback when this fails. */ }
   };
 
   const onDragMove = (ev) => {
@@ -359,14 +359,14 @@ function AboutUs() {
   const copyConfig = async () => {
     try {
       await navigator.clipboard.writeText(JSON.stringify(stickers, null, 2));
-    } catch {}
+    } catch { /* Best-effort operation: keep the existing fallback when this fails. */ }
   };
 
   const reset = () => {
     setStickers(defaultStickers);
     try {
       localStorage.removeItem(storageKey);
-    } catch {}
+    } catch { /* Best-effort operation: keep the existing fallback when this fails. */ }
   };
 
   return (

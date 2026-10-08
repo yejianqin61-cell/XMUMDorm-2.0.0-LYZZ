@@ -1,6 +1,6 @@
 import { X } from 'lucide-react';
 import Button from './Button';
-import { useLanguage } from '../../context/LanguageContext';
+import { useLanguage } from '../../context/LanguageContextState';
 import './Toast.css';
 
 const TITLE_MAP = {

@@ -16,7 +16,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Download, FileWarning, Loader } from 'lucide-react';
 import { listMaterials, fetchMarkdownText } from '@shared/api/materials';
 import { QK } from '@shared/query/queryKeys';
-import { useLanguage } from '../../context/LanguageContext';
+import { useLanguage } from '../../context/LanguageContextState';
 import MarkdownViewer from '../../components/materials/MarkdownViewer';
 import PdfViewer from '../../components/materials/PdfViewer';
 import { downloadMaterial } from '../../components/materials/downloadMaterial';
@@ -54,11 +54,17 @@ export default function MaterialDetail() {
   const [mdError, setMdError] = useState('');
   const [mdLoading, setMdLoading] = useState(false);
 
+  const [previousItem, setPreviousItem] = useState(item);
+  if (previousItem !== item) {
+    setPreviousItem(item);
+    setMdLoading(item?.kind === 'markdown');
+    setMdError('');
+    setMdText('');
+  }
+
   useEffect(() => {
     if (!item || item.kind !== 'markdown') return undefined;
     let cancelled = false;
-    setMdLoading(true);
-    setMdError('');
     fetchMarkdownText({ cdnUrl: item.cdnUrl, path: item.path })
       .then((t) => { if (!cancelled) setMdText(t); })
       .catch((e) => { if (!cancelled) setMdError(e?.message || '加载失败'); })

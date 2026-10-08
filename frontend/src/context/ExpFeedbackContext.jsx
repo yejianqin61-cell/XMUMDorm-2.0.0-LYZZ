@@ -1,20 +1,14 @@
-import { createContext, useCallback, useContext, useState } from 'react';
-import { Toast } from './ToastContext';
+import { ExpFeedbackContext } from './ExpFeedbackContextState';
+import {  useCallback,  useState } from 'react';
+import { Toast } from './toast';
 import LevelUpModal from '../components/LevelUpModal';
-import { useLanguage } from './LanguageContext';
-import { useAuth } from './AuthContext';
+import { useLanguage } from './LanguageContextState';
+import { useAuth } from './AuthContextState';
 
-const ExpFeedbackContext = createContext(null);
+
 
 /** 从 API 返回值提取并处理经验反馈 */
-export function useExpFeedback() {
-  const ctx = useContext(ExpFeedbackContext);
-  const handleExpResponse = useCallback(
-    (result, isZh = true) => ctx?.handleExpResponse?.(result, isZh),
-    [ctx]
-  );
-  return { handleExpResponse };
-}
+
 
 export function ExpFeedbackProvider({ children }) {
   const { lang } = useLanguage();

@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState,  useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Heart, MessageCircle, MoreHorizontal, SendHorizonal, Smile } from 'lucide-react';
 import ReportButton from './ReportButton';
-import { useLanguage } from '../context/LanguageContext';
+import { useLanguage } from '../context/LanguageContextState';
 import { API_BASE_URL } from '@shared/api/config';
 import EmptyState from './ui/EmptyState';
 import ImagePreview from './ImagePreview';
@@ -68,10 +68,12 @@ export default function PostDetailShell({
 
   const postId = post?.id;
 
-  useEffect(() => {
+  const [previousKey, setPreviousKey] = useState(postId);
+  if (previousKey !== postId) {
+    setPreviousKey(postId);
     setCarouselIndex(0);
     setCarouselDir(1);
-  }, [postId]);
+  }
 
   const requireLogin = useCallback(() => {
     if (!isLoggedIn) {

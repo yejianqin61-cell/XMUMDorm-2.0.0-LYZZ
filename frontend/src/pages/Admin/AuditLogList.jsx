@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, Loader2, AlertTriangle } from 'lucide-react';
 import { getAdminAuditLogs } from '@shared/api/admin';
-import { useLanguage } from '../../context/LanguageContext';
+import { useLanguage } from '../../context/LanguageContextState';
 
 const PAGE_SIZE = 30;
 

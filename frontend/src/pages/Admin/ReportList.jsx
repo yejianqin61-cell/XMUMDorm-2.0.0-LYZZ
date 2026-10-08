@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, ExternalLink, Loader2, AlertTriangle } from 'lucide-react';
 import { getAdminReports } from '@shared/api/admin';
-import { useLanguage } from '../../context/LanguageContext';
+import { useLanguage } from '../../context/LanguageContextState';
 import Badge from '../../components/ui/Badge';
 import Tag from '../../components/ui/Tag';
 

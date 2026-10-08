@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getAdvertisementPublic } from '@shared/api/advertisements';
 import { QK } from '@shared/query/queryKeys';
-import { useLanguage } from '../context/LanguageContext';
+import { useLanguage } from '../context/LanguageContextState';
 import AdvertisementDetailView from '@shared/components/AdvertisementDetailView';
 
 export default function AdvertisementDetail() {

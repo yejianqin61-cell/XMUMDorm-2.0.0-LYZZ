@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { useLanguage } from '../context/LanguageContext';
+import { useLanguage } from '../context/LanguageContextState';
 import { getCanteenStrings } from '../i18n/canteenStrings';
 import { searchCanteen } from '@shared/api/canteen';
 import { QK } from '@shared/query/queryKeys';

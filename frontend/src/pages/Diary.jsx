@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useCallback, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, Check, Feather, X } from 'lucide-react';
-import { useLanguage } from '../context/LanguageContext';
-import { Toast } from '../context/ToastContext';
+import { useLanguage } from '../context/LanguageContextState';
+import { Toast } from '../context/toast';
 import { getDiaryDay, getDiaryMonth, getDiaryOverview, saveDiaryDay } from '@shared/api/diary';
 import './Diary.css';
 
@@ -12,15 +12,9 @@ function fmtYMD(dateStr) {
   return `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
 }
 
-function fmtMD(dateStr) {
-  const d = new Date(String(dateStr));
-  if (Number.isNaN(d.getTime())) return '';
-  return `${d.getMonth() + 1}.${d.getDate()}`;
-}
 
-function clamp(n, a, b) {
-  return Math.max(a, Math.min(b, n));
-}
+
+
 
 function ymdParts(dateStr) {
   const d = new Date(String(dateStr));
@@ -39,7 +33,7 @@ function daysInMonth(y, m) {
 function Diary() {
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
-  const [loadingOverview, setLoadingOverview] = useState(true);
+  const [_loadingOverview, setLoadingOverview] = useState(true);
   const [overview, setOverview] = useState(null);
   const [realToday, setRealToday] = useState(null); // { date, label } 固定“真实今天”
   const [currentDate, setCurrentDate] = useState(null); // YYYY-MM-DD
@@ -97,7 +91,7 @@ function Diary() {
   };
 
   const DAY_CACHE_TTL_MS = 10 * 60 * 1000; // 10min
-  const readDayCache = (date) => {
+  const readDayCache = useCallback((date) => {
     if (!date) return null;
     const key = String(date).slice(0, 10);
     const now = Date.now();
@@ -115,9 +109,9 @@ function Diary() {
     } catch {
       return null;
     }
-  };
+ }, [DAY_CACHE_TTL_MS]);
 
-  const writeDayCache = (date, content) => {
+  const writeDayCache = useCallback((date, content) => {
     if (!date) return;
     const key = String(date).slice(0, 10);
     const c = String(content ?? '');
@@ -128,9 +122,9 @@ function Diary() {
     } catch {
       // ignore quota
     }
-  };
+ }, []);
 
-  const fetchDiaryDayCached = async (date) => {
+  const fetchDiaryDayCached = useCallback(async (date) => {
     const key = String(date || '').slice(0, 10);
     const cached = readDayCache(key);
     if (cached) return cached;
@@ -138,7 +132,7 @@ function Diary() {
     const content = day?.content || '';
     writeDayCache(key, content);
     return readDayCache(key) || { content: String(content || ''), hasDiary: !!String(content || '').trim(), ts: Date.now() };
-  };
+ }, [readDayCache, writeDayCache]);
 
   useEffect(() => {
     loadOverview();
@@ -169,8 +163,8 @@ function Diary() {
     }
   };
 
-  const sameDayPastYears = overview?.sameDayPastYears || [];
-  const recentDays = overview?.recentDays || [];
+  overview?.sameDayPastYears || [];
+  overview?.recentDays || [];
 
   const moodOptions = useMemo(
     () => ['🍃', '☀️', '✨', '🌧️', '🌙', '🫶', '😵‍💫', '😌'],
@@ -204,7 +198,7 @@ function Diary() {
     return () => {
       cancelled = true;
     };
-  }, [currentDate]);
+  }, [currentDate, fetchDiaryDayCached]);
 
   // Calendar heatmap for current visible month
   useEffect(() => {

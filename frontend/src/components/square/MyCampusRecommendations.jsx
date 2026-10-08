@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import EmptyState from '../ui/EmptyState';
 import NeoCard from '../retroui/Card';
-import { useLanguage } from '../../context/LanguageContext';
+import { useLanguage } from '../../context/LanguageContextState';
 
 export default function MyCampusRecommendations({ summary }) {
   const { lang } = useLanguage();

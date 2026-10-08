@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
-import { useLanguage } from '../context/LanguageContext';
+import { useLanguage } from '../context/LanguageContextState';
 import { getTrendingTopicDetail, getTrendingPosts } from '@shared/api/square';
 import { QK } from '@shared/query/queryKeys';
 import { getUploadUrl } from '@shared/api/config';

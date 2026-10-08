@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContextState';
+import { useLanguage } from '../context/LanguageContextState';
 import { updateAvatar, updateProfileInfo } from '@shared/api/users';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import './ProfileEdit.css';

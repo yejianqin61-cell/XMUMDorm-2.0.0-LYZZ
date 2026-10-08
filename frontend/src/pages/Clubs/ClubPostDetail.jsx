@@ -3,10 +3,10 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Eye, Heart, MessageCircle, Trash2 } from 'lucide-react';
 import ReportButton from '../../components/ReportButton';
-import { useLanguage } from '../../context/LanguageContext';
-import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContextState';
+import { useAuth } from '../../context/AuthContextState';
 import { queryClient } from '@shared/query/queryClient';
-import { Toast } from '../../context/ToastContext';
+import { Toast } from '../../context/toast';
 import { deleteClubPost, getClubPostDetail, toggleClubLike, trackClubView } from '@shared/api/clubs';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { API_BASE_URL } from '@shared/api/config';
@@ -48,12 +48,14 @@ function ClubPostDetail() {
     if (!p?.images || !Array.isArray(p.images)) return [];
     const from = p.images.map((x) => (typeof x === 'string' ? x : x?.url)).filter(Boolean);
     return from.map((u) => prefixImageUrl(u)).filter(Boolean);
-  }, [p?.images]);
+  }, [p]);
 
-  useEffect(() => {
+  const [previousKey, setPreviousKey] = useState(postId);
+  if (previousKey !== postId) {
+    setPreviousKey(postId);
     setCarouselIndex(0);
     setCarouselDir(1);
-  }, [postId]);
+  }
 
   useEffect(() => {
     if (!postId) return;

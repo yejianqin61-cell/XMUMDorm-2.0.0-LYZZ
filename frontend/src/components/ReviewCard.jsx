@@ -8,7 +8,7 @@ import './ReviewCard.css';
  * @param {Object} review - { id, product_id, product_name, shop_name, rating, content, created_at, images }
  */
 function ReviewCard({ review }) {
-  const { id, product_id, product_name, shop_name, rating, content, created_at, images } = review;
+  const { id: _id, product_id, product_name, shop_name, rating, content, created_at, images } = review;
   const imgUrl = images?.length
     ? (images[0].url.startsWith('http') ? images[0].url : `${API_BASE_URL}${images[0].url}`)
     : null;

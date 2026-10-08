@@ -1,10 +1,7 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { LanguageContext } from './LanguageContextState';
+import {   useEffect, useState } from 'react';
 
-const LanguageContext = createContext({
-  lang: 'zh',
-  isZh: true,
-  setLang: () => {},
-});
+
 
 function readInitialLanguage() {
   if (typeof window === 'undefined') return 'zh';
@@ -43,7 +40,5 @@ export function LanguageProvider({ children }) {
   );
 }
 
-export function useLanguage() {
-  return useContext(LanguageContext);
-}
+
 

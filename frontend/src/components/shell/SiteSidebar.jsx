@@ -1,6 +1,6 @@
 import { useLocation } from 'react-router-dom';
-import { useLanguage } from '../../context/LanguageContext';
-import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContextState';
+import { useAuth } from '../../context/AuthContextState';
 import { Shield } from 'lucide-react';
 import ShellNavItem from './ShellNavItem';
 import { SITE_PRIMARY_NAV_ITEMS, isSiteNavActive } from './siteShellNav';

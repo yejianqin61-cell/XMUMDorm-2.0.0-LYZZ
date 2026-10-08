@@ -9,8 +9,8 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useLanguage } from '../context/LanguageContext';
-import { Toast } from '../context/ToastContext';
+import { useLanguage } from '../context/LanguageContextState';
+import { Toast } from '../context/toast';
 import { QK } from '@shared/query/queryKeys';
 import { CONFESSION_TEMPLATES, getTemplate } from '@shared/constants/confessionTemplates';
 import { createConfession } from '@shared/api/confessions';

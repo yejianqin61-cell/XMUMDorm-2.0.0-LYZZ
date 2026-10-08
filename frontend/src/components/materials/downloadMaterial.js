@@ -36,7 +36,7 @@ export async function downloadMaterial(item, { onCount } = {}) {
 
     if (typeof onCount === 'function') onCount();
     return true;
-  } catch (e) {
+  } catch {
     // 兜底：直接新窗口打开（可能变成「打开」而非下载，但至少不是完全失败）
     if (typeof window !== 'undefined') {
       window.open(url, '_blank', 'noopener,noreferrer');

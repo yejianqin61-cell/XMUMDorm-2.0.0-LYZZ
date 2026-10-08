@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { useLanguage } from '../../context/LanguageContext';
-import { useAuth } from '../../context/AuthContext';
-import { Toast } from '../../context/ToastContext';
+import { useLanguage } from '../../context/LanguageContextState';
+import { useAuth } from '../../context/AuthContextState';
+import { Toast } from '../../context/toast';
 import { QK } from '@shared/query/queryKeys';
 import { getMarketplaceCategories, createMarketplaceItem, getMarketplaceItemDetail, updateMarketplaceItem } from '@shared/api/marketplace';
 import './Marketplace.css';
@@ -63,14 +63,15 @@ function MarketplacePublish() {
   }, [previews]);
 
   useEffect(() => {
-    if (!isEdit) return;
-    const d = detailQuery.data;
-    if (!d) return;
-    if (d?.viewer?.canEdit === false) {
+    if (isEdit && detailQuery.data?.viewer?.canEdit === false) {
       Toast.error(isZh ? '无权限编辑' : 'No permission');
       nav(`/about/second-hand/item/${id}`);
-      return;
     }
+  }, [isEdit, detailQuery.data, id, isZh, nav]);
+  const [previousDetail, setPreviousDetail] = useState(null);
+  if (isEdit && detailQuery.data && previousDetail !== detailQuery.data && detailQuery.data.viewer?.canEdit !== false) {
+    const d = detailQuery.data;
+    setPreviousDetail(d);
     setTitle(d.title || '');
     setDescription(d.description || '');
     setPrice(d.price != null ? String(d.price) : '');
@@ -78,7 +79,7 @@ function MarketplacePublish() {
     setTags(Array.isArray(d.tags) ? d.tags.join(',') : '');
     setDeliveryMethod(d.delivery_method || 'pickup');
     setDormArea(d.dorm_area || 'LY1');
-  }, [isEdit, detailQuery.data, id, isZh, nav]);
+  }
 
   const createMut = useMutation({
     mutationFn: async () => {
@@ -220,7 +221,7 @@ function MarketplacePublish() {
                   setImages(next);
                   // allow re-selecting same file(s)
                   try {
-                    // eslint-disable-next-line no-param-reassign
+                     
                     e.target.value = '';
                   } catch {
                     // ignore

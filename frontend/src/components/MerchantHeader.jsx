@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useLanguage } from '../context/LanguageContext';
+import { useLanguage } from '../context/LanguageContextState';
 import './MerchantHeader.css';
 import { DEFAULT_PRODUCT_IMAGE_PATH, DEFAULT_SHOP_LOGO_PATH } from '@shared/api/config';
 

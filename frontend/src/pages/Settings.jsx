@@ -1,8 +1,14 @@
 import { Navigate, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContextState';
+import { useLanguage } from '../context/LanguageContextState';
 import { deactivateMyAccount } from '@shared/api/users';
 import './Settings.css';
+
+const Row = ({ children, onClick, danger = false }) => (
+    <button type="button" className={`settings-row${danger ? ' settings-row--danger' : ''}`} onClick={onClick}>
+      <span>{children}</span><span className="settings-row-chevron" aria-hidden="true">›</span>
+    </button>
+  );
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -17,11 +23,6 @@ export default function Settings() {
     logout();
     navigate('/', { replace: true });
   };
-  const Row = ({ children, onClick, danger = false }) => (
-    <button type="button" className={`settings-row${danger ? ' settings-row--danger' : ''}`} onClick={onClick}>
-      <span>{children}</span><span className="settings-row-chevron" aria-hidden="true">›</span>
-    </button>
-  );
   return (
     <div className="settings-page">
       <div className="settings-content">

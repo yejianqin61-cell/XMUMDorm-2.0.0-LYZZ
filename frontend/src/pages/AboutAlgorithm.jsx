@@ -1,5 +1,5 @@
 import Card from '../components/ui/Card';
-import { useLanguage } from '../context/LanguageContext';
+import { useLanguage } from '../context/LanguageContextState';
 import './AboutAlgorithm.css';
 
 function AboutAlgorithm() {
