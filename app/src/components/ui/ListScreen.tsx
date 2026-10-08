@@ -324,6 +324,7 @@ export function ListScreen<T>({
   style,
   testID,
 }: ListScreenProps<T>): React.ReactElement {
+  // Web uses RN's supported virtualizer; native keeps FlashList recycling.
   const theme = useTheme();
   const screenState = resolveListState({ pagination, itemCount: data.length });
   const footer = listFooterState(pagination);
@@ -348,7 +349,7 @@ export function ListScreen<T>({
 
   if (screenState === 'loading') {
     return (
-      <View testID={testID} style={[{ flex: 1 }, style]}>
+      <View testID={testID} style={[{ flex: 1, minHeight: 0 }, style]}>
         {tabs}
         {filterChips}
         {listHeader}
@@ -359,7 +360,7 @@ export function ListScreen<T>({
 
   if (screenState === 'error') {
     return (
-      <View testID={testID} style={[{ flex: 1 }, style]}>
+      <View testID={testID} style={[{ flex: 1, minHeight: 0 }, style]}>
         {tabs}
         {filterChips}
         {listHeader}
@@ -374,7 +375,7 @@ export function ListScreen<T>({
 
   if (screenState === 'empty') {
     return (
-      <View testID={testID} style={[{ flex: 1 }, style]}>
+      <View testID={testID} style={[{ flex: 1, minHeight: 0 }, style]}>
         {tabs}
         {filterChips}
         {/* 空态也保留 `listHeader`：例如店里没上架菜品时，店头信息与分类仍应可见 */}
@@ -392,10 +393,11 @@ export function ListScreen<T>({
   }
 
   return (
-    <View testID={testID} style={[{ flex: 1 }, style]}>
+    <View testID={testID} style={[{ flex: 1, minHeight: 0 }, style]}>
       {tabs}
         {filterChips}
       <FlashList
+        style={{ flex: 1, minHeight: 0 }}
         ref={listRef as never}
         data={data as T[]}
         renderItem={({ item, index }) => renderItem(item, index)}

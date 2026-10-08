@@ -50,17 +50,22 @@ export type PullToRefreshProps = {
   refreshing: boolean;
   onRefresh: () => void;
   testID?: string;
+  children?: React.ReactNode;
+  style?: RefreshControlProps['style'];
 };
 
 export function PullToRefresh({
   refreshing,
   onRefresh,
   testID,
+  children,
+  style,
 }: PullToRefreshProps): React.ReactElement {
   const theme = useTheme();
 
   return (
     <RefreshControl
+      style={style}
       {...refreshControlProps({
         refreshing,
         onRefresh,
@@ -69,6 +74,8 @@ export function PullToRefresh({
         background: theme.color['bg-surface'].value,
         testID,
       })}
-    />
+    >
+      {children}
+    </RefreshControl>
   );
 }

@@ -119,6 +119,8 @@ export function Screen({
       testID="screen-content"
       style={{
         flexGrow: 1,
+        flex: scroll ? undefined : 1,
+        minHeight: 0,
         paddingLeft: resolved.contentPaddingLeft,
         paddingRight: resolved.contentPaddingRight,
         paddingBottom: resolved.contentBottomPadding + resolved.keyboardPadding,
@@ -135,7 +137,7 @@ export function Screen({
     <ScreenInsetsContext.Provider value={resolved}>
       <View
         testID={testID}
-        style={[{ flex: 1, backgroundColor: theme.color['bg-canvas'].value }, style]}
+        style={[{ flex: 1, minHeight: 0, backgroundColor: theme.color['bg-canvas'].value }, style]}
       >
       {topMode === 'topbar' && titleKey ? (
         <TopBar
@@ -155,6 +157,7 @@ export function Screen({
             // S8：两端默认行为不同（iOS 会自动调整内容内边距）→ 显式统一
             contentInsetAdjustmentBehavior="never"
             keyboardShouldPersistTaps="handled"
+            style={{ flex: 1, minHeight: 0 }}
             contentContainerStyle={{ flexGrow: 1 }}
           >
             {content}

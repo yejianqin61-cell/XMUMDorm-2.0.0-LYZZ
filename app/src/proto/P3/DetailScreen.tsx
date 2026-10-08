@@ -277,7 +277,7 @@ export function DetailScreen({
   return (
     <Screen topMode={topMode} testID={testID} style={style}>
       {header}
-      <ScrollView contentContainerStyle={{ paddingBottom: theme.space('space_8') }}>
+      <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ paddingBottom: theme.space('space_8') }}>
         {hero}
         <View style={{ padding: theme.space('space_4'), gap: theme.space('space_3') }}>
           <Text role="title" emphasis="strong" colorToken="text-primary">
