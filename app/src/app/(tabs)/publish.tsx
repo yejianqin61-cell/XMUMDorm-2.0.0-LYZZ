@@ -12,7 +12,8 @@
  */
 import * as React from 'react';
 import { Redirect } from 'expo-router';
+import { Platform } from 'react-native';
 
 export default function PublishSlotPlaceholder(): React.ReactElement {
-  return <Redirect href="/" />;
+  return <Redirect href={Platform.OS === 'web' ? '/publish-center' : '/'} />;
 }
