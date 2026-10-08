@@ -22,6 +22,7 @@ import { InlineNotice } from '@/components/ui/InlineNotice';
 import { ListScreen } from '@/components/ui/ListScreen';
 import { SchoolSystemCard } from '@/components/ui/SchoolSystemCard';
 import { Screen } from '@/components/ui/Screen';
+import { useMailboxBadge } from '@/features/mailbox/useUnread';
 import { SCHOOL_SYSTEMS, type SchoolSystem, type SchoolSystemId } from './schoolSystems';
 import { useSchoolSessions } from './schoolSession';
 
@@ -96,10 +97,11 @@ export function SchoolSystemList({
 
 /** 页面级组合：说明条 + 列表（骨架自带安全区，`K05` 只负责列表本体） */
 export function SchoolSystemScreen(): React.ReactElement {
+  const badge = useMailboxBadge();
   const theme = useTheme();
   const { t } = useI18n();
   return (
-    <Screen testID="screen-school-systems" titleKey="tools.systems.title" bottomMode="own">
+    <Screen testID="screen-school-systems" titleKey="tools.systems.title" bottomMode="own" {...badge}>
       <View style={{ flex: 1, gap: theme.space('space_2') }}>
         <View style={{ paddingHorizontal: theme.space('space_4') }}>
           <InlineNotice testID="school-session-notice" tone="info" message={t('tools.sessions.notice')} />

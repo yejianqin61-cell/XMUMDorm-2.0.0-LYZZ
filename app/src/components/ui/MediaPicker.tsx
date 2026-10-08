@@ -17,6 +17,7 @@
 
 import * as React from 'react';
 import { View } from 'react-native';
+import { Image } from 'expo-image';
 import ImagePlus from 'lucide-react-native/icons/image-plus';
 
 import { useTheme } from '@/design-system/theme';
@@ -46,6 +47,7 @@ export type MediaPickerProps = {
   allowGif?: boolean;
   /** 按钮文案（页面给词条） */
   pickLabel: string;
+  failureLabel?: string;
   /** 替换文案（已有图时） */
   replaceLabel?: string;
   /** 移除按钮的无障碍标签 */
@@ -93,6 +95,7 @@ export function MediaPicker({
   maxBytes = IMAGE_MAX_BYTES,
   allowGif = true,
   pickLabel,
+  failureLabel,
   replaceLabel,
   removeLabel,
   unavailableLabel,
@@ -111,7 +114,7 @@ export function MediaPicker({
     setMessage(null);
     try {
       const result = await onPick();
-      if (!result.ok) return; // 取消 / 失败：⛔ 不打扰用户
+      if (!result.ok) { if (result.reason === 'failed') setMessage(failureLabel ?? null); return; }
       const verdict = validatePickedImage({
         mimeType: result.image.mimeType,
         sizeBytes: result.image.sizeBytes,
@@ -123,17 +126,20 @@ export function MediaPicker({
         return;
       }
       onChange(result.image);
+    } catch {
+      setMessage(failureLabel ?? null);
     } finally {
       setBusy(false);
     }
-  }, [allowGif, disabled, gifNotAllowedLabel, maxBytes, onChange, onPick, tooLargeLabel]);
+  }, [allowGif, disabled, failureLabel, gifNotAllowedLabel, maxBytes, onChange, onPick, tooLargeLabel]);
 
   const hasImage = value !== null;
 
   return (
     <View testID={testID} style={{ gap: theme.space('space_2') }}>
+      {hasImage ? <Image source={{ uri: value.uri }} accessibilityLabel={replaceLabel ?? pickLabel} contentFit="contain" style={{ width: '100%', aspectRatio: 1 }} /> : null}
       <Text role="label" colorToken="text-secondary" testID={testID ? `${testID}-label` : undefined}>
-        {hasImage ? value.uri : (unavailableLabel ?? pickLabel)}
+        {hasImage ? (replaceLabel ?? pickLabel) : (onPick ? pickLabel : (unavailableLabel ?? pickLabel))}
       </Text>
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.space('space_2') }}>

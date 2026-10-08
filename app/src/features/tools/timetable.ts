@@ -20,7 +20,8 @@
 
 import * as React from 'react';
 
-import { getItem, setItem } from '@/shared/storage';
+import { getItem, setItem, removeItem, getAllNamespacedKeys, STORAGE_NAMESPACE } from '@/shared/storage';
+import { timetableIdentity } from './cacheIdentity';
 import { FALLBACK_TOTAL_WEEKS, clampWeek, kualaLumpurCalendarParts } from '../../../../shared/config/semesters';
 import type { AppError } from '@/i18n/errors';
 
@@ -80,13 +81,13 @@ export function normalizeTimetableWeek(data: unknown): TimetableWeek | null {
       days[day] = list.map((item) => {
         const meeting = (item ?? {}) as Record<string, unknown>;
         return {
-          courseCode: asString(meeting.course_code) ?? '',
-          courseName: asString(meeting.course_name),
+          courseCode: asString(meeting.course_code ?? meeting.courseCode) ?? '',
+          courseName: asString(meeting.course_name ?? meeting.courseName),
           credit: asNumber(meeting.credit),
           lecturer: asString(meeting.lecturer),
-          dayOfWeek: asNumber(meeting.day_of_week) ?? day,
-          startTime: asString(meeting.start_time),
-          endTime: asString(meeting.end_time),
+          dayOfWeek: asNumber(meeting.day_of_week ?? meeting.dayOfWeek) ?? day,
+          startTime: asString(meeting.start_time ?? meeting.startTime),
+          endTime: asString(meeting.end_time ?? meeting.endTime),
           venue: asString(meeting.venue),
         };
       });
@@ -186,16 +187,59 @@ export function shouldHighlightToday(shownWeek: number, currentWeek: number | nu
 /* ────────────────────────── 本地优先缓存（宪法 10.6） ────────────────────────── */
 
 export function timetableCacheKey(week: number): string {
-  return `timetable:week:${week}`;
+  return `timetable:v2:${timetableIdentity().scope}:week:${week}`;
 }
 
 export async function readCachedWeek(week: number): Promise<TimetableWeek | null> {
+  if (!timetableIdentity().persist) return null;
   const cached = await getItem<unknown>(timetableCacheKey(week));
-  return cached === null ? null : normalizeTimetableWeek(cached);
+  const result = cached === null ? null : normalizeTimetableWeek(cached);
+  return result?.week === week ? result : null;
 }
 
 export async function writeCachedWeek(week: number, data: TimetableWeek): Promise<void> {
+  if (!timetableIdentity().persist || data.week !== week) return;
   await setItem(timetableCacheKey(week), data);
+}
+
+let revision = 0;
+let diskQueue: Promise<void> = Promise.resolve();
+const listeners = new Set<() => void>();
+const pending = new Map<string, Promise<TimetableWeek>>();
+
+/** Invalidate every week after a successful replacement import. */
+export async function invalidateTimetable(): Promise<void> {
+  revision += 1;
+  const clear = diskQueue.then(async () => {
+    const keys = await getAllNamespacedKeys();
+    const prefix = `${STORAGE_NAMESPACE}:`;
+    await Promise.all(keys.filter((key) => key.startsWith(`${prefix}timetable:`))
+      .map((key) => removeItem(key.slice(prefix.length))));
+  });
+  diskQueue = clear.catch(() => undefined);
+  try { await clear; } finally { for (const listener of listeners) listener(); }
+}
+
+function requestWeek(week: number, load: (week: number) => Promise<unknown>): Promise<TimetableWeek> {
+  const identity = timetableIdentity();
+  const version = revision;
+  const key = `${identity.scope}:${identity.epoch}:${version}:${week}`;
+  const existing = pending.get(key);
+  if (existing) return existing;
+  const request = Promise.resolve().then(() => load(week)).then(async (raw) => {
+    const data = normalizeTimetableWeek(raw);
+    if (data === null) throw { kind: 'unknown' };
+    const write = diskQueue.then(async () => {
+      if (revision === version && timetableIdentity().epoch === identity.epoch) {
+        try { await writeCachedWeek(week, data); } catch { /* disk failure must not hide remote data */ }
+      }
+    });
+    diskQueue = write.catch(() => undefined);
+    await write;
+    return data;
+  }).finally(() => { pending.delete(key); });
+  pending.set(key, request);
+  return request;
 }
 
 export type WeekSource = 'remote' | 'cache';
@@ -223,34 +267,36 @@ export function useTimetableWeek(
     error: null,
   });
   const [nonce, setNonce] = React.useState(0);
+  const identity = timetableIdentity();
+  const key = `${identity.scope}:${identity.epoch}:${week}`;
+  const [stateKey, setStateKey] = React.useState(key);
   const fetchRef = React.useRef(fetchWeek);
   fetchRef.current = fetchWeek;
 
   React.useEffect(() => {
     let cancelled = false;
-    setState((prev) => ({ ...prev, loading: true, error: null }));
+    const version = revision;
+    setStateKey(key);
+    setState({ week: null, source: null, loading: true, error: null });
+    const refresh = () => { cancelled = true; setNonce((value) => value + 1); };
+    listeners.add(refresh);
+    const active = () => !cancelled && revision === version && timetableIdentity().epoch === identity.epoch;
 
     void (async () => {
       // ① 缓存先上（立刻有东西看）
       const cached = await readCachedWeek(week);
-      if (cancelled) return;
+      if (!active()) return;
       if (cached !== null) {
         setState({ week: cached, source: 'cache', loading: true, error: null });
       }
 
       // ② 再打远端
       try {
-        const data = await fetchRef.current(week);
-        if (cancelled) return;
-        const normalized = normalizeTimetableWeek(data);
-        if (normalized === null) {
-          setState((prev) => ({ ...prev, loading: false, error: { kind: 'unknown' } }));
-          return;
-        }
+        const normalized = await requestWeek(week, fetchRef.current);
+        if (!active()) return;
         setState({ week: normalized, source: 'remote', loading: false, error: null });
-        await writeCachedWeek(week, normalized);
       } catch (error) {
-        if (cancelled) return;
+        if (!active()) return;
         // ③ 失败：**保留已有内容**（这就是"离线优先"的全部意义）
         setState((prev) => ({
           ...prev,
@@ -262,9 +308,10 @@ export function useTimetableWeek(
 
     return () => {
       cancelled = true;
+      listeners.delete(refresh);
     };
-  }, [week, nonce]);
+  }, [week, key, identity.epoch, nonce]);
 
   const reload = React.useCallback(() => setNonce((n) => n + 1), []);
-  return { ...state, reload };
+  return { ...(stateKey === key ? state : { week: null, source: null, loading: true, error: null }), reload };
 }
