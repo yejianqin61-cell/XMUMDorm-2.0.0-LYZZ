@@ -70,6 +70,12 @@ function MarketFeed({filters}:{filters:Filters}):React.ReactElement {
   finally{if(request===generation.current)pending.current=null;}
  },[client,key,filters,dispatch]);
  React.useEffect(()=>{if(!initial.current)void load('refresh');return()=>{generation.current++;pending.current=null;};},[load]);
+ // Publishing removes snapshots; mounted feeds must also refresh, not only future mounts.
+ React.useEffect(()=>client.getQueryCache().subscribe(event=>{
+  if(event.type==='removed'&&JSON.stringify(event.query.queryKey)===JSON.stringify(key)){
+   generation.current++;pending.current=null;void load('refresh');
+  }
+ }),[client,key,load]);
  const refresh=()=>void load('refresh'),append=()=>void load('append');
  return <>
   {rows.length>0&&pagination.errorScope==='refresh'?<Button label={t('screen.market.refreshFailed')} onPress={refresh}/>:null}
@@ -84,17 +90,17 @@ function safeCount(value:unknown):number|null{return typeof value==='number'&&Nu
 export function MarketDetailScreen({itemId}:{itemId:string}):React.ReactElement {
  const {t}=useI18n();const router=useRouter();const session=useSession();const [item,setItem]=React.useState<Detail|null>(null),[count,setCount]=React.useState<number|null>(null);
  const [loading,setLoading]=React.useState(true),[error,setError]=React.useState<AppError|null>(null),[busy,setBusy]=React.useState(false),[notice,setNotice]=React.useState<'login'|'denied'|'failed'|null>(null);
- const epoch=React.useRef(0),lock=React.useRef(false);
+ const epoch=React.useRef(0),lock=React.useRef(false),uncertain=React.useRef(false);
  const load=React.useCallback(async()=>{const request=++epoch.current;lock.current=false;setBusy(false);setItem(null);setNotice(null);setError(null);setLoading(true);
-  try{if(!/^[1-9]\d*$/.test(itemId)||!Number.isSafeInteger(Number(itemId)))throw {status:404};const raw=await getMarketplaceItemDetail(Number(itemId));const data=readMarketDetail(raw);if(data.id!==Number(itemId))throw {status:404};if(request===epoch.current){setItem(data);setCount(safeCount(raw.wants_count));}}
+  try{if(!/^[1-9]\d*$/.test(itemId)||!Number.isSafeInteger(Number(itemId)))throw {status:404};const raw=await getMarketplaceItemDetail(Number(itemId));const data=readMarketDetail(raw);if(data.id!==Number(itemId))throw {status:404};if(request===epoch.current){setItem(data);setCount(safeCount(raw.wants_count));uncertain.current=false;}}
   catch(failure){if(request===epoch.current)setError(errorFor(failure));}finally{if(request===epoch.current)setLoading(false);}
  },[itemId]);
  React.useEffect(()=>{void load();return()=>{epoch.current++;};},[load]);
- const toggle=async()=>{if(!item||lock.current)return;if(!session.isSignedIn){setNotice('login');return;}if(!item.canWant){setNotice('denied');return;}
+ const toggle=async()=>{if(!item||lock.current)return;if(uncertain.current){await load();return;}if(!session.isSignedIn){setNotice('login');return;}if(!item.canWant){setNotice('denied');return;}
   lock.current=true;setBusy(true);setNotice(null);const request=epoch.current;
   try{const data=await toggleMarketplaceWant(item.id);if(request!==epoch.current)return;if(typeof data?.want!=='boolean')throw new Error('Invalid want response');setItem(current=>current?{...current,want:data.want}:null);setCount(safeCount(data.wants_count));
    if(safeCount(data.wants_count)===null){try{const raw=await getMarketplaceItemDetail(item.id);const refreshed=readMarketDetail(raw);if(request===epoch.current&&refreshed.id===item.id){setItem(refreshed);setCount(safeCount(raw.wants_count));}}catch{/* Successful toggle is not repeated if count refresh fails. */}}
-  }catch(failure){if(request!==epoch.current)return;const auth=classifyAuthFailure(failure);if(isSessionInvalid(auth))await session.handleAuthFailure(failure);if(request===epoch.current)setNotice(isSessionInvalid(auth)?'login':auth==='sanctioned'?'denied':'failed');}
+  }catch(failure){if(request!==epoch.current)return;uncertain.current=true;const auth=classifyAuthFailure(failure);if(isSessionInvalid(auth))await session.handleAuthFailure(failure);if(request===epoch.current)setNotice(isSessionInvalid(auth)?'login':auth==='sanctioned'?'denied':'failed');}
   finally{if(request===epoch.current){lock.current=false;setBusy(false);}}
  };
  const back=()=>router.canGoBack()?router.back():router.replace('/market' as never);
