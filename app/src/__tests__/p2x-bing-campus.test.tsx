@@ -329,3 +329,10 @@ it('已删除帖子显示内容不可用并返回列表',async()=>{
  await waitFor(()=>expect(v.getByText('内容不存在或已删除')).toBeTruthy());
  await fireEvent.press(v.getByText('返回列表'));expect(mockBack).toHaveBeenCalled();
 });
+
+it('普通帖子发布清缓存后已挂载树洞重新读取',async()=>{
+ list.mockResolvedValueOnce({list:[{id:7,title:'Old',content:'Old'}],hasMore:false}).mockResolvedValue({list:[{id:8,title:'New',content:'New'}],hasMore:false});
+ const v=await renderApp(<CampusListScreen/>);await waitFor(()=>expect(v.getByTestId('campus-row-7')).toBeTruthy());
+ await act(async()=>getQueryClient().removeQueries({queryKey:['posts','infinite']}));
+ await waitFor(()=>expect(v.getByTestId('campus-row-8')).toBeTruthy());expect(v.queryByTestId('campus-row-7')).toBeNull();
+});
