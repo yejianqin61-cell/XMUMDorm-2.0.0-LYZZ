@@ -30,6 +30,7 @@ import { useResolvedDescriptor } from './resolveDescriptor';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { usePublishForm } from './usePublishForm';
+import {useSession} from '@/features/auth/session';
 
 export type PublishFormHostProps = {
   descriptor: PublishFormDescriptor;
@@ -37,8 +38,10 @@ export type PublishFormHostProps = {
 
 /** 发布表单宿主：门禁优先，其次才是表单本身 */
 export function PublishFormHost({ descriptor }: PublishFormHostProps): React.ReactElement {
-  if (PUBLISH_DESCRIPTORS?.[descriptor.id] !== descriptor) return <ResolvedPublishFormHost descriptor={descriptor} />;
-  return <RegisteredPublishFormHost descriptor={descriptor} />;
+  const session=useSession();
+  const identity=`${session.status}:${session.identifier??''}`;
+  if (PUBLISH_DESCRIPTORS?.[descriptor.id] !== descriptor) return <ResolvedPublishFormHost key={identity} descriptor={descriptor} />;
+  return <RegisteredPublishFormHost key={identity} descriptor={descriptor} />;
 }
 function RegisteredPublishFormHost({descriptor}: PublishFormHostProps): React.ReactElement {
   const resolved = useResolvedDescriptor(descriptor, true);
@@ -59,6 +62,7 @@ function ResolvedPublishFormHost({descriptor}: PublishFormHostProps): React.Reac
   return (
     <Form
       testID={`publish-form-${descriptor.id}`}
+      guardNavigation
       form={host.form}
       sections={host.sections}
       labels={host.labels}

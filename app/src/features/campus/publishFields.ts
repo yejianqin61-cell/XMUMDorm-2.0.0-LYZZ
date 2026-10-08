@@ -5,6 +5,9 @@ import type { MessageKey, Translate } from '@/i18n';
 import type { PublishFormDescriptor } from '@/features/publish/descriptor';
 import { fieldsOf } from '@/features/publish/descriptor';
 import { CONFESSION_TEMPLATES, getTemplateMaxLength } from '../../../../shared/constants/confessionTemplates';
+import { getQueryClient } from '@/shared/queryClient';
+import { QK } from '../../../../shared/query/queryKeys';
+import { secondaryTabStore } from '@/features/navigation/secondaryTabs';
 import { createConfession } from '../../../../shared/api/confessions';
 
 const TEMPLATE_LABELS: Readonly<Record<string, MessageKey>> = {
@@ -29,8 +32,7 @@ export function createWallPublishDescriptor(t: Translate): PublishFormDescriptor
           ? undefined : 'publish.wall.invalidTemplate',
       }, {
         kind: 'textarea', name: 'content', labelKey: 'publish.wall.content', required: true,
-        // 公共DSL的maxLength是静态数字。此处按最新values校验，不用静态60截断信笺输入。
-        // 实时CharCounter/可变上限的显示接线待甲扩展公共契约；不在域内另造控件。
+        maxLength: values => getTemplateMaxLength(values.template_key),
         validate: (value, values) => {
           if (typeof value !== 'string') return 'form.error.required';
           return value.length > getTemplateMaxLength(values.template_key)
@@ -42,9 +44,12 @@ export function createWallPublishDescriptor(t: Translate): PublishFormDescriptor
       const errors = validateAll(fieldsOf(descriptor), values);
       if (Object.keys(errors).length || typeof values.content !== 'string' || typeof values.template_key !== 'string') throw { kind: 'validation', target: t('publish.wall.content') };
       const result = await createConfession({content: values.content, template_key: values.template_key});
+      if (!Number.isSafeInteger(result?.id) || result.id <= 0) throw {kind: 'unknown'};
+      getQueryClient().removeQueries({queryKey: QK.confessionWindow('_guest')});
+      secondaryTabStore.update('campus', 'wall', {scrollOffset: 0, cursor: null});
       return {id: result.id};
     },
-    routeAfterSubmit: () => '/(tabs)/campus',
+    routeAfterSubmit: () => '/(tabs)/campus?tab=wall',
   };
   return descriptor;
 }

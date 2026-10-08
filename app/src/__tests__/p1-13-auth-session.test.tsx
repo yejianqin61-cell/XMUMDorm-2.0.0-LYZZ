@@ -307,6 +307,7 @@ describe('TC-P1-13-6A · 集成：水合 / 登录 / 失效 / 登出', () => {
       );
     }
     await saveToken('jwt-old');
+    await setItem('draft:publish-wall', {content:'Previous account private draft'});
     const view = await renderApp(
       <SessionProvider>
         <ExpireProbe />
@@ -317,6 +318,7 @@ describe('TC-P1-13-6A · 集成：水合 / 登录 / 失效 / 登出', () => {
     await waitFor(() => expect(view.getByText(/status=expired/)).toBeTruthy());
     expect(readTokenSync()).toBeNull();
     expect(secureStore.__store.has(JWT_STORAGE_KEY)).toBe(false);
+    expect(await getAllNamespacedKeys()).toEqual([]);
   });
 
   it('登出 → 清令牌 **且清落盘命名空间**（否则下个账号看到上个账号的草稿与缓存）', async () => {

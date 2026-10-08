@@ -39,6 +39,8 @@ import {
 } from './descriptor';
 import type { Viewer } from './registry';
 import { useViewer } from './useViewer';
+import {useSession} from '@/features/auth/session';
+import {classifyAuthFailure,isSessionInvalid} from '@/features/auth/authFailure';
 
 export type PublishFormHost = {
   descriptor: PublishFormDescriptor;
@@ -63,7 +65,8 @@ export type PublishFormHost = {
  */
 export function usePublishFormCore(
   descriptor: PublishFormDescriptor,
-  viewer: Viewer
+  viewer: Viewer,
+  onAuthFailure?: (error: unknown) => Promise<AppError>
 ): PublishFormHost {
   const { t } = useI18n();
   const router = useRouter();
@@ -83,6 +86,7 @@ export function usePublishFormCore(
   const form = useForm({
     formId: draftFormIdFor(descriptor),
     fields,
+    enableDraft: viewer.signedIn,
     onSubmit: async (values) => {
       if (!gateRef.current.allowed) {
         /**
@@ -93,24 +97,32 @@ export function usePublishFormCore(
          */
         throw { kind: 'permission' } as AppError;
       }
-      resultRef.current = await descriptor.submit(values);
+      try {resultRef.current = await descriptor.submit(values);}
+      catch(error){if(onAuthFailure && isSessionInvalid(classifyAuthFailure(error))) await onAuthFailure(error);throw error;}
     },
   });
 
   const onSettled = React.useCallback(
     (plan: PostSubmitPlan) => {
-      if (plan.announce === 'toast') {
-        toast.show({
-          message: t(descriptor.successKey ?? 'publish.submitted'),
-          tone: 'success',
-        });
-      }
       if (plan.navigate === 'stay') return;
       const destination = resolvePublishDestination(descriptor, resultRef.current);
       if (plan.navigate === 'replace' && destination) {
-        router.replace(destination);
+        // 创建后表单必须从栈中移除。详情改为回执动作显式打开，
+        // 这样系统返回始终稳定落在列表，避免回到已提交表单。
+        if(descriptor.listAfterSubmit){
+          router.replace(descriptor.listAfterSubmit as never);
+          if (plan.announce === 'toast') toast.show({
+            message: t(descriptor.successKey ?? 'publish.submitted'), tone: 'success',
+            actionLabel: t('publish.viewDetail'), onAction: () => router.push(destination),
+          });
+        }
+        else {
+          router.replace(destination);
+          if (plan.announce === 'toast') toast.show({message: t(descriptor.successKey ?? 'publish.submitted'), tone: 'success'});
+        }
         return;
       }
+      if (plan.announce === 'toast') toast.show({message: t(descriptor.successKey ?? 'publish.submitted'), tone: 'success'});
       router.back();
     },
     [descriptor, router, t, toast]
@@ -145,5 +157,6 @@ export function usePublishFormCore(
 /** 宿主：viewer 取自真源（P2A-02） */
 export function usePublishForm(descriptor: PublishFormDescriptor): PublishFormHost {
   const { viewer } = useViewer();
-  return usePublishFormCore(descriptor, viewer);
+  const session=useSession();
+  return usePublishFormCore(descriptor, viewer, session.handleAuthFailure);
 }

@@ -31,16 +31,16 @@ it('跑腿联系方式、金额、期限校验阻止接口',async()=>{
 });
 it('跑腿提交白名单并清列表缓存',async()=>{
  (createErrand as jest.Mock).mockResolvedValue({id:19});getQueryClient().setQueryData(['bing-errand','list',{}],{});
- const d=errand();expect(await d.submit({...ev,owner_user_id:99})).toEqual({id:19});expect(createErrand).toHaveBeenCalledWith({...ev,reward:5.5,deadline:null});expect(getQueryClient().getQueryData(['bing-errand','list',{}])).toBeUndefined();expect(d.routeAfterSubmit?.({id:19})).toBe('/errand/19');
+ const d=errand();expect(await d.submit({...ev,owner_user_id:99})).toEqual({id:19});expect(createErrand).toHaveBeenCalledWith({...ev,reward:5.5,deadline:null});expect(getQueryClient().getQueryData(['bing-errand','list',{}])).toBeUndefined();expect(d.routeAfterSubmit?.({id:19})).toBe('/errand/19?published=1');
 });
 it('二手价格、远程分类、宿舍与图片格式限制',async()=>{
  const d=market();for(const values of [{...mv,price:'Infinity'},{...mv,category:'unknown'},{...mv,dorm_area:'LY3'},{...mv,images:[{uri:'file:///a.gif',name:'a.gif',type:'image/gif',size:20}]}])await expect(d.submit(values)).rejects.toMatchObject({kind:'validation'});expect(createMarketplaceItem).not.toHaveBeenCalled();
 });
 it('二手提交multipart白名单并返回详情',async()=>{
- (createMarketplaceItem as jest.Mock).mockResolvedValue({id:21});const d=market();expect(await d.submit({...mv,seller_user_id:99})).toEqual({id:21});const data=(createMarketplaceItem as jest.Mock).mock.calls[0][0] as FormData;expect(data.get('price')).toBe('12.5');expect(data.has('seller_user_id')).toBe(false);expect(d.routeAfterSubmit?.({id:21})).toBe('/market/21');
+ (createMarketplaceItem as jest.Mock).mockResolvedValue({id:21});const d=market();expect(await d.submit({...mv,seller_user_id:99})).toEqual({id:21});const data=(createMarketplaceItem as jest.Mock).mock.calls[0][0] as FormData;expect(data.get('price')).toBe('12.5');expect(data.has('seller_user_id')).toBe(false);expect(d.routeAfterSubmit?.({id:21})).toBe('/market/21?published=1');
 });
 it('树洞普通帖固定type并校验标签与标题',async()=>{
- const d=post();await expect(d.submit({...pv,tagIds:['99']})).rejects.toMatchObject({kind:'validation'});await expect(d.submit({...pv,title:''})).rejects.toMatchObject({kind:'validation'});(createPost as jest.Mock).mockResolvedValue({id:23});await d.submit({...pv,type:'announcement'});expect(createPost).toHaveBeenCalledWith({...pv,type:'normal',tagIds:[7]});expect(d.routeAfterSubmit?.({id:23})).toBe('/campus/23');
+ const d=post();await expect(d.submit({...pv,tagIds:['99']})).rejects.toMatchObject({kind:'validation'});await expect(d.submit({...pv,title:''})).rejects.toMatchObject({kind:'validation'});(createPost as jest.Mock).mockResolvedValue({id:23});await d.submit({...pv,type:'announcement'});expect(createPost).toHaveBeenCalledWith({...pv,type:'normal',tagIds:[7]});expect(d.routeAfterSubmit?.({id:23})).toBe('/campus/23?published=1');
 });
 it('提交失败不清缓存且无效返回id不宣称成功',async()=>{
  getQueryClient().setQueryData(['bing-errand','list',{}],{old:true});(createErrand as jest.Mock).mockRejectedValue({kind:'unreachable'});await expect(errand().submit(ev)).rejects.toMatchObject({kind:'unreachable'});expect(getQueryClient().getQueryData(['bing-errand','list',{}])).toEqual({old:true});(createErrand as jest.Mock).mockResolvedValue({id:0});await expect(errand().submit(ev)).rejects.toMatchObject({kind:'unknown'});
@@ -66,4 +66,10 @@ it('树洞成功清理列表与搜索快照，失败不清理',async()=>{
 it('跑腿期限明确时区后规范化提交，联系方式不落草稿',async()=>{
  (createErrand as jest.Mock).mockResolvedValue({id:44});const d=errand();await d.submit({...ev,deadline:'2026-10-09T12:00+08:00'});
  expect(createErrand).toHaveBeenCalledWith({...ev,reward:5.5,deadline:'2026-10-09T04:00:00.000Z'});expect(fieldsOf(d).find(f=>f.name==='contactInfo')?.neverDraft).toBe(true);
+});
+
+it('日期控件生成的带毫秒 ISO 截止时间可提交',async()=>{
+ (createErrand as jest.Mock).mockResolvedValue({id:25});const d=errand();
+ await d.submit({...ev,deadline:'2026-11-10T09:25:00.000Z'});
+ expect(createErrand).toHaveBeenCalledWith(expect.objectContaining({deadline:'2026-11-10T09:25:00.000Z'}));
 });

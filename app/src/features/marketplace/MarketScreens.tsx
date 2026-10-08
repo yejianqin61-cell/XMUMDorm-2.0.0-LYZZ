@@ -2,7 +2,7 @@ import * as React from 'react';
 import {useRouter} from 'expo-router';
 import {Screen} from '@/components/ui/Screen';
 import {ListScreen,useListPagination} from '@/components/ui/ListScreen';
-import {ListItem} from '@/components/ui/ListItem';
+import {EntityCard} from '@/components/ui/EntityCard';
 import {FilterChips} from '@/components/ui/FilterChips';
 import {SegmentedControl} from '@/components/ui/SegmentedControl';
 import {Input} from '@/components/ui/Input';
@@ -82,12 +82,12 @@ function MarketFeed({filters}:{filters:Filters}):React.ReactElement {
   <ListScreen key={revision} testID="market-list" data={rows} keyExtractor={r=>String(r.id)} pagination={pagination} restoredScrollOffset={revision===0?initial.current?.scrollOffset??0:0} onScrollOffset={saveScroll}
    onRefresh={refresh} onEndReached={append} onRetryRefresh={refresh} onRetryAppend={append}
    labels={{retryLabel:t('action.retry'),endLabel:t('screen.market.end'),empty:{kind:'noResult',title:t('screen.market.empty'),actionLabel:t('action.retry'),onAction:refresh}}}
-   renderItem={r=><ListItem testID={`market-row-${r.id}`} title={r.title} subtitle={r.description} meta={`RM ${r.price.toFixed(2)} · ${t(r.status==='sold'?'screen.market.sold':'screen.market.on_sale')}`} onPress={()=>router.push(`/market/${r.id}` as never)}/>}/>
+   renderItem={r=><EntityCard domain="listing" testID={`market-row-${r.id}`} title={r.title} subtitle={r.description} mediaUri={r.cover} metrics={[`RM ${r.price.toFixed(2)}`, t(r.status==='sold'?'screen.market.sold':'screen.market.on_sale')]} onPress={()=>router.push(`/market/${r.id}` as never)}/>}/>
  </>;
 }
 type Detail=ReturnType<typeof readMarketDetail>;
 function safeCount(value:unknown):number|null{return typeof value==='number'&&Number.isSafeInteger(value)&&value>=0?value:null;}
-export function MarketDetailScreen({itemId}:{itemId:string}):React.ReactElement {
+export function MarketDetailScreen({published=false,itemId}:{published?:boolean;itemId:string}):React.ReactElement {
  const {t}=useI18n();const router=useRouter();const session=useSession();const [item,setItem]=React.useState<Detail|null>(null),[count,setCount]=React.useState<number|null>(null);
  const [loading,setLoading]=React.useState(true),[error,setError]=React.useState<AppError|null>(null),[busy,setBusy]=React.useState(false),[notice,setNotice]=React.useState<'login'|'denied'|'failed'|null>(null);
  const epoch=React.useRef(0),lock=React.useRef(false),uncertain=React.useRef(false);
@@ -103,7 +103,7 @@ export function MarketDetailScreen({itemId}:{itemId:string}):React.ReactElement 
   }catch(failure){if(request!==epoch.current)return;uncertain.current=true;const auth=classifyAuthFailure(failure);if(isSessionInvalid(auth))await session.handleAuthFailure(failure);if(request===epoch.current)setNotice(isSessionInvalid(auth)?'login':auth==='sanctioned'?'denied':'failed');}
   finally{if(request===epoch.current){lock.current=false;setBusy(false);}}
  };
- const back=()=>router.canGoBack()?router.back():router.replace('/market' as never);
+ const back=()=>published?router.replace('/market' as never):router.canGoBack()?router.back():router.replace('/market' as never);
  return <DetailScreen testID="market-detail" title={item?.title??t('screen.market.detail')} author={{kind:'named',name:item?.sellerName??t('screen.market.seller')}} interactions={{}} onBack={back} onRetry={()=>void load()} state={loading?'loading':error?.kind==='content'?'empty':error?'error':item?'content':'empty'} error={error}
   empty={{kind:'noResult',title:t('screen.market.unavailable'),actionLabel:t('screen.market.back'),onAction:back}}
   hero={item&&item.images.length?<MediaGrid testID="market-media" variant="hero" uris={item.images}/>:undefined}

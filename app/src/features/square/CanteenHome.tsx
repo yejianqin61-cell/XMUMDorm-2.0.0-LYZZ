@@ -20,6 +20,9 @@ import * as React from 'react';
 import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import MapPin from 'lucide-react-native/icons/map-pin';
+import ShoppingBag from 'lucide-react-native/icons/shopping-bag';
+import Bike from 'lucide-react-native/icons/bike';
+import BookOpen from 'lucide-react-native/icons/book-open';
 import Shuffle from 'lucide-react-native/icons/shuffle';
 
 import { useTheme } from '@/design-system/theme';
@@ -82,6 +85,11 @@ export function CanteenHome(): React.ReactElement {
   return (
     <Screen testID="screen-canteen" titleKey="canteen.title" bottomMode="own" {...badge}>
       <View style={{ flex: 1, padding: theme.space('space_4'), gap: theme.space('space_4') }}>
+        <QuickActionGrid testID="square-services" actions={[
+          {key:'market',label:t('screen.market.title'),icon:ShoppingBag,onPress:()=>router.push('/market' as never)},
+          {key:'errand',label:t('screen.errand.title'),icon:Bike,onPress:()=>router.push('/errand' as never)},
+          {key:'guides',label:t('square.guides.title'),icon:BookOpen,onPress:()=>router.push('/guides' as never)},
+        ]}/>
         <Button testID="canteen-search-entry" label={t('canteen.search.title')} variant="secondary" onPress={() => router.push('/canteen/search')} />
         {regions.stale ? <OfflineBanner testID="canteen-stale" variant="stale" message={t('canteen.cache.stale')} actionLabel={t('action.refresh')} onAction={regions.reload} /> : null}
         {regions.loading && regions.data === null ? (

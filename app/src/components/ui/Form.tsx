@@ -35,7 +35,6 @@ import { usePreventRemove } from 'expo-router/react-navigation';
 import {
   ScrollView,
   View,
-  findNodeHandle,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
@@ -47,7 +46,7 @@ import type { MessageKey } from '@/i18n/zh';
 import { assertNotCredential, getItem, removeItem, setItem } from '@/shared/storage';
 import { AlertDialog } from './AlertDialog';
 import { Button } from './Button';
-import { ErrorSummary, focusAccessibilityElement, type FieldErrorEntry } from './ErrorSummary';
+import { ErrorSummary, focusAccessibilityRef, type FieldErrorEntry } from './ErrorSummary';
 import {
   FormField,
   createInitialValues,
@@ -170,8 +169,8 @@ export function validateAll(
       errors[field.name] = 'form.error.required';
       continue;
     }
-    if (field.maxLength !== undefined && typeof value === 'string' && value.length > field.maxLength) {
-      errors[field.name] = 'form.error.tooLong';
+    if (field.maxLength !== undefined && typeof value === 'string' && value.length > (typeof field.maxLength === 'function' ? field.maxLength(values) : field.maxLength)) {
+      errors[field.name] = field.validate?.(value, values) ?? 'form.error.tooLong';
       continue;
     }
     const custom = field.validate?.(value, values);
@@ -351,7 +350,7 @@ export function useForm(options: UseFormOptions): UseFormReturn {
     // 与 `K04` 共用同一套焦点机制（`ErrorSummary` 导出的那个函数）
     const node = refs.current.get(name) ?? null;
     if (node === null) return;
-    focusAccessibilityElement(findNodeHandle(node));
+    focusAccessibilityRef(node);
   }, []);
 
   const discardDraft = React.useCallback(async () => {

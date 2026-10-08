@@ -46,7 +46,7 @@ describe('丙：万能墙发布描述符', () => {
     const result=await d.submit({template_key:'note',content:'寻找钥匙',user_id:9});
     expect(api).toHaveBeenCalledWith({template_key:'note',content:'寻找钥匙'});
     expect(result).toEqual({id:42});
-    expect(d.routeAfterSubmit?.(result)).toBe('/(tabs)/campus');
+    expect(d.routeAfterSubmit?.(result)).toBe('/(tabs)/campus?tab=wall');
   });
   it('网络失败原样交给公共宿主，不假报成功', async () => {
     const error={kind:'unreachable'};

@@ -1,3 +1,6 @@
+import {ReportSheet} from '@/components/ui/ReportSheet';
+import {useToast} from '@/components/ui/Toast';
+import type {CampusReportReason} from './useCampusReport';
 import {useCampusActions} from './useCampusActions';
 import * as React from 'react';
 import {useRouter} from 'expo-router';
@@ -52,6 +55,7 @@ function snapshotKey(kind:CampusKind){
 
 export function CampusListScreen({initialTab='confession', ...screenProps}:{initialTab?:CampusKind} & Omit<ScreenProps, 'children' | 'titleKey'>={}):React.ReactElement {
  const {t}=useI18n();const router=useRouter();const [selected,setSelected]=React.useState<CampusKind>(initialTab);
+ React.useEffect(() => setSelected(initialTab), [initialTab]);
  return <Screen titleKey="screen.campus" showMailbox={false} testID="campus-screen" {...screenProps}>
   <TopTabStrip tabs={getSecondaryTabs('campus')} selectedKey={selected} onSelect={key=>{
    if(key!=='confession'&&key!=='wall')return;
@@ -128,7 +132,7 @@ export function CampusFeed({kind,query}:{kind:CampusKind;query?:string}):React.R
  </>;
 }
 
-export function CampusDetailScreen({postId,kind='confession'}:{postId:string;kind?:CampusKind}):React.ReactElement {
+export function CampusDetailScreen({published=false,postId,kind='confession'}:{published?:boolean;postId:string;kind?:CampusKind}):React.ReactElement {
  const {t}=useI18n();const router=useRouter();
  const [post,setPost]=React.useState<Post|null>(null),[error,setError]=React.useState<AppError|null>(null);
  const [loading,setLoading]=React.useState(true);const generation=React.useRef(0);
@@ -144,15 +148,26 @@ export function CampusDetailScreen({postId,kind='confession'}:{postId:string;kin
  },[postId,kind]);
  React.useEffect(()=>{void load();return()=>{generation.current++;};},[load]);
  const actions=useCampusActions(post,kind);
- const back=()=>router.canGoBack()?router.back():router.replace((kind==='wall'?'/campus?tab=wall':'/campus') as never);
+ const toast=useToast();
+ const [reportOpen,setReportOpen]=React.useState(false),[reportReason,setReportReason]=React.useState<string|null>(null),[reportDetail,setReportDetail]=React.useState('');
+ React.useEffect(()=>{setReportOpen(false);setReportReason(null);setReportDetail('');},[postId,kind]);
+ React.useEffect(()=>{if(actions.report.state==='success'){setReportOpen(false);toast.show({message:t('screen.campus.report.success'),tone:'success'});}},[actions.report.state,t,toast]);
+ const reportReasons=['spam','fraud','abuse','nsfw','trolling','privacy','illegal_trade','other'] as const;
+ const reportReasonKeys={spam:'screen.campus.report.spam',fraud:'screen.campus.report.fraud',abuse:'screen.campus.report.abuse',nsfw:'screen.campus.report.nsfw',trolling:'screen.campus.report.trolling',privacy:'screen.campus.report.privacy',illegal_trade:'screen.campus.report.illegal_trade',other:'screen.campus.report.other'} as const;
+ const reportPanel=<ReportSheet maxDetailLength={1000} visible={reportOpen} reasons={reportReasons.map(value=>({value,label:t(reportReasonKeys[value])}))} reason={reportReason} detail={reportDetail} onReason={setReportReason} onDetail={setReportDetail}
+  busy={actions.report.state==='sending'} onSubmit={()=>{if(reportReason)void actions.report.submit(reportReason as CampusReportReason,reportDetail);}} onCancel={()=>setReportOpen(false)}
+  message={['failed','denied','invalid','login'].includes(actions.report.state)?t(actions.report.state==='login'?'screen.campus.write.login':actions.report.state==='denied'?'screen.campus.write.denied':'screen.campus.report.failed'):undefined}
+  action={actions.report.state==='login'?{label:t('screen.campus.write.login'),onPress:()=>{setReportOpen(false);router.push('/login');}}:undefined}
+  labels={{title:t('screen.campus.read.report'),reason:t('screen.campus.report.reason'),detail:t('screen.campus.report.detail'),submit:t('screen.campus.read.report'),cancel:t('action.cancel')}}/>;
+ const back=()=>published?router.replace('/(tabs)/campus' as never):router.canGoBack()?router.back():router.replace((kind==='wall'?'/campus?tab=wall':'/campus') as never);
  const images=Array.isArray(post?.images)?post.images.filter(image=>image&&typeof image.url==='string').map(image=>image.url):[];
  return <DetailScreen testID="campus-detail" title={kind==='wall'?t('screen.campus.read.wallTitle'):post?.title||t('screen.campus.read.title')}
   author={post?.author ? {kind:'named',name:post.author.nickname||post.author.username||t('screen.campus.read.author')} : {kind:'anonymous'}}
-  interactions={actions.interactions} onToggleLike={post?actions.onToggleLike:undefined} comments={post?actions.comments:undefined} state={loading?'loading':error?.kind==='content'?'empty':error?'error':post?'content':'empty'} error={error}
+  onReport={post&&actions.report.state!=='success'?()=>setReportOpen(true):undefined} interactions={actions.interactions} onToggleLike={post?actions.onToggleLike:undefined} comments={post?actions.comments:undefined} state={loading?'loading':error?.kind==='content'?'empty':error?'error':post?'content':'empty'} error={error}
   empty={{kind:'noResult',title:t('screen.campus.read.unavailable'),actionLabel:t('screen.campus.read.backToList'),onAction:back}}
   onBack={back} onRetry={()=>error?.kind==='content'?back():void load()}
   hero={images.length>0?<MediaGrid testID="campus-media" uris={images} variant="hero"/>:undefined}
-  body={<><Text role="body">{post?.content}</Text>{post?actions.body:null}</>}
+  body={<><Text role="body">{post?.content}</Text>{post?actions.body:null}{reportPanel}</>}
   labels={{back:t('action.back'),like:t('screen.campus.read.like'),favorite:t('action.save'),comment:t('screen.campus.read.comments'),report:t('screen.campus.read.report'),countPlaceholder:'—',anonymous:t('screen.campus.read.anonymous'),
    comments:{anonymous:t('screen.campus.read.anonymous'),deleteLabel:t('screen.campus.read.delete'),replyLabel:t('screen.campus.read.reply'),likeLabel:t('screen.campus.read.like'),moreReplies:n=>String(n),collapse:t('screen.campus.read.collapse')},commentsEnd:t('screen.campus.read.end'),commentsRetry:t('action.retry')}}/>;
 }

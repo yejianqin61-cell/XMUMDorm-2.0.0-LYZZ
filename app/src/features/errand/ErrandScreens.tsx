@@ -1,9 +1,10 @@
 import * as React from 'react';
+import {ContactCopy} from './ContactCopy';
 import * as Linking from 'expo-linking';
 import {useRouter} from 'expo-router';
 import {Screen} from '@/components/ui/Screen';
 import {ListScreen,useListPagination} from '@/components/ui/ListScreen';
-import {ListItem} from '@/components/ui/ListItem';
+import {EntityCard} from '@/components/ui/EntityCard';
 import {SegmentedControl} from '@/components/ui/SegmentedControl';
 import {Button} from '@/components/ui/Button';
 import {Text} from '@/components/ui/Text';
@@ -72,12 +73,12 @@ function ErrandFeed({filters}:{filters:Filters}):React.ReactElement {
   <ListScreen key={revision} testID="errand-list" data={rows} keyExtractor={r=>String(r.id)} pagination={pagination} restoredScrollOffset={revision===0?initial.current?.scrollOffset??0:0} onScrollOffset={saveScroll}
    onRefresh={refresh} onEndReached={append} onRetryRefresh={refresh} onRetryAppend={append}
    labels={{retryLabel:t('action.retry'),endLabel:t('screen.errand.end'),empty:{kind:'noResult',title:t('screen.errand.empty'),actionLabel:t('action.retry'),onAction:refresh}}}
-   renderItem={r=><ListItem testID={`errand-row-${r.id}`} title={r.title} subtitle={r.location} meta={`RM ${r.reward.toFixed(2)} · ${t(statusKeys[r.status as 'open'|'taken'|'done'])}`} onPress={()=>router.push(`/errand/${r.id}` as never)}/>}/>
+   renderItem={r=><EntityCard domain="errand" testID={`errand-row-${r.id}`} title={r.title} subtitle={r.location} metrics={[`RM ${r.reward.toFixed(2)}`,t(statusKeys[r.status as 'open'|'taken'|'done'])]} onPress={()=>router.push(`/errand/${r.id}` as never)}/>}/>
  </>;
 }
 type Detail=ReturnType<typeof readErrandDetail>;
 type Viewer={id:number;role:string};
-export function ErrandDetailScreen({errandId}:{errandId:string}):React.ReactElement {
+export function ErrandDetailScreen({published=false,errandId}:{published?:boolean;errandId:string}):React.ReactElement {
  const {t}=useI18n();const router=useRouter();const session=useSession();
  const [item,setItem]=React.useState<Detail|null>(null),[viewer,setViewer]=React.useState<Viewer|null>(null),[identityError,setIdentityError]=React.useState(false);
  const [loading,setLoading]=React.useState(true),[error,setError]=React.useState<AppError|null>(null),[busy,setBusy]=React.useState(false),[confirm,setConfirm]=React.useState<'take'|'done'|'delete'|null>(null),[notice,setNotice]=React.useState<'failed'|'login'|'denied'|'conflict'|null>(null);
@@ -118,13 +119,13 @@ export function ErrandDetailScreen({errandId}:{errandId:string}):React.ReactElem
    if(request===epoch.current){const status=(failure as {status?:number})?.status;setNotice(isSessionInvalid(auth)?'login':status===403?'denied':status===409?'conflict':'failed');uncertain.current=true;}
   }finally{if(request===epoch.current){lock.current=false;setBusy(false);}}
  };
- const back=()=>router.canGoBack()?router.back():router.replace('/errand' as never);
+ const back=()=>published?router.replace('/errand' as never):router.canGoBack()?router.back():router.replace('/errand' as never);
  return <DetailScreen testID="errand-detail" title={item?.title??t('screen.errand.detail')} author={{kind:'named',name:item?.ownerName??t('screen.errand.owner')}} interactions={{}} onBack={back} onRetry={()=>void load()} state={loading?'loading':error?.kind==='content'?'empty':error?'error':item?'content':'empty'} error={error}
   empty={{kind:'noResult',title:t('screen.errand.unavailable'),actionLabel:t('screen.errand.back'),onAction:back}}
   body={item?<><Text role="body">{item.description}</Text><Text role="body">{`RM ${item.reward.toFixed(2)} · ${t(statusKeys[item.status as 'open'|'taken'|'done'])}`}</Text>
    <Text role="body">{item.location}</Text>{item.deadline?<Text role="body">{item.deadline}</Text>:null}
    <Text role="label">{t('screen.errand.contact')}</Text><Text role="body">{item.contactInfo}</Text>
-   {dialNumber?<Button testID="errand-dial" label={t('screen.errand.dial')} onPress={()=>void dial()}/>:null}
+   <ContactCopy value={item.contactInfo}/>{dialNumber?<Button testID="errand-dial" label={t('screen.errand.dial')} onPress={()=>void dial()}/>:null}
    {contactError?<Text role="body">{t('screen.errand.dialFailed')}</Text>:null}
    {canDelete?<Button testID="errand-delete" disabled={busy||uncertain.current} label={t('screen.errand.delete')} onPress={()=>setConfirm('delete')}/>:null}
    {identityError?<Button label={t('screen.errand.identityFailed')} onPress={()=>void load()}/>:null}

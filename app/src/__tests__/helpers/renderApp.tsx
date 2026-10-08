@@ -24,6 +24,7 @@ import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
 
 import { ThemeProvider } from '@/design-system/theme';
 import { I18nProvider, type Locale } from '@/i18n';
+import { ToastProvider } from '@/components/ui/Toast';
 import { Screen } from '@/components/ui/Screen';
 
 /** 骨架规范 §6.4 的机型矩阵取值（测试里用一台标准 Android 手机） */
@@ -63,7 +64,7 @@ export async function renderApp(
   const tree = (
     <ThemeProvider source={scheme} systemScheme={scheme}>
       <I18nProvider locale={locale}>
-        {inScreen ? <Screen bottomMode="own">{node}</Screen> : node}
+        <ToastProvider>{inScreen ? <Screen bottomMode="own">{node}</Screen> : node}</ToastProvider>
       </I18nProvider>
     </ThemeProvider>
   );
