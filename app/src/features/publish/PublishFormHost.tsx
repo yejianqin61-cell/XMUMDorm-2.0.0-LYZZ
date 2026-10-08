@@ -49,6 +49,7 @@ function RegisteredPublishFormHost({descriptor}: PublishFormHostProps): React.Re
 }
 function ResolvedPublishFormHost({descriptor}: PublishFormHostProps): React.ReactElement {
   const host = usePublishForm(descriptor);
+  const router = useRouter();
 
   // A-05：门禁是**拦截点**，不是字段错误 —— 所以不渲染表单，只给三要素 + 一个动作
   if (!host.gate.allowed) {
@@ -63,6 +64,7 @@ function ResolvedPublishFormHost({descriptor}: PublishFormHostProps): React.Reac
       labels={host.labels}
       semantic={host.semantic}
       onSettled={host.onSettled}
+      onCancel={() => router.back()}
     />
   );
 }
