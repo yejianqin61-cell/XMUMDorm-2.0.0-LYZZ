@@ -161,6 +161,9 @@ describe('P2B-06 M-12 私信会话', () => {
       expect(normalized).not.toBeNull();
       expect(normalized?.thread.itemTitle).toBe('二手键盘');
       expect(normalized?.messages.map((message) => message.mine)).toEqual([false, true]);
+      const paged = normalizeChat({ ...THREAD_PAYLOAD, hasMore: true, nextCursor: 'cursor-1' }, 7);
+      expect(paged?.hasMore).toBe(true);
+      expect(paged?.nextCursor).toBe('cursor-1');
 
       const noId = normalizeChat({ thread: { id: 11 }, list: [{ sender_user_id: 7, content: 'x' }] }, 7);
       expect(noId?.messages).toEqual([]);

@@ -63,6 +63,7 @@ export function ChatScreen(): React.ReactElement {
   const [sending, setSending] = React.useState(false);
   const [focusReady, setFocusReady] = React.useState(false);
   const [threadAccessGranted, setThreadAccessGranted] = React.useState(false);
+  const [historyCursor, setHistoryCursor] = React.useState<string | null>(null);
   const [focused, setFocused] = React.useState(false);
   const [appActive, setAppActive] = React.useState(AppState.currentState === 'active');
   const lastSeenRef = React.useRef(0);
@@ -88,8 +89,9 @@ export function ChatScreen(): React.ReactElement {
 
   /** 拉一次消息（首次 = 全量；之后 = 只取增量，避免整页覆盖导致闪烁） */
   const pull = React.useCallback(
-    async (mode: 'initial' | 'poll') => {
+    async (mode: 'initial' | 'poll' | 'history') => {
       if (mode === 'initial') dispatch({ type: 'refresh:start' });
+      if (mode === 'history') dispatch({ type: 'append:start' });
       try {
         if (mode === 'initial') {
           setThreadAccessGranted(false);
@@ -100,10 +102,14 @@ export function ChatScreen(): React.ReactElement {
             return;
           }
           setThreadAccessGranted(true);
-        } else if (!threadAccessGranted) {
+        } else if (!threadAccessGranted || (mode === 'history' && !historyCursor)) {
+          if (mode === 'history') dispatch({ type: 'append:success', hasMore: false });
           return;
         }
-        const payload = await getMarketplaceThreadMessages(threadId);
+        const payload = await getMarketplaceThreadMessages(
+          threadId,
+          mode === 'history' ? { cursor: historyCursor } : undefined
+        );
         // 自己的 id 只在第一次拉；之后从 state 里读（⛔ 不在每次轮询里重复请求）
         let me = viewerId;
         if (me === null) {
@@ -123,7 +129,12 @@ export function ChatScreen(): React.ReactElement {
         if (mode === 'initial') {
           setMessages(normalized.messages);
           lastSeenRef.current = lastSeenId(normalized.messages);
-          dispatch({ type: 'refresh:success', hasMore: false });
+          setHistoryCursor(normalized.nextCursor);
+          dispatch({ type: 'refresh:success', hasMore: normalized.hasMore });
+        } else if (mode === 'history') {
+          setMessages((previous) => mergeMessages(previous, normalized.messages));
+          setHistoryCursor(normalized.nextCursor);
+          dispatch({ type: 'append:success', hasMore: normalized.hasMore });
         } else if (fresh.length > 0) {
           setMessages((previous) => mergeMessages(previous, fresh));
           lastSeenRef.current = lastSeenId([...messages, ...fresh]);
@@ -136,11 +147,12 @@ export function ChatScreen(): React.ReactElement {
       } catch (error) {
         setThreadAccessGranted(false);
         if (mode === 'initial') dispatch({ type: 'refresh:failure', error: toMailboxError(error) });
+        if (mode === 'history') dispatch({ type: 'append:failure', error: toMailboxError(error) });
       } finally {
         if (mode === 'initial') setFocusReady(true);
       }
     },
-    [dispatch, messages, refreshUnread, threadAccessGranted, threadId, viewerId]
+    [dispatch, historyCursor, messages, refreshUnread, threadAccessGranted, threadId, viewerId]
   );
 
   React.useEffect(() => {
@@ -206,7 +218,7 @@ export function ChatScreen(): React.ReactElement {
           keyExtractor={(message) => String(message.id)}
           pagination={pagination}
           onRefresh={() => void pull('initial')}
-          onEndReached={() => undefined}
+          onEndReached={() => void pull('history')}
           onRetryRefresh={() => void pull('initial')}
           labels={{
             empty: {

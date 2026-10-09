@@ -61,7 +61,7 @@ function normalizeMessage(raw: unknown, viewerId: number): ChatMessage | null {
 export function normalizeChat(
   payload: unknown,
   viewerId: number
-): { thread: ChatThread; messages: ChatMessage[] } | null {
+): { thread: ChatThread; messages: ChatMessage[]; hasMore: boolean; nextCursor: string | null } | null {
   if (!isObject(payload) || !isObject(payload.thread)) return null;
   const threadId = Number(payload.thread.id);
   if (!Number.isInteger(threadId) || threadId <= 0) return null;
@@ -78,6 +78,8 @@ export function normalizeChat(
       itemTitle: asString(payload.thread.item_title),
     },
     messages: orderMessages(messages),
+    hasMore: payload.hasMore === true,
+    nextCursor: typeof payload.nextCursor === 'string' ? payload.nextCursor : null,
   };
 }
 
