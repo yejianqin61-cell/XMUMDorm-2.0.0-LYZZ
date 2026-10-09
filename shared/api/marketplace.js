@@ -65,8 +65,9 @@ export function sellerListItemChatThreads(itemId) {
   return get(`/api/marketplace/items/${itemId}/chat/threads`);
 }
 
-export function getMarketplaceThreadMessages(threadId) {
-  return get(`/api/marketplace/chat/threads/${threadId}/messages`);
+export function getMarketplaceThreadMessages(threadId, params = {}) {
+  const query = params.cursor ? `?cursor=${encodeURIComponent(params.cursor)}` : '';
+  return get(`/api/marketplace/chat/threads/${threadId}/messages${query}`);
 }
 
 export function sendMarketplaceThreadMessage(threadId, content) {
