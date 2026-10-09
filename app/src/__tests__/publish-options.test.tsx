@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Text } from 'react-native';
-import { waitFor } from '@testing-library/react-native';
+import { act, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderApp } from './helpers/renderApp';
 import { buildDescriptor, useResolvedDescriptor } from '@/features/publish/resolveDescriptor';
@@ -23,5 +23,6 @@ it('registered marketplace loads remote category values and English labels, excl
   await waitFor(() => expect(view.getByTestId('options').props.children).toContain('Books'));
   expect(view.getByTestId('options').props.children).toContain('books');
   expect(view.getByTestId('options').props.children).not.toContain('All');
+  await act(async () => { view.unmount(); });
   client.clear();
 });

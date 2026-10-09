@@ -7,6 +7,7 @@ module.exports = {
   // P1-02：AsyncStorage / NetInfo 需要官方 mock。⛔ 必须展开 preset 的 setupFiles，
   // 否则会把 jest-expo 自己的 setup 丢掉。
   setupFiles: [...(expoPreset.setupFiles ?? []), '<rootDir>/jest.setup.js'],
+  setupFilesAfterEnv: ['<rootDir>/jest.lifecycle.setup.js'],
   roots: ['<rootDir>/src'],
   testMatch: ['**/__tests__/**/*.test.ts', '**/__tests__/**/*.test.tsx'],
   // ⚠️ P1-08：`@ronradtke/react-native-markdown-display` 的 `dist/` **带着未编译的 JSX**
