@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Copy, MessageCircle } from 'lucide-react';
 import Card from '../components/ui/Card';
-import { useLanguage } from '../context/LanguageContext';
-import { Toast } from '../context/ToastContext';
+import { useLanguage } from '../context/LanguageContextState';
+import { Toast } from '../context/toast';
 import './JoinUs.css';
 
 /**

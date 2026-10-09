@@ -66,6 +66,8 @@ export type EntityCardProps = {
   status?: string;
   /** 点评作者：后端对普通用户点评**强制匿名**（调研 G18），因此有值才显示 */
   authorLabel?: string;
+  /** Localized metrics supplied by domain adapters (currency/status are business rules). */
+  metrics?: readonly string[];
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
   testID?: string;
@@ -106,13 +108,14 @@ export function EntityCard({
   reviewCount,
   status,
   authorLabel,
+  metrics: injectedMetrics,
   onPress,
   style,
   testID,
 }: EntityCardProps): React.ReactElement {
   const theme = useTheme();
   const hasMedia = typeof mediaUri === 'string' && mediaUri.length > 0;
-  const metrics = entityMetrics({ domain, price, reward, score, reviewCount, status });
+  const metrics = injectedMetrics ?? entityMetrics({ domain, price, reward, score, reviewCount, status });
 
   return (
     <Pressable

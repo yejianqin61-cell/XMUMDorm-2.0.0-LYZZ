@@ -4,7 +4,7 @@ export default function Card({
   as: Component = 'div',
   className = '',
   bodyClassName = '',
-  variant = 'default',
+  variant: _variant = 'default',
   padding = 'md',
   interactive = false,
   children,

@@ -39,7 +39,7 @@ function isRemoteDefaultAvatar(src) {
   return typeof src === 'string' && /\/uploads\/default-avatar\.(?:png|svg)(?:[?#].*)?$/i.test(src);
 }
 
-function AvatarImage({ className = '', src, alt = '', shape = 'circle', ...props }) {
+function AvatarImage({ className = '', src, alt = '', shape: _shape = 'circle', ...props }) {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
   const imageSrc = isRemoteDefaultAvatar(src) ? '/default-avatar.svg' : src;

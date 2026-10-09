@@ -1,7 +1,7 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContextState';
+import { useLanguage } from '../../context/LanguageContextState';
 import { getCanteenStrings } from '../../i18n/canteenStrings';
 import { getFoodArticles } from '@shared/api/canteen';
 import { QK } from '@shared/query/queryKeys';

@@ -1,8 +1,8 @@
 import { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useLanguage } from '../context/LanguageContext';
+import { useLanguage } from '../context/LanguageContextState';
 import { postTrendingPost } from '@shared/api/square';
-import { useExpFeedback } from '../context/ExpFeedbackContext';
+import { useExpFeedback } from '../context/ExpFeedbackContextState';
 import NeoButton from '../components/retroui/Button';
 import NeoTextarea from '../components/retroui/Textarea';
 import NeoCard from '../components/retroui/Card';

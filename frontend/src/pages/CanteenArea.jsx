@@ -146,14 +146,14 @@ function CanteenArea() {
         const base = parsed.filter((x) => x && x.src && x.id !== 'cloud');
         setStickers(base);
       }
-    } catch {}
+    } catch { /* Best-effort operation: keep the existing fallback when this fails. */ }
   }, [defaultStickers, storageKey]);
 
   useEffect(() => {
     if (!editMode) return;
     try {
       localStorage.setItem(storageKey, JSON.stringify(stickers));
-    } catch {}
+    } catch { /* Best-effort operation: keep the existing fallback when this fails. */ }
   }, [editMode, stickers]);
 
   const dragRef = useRef(null); // { id, startX, startY, startRect, box }
@@ -198,7 +198,7 @@ function CanteenArea() {
     if (changed) {
       try {
         localStorage.setItem(storageKey, JSON.stringify(stickers));
-      } catch {}
+      } catch { /* Best-effort operation: keep the existing fallback when this fails. */ }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [imgSize.w, imgSize.h, cover.scale, cover.offsetX, cover.offsetY]);
@@ -222,7 +222,7 @@ function CanteenArea() {
     };
     try {
       ev.currentTarget.setPointerCapture(ev.pointerId);
-    } catch {}
+    } catch { /* Best-effort operation: keep the existing fallback when this fails. */ }
   };
 
   const onDragMove = (ev) => {
@@ -268,14 +268,14 @@ function CanteenArea() {
   const copyConfig = async () => {
     try {
       await navigator.clipboard.writeText(JSON.stringify(stickers, null, 2));
-    } catch {}
+    } catch { /* Best-effort operation: keep the existing fallback when this fails. */ }
   };
 
   const reset = () => {
     setStickers(defaultStickers);
     try {
       localStorage.removeItem(storageKey);
-    } catch {}
+    } catch { /* Best-effort operation: keep the existing fallback when this fails. */ }
   };
 
   return (

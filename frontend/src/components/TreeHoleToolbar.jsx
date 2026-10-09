@@ -3,8 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PenLine, Plus, Search } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContextState';
+import { useLanguage } from '../context/LanguageContextState';
 import { getPostTagsList, getHotPostTags } from '@shared/api/posts';
 import { getVisibleTags } from '@shared/api/tags';
 import { QK } from '@shared/query/queryKeys';
@@ -29,7 +29,7 @@ function TreeHoleToolbar({ selectedSlug = null, onSelectTagSlug }) {
     staleTime: POST_TAGS_STALE_MS,
     select: (data) => (Array.isArray(data) ? data : []),
   });
-  const tags = tagsQuery.data ?? [];
+  const tags = useMemo(() => tagsQuery.data ?? [], [tagsQuery.data]);
 
   const visibleQuery = useQuery({
     queryKey: QK.postTagsVisible(),
@@ -37,7 +37,7 @@ function TreeHoleToolbar({ selectedSlug = null, onSelectTagSlug }) {
     enabled: isLoggedIn && !!token,
     staleTime: 2 * 60 * 1000,
   });
-  const visibleTags = visibleQuery.data?.visible || [];
+  const visibleTags = useMemo(() => visibleQuery.data?.visible || [], [visibleQuery.data]);
 
   // 游客端标签栏：按帖子热度（usage_count）排序的热门标签，双语名沿用全量标签
   const hotTagsQuery = useQuery({

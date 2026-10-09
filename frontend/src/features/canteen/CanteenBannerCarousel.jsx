@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
-import { useLanguage } from '../../context/LanguageContext';
-import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContextState';
+import { useAuth } from '../../context/AuthContextState';
 import { getCanteenStrings } from '../../i18n/canteenStrings';
 import { getCanteenBanners } from '@shared/api/canteen';
 import { recordAdvertisementClick } from '@shared/api/advertisements';

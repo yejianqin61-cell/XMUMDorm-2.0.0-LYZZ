@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion as Motion } from 'framer-motion';
 import { getApiErrorMessage } from '@shared/utils/apiError';
-import { useLanguage } from '../context/LanguageContext';
+import { useLanguage } from '../context/LanguageContextState';
 import { sendVerificationCode, register as apiRegister } from '@shared/api/auth';
 import AuthPageShell from '../components/auth/AuthPageShell';
 import MascotHero from '../components/auth/MascotHero';

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { useLanguage } from '../../context/LanguageContext';
-import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContextState';
+import { useAuth } from '../../context/AuthContextState';
 import { listMyClubs } from '@shared/api/clubs';
 import NeoCard from '../../components/retroui/Card';
 import { NeoAvatar } from '../../components/retroui/Avatar';

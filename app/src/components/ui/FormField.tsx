@@ -70,7 +70,7 @@ export type FormFieldDescriptor = {
   /** 帮助文案（`K03` 补的那一行） */
   helpKey?: MessageKey;
   required?: boolean;
-  maxLength?: number;
+  maxLength?: number | ((values: FormValues) => number);
   rows?: number;
   /** 选项（`segmented`/`select`/`multiselect`/`tags` 用） */
   source?: OptionSource;
@@ -214,7 +214,7 @@ export function FormField({
           kind={inputKindFor(field.kind)}
           value={typeof value === 'string' ? value : ''}
           onChangeText={set}
-          maxLength={field.maxLength}
+          maxLength={typeof field.maxLength === 'function' ? field.maxLength(values) : field.maxLength}
           errorText={errorText}
           required={field.required}
           disabled={disabled}
@@ -229,7 +229,7 @@ export function FormField({
           placeholder={placeholder}
           value={typeof value === 'string' ? value : ''}
           onChangeText={set}
-          maxLength={field.maxLength}
+          maxLength={typeof field.maxLength === 'function' ? field.maxLength(values) : field.maxLength}
           counter={field.maxLength !== undefined}
           errorText={errorText}
           required={field.required}
@@ -309,7 +309,7 @@ export function FormField({
           source={field.enumTags ? 'enum' : 'free'}
           options={field.enumTags}
           max={field.max}
-          maxLength={field.maxLength}
+          maxLength={typeof field.maxLength === 'function' ? field.maxLength(values) : field.maxLength}
           placeholder={placeholder}
           errorText={errorText}
           disabled={disabled}

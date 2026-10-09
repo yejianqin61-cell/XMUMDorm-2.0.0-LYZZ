@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Loader2, AlertTriangle, Save } from 'lucide-react';
 import { get, patch } from '@shared/api/request';
-import { useLanguage } from '../../context/LanguageContext';
+import { useLanguage } from '../../context/LanguageContextState';
 
 const CONFIG_META = {
   report_auto_hide_threshold: { label: '自动隐藏阈值', labelEn: 'Auto-hide', desc: '被举报N次自动隐藏', descEn: 'Auto-hide after N reports' },
@@ -25,7 +25,7 @@ export default function SystemConfig() {
   const [levelSaved, setLevelSaved] = useState(false);
 
   // 举报规则配置
-  const { data: configs, isLoading } = useQuery({
+  const { data: _configs, isLoading } = useQuery({
     queryKey: ['admin', 'configs'],
     queryFn: async () => {
       const data = await get('/api/admin/configs');
@@ -42,7 +42,9 @@ export default function SystemConfig() {
     queryFn: () => get('/api/admin/level-config'),
   });
 
-  useEffect(() => {
+  const [previousConfig, setPreviousConfig] = useState(lc);
+  if (previousConfig !== lc) {
+    setPreviousConfig(lc);
     if (lc) {
       setLevelConfig({
         thresholds: lc.level_thresholds || {},
@@ -50,7 +52,7 @@ export default function SystemConfig() {
         rewards: lc.exp_action_rewards || {},
       });
     }
-  }, [lc]);
+  }
 
   const saveMutation = useMutation({
     mutationFn: ({ key, value }) => patch(`/api/admin/configs/${key}`, { value }),

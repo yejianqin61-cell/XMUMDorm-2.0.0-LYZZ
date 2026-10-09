@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContextState';
+import { useLanguage } from '../context/LanguageContextState';
 import { getProfile } from '@shared/api/users';
 import PostCard from '../components/PostCard';
 import EmptyState from '../components/ui/EmptyState';
@@ -16,10 +16,17 @@ function MyPosts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const requestKey = `${isLoggedIn}:${user?.id}`;
+  const [previousRequestKey, setPreviousRequestKey] = useState(requestKey);
+  if (previousRequestKey !== requestKey) {
+    setPreviousRequestKey(requestKey);
+    setLoading(isLoggedIn);
+    setError(null);
+    if (!(isLoggedIn)) { setList([]); }
+  }
+
   useEffect(() => {
     if (!isLoggedIn) {
-      setList([]);
-      setLoading(false);
       return;
     }
     if (!user?.id) {
@@ -27,8 +34,6 @@ function MyPosts() {
       return;
     }
     let cancelled = false;
-    setLoading(true);
-    setError(null);
     getProfile(user.id, { page: 1, pageSize: 30 })
       .then((data) => {
         if (cancelled) return;
@@ -53,7 +58,7 @@ function MyPosts() {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [isLoggedIn, user?.id]);
+  }, [isLoggedIn, user?.id, refreshUser]);
 
   if (!isLoggedIn) {
     return (

@@ -54,21 +54,15 @@ describe('P2A-01 发布描述符契约与缺口账本', () => {
         'marketplace',
         'wall',
       ]);
-      expect(missingDescriptorIds()).toEqual([
-        'clubActivity',
-        'confession',
-        'errand',
-        'marketplace',
-        'wall',
-      ]);
+      expect(missingDescriptorIds()).toEqual(['clubActivity']);
     });
 
     it('账本与实现一致（断言不抛）', () => {
       expect(() => assertDescriptorLedger()).not.toThrow();
     });
 
-    it('Phase A 交付时描述符表为空 —— 缺口是**已知且登记**的，不是"允许缺失"', () => {
-      expect(Object.keys(PUBLISH_DESCRIPTORS)).toEqual([]);
+    it('丙交付的四类描述符已注册，剩余缺口仍被登记', () => {
+      expect(Object.keys(PUBLISH_DESCRIPTORS).sort()).toEqual(['confession', 'errand', 'marketplace', 'wall']);
       expect(publish_missingEqualsLedger()).toBe(true);
     });
   });
@@ -170,7 +164,7 @@ describe('P2A-01 发布描述符契约与缺口账本', () => {
 
   describe('getPublishDescriptor', () => {
     it('未交付的 id 返回 undefined（宿主据此走"暂未开放"分支）', () => {
-      expect(getPublishDescriptor('wall')).toBeUndefined();
+      expect(getPublishDescriptor('clubActivity')).toBeUndefined();
     });
 
     it('字段展平工具按分节顺序返回全部字段', () => {

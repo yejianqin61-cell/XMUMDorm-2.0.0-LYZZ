@@ -3,10 +3,10 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { MoreVertical, Star } from 'lucide-react';
 import ReportButton from '../../components/ReportButton';
-import { useLanguage } from '../../context/LanguageContext';
+import { useLanguage } from '../../context/LanguageContextState';
 import { createCourseReviewComment, deleteCourseReview, deleteCourseReviewComment, getCourseReviewDetail, listCourseReviewComments, rateCourseReview } from '@shared/api/handbook';
-import { useAuth } from '../../context/AuthContext';
-import { Toast } from '../../context/ToastContext';
+import { useAuth } from '../../context/AuthContextState';
+import { Toast } from '../../context/toast';
 import { QK } from '@shared/query/queryKeys';
 import './Handbook.css';
 

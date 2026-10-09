@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { useLanguage } from '../../context/LanguageContext';
+import { useLanguage } from '../../context/LanguageContextState';
 import { getCanteenStrings } from '../../i18n/canteenStrings';
 import { pickRandomMeal } from '@shared/api/canteen';
 import { QK } from '@shared/query/queryKeys';

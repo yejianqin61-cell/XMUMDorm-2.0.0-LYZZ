@@ -8,8 +8,8 @@ import { API_BASE_URL, productImageUrl } from '@shared/api/config';
 import { formatRatingLabel } from '@shared/constants/rating';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { appendUniquePosts, parsePositiveUserId } from '@shared/utils/profilePage';
-import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContextState';
+import { useLanguage } from '../context/LanguageContextState';
 import EmptyState from '../components/ui/EmptyState';
 import ErrorState from '../components/ui/ErrorState';
 import PageSkeleton from '../components/ui/PageSkeleton';
@@ -82,13 +82,7 @@ function warmImage(url) {
   IMG_CACHE.set(url, img);
 }
 
-function pastelFromString(str) {
-  const s = String(str || '');
-  let h = 0;
-  for (let i = 0; i < s.length; i += 1) h = (h * 31 + s.charCodeAt(i)) >>> 0;
-  const hue = h % 360;
-  return `hsl(${hue} 80% 92%)`;
-}
+
 
 function snippet(text) {
   const s = String(text || '').trim().replace(/\s+/g, ' ');
@@ -216,7 +210,7 @@ function UserZone() {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [userId, profileReloadKey]);
+  }, [userId, profileReloadKey, isZh]);
 
   const loadMorePosts = async () => {
     if (postsLoadingMore || !postsHasMore) return;
@@ -764,10 +758,8 @@ function FavoriteListItem({ item, locale }) {
 }
 
 function FadeImg({ src, alt, className, locale }) {
-  const [failed, setFailed] = useState(false);
-  useEffect(() => {
-    setFailed(false);
-  }, [src]);
+  const [failedSrc, setFailedSrc] = useState(null);
+  const failed = failedSrc === src;
   return (
     <div className="relative">
       <img
@@ -775,7 +767,7 @@ function FadeImg({ src, alt, className, locale }) {
         alt={alt}
         loading="lazy"
         decoding="async"
-        onError={() => setFailed(true)}
+        onError={() => setFailedSrc(src)}
         className={className}
       />
       {failed ? (

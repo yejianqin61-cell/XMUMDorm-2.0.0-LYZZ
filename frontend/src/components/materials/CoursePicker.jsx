@@ -10,7 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { School, X } from 'lucide-react';
 import { listCourses, resolveCourse } from '@shared/api/materials';
 import { QK } from '@shared/query/queryKeys';
-import { Toast } from '../../context/ToastContext';
+import { Toast } from '../../context/toast';
 
 export default function CoursePicker({ value, onChange, isZh = true, disabled = false }) {
   const [text, setText] = useState('');

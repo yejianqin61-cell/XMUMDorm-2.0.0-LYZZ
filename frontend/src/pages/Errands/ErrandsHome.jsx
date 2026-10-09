@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Plus, Package, ShoppingBag, Zap } from 'lucide-react';
-import { useLanguage } from '../../context/LanguageContext';
+import { useLanguage } from '../../context/LanguageContextState';
 import { QK } from '@shared/query/queryKeys';
 import { listErrands } from '@shared/api/errands';
 import ErrandCard from '../../components/errands/ErrandCard';

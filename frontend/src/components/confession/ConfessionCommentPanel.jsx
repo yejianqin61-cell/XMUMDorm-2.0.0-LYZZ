@@ -13,7 +13,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useLanguage } from '../../context/LanguageContext';
+import { useLanguage } from '../../context/LanguageContextState';
 import { formatPostTime } from '@shared/utils/formatTime';
 import { FOCUSABLE_SELECTOR, computeTabTargetIndex } from '@shared/utils/focusTrap';
 import ReportButton from '../ReportButton';
@@ -158,7 +158,7 @@ function CommentRow({
  * @param {boolean} [props.submitting]
  */
 export default function ConfessionCommentPanel({
-  confessionId,
+  confessionId: _confessionId,
   comments = [],
   isLoading = false,
   isError = false,

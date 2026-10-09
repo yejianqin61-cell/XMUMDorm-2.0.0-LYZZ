@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import {  useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getRegions } from '@shared/api/canteen';
 import { QK } from '@shared/query/queryKeys';
-import { Toast } from '../context/ToastContext';
+import { Toast } from '../context/toast';
 import Button from './ui/Button';
 import Input from './ui/Input';
 import Select from './ui/Select';
@@ -34,14 +34,7 @@ function StoreForm({ initialValues, defaultRegionId, onSubmit, onCancel, loading
       : (defaultRegionId != null ? String(defaultRegionId) : '')
   );
 
-  useEffect(() => {
-    if (regionId) return;
-    if (defaultRegionId != null) {
-      setRegionId(String(defaultRegionId));
-      return;
-    }
-    if (regions.length > 0) setRegionId(String(regions[0].id));
-  }, [regions, regionId, defaultRegionId]);
+  const effectiveRegionId = regionId || (defaultRegionId != null ? String(defaultRegionId) : String(regions[0]?.id ?? ''));
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -50,13 +43,13 @@ function StoreForm({ initialValues, defaultRegionId, onSubmit, onCancel, loading
       Toast.error('请输入店铺名称 Please enter shop name');
       return;
     }
-    if (!regionId) {
+    if (!effectiveRegionId) {
       Toast.error('请选择分区 Please select an area');
       return;
     }
     onSubmit({
       name: nameTrim,
-      region_id: parseInt(regionId, 10),
+      region_id: parseInt(effectiveRegionId, 10),
     });
   };
 
@@ -76,7 +69,7 @@ function StoreForm({ initialValues, defaultRegionId, onSubmit, onCancel, loading
         id="store-form-area"
         label="分区 Area"
         required
-        value={regionId}
+        value={effectiveRegionId}
         onChange={(e) => setRegionId(e.target.value)}
       >
         {regions.map((r) => (

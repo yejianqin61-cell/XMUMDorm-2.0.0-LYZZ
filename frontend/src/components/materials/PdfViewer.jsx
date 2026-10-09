@@ -26,10 +26,15 @@ export default function PdfViewer({ url, title = 'PDF', fileName, onDownload }) 
   const [timedOut, setTimedOut] = useState(false);
   const timerRef = useRef(null);
 
-  useEffect(() => {
-    if (fallback) return undefined;
+  const [previousUrl, setPreviousUrl] = useState(url);
+  if (previousUrl !== url) {
+    setPreviousUrl(url);
     setLoaded(false);
     setTimedOut(false);
+  }
+
+  useEffect(() => {
+    if (fallback) return undefined;
     clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => setTimedOut(true), LOAD_TIMEOUT_MS);
     return () => clearTimeout(timerRef.current);

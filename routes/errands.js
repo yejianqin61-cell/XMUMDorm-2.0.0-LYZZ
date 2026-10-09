@@ -14,7 +14,8 @@ const { checkSanction } = require('../middleware/checkSanction');
 const sensitiveWordFilter = require('../middleware/sensitiveWordFilter');
 const sanitizeHtml = require('sanitize-html');
 
-const TYPES = new Set(['delivery', 'purchase', 'urgent']);
+import { ERRAND_TYPES } from '../shared/constants/serviceEnums.js';
+const TYPES = new Set(ERRAND_TYPES);
 const STATUSES = new Set(['open', 'taken', 'done']);
 
 function isAdmin(req) {

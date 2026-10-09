@@ -4,8 +4,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import FoodCard from '../components/FoodCard';
 import PageSkeleton from '../components/ui/PageSkeleton';
 import EmptyState from '../components/ui/EmptyState';
-import { Toast } from '../context/ToastContext';
-import { useAuth } from '../context/AuthContext';
+import { Toast } from '../context/toast';
+import { useAuth } from '../context/AuthContextState';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { getShopMe, getProducts, deleteProduct, createCategory } from '@shared/api/canteen';
 import { productImageUrl } from '@shared/api/config';
@@ -25,9 +25,7 @@ function FoodManage() {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [categorySubmitting, setCategorySubmitting] = useState(false);
 
-  const load = useCallback(() => {
-    setLoading(true);
-    setError(null);
+  const fetchFoods = useCallback(() => {
     getShopMe()
       .then((data) => {
         setShop(data);
@@ -73,9 +71,15 @@ function FoodManage() {
       });
   }, []);
 
+  const load = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    fetchFoods();
+  }, [fetchFoods]);
+
   useEffect(() => {
-    load();
-  }, [load]);
+    fetchFoods();
+  }, [fetchFoods]);
 
   const handleDelete = (food) => {
     if (!isAdmin) return;

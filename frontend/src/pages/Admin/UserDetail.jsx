@@ -11,7 +11,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { getAdminUserDetail, banUser, unbanUser, muteUser, unmuteUser, deleteUser } from '@shared/api/admin';
-import { useLanguage } from '../../context/LanguageContext';
+import { useLanguage } from '../../context/LanguageContextState';
 import UserActionModal from '../../components/Admin/UserActionModal';
 
 const ROLE_LABELS = { student: '学生', merchant: '商家', admin: '管理员' };

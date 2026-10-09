@@ -101,7 +101,7 @@ self.addEventListener('fetch', (event) => {
       );
       return;
     }
-  } catch (_) {}
+  } catch { /* Best-effort operation: keep the existing fallback when this fails. */ }
 
   const url = request.url;
   const isApi = url.includes('/api/');
@@ -152,7 +152,7 @@ self.addEventListener('push', (event) => {
   let data = {};
   try {
     data = event.data ? event.data.json() : {};
-  } catch (_) {
+  } catch {
     data = { title: 'Dorm', body: event.data ? event.data.text() : '' };
   }
   const title = data.title || 'Dorm';

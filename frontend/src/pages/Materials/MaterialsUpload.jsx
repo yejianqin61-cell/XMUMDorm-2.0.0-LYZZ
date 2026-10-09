@@ -11,9 +11,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, CheckCircle2, FileUp, Loader, Upload } from 'lucide-react';
 import { uploadMaterial, getUploadStatus, validateUploadLocally, listCourses } from '@shared/api/materials';
 import { QK } from '@shared/query/queryKeys';
-import { useLanguage } from '../../context/LanguageContext';
-import { useAuth } from '../../context/AuthContext';
-import { Toast } from '../../context/ToastContext';
+import { useLanguage } from '../../context/LanguageContextState';
+import { useAuth } from '../../context/AuthContextState';
+import { Toast } from '../../context/toast';
 import CoursePicker from '../../components/materials/CoursePicker';
 import TaxonomyFields from '../../components/materials/TaxonomyFields';
 import UploadStatusTracker from '../../components/materials/UploadStatusTracker';
@@ -34,7 +34,7 @@ export default function MaterialsUpload() {
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
   const { isLoggedIn } = useAuth();
-  const navigate = useNavigate();
+  useNavigate();
   const qc = useQueryClient();
   const [sp] = useSearchParams();
   const presetCourseId = Number(sp.get('course')) || null;
@@ -86,10 +86,10 @@ export default function MaterialsUpload() {
 
   const poll = async (id) => {
     for (let i = 0; i < MAX_POLLS; i += 1) {
-      // eslint-disable-next-line no-await-in-loop
+       
       await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
       try {
-        // eslint-disable-next-line no-await-in-loop
+         
         const st = await getUploadStatus(id);
         if (st.status === 'merged') {
           setPhase('merged');

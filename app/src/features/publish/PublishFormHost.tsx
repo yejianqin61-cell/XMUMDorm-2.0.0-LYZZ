@@ -25,7 +25,12 @@ import { useTheme } from '@/design-system/theme';
 import { useI18n, type MessageKey } from '@/i18n';
 import { TERMS_ROUTE, type SubmitGate } from './complianceGate';
 import type { PublishFormDescriptor } from './descriptor';
+import { PUBLISH_DESCRIPTORS } from './descriptors';
+import { useResolvedDescriptor } from './resolveDescriptor';
+import { LoadingState } from '@/components/ui/LoadingState';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { usePublishForm } from './usePublishForm';
+import {useSession} from '@/features/auth/session';
 
 export type PublishFormHostProps = {
   descriptor: PublishFormDescriptor;
@@ -33,7 +38,21 @@ export type PublishFormHostProps = {
 
 /** 发布表单宿主：门禁优先，其次才是表单本身 */
 export function PublishFormHost({ descriptor }: PublishFormHostProps): React.ReactElement {
+  const session=useSession();
+  const identity=`${session.status}:${session.identifier??''}`;
+  if (PUBLISH_DESCRIPTORS?.[descriptor.id] !== descriptor) return <ResolvedPublishFormHost key={identity} descriptor={descriptor} />;
+  return <RegisteredPublishFormHost key={identity} descriptor={descriptor} />;
+}
+function RegisteredPublishFormHost({descriptor}: PublishFormHostProps): React.ReactElement {
+  const resolved = useResolvedDescriptor(descriptor, true);
+  if (resolved.loading || resolved.error) return <Screen titleKey="publish.title" showMailbox={false}>
+    {resolved.error ? <ErrorState error={{kind:'unreachable'}} onAction={() => void resolved.retry()} /> : <LoadingState variant="skeleton" />}
+  </Screen>;
+  return <ResolvedPublishFormHost descriptor={resolved.descriptor} />;
+}
+function ResolvedPublishFormHost({descriptor}: PublishFormHostProps): React.ReactElement {
   const host = usePublishForm(descriptor);
+  const router = useRouter();
 
   // A-05：门禁是**拦截点**，不是字段错误 —— 所以不渲染表单，只给三要素 + 一个动作
   if (!host.gate.allowed) {
@@ -43,11 +62,13 @@ export function PublishFormHost({ descriptor }: PublishFormHostProps): React.Rea
   return (
     <Form
       testID={`publish-form-${descriptor.id}`}
+      guardNavigation
       form={host.form}
       sections={host.sections}
       labels={host.labels}
       semantic={host.semantic}
       onSettled={host.onSettled}
+      onCancel={() => router.back()}
     />
   );
 }

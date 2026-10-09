@@ -16,8 +16,8 @@ import {
   UtensilsCrossed,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContextState';
+import { useLanguage } from '../context/LanguageContextState';
 import { getProfile } from '@shared/api/users';
 import { getMyFavorites, getMyProductReviews } from '@shared/api/canteen';
 import { getScheduleWeek } from '@shared/api/schedule';
@@ -103,7 +103,7 @@ function MyZone() {
   const isZh = lang !== 'en';
   const t = MyZoneStrings(isZh);
 
-  const { isLoggedIn, isMerchant, isAdmin, displayName, displayAvatar, user, userLoading, logout } = useAuth();
+  const { isLoggedIn, isMerchant, isAdmin, displayName, displayAvatar, user, userLoading } = useAuth();
   const userId = user?.id ? Number(user.id) : 0;
 
   const goLogin = () => navigate('/login', { state: { from: { pathname: '/myzone' } } });
@@ -115,10 +115,7 @@ function MyZone() {
     if (!isLoggedIn || !userId) return goLogin();
     navigate(`/user/${userId}`);
   };
-  const handleLogout = () => {
-    logout();
-    navigate('/', { replace: true });
-  };
+  
 
   // 「当前/下一节课」必须按**本周**查，不能用写死的第 1 周
   // （第 1 周和第 10 周的课表不一样，例如 (Week 9-14) 的课第 1 周根本不上）

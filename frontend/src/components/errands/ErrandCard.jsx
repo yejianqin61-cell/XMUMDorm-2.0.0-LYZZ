@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Clock3, MapPin, Tag } from 'lucide-react';
-import { useLanguage } from '../../context/LanguageContext';
+import { useLanguage } from '../../context/LanguageContextState';
 import '../../pages/Errands/Errands.css';
 
 function formatDeadline(deadline) {

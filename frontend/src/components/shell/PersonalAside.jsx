@@ -2,8 +2,8 @@ import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { CalendarDays, CheckSquare, ChevronRight } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContextState';
+import { useLanguage } from '../../context/LanguageContextState';
 import LevelProgressBar from '../LevelProgressBar';
 import { getScheduleWeek } from '@shared/api/schedule';
 import { resolveSemesterContext } from '@shared/config/semesters';
@@ -41,7 +41,7 @@ export default function PersonalAside() {
   });
   const courses = useMemo(() => getTodayCourses(scheduleQuery.data), [scheduleQuery.data]);
   const holidays = useMemo(() => upcomingHolidays().slice(0, 3), []);
-  const rawTodos = todosQuery.data?.data?.list || todosQuery.data?.list || todosQuery.data?.data || [];
+  const rawTodos = useMemo(() => todosQuery.data?.data?.list || todosQuery.data?.list || todosQuery.data?.data || [], [todosQuery.data]);
   const todos = Array.isArray(rawTodos) ? rawTodos : [];
 
   useEffect(() => {

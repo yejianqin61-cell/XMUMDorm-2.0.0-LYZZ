@@ -4,7 +4,7 @@ import { ChevronDown } from 'lucide-react';
 
 const AccordionContext = createContext(null);
 
-function NeoAccordion({ type = 'single', value, defaultValue, onValueChange, className = '', children, ...props }) {
+function NeoAccordion({ type: _type = 'single', value, defaultValue, onValueChange, className = '', children, ...props }) {
   const [internalValue, setInternalValue] = useState(defaultValue || '');
   const isControlled = value !== undefined;
   const activeValue = isControlled ? value : internalValue;

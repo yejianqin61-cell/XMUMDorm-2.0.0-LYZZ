@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '../../lib/utils';
 import { cva } from 'class-variance-authority';
@@ -38,16 +38,14 @@ export default function NeoDialog({
 }) {
   const dialogRef = useRef(null);
   const previousFocusRef = useRef(null);
-  const [mounted, setMounted] = useState(false);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     onClose?.();
     onOpenChange?.(false);
-  };
+  }, [onClose, onOpenChange]);
 
   useEffect(() => {
     if (open) {
-      setMounted(true);
       previousFocusRef.current = document.activeElement;
       const previousOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
@@ -81,13 +79,11 @@ export default function NeoDialog({
       return () => {
         document.body.style.overflow = previousOverflow;
         window.removeEventListener('keydown', handleKeyDown);
+        previousFocusRef.current?.focus();
       };
-    } else {
-      setMounted(false);
-      previousFocusRef.current?.focus();
     }
     return undefined;
-  }, [open]);
+  }, [open, closeOnEscape, handleClose]);
 
   const handleBackdropClick = (e) => {
     if (closeOnBackdrop && e.target === e.currentTarget) {
@@ -110,7 +106,7 @@ export default function NeoDialog({
         aria-label={title}
         className={cn(
           dialogVariants({ size }),
-          mounted && 'animate-in fade-in-0 zoom-in-95',
+          'animate-in fade-in-0 zoom-in-95',
           className,
         )}
         onClick={(e) => e.stopPropagation()}

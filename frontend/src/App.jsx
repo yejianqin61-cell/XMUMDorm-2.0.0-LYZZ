@@ -5,7 +5,8 @@ import { queryClient } from '@shared/query/queryClient';
 import { AuthProvider } from './context/AuthContext';
 import { ExpFeedbackProvider } from './context/ExpFeedbackContext';
 import { ToastProvider } from './context/ToastContext';
-import { LanguageProvider, useLanguage } from './context/LanguageContext';
+import { LanguageProvider } from './context/LanguageContext';
+import { useLanguage } from './context/LanguageContextState';
 import AuthGuard from './components/AuthGuard';
 import SiteShellRoute from './components/shell/SiteShellRoute';
 import Login from './pages/Login';
@@ -178,14 +179,22 @@ function InstallPrompt({ showInstallPrompt, manualGuide, onInstallLater, onInsta
   );
 }
 
+function initialManualGuide() {
+  if (typeof window === 'undefined' || window.localStorage.getItem('dorm-install-hint-dismissed') === 'true') return null;
+  const ua = window.navigator.userAgent || '';
+  if (!/iP(hone|od|ad)/.test(ua)) return null;
+  if (/MicroMessenger/i.test(ua)) return 'wechat-ios';
+  return /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS/i.test(ua) ? 'ios-safari' : null;
+}
+
 function AppShell() {
   const [showSplash, setShowSplash] = useState(true);
   const [fadeOut, setFadeOut] = useState(false);
   const timersRef = useRef({ fade: null, hide: null });
   const startedRef = useRef(false);
   const [installPromptEvent, setInstallPromptEvent] = useState(null);
-  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
-  const [manualGuide, setManualGuide] = useState(null);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(() => !!initialManualGuide());
+  const [manualGuide] = useState(initialManualGuide);
 
   const startSplashTimers = useCallback(() => {
     if (startedRef.current) return;
@@ -200,14 +209,15 @@ function AppShell() {
   }, []);
 
   useEffect(() => {
+    const timers = timersRef.current;
     const fallback = setTimeout(() => {
       startSplashTimers();
     }, 3000);
 
     return () => {
       clearTimeout(fallback);
-      if (timersRef.current.fade) clearTimeout(timersRef.current.fade);
-      if (timersRef.current.hide) clearTimeout(timersRef.current.hide);
+      if (timers.fade) clearTimeout(timers.fade);
+      if (timers.hide) clearTimeout(timers.hide);
     };
   }, [startSplashTimers]);
 
@@ -228,31 +238,13 @@ function AppShell() {
     };
   }, []);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const hasShown = window.localStorage.getItem('dorm-install-hint-dismissed') === 'true';
-    if (hasShown) return;
 
-    const ua = window.navigator.userAgent || '';
-    const isIOS = /iP(hone|od|ad)/.test(ua);
-    const isWeChat = /MicroMessenger/i.test(ua);
-    const isIOSWeChat = isIOS && isWeChat;
-    const isSafari = isIOS && /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS/i.test(ua) && !isWeChat;
-
-    if (isIOSWeChat) {
-      setManualGuide('wechat-ios');
-      setShowInstallPrompt(true);
-    } else if (isSafari) {
-      setManualGuide('ios-safari');
-      setShowInstallPrompt(true);
-    }
-  }, []);
 
   const handleInstallLater = () => {
     setShowInstallPrompt(false);
     try {
       window.localStorage.setItem('dorm-install-hint-dismissed', 'true');
-    } catch {}
+    } catch { /* Best-effort operation: keep the existing fallback when this fails. */ }
   };
 
   const handleInstallNow = async () => {
@@ -264,7 +256,7 @@ function AppShell() {
     try {
       installPromptEvent.prompt();
       await installPromptEvent.userChoice;
-    } catch {}
+    } catch { /* Best-effort operation: keep the existing fallback when this fails. */ }
 
     handleInstallLater();
   };

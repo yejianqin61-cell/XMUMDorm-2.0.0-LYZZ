@@ -130,6 +130,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
 
   const markExpired = React.useCallback(async () => {
     await clearToken();
+    await clearNamespace();
     dispatch({ type: 'session:expired' });
   }, []);
 
@@ -152,6 +153,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
             error: authFailureToAppError('badCredentials'),
           };
         }
+        await clearNamespace();
         await saveToken(result.token);
         dispatch({ type: 'login:success', identifier });
         return { ok: true };
@@ -181,6 +183,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
             error: authFailureToAppError('badCredentials'),
           };
         }
+        await clearNamespace();
         await saveToken(result.token);
         dispatch({ type: 'login:success', identifier: body.username });
         return { ok: true };

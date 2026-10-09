@@ -4,7 +4,7 @@
  * 设计文档 §7.5。承载三款版式的正文 + 匿名作者行 + 互动行。
  * 身份信息**不可能**出现在这里：后端不下发，卡片也不接收。
  */
-import { useLanguage } from '../../context/LanguageContext';
+import { useLanguage } from '../../context/LanguageContextState';
 import { formatPostTime } from '@shared/utils/formatTime';
 import { getTemplate } from '@shared/constants/confessionTemplates';
 import ReportButton from '../ReportButton';

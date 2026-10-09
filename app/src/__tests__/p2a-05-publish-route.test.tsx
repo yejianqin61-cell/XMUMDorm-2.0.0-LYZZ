@@ -37,6 +37,7 @@ jest.mock('expo-router', () => {
       },
       canGoBack: () => true,
     }),
+    useNavigation: () => ({ dispatch: jest.fn() }),
     useLocalSearchParams: () => state.params,
     Redirect: ({ href }: { href: unknown }) => {
       state.redirects.push(href);
@@ -44,6 +45,7 @@ jest.mock('expo-router', () => {
     },
   };
 });
+jest.mock('expo-router/react-navigation', () => ({ usePreventRemove: jest.fn() }));
 jest.mock('@/features/publish/descriptors', () => ({ getPublishDescriptor: jest.fn() }));
 jest.mock('../../../shared/api/clubs', () => ({ listMyClubs: jest.fn() }));
 jest.mock('../../../shared/api/organizations', () => ({ getMyOrganizations: jest.fn() }));

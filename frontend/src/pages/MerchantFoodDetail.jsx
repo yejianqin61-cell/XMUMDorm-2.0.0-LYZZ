@@ -6,9 +6,9 @@ import FoodForm from '../components/FoodForm';
 import EmptyState from '../components/ui/EmptyState';
 import ImagePreview from '../components/ImagePreview';
 import Button from '../components/ui/Button';
-import { Toast } from '../context/ToastContext';
-import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
+import { Toast } from '../context/toast';
+import { useAuth } from '../context/AuthContextState';
+import { useLanguage } from '../context/LanguageContextState';
 import { getProduct, getCategories, updateProduct, deleteProduct } from '@shared/api/canteen';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { productImageUrl } from '@shared/api/config';
@@ -52,16 +52,21 @@ function MerchantFoodDetail() {
     });
   }, [isLoggedIn, navigate, location.pathname, location.search]);
 
+  const requestKey = `${isLoggedIn}:${productId}`;
+  const [previousRequestKey, setPreviousRequestKey] = useState(requestKey);
+  if (previousRequestKey !== requestKey) {
+    setPreviousRequestKey(requestKey);
+    setLoading(!!(isLoggedIn && productId));
+    setError(null);
+    if (!(isLoggedIn && productId)) { setFood(null); }
+  }
+
   useEffect(() => {
     if (!isLoggedIn) return undefined;
     if (!productId) {
-      setFood(null);
-      setLoading(false);
       return undefined;
     }
     let cancelled = false;
-    setLoading(true);
-    setError(null);
     getProduct(productId)
       .then((data) => {
         if (cancelled) return undefined;

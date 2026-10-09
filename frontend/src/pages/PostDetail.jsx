@@ -3,8 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import PostDetailShell from '../components/PostDetailShell';
-import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContextState';
+import { useLanguage } from '../context/LanguageContextState';
 import {
   getPostDetail,
   getPostComments,
@@ -14,8 +14,8 @@ import {
   deleteComment,
 } from '@shared/api/posts';
 import { API_BASE_URL } from '@shared/api/config';
-import { Toast } from '../context/ToastContext';
-import { useExpFeedback } from '../context/ExpFeedbackContext';
+import { Toast } from '../context/toast';
+import { useExpFeedback } from '../context/ExpFeedbackContextState';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { QK } from '@shared/query/queryKeys';
 import './PostDetail.css';

@@ -19,8 +19,8 @@ import {
   removeMaterial,
 } from '@shared/api/materials';
 import { QK } from '@shared/query/queryKeys';
-import { useLanguage } from '../../context/LanguageContext';
-import { Toast } from '../../context/ToastContext';
+import { useLanguage } from '../../context/LanguageContextState';
+import { Toast } from '../../context/toast';
 import { humanSize, formatDate } from '@shared/utils/materialDisplay';
 import { TYPE_META } from '@shared/constants/materials';
 import './Materials.css';

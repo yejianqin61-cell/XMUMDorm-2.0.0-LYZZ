@@ -4,8 +4,8 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Heart, MoreVertical } from 'lucide-react';
 import ReportButton from '../../components/ReportButton';
-import { useLanguage } from '../../context/LanguageContext';
-import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContextState';
+import { useAuth } from '../../context/AuthContextState';
 import { QK } from '@shared/query/queryKeys';
 import {
   buyerSendMarketplaceMessage,
@@ -19,7 +19,7 @@ import {
   updateMarketplaceItemStatus,
 } from '@shared/api/marketplace';
 import { queryClient } from '@shared/query/queryClient';
-import { Toast } from '../../context/ToastContext';
+import { Toast } from '../../context/toast';
 import ImagePreview from '../../components/ImagePreview';
 import Button from '../../components/ui/Button';
 import './Marketplace.css';
@@ -70,7 +70,6 @@ function MarketplaceDetail() {
   });
 
   const [activeThreadId, setActiveThreadId] = useState(null);
-  const effectiveThreadId = activeThreadId;
 
   const buyerThreadQuery = useQuery({
     enabled: !!isLoggedIn && !isSeller && !!id,
@@ -80,11 +79,7 @@ function MarketplaceDetail() {
     refetchInterval: 5 * 1000,
   });
 
-  useEffect(() => {
-    if (isSeller) return;
-    const tid = buyerThreadQuery.data?.id || buyerThreadQuery.data?.thread_id || null;
-    if (tid && !activeThreadId) setActiveThreadId(tid);
-  }, [isSeller, buyerThreadQuery.data, activeThreadId]);
+  const effectiveThreadId = activeThreadId || (!isSeller ? buyerThreadQuery.data?.id || buyerThreadQuery.data?.thread_id : null);
 
   const msgsQuery = useQuery({
     enabled: !!isLoggedIn && !!effectiveThreadId,
@@ -104,7 +99,7 @@ function MarketplaceDetail() {
   useEffect(() => {
     try {
       chatEndRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'end' });
-    } catch {}
+    } catch { /* Best-effort operation: keep the existing fallback when this fails. */ }
   }, [msgList.length]);
 
   const wantMut = useMutation({
@@ -414,7 +409,7 @@ function mod(n, m) {
   return ((n % m) + m) % m;
 }
 
-function StackedCardCarousel({ urls, index, onChangeIndex, onOpenPreview, dir, sharedLayoutId }) {
+function StackedCardCarousel({ urls, index, onChangeIndex, onOpenPreview, dir: _dir, sharedLayoutId }) {
   const n = Array.isArray(urls) ? urls.length : 0;
   if (!n) return null;
 

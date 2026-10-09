@@ -21,12 +21,16 @@
 
 import { assertDescriptorInvariants, readyPublishIds, type PublishFormDescriptor } from './descriptor';
 import type { PublishId } from './registry';
+import { zh } from '@/i18n/zh';
+import { buildDescriptor } from './resolveDescriptor';
 
 /**
  * 已交付的描述符（id → 描述符）。
  * ⛔ 域文件不许 import 本文件（会成环）；依赖方向只能是 本文件 → 域文件。
  */
-export const PUBLISH_DESCRIPTORS: Partial<Record<PublishId, PublishFormDescriptor>> = {};
+export const PUBLISH_DESCRIPTORS: Partial<Record<PublishId, PublishFormDescriptor>> = Object.fromEntries(
+  (['confession', 'errand', 'marketplace', 'wall'] as const).map(id => [id, buildDescriptor(id, key => zh[key])])
+);
 
 /**
  * **缺口账本**：已就绪但还没交描述符的发布类型。
@@ -34,10 +38,6 @@ export const PUBLISH_DESCRIPTORS: Partial<Record<PublishId, PublishFormDescripto
  */
 export const KNOWN_MISSING_DESCRIPTORS: readonly PublishId[] = [
   'clubActivity',
-  'confession',
-  'errand',
-  'marketplace',
-  'wall',
 ];
 
 export function getPublishDescriptor(id: PublishId): PublishFormDescriptor | undefined {

@@ -3,12 +3,12 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ArrowLeft, CalendarPlus2, Clock3, Download, ExternalLink, Eye, Heart, ListTodo, MapPin, MessageCircle, Trash2, UsersRound } from 'lucide-react';
 import ReportButton from '../../components/ReportButton';
-import { useLanguage } from '../../context/LanguageContext';
-import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContextState';
+import { useAuth } from '../../context/AuthContextState';
 import ActivityRegisterBar from '../../components/clubs/ActivityRegisterBar';
 import { QK } from '@shared/query/queryKeys';
 import { queryClient } from '@shared/query/queryClient';
-import { Toast } from '../../context/ToastContext';
+import { Toast } from '../../context/toast';
 import {
   cancelClubActivityRegistration,
   deleteClubActivity,
@@ -129,12 +129,14 @@ function ActivityDetail() {
     if (fromObjs.length) return fromObjs.map((u) => prefixImageUrl(u));
     if (a?.cover) return [prefixImageUrl(a.cover)];
     return [];
-  }, [a?.images, a?.cover]);
+  }, [a]);
 
-  useEffect(() => {
+  const [previousKey, setPreviousKey] = useState(activityId);
+  if (previousKey !== activityId) {
+    setPreviousKey(activityId);
     setCarouselIndex(0);
     setCarouselDir(1);
-  }, [activityId]);
+  }
 
   useEffect(() => {
     if (!activityId) return;
@@ -251,9 +253,9 @@ function ActivityDetail() {
     } catch {
       return String(a.time);
     }
-  }, [a?.time]);
+  }, [a]);
 
-  const eventDate = useMemo(() => parseDateTime(a?.time), [a?.time]);
+  const eventDate = useMemo(() => parseDateTime(a?.time), [a]);
   const eventDay = eventDate ? String(eventDate.getDate()).padStart(2, '0') : '--';
   const eventMonth = eventDate
     ? eventDate.toLocaleDateString(isZh ? 'zh-CN' : 'en-US', { month: 'short' }).toUpperCase()

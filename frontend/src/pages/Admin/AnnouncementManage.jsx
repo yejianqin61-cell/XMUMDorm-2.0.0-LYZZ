@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Loader2, AlertTriangle, Plus, X, Trash2 } from 'lucide-react';
 import { getAdminAnnouncements, createAnnouncement, deleteAnnouncement } from '@shared/api/admin';
-import { useLanguage } from '../../context/LanguageContext';
+import { useLanguage } from '../../context/LanguageContextState';
 
 export default function AnnouncementManage() {
   const { lang } = useLanguage();

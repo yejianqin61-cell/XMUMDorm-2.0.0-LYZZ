@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Award, ChevronRight, Code2, ShieldAlert } from 'lucide-react';
-import { useLanguage } from '../context/LanguageContext';
+import { useLanguage } from '../context/LanguageContextState';
 
 const listContainer = {
   hidden: { opacity: 0, y: 8 },

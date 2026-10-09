@@ -15,7 +15,7 @@
  */
 
 import * as React from 'react';
-import { AccessibilityInfo, View, findNodeHandle, type StyleProp, type ViewStyle } from 'react-native';
+import { AccessibilityInfo, Platform, View, findNodeHandle, type StyleProp, type ViewStyle } from 'react-native';
 
 import { useTheme } from '@/design-system/theme';
 import { toErrorCopy, type AppError } from '@/i18n/errors';
@@ -44,6 +44,19 @@ export function focusAccessibilityElement(ref: unknown): void {
   const tag = ref as number | null | undefined;
   if (typeof tag !== 'number') return;
   AccessibilityInfo.setAccessibilityFocus(tag);
+}
+
+/** Browser refs are DOM elements; RN Web deliberately rejects findNodeHandle. */
+export function focusAccessibilityRef(ref: unknown): void {
+  if (Platform.OS === 'web') {
+    const node = ref as { focus?: () => void; setAttribute?: (name: string, value: string) => void } | null;
+    if (typeof node?.focus === 'function') {
+      node.setAttribute?.('tabindex', '-1');
+      node.focus();
+    }
+    return;
+  }
+  if (ref != null) focusAccessibilityElement(findNodeHandle(ref as View));
 }
 
 export type ErrorSummaryProps = {
@@ -87,7 +100,7 @@ export function ErrorSummary({
     if (node === null) return;
     // `findNodeHandle` 是 RN 里把 ref 变成读屏可聚焦 tag 的标准做法；
     // 拿不到就静默跳过（⛔ 不在渲染路径上抛）
-    focusAccessibilityElement(findNodeHandle(node));
+    focusAccessibilityRef(node);
   }, [hasFieldErrors, copy]);
 
   if (!hasFieldErrors && copy === null) return null;

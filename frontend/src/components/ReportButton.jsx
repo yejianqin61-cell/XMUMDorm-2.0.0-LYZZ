@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Flag, Loader2, X } from 'lucide-react';
 import { submitReport } from '@shared/api/admin';
-import { useLanguage } from '../context/LanguageContext';
+import { useLanguage } from '../context/LanguageContextState';
 
 const REASONS = [
   { value: 'spam', label: '垃圾广告', labelEn: 'Spam' },

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { Menu, ArrowLeft } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContextState';
+import { useLanguage } from '../../context/LanguageContextState';
 import AdminSidebar from './AdminSidebar';
 import './AdminLayout.css';
 

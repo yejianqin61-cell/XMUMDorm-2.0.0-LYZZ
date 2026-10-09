@@ -11,8 +11,8 @@ import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Clock, Search, GraduationCap } from 'lucide-react';
 import { listCourses, listMaterials } from '@shared/api/materials';
 import { QK } from '@shared/query/queryKeys';
-import { useLanguage } from '../../context/LanguageContext';
-import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContextState';
+import { useAuth } from '../../context/AuthContextState';
 import MaterialCard from '../../components/materials/MaterialCard';
 import './Materials.css';
 

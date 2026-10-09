@@ -44,6 +44,8 @@ export type PublishFormDescriptor = {
   /** 提交：只负责"把值交给后端"，⛔ 不碰导航（导航归宿主） */
   submit: (values: FormValues) => Promise<PublishSubmitResult | void>;
   /** `create` 语义必填：提交成功后去哪（`null` = 留在原地） */
+  /** Replace the form with this list before pushing a new detail, including system back. */
+  listAfterSubmit?: string;
   routeAfterSubmit?: (result: PublishSubmitResult | void) => string | null;
   /**
    * **媒体字段名**（`kind:'custom'` 渲染图片选择器的那几个）。

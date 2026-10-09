@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Eye, EyeOff, Loader2, AlertTriangle, Trash2 } from 'lucide-react';
 import { get, patch, del } from '@shared/api/request';
-import { useLanguage } from '../../context/LanguageContext';
+import { useLanguage } from '../../context/LanguageContextState';
 
 export default function ContentDetail() {
   const { module, id } = useParams();

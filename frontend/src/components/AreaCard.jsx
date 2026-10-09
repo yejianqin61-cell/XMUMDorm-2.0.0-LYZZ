@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import Card from './ui/Card';
-import { useLanguage } from '../context/LanguageContext';
+import { useLanguage } from '../context/LanguageContextState';
 import './AreaCard.css';
 
 /** 分区名称展示（用于 UI 显示，如 others -> Others） */

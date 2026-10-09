@@ -1,4 +1,5 @@
-import NeoButton, { buttonVariants } from '../retroui/Button';
+import NeoButton from '../retroui/Button';
+import { buttonVariants } from '../retroui/buttonVariants';
 import './Button.css';
 
 const VARIANT_MAP = {

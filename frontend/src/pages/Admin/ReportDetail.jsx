@@ -3,7 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ArrowUpRight, Loader2, AlertTriangle } from 'lucide-react';
 import { getAdminReportDetail, processReport } from '@shared/api/admin';
-import { useLanguage } from '../../context/LanguageContext';
+import { useLanguage } from '../../context/LanguageContextState';
 
 const REASON_LABELS = {
   spam: '垃圾广告', fraud: '诈骗信息', abuse: '辱骂攻击',

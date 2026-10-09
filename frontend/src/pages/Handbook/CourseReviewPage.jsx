@@ -5,7 +5,7 @@ import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Tag from '../../components/ui/Tag';
 import FilterBar from '../../components/templates/FilterBar';
-import { useLanguage } from '../../context/LanguageContext';
+import { useLanguage } from '../../context/LanguageContextState';
 import { listCourseReviews } from '@shared/api/handbook';
 import { flattenPages, nextPageParamFrom } from '@shared/utils/infiniteList';
 import { QK } from '@shared/query/queryKeys';

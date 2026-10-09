@@ -1,9 +1,7 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { ShellAsideContext } from './ShellAsideContextState';
+import {   useState } from 'react';
 
-const ShellAsideContext = createContext({
-  asideContent: null,
-  setAsideContent: () => {},
-});
+
 
 export function ShellAsideProvider({ children }) {
   const [asideContent, setAsideContent] = useState(null);
@@ -14,6 +12,4 @@ export function ShellAsideProvider({ children }) {
   );
 }
 
-export function useShellAside() {
-  return useContext(ShellAsideContext);
-}
+

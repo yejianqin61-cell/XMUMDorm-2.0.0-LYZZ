@@ -20,7 +20,7 @@ function getSessionStorage() {
   if (typeof window === 'undefined') return null;
   try {
     return window.sessionStorage;
-  } catch (_) {
+  } catch {
     return null;
   }
 }

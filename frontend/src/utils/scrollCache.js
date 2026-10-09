@@ -10,7 +10,7 @@ export function saveScroll(key, scrollTop, page = 1) {
   try {
     const k = KEY_PREFIX + key;
     sessionStorage.setItem(k, JSON.stringify({ scrollTop, page }));
-  } catch (_) {}
+  } catch { /* Best-effort operation: keep the existing fallback when this fails. */ }
 }
 
 /**
@@ -29,7 +29,7 @@ export function takeScroll(key) {
       scrollTop: Number(data.scrollTop) || 0,
       page: Math.max(1, Number(data.page) || 1),
     };
-  } catch (_) {
+  } catch {
     return null;
   }
 }

@@ -20,6 +20,13 @@ export function DateTimeField({ mode, value, onChange, disabled = false, min, ma
     const [hours, minutes] = value.split(':').map(Number); selected.setHours(hours, minutes, 0, 0);
   }
   const pad = (number: number) => String(number).padStart(2, '0');
+  if (Platform.OS === 'web') return <View style={{gap:theme.space('space_2')}}>
+    {React.createElement('input', {type:mode, value, disabled, 'data-testid':testID, 'aria-label':t(mode === 'date' ? 'tools.todos.chooseDate' : 'tools.todos.chooseTime'),
+      onChange:(event:{currentTarget:{value:string}})=>onChange(event.currentTarget.value),
+      onInput:(event:{currentTarget:{value:string}})=>onChange(event.currentTarget.value),
+      style:{color:theme.color['text-primary'].value,backgroundColor:theme.color['bg-surface'].value,padding:theme.space('space_3')}})}
+    {value?<Button label={t('tools.todos.clearValue')} variant="ghost" disabled={disabled} onPress={()=>onChange('')}/>:null}
+  </View>;
   return <View style={{ gap: theme.space('space_2') }}>
     <View style={{ flexDirection: 'row', gap: theme.space('space_2') }}>
       <Button testID={testID} variant="secondary" label={value || t(mode === 'date' ? 'tools.todos.chooseDate' : 'tools.todos.chooseTime')} disabled={disabled} onPress={() => { setCandidate(null); setOpen(true); }} />

@@ -1,5 +1,5 @@
 import { productImageUrl } from '@shared/api/config';
-import { useLanguage } from '../context/LanguageContext';
+import { useLanguage } from '../context/LanguageContextState';
 import './FoodDetailView.css';
 
 function FoodDetailView({ food, onImageClick, canDelete, onDelete, showSummary = true }) {

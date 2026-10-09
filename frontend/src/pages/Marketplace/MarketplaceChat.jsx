@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useLanguage } from '../../context/LanguageContext';
-import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContextState';
+import { useAuth } from '../../context/AuthContextState';
 import { getMarketplaceThreadMessages, markMarketplaceThreadRead, sendMarketplaceThreadMessage } from '@shared/api/marketplace';
-import { Toast } from '../../context/ToastContext';
+import { Toast } from '../../context/toast';
 import './Marketplace.css';
 
 function formatHm(ts) {
@@ -45,7 +45,7 @@ function MarketplaceChat() {
   useEffect(() => {
     try {
       endRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'end' });
-    } catch {}
+    } catch { /* Best-effort operation: keep the existing fallback when this fails. */ }
   }, [list.length]);
 
   const sendMut = useMutation({

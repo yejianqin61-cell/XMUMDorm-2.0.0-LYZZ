@@ -36,3 +36,10 @@ jest.mock('expo-secure-store', () => {
     }),
   };
 });
+
+// Native picker binaries are absent in Jest. UI tests drive callbacks explicitly; device tests remain separate.
+jest.mock('@react-native-community/datetimepicker', () => {
+ const React = require('react');
+ const {View} = require('react-native');
+ return {__esModule:true, default:(props)=>React.createElement(View, props)};
+});

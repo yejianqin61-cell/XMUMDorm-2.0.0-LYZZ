@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContextState';
+import { useLanguage } from '../context/LanguageContextState';
 import { motion } from 'framer-motion';
 import { Heart, MessageCircle } from 'lucide-react';
 import TreeHoleToolbar from '../components/TreeHoleToolbar';
@@ -12,7 +12,7 @@ import RelatedCampusTopicsBlock from '../components/square/RelatedCampusTopicsBl
 import ErrorState from '../components/ui/ErrorState';
 import RouteTransition from '../components/ui/RouteTransition';
 import ListPageLayout from '../components/templates/ListPageLayout';
-import { useShellAside } from '../context/ShellAsideContext';
+import { useShellAside } from '../context/ShellAsideContextState';
 import { getPostList } from '@shared/api/posts';
 import { getSquareRecommendations } from '@shared/api/square';
 import { getApiErrorMessage } from '@shared/utils/apiError';
@@ -414,7 +414,7 @@ function TreeHole() {
   }, [isCoarse, list]);
   const isEagerCard = (post) => !!eagerCardIds && eagerCardIds.has(post.id);
   const showInitialSkeleton = isPending && list.length === 0;
-  const showRefreshing = !showInitialSkeleton && isFetching && list.length > 0;
+  !showInitialSkeleton && isFetching && list.length > 0;
   const errorMsg = infiniteError ? getApiErrorMessage(infiniteError) : null;
   const recommendationData = recommendationQuery.data || {
     interest_posts: [],
@@ -448,7 +448,7 @@ function TreeHole() {
   );
 
   const gridRef = useRef(null);
-  const [gridW, setGridW] = useState(0);
+  const [_gridW, setGridW] = useState(0);
   const [scrollTop, setScrollTop] = useState(0);
   const [vpH, setVpH] = useState(0);
   const [gridTop, setGridTop] = useState(0); // grid offsetTop within scroll container
@@ -533,7 +533,7 @@ function TreeHole() {
     }
   }, [fetchNextPage, hasNextPage, isFetchingNextPage, scrollTop, vpH]);
 
-  const gridScrollTop = Math.max(0, scrollTop - (gridTop || 0));
+  Math.max(0, scrollTop - (gridTop || 0));
 
   // Desktop: inject recommendation blocks into global SiteShell aside
   useEffect(() => {

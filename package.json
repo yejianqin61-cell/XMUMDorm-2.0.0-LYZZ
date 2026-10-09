@@ -17,9 +17,9 @@
     "migrate:title:railway": "node scripts/migrate-railway-013-posts-title-safe.js",
     "migrate:perf:railway": "node scripts/migrate-railway-014-perf-indexes-safe.js",
     "backfill:post-thumbs": "node scripts/backfill-post-thumbs.js",
-    "test": "jest",
-    "test:coverage": "jest --coverage",
-    "test:watch": "jest --watch",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
     "build:web": "cd frontend && npm run build"
   },
   "keywords": [

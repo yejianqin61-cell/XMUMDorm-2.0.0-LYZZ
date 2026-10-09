@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { BookOpenText, HandHelping, Shapes, Store } from 'lucide-react';
 import { getSquareBanners, getSquareHomeSummary } from '@shared/api/square';
-import { useLanguage } from '../context/LanguageContext';
+import { useLanguage } from '../context/LanguageContextState';
 import CanteenBannerCarousel from '../features/canteen/CanteenBannerCarousel';
 import TodayCampusHero from '../components/square/TodayCampusHero';
 import TodayCampusQuickActions from '../components/square/TodayCampusQuickActions';
