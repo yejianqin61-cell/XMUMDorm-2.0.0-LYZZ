@@ -51,4 +51,29 @@ describe('UGC publishing terms gate', () => {
     expect(query.mock.calls[0][0]).toContain('user_terms_acceptances');
     expect(query.mock.calls.some(([sql]) => /\bINSERT\b/i.test(sql))).toBe(false);
   });
+
+  test('acceptance of the current version lets the publish handler run', async () => {
+    query.mockReset()
+      .mockResolvedValueOnce([{ accepted_at: '2026-10-09 10:00:00' }])
+      .mockResolvedValueOnce({ insertId: 81 });
+
+    const res = await supertest(app()).post('/api/errands').send({
+      title: '跑腿', contactInfo: '电话', reward: '10', type: 'delivery',
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.id).toBe(81);
+    expect(query.mock.calls[0][1]).toEqual([9, '2026-10-09']);
+    expect(query.mock.calls[1][0]).toContain('INSERT INTO errands');
+  });
+
+  test('an older acceptance is stale because the gate always checks the current version', async () => {
+    query.mockResolvedValueOnce([]);
+
+    const res = await supertest(app()).post('/api/errands').send({ title: '跑腿', contactInfo: '电话' });
+
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('TERMS_NOT_ACCEPTED');
+    expect(query.mock.calls[0][1]).toEqual([9, '2026-10-09']);
+  });
 });
