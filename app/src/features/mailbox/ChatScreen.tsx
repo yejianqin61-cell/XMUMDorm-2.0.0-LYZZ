@@ -29,6 +29,7 @@ import { useTheme } from '@/design-system/theme';
 import { useI18n } from '@/i18n';
 import {
   getMarketplaceThreadMessages,
+  listMyChatThreads,
   markMarketplaceThreadRead,
   sendMarketplaceThreadMessage,
 } from '../../../../shared/api/marketplace';
@@ -45,7 +46,7 @@ import {
   type ChatMessage,
   type ChatThread,
 } from './chat';
-import { toMailboxError } from './conversations';
+import { normalizeThreadRows, toMailboxError } from './conversations';
 import { useUnread } from './useUnread';
 
 export function ChatScreen(): React.ReactElement {
@@ -89,6 +90,14 @@ export function ChatScreen(): React.ReactElement {
     async (mode: 'initial' | 'poll') => {
       if (mode === 'initial') dispatch({ type: 'refresh:start' });
       try {
+        if (mode === 'initial') {
+          // 客户端只做深链预检；后端消息接口仍是最终授权边界。
+          const threads = normalizeThreadRows(await listMyChatThreads());
+          if (!threads.some((row) => row.thread_id === threadId)) {
+            dispatch({ type: 'refresh:failure', error: { kind: 'unknown' } });
+            return;
+          }
+        }
         const payload = await getMarketplaceThreadMessages(threadId);
         // 自己的 id 只在第一次拉；之后从 state 里读（⛔ 不在每次轮询里重复请求）
         let me = viewerId;
@@ -130,6 +139,7 @@ export function ChatScreen(): React.ReactElement {
 
   React.useEffect(() => {
     if (!Number.isInteger(threadId) || threadId <= 0) {
+      dispatch({ type: 'refresh:failure', error: { kind: 'unknown' } });
       setFocusReady(true);
       return;
     }
