@@ -14,8 +14,8 @@ const { checkSanction } = require('../middleware/checkSanction');
 const sensitiveWordFilter = require('../middleware/sensitiveWordFilter');
 const sanitizeHtml = require('sanitize-html');
 
-import { ERRAND_TYPES } from '../shared/constants/serviceEnums.js';
-const TYPES = new Set(ERRAND_TYPES);
+// ponytail: Keep this CommonJS route self-contained; sync these values if shared enums change, until they expose a CommonJS entrypoint.
+const TYPES = new Set(['delivery', 'purchase', 'urgent']);
 const STATUSES = new Set(['open', 'taken', 'done']);
 
 function isAdmin(req) {
