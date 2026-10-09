@@ -17,9 +17,9 @@ const { prepareImageUpload } = require('../services/imageProcessing');
 const { simpleCache } = require('../utils/simpleCache');
 const { getUserLevelSummary, formatAuthorLevel } = require('../services/expService');
 const { getExpProgress } = require('../constants/levelThresholds');
+const { CURRENT_TERMS_VERSION, getCurrentTermsStatus } = require('../services/termsAcceptance');
 
 const DEFAULT_AVATAR = '/uploads/default-avatar.png';
-const CURRENT_TERMS_VERSION = '2026-10-09';
 
 function parseOptionalUser(req) {
   if (!req.headers.authorization) return null;
@@ -173,15 +173,11 @@ router.get('/me', authenticateToken, async (req, res) => {
 // 当前用户的服务端条款接受状态（按版本记录，客户端缓存不是授权依据）
 router.get('/me/terms', authenticateToken, async (req, res) => {
   try {
-    const rows = await query(
-      'SELECT accepted_at FROM user_terms_acceptances WHERE user_id = ? AND terms_version = ? LIMIT 1',
-      [req.user.id, CURRENT_TERMS_VERSION]
-    );
-    const acceptedAt = rows?.[0]?.accepted_at || null;
+    const terms = await getCurrentTermsStatus(req.user.id);
     res.status(200).json({
       status: 0,
       message: '获取成功',
-      data: { version: CURRENT_TERMS_VERSION, accepted: Boolean(acceptedAt), accepted_at: acceptedAt },
+      data: terms,
     });
   } catch (e) {
     console.error('获取条款状态错误:', e);
