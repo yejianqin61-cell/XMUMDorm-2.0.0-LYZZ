@@ -98,3 +98,15 @@ it('发布清除缓存后已挂载跑腿列表重新读取新内容',async()=>{
  await act(async()=>getQueryClient().removeQueries({queryKey:['bing-errand','list']}));
  await waitFor(()=>expect(v.getByTestId('errand-row-9')).toBeTruthy());expect(v.queryByTestId('errand-row-2')).toBeNull();
 });
+
+it('跑腿列表卸载时解绑查询缓存订阅',async()=>{
+ const unsubscribe=jest.fn();
+ const subscribe=jest.spyOn(getQueryClient().getQueryCache(),'subscribe').mockReturnValue(unsubscribe);
+ try{
+  list.mockResolvedValue({list:[row],page:1,pageSize:5,total:1});
+  const v=await renderApp(<ErrandListScreen/>);
+  await waitFor(()=>expect(v.getByTestId('errand-row-2')).toBeTruthy());
+  v.unmount();
+  expect(unsubscribe).toHaveBeenCalledTimes(1);
+ }finally{subscribe.mockRestore();}
+});
