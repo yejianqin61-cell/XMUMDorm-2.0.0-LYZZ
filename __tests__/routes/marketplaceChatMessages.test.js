@@ -64,4 +64,34 @@ describe('marketplace chat message history cursor', () => {
     expect(res.status).toBe(400);
     expect(query).not.toHaveBeenCalled();
   });
+
+  it('超过 500 条消息分页后，每条消息恰好出现一次', async () => {
+    const threadRow = { id: 11, item_id: 5, seller_user_id: 7, buyer_user_id: 9, item_title: '键盘' };
+    const pages = [
+      Array.from({ length: 101 }, (_, index) => message(501 - index)),
+      Array.from({ length: 101 }, (_, index) => message(401 - index)),
+      Array.from({ length: 101 }, (_, index) => message(301 - index)),
+      Array.from({ length: 101 }, (_, index) => message(201 - index)),
+      Array.from({ length: 101 }, (_, index) => message(101 - index)),
+      [message(1)],
+    ];
+    for (const page of pages) {
+      query.mockResolvedValueOnce([threadRow]).mockResolvedValueOnce(page);
+    }
+
+    const ids = [];
+    let cursor = null;
+    for (;;) {
+      const suffix = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
+      const res = await supertest(app()).get(`/api/marketplace/chat/threads/11/messages${suffix}`);
+      expect(res.status).toBe(200);
+      ids.push(...res.body.data.list.map((row) => row.id));
+      if (!res.body.data.hasMore) break;
+      cursor = res.body.data.nextCursor;
+    }
+
+    expect(ids).toHaveLength(501);
+    expect(new Set(ids).size).toBe(501);
+    expect([...new Set(ids)].sort((a, b) => a - b)).toEqual(Array.from({ length: 501 }, (_, index) => index + 1));
+  });
 });
