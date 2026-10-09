@@ -84,3 +84,15 @@ it('想要响应丢失后下一次操作先读权威状态，不能反向切换'
  await fireEvent.press(v.getByTestId('market-want'));await waitFor(()=>expect(want).toHaveBeenCalledTimes(1));
  await fireEvent.press(v.getByTestId('market-want'));await waitFor(()=>expect(v.getByText('已想要 · 3')).toBeTruthy());expect(want).toHaveBeenCalledTimes(1);
 });
+
+it('二手列表卸载时解绑查询缓存订阅',async()=>{
+ const unsubscribe=jest.fn();
+ const subscribe=jest.spyOn(getQueryClient().getQueryCache(),'subscribe').mockReturnValue(unsubscribe);
+ try{
+  list.mockResolvedValue({list:[row],hasMore:false});
+  const v=await renderApp(<MarketListScreen/>);
+  await waitFor(()=>expect(v.getByTestId('market-row-1')).toBeTruthy());
+  await act(async()=>{v.unmount();});
+  expect(unsubscribe).toHaveBeenCalledTimes(1);
+ }finally{subscribe.mockRestore();}
+});

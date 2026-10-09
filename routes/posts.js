@@ -19,6 +19,7 @@ const { simpleCache } = require('../utils/simpleCache');
 const { grantExp, revokeByRef, checkAndGrantPostPopularRewards, formatAuthorLevel } = require('../services/expService');
 const { attachExp } = require('../utils/expResponse');
 const { isPostContentEligible, isCommentEligible } = require('../utils/expEligibility');
+const { requireCurrentTerms } = require('../services/termsAcceptance');
 
 // 统一的文本清洗，防止 XSS 注入（去掉所有 HTML 标签，只保留纯文本）
 function cleanText(input) {
@@ -201,7 +202,7 @@ function mergePostRows(rows, req) {
 // ============================================
 // 发布帖子（登录 + 可选图片，最多 3 张）
 // ============================================
-router.post('/', authenticateToken, checkSanction, sensitiveWordFilter, (req, res, next) => {
+router.post('/', authenticateToken, requireCurrentTerms, checkSanction, sensitiveWordFilter, (req, res, next) => {
   postImagesUpload(req, res, (err) => {
     if (err) {
       return res.status(400).json({

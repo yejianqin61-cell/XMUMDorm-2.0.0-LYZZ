@@ -20,6 +20,7 @@ export type AppErrorKind =
   | 'timeout'
   | 'validation'
   | 'permission'
+  | 'terms'
   | 'content'
   | 'conflict'
   | 'unknown';
@@ -80,6 +81,11 @@ const COPY_KEY: Record<AppErrorKind, { perceive: MessageKey; understand: Message
     understand: 'error.permission.understand',
     fix: 'error.permission.fix',
   },
+  terms: {
+    perceive: 'error.terms.perceive',
+    understand: 'error.terms.understand',
+    fix: 'error.terms.fix',
+  },
   content: {
     perceive: 'error.content.perceive',
     understand: 'error.content.understand',
@@ -103,6 +109,7 @@ const ACTION_KIND: Record<AppErrorKind, ErrorCopy['actionKind']> = {
   timeout: 'retry',
   validation: 'edit',
   permission: 'switchAccount',
+  terms: 'reopen',
   content: 'edit',
   conflict: 'refresh',
   unknown: 'reopen',

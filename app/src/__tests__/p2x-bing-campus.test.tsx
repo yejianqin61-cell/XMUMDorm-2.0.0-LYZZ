@@ -343,3 +343,15 @@ it('发布后的详情返回树洞列表，普通阅读仍走原返回栈',async
  await waitFor(()=>expect(v.getByText('新内容')).toBeTruthy());
  await fireEvent.press(v.getByTestId('campus-detail-back'));expect(mockReplace).toHaveBeenCalledWith('/(tabs)/campus');expect(mockBack).not.toHaveBeenCalled();
 });
+
+it('树洞列表卸载时解绑查询缓存订阅',async()=>{
+ const unsubscribe=jest.fn();
+ const subscribe=jest.spyOn(getQueryClient().getQueryCache(),'subscribe').mockReturnValue(unsubscribe);
+ try{
+  list.mockResolvedValue({list:[{id:7,title:'Old',content:'Old'}],hasMore:false});
+  const v=await renderApp(<CampusListScreen/>);
+  await waitFor(()=>expect(v.getByTestId('campus-row-7')).toBeTruthy());
+  await act(async()=>{v.unmount();});
+  expect(unsubscribe).toHaveBeenCalledTimes(1);
+ }finally{subscribe.mockRestore();}
+});

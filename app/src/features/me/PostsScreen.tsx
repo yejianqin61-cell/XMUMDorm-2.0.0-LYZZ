@@ -23,8 +23,7 @@ import { ListScreen, useListPagination } from '@/components/ui/ListScreen';
 import { Screen } from '@/components/ui/Screen';
 import { useTheme } from '@/design-system/theme';
 import { useI18n } from '@/i18n';
-import { getProfile } from '../../../../shared/api/users';
-import { getMe } from '../../../../shared/api/users';
+import { getMe, getProfile } from '../../../../shared/api/users';
 import { deletePost } from '../../../../shared/api/posts';
 import { toMailboxError } from '@/features/mailbox/conversations';
 import {

@@ -36,6 +36,7 @@ export const ERROR_ICON: Record<AppErrorKind, IconComponent> = {
   timeout: Clock,
   validation: CircleAlert,
   permission: Lock,
+  terms: Lock,
   content: FileX,
   conflict: RefreshCw,
   unknown: CircleAlert,

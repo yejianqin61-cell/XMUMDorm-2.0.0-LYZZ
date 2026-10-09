@@ -42,6 +42,13 @@ import { useViewer } from './useViewer';
 import {useSession} from '@/features/auth/session';
 import {classifyAuthFailure,isSessionInvalid} from '@/features/auth/authFailure';
 
+export function toPublishSubmitError(error: unknown): AppError | null {
+  if (error && typeof error === 'object' && 'kind' in error) return error as AppError;
+  const body = (error as { body?: { code?: unknown } } | null)?.body;
+  if (body?.code === 'TERMS_NOT_ACCEPTED') return { kind: 'terms' };
+  return null;
+}
+
 export type PublishFormHost = {
   descriptor: PublishFormDescriptor;
   /** 直接喂 `<Form sections />` */
@@ -98,7 +105,10 @@ export function usePublishFormCore(
         throw { kind: 'permission' } as AppError;
       }
       try {resultRef.current = await descriptor.submit(values);}
-      catch(error){if(onAuthFailure && isSessionInvalid(classifyAuthFailure(error))) await onAuthFailure(error);throw error;}
+      catch(error){
+        if(onAuthFailure && isSessionInvalid(classifyAuthFailure(error))) await onAuthFailure(error);
+        throw toPublishSubmitError(error) ?? error;
+      }
     },
   });
 

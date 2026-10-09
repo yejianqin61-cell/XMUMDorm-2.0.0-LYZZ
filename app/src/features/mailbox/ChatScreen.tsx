@@ -11,8 +11,8 @@
  *   · **上限 1200 由客户端拦**（服务端是**静默截断**，用户看不见）
  *
  * ⚠️ 两个如实登记的缺口：
- *   1. 消息接口**无游标**（写死 `LIMIT 500` 升序）→ "增量"靠 `id > lastSeen` 过滤整页；
- *      **>500 条的会话会丢最旧**（G2）；
+ *   1. 消息接口现在提供历史游标；本页仍先使用当前页的 `id > lastSeen` 过滤轮询增量，
+ *      历史页合并留给 Phase 2 后续任务；
  *   2. 读会话时把 `marketplace_chat` 通知一并标已读，否则**读完了角标还在**。
  */
 
@@ -29,6 +29,7 @@ import { useTheme } from '@/design-system/theme';
 import { useI18n } from '@/i18n';
 import {
   getMarketplaceThreadMessages,
+  listMyChatThreads,
   markMarketplaceThreadRead,
   sendMarketplaceThreadMessage,
 } from '../../../../shared/api/marketplace';
@@ -45,7 +46,7 @@ import {
   type ChatMessage,
   type ChatThread,
 } from './chat';
-import { toMailboxError } from './conversations';
+import { normalizeThreadRows, toMailboxError } from './conversations';
 import { useUnread } from './useUnread';
 
 export function ChatScreen(): React.ReactElement {
@@ -61,6 +62,8 @@ export function ChatScreen(): React.ReactElement {
   const [draft, setDraft] = React.useState('');
   const [sending, setSending] = React.useState(false);
   const [focusReady, setFocusReady] = React.useState(false);
+  const [threadAccessGranted, setThreadAccessGranted] = React.useState(false);
+  const [historyCursor, setHistoryCursor] = React.useState<string | null>(null);
   const [focused, setFocused] = React.useState(false);
   const [appActive, setAppActive] = React.useState(AppState.currentState === 'active');
   const lastSeenRef = React.useRef(0);
@@ -86,10 +89,27 @@ export function ChatScreen(): React.ReactElement {
 
   /** 拉一次消息（首次 = 全量；之后 = 只取增量，避免整页覆盖导致闪烁） */
   const pull = React.useCallback(
-    async (mode: 'initial' | 'poll') => {
+    async (mode: 'initial' | 'poll' | 'history') => {
       if (mode === 'initial') dispatch({ type: 'refresh:start' });
+      if (mode === 'history') dispatch({ type: 'append:start' });
       try {
-        const payload = await getMarketplaceThreadMessages(threadId);
+        if (mode === 'initial') {
+          setThreadAccessGranted(false);
+          // 客户端只做深链预检；后端消息接口仍是最终授权边界。
+          const threads = normalizeThreadRows(await listMyChatThreads());
+          if (!threads.some((row) => row.thread_id === threadId)) {
+            dispatch({ type: 'refresh:failure', error: { kind: 'unknown' } });
+            return;
+          }
+          setThreadAccessGranted(true);
+        } else if (!threadAccessGranted || (mode === 'history' && !historyCursor)) {
+          if (mode === 'history') dispatch({ type: 'append:success', hasMore: false });
+          return;
+        }
+        const payload = await getMarketplaceThreadMessages(
+          threadId,
+          mode === 'history' ? { cursor: historyCursor } : undefined
+        );
         // 自己的 id 只在第一次拉；之后从 state 里读（⛔ 不在每次轮询里重复请求）
         let me = viewerId;
         if (me === null) {
@@ -109,7 +129,12 @@ export function ChatScreen(): React.ReactElement {
         if (mode === 'initial') {
           setMessages(normalized.messages);
           lastSeenRef.current = lastSeenId(normalized.messages);
-          dispatch({ type: 'refresh:success', hasMore: false });
+          setHistoryCursor(normalized.nextCursor);
+          dispatch({ type: 'refresh:success', hasMore: normalized.hasMore });
+        } else if (mode === 'history') {
+          setMessages((previous) => mergeMessages(previous, normalized.messages));
+          setHistoryCursor(normalized.nextCursor);
+          dispatch({ type: 'append:success', hasMore: normalized.hasMore });
         } else if (fresh.length > 0) {
           setMessages((previous) => mergeMessages(previous, fresh));
           lastSeenRef.current = lastSeenId([...messages, ...fresh]);
@@ -120,16 +145,20 @@ export function ChatScreen(): React.ReactElement {
           refreshUnread();
         }
       } catch (error) {
+        setThreadAccessGranted(false);
         if (mode === 'initial') dispatch({ type: 'refresh:failure', error: toMailboxError(error) });
+        if (mode === 'history') dispatch({ type: 'append:failure', error: toMailboxError(error) });
       } finally {
         if (mode === 'initial') setFocusReady(true);
       }
     },
-    [dispatch, messages, refreshUnread, threadId, viewerId]
+    [dispatch, historyCursor, messages, refreshUnread, threadAccessGranted, threadId, viewerId]
   );
 
   React.useEffect(() => {
     if (!Number.isInteger(threadId) || threadId <= 0) {
+      setThreadAccessGranted(false);
+      dispatch({ type: 'refresh:failure', error: { kind: 'unknown' } });
       setFocusReady(true);
       return;
     }
@@ -141,16 +170,17 @@ export function ChatScreen(): React.ReactElement {
   /* 4s 轮询：只有"页面可见 + App 在前台"才建立定时器 —— 离开即停 */
   React.useEffect(() => {
     if (!focusReady) return;
+    if (!threadAccessGranted) return;
     if (!shouldPoll({ focused, appActive })) return;
     const timer = setInterval(() => {
       void pull('poll');
     }, CHAT_POLL_INTERVAL_MS);
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focusReady, focused, appActive, threadId]);
+  }, [focusReady, focused, appActive, threadAccessGranted, threadId]);
 
   const send = React.useCallback(async () => {
-    if (!canSend(draft)) return;
+    if (!threadAccessGranted || !canSend(draft)) return;
     const text = draft.trim();
     setSending(true);
     try {
@@ -169,7 +199,7 @@ export function ChatScreen(): React.ReactElement {
     } finally {
       setSending(false);
     }
-  }, [dispatch, draft, threadId]);
+  }, [dispatch, draft, threadAccessGranted, threadId]);
 
   const canSubmit = canSend(draft);
 
@@ -188,7 +218,7 @@ export function ChatScreen(): React.ReactElement {
           keyExtractor={(message) => String(message.id)}
           pagination={pagination}
           onRefresh={() => void pull('initial')}
-          onEndReached={() => undefined}
+          onEndReached={() => void pull('history')}
           onRetryRefresh={() => void pull('initial')}
           labels={{
             empty: {
@@ -229,7 +259,7 @@ export function ChatScreen(): React.ReactElement {
         onSend={() => void send()}
         maxLength={CHAT_MAX_MESSAGE_LEN}
         counter
-        disabled={!Number.isInteger(threadId) || threadId <= 0}
+        disabled={!threadAccessGranted || !Number.isInteger(threadId) || threadId <= 0}
         sendDisabled={!canSubmit}
         sending={sending}
       />

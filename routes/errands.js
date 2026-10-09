@@ -12,6 +12,7 @@ const { query } = require('../database');
 const authenticateToken = require('../middleware/auth');
 const { checkSanction } = require('../middleware/checkSanction');
 const sensitiveWordFilter = require('../middleware/sensitiveWordFilter');
+const { requireCurrentTerms } = require('../services/termsAcceptance');
 const sanitizeHtml = require('sanitize-html');
 
 // ponytail: Keep this CommonJS route self-contained; sync these values if shared enums change, until they expose a CommonJS entrypoint.
@@ -197,7 +198,7 @@ router.get('/:id', async (req, res, next) => {
 // Publish
 // POST /api/errands
 // =========================
-router.post('/', authenticateToken, checkSanction, sensitiveWordFilter, async (req, res, next) => {
+router.post('/', authenticateToken, requireCurrentTerms, checkSanction, sensitiveWordFilter, async (req, res, next) => {
   try {
     const userId = req.user && req.user.id;
     const title = cleanText(req.body?.title, 120);

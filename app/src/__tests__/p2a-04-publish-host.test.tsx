@@ -18,7 +18,7 @@ import { ToastProvider } from '@/components/ui/Toast';
 import { canPersistDraft, draftKeyFor, postSubmitPlan } from '@/components/ui/Form';
 import { resolveSubmitGate, canSubmit, TERMS_ROUTE } from '@/features/publish/complianceGate';
 import { draftFormIdFor, type PublishFormDescriptor } from '@/features/publish/descriptor';
-import { usePublishFormCore, type PublishFormHost } from '@/features/publish/usePublishForm';
+import { toPublishSubmitError, usePublishFormCore, type PublishFormHost } from '@/features/publish/usePublishForm';
 import type { Viewer } from '@/features/publish/registry';
 
 jest.mock('expo-router', () => {
@@ -81,6 +81,11 @@ beforeEach(() => {
 });
 
 describe('P2A-04 发布表单宿主与提交门控', () => {
+  it('服务端 TERMS_NOT_ACCEPTED 映射为可打开条款的表单错误', () => {
+    expect(toPublishSubmitError({ body: { code: 'TERMS_NOT_ACCEPTED' } })).toEqual({ kind: 'terms' });
+    expect(toPublishSubmitError({ body: { code: 'OTHER' } })).toBeNull();
+  });
+
   describe('TC-P2A-04-1A · 条款源缺失（缺口 G4 / Q2-A）', () => {
     it('undefined ⇒ 放行，并打上 bypassed 标记（不是静默放行）', () => {
       const gate = resolveSubmitGate({ signedIn: true });

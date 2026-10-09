@@ -1,12 +1,12 @@
 /**
  * 私信会话（`M-12`）的**纯规则**（P2B-06）
  *
- * 服务端现状（`routes/marketplace.js:838-898`）：
- *   · 读消息：`ORDER BY created_at ASC, id ASC` + **写死 `LIMIT 500`**、**不接受任何参数**；
+ * 服务端现状（`routes/marketplace.js:907-980`）：
+ *   · 读消息：按 `created_at` + `id` 倒序取页，再返回升序页和复合游标；
  *   · 写消息：`MARKETPLACE_CHAT_MAX_LEN = 1200`，而且是**静默截断**（`:67-72`）。
  *
  * 由此推出本文件的三条规则：
- *   1. **没有游标** → "增量"只能客户端按 `id > lastSeen` 过滤整页；**>500 条的会话会丢最旧**（登记 G2）；
+ *   1. 历史游标由服务端提供；轮询仍可按 `id > lastSeen` 过滤当前页；
  *   2. **顺序按 `id` 断胜负**（同秒 `created_at` 很常见，而 id 是自增的插入序）；
  *   3. **上限由客户端拦**（服务端会静默截断，用户会以为发全了）。
  *
@@ -61,7 +61,7 @@ function normalizeMessage(raw: unknown, viewerId: number): ChatMessage | null {
 export function normalizeChat(
   payload: unknown,
   viewerId: number
-): { thread: ChatThread; messages: ChatMessage[] } | null {
+): { thread: ChatThread; messages: ChatMessage[]; hasMore: boolean; nextCursor: string | null } | null {
   if (!isObject(payload) || !isObject(payload.thread)) return null;
   const threadId = Number(payload.thread.id);
   if (!Number.isInteger(threadId) || threadId <= 0) return null;
@@ -78,6 +78,8 @@ export function normalizeChat(
       itemTitle: asString(payload.thread.item_title),
     },
     messages: orderMessages(messages),
+    hasMore: payload.hasMore === true,
+    nextCursor: typeof payload.nextCursor === 'string' ? payload.nextCursor : null,
   };
 }
 

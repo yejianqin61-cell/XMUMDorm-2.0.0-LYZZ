@@ -35,7 +35,7 @@ import { clearToken } from '@/features/auth/tokenStore';
 jest.mock('expo-router', () => {
   const ReactInside = require('react');
   return {
-    useLocalSearchParams: () => ({ threadId: '11' }),
+    useLocalSearchParams: jest.fn(() => ({ threadId: '11' })),
     // 真实 API 是 `useFocusEffect(cb)`；这里退化成"挂载即聚焦"
     useFocusEffect: (cb: () => void | (() => void)) => {
       ReactInside.useEffect(cb, []);
@@ -56,6 +56,7 @@ const api = {
     getMarketplaceThreadMessages: jest.Mock;
     sendMarketplaceThreadMessage: jest.Mock;
     markMarketplaceThreadRead: jest.Mock;
+    listMyChatThreads: jest.Mock;
   },
   users: require('../../../shared/api/users') as { getMe: jest.Mock },
   notifications: require('../../../shared/api/notifications') as { getUnreadSummary: jest.Mock },
@@ -91,6 +92,7 @@ beforeEach(async () => {
   api.notifications.getUnreadSummary.mockReset();
   api.users.getMe.mockResolvedValue({ id: 7 });
   api.notifications.getUnreadSummary.mockResolvedValue({ total: 0, byType: {}, byModule: {}, byCategory: {} });
+  api.marketplace.listMyChatThreads.mockResolvedValue({ list: [{ thread_id: 11 }] });
   api.marketplace.markMarketplaceThreadRead.mockResolvedValue({ thread_id: 11 });
   await clearToken();
   unreadStore.reset();
@@ -159,6 +161,9 @@ describe('P2B-06 M-12 私信会话', () => {
       expect(normalized).not.toBeNull();
       expect(normalized?.thread.itemTitle).toBe('二手键盘');
       expect(normalized?.messages.map((message) => message.mine)).toEqual([false, true]);
+      const paged = normalizeChat({ ...THREAD_PAYLOAD, hasMore: true, nextCursor: 'cursor-1' }, 7);
+      expect(paged?.hasMore).toBe(true);
+      expect(paged?.nextCursor).toBe('cursor-1');
 
       const noId = normalizeChat({ thread: { id: 11 }, list: [{ sender_user_id: 7, content: 'x' }] }, 7);
       expect(noId?.messages).toEqual([]);
@@ -211,6 +216,33 @@ describe('P2B-06 M-12 私信会话', () => {
       await waitFor(() =>
         expect(api.marketplace.sendMarketplaceThreadMessage).toHaveBeenCalledWith(11, '你好')
       );
+    });
+
+    it('深链线程不在当前用户会话列表时，不读取消息并进入错误态', async () => {
+      api.marketplace.listMyChatThreads.mockResolvedValue({ list: [{ thread_id: 99 }] });
+
+      const view = await renderApp(<ChatScreen />);
+
+      await waitFor(() => expect(view.getByTestId('chat-messages-error')).toBeTruthy());
+      expect(api.marketplace.getMarketplaceThreadMessages).not.toHaveBeenCalled();
+      expect(api.marketplace.sendMarketplaceThreadMessage).not.toHaveBeenCalled();
+      expect(api.marketplace.markMarketplaceThreadRead).not.toHaveBeenCalled();
+      const user = userEvent.setup();
+      await user.type(view.getByPlaceholderText(zh['mailbox.chat.placeholder']), '不能发送');
+      await user.press(view.getByTestId('chat-composer-send'));
+      expect(api.marketplace.sendMarketplaceThreadMessage).not.toHaveBeenCalled();
+    });
+
+    it('缺失 threadId 不请求会话或消息，并进入错误态', async () => {
+      const router = require('expo-router');
+      router.useLocalSearchParams.mockReturnValue({});
+
+      const view = await renderApp(<ChatScreen />);
+
+      await waitFor(() => expect(view.getByTestId('chat-messages-error')).toBeTruthy());
+      expect(api.marketplace.listMyChatThreads).not.toHaveBeenCalled();
+      expect(api.marketplace.getMarketplaceThreadMessages).not.toHaveBeenCalled();
+      router.useLocalSearchParams.mockReturnValue({ threadId: '11' });
     });
   });
 

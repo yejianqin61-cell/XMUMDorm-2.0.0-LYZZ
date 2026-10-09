@@ -63,6 +63,43 @@ describe('Users Routes', () => {
     simpleCache.getOrSet.mockReset();
   });
 
+  describe('versioned terms acceptance', () => {
+    it('returns false when the current version has no acceptance record', async () => {
+      query.mockResolvedValueOnce([]);
+
+      const res = await supertest(app()).get('/api/users/me/terms');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data).toEqual({
+        version: '2026-10-09',
+        accepted: false,
+        accepted_at: null,
+      });
+    });
+
+    it('accepts the current version idempotently and returns the persisted timestamp', async () => {
+      query.mockResolvedValueOnce([]).mockResolvedValueOnce([{ accepted_at: '2026-10-09 12:00:00' }]);
+
+      const res = await supertest(app()).post('/api/users/me/terms/accept').send({ version: '2026-10-09' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data).toEqual({
+        version: '2026-10-09',
+        accepted: true,
+        accepted_at: '2026-10-09 12:00:00',
+      });
+      expect(query.mock.calls[0][0]).toContain('ON DUPLICATE KEY UPDATE');
+    });
+
+    it('rejects a stale or unknown version before writing', async () => {
+      const res = await supertest(app()).post('/api/users/me/terms/accept').send({ version: 'old-version' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.data.version).toBe('2026-10-09');
+      expect(query).not.toHaveBeenCalled();
+    });
+  });
+
   describe('GET /api/users/me', () => {
     it('returns the current user profile with campus identity fields', async () => {
       simpleCache.getOrSet.mockImplementationOnce(async (_key, _ttlMs, loader) => loader());

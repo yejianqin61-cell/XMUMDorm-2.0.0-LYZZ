@@ -7,18 +7,19 @@
  *   3. 失败**不抛给页面**：降级为 fail-closed 的 viewer + `degraded` 原因，
  *      发布中心仍要能进去（⛔ 不许整屏报错）。
  *
- * ⚠️ 后端今天没有能力布尔（见 `viewer.ts` 的头注），所以 `termsAccepted` 恒为 `null`
- *    → `viewer.acceptedTerms === undefined`，宿主按 Q2-A 走"源缺失=放行 + 标记"。
+ * 条款状态也从服务端读取；请求失败时显式降级为源缺失，不能当作已接受。
  */
 
 import * as React from 'react';
 
 import { listMyClubs } from '../../../../shared/api/clubs';
 import { getMyOrganizations } from '../../../../shared/api/organizations';
+import { getMyTermsStatus } from '../../../../shared/api/users';
 import { useSession } from '@/features/auth/session';
 import {
   normalizeClubRows,
   normalizeOrgRows,
+  normalizeTermsAccepted,
   resolveViewer,
   type ClubRoleRow,
   type OrgMembershipRow,
@@ -30,9 +31,14 @@ export type ViewerState = ResolvedViewer & {
   loading: boolean;
 };
 
-const NO_ROWS: { clubs: readonly ClubRoleRow[] | null; orgs: readonly OrgMembershipRow[] | null } = {
+const NO_ROWS: {
+  clubs: readonly ClubRoleRow[] | null;
+  orgs: readonly OrgMembershipRow[] | null;
+  terms: boolean | null;
+} = {
   clubs: null,
   orgs: null,
+  terms: null,
 };
 
 export function useViewer(): ViewerState {
@@ -40,6 +46,7 @@ export function useViewer(): ViewerState {
   const [rows, setRows] = React.useState<{
     clubs: readonly ClubRoleRow[] | null;
     orgs: readonly OrgMembershipRow[] | null;
+    terms: boolean | null;
   }>(NO_ROWS);
   const [loading, setLoading] = React.useState(false);
 
@@ -52,11 +59,16 @@ export function useViewer(): ViewerState {
     let cancelled = false;
     setLoading(true);
     void (async () => {
-      const [clubs, orgs] = await Promise.allSettled([listMyClubs(), getMyOrganizations()]);
+      const [clubs, orgs, terms] = await Promise.allSettled([
+        listMyClubs(),
+        getMyOrganizations(),
+        getMyTermsStatus(),
+      ]);
       if (cancelled) return;
       setRows({
         clubs: clubs.status === 'fulfilled' ? normalizeClubRows(clubs.value) : null,
         orgs: orgs.status === 'fulfilled' ? normalizeOrgRows(orgs.value) : null,
+        terms: terms.status === 'fulfilled' ? normalizeTermsAccepted(terms.value) : null,
       });
       setLoading(false);
     })();
@@ -71,8 +83,7 @@ export function useViewer(): ViewerState {
         signedIn: isSignedIn,
         clubRows: rows.clubs,
         orgRows: rows.orgs,
-        // 后端暂无此真源（缺口 G4）→ 恒 null；补齐后这一行换成真值即可
-        termsAccepted: null,
+        termsAccepted: rows.terms,
       }),
       loading,
     }),

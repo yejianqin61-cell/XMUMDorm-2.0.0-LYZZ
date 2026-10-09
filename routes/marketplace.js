@@ -17,6 +17,7 @@ const { assetUrl } = require('../utils/assets');
 const { simpleCache } = require('../utils/simpleCache');
 const { uploadBuffer, isObjectStorageConfigured } = require('../services/objectStorage');
 const { prepareImageUpload } = require('../services/imageProcessing');
+const { requireCurrentTerms } = require('../services/termsAcceptance');
 
 const multer = require('multer');
 const path = require('path');
@@ -31,6 +32,7 @@ const extMap = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp
 const DORM_AREAS = new Set(['LY1', 'LY2', 'LY4', 'LY5', 'LY6', 'LY7', 'LY8', 'LY9', 'D1', 'D2', 'D3', 'D4', 'D5']);
 const DELIVERY_METHODS = new Set(['pickup', 'delivery']);
 const MARKETPLACE_CHAT_MAX_LEN = 1200;
+const MARKETPLACE_CHAT_PAGE_SIZE = 100;
 
 function isValidDormArea(x) {
   return !!x && DORM_AREAS.has(String(x).toUpperCase());
@@ -70,6 +72,21 @@ function cleanText(input, maxLen) {
   const cleaned = sanitizeHtml(raw, { allowedTags: [], allowedAttributes: {} }).trim();
   if (!maxLen) return cleaned;
   return cleaned.length > maxLen ? cleaned.slice(0, maxLen) : cleaned;
+}
+
+function encodeChatCursor(row) {
+  return Buffer.from(JSON.stringify({ createdAt: row.created_at, id: Number(row.id) })).toString('base64url');
+}
+
+function decodeChatCursor(raw) {
+  if (typeof raw !== 'string' || !raw) return null;
+  try {
+    const value = JSON.parse(Buffer.from(raw, 'base64url').toString('utf8'));
+    if (typeof value.createdAt !== 'string' || !Number.isInteger(Number(value.id)) || Number(value.id) <= 0) return null;
+    return { createdAt: value.createdAt, id: Number(value.id) };
+  } catch (_) {
+    return null;
+  }
 }
 
 function ensureUploadsDir(relDir) {
@@ -403,7 +420,7 @@ router.get('/items/:id', async (req, res) => {
 // ============================================
 // 发布（登录，multipart/form-data）
 // ============================================
-router.post('/items', authenticateToken, checkSanction, sensitiveWordFilter, (req, res, next) => {
+router.post('/items', authenticateToken, requireCurrentTerms, checkSanction, sensitiveWordFilter, (req, res, next) => {
   itemImagesUpload(req, res, (err) => {
     if (err) return res.status(400).json({ status: -1, message: err.message || '图片上传失败' });
     next();
@@ -908,6 +925,8 @@ router.get('/chat/threads/:threadId/messages', authenticateToken, async (req, re
   try {
     const threadId = toInt(req.params.threadId, 0);
     if (!threadId) return res.status(400).json({ status: -1, message: 'threadId 不合法' });
+    const cursor = req.query.cursor == null ? null : decodeChatCursor(req.query.cursor);
+    if (req.query.cursor != null && !cursor) return res.status(400).json({ status: -1, message: 'cursor 不合法' });
 
     const thRows = await query(
       `SELECT t.id, t.item_id, t.seller_user_id, t.buyer_user_id, t.seller_last_read_at, t.buyer_last_read_at,
@@ -922,17 +941,25 @@ router.get('/chat/threads/:threadId/messages', authenticateToken, async (req, re
     const isParticipant = Number(req.user.id) === Number(t.seller_user_id) || Number(req.user.id) === Number(t.buyer_user_id) || isAdmin(req);
     if (!isParticipant) return res.status(403).json({ status: -1, message: '无权限' });
 
+    const messageParams = [threadId];
+    const cursorWhere = cursor
+      ? ' AND (m.created_at < ? OR (m.created_at = ? AND m.id < ?))'
+      : '';
+    if (cursor) messageParams.push(cursor.createdAt, cursor.createdAt, cursor.id);
     const rows = await query(
       `SELECT m.id, m.thread_id, m.sender_user_id, m.content, m.created_at,
         u.username, u.nickname, u.avatar
        FROM marketplace_chat_messages m
        LEFT JOIN users u ON u.id = m.sender_user_id
-       WHERE m.thread_id = ?
-       ORDER BY m.created_at ASC, m.id ASC
-       LIMIT 500`,
-      [threadId]
+       WHERE m.thread_id = ?${cursorWhere}
+       ORDER BY m.created_at DESC, m.id DESC
+       LIMIT ${MARKETPLACE_CHAT_PAGE_SIZE + 1}`,
+      messageParams
     );
-    const list = (rows || []).map((r) => ({
+    const pageRows = rows || [];
+    const hasMore = pageRows.length > MARKETPLACE_CHAT_PAGE_SIZE;
+    const visibleRows = pageRows.slice(0, MARKETPLACE_CHAT_PAGE_SIZE).reverse();
+    const list = visibleRows.map((r) => ({
       id: r.id,
       sender_user_id: r.sender_user_id,
       sender: {
@@ -958,6 +985,8 @@ router.get('/chat/threads/:threadId/messages', authenticateToken, async (req, re
           buyer_last_read_at: t.buyer_last_read_at,
         },
         list,
+        hasMore,
+        nextCursor: hasMore ? encodeChatCursor(pageRows[MARKETPLACE_CHAT_PAGE_SIZE - 1]) : null,
       },
     });
   } catch (e) {

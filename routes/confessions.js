@@ -14,6 +14,7 @@ const router = express.Router();
 const { query } = require('../database');
 const { checkSanction } = require('../middleware/checkSanction');
 const sensitiveWordFilter = require('../middleware/sensitiveWordFilter');
+const { requireCurrentTerms } = require('../services/termsAcceptance');
 const authenticateToken = require('../middleware/auth');
 const { logAudit } = require('../services/auditLog');
 const { simpleCache } = require('../utils/simpleCache');
@@ -321,7 +322,7 @@ router.get('/meta', async (_req, res) => {
 // ============================================
 // POST / — 投稿（先发后审）
 // ============================================
-router.post('/', authenticateToken, checkSanction, sensitiveWordFilter, async (req, res) => {
+router.post('/', authenticateToken, requireCurrentTerms, checkSanction, sensitiveWordFilter, async (req, res) => {
   try {
     const rawTemplateKey = req.body && req.body.template_key;
     const safeContent = cleanText(req.body && req.body.content);
