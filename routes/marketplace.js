@@ -27,9 +27,9 @@ const MAX_IMAGES_PER_ITEM = 4;
 const MAX_FILE_SIZE = 8 * 1024 * 1024; // 8MB
 const ALLOWED_IMAGE_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const extMap = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp' };
-import { MARKET_DORM_AREAS, MARKET_DELIVERY_METHODS } from '../shared/constants/serviceEnums.js';
-const DORM_AREAS = new Set(MARKET_DORM_AREAS);
-const DELIVERY_METHODS = new Set(MARKET_DELIVERY_METHODS);
+// ponytail: Keep this CommonJS route self-contained; sync these values if shared enums change, until they expose a CommonJS entrypoint.
+const DORM_AREAS = new Set(['LY1', 'LY2', 'LY4', 'LY5', 'LY6', 'LY7', 'LY8', 'LY9', 'D1', 'D2', 'D3', 'D4', 'D5']);
+const DELIVERY_METHODS = new Set(['pickup', 'delivery']);
 const MARKETPLACE_CHAT_MAX_LEN = 1200;
 
 function isValidDormArea(x) {
