@@ -28,6 +28,7 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+.trae/
 
 # 临时文件
 *.tmp
