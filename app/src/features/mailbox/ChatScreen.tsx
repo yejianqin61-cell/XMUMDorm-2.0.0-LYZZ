@@ -62,6 +62,7 @@ export function ChatScreen(): React.ReactElement {
   const [draft, setDraft] = React.useState('');
   const [sending, setSending] = React.useState(false);
   const [focusReady, setFocusReady] = React.useState(false);
+  const [threadAccessGranted, setThreadAccessGranted] = React.useState(false);
   const [focused, setFocused] = React.useState(false);
   const [appActive, setAppActive] = React.useState(AppState.currentState === 'active');
   const lastSeenRef = React.useRef(0);
@@ -91,12 +92,16 @@ export function ChatScreen(): React.ReactElement {
       if (mode === 'initial') dispatch({ type: 'refresh:start' });
       try {
         if (mode === 'initial') {
+          setThreadAccessGranted(false);
           // 客户端只做深链预检；后端消息接口仍是最终授权边界。
           const threads = normalizeThreadRows(await listMyChatThreads());
           if (!threads.some((row) => row.thread_id === threadId)) {
             dispatch({ type: 'refresh:failure', error: { kind: 'unknown' } });
             return;
           }
+          setThreadAccessGranted(true);
+        } else if (!threadAccessGranted) {
+          return;
         }
         const payload = await getMarketplaceThreadMessages(threadId);
         // 自己的 id 只在第一次拉；之后从 state 里读（⛔ 不在每次轮询里重复请求）
@@ -129,16 +134,18 @@ export function ChatScreen(): React.ReactElement {
           refreshUnread();
         }
       } catch (error) {
+        setThreadAccessGranted(false);
         if (mode === 'initial') dispatch({ type: 'refresh:failure', error: toMailboxError(error) });
       } finally {
         if (mode === 'initial') setFocusReady(true);
       }
     },
-    [dispatch, messages, refreshUnread, threadId, viewerId]
+    [dispatch, messages, refreshUnread, threadAccessGranted, threadId, viewerId]
   );
 
   React.useEffect(() => {
     if (!Number.isInteger(threadId) || threadId <= 0) {
+      setThreadAccessGranted(false);
       dispatch({ type: 'refresh:failure', error: { kind: 'unknown' } });
       setFocusReady(true);
       return;
@@ -151,16 +158,17 @@ export function ChatScreen(): React.ReactElement {
   /* 4s 轮询：只有"页面可见 + App 在前台"才建立定时器 —— 离开即停 */
   React.useEffect(() => {
     if (!focusReady) return;
+    if (!threadAccessGranted) return;
     if (!shouldPoll({ focused, appActive })) return;
     const timer = setInterval(() => {
       void pull('poll');
     }, CHAT_POLL_INTERVAL_MS);
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focusReady, focused, appActive, threadId]);
+  }, [focusReady, focused, appActive, threadAccessGranted, threadId]);
 
   const send = React.useCallback(async () => {
-    if (!canSend(draft)) return;
+    if (!threadAccessGranted || !canSend(draft)) return;
     const text = draft.trim();
     setSending(true);
     try {
@@ -179,7 +187,7 @@ export function ChatScreen(): React.ReactElement {
     } finally {
       setSending(false);
     }
-  }, [dispatch, draft, threadId]);
+  }, [dispatch, draft, threadAccessGranted, threadId]);
 
   const canSubmit = canSend(draft);
 
@@ -239,7 +247,7 @@ export function ChatScreen(): React.ReactElement {
         onSend={() => void send()}
         maxLength={CHAT_MAX_MESSAGE_LEN}
         counter
-        disabled={!Number.isInteger(threadId) || threadId <= 0}
+        disabled={!threadAccessGranted || !Number.isInteger(threadId) || threadId <= 0}
         sendDisabled={!canSubmit}
         sending={sending}
       />

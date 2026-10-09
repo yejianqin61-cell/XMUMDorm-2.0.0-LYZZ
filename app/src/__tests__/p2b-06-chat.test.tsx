@@ -223,6 +223,11 @@ describe('P2B-06 M-12 私信会话', () => {
       await waitFor(() => expect(view.getByTestId('chat-messages-error')).toBeTruthy());
       expect(api.marketplace.getMarketplaceThreadMessages).not.toHaveBeenCalled();
       expect(api.marketplace.sendMarketplaceThreadMessage).not.toHaveBeenCalled();
+      expect(api.marketplace.markMarketplaceThreadRead).not.toHaveBeenCalled();
+      const user = userEvent.setup();
+      await user.type(view.getByPlaceholderText(zh['mailbox.chat.placeholder']), '不能发送');
+      await user.press(view.getByTestId('chat-composer-send'));
+      expect(api.marketplace.sendMarketplaceThreadMessage).not.toHaveBeenCalled();
     });
 
     it('缺失 threadId 不请求会话或消息，并进入错误态', async () => {
