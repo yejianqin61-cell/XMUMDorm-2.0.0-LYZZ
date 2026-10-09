@@ -351,7 +351,7 @@ it('树洞列表卸载时解绑查询缓存订阅',async()=>{
   list.mockResolvedValue({list:[{id:7,title:'Old',content:'Old'}],hasMore:false});
   const v=await renderApp(<CampusListScreen/>);
   await waitFor(()=>expect(v.getByTestId('campus-row-7')).toBeTruthy());
-  v.unmount();
+  await act(async()=>{v.unmount();});
   expect(unsubscribe).toHaveBeenCalledTimes(1);
  }finally{subscribe.mockRestore();}
 });

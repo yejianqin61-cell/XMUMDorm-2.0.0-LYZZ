@@ -106,7 +106,7 @@ it('跑腿列表卸载时解绑查询缓存订阅',async()=>{
   list.mockResolvedValue({list:[row],page:1,pageSize:5,total:1});
   const v=await renderApp(<ErrandListScreen/>);
   await waitFor(()=>expect(v.getByTestId('errand-row-2')).toBeTruthy());
-  v.unmount();
+  await act(async()=>{v.unmount();});
   expect(unsubscribe).toHaveBeenCalledTimes(1);
  }finally{subscribe.mockRestore();}
 });

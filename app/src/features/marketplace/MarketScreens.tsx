@@ -71,11 +71,14 @@ function MarketFeed({filters}:{filters:Filters}):React.ReactElement {
  },[client,key,filters,dispatch]);
  React.useEffect(()=>{if(!initial.current)void load('refresh');return()=>{generation.current++;pending.current=null;};},[load]);
  // Publishing removes snapshots; mounted feeds must also refresh, not only future mounts.
- React.useEffect(()=>client.getQueryCache().subscribe(event=>{
+ React.useEffect(()=>{
+  const unsubscribe=client.getQueryCache().subscribe(event=>{
   if(event.type==='removed'&&JSON.stringify(event.query.queryKey)===JSON.stringify(key)){
    generation.current++;pending.current=null;void load('refresh');
   }
- }),[client,key,load]);
+  });
+  return unsubscribe;
+ },[client,key,load]);
  const refresh=()=>void load('refresh'),append=()=>void load('append');
  return <>
   {rows.length>0&&pagination.errorScope==='refresh'?<Button label={t('screen.market.refreshFailed')} onPress={refresh}/>:null}

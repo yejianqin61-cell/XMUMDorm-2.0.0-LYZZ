@@ -92,7 +92,7 @@ it('二手列表卸载时解绑查询缓存订阅',async()=>{
   list.mockResolvedValue({list:[row],hasMore:false});
   const v=await renderApp(<MarketListScreen/>);
   await waitFor(()=>expect(v.getByTestId('market-row-1')).toBeTruthy());
-  v.unmount();
+  await act(async()=>{v.unmount();});
   expect(unsubscribe).toHaveBeenCalledTimes(1);
  }finally{subscribe.mockRestore();}
 });
