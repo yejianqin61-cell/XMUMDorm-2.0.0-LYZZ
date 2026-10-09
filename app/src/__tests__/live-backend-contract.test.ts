@@ -204,8 +204,20 @@ authDescribe('真实后端契约 · 需登录', () => {
   });
 
   it('线上 `/api/marketplace/chat/threads` 已部署——带令牌返回会话数组', async () => {
-    const { status } = await liveGet2('/api/marketplace/chat/threads', token);
+    const { status, json } = await liveGet2('/api/marketplace/chat/threads', token);
     expect(status).toBe(200);
+    expect(json.status).toBe(0);
+    expect(Array.isArray(json.data?.list)).toBe(true);
+    for (const row of json.data.list) {
+      expect(row).toEqual(expect.objectContaining({
+        thread_id: expect.any(Number),
+        item: expect.objectContaining({ id: expect.any(Number), available: expect.any(Boolean) }),
+        role: expect.stringMatching(/^(buyer|seller)$/),
+        peer: expect.objectContaining({ id: expect.any(Number), name: expect.any(String) }),
+        unread_count: expect.any(Number),
+      }));
+    }
+    if (json.data.list.length === 0) console.log('[live] 当前测试账号没有会话 → 空列表分支已确认');
   });
 });
 
