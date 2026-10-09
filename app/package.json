@@ -18,7 +18,8 @@
     "rulers:contrast": "node ../scripts/contrast-check.js --file ../tokens/generated/tokens.check.json --fail",
     "rulers:brand": "node ../scripts/brand-ramp.js --hue 261.2 --fail",
     "rulers:tokens": "node ../scripts/gen-tokens.js --check",
-    "verify": "npm run typecheck && npm run test:ci && npm run rulers",
+    "verify": "npm run typecheck && npm run test:ci -- --runInBand && npm run rulers",
+    "verify:serial": "npm run typecheck && npm run test:ci -- --runInBand && npm run rulers",
     "lint": "expo lint"
   },
   "dependencies": {
