@@ -201,7 +201,7 @@
 
 | ID | 条目 | 状态 | 等谁 / 何时消 | 唯一真源 |
 |---|---|---|---|---|
-| TD-70 | Expo lint迁移warning仍开放，当前0 error/220 warning；refs/set-state-in-effect/globals与测试探针immutability保留warning | 待排期 | 公共基座维护者；逐项清偿后才提高严重级别，不直接关闭规则 | 依赖准入登记§5；乙续收尾小结 |
+| TD-70 | Expo lint迁移warning仍开放，当前0 error/309 warning；主要剩余项为no-require-imports、refs、set-state-in-effect、no-unused-vars与导入规则 | 待排期 | 公共基座维护者；逐项清偿后才提高严重级别，不直接关闭规则 | [Phase4-Task05-完整verify双次回归.md](evaluation/Phase4-Task05-完整verify双次回归.md) |
 | TD-71 | T05标准工具顶栏已接同源信箱与角标，读表/关闭保留在内容工具栏 | 已完成 | 70cf140；p2y-e02五例及p1-14共34例通过；设备布局仍见TD-64 | 乙逐屏13.1 T05 |
 | TD-72 | T03复用公共Form系统移除保护，取消留页、确认丢弃、忙时阻止、成功放行 | 已完成 | dcb0f99；p2y-e01六例通过，账号分区草稿清理已验；设备手势/硬件返回仍见TD-64 | 乙逐屏13.1 T03 |
 | TD-73 | SDK57相册/日期时间、3图上传及真实后端写后刷新尚未在development build验证 | 待实测 | 后续设备验收；本轮按C-28不构建发布，复用TD-64设备矩阵 | 乙逐屏13.1；乙验收报告 |
@@ -209,6 +209,8 @@
 ## 变更记录
 
 - 2026-10-07：关闭TD-71宿主信箱与TD-72导入返回保护；TD-70记录220 warning；设备布局/返回实测仍保留在TD-64。
+
+- 2026-10-09：Phase 4 Task 02 清除一次重复 users import，lint 从311降至309 warnings；完整 verify 两次均在Jest完成后因未关闭异步操作挂起，typecheck与rulers独立通过，TD-70继续开放。
 
 - 2026-10-07：更新 TD-60 的依赖已准入事实，新增乙域TD-70–73；既有TD-64等实测项保持开放。
 
