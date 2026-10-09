@@ -1,10 +1,18 @@
 /**
  * 用户 API，与后端 /api/users 对应
  */
-import { del, get, patch } from './request';
+import { del, get, patch, post } from './request';
 
 export function getMe() {
   return get('/api/users/me');
+}
+
+export function getMyTermsStatus() {
+  return get('/api/users/me/terms');
+}
+
+export function acceptCurrentTerms(version) {
+  return post('/api/users/me/terms/accept', { version });
 }
 
 /**

@@ -7,7 +7,7 @@
  *   · 能拿到的最接近真源是两个列表：
  *       `GET /api/clubs/me/clubs` → 每行有 `role`（`routes/clubs.js:1000-1033`）
  *       `GET /api/organizations/me` → 每行有 `can_post`（`routes/organizations.js:30-56`）
- *   · `acceptedTerms` **后端 0 实现**（全仓 grep 0 命中）→ 登记为缺口 G4。
+ *   · `acceptedTerms` 来自 `GET /api/users/me/terms`；请求失败或响应缺字段时保持源缺失。
  *
  * 所以本文件的职责是**把后端字段翻译成 viewer**，且：
  *   1. **只在这里翻译**（别处再判断一次就是"UI 自行推断"）；
@@ -37,6 +37,13 @@ export type ViewerSources = {
   /** `null` = 后端暂无此真源（G4）；`true`/`false` = 后端明确回答 */
   termsAccepted: boolean | null;
 };
+
+/** `GET /api/users/me/terms` 的响应已经由 request() 拆出 data。 */
+export function normalizeTermsAccepted(payload: unknown): boolean | null {
+  if (payload === null || typeof payload !== 'object') return null;
+  const accepted = (payload as { accepted?: unknown }).accepted;
+  return typeof accepted === 'boolean' ? accepted : null;
+}
 
 export type ResolvedViewer = {
   viewer: Viewer;
@@ -70,7 +77,7 @@ export function isOrgMemberFrom(rows: readonly OrgMembershipRow[] | null): boole
   return rows.length > 0;
 }
 
-/** 真源 → viewer。`acceptedTerms` 缺失时**不写这个键**（宿主据此走 Q2-A 的放行分支） */
+/** 真源 → viewer。只有服务端明确返回 true/false 时才写入 `acceptedTerms`。 */
 export function resolveViewer(sources: ViewerSources): ResolvedViewer {
   const degraded: ViewerDegradedReason[] = [];
   // 未登录时不拉这两个接口 → 那不算"源拿不到"

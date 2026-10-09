@@ -19,6 +19,7 @@ const { getUserLevelSummary, formatAuthorLevel } = require('../services/expServi
 const { getExpProgress } = require('../constants/levelThresholds');
 
 const DEFAULT_AVATAR = '/uploads/default-avatar.png';
+const CURRENT_TERMS_VERSION = '2026-10-09';
 
 function parseOptionalUser(req) {
   if (!req.headers.authorization) return null;
@@ -166,6 +167,52 @@ router.get('/me', authenticateToken, async (req, res) => {
   } catch (e) {
     console.error('èŽ·å–å½“å‰ç”¨æˆ·é”™è¯¯:', e);
     res.status(500).json({ status: -1, message: 'æœåŠ¡å™¨é”™è¯¯ï¼Œè¯·ç¨åŽé‡è¯•' });
+  }
+});
+
+// 当前用户的服务端条款接受状态（按版本记录，客户端缓存不是授权依据）
+router.get('/me/terms', authenticateToken, async (req, res) => {
+  try {
+    const rows = await query(
+      'SELECT accepted_at FROM user_terms_acceptances WHERE user_id = ? AND terms_version = ? LIMIT 1',
+      [req.user.id, CURRENT_TERMS_VERSION]
+    );
+    const acceptedAt = rows?.[0]?.accepted_at || null;
+    res.status(200).json({
+      status: 0,
+      message: '获取成功',
+      data: { version: CURRENT_TERMS_VERSION, accepted: Boolean(acceptedAt), accepted_at: acceptedAt },
+    });
+  } catch (e) {
+    console.error('获取条款状态错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
+router.post('/me/terms/accept', authenticateToken, async (req, res) => {
+  try {
+    const version = typeof req.body?.version === 'string' ? req.body.version.trim() : '';
+    if (version !== CURRENT_TERMS_VERSION) {
+      return res.status(400).json({ status: -1, message: '条款版本无效或已过期', data: { version: CURRENT_TERMS_VERSION } });
+    }
+    await query(
+      `INSERT INTO user_terms_acceptances (user_id, terms_version)
+       VALUES (?, ?)
+       ON DUPLICATE KEY UPDATE accepted_at = CURRENT_TIMESTAMP`,
+      [req.user.id, CURRENT_TERMS_VERSION]
+    );
+    const rows = await query(
+      'SELECT accepted_at FROM user_terms_acceptances WHERE user_id = ? AND terms_version = ? LIMIT 1',
+      [req.user.id, CURRENT_TERMS_VERSION]
+    );
+    res.status(200).json({
+      status: 0,
+      message: '已接受条款',
+      data: { version: CURRENT_TERMS_VERSION, accepted: true, accepted_at: rows?.[0]?.accepted_at || null },
+    });
+  } catch (e) {
+    console.error('接受条款错误:', e);
+    res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
   }
 });
 

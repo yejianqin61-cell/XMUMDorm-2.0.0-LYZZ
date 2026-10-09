@@ -19,6 +19,7 @@ import {
   isOrgMemberFrom,
   normalizeClubRows,
   normalizeOrgRows,
+  normalizeTermsAccepted,
   resolveViewer,
 } from '@/features/publish/viewer';
 
@@ -47,6 +48,12 @@ beforeEach(async () => {
 });
 
 describe('P2A-02 viewer 真源', () => {
+  it('服务端条款状态只接受明确 boolean，形状缺失保持源缺失', () => {
+    expect(normalizeTermsAccepted({ version: '2026-10-09', accepted: true })).toBe(true);
+    expect(normalizeTermsAccepted({ version: '2026-10-09', accepted: false })).toBe(false);
+    expect(normalizeTermsAccepted({ version: '2026-10-09' })).toBeNull();
+  });
+
   describe('TC-P2A-02-1A · 未登录：一条都不显示，且不算"源拿不到"', () => {
     it('viewer 全 false，可见条目 0 条', () => {
       const { viewer, degraded } = resolveViewer({
