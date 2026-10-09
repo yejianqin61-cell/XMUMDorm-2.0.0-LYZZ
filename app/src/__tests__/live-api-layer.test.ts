@@ -152,14 +152,8 @@ liveLayerDescribe('真实后端 · 端到端层（真传输 + 真归一化）', 
     expect(Number.isInteger(total)).toBe(true);
   });
 
-  it('本地新增的 `/api/marketplace/chat/threads` 在线上返回 404（**未部署**，带令牌也一样）', async () => {
-    let status = 0;
-    try {
-      await request('/api/marketplace/chat/threads', { token });
-      status = 200;
-    } catch (error: any) {
-      status = error?.status ?? error?.body?.__httpStatus ?? 0;
-    }
-    expect(status).toBe(404);
+  it('已部署的 `/api/marketplace/chat/threads` 带令牌返回会话列表', async () => {
+    const payload = await request('/api/marketplace/chat/threads', { token });
+    expect(Array.isArray(payload.list)).toBe(true);
   });
 });

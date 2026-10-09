@@ -203,10 +203,9 @@ authDescribe('真实后端契约 · 需登录', () => {
     expect(unread.json.data).toHaveProperty('byCategory');
   });
 
-  it('线上**没有** `/api/marketplace/chat/threads`（本地新增路由未部署）——带令牌实测', async () => {
+  it('线上 `/api/marketplace/chat/threads` 已部署——带令牌返回会话数组', async () => {
     const { status } = await liveGet2('/api/marketplace/chat/threads', token);
-    // 带令牌仍是 404 → 不是"缺权限"，是**路由不存在**
-    expect(status).toBe(404);
+    expect(status).toBe(200);
   });
 });
 
@@ -295,15 +294,9 @@ liveDescribe(`真实后端契约 · 公开端点（${LIVE || '未设置'}）`, (
     expect(typeof user.levelProgress.progress).toBe('number');
   });
 
-  it('已部署的服务端**没有** `GET /api/marketplace/chat/threads`（本地新增的路由未部署）', async () => {
+  it('已部署的服务端公开访问 `GET /api/marketplace/chat/threads` 时返回鉴权错误', async () => {
     const { status } = await liveGet('/api/marketplace/chat/threads');
-    // 401 = 路由存在但要令牌；404 = 该路由**不在部署里**
-    // ⚠️ 这条断言记录的是"当前事实"，一旦部署方带上这条路由，它会红 —— 那时应当改成 401
-    expect([401, 404]).toContain(status);
-    if (status === 404) {
-      console.log(
-        '[live] 线上没有 /api/marketplace/chat/threads —— 本地 backend 改动（Q1）尚未部署，会话列表在真机上会 404'
-      );
-    }
+    // 401 证明路由已进入部署；404 才表示部署入口仍未更新。
+    expect(status).toBe(401);
   });
 });
