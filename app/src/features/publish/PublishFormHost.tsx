@@ -69,6 +69,7 @@ function ResolvedPublishFormHost({descriptor}: PublishFormHostProps): React.Reac
       semantic={host.semantic}
       onSettled={host.onSettled}
       onCancel={() => router.back()}
+      onRetrySubmit={host.form.state.formError?.kind === 'terms' ? () => router.push(TERMS_ROUTE) : undefined}
     />
   );
 }

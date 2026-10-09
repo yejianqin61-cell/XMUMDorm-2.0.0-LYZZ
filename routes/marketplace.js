@@ -17,6 +17,7 @@ const { assetUrl } = require('../utils/assets');
 const { simpleCache } = require('../utils/simpleCache');
 const { uploadBuffer, isObjectStorageConfigured } = require('../services/objectStorage');
 const { prepareImageUpload } = require('../services/imageProcessing');
+const { requireCurrentTerms } = require('../services/termsAcceptance');
 
 const multer = require('multer');
 const path = require('path');
@@ -419,7 +420,7 @@ router.get('/items/:id', async (req, res) => {
 // ============================================
 // 发布（登录，multipart/form-data）
 // ============================================
-router.post('/items', authenticateToken, checkSanction, sensitiveWordFilter, (req, res, next) => {
+router.post('/items', authenticateToken, requireCurrentTerms, checkSanction, sensitiveWordFilter, (req, res, next) => {
   itemImagesUpload(req, res, (err) => {
     if (err) return res.status(400).json({ status: -1, message: err.message || '图片上传失败' });
     next();

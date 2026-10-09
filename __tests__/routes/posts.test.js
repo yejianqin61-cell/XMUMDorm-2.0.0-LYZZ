@@ -2,6 +2,7 @@ const express = require('express');
 const supertest = require('supertest');
 
 jest.mock('../../database', () => ({ query: jest.fn() }));
+jest.mock('../../services/termsAcceptance', () => ({ requireCurrentTerms: (_req, _res, next) => next() }));
 jest.mock('../../middleware/auth', () => (req, _res, next) => {
   req.user = { id: 9, role: 'student' };
   next();

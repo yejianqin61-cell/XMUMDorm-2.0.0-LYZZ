@@ -14,6 +14,7 @@ require('dotenv').config();
 const jwt = require('jsonwebtoken');
 
 jest.mock('../../database', () => ({ query: jest.fn() }));
+jest.mock('../../services/termsAcceptance', () => ({ requireCurrentTerms: (_req, _res, next) => next() }));
 jest.mock('../../middleware/auth', () => (req, _res, next) => {
   // 默认已登录；测试可通过 setAuth(null) 模拟未登录
   req.user = req.__testUser === undefined ? { id: 9, role: 'student' } : req.__testUser;
