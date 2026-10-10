@@ -146,6 +146,11 @@ export function addClubMember(clubId, email, role = 'member') {
   return post(`/api/clubs/${clubId}/members`, { email, role });
 }
 
+/** 移除成员；服务端继续保护最后一个社团管理员。 */
+export function removeClubMember(clubId, userId) {
+  return del(`/api/clubs/${clubId}/members/${userId}`);
+}
+
 /**
  * 发布社团活动。支持 JSON（无图）或 FormData（字段 + 最多 4 张 images 文件）。
  * @param {number} clubId

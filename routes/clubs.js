@@ -798,6 +798,45 @@ router.post('/:id/members', authenticateToken, async (req, res, next) => {
 });
 
 // =========================
+// Remove member (club admin or site admin)
+// DELETE /api/clubs/:id/members/:userId
+// =========================
+router.delete('/:id/members/:userId', authenticateToken, async (req, res, next) => {
+  try {
+    const clubId = toInt(req.params.id, 0);
+    const targetUserId = toInt(req.params.userId, 0);
+    const requesterId = Number(req.user?.id);
+    if (!clubId || !targetUserId || !requesterId) {
+      return res.status(400).json({ status: -1, message: '参数错误' });
+    }
+    const canManage = isSiteAdmin(req) || (await userCanManageClub(requesterId, clubId));
+    if (!canManage) return res.status(403).json({ status: -1, message: '无权限' });
+
+    const members = await query(
+      'SELECT user_id, role FROM club_members WHERE club_id = ? AND user_id = ? LIMIT 1',
+      [clubId, targetUserId]
+    );
+    const member = members && members[0];
+    if (!member) return res.status(404).json({ status: -1, message: '成员不存在' });
+
+    if (String(member.role) === 'admin') {
+      const adminRows = await query(
+        "SELECT COUNT(*) AS c FROM club_members WHERE club_id = ? AND role = 'admin'",
+        [clubId]
+      );
+      if (Number(adminRows?.[0]?.c || 0) <= 1) {
+        return res.status(400).json({ status: -1, message: '不能移除最后一个社团管理员' });
+      }
+    }
+
+    await query('DELETE FROM club_members WHERE club_id = ? AND user_id = ? LIMIT 1', [clubId, targetUserId]);
+    return res.json({ status: 0, data: { userId: targetUserId, removed: true } });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// =========================
 // Create activity (club admin or site admin)
 // POST /api/clubs/:id/activities
 // JSON body 或 multipart/form-data（字段 + 最多 4 张 images）

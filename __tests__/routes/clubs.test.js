@@ -287,3 +287,48 @@ describe('Clubs discovery list contract', () => {
     expect(query).not.toHaveBeenCalled();
   });
 });
+
+describe('Clubs member removal', () => {
+  beforeEach(() => {
+    mockUser.id = 9;
+    mockUser.role = 'student';
+    query.mockReset();
+  });
+
+  it('lets a club administrator remove a non-admin member', async () => {
+    query
+      .mockResolvedValueOnce([{role: 'admin'}])
+      .mockResolvedValueOnce([{user_id: 22, role: 'member'}])
+      .mockResolvedValueOnce({affectedRows: 1});
+
+    const res = await supertest(app()).delete('/api/clubs/8/members/22');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({userId: 22, removed: true});
+    expect(query.mock.calls[2]).toEqual([
+      'DELETE FROM club_members WHERE club_id = ? AND user_id = ? LIMIT 1', [8, 22],
+    ]);
+  });
+
+  it('does not let a regular member remove anyone', async () => {
+    query.mockResolvedValueOnce([]);
+
+    const res = await supertest(app()).delete('/api/clubs/8/members/22');
+
+    expect(res.status).toBe(403);
+    expect(query).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the last club administrator', async () => {
+    query
+      .mockResolvedValueOnce([{role: 'admin'}])
+      .mockResolvedValueOnce([{user_id: 22, role: 'admin'}])
+      .mockResolvedValueOnce([{c: 1}]);
+
+    const res = await supertest(app()).delete('/api/clubs/8/members/22');
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toContain('最后');
+    expect(query).toHaveBeenCalledTimes(3);
+  });
+});
