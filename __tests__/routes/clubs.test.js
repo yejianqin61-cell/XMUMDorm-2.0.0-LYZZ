@@ -332,3 +332,41 @@ describe('Clubs member removal', () => {
     expect(query).toHaveBeenCalledTimes(3);
   });
 });
+
+describe('Clubs content list pagination', () => {
+  beforeEach(() => {
+    mockUser.id = 9;
+    mockUser.role = 'student';
+    query.mockReset();
+  });
+
+  it('does not expose the activity lookahead record and reports hasMore', async () => {
+    query.mockResolvedValueOnce(Array.from({length: 6}, (_unused, index) => ({
+      id: index + 1, title: `Activity ${index + 1}`, club_id: 8, club_name: 'Music',
+      images: null, cover: null, start_time: null, end_time: null, created_at: '2099-01-01',
+    })));
+
+    const res = await supertest(app()).get('/api/clubs/activities?page=1&pageSize=5');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({page: 1, pageSize: 5, hasMore: true});
+    expect(res.body.data.list).toHaveLength(5);
+    expect(query.mock.calls[0][0]).toContain('LIMIT 6 OFFSET 0');
+    expect(query.mock.calls.slice(1).flatMap((call) => call[1] || [])).not.toContain(6);
+  });
+
+  it('does not expose the post lookahead record and reports hasMore', async () => {
+    query.mockResolvedValueOnce(Array.from({length: 6}, (_unused, index) => ({
+      id: index + 1, title: `Post ${index + 1}`, content: 'content', club_id: 8, club_name: 'Music',
+      images: null, created_at: '2099-01-01',
+    })));
+
+    const res = await supertest(app()).get('/api/clubs/posts?page=1&pageSize=5');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({page: 1, pageSize: 5, hasMore: true});
+    expect(res.body.data.list).toHaveLength(5);
+    expect(query.mock.calls[0][0]).toContain('LIMIT 6 OFFSET 0');
+    expect(query.mock.calls.slice(1).flatMap((call) => call[1] || [])).not.toContain(6);
+  });
+});

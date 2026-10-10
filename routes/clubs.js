@@ -1211,18 +1211,20 @@ router.get('/activities', async (req, res, next) => {
         CASE WHEN a.start_time IS NULL THEN 1 ELSE 0 END ASC,
         a.start_time DESC,
         a.created_at DESC
-      LIMIT ${pageSize} OFFSET ${offset};
+      LIMIT ${pageSize + 1} OFFSET ${offset};
       `
     );
 
-    const ids = (rows || []).map((r) => Number(r.id));
+    const hasMore = (rows || []).length > pageSize;
+    const pageRows = (rows || []).slice(0, pageSize);
+    const ids = pageRows.map((r) => Number(r.id));
     const stats = await getStatsForTargets('activity', ids);
     const liked = await getViewerLikedMap(viewerId, 'activity', ids);
 
     res.json({
       status: 0,
       data: {
-        list: (rows || []).map((r) => {
+        list: pageRows.map((r) => {
           const media = activityMediaForClient(r);
           return {
             id: r.id,
@@ -1243,6 +1245,7 @@ router.get('/activities', async (req, res, next) => {
         }),
         page,
         pageSize,
+        hasMore,
       },
     });
   } catch (e) {
@@ -1343,17 +1346,19 @@ router.get('/posts', async (req, res, next) => {
       FROM club_posts p
       JOIN clubs c ON c.id = p.club_id
       ORDER BY p.created_at DESC
-      LIMIT ${pageSize} OFFSET ${offset};
+      LIMIT ${pageSize + 1} OFFSET ${offset};
       `
     );
-    const ids = (rows || []).map((r) => Number(r.id));
+    const hasMore = (rows || []).length > pageSize;
+    const pageRows = (rows || []).slice(0, pageSize);
+    const ids = pageRows.map((r) => Number(r.id));
     const stats = await getStatsForTargets('post', ids);
     const liked = await getViewerLikedMap(viewerId, 'post', ids);
 
     res.json({
       status: 0,
       data: {
-        list: (rows || []).map((r) => {
+        list: pageRows.map((r) => {
           const imageKeys = parseJsonImageArray(r.images, 4);
           const images = imageKeys.map((k) => assetUrl(String(k))).filter(Boolean);
           return {
@@ -1370,6 +1375,7 @@ router.get('/posts', async (req, res, next) => {
         }),
         page,
         pageSize,
+        hasMore,
       },
     });
   } catch (e) {
