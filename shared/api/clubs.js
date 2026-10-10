@@ -33,6 +33,7 @@ export function listClubActivities(params = {}) {
 export function listClubs(params = {}) {
   const qs = new URLSearchParams();
   if (params.q) qs.set('q', String(params.q));
+  if (params.category) qs.set('category', String(params.category));
   if (params.page) qs.set('page', String(params.page));
   if (params.pageSize) qs.set('pageSize', String(params.pageSize));
   const query = qs.toString();
@@ -143,6 +144,11 @@ export function updateClub(clubId, formData) {
 
 export function addClubMember(clubId, email, role = 'member') {
   return post(`/api/clubs/${clubId}/members`, { email, role });
+}
+
+/** 移除成员；服务端继续保护最后一个社团管理员。 */
+export function removeClubMember(clubId, userId) {
+  return del(`/api/clubs/${clubId}/members/${userId}`);
 }
 
 /**

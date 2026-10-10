@@ -169,8 +169,7 @@ export function CampusDetailScreen({published=false,postId,kind='confession'}:{p
   onReport={post&&actions.report.state!=='success'?()=>setReportOpen(true):undefined} interactions={actions.interactions} onToggleLike={post?actions.onToggleLike:undefined} comments={post?actions.comments:undefined} state={loading?'loading':error?.kind==='content'?'empty':error?'error':post?'content':'empty'} error={error}
   empty={{kind:'noResult',title:t('screen.campus.read.unavailable'),actionLabel:t('screen.campus.read.backToList'),onAction:back}}
   onBack={back} onRetry={()=>error?.kind==='content'?back():void load()}
-  hero={images.length>0?<MediaGrid testID="campus-media" uris={images} variant="hero"/>:undefined}
-  body={<><Text role="body">{post?.content}</Text>{post?actions.body:null}{reportPanel}</>}
+  body={<><Text role="body">{post?.content}</Text>{images.length>0?<MediaGrid testID="campus-media" uris={images} variant="hero"/>:null}{post?actions.body:null}{reportPanel}</>}
   labels={{back:t('action.back'),like:t('screen.campus.read.like'),favorite:t('action.save'),comment:t('screen.campus.read.comments'),report:t('screen.campus.read.report'),countPlaceholder:'—',anonymous:t('screen.campus.read.anonymous'),
    comments:{anonymous:t('screen.campus.read.anonymous'),deleteLabel:t('screen.campus.read.delete'),replyLabel:t('screen.campus.read.reply'),likeLabel:t('screen.campus.read.like'),moreReplies:n=>String(n),collapse:t('screen.campus.read.collapse')},commentsEnd:t('screen.campus.read.end'),commentsRetry:t('action.retry')}}/>;
 }

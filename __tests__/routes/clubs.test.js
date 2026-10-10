@@ -251,3 +251,196 @@ describe('Clubs activity registration routes', () => {
     });
   });
 });
+
+describe('Clubs discovery list contract', () => {
+  beforeEach(() => {
+    mockUser.id = 9;
+    mockUser.role = 'student';
+    query.mockReset();
+  });
+
+  it('filters by a whitelisted category and returns a stable page boundary', async () => {
+    query.mockResolvedValueOnce([
+      { id: 6, name: 'Music 1', category: 'music', description: '', avatar: null, followers: 4 },
+      { id: 5, name: 'Music 2', category: 'music', description: '', avatar: null, followers: 3 },
+      { id: 4, name: 'Music 3', category: 'music', description: '', avatar: null, followers: 2 },
+      { id: 3, name: 'Music 4', category: 'music', description: '', avatar: null, followers: 1 },
+      { id: 2, name: 'Music 5', category: 'music', description: '', avatar: null, followers: 0 },
+      { id: 1, name: 'Music next page', category: 'music', description: '', avatar: null, followers: 0 },
+    ]);
+
+    const res = await supertest(app()).get('/api/clubs/list?category=music&page=1&pageSize=5');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({ page: 1, pageSize: 5, hasMore: true });
+    expect(res.body.data.list).toHaveLength(5);
+    expect(res.body.data.list[0]).toMatchObject({ id: 6, category: 'music', viewer: { following: false } });
+    expect(query.mock.calls[0][0]).toContain('c.category = ?');
+    expect(query.mock.calls[0][1]).toEqual(['music']);
+  });
+
+  it('rejects an unknown category before it reaches the database', async () => {
+    const res = await supertest(app()).get('/api/clubs/list?category=not-a-category');
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toContain('分类');
+    expect(query).not.toHaveBeenCalled();
+  });
+});
+
+describe('Clubs member removal', () => {
+  beforeEach(() => {
+    mockUser.id = 9;
+    mockUser.role = 'student';
+    query.mockReset();
+  });
+
+  it('lets a club administrator remove a non-admin member', async () => {
+    query
+      .mockResolvedValueOnce([{role: 'admin'}])
+      .mockResolvedValueOnce([{user_id: 22, role: 'member'}])
+      .mockResolvedValueOnce({affectedRows: 1});
+
+    const res = await supertest(app()).delete('/api/clubs/8/members/22');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({userId: 22, removed: true});
+    expect(query.mock.calls[2]).toEqual([
+      'DELETE FROM club_members WHERE club_id = ? AND user_id = ? LIMIT 1', [8, 22],
+    ]);
+  });
+
+  it('does not let a regular member remove anyone', async () => {
+    query.mockResolvedValueOnce([]);
+
+    const res = await supertest(app()).delete('/api/clubs/8/members/22');
+
+    expect(res.status).toBe(403);
+    expect(query).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the last club administrator', async () => {
+    query
+      .mockResolvedValueOnce([{role: 'admin'}])
+      .mockResolvedValueOnce([{user_id: 22, role: 'admin'}])
+      .mockResolvedValueOnce([{c: 1}]);
+
+    const res = await supertest(app()).delete('/api/clubs/8/members/22');
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toContain('最后');
+    expect(query).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe('Clubs content list pagination', () => {
+  beforeEach(() => {
+    mockUser.id = 9;
+    mockUser.role = 'student';
+    query.mockReset();
+  });
+
+  it('does not expose the activity lookahead record and reports hasMore', async () => {
+    query.mockResolvedValueOnce(Array.from({length: 6}, (_unused, index) => ({
+      id: index + 1, title: `Activity ${index + 1}`, club_id: 8, club_name: 'Music',
+      images: null, cover: null, start_time: null, end_time: null, created_at: '2099-01-01',
+    })));
+
+    const res = await supertest(app()).get('/api/clubs/activities?page=1&pageSize=5');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({page: 1, pageSize: 5, hasMore: true});
+    expect(res.body.data.list).toHaveLength(5);
+    expect(query.mock.calls[0][0]).toContain('LIMIT 6 OFFSET 0');
+    expect(query.mock.calls.slice(1).flatMap((call) => call[1] || [])).not.toContain(6);
+  });
+
+  it('does not expose the post lookahead record and reports hasMore', async () => {
+    query.mockResolvedValueOnce(Array.from({length: 6}, (_unused, index) => ({
+      id: index + 1, title: `Post ${index + 1}`, content: 'content', club_id: 8, club_name: 'Music',
+      images: null, created_at: '2099-01-01',
+    })));
+
+    const res = await supertest(app()).get('/api/clubs/posts?page=1&pageSize=5');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({page: 1, pageSize: 5, hasMore: true});
+    expect(res.body.data.list).toHaveLength(5);
+    expect(query.mock.calls[0][0]).toContain('LIMIT 6 OFFSET 0');
+    expect(query.mock.calls.slice(1).flatMap((call) => call[1] || [])).not.toContain(6);
+  });
+});
+
+describe('Clubs like acknowledgement', () => {
+  beforeEach(() => {
+    mockUser.id = 9;
+    mockUser.role = 'student';
+    query.mockReset();
+  });
+
+  it('returns the exact post identity and authoritative count after liking', async () => {
+    query
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce({affectedRows: 1})
+      .mockResolvedValueOnce([{c: 6}])
+      .mockResolvedValueOnce([{club_id: 8}])
+      .mockResolvedValueOnce([]);
+
+    const res = await supertest(app()).post('/api/clubs/likes/toggle').send({targetType: 'post', targetId: 44});
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({targetType: 'post', targetId: 44, liked: true, count: 6});
+    expect(query.mock.calls[2][0]).toContain('COUNT(*) AS c FROM club_likes');
+    expect(query.mock.calls[2][1]).toEqual(['post', 44]);
+  });
+
+  it('returns the exact activity identity and authoritative count after unliking', async () => {
+    query
+      .mockResolvedValueOnce([{ok: 1}])
+      .mockResolvedValueOnce({affectedRows: 1})
+      .mockResolvedValueOnce([{c: 2}]);
+
+    const res = await supertest(app()).post('/api/clubs/likes/toggle').send({targetType: 'activity', targetId: 33});
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({targetType: 'activity', targetId: 33, liked: false, count: 2});
+    expect(query.mock.calls[2][1]).toEqual(['activity', 33]);
+  });
+});
+
+describe('Clubs follow acknowledgement', () => {
+  beforeEach(() => {
+    mockUser.id = 9;
+    mockUser.role = 'student';
+    query.mockReset();
+  });
+
+  it('returns matching club identity and count after following', async () => {
+    query
+      .mockResolvedValueOnce([{id: 8}])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce({affectedRows: 1})
+      .mockResolvedValueOnce([{c: 12}])
+      .mockResolvedValueOnce([]);
+
+    const res = await supertest(app()).post('/api/clubs/8/follow').send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({clubId: 8, following: true, followers: 12});
+    expect(query.mock.calls[3][0]).toContain('COUNT(*) AS c FROM club_follows');
+    expect(query.mock.calls[3][1]).toEqual([8]);
+  });
+
+  it('returns matching club identity and count after unfollowing', async () => {
+    query
+      .mockResolvedValueOnce([{id: 8}])
+      .mockResolvedValueOnce([{ok: 1}])
+      .mockResolvedValueOnce({affectedRows: 1})
+      .mockResolvedValueOnce([{c: 11}]);
+
+    const res = await supertest(app()).post('/api/clubs/8/follow').send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({clubId: 8, following: false, followers: 11});
+  });
+});

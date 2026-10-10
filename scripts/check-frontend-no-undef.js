@@ -16,12 +16,15 @@ const fs = require('fs');
 const path = require('path');
 const { createRequire } = require('module');
 
-const FRONTEND_DIR = path.resolve(__dirname, '..', 'frontend');
+const FRONTEND_DIR = process.env.FRONTEND_DIR || path.resolve(__dirname, '..', 'frontend');
 const eslintEntry = path.join(FRONTEND_DIR, 'node_modules', 'eslint', 'package.json');
 
 async function main() {
   if (!fs.existsSync(eslintEntry)) {
-    console.error('[no-undef] 跳过：未安装 frontend 依赖（请先 cd frontend && npm install）');
+    // 这是一个可选的 Web 质量门：根目录后端测试不应因为未安装独立的
+    // frontend 工作区依赖而失败。用 stdout 输出状态，供 Jest 守卫明确区分
+    // “实际检查通过”与“依赖未安装，未执行检查”。
+    console.log('[no-undef] SKIPPED — 未安装 frontend 依赖（请先 cd frontend && npm ci）');
     process.exit(0);
   }
 

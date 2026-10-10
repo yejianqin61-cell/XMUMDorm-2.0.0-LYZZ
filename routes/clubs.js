@@ -285,6 +285,16 @@ async function getViewerLikedMap(userId, targetType, ids) {
   return new Map((rows || []).map((r) => [Number(r.target_id), true]));
 }
 
+
+/** Mutation acknowledgements use a fresh database count; clients never infer it locally. */
+async function getClubLikeCount(targetType, targetId) {
+  const rows = await query(
+    'SELECT COUNT(*) AS c FROM club_likes WHERE target_type = ? AND target_id = ?',
+    [targetType, targetId]
+  );
+  return Number(rows?.[0]?.c || 0);
+}
+
 async function userCanManageClub(userId, clubId) {
   if (!userId || !clubId) return false;
   const rows = await query(
@@ -798,6 +808,45 @@ router.post('/:id/members', authenticateToken, async (req, res, next) => {
 });
 
 // =========================
+// Remove member (club admin or site admin)
+// DELETE /api/clubs/:id/members/:userId
+// =========================
+router.delete('/:id/members/:userId', authenticateToken, async (req, res, next) => {
+  try {
+    const clubId = toInt(req.params.id, 0);
+    const targetUserId = toInt(req.params.userId, 0);
+    const requesterId = Number(req.user?.id);
+    if (!clubId || !targetUserId || !requesterId) {
+      return res.status(400).json({ status: -1, message: '参数错误' });
+    }
+    const canManage = isSiteAdmin(req) || (await userCanManageClub(requesterId, clubId));
+    if (!canManage) return res.status(403).json({ status: -1, message: '无权限' });
+
+    const members = await query(
+      'SELECT user_id, role FROM club_members WHERE club_id = ? AND user_id = ? LIMIT 1',
+      [clubId, targetUserId]
+    );
+    const member = members && members[0];
+    if (!member) return res.status(404).json({ status: -1, message: '成员不存在' });
+
+    if (String(member.role) === 'admin') {
+      const adminRows = await query(
+        "SELECT COUNT(*) AS c FROM club_members WHERE club_id = ? AND role = 'admin'",
+        [clubId]
+      );
+      if (Number(adminRows?.[0]?.c || 0) <= 1) {
+        return res.status(400).json({ status: -1, message: '不能移除最后一个社团管理员' });
+      }
+    }
+
+    await query('DELETE FROM club_members WHERE club_id = ? AND user_id = ? LIMIT 1', [clubId, targetUserId]);
+    return res.json({ status: 0, data: { userId: targetUserId, removed: true } });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// =========================
 // Create activity (club admin or site admin)
 // POST /api/clubs/:id/activities
 // JSON body 或 multipart/form-data（字段 + 最多 4 张 images）
@@ -955,9 +1004,11 @@ router.post('/likes/toggle', authenticateToken, async (req, res, next) => {
     const liked = !!(rows && rows[0]);
     if (liked) {
       await query('DELETE FROM club_likes WHERE user_id = ? AND target_type = ? AND target_id = ? LIMIT 1', [userId, targetType, targetId]);
-      return res.json({ status: 0, data: { liked: false } });
+      const count = await getClubLikeCount(targetType, targetId);
+      return res.json({ status: 0, data: { targetType, targetId, liked: false, count } });
     }
     await query('INSERT INTO club_likes (user_id, target_type, target_id) VALUES (?, ?, ?)', [userId, targetType, targetId]);
+    const count = await getClubLikeCount(targetType, targetId);
     // 通知社团管理员
     try {
       let clubId = null;
@@ -976,7 +1027,7 @@ router.post('/likes/toggle', authenticateToken, async (req, res, next) => {
         }
       }
     } catch (_) {}
-    return res.json({ status: 0, data: { liked: true } });
+    return res.json({ status: 0, data: { targetType, targetId, liked: true, count } });
   } catch (e) {
     next(e);
   }
@@ -998,9 +1049,13 @@ router.post('/:id/follow', authenticateToken, async (req, res, next) => {
     const following = !!(rows && rows[0]);
     if (following) {
       await query('DELETE FROM club_follows WHERE user_id = ? AND club_id = ? LIMIT 1', [userId, clubId]);
-      return res.json({ status: 0, data: { following: false } });
+      const followerRows = await query('SELECT COUNT(*) AS c FROM club_follows WHERE club_id = ?', [clubId]);
+      const followers = Number(followerRows?.[0]?.c || 0);
+      return res.json({ status: 0, data: { clubId, following: false, followers } });
     }
     await query('INSERT INTO club_follows (user_id, club_id) VALUES (?, ?)', [userId, clubId]);
+    const followerRows = await query('SELECT COUNT(*) AS c FROM club_follows WHERE club_id = ?', [clubId]);
+    const followers = Number(followerRows?.[0]?.c || 0);
     // 通知社团管理员
     try {
       const admins = await query('SELECT user_id FROM club_members WHERE club_id = ? AND role = ?', [clubId, 'admin']);
@@ -1009,7 +1064,7 @@ router.post('/:id/follow', authenticateToken, async (req, res, next) => {
         createNotificationBatch(adminIds, { type: 'club_follow', fromUserId: userId, extra: { targetType: 'club', targetId: clubId, targetPath: `/about/club/${clubId}` } }).catch(() => {});
       }
     } catch (_) {}
-    return res.json({ status: 0, data: { following: true } });
+    return res.json({ status: 0, data: { clubId, following: true, followers } });
   } catch (e) {
     next(e);
   }
@@ -1172,18 +1227,20 @@ router.get('/activities', async (req, res, next) => {
         CASE WHEN a.start_time IS NULL THEN 1 ELSE 0 END ASC,
         a.start_time DESC,
         a.created_at DESC
-      LIMIT ${pageSize} OFFSET ${offset};
+      LIMIT ${pageSize + 1} OFFSET ${offset};
       `
     );
 
-    const ids = (rows || []).map((r) => Number(r.id));
+    const hasMore = (rows || []).length > pageSize;
+    const pageRows = (rows || []).slice(0, pageSize);
+    const ids = pageRows.map((r) => Number(r.id));
     const stats = await getStatsForTargets('activity', ids);
     const liked = await getViewerLikedMap(viewerId, 'activity', ids);
 
     res.json({
       status: 0,
       data: {
-        list: (rows || []).map((r) => {
+        list: pageRows.map((r) => {
           const media = activityMediaForClient(r);
           return {
             id: r.id,
@@ -1204,6 +1261,7 @@ router.get('/activities', async (req, res, next) => {
         }),
         page,
         pageSize,
+        hasMore,
       },
     });
   } catch (e) {
@@ -1213,7 +1271,7 @@ router.get('/activities', async (req, res, next) => {
 
 // =========================
 // Clubs list
-// GET /api/clubs/list?page=&pageSize=
+// GET /api/clubs/list?page=&pageSize=&q=&category=
 // =========================
 router.get('/list', async (req, res, next) => {
   try {
@@ -1223,12 +1281,21 @@ router.get('/list', async (req, res, next) => {
     const pageSize = Math.min(50, Math.max(5, toInt(req.query.pageSize, 30)));
     const offset = (page - 1) * pageSize;
     const q = cleanText(req.query.q, 60);
+    const rawCategory = cleanText(req.query.category, 20).toLowerCase();
+    const category = rawCategory ? normalizeClubCategory(rawCategory) : null;
+    if (rawCategory && !category) {
+      return res.status(400).json({ status: -1, message: '社团分类无效' });
+    }
 
     const where = [];
     const params = [];
     if (q) {
       where.push('(c.name LIKE ? OR c.description LIKE ?)');
       params.push(`%${q}%`, `%${q}%`);
+    }
+    if (category) {
+      where.push('c.category = ?');
+      params.push(category);
     }
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
@@ -1239,12 +1306,14 @@ router.get('/list', async (req, res, next) => {
       FROM clubs c
       ${whereSql}
       ORDER BY followers DESC, c.id DESC
-      LIMIT ${pageSize} OFFSET ${offset};
+      LIMIT ${pageSize + 1} OFFSET ${offset};
       `,
       params
     );
-    const ids = (rows || []).map((r) => Number(r.id));
-    const followingMap = viewerId
+    const hasMore = (rows || []).length > pageSize;
+    const pageRows = (rows || []).slice(0, pageSize);
+    const ids = pageRows.map((r) => Number(r.id));
+    const followingMap = viewerId && ids.length > 0
       ? new Map(
           (await query(
             `SELECT club_id FROM club_follows WHERE user_id = ? AND club_id IN (${ids.map(() => '?').join(',')})`,
@@ -1256,9 +1325,10 @@ router.get('/list', async (req, res, next) => {
     res.json({
       status: 0,
       data: {
-        list: (rows || []).map((r) => ({
+        list: pageRows.map((r) => ({
           id: r.id,
           name: r.name,
+          category: r.category || null,
           avatar: r.avatar ? assetUrl(r.avatar) : null,
           description: r.description || '',
           followers: Number(r.followers || 0),
@@ -1266,6 +1336,7 @@ router.get('/list', async (req, res, next) => {
         })),
         page,
         pageSize,
+        hasMore,
       },
     });
   } catch (e) {
@@ -1291,17 +1362,19 @@ router.get('/posts', async (req, res, next) => {
       FROM club_posts p
       JOIN clubs c ON c.id = p.club_id
       ORDER BY p.created_at DESC
-      LIMIT ${pageSize} OFFSET ${offset};
+      LIMIT ${pageSize + 1} OFFSET ${offset};
       `
     );
-    const ids = (rows || []).map((r) => Number(r.id));
+    const hasMore = (rows || []).length > pageSize;
+    const pageRows = (rows || []).slice(0, pageSize);
+    const ids = pageRows.map((r) => Number(r.id));
     const stats = await getStatsForTargets('post', ids);
     const liked = await getViewerLikedMap(viewerId, 'post', ids);
 
     res.json({
       status: 0,
       data: {
-        list: (rows || []).map((r) => {
+        list: pageRows.map((r) => {
           const imageKeys = parseJsonImageArray(r.images, 4);
           const images = imageKeys.map((k) => assetUrl(String(k))).filter(Boolean);
           return {
@@ -1318,6 +1391,7 @@ router.get('/posts', async (req, res, next) => {
         }),
         page,
         pageSize,
+        hasMore,
       },
     });
   } catch (e) {

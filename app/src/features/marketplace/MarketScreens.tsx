@@ -6,6 +6,7 @@ import {EntityCard} from '@/components/ui/EntityCard';
 import {FilterChips} from '@/components/ui/FilterChips';
 import {SegmentedControl} from '@/components/ui/SegmentedControl';
 import {Input} from '@/components/ui/Input';
+import {SearchField} from '@/components/ui/SearchField';
 import {Button} from '@/components/ui/Button';
 import {Text} from '@/components/ui/Text';
 import {MediaGrid} from '@/components/ui/MediaGrid';
@@ -39,9 +40,9 @@ export function MarketListScreen():React.ReactElement {
   setInvalid(false);select({...filters,q:q.trim()||undefined,priceMin,priceMax});
  };
  return <Screen titleKey="screen.market.title" showMailbox={false} testID="market-screen">
+  <SearchField testID="market-search-field" appearance="full" value={q} onChangeText={setQ} onSubmit={apply} placeholder={t('screen.market.query')}/>
   <FilterChips testID="market-categories" options={categories} selected={[filters.category??'all']} onToggle={key=>select({...filters,category:key==='all'?undefined:key})}/>
   <SegmentedControl testID="market-status" value={filters.status??'all'} options={['all','on_sale','sold'].map(value=>({value,label:t(statusKeys[value as keyof typeof statusKeys])}))} onChange={status=>select({...filters,status:status==='all'?undefined:status})}/>
-  <Input testID="market-query-input" value={q} onChangeText={setQ} label={t('screen.market.query')} maxLength={80}/>
   <Input testID="market-min-input" value={min} onChangeText={setMin} label={t('screen.market.min')} kind="number"/>
   <Input testID="market-max-input" value={max} onChangeText={setMax} label={t('screen.market.max')} kind="number"/>
   {invalid?<Text role="body">{t('screen.market.priceInvalid')}</Text>:null}

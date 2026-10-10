@@ -4,12 +4,13 @@ import * as Linking from 'expo-linking';
 import { act, fireEvent, waitFor } from '@testing-library/react-native';
 import { renderApp } from './helpers/renderApp';
 import { GuidesListScreen, GuideDetailScreen } from '@/features/guides/GuidesScreens';
-import { listHandbookArticles, getHandbookArticleDetail } from '../../../shared/api/handbook';
+import { listHandbookArticles, getHandbookArticleDetail, listHandbookComments, toggleHandbookLike, createHandbookComment } from '../../../shared/api/handbook';
 jest.mock('expo-linking', () => ({ openURL: jest.fn() }));
 const mockPush = jest.fn();
 const mockBack = jest.fn();
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, back: mockBack, canGoBack: () => true }) }));
-jest.mock('../../../shared/api/handbook', () => ({ listHandbookArticles: jest.fn(), getHandbookArticleDetail: jest.fn() }));
+jest.mock('@/features/auth/session', () => ({ useSession: () => ({ isSignedIn: true }) }));
+jest.mock('../../../shared/api/handbook', () => ({ listHandbookArticles: jest.fn(), getHandbookArticleDetail: jest.fn(), listHandbookComments: jest.fn(), toggleHandbookLike: jest.fn(), createHandbookComment: jest.fn() }));
 import type { ListScreenProps } from '@/components/ui/ListScreen';
 let mockListProps: ListScreenProps<unknown>;
 jest.mock('@/components/ui/ListScreen', () => {
@@ -22,7 +23,10 @@ import { getQueryClient } from '@/shared/queryClient';
 import { secondaryTabStore } from '@/features/navigation/secondaryTabs';
 const list = listHandbookArticles as jest.Mock;
 const detail = getHandbookArticleDetail as jest.Mock;
-beforeEach(() => { getQueryClient().clear(); secondaryTabStore.clear(); jest.clearAllMocks(); (Linking.openURL as jest.Mock).mockReset(); list.mockReset(); detail.mockReset(); });
+const comments = listHandbookComments as jest.Mock;
+const like = toggleHandbookLike as jest.Mock;
+const createComment = createHandbookComment as jest.Mock;
+beforeEach(() => { getQueryClient().clear(); secondaryTabStore.clear(); jest.clearAllMocks(); (Linking.openURL as jest.Mock).mockReset(); list.mockReset(); detail.mockReset(); comments.mockResolvedValue([]); like.mockReset(); createComment.mockReset(); });
 it('列表从第一页读取，点击进入正确文章', async () => {
  list.mockResolvedValue({ list: [{ id: 7, title: '入学流程', summary: '带齐材料' }], hasMore: false });
  const v = await renderApp(<GuidesListScreen />);
@@ -30,6 +34,14 @@ it('列表从第一页读取，点击进入正确文章', async () => {
  expect(list).toHaveBeenCalledWith({ page: 1, pageSize: 10 });
  await fireEvent.press(v.getByTestId('guide-row-7'));
  expect(mockPush).toHaveBeenCalledWith('/guides/7');
+});
+it('搜索使用同一文章真源并修剪关键词', async () => {
+ list.mockResolvedValue({ list: [{ id: 7, title: '入学流程', summary: '带齐材料' }], hasMore: false });
+ const v = await renderApp(<GuidesListScreen />);
+ await waitFor(() => expect(v.getByTestId('guides-search-field')).toBeTruthy());
+ await fireEvent.changeText(v.getByRole('search'), '  护照  ');
+ await fireEvent(v.getByRole('search'), 'submitEditing');
+ await waitFor(() => expect(list).toHaveBeenLastCalledWith({ page: 1, pageSize: 10, q: '护照' }));
 });
 it('详情取指定文章并显示 Markdown，返回原页面', async () => {
  detail.mockResolvedValue({ id: 7, title: '入学流程', contentType: 'markdown', content: '# 材料清单\n带上护照' });
@@ -39,6 +51,14 @@ it('详情取指定文章并显示 Markdown，返回原页面', async () => {
  expect(detail).toHaveBeenCalledWith(7);
  await fireEvent.press(v.getByTestId('guide-detail-back'));
  expect(mockBack).toHaveBeenCalled();
+});
+it('详情点赞使用文章真接口，不虚增服务端未返回的计数', async () => {
+ detail.mockResolvedValue({ id: 7, title: '入学流程', contentType: 'markdown', content: '正文', likes_count: 3 });
+ like.mockResolvedValue({ article_id: 7, liked: true });
+ const v = await renderApp(<GuideDetailScreen articleId="7" />);
+ await waitFor(() => expect(v.getByTestId('guide-detail-like')).toBeTruthy());
+ await fireEvent.press(v.getByTestId('guide-detail-like'));
+ await waitFor(() => expect(like).toHaveBeenCalledWith(7));
 });
 it('详情失败可重试，不显示内部错误', async () => {
  detail.mockRejectedValueOnce(new TypeError('database-secret')).mockResolvedValueOnce({ id: 7, title: '恢复文章', contentType: 'markdown', content: '重试正文' });
