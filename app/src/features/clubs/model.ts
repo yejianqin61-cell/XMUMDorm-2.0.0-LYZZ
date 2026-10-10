@@ -126,3 +126,100 @@ export function readClubProfile(value: unknown): ClubProfile {
     posts: profile.posts,
   };
 }
+
+export type ClubContentStats = {likes: number; views: number; comments: number};
+export type ClubContentViewer = {liked: boolean; canManage: boolean};
+export type ClubActivityDetail = {
+  id: number;
+  title: string;
+  tag: string | null;
+  summary: string;
+  cover: string | null;
+  images: readonly string[];
+  time: string | null;
+  endTime: string | null;
+  location: string | null;
+  clubId: number;
+  clubName: string;
+  status: string;
+  signupLink: string | null;
+  registration: {count: number; registered: boolean; deadline: string | null};
+  stats: ClubContentStats;
+  viewer: ClubContentViewer;
+};
+export type ClubPostDetail = {
+  id: number;
+  clubId: number;
+  clubName: string;
+  title: string;
+  content: string;
+  images: readonly string[];
+  createdAt: string | null;
+  stats: ClubContentStats;
+  viewer: ClubContentViewer;
+};
+
+function requiredPositiveInt(value: unknown): number | null {
+  return Number.isSafeInteger(value) && Number(value) > 0 ? Number(value) : null;
+}
+function nullableText(value: unknown): string | null {
+  return value === null ? null : typeof value === 'string' ? value : null;
+}
+function textList(value: unknown): readonly string[] | null {
+  return Array.isArray(value) && value.every((item) => typeof item === 'string') ? value : null;
+}
+function statsAndViewer(value: Row): {stats: ClubContentStats; viewer: ClubContentViewer} {
+  const stats = record(value.stats);
+  const viewer = record(value.viewer);
+  if (
+    !Number.isSafeInteger(stats.likes) || Number(stats.likes) < 0 ||
+    !Number.isSafeInteger(stats.views) || Number(stats.views) < 0 ||
+    !Number.isSafeInteger(stats.comments) || Number(stats.comments) < 0 ||
+    typeof viewer.liked !== 'boolean' || typeof viewer.canManage !== 'boolean'
+  ) throw new Error('Invalid club content detail');
+  return {
+    stats: {likes: Number(stats.likes), views: Number(stats.views), comments: Number(stats.comments)},
+    viewer: {liked: viewer.liked, canManage: viewer.canManage},
+  };
+}
+
+/** Detail facts are accepted only with the complete interaction and permission contract. */
+export function readClubActivityDetail(value: unknown): ClubActivityDetail {
+  const row = record(value);
+  const id = requiredPositiveInt(row.id);
+  const clubId = requiredPositiveInt(row.clubId);
+  const images = textList(row.images);
+  const registration = record(row.registration);
+  const shared = statsAndViewer(row);
+  if (
+    id === null || clubId === null || typeof row.title !== 'string' || typeof row.summary !== 'string' ||
+    typeof row.clubName !== 'string' || typeof row.status !== 'string' || images === null ||
+    nullableText(row.tag) === null && row.tag !== null || nullableText(row.cover) === null && row.cover !== null ||
+    nullableText(row.time) === null && row.time !== null || nullableText(row.endTime) === null && row.endTime !== null ||
+    nullableText(row.location) === null && row.location !== null || nullableText(row.signupLink) === null && row.signupLink !== null ||
+    !Number.isSafeInteger(registration.count) || Number(registration.count) < 0 ||
+    typeof registration.registered !== 'boolean' ||
+    (registration.deadline !== null && typeof registration.deadline !== 'string')
+  ) throw new Error('Invalid club content detail');
+  return {
+    id, title: row.title, tag: nullableText(row.tag), summary: row.summary, cover: nullableText(row.cover), images,
+    time: nullableText(row.time), endTime: nullableText(row.endTime), location: nullableText(row.location), clubId,
+    clubName: row.clubName, status: row.status, signupLink: nullableText(row.signupLink),
+    registration: {count: Number(registration.count), registered: registration.registered, deadline: registration.deadline as string | null},
+    ...shared,
+  };
+}
+
+export function readClubPostDetail(value: unknown): ClubPostDetail {
+  const row = record(value);
+  const id = requiredPositiveInt(row.id);
+  const clubId = requiredPositiveInt(row.clubId);
+  const images = textList(row.images);
+  const shared = statsAndViewer(row);
+  if (
+    id === null || clubId === null || typeof row.clubName !== 'string' || typeof row.title !== 'string' ||
+    typeof row.content !== 'string' || images === null ||
+    (row.createdAt !== null && typeof row.createdAt !== 'string')
+  ) throw new Error('Invalid club content detail');
+  return {id, clubId, clubName: row.clubName, title: row.title, content: row.content, images, createdAt: row.createdAt as string | null, ...shared};
+}

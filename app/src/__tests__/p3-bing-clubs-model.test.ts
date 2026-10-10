@@ -51,3 +51,22 @@ it('拒绝主页中伪造的权限或未知成员角色', () => {
   expect(() => readClubProfile({...base, basicInfo: {...base.basicInfo, viewer: {...base.basicInfo.viewer, canManage: 'yes'}}})).toThrow('Invalid club profile');
   expect(() => readClubProfile({...base, members: [{...base.members[0], role: 'owner'}]})).toThrow('Invalid club profile');
 });
+
+it('读取活动详情时保留服务端报名和互动事实', () => {
+  const {readClubActivityDetail} = require('@/features/clubs/model');
+  expect(readClubActivityDetail({
+    id: 12, title: 'Welcome', tag: null, summary: 'Meet us', cover: null, images: ['https://cdn.test/a.jpg'],
+    time: '2099-01-02T10:00:00.000Z', endTime: '2099-01-02T12:00:00.000Z', location: 'Hall', clubId: 7, clubName: 'Music',
+    status: 'upcoming', signupLink: null,
+    registration: {count: 23, registered: true, deadline: '2099-01-02T12:00:00.000Z'},
+    stats: {likes: 3, views: 5, comments: 2}, viewer: {liked: true, canManage: false},
+  })).toMatchObject({id: 12, registration: {count: 23, registered: true}, viewer: {liked: true, canManage: false}});
+});
+
+it('拒绝详情里伪造的统计、报名和权限字段', () => {
+  const {readClubPostDetail} = require('@/features/clubs/model');
+  expect(() => readClubPostDetail({
+    id: 12, clubId: 7, clubName: 'Music', title: '', content: 'hello', images: [], createdAt: 'now',
+    stats: {likes: -1, views: 5, comments: 2}, viewer: {liked: false, canManage: false},
+  })).toThrow('Invalid club content detail');
+});
