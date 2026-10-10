@@ -19,7 +19,8 @@ it('列表到详情，并带修剪查询及价格筛选',async()=>{
  list.mockResolvedValue({list:[row],hasMore:false});const v=await renderApp(<MarketListScreen/>);
  await waitFor(()=>expect(v.getByTestId('market-row-1')).toBeTruthy());
  await fireEvent.press(v.getByTestId('market-row-1'));expect(mockPush).toHaveBeenCalledWith('/market/1');
- await fireEvent.changeText(v.getByTestId('market-query-input'),' Book ');
+ expect(v.getByTestId('market-search-field')).toBeTruthy();
+ await fireEvent.changeText(v.getByTestId('market-search-field'),' Book ');
  await fireEvent.changeText(v.getByTestId('market-min-input'),'5');
  await fireEvent.changeText(v.getByTestId('market-max-input'),'15');
  await fireEvent.press(v.getByTestId('market-apply'));
