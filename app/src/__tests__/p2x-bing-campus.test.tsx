@@ -37,6 +37,13 @@ it('详情显示正文作者和图片，返回原页',async()=>{
  expect(detail).toHaveBeenCalledWith(7);
  await fireEvent.press(v.getByTestId('campus-detail-back'));expect(mockBack).toHaveBeenCalled();
 });
+it('树洞详情把正文放在媒体之前',async()=>{
+ detail.mockResolvedValue({id:7,content:'正文优先',images:[{url:'https://example.com/one'}]});
+ const v=await renderApp(<CampusDetailScreen postId="7"/>);
+ await waitFor(()=>expect(v.getByTestId('campus-media-0',{includeHiddenElements:true})).toBeTruthy());
+ const tree=JSON.stringify(v.toJSON());
+ expect(tree.indexOf('正文优先')).toBeLessThan(tree.indexOf('campus-media'));
+});
 it('详情失败重试保留安全提示',async()=>{
  detail.mockRejectedValueOnce(new TypeError('secret-db')).mockResolvedValueOnce({id:7,content:'恢复正文'});
  const v=await renderApp(<CampusDetailScreen postId="7"/>);
