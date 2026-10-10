@@ -76,7 +76,7 @@ function ErrandFeed({filters}:{filters:Filters}):React.ReactElement {
   <ListScreen key={revision} testID="errand-list" data={rows} keyExtractor={r=>String(r.id)} pagination={pagination} restoredScrollOffset={revision===0?initial.current?.scrollOffset??0:0} onScrollOffset={saveScroll}
    onRefresh={refresh} onEndReached={append} onRetryRefresh={refresh} onRetryAppend={append}
    labels={{retryLabel:t('action.retry'),endLabel:t('screen.errand.end'),empty:{kind:'noResult',title:t('screen.errand.empty'),actionLabel:t('action.retry'),onAction:refresh}}}
-   renderItem={r=><EntityCard domain="errand" testID={`errand-row-${r.id}`} title={r.title} subtitle={r.location} metrics={[`RM ${r.reward.toFixed(2)}`,t(statusKeys[r.status as 'open'|'taken'|'done'])]} onPress={()=>router.push(`/errand/${r.id}` as never)}/>}/>
+   renderItem={r=><EntityCard domain="errand" testID={`errand-row-${r.id}`} title={r.title} subtitle={r.location} metrics={[`RM ${r.reward.toFixed(2)}`,t(statusKeys[r.status as 'open'|'taken'|'done'])]} style={{alignSelf:'stretch'}} onPress={()=>router.push(`/errand/${r.id}` as never)}/>}/>
  </>;
 }
 type Detail=ReturnType<typeof readErrandDetail>;
