@@ -1213,7 +1213,7 @@ router.get('/activities', async (req, res, next) => {
 
 // =========================
 // Clubs list
-// GET /api/clubs/list?page=&pageSize=
+// GET /api/clubs/list?page=&pageSize=&q=&category=
 // =========================
 router.get('/list', async (req, res, next) => {
   try {
@@ -1223,12 +1223,21 @@ router.get('/list', async (req, res, next) => {
     const pageSize = Math.min(50, Math.max(5, toInt(req.query.pageSize, 30)));
     const offset = (page - 1) * pageSize;
     const q = cleanText(req.query.q, 60);
+    const rawCategory = cleanText(req.query.category, 20).toLowerCase();
+    const category = rawCategory ? normalizeClubCategory(rawCategory) : null;
+    if (rawCategory && !category) {
+      return res.status(400).json({ status: -1, message: '社团分类无效' });
+    }
 
     const where = [];
     const params = [];
     if (q) {
       where.push('(c.name LIKE ? OR c.description LIKE ?)');
       params.push(`%${q}%`, `%${q}%`);
+    }
+    if (category) {
+      where.push('c.category = ?');
+      params.push(category);
     }
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
@@ -1239,12 +1248,14 @@ router.get('/list', async (req, res, next) => {
       FROM clubs c
       ${whereSql}
       ORDER BY followers DESC, c.id DESC
-      LIMIT ${pageSize} OFFSET ${offset};
+      LIMIT ${pageSize + 1} OFFSET ${offset};
       `,
       params
     );
-    const ids = (rows || []).map((r) => Number(r.id));
-    const followingMap = viewerId
+    const hasMore = (rows || []).length > pageSize;
+    const pageRows = (rows || []).slice(0, pageSize);
+    const ids = pageRows.map((r) => Number(r.id));
+    const followingMap = viewerId && ids.length > 0
       ? new Map(
           (await query(
             `SELECT club_id FROM club_follows WHERE user_id = ? AND club_id IN (${ids.map(() => '?').join(',')})`,
@@ -1256,9 +1267,10 @@ router.get('/list', async (req, res, next) => {
     res.json({
       status: 0,
       data: {
-        list: (rows || []).map((r) => ({
+        list: pageRows.map((r) => ({
           id: r.id,
           name: r.name,
+          category: r.category || null,
           avatar: r.avatar ? assetUrl(r.avatar) : null,
           description: r.description || '',
           followers: Number(r.followers || 0),
@@ -1266,6 +1278,7 @@ router.get('/list', async (req, res, next) => {
         })),
         page,
         pageSize,
+        hasMore,
       },
     });
   } catch (e) {

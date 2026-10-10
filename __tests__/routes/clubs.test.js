@@ -251,3 +251,39 @@ describe('Clubs activity registration routes', () => {
     });
   });
 });
+
+describe('Clubs discovery list contract', () => {
+  beforeEach(() => {
+    mockUser.id = 9;
+    mockUser.role = 'student';
+    query.mockReset();
+  });
+
+  it('filters by a whitelisted category and returns a stable page boundary', async () => {
+    query.mockResolvedValueOnce([
+      { id: 6, name: 'Music 1', category: 'music', description: '', avatar: null, followers: 4 },
+      { id: 5, name: 'Music 2', category: 'music', description: '', avatar: null, followers: 3 },
+      { id: 4, name: 'Music 3', category: 'music', description: '', avatar: null, followers: 2 },
+      { id: 3, name: 'Music 4', category: 'music', description: '', avatar: null, followers: 1 },
+      { id: 2, name: 'Music 5', category: 'music', description: '', avatar: null, followers: 0 },
+      { id: 1, name: 'Music next page', category: 'music', description: '', avatar: null, followers: 0 },
+    ]);
+
+    const res = await supertest(app()).get('/api/clubs/list?category=music&page=1&pageSize=5');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({ page: 1, pageSize: 5, hasMore: true });
+    expect(res.body.data.list).toHaveLength(5);
+    expect(res.body.data.list[0]).toMatchObject({ id: 6, category: 'music', viewer: { following: false } });
+    expect(query.mock.calls[0][0]).toContain('c.category = ?');
+    expect(query.mock.calls[0][1]).toEqual(['music']);
+  });
+
+  it('rejects an unknown category before it reaches the database', async () => {
+    const res = await supertest(app()).get('/api/clubs/list?category=not-a-category');
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toContain('分类');
+    expect(query).not.toHaveBeenCalled();
+  });
+});

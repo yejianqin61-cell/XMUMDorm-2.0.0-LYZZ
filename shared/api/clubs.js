@@ -33,6 +33,7 @@ export function listClubActivities(params = {}) {
 export function listClubs(params = {}) {
   const qs = new URLSearchParams();
   if (params.q) qs.set('q', String(params.q));
+  if (params.category) qs.set('category', String(params.category));
   if (params.page) qs.set('page', String(params.page));
   if (params.pageSize) qs.set('pageSize', String(params.pageSize));
   const query = qs.toString();
