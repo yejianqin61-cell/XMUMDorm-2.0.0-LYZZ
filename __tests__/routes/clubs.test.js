@@ -370,3 +370,40 @@ describe('Clubs content list pagination', () => {
     expect(query.mock.calls.slice(1).flatMap((call) => call[1] || [])).not.toContain(6);
   });
 });
+
+describe('Clubs like acknowledgement', () => {
+  beforeEach(() => {
+    mockUser.id = 9;
+    mockUser.role = 'student';
+    query.mockReset();
+  });
+
+  it('returns the exact post identity and authoritative count after liking', async () => {
+    query
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce({affectedRows: 1})
+      .mockResolvedValueOnce([{c: 6}])
+      .mockResolvedValueOnce([{club_id: 8}])
+      .mockResolvedValueOnce([]);
+
+    const res = await supertest(app()).post('/api/clubs/likes/toggle').send({targetType: 'post', targetId: 44});
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({targetType: 'post', targetId: 44, liked: true, count: 6});
+    expect(query.mock.calls[2][0]).toContain('COUNT(*) AS c FROM club_likes');
+    expect(query.mock.calls[2][1]).toEqual(['post', 44]);
+  });
+
+  it('returns the exact activity identity and authoritative count after unliking', async () => {
+    query
+      .mockResolvedValueOnce([{ok: 1}])
+      .mockResolvedValueOnce({affectedRows: 1})
+      .mockResolvedValueOnce([{c: 2}]);
+
+    const res = await supertest(app()).post('/api/clubs/likes/toggle').send({targetType: 'activity', targetId: 33});
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({targetType: 'activity', targetId: 33, liked: false, count: 2});
+    expect(query.mock.calls[2][1]).toEqual(['activity', 33]);
+  });
+});

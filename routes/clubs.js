@@ -285,6 +285,16 @@ async function getViewerLikedMap(userId, targetType, ids) {
   return new Map((rows || []).map((r) => [Number(r.target_id), true]));
 }
 
+
+/** Mutation acknowledgements use a fresh database count; clients never infer it locally. */
+async function getClubLikeCount(targetType, targetId) {
+  const rows = await query(
+    'SELECT COUNT(*) AS c FROM club_likes WHERE target_type = ? AND target_id = ?',
+    [targetType, targetId]
+  );
+  return Number(rows?.[0]?.c || 0);
+}
+
 async function userCanManageClub(userId, clubId) {
   if (!userId || !clubId) return false;
   const rows = await query(
@@ -994,9 +1004,11 @@ router.post('/likes/toggle', authenticateToken, async (req, res, next) => {
     const liked = !!(rows && rows[0]);
     if (liked) {
       await query('DELETE FROM club_likes WHERE user_id = ? AND target_type = ? AND target_id = ? LIMIT 1', [userId, targetType, targetId]);
-      return res.json({ status: 0, data: { liked: false } });
+      const count = await getClubLikeCount(targetType, targetId);
+      return res.json({ status: 0, data: { targetType, targetId, liked: false, count } });
     }
     await query('INSERT INTO club_likes (user_id, target_type, target_id) VALUES (?, ?, ?)', [userId, targetType, targetId]);
+    const count = await getClubLikeCount(targetType, targetId);
     // 通知社团管理员
     try {
       let clubId = null;
@@ -1015,7 +1027,7 @@ router.post('/likes/toggle', authenticateToken, async (req, res, next) => {
         }
       }
     } catch (_) {}
-    return res.json({ status: 0, data: { liked: true } });
+    return res.json({ status: 0, data: { targetType, targetId, liked: true, count } });
   } catch (e) {
     next(e);
   }
