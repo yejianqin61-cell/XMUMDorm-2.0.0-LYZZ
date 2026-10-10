@@ -407,3 +407,40 @@ describe('Clubs like acknowledgement', () => {
     expect(query.mock.calls[2][1]).toEqual(['activity', 33]);
   });
 });
+
+describe('Clubs follow acknowledgement', () => {
+  beforeEach(() => {
+    mockUser.id = 9;
+    mockUser.role = 'student';
+    query.mockReset();
+  });
+
+  it('returns matching club identity and count after following', async () => {
+    query
+      .mockResolvedValueOnce([{id: 8}])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce({affectedRows: 1})
+      .mockResolvedValueOnce([{c: 12}])
+      .mockResolvedValueOnce([]);
+
+    const res = await supertest(app()).post('/api/clubs/8/follow').send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({clubId: 8, following: true, followers: 12});
+    expect(query.mock.calls[3][0]).toContain('COUNT(*) AS c FROM club_follows');
+    expect(query.mock.calls[3][1]).toEqual([8]);
+  });
+
+  it('returns matching club identity and count after unfollowing', async () => {
+    query
+      .mockResolvedValueOnce([{id: 8}])
+      .mockResolvedValueOnce([{ok: 1}])
+      .mockResolvedValueOnce({affectedRows: 1})
+      .mockResolvedValueOnce([{c: 11}]);
+
+    const res = await supertest(app()).post('/api/clubs/8/follow').send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({clubId: 8, following: false, followers: 11});
+  });
+});

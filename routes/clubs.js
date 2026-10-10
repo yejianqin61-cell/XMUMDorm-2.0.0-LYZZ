@@ -1049,9 +1049,13 @@ router.post('/:id/follow', authenticateToken, async (req, res, next) => {
     const following = !!(rows && rows[0]);
     if (following) {
       await query('DELETE FROM club_follows WHERE user_id = ? AND club_id = ? LIMIT 1', [userId, clubId]);
-      return res.json({ status: 0, data: { following: false } });
+      const followerRows = await query('SELECT COUNT(*) AS c FROM club_follows WHERE club_id = ?', [clubId]);
+      const followers = Number(followerRows?.[0]?.c || 0);
+      return res.json({ status: 0, data: { clubId, following: false, followers } });
     }
     await query('INSERT INTO club_follows (user_id, club_id) VALUES (?, ?)', [userId, clubId]);
+    const followerRows = await query('SELECT COUNT(*) AS c FROM club_follows WHERE club_id = ?', [clubId]);
+    const followers = Number(followerRows?.[0]?.c || 0);
     // 通知社团管理员
     try {
       const admins = await query('SELECT user_id FROM club_members WHERE club_id = ? AND role = ?', [clubId, 'admin']);
@@ -1060,7 +1064,7 @@ router.post('/:id/follow', authenticateToken, async (req, res, next) => {
         createNotificationBatch(adminIds, { type: 'club_follow', fromUserId: userId, extra: { targetType: 'club', targetId: clubId, targetPath: `/about/club/${clubId}` } }).catch(() => {});
       }
     } catch (_) {}
-    return res.json({ status: 0, data: { following: true } });
+    return res.json({ status: 0, data: { clubId, following: true, followers } });
   } catch (e) {
     next(e);
   }
