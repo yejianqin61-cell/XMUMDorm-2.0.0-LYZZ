@@ -42,7 +42,6 @@ export function LoginLayout({
   const artworkHeight = showArtwork
     ? blankHeight + curveHeight
     : theme.space('space_4');
-  const backgroundColor = theme.color['bg-canvas'].value;
 
   return (
     <Screen topMode="none" bottomMode="own" testID="login">
@@ -75,7 +74,7 @@ export function LoginLayout({
               <LoginArtwork width={viewport.width} height={artworkHeight} />
             ) : null}
           </View>
-          <View testID="login-front-layer" style={{ flexGrow: 1, backgroundColor }}>
+          <View testID="login-front-layer" style={{ flexGrow: 1, backgroundColor: theme.color['bg-canvas'].value }}>
             <LoginGlassSides />
             <View
               testID="login-form-content"

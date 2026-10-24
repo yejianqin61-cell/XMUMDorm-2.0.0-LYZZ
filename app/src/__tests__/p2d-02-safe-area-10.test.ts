@@ -91,7 +91,7 @@ describe('P2D-02 安全区 10 条清单', () => {
     expect(layout).toMatch(/scheme === 'dark' \? 'light' : 'dark'/);
   });
 
-  it('第 6 条 · 大屏（`sw≥600dp`）：**只有两处读宽度**，未见断点式布局 → 未验', () => {
+  it('第 6 条 · 大屏（`sw≥600dp`）：窗口尺寸读取已登记，平板断点仍未验', () => {
     const walk = (dir: string, out: string[] = []): string[] => {
       for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
         if (entry.name === '__tests__') continue;
@@ -101,17 +101,19 @@ describe('P2D-02 安全区 10 条清单', () => {
       }
       return out;
     };
-    const widthReaders = walk(SRC_ROOT)
+    const windowReaders = walk(SRC_ROOT)
       .filter((file) => /useWindowDimensions|Dimensions\.get/.test(fs.readFileSync(file, 'utf8')))
       .map((file) => path.relative(SRC_ROOT, file))
       .sort();
     // ⚠️ 这是**事实登记**而不是"合格判定"：读宽度 ≠ 做了大屏布局。
     //    台账里第 6 条标 `❌ 未验`；若将来真的做了断点布局，这里会红，逼着同步改台账。
-    expect(widthReaders).toEqual([
+    expect(windowReaders).toEqual([
       path.join('components', 'ui', 'BannerSlot.tsx'),
       // 2026-10-18：O06 BottomSheet 读窗口**高度**算半屏高度，不参与宽度断点
       path.join('components', 'ui', 'BottomSheet.tsx'),
       path.join('components', 'ui', 'Screen.tsx'),
+      // LoginLayout 按窗口尺寸安排品牌画，不等于实现平板断点。
+      path.join('features', 'auth', 'LoginLayout.tsx'),
     ]);
   });
 
