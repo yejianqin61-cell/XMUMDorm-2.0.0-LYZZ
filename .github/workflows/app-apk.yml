@@ -1,0 +1,70 @@
+name: app-apk
+
+# 手动触发：打一个可侧载的 Android 测试 APK（debug keystore 签名），供团队试用。
+#
+# 为什么放在 CI：本地 Windows 构建会被 CMake/Ninja 的 manifest 重建循环挡住
+# （`manifest 'build.ninja' still dirty after 100 tries`，与路径长度无关），
+# Linux runner 上没有这个问题。
+
+on:
+  workflow_dispatch:
+    inputs:
+      api_base_url:
+        description: '构建时写入 App 的后端地址（EXPO_PUBLIC_API_BASE_URL）'
+        required: false
+        default: 'https://xmumdorm-200-lyzz-production.up.railway.app'
+      architectures:
+        description: '要打包的 ABI，逗号分隔'
+        required: false
+        default: 'arm64-v8a,armeabi-v7a'
+
+jobs:
+  android-apk:
+    name: Android 测试 APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: app/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: 安装依赖
+        working-directory: app
+        run: npm ci
+
+      - name: 生成原生工程
+        working-directory: app
+        env:
+          EXPO_PUBLIC_API_BASE_URL: ${{ inputs.api_base_url }}
+        run: npx expo prebuild --platform android --no-install
+
+      - name: 构建 Release APK
+        working-directory: app/android
+        env:
+          EXPO_PUBLIC_API_BASE_URL: ${{ inputs.api_base_url }}
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=${{ inputs.architectures }}
+
+      - name: 记录产物信息
+        working-directory: app/android
+        run: |
+          ls -lh app/build/outputs/apk/release/
+          echo "API_BASE=${{ inputs.api_base_url }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "ABIS=${{ inputs.architectures }}" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: xmumdorm-test-apk
+          path: app/android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 14
