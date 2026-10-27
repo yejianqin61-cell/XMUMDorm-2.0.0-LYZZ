@@ -73,3 +73,6 @@ frontend/public/pet/video/*
 !frontend/public/pet/video/README.md
 # 素材链临时目录
 frontend/public/pet/main-animation/webm/.pipeline-tmp/
+
+# 本地下载的测试 APK（构建产物，不入库）
+dist-apk/
