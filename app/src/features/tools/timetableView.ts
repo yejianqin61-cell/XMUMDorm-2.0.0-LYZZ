@@ -87,7 +87,7 @@ export function weekdayTimetableWeek(week: TimetableWeek): TimetableWeek {
   return { ...week, days: Object.fromEntries(visibleTimetableWeekdays(week).map((day) => [day, week.days[day] ?? []])) };
 }
 
-/* ───────────────────────── 时间轴（08:00–21:00 固定窗口） ───────────────────────── */
+/* ───────────────────────── 时间轴（默认 08:00–21:00，可按课程扩展） ───────────────────────── */
 
 /** 时间轴起止小时（所有者 2026-10-18：从早上 8 点到晚上 9 点都要画出来） */
 export const TIMETABLE_AXIS_START_HOUR = 8;
@@ -117,7 +117,7 @@ export type TimetableCardLayout = {
 };
 
 /**
- * 把一节课摆进固定时间轴（纯函数）。
+ * 把一节课摆进指定时间轴（纯函数，默认 08:00–21:00）。
  * - 起止时间非法 → `null`（不画这张卡）；
  * - 与 08:00–21:00 无交集 → `null`；
  * - 跨出窗口的部分钳到窗口内（保证看得见，且不撑破时间轴）；

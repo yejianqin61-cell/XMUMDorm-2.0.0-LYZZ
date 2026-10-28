@@ -2,7 +2,7 @@
  * P3A7 · 课表课程色与卡片内容
  *
  * 依据：`docs/app/task/课表重做/T2-课程色板与网格重排.md`
- *   · 同课跨周同色，允许不同课程同色；· 卡片同时显示课程名与地点；· 只显示周一–周五。
+ *   · 同课跨周同色，允许不同课程同色；· 卡片同时显示课程名与地点；· 无周末课程时保留工作日布局。
  */
 import * as React from 'react';
 
@@ -88,7 +88,7 @@ describe('P3A7 课表课程色与卡片', () => {
     expect(background(first).backgroundColor).not.toEqual(background(second).backgroundColor);
   });
 
-  it('只显示周一–周五（不出现周六/周日列头）', async () => {
+  it('无周末课程时只显示工作日列头', async () => {
     const parsed = week({ 1: [meeting()] });
     const view = await renderApp(<TimetableGrid testID="grid" week={parsed} />);
     expect(view.getByTestId('grid-head-1')).toBeTruthy();

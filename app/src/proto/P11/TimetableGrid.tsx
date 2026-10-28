@@ -6,7 +6,7 @@
  *
  * 2026-10-18 所有者重做：
  *   ① 卡片必须**同时显示课程名称与上课地点**，并按**课程色**填充（同课同色 / 异课异色）；
- *   ② **时间轴固定 08:00–21:00**，没课的小时也要画出来（空行可见）；
+ *   ② **时间轴至少覆盖 08:00–21:00**，有更早或更晚课程时自动扩展；
  *   ③ 课程卡按真实起止时间**绝对定位**在轴上（⛔ 不再按"开始时间行"堆叠）。
  *
  * ⚠️ **"节次"落地为"开始时间"**：接口只给 `start_time`/`end_time`，**没有节次编号也没有节次表**
@@ -53,7 +53,7 @@ const pad2 = (hour: number): string => `${String(hour).padStart(2, '0')}:00`;
 
 export type TimetableGridProps = {
   week: TimetableWeek;
-  /** 显示哪几列（默认周一–周五） */
+  /** 显示哪几列（默认工作日及有课的周末） */
   visibleWeekdays?: readonly number[];
   /** 课程 → 课程色（由页面按本周分配；缺省时用兜底色） */
   getCourseAccent?: (meeting: TimetableMeeting) => CourseAccent;
@@ -182,7 +182,7 @@ export function TimetableGrid({
         })}
       </View>
 
-      {/* 08:00–21:00 固定时间轴：没课的小时也是可见的空行 */}
+      {/* 至少覆盖 08:00–21:00；按课程需要扩展时间轴。 */}
       <ScrollView
         testID={testID ? `${testID}-axis` : undefined}
         contentInsetAdjustmentBehavior="never"
