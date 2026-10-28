@@ -46,6 +46,8 @@ export type TimetableDays = Record<number, readonly TimetableMeeting[]>;
 export type TimetableWeek = {
   week: number;
   days: TimetableDays;
+  /** Sunday meetings from the preceding week, used only to display overnight continuation. */
+  previousSunday?: readonly TimetableMeeting[];
   /** 服务端算出的当前教学周（未开学/已结束时为 `null`） */
   currentWeek: number | null;
   totalWeeks: number;

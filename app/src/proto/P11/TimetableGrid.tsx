@@ -91,7 +91,8 @@ export function TimetableGrid({
   const minCardHeight = Math.max(theme.touchTarget + theme.space('space_1'), theme.space('space_12') - theme.space('space_1'));
   let axisStart = TIMETABLE_AXIS_START_HOUR, axisEnd = TIMETABLE_AXIS_END_HOUR;
   for (const day of days) {
-    if (day > 1 && (week.days[day - 1] ?? []).some(isOvernightMeeting)) axisStart = 0;
+    const previous = day === 1 ? week.previousSunday ?? [] : week.days[day - 1] ?? [];
+    if (previous.some(isOvernightMeeting)) axisStart = 0;
     for (const meeting of week.days[day] ?? []) {
       const start = clockMinutes(meeting.startTime), end = clockMinutes(meeting.endTime);
       if (start === null) continue;
@@ -115,7 +116,8 @@ export function TimetableGrid({
           placed.push({ meeting, accent: resolveAccent(meeting), top: layout.top, height: layout.height, lane: 0, lanes: 1, continuation: false });
         }
       }
-      if (day > 1) for (const meeting of week.days[day - 1] ?? []) {
+      const previous = day === 1 ? week.previousSunday ?? [] : week.days[day - 1] ?? [];
+      for (const meeting of previous) {
         if (!isOvernightMeeting(meeting)) continue;
         const layout = layoutTimetableCard({ ...meeting, startTime: '00:00' }, hourHeight, minCardHeight, axisStart, axisEnd);
         if (layout) placed.push({ meeting, accent: resolveAccent(meeting), top: layout.top,

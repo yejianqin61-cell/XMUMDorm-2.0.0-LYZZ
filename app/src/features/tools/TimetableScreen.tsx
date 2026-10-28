@@ -143,15 +143,18 @@ function OwnedTimetableScreen({ renderGrid, legacyControls }: { renderGrid: (pro
     setSelected(null); // 换周后旧课程详情不再成立
     setWeek(next);
   }, []);
-  const timetable = useTimetableWeek(week, async (target) => {
+  const loadWeek = async (target: number) => {
     const owner = timetableIdentity().epoch;
     try { return await getScheduleWeek(target); }
     catch (error) {
       if (owner !== timetableIdentity().epoch) throw error;
       throw toToolsError(error, await session.handleAuthFailure(error));
     }
-  });
-  const shown = timetable.week ? weekdayTimetableWeek(timetable.week) : null;
+  };
+  const timetable = useTimetableWeek(week, loadWeek);
+  const previousWeek = useTimetableWeek(week > 1 ? week - 1 : week, loadWeek);
+  const shown = timetable.week ? { ...weekdayTimetableWeek(timetable.week),
+    previousSunday: week > 1 && previousWeek.week?.week === week - 1 ? previousWeek.week.days[7] : [] } : null;
   // 本周课程 → 课程色（同课同色、异课异色）；`null` 时兜底调色板第一色
   const accents = React.useMemo(() => (shown === null ? null : courseAccentMap(shown)), [shown]);
   const resolveAccent = React.useCallback(
@@ -171,6 +174,7 @@ function OwnedTimetableScreen({ renderGrid, legacyControls }: { renderGrid: (pro
         if (courseKey(meeting) === key) list.push(meeting);
       }
     }
+    if (list.length === 0 && shown.previousSunday?.includes(selected)) list.push(selected);
     return list;
   }, [selected, shown]);
   const closeSheet = React.useCallback(() => setSelected(null), []);

@@ -62,6 +62,10 @@ export function courseAccentMap(week: TimetableWeek): ReadonlyMap<string, Course
       if (key !== '') keys.add(key);
     }
   }
+  for (const meeting of week.previousSunday ?? []) {
+    const key = courseKey(meeting);
+    if (key !== '') keys.add(key);
+  }
   return new Map(
     [...keys]
       .sort()
