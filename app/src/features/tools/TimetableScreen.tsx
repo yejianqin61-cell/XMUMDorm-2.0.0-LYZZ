@@ -26,7 +26,7 @@ import { shouldHighlightToday, todayWeekday, useTimetableWeek, type TimetableMee
 import { toToolsError } from './requestError';
 import {
   FALLBACK_COURSE_ACCENT,
-  VISIBLE_WEEKDAYS,
+  visibleTimetableWeekdays,
   courseAccentMap,
   courseKey,
   weekdayTimetableWeek,
@@ -203,7 +203,7 @@ function OwnedTimetableScreen({ renderGrid, legacyControls }: { renderGrid: (pro
       {timetable.loading && !shown ? <LoadingState testID="timetable-loading" /> : timetable.error && !shown ?
         <ErrorState testID="timetable-error" error={timetable.error} onAction={timetable.reload} /> : shown === null ? null :
         // 2026-10-18：即使这周没课也**画完整时间轴**（08:00–21:00 空着），不再用空态替换网格
-          <View style={{ flex: 1 }}>{renderGrid({ week: shown, visibleWeekdays: VISIBLE_WEEKDAYS,
+          <View style={{ flex: 1 }}>{renderGrid({ week: shown, visibleWeekdays: visibleTimetableWeekdays(shown),
             getCourseAccent: resolveAccent, highlightWeekday: highlight, testID: 'timetable-grid',
             onPressMeeting: setSelected,
           })}</View>}
