@@ -10,8 +10,10 @@ it('二手列表保留服务端分类用于商品卡',()=>{
  expect(readMarketPage({list:[{...market,category:'books'}],hasMore:false}).rows[0].category).toBe('books');
 });
 it('二手详情使用服务端viewer及actions权限',()=>{
- const row=readMarketDetail({...market,sellerInfo:{name:'Seller'},viewer:{want:true},actions:{want:false},images:[{url:'https://example.com/book.jpg'}]});
+ const row=readMarketDetail({...market,delivery_method:'meetup',dorm_area:'LY1',tags:['books'],sellerInfo:{name:'Seller'},viewer:{want:true,canEdit:true},actions:{want:false,markSold:true},images:[{url:'https://example.com/book.jpg'}]});
  expect(row.sellerName).toBe('Seller');expect(row.want).toBe(true);expect(row.canWant).toBe(false);
+ expect(row.canEdit).toBe(true);expect(row.canMarkSold).toBe(true);
+ expect(row.deliveryMethod).toBe('meetup');expect(row.dormArea).toBe('LY1');expect(row.tags).toEqual(['books']);
 });
 it('跑腿按实际返回页大小计算分页',()=>{
  expect(readErrandPage({list:[errand],page:1,pageSize:5,total:6}).hasMore).toBe(true);
