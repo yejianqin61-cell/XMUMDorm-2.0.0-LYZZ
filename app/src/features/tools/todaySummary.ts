@@ -25,7 +25,8 @@ export function selectCoursesNow(courses: readonly TimetableMeeting[], minutes: 
     .filter((item): item is { course: TimetableMeeting; start: number; end: number | null } => item.start !== null)
     .sort((a, b) => a.start - b.start);
   return {
-    current: timed.find((item) => item.start <= minutes && item.end !== null && minutes < item.end)?.course ?? null,
+    current: timed.find((item) => item.start <= minutes && item.end !== null
+      && (item.end < item.start || minutes < item.end))?.course ?? null,
     next: timed.find((item) => item.start > minutes)?.course ?? null,
   };
 }
