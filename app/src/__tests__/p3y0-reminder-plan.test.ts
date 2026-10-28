@@ -13,7 +13,8 @@ function week(meetings: TimetableMeeting[] = [meeting()], weekNumber = 2): Timet
 it('plans school Monday at 09:00 as UTC 01:00 with a 30-minute lead', () => {
   expect(buildClassReminderPlan({ semester, weeks: [week()], now: new Date('2026-10-04T00:00:00Z') })).toEqual([
     { id: 'class:2026-09:CS101:2026-10-05:09%3A00%3A00', week: 2, dayOfWeek: 1,
-      startsAt: '2026-10-05T01:00:00.000Z', fireAt: Date.parse('2026-10-05T00:30:00.000Z') },
+      startsAt: '2026-10-05T01:00:00.000Z', fireAt: Date.parse('2026-10-05T00:30:00.000Z'),
+      target: { semesterId: '2026-09', courseCode: 'CS101', date: '2026-10-05', startTime: '09:00:00' } },
   ]);
 });
 
@@ -23,7 +24,8 @@ it('keeps school dates across midnight and representations of the device instant
   for (const instant of inputs) {
     expect(buildClassReminderPlan({ semester, weeks: [tuesday], now: new Date(instant) })).toEqual([
       { id: 'class:2026-09:CS101:2026-10-06:00%3A15%3A00', week: 2, dayOfWeek: 2,
-        startsAt: '2026-10-05T16:15:00.000Z', fireAt: Date.parse('2026-10-05T15:45:00.000Z') },
+        startsAt: '2026-10-05T16:15:00.000Z', fireAt: Date.parse('2026-10-05T15:45:00.000Z'),
+        target: { semesterId: '2026-09', courseCode: 'CS101', date: '2026-10-06', startTime: '00:15:00' } },
     ]);
   }
 });

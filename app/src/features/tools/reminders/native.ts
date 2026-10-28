@@ -79,7 +79,7 @@ export async function refreshClassReminders(labels: ReminderLabels): Promise<voi
     loadWeek: getScheduleWeek,
     isCurrent: () => timetableIdentity().epoch === epoch && owner() === current,
   });
-  await scheduler.replaceDomain(current, 'class', plan.map((item) => ({ id: item.id, fireAt: item.fireAt })), labels);
+  await scheduler.replaceDomain(current, 'class', plan, labels);
 }
 
 export function invalidateReminderSession(): void {
