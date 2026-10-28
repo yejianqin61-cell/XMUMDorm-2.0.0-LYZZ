@@ -73,10 +73,15 @@ describe('P3A7 课程详情半屏弹窗', () => {
     jest.setSystemTime(new Date('2026-10-05T01:00:00Z'));
     api.getScheduleWeek.mockImplementation(async (week: number) => ({ week, currentWeek: 2, totalWeeks: 14,
       days: week === 1 ? { 7: [{ ...ENGLISH, course_code: 'SUN', day_of_week: 7,
-        start_time: '23:30', end_time: '00:30' }] } : {} }));
+        start_time: '23:30', end_time: '00:30' }] } : { 1: [{ ...ENGLISH,
+        course_code: 'SUN', day_of_week: 1, start_time: '10:00', end_time: '11:00' }] } }));
     try {
       const view = await renderApp(withProviders(<TimetableScreen />));
       await waitFor(() => expect(view.getByTestId('timetable-grid-card-SUN-continuation')).toBeTruthy());
+      const user = userEvent.setup();
+      await user.press(view.getByTestId('timetable-grid-card-SUN-continuation'));
+      expect(view.getByTestId('course-sheet-occurrence-0', { includeHiddenElements: true })).toBeTruthy();
+      expect(view.getByTestId('course-sheet-occurrence-1', { includeHiddenElements: true })).toBeTruthy();
       expect(api.getScheduleWeek).toHaveBeenCalledWith(1);
       expect(api.getScheduleWeek).toHaveBeenCalledWith(2);
     } finally { jest.useRealTimers(); }
