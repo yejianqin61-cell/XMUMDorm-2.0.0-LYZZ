@@ -241,7 +241,7 @@ function requestWeek(week: number, load: (week: number) => Promise<unknown>): Pr
   if (existing) return existing;
   const request = Promise.resolve().then(() => load(week)).then(async (raw) => {
     const data = normalizeTimetableWeek(raw);
-    if (data === null) throw { kind: 'unknown' };
+    if (data === null || data.week !== week) throw { kind: 'unknown' };
     const write = diskQueue.then(async () => {
       if (revision === version && timetableIdentity().epoch === identity.epoch) {
         try { await writeCachedWeek(week, data); } catch { /* disk failure must not hide remote data */ }
