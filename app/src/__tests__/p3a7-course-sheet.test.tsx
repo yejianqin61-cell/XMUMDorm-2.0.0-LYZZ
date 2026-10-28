@@ -36,7 +36,7 @@ const withProviders = (node: React.ReactElement): React.ReactElement => (
   </SessionProvider>
 );
 
-const payload = (days: Record<string, unknown[]>) => ({ week: 3, currentWeek: 3, totalWeeks: 20, days });
+const payload = (days: Record<string, unknown[]>, week: number) => ({ week, currentWeek: week, totalWeeks: 20, days });
 
 const ENGLISH: Record<string, unknown> = {
   course_code: 'G0173',
@@ -55,7 +55,7 @@ beforeEach(() => {
 });
 
 async function openSheet(days: Record<string, unknown[]> = { 1: [ENGLISH] }) {
-  api.getScheduleWeek.mockResolvedValue(payload(days));
+  api.getScheduleWeek.mockImplementation(async (week: number) => payload(days, week));
   const view = await renderApp(withProviders(<TimetableScreen />));
   await waitFor(() => expect(view.getAllByTestId('timetable-grid-card-G0173').length).toBeGreaterThan(0));
   const user = userEvent.setup();
