@@ -30,6 +30,7 @@ import {
   TIMETABLE_AXIS_END_HOUR,
   TIMETABLE_AXIS_START_HOUR,
   visibleTimetableWeekdays,
+  isOvernightMeeting,
   clockMinutes,
   layoutTimetableCard,
   type CourseAccent,
@@ -70,6 +71,7 @@ type PlacedCard = {
   height: number;
   lane: number;
   lanes: number;
+  continuation: boolean;
 };
 
 export function TimetableGrid({
@@ -89,6 +91,7 @@ export function TimetableGrid({
   const minCardHeight = Math.max(theme.touchTarget + theme.space('space_1'), theme.space('space_12') - theme.space('space_1'));
   let axisStart = TIMETABLE_AXIS_START_HOUR, axisEnd = TIMETABLE_AXIS_END_HOUR;
   for (const day of days) {
+    if (day > 1 && (week.days[day - 1] ?? []).some(isOvernightMeeting)) axisStart = 0;
     for (const meeting of week.days[day] ?? []) {
       const start = clockMinutes(meeting.startTime), end = clockMinutes(meeting.endTime);
       if (start === null) continue;
@@ -109,8 +112,14 @@ export function TimetableGrid({
       for (const meeting of week.days[day] ?? []) {
         const layout = layoutTimetableCard(meeting, hourHeight, minCardHeight, axisStart, axisEnd);
         if (layout !== null) {
-          placed.push({ meeting, accent: resolveAccent(meeting), top: layout.top, height: layout.height, lane: 0, lanes: 1 });
+          placed.push({ meeting, accent: resolveAccent(meeting), top: layout.top, height: layout.height, lane: 0, lanes: 1, continuation: false });
         }
+      }
+      if (day > 1) for (const meeting of week.days[day - 1] ?? []) {
+        if (!isOvernightMeeting(meeting)) continue;
+        const layout = layoutTimetableCard({ ...meeting, startTime: '00:00' }, hourHeight, minCardHeight, axisStart, axisEnd);
+        if (layout) placed.push({ meeting, accent: resolveAccent(meeting), top: layout.top,
+          height: layout.height, lane: 0, lanes: 1, continuation: true });
       }
       placed.sort((a, b) => a.top - b.top || b.height - a.height);
       let group: PlacedCard[] = [], laneEnds: number[] = [], groupEnd = -1;
@@ -208,7 +217,7 @@ export function TimetableGrid({
               style={{
                 flex: 1,
                 minWidth: dayMinWidth(day),
-                height: axisHeight,
+                height: axisHeight + minCardHeight,
                 borderLeftWidth: theme.borderWidth('border_width_hairline'),
                 borderLeftColor: theme.color['border-subtle'].value,
               }}
@@ -226,15 +235,15 @@ export function TimetableGrid({
                 />
               ))}
 
-              {(cardsByDay.get(day) ?? []).map(({ meeting, accent, top, height, lane, lanes }) => {
+              {(cardsByDay.get(day) ?? []).map(({ meeting, accent, top, height, lane, lanes, continuation }) => {
                 const name = meeting.courseName ?? meeting.courseCode;
                 const venue = meeting.venue ?? t('timetable.noVenue');
                 const start = formatClockTime(meeting.startTime);
                 const end = formatClockTime(meeting.endTime);
                 return (
                   <Pressable
-                    key={`${meeting.courseCode}-${meeting.startTime ?? ''}-${meeting.venue ?? ''}`}
-                    testID={testID ? `${testID}-card-${meeting.courseCode}` : undefined}
+                    key={`${meeting.courseCode}-${meeting.startTime ?? ''}-${meeting.venue ?? ''}-${continuation}`}
+                    testID={testID ? `${testID}-card-${meeting.courseCode}${continuation ? '-continuation' : ''}` : undefined}
                     onPress={
                       onPressMeeting === undefined ? undefined : () => onPressMeeting(meeting)
                     }

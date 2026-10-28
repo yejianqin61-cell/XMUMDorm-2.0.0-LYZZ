@@ -22,7 +22,13 @@ import type { TimetableMeeting, TimetableWeek } from './timetable';
 export const VISIBLE_WEEKDAYS = [1, 2, 3, 4, 5] as const;
 
 export function visibleTimetableWeekdays(week: TimetableWeek): readonly number[] {
-  return [...VISIBLE_WEEKDAYS, ...[6, 7].filter((day) => (week.days[day]?.length ?? 0) > 0)];
+  return [...VISIBLE_WEEKDAYS, ...[6, 7].filter((day) => (week.days[day]?.length ?? 0) > 0
+    || (week.days[day - 1] ?? []).some(isOvernightMeeting))];
+}
+
+export function isOvernightMeeting(meeting: TimetableMeeting): boolean {
+  const start = clockMinutes(meeting.startTime), end = clockMinutes(meeting.endTime);
+  return start !== null && end !== null && end > 0 && end < start;
 }
 
 export type CourseAccent = {
@@ -131,5 +137,6 @@ export function layoutTimetableCard(
   const clampedEnd = Math.min(axisEnd, Math.max(end, clampedStart + 15));
   const top = ((clampedStart - axisStart) / 60) * hourHeight;
   const rawHeight = ((clampedEnd - clampedStart) / 60) * hourHeight;
-  return { top, height: Math.max(minCardHeight, rawHeight) };
+  const height = Math.max(minCardHeight, rawHeight);
+  return { top, height };
 }
