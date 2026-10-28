@@ -26,6 +26,10 @@ export function ReminderRuntimeHost(): null {
       previousOwner.current = null;
       if (oldOwner) void clearReminderOwner(oldOwner);
     } else if (currentOwner) {
+      if (previousOwner.current && previousOwner.current !== currentOwner) {
+        invalidateReminderSession();
+        void clearReminderOwner(previousOwner.current);
+      }
       previousOwner.current = currentOwner;
     }
   }, [currentOwner, session.status]);
