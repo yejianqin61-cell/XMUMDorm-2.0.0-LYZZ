@@ -11,10 +11,9 @@
  * ⛔ 不得拿课程色表达状态语义（状态仍用 `state-*`）。
  *
  * ## 颜色怎么分配
- * 按**本周出现的课程码升序**依次取色（模 6）：
- *   · 同一课程（同一 `courseCode`，不论时间/地点）→ 同色；
- *   · 不同课程 → 顺延不同色；本周 ≤6 门时**必不重复**；
- *   · 跨周课程集合不变 → 颜色稳定；集合变化允许位移（文档已注明，不假装全局稳定）。
+ * 按课程身份键稳定映射到 6 色：
+ *   · 同一课程（同一 `courseCode`，不论周次、时间和地点）→ 同色；
+ *   · 色板数量有限，不同课程可能使用同色。
  */
 
 import type { DarkColorTokenName } from '@/design-system/tokens';
@@ -44,7 +43,7 @@ export function courseKey(meeting: TimetableMeeting): string {
   return meeting.courseCode.trim() || (meeting.courseName ?? '').trim();
 }
 
-/** 本周「课程码 → 课程色」的唯一分配处（纯函数，可单测） */
+/** 本周「课程码 → 课程色」的唯一分配处；颜色不依赖其他课程。 */
 export function courseAccentMap(week: TimetableWeek): ReadonlyMap<string, CourseAccent> {
   const keys = new Set<string>();
   for (const day of Object.keys(week.days)) {
@@ -56,7 +55,13 @@ export function courseAccentMap(week: TimetableWeek): ReadonlyMap<string, Course
   return new Map(
     [...keys]
       .sort()
-      .map((key, index) => [key, COURSE_ACCENTS[index % COURSE_ACCENTS.length]])
+      .map((key) => {
+        let hash = 2166136261;
+        for (let index = 0; index < key.length; index += 1) {
+          hash = Math.imul(hash ^ key.charCodeAt(index), 16777619);
+        }
+        return [key, COURSE_ACCENTS[(hash >>> 0) % COURSE_ACCENTS.length]];
+      })
   );
 }
 
