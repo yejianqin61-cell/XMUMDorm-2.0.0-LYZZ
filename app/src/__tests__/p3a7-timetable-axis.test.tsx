@@ -135,6 +135,13 @@ describe('P3A7 时间轴渲染', () => {
     await user.press(view.getByTestId('grid-card-NIGHT-continuation'));
     expect(onPress).toHaveBeenCalledWith(expect.objectContaining({ courseCode: 'NIGHT', dayOfWeek: 5 }));
   });
+  it('shows a Sunday overnight course in Monday of the following week', async () => {
+    const previous = week({ 7: [meeting({ course_code: 'SUN', day_of_week: 7,
+      start_time: '23:30', end_time: '00:30' })] }).days[7];
+    const view = await renderApp(<TimetableGrid testID="grid" week={{ ...week({}), previousSunday: previous }} />);
+    expect(view.getByTestId('grid-card-SUN-continuation')).toBeTruthy();
+    expect(view.getByTestId('grid-hour-0')).toBeTruthy();
+  });
   it('没课的周也画完整 08:00–21:00 刻度', async () => {
     const view = await renderApp(<TimetableGrid testID="grid" week={week({})} />);
     expect(view.getAllByTestId(/^grid-hour-/)).toHaveLength(14); // 08…21 共 14 个整点刻度
