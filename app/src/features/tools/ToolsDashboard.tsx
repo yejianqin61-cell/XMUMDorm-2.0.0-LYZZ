@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import BookOpen from 'lucide-react-native/icons/book-open';
 import ListChecks from 'lucide-react-native/icons/list-checks';
 import ShieldCheck from 'lucide-react-native/icons/shield-check';
-import { currentTeachingWeek, clampWeek, kualaLumpurCalendarParts, resolveSemesterContext } from '../../../../shared/config/semesters';
+import { currentTeachingWeek, clampWeek, kualaLumpurCalendarParts, resolveSemesterContext, addDaysYmd } from '../../../../shared/config/semesters';
 import { getScheduleWeek } from '../../../../shared/api/schedule';
 import { Button } from '@/components/ui/Button';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -24,7 +24,8 @@ import { useTheme } from '@/design-system/theme';
 import { useI18n } from '@/i18n';
 import type { AppError } from '@/i18n/errors';
 import { SCHOOL_SYSTEMS } from './schoolSystems';
-import { todayWeekday, useTimetableWeek } from './timetable';
+import { requestWeek, todayWeekday, useTimetableWeek, type TimetableMeeting } from './timetable';
+import { clockMinutes } from './timetableView';
 import { toToolsError } from './requestError';
 import { nextHoliday, remainingTodayCourses, schoolClockMinutes, selectCoursesNow } from './todaySummary';
 import { HolidaysContent } from './HolidaysScreen';
@@ -67,6 +68,40 @@ export function ToolsDashboardContent({ onRequestError }: { onRequestError?: (er
   const previousCourses = sameSemester ? meetingsOf(previousTimetable.week, todayWeekday(yesterday)) : [];
   const { current, next } = selectCoursesNow(todayCourses, minutes, previousCourses);
   const courses = current && !todayCourses.includes(current) ? [current, ...todayCourses] : todayCourses;
+  const [future, setFuture] = React.useState<{ course: TimetableMeeting; date: string } | null>(null);
+  const [futureError, setFutureError] = React.useState(false);
+  const [futureRetry, setFutureRetry] = React.useState(0);
+  React.useEffect(() => {
+    let active = true;
+    setFuture(null); setFutureError(false);
+    const weekday = todayWeekday(now);
+    if (!timetable.week || timetable.week.currentWeek === null || next || weekday === null
+      || currentContext.status !== 'during') return () => { active = false; };
+    const epoch = timetableIdentity().epoch;
+    const seek = async () => {
+      try {
+        for (let target = week; target <= currentContext.totalWeeks; target += 1) {
+          const data = target === week ? timetable.week : await requestWeek(target, loadWeek);
+          if (!active || timetableIdentity().epoch !== epoch || !data) return;
+          const firstDay = target === week ? weekday + 1 : 1;
+          for (let targetDay = firstDay; targetDay <= 7; targetDay += 1) {
+            const first = [...(data.days[targetDay] ?? [])]
+              .filter((item) => clockMinutes(item.startTime) !== null)
+              .sort((a, b) => clockMinutes(a.startTime)! - clockMinutes(b.startTime)!)[0];
+            if (first) {
+              const date = addDaysYmd(day, (target - week) * 7 + targetDay - weekday);
+              if (date && active) setFuture({ course: first, date });
+              return;
+            }
+          }
+        }
+      } catch {
+        if (active) setFutureError(true);
+      }
+    };
+    void seek();
+    return () => { active = false; };
+  }, [day, week, timetable.week, next, currentContext.status, currentContext.totalWeeks, futureRetry]);
   const holiday = nextHoliday(day);
   if (holidaysOpen) return <HolidaysContent now={now} onBack={closeHolidays} />;
   return <View testID="tools-dashboard-content" style={{ padding: theme.space('space_4'), gap: theme.space('space_4') }}>
@@ -74,6 +109,10 @@ export function ToolsDashboardContent({ onRequestError }: { onRequestError?: (er
       <SectionHeader title={t('tools.dashboard.schedule')} />
       {current ? <Text role="caption" testID="tools-current-course">{t('tools.dashboard.current', { name: current.courseName ?? current.courseCode })}</Text> : null}
       {next ? <Text role="caption" testID="tools-next-course">{t('tools.dashboard.next', { name: next.courseName ?? next.courseCode })}</Text> : null}
+      {!next && future ? <Text role="caption" testID="tools-next-course">{t('tools.dashboard.next', {
+        name: `${future.course.courseName ?? future.course.courseCode} (${future.date} ${formatClockTime(future.course.startTime)})`,
+      })}</Text> : null}
+      {futureError ? <ErrorState testID="tools-next-error" error={{ kind: 'unknown' }} onAction={() => setFutureRetry((value) => value + 1)} /> : null}
       {timetable.source === 'cache' ? <OfflineBanner testID="tools-courses-stale" variant="stale" message={t('timetable.stale')} actionLabel={t('action.refresh')} onAction={timetable.reload} /> : null}
       {timetable.loading && !timetable.week ? <LoadingState testID="tools-courses-loading" /> : timetable.error && !timetable.week ? <ErrorState testID="tools-courses-error" error={timetable.error} onAction={timetable.reload} /> : courses.length === 0 ? <Text role="body" colorToken="text-secondary">{t('tools.dashboard.noCourses')}</Text> :
         courses.slice(0, 3).map((course, index) => <ListItem key={`${course.courseCode}:${index}`} title={course.courseName ?? course.courseCode} subtitle={t('tools.dashboard.courseLine', { start: formatClockTime(course.startTime), end: formatClockTime(course.endTime), venue: course.venue ?? t('tools.dashboard.noVenue') })} onPress={() => router.push('/tools/timetable')} />)}

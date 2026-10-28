@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { fireEvent, waitFor } from '@testing-library/react-native';
+import { fireEvent, waitFor, within } from '@testing-library/react-native';
 import { renderApp } from './helpers/renderApp';
 import { ToolsDashboardContent } from '@/features/tools/ToolsDashboard';
 import { clearNamespace } from '@/shared/storage';
@@ -76,4 +76,19 @@ it('finds the next course in the following week when the rest of this week is em
   const view = await renderApp(<ToolsDashboardContent />);
   await waitFor(() => expect(view.getByTestId('tools-next-course').props.children).toContain('Next week course'));
   expect(api.getScheduleWeek).toHaveBeenCalledWith(3);
+});
+
+it('offers a retry when a future week cannot be loaded', async () => {
+  jest.setSystemTime(new Date('2026-10-11T13:00:00Z'));
+  api.getScheduleWeek.mockImplementation(async (week: number) => {
+    if (week === 3) throw { kind: 'offline' };
+    return { week, currentWeek: 2, totalWeeks: 14, days: {} };
+  });
+  const view = await renderApp(<ToolsDashboardContent />);
+  await waitFor(() => expect(view.getByTestId('tools-next-error')).toBeTruthy());
+  api.getScheduleWeek.mockImplementation(async (week: number) => ({ week, currentWeek: 2, totalWeeks: 14,
+    days: week === 3 ? { 1: [{ course_code: 'NEXT', course_name: 'Recovered course',
+      day_of_week: 1, start_time: '08:00', end_time: '10:00' }] } : {} }));
+  await fireEvent.press(within(view.getByTestId('tools-next-error')).getByRole('button'));
+  await waitFor(() => expect(view.getByTestId('tools-next-course').props.children).toContain('Recovered course'));
 });

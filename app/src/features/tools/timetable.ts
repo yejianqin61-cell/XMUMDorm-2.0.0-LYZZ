@@ -233,7 +233,7 @@ export async function invalidateTimetable(): Promise<void> {
   }
 }
 
-function requestWeek(week: number, load: (week: number) => Promise<unknown>): Promise<TimetableWeek> {
+export function requestWeek(week: number, load: (week: number) => Promise<unknown>): Promise<TimetableWeek> {
   const identity = timetableIdentity();
   const version = revision;
   const key = `${identity.scope}:${identity.epoch}:${version}:${week}`;
@@ -249,6 +249,7 @@ function requestWeek(week: number, load: (week: number) => Promise<unknown>): Pr
     });
     diskQueue = write.catch(() => undefined);
     await write;
+    if (revision !== version || timetableIdentity().epoch !== identity.epoch) throw { kind: 'unknown' };
     return data;
   }).finally(() => { pending.delete(key); });
   pending.set(key, request);
