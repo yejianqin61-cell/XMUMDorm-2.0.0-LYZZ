@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { ScrollView, View } from 'react-native';
+import { AppState, ScrollView, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import ChevronLeft from 'lucide-react-native/icons/chevron-left';
 import ChevronRight from 'lucide-react-native/icons/chevron-right';
@@ -17,6 +18,8 @@ import { useTheme } from '@/design-system/theme';
 import { useSession } from '@/features/auth/session';
 import { useMailboxBadge } from '@/features/mailbox/useUnread';
 import { useI18n } from '@/i18n';
+import { notificationPermission, type NotificationPermission } from '@/features/notifications/permissions';
+import { refreshRemindersAfterTimetableImport } from './reminders/importRefresh';
 import { CourseInfoSheet } from './CourseInfoSheet';
 import { timetableIdentity } from './cacheIdentity';
 import { shouldHighlightToday, todayWeekday, useTimetableWeek, type TimetableMeeting, type TimetableWeek } from './timetable';
@@ -91,6 +94,33 @@ function OwnedTimetableScreen({ renderGrid, legacyControls }: { renderGrid: (pro
   const router = useRouter();
   const badge = useMailboxBadge();
   const session = useSession();
+  const [permission, setPermission] = React.useState<NotificationPermission | null>(null);
+  React.useEffect(() => {
+    let active = true;
+    const update = async (firstEntry: boolean) => {
+      try {
+        let status = await notificationPermission.read();
+        if (firstEntry && status === 'undetermined') {
+          const asked = await AsyncStorage.getItem('@dorm:timetable-notification-requested');
+          if (!asked && active) {
+            await AsyncStorage.setItem('@dorm:timetable-notification-requested', '1');
+            if (!active) return;
+            status = await notificationPermission.request();
+          }
+        }
+        if (!active) return;
+        setPermission(status);
+        if (status === 'granted') await refreshRemindersAfterTimetableImport();
+      } catch {
+        if (active) setPermission('unavailable');
+      }
+    };
+    void update(true);
+    const listener = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void update(false);
+    });
+    return () => { active = false; listener.remove(); };
+  }, []);
   const [week, setWeek] = React.useState(() => clampWeek(currentTeachingWeek() ?? 1));
   const [selected, setSelected] = React.useState<TimetableMeeting | null>(null);
   const selectWeek = React.useCallback((next: number) => {
@@ -130,6 +160,16 @@ function OwnedTimetableScreen({ renderGrid, legacyControls }: { renderGrid: (pro
   const closeSheet = React.useCallback(() => setSelected(null), []);
   return <Screen titleKey="tools.timetable" bottomMode="own" testID="screen-phase3-timetable" {...badge}>
     <View style={{ flex: 1, padding: theme.space('space_4'), gap: theme.space('space_3') }}>
+      {permission !== 'granted' ? <View style={{ gap: theme.space('space_1') }}>
+        <Text testID="timetable-reminder-explanation" role="body" colorToken="text-secondary">
+          {t('me.settings.notifications.description')}
+        </Text>
+        {permission === 'denied' || permission === 'undetermined' ?
+          <Button testID="timetable-reminder-settings" variant="secondary"
+            label={t('me.settings.notifications.openSettings')}
+            onPress={() => { void notificationPermission.openSettings(); }} /> : null}
+        {permission === 'unavailable' ? <Text role="body">{t('me.settings.notifications.unavailable')}</Text> : null}
+      </View> : null}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.space('space_2') }}>
         {legacyControls ? <IconButton testID="timetable-prev" Icon={ChevronLeft} accessibilityLabel={t('timetable.prevWeek')}
           onPress={() => selectWeek(clampWeek(week - 1, totalWeeks))} /> : null}

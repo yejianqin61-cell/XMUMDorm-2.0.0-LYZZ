@@ -27,10 +27,13 @@ beforeEach(() => {
 });
 
 it('explains class notifications and requests permission on first timetable entry', async () => {
+  let finish!: (value: string) => void;
+  permissions.request.mockImplementation(() => new Promise((resolve) => { finish = resolve; }));
   const view = await renderApp(<SessionProvider><TimetableScreen renderGrid={() => null} /></SessionProvider>);
   expect(view.getByTestId('timetable-reminder-explanation')).toBeTruthy();
   await waitFor(() => expect(permissions.request).toHaveBeenCalledTimes(1));
   expect(storage.setItem).toHaveBeenCalled();
+  finish('granted');
 });
 
 it('does not request again after an earlier request', async () => {
