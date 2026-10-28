@@ -67,3 +67,13 @@ it('shows the previous Sunday overnight course after midnight on Monday', async 
   expect(api.getScheduleWeek).toHaveBeenCalledWith(1);
   expect(api.getScheduleWeek).toHaveBeenCalledWith(2);
 });
+
+it('finds the next course in the following week when the rest of this week is empty', async () => {
+  jest.setSystemTime(new Date('2026-10-11T13:00:00Z')); // Sunday 21:00 in Kuala Lumpur, teaching week 2.
+  api.getScheduleWeek.mockImplementation(async (week: number) => ({ week, currentWeek: 2, totalWeeks: 14,
+    days: week === 3 ? { 1: [{ course_code: 'NEXT', course_name: 'Next week course',
+      day_of_week: 1, start_time: '08:00', end_time: '10:00' }] } : {} }));
+  const view = await renderApp(<ToolsDashboardContent />);
+  await waitFor(() => expect(view.getByTestId('tools-next-course').props.children).toContain('Next week course'));
+  expect(api.getScheduleWeek).toHaveBeenCalledWith(3);
+});
