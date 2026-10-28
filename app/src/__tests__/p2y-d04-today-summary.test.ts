@@ -9,6 +9,11 @@ it('includes the start and excludes the end of a current class', () => {
   expect(selectCoursesNow(courses, 600)).toMatchObject({ current: null, next: { courseCode: 'B' } });
   expect(selectCoursesNow(courses, 720)).toEqual({ current: null, next: null });
 });
+it('recognizes an overnight course as current after it starts on its scheduled day', () => {
+  const overnight = meeting('NIGHT', '23:30', '00:30');
+  expect(selectCoursesNow([overnight], 23 * 60 + 45).current?.courseCode).toBe('NIGHT');
+  expect(selectCoursesNow([overnight], 23 * 60).next?.courseCode).toBe('NIGHT');
+});
 it('uses the school timezone regardless of the device timezone', () => {
   expect(schoolClockMinutes(new Date('2026-10-07T00:30:00Z'))).toBe(510);
 });
