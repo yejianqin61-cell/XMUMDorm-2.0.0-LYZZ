@@ -19,7 +19,7 @@ import { useSession } from '@/features/auth/session';
 import { useMailboxBadge } from '@/features/mailbox/useUnread';
 import { useI18n } from '@/i18n';
 import { notificationPermission, type NotificationPermission } from '@/features/notifications/permissions';
-import { refreshRemindersAfterTimetableImport } from './reminders/importRefresh';
+import { refreshClassReminders } from './reminders/native';
 import { CourseInfoSheet } from './CourseInfoSheet';
 import { timetableIdentity } from './cacheIdentity';
 import { shouldHighlightToday, todayWeekday, useTimetableWeek, type TimetableMeeting, type TimetableWeek } from './timetable';
@@ -95,8 +95,24 @@ function OwnedTimetableScreen({ renderGrid, legacyControls }: { renderGrid: (pro
   const badge = useMailboxBadge();
   const session = useSession();
   const [permission, setPermission] = React.useState<NotificationPermission | null>(null);
+  const [reminderStatus, setReminderStatus] = React.useState<'partial' | 'failed' | 'stale' | null>(null);
+  const mounted = React.useRef(true);
+  const refreshReminders = React.useCallback(async () => {
+    try {
+      const result = await refreshClassReminders({ title: t('tools.reminders.class.title'),
+        body: t('tools.reminders.class.body') });
+      if (!mounted.current) return;
+      if (result?.status === 'permission-denied') setPermission('denied');
+      setReminderStatus(!result || result.status === 'stale' ? 'stale' : result.deferred > 0 ? 'partial' : null);
+    } catch {
+      if (mounted.current) setReminderStatus('failed');
+    }
+  }, [t]);
+  const refreshRef = React.useRef(refreshReminders);
+  refreshRef.current = refreshReminders;
   React.useEffect(() => {
     let active = true;
+    mounted.current = true;
     const update = async (firstEntry: boolean) => {
       try {
         let status = await notificationPermission.read();
@@ -110,7 +126,7 @@ function OwnedTimetableScreen({ renderGrid, legacyControls }: { renderGrid: (pro
         }
         if (!active) return;
         setPermission(status);
-        if (status === 'granted') await refreshRemindersAfterTimetableImport();
+        if (status === 'granted') await refreshRef.current();
       } catch {
         if (active) setPermission('unavailable');
       }
@@ -119,7 +135,7 @@ function OwnedTimetableScreen({ renderGrid, legacyControls }: { renderGrid: (pro
     const listener = AppState.addEventListener('change', (state) => {
       if (state === 'active') void update(false);
     });
-    return () => { active = false; listener.remove(); };
+    return () => { active = false; mounted.current = false; listener.remove(); };
   }, []);
   const [week, setWeek] = React.useState(() => clampWeek(currentTeachingWeek() ?? 1));
   const [selected, setSelected] = React.useState<TimetableMeeting | null>(null);
@@ -169,6 +185,12 @@ function OwnedTimetableScreen({ renderGrid, legacyControls }: { renderGrid: (pro
             label={t('me.settings.notifications.openSettings')}
             onPress={() => { void notificationPermission.openSettings(); }} /> : null}
         {permission === 'unavailable' ? <Text role="body">{t('me.settings.notifications.unavailable')}</Text> : null}
+      </View> : null}
+      {permission === 'granted' && reminderStatus ? <View style={{ gap: theme.space('space_1') }}>
+        <Text role="body">{t(reminderStatus === 'failed' ? 'tools.moodle.reminders.failed'
+          : reminderStatus === 'partial' ? 'tools.moodle.reminders.partial' : 'tools.moodle.reminders.stale')}</Text>
+        <Button testID="timetable-reminder-retry" variant="secondary" label={t('action.refresh')}
+          onPress={() => { void refreshReminders(); }} />
       </View> : null}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.space('space_2') }}>
         {legacyControls ? <IconButton testID="timetable-prev" Icon={ChevronLeft} accessibilityLabel={t('timetable.prevWeek')}

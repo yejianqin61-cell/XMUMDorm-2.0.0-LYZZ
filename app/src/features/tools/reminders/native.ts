@@ -6,7 +6,8 @@ import { timetableIdentity } from '../cacheIdentity';
 import { loadSemesterClassReminderPlan } from './runtime';
 import type { ReminderSemester } from './plan';
 import type { MoodleReminderDelivery } from '../moodle/deadlines';
-import { createReminderScheduler, reminderOwnerFromScope, type NativeReminderPort, type ReminderLabels } from './scheduler';
+import { createReminderScheduler, reminderOwnerFromScope, type NativeReminderPort, type ReminderLabels,
+  type ReminderScheduleResult } from './scheduler';
 
 const port: NativeReminderPort = {
   async getPermissionsAsync() {
@@ -64,13 +65,12 @@ export async function clearReminderOwner(previousOwner: string): Promise<void> {
   await scheduler.clearOwner(previousOwner);
 }
 
-export async function refreshClassReminders(labels: ReminderLabels): Promise<void> {
+export async function refreshClassReminders(labels: ReminderLabels): Promise<ReminderScheduleResult | null> {
   const current = owner();
-  if (!current) return;
+  if (!current) return null;
   const semester = resolveSemesterContext().semester as ReminderSemester | null;
   if (!semester) {
-    await scheduler.replaceDomain(current, 'class', [], labels);
-    return;
+    return scheduler.replaceDomain(current, 'class', [], labels);
   }
   const epoch = timetableIdentity().epoch;
   const plan = await loadSemesterClassReminderPlan({
@@ -79,7 +79,7 @@ export async function refreshClassReminders(labels: ReminderLabels): Promise<voi
     loadWeek: getScheduleWeek,
     isCurrent: () => timetableIdentity().epoch === epoch && owner() === current,
   });
-  await scheduler.replaceDomain(current, 'class', plan, labels);
+  return scheduler.replaceDomain(current, 'class', plan, labels);
 }
 
 export function invalidateReminderSession(): void {
