@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import BookOpen from 'lucide-react-native/icons/book-open';
 import ListChecks from 'lucide-react-native/icons/list-checks';
 import ShieldCheck from 'lucide-react-native/icons/shield-check';
-import { currentTeachingWeek, clampWeek, kualaLumpurCalendarParts } from '../../../../shared/config/semesters';
+import { currentTeachingWeek, clampWeek, kualaLumpurCalendarParts, resolveSemesterContext } from '../../../../shared/config/semesters';
 import { getScheduleWeek } from '../../../../shared/api/schedule';
 import { Button } from '@/components/ui/Button';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -46,18 +46,27 @@ export function ToolsDashboardContent({ onRequestError }: { onRequestError?: (er
   }, []);
   const day = kualaLumpurCalendarParts(now).ymd;
   const week = clampWeek(currentTeachingWeek(now) ?? 1);
-  const timetable = useTimetableWeek(week, async (target) => {
+  const loadWeek = async (target: number) => {
     const owner = timetableIdentity().epoch;
     try { return await getScheduleWeek(target); }
     catch (error) {
       if (owner !== timetableIdentity().epoch) throw error;
       throw toToolsError(error, await handleError(error));
     }
-  });
+  };
+  const timetable = useTimetableWeek(week, loadWeek);
+  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const currentContext = resolveSemesterContext(now);
+  const previousContext = resolveSemesterContext(yesterday);
+  const sameSemester = currentContext.status === 'during' && previousContext.status === 'during'
+    && currentContext.startDate === previousContext.startDate;
+  const previousTimetable = useTimetableWeek(sameSemester ? clampWeek(previousContext.week ?? week) : week, loadWeek);
   const todos = useTodayTodos(handleError, day);
   const minutes = schoolClockMinutes(now);
-  const courses = remainingTodayCourses(meetingsOf(timetable.week, timetable.week?.currentWeek == null ? null : todayWeekday(now)), minutes);
-  const { current, next } = selectCoursesNow(courses, minutes);
+  const todayCourses = remainingTodayCourses(meetingsOf(timetable.week, timetable.week?.currentWeek == null ? null : todayWeekday(now)), minutes);
+  const previousCourses = sameSemester ? meetingsOf(previousTimetable.week, todayWeekday(yesterday)) : [];
+  const { current, next } = selectCoursesNow(todayCourses, minutes, previousCourses);
+  const courses = current && !todayCourses.includes(current) ? [current, ...todayCourses] : todayCourses;
   const holiday = nextHoliday(day);
   if (holidaysOpen) return <HolidaysContent now={now} onBack={closeHolidays} />;
   return <View testID="tools-dashboard-content" style={{ padding: theme.space('space_4'), gap: theme.space('space_4') }}>

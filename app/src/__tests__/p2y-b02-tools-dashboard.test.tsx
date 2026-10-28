@@ -54,3 +54,16 @@ it('renders the same dashboard in English', async () => {
   await waitFor(() => expect(view.getByText('Today’s schedule')).toBeTruthy());
   expect(view.getAllByText('School systems')).toHaveLength(2);
 });
+it('shows the previous Sunday overnight course after midnight on Monday', async () => {
+  jest.setSystemTime(new Date('2026-10-04T16:15:00Z'));
+  api.getScheduleWeek.mockImplementation(async (week: number) => ({ week, currentWeek: 2, totalWeeks: 14,
+    days: week === 1 ? { 7: [{ course_code: 'NIGHT', course_name: 'Night course',
+      day_of_week: 7, start_time: '23:30', end_time: '00:30' }] }
+      : { 1: [{ course_code: 'DAY', course_name: 'Day course', day_of_week: 1,
+        start_time: '08:00', end_time: '10:00' }] } }));
+  const view = await renderApp(<ToolsDashboardContent />);
+  await waitFor(() => expect(view.getByTestId('tools-current-course').props.children).toContain('Night course'));
+  expect(view.getByTestId('tools-next-course').props.children).toContain('Day course');
+  expect(api.getScheduleWeek).toHaveBeenCalledWith(1);
+  expect(api.getScheduleWeek).toHaveBeenCalledWith(2);
+});

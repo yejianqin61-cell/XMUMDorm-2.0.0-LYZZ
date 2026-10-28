@@ -20,12 +20,17 @@ export function remainingTodayCourses(courses: readonly TimetableMeeting[], minu
     return end === null || (start !== null && end < start) || end > minutes;
   });
 }
-export function selectCoursesNow(courses: readonly TimetableMeeting[], minutes: number) {
+export function selectCoursesNow(courses: readonly TimetableMeeting[], minutes: number,
+  previousCourses: readonly TimetableMeeting[] = []) {
   const timed = courses.map((course) => ({ course, start: clockMinutes(course.startTime), end: clockMinutes(course.endTime) }))
     .filter((item): item is { course: TimetableMeeting; start: number; end: number | null } => item.start !== null)
     .sort((a, b) => a.start - b.start);
+  const overnight = previousCourses.find((course) => {
+    const start = clockMinutes(course.startTime), end = clockMinutes(course.endTime);
+    return start !== null && end !== null && end < start && minutes < end;
+  });
   return {
-    current: timed.find((item) => item.start <= minutes && item.end !== null
+    current: overnight ?? timed.find((item) => item.start <= minutes && item.end !== null
       && (item.end < item.start || minutes < item.end))?.course ?? null,
     next: timed.find((item) => item.start > minutes)?.course ?? null,
   };
