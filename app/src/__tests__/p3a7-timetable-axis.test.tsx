@@ -101,6 +101,29 @@ describe('P3A7 时间轴纯规则', () => {
 });
 
 describe('P3A7 时间轴渲染', () => {
+  it('shows a weekend class outside the usual time window', async () => {
+    const view = await renderApp(<TimetableGrid testID="grid" week={week({ 6: [meeting({
+      course_code: 'LATE', day_of_week: 6, start_time: '22:00', end_time: '23:00',
+    })] })} />);
+    expect(view.getByTestId('grid-head-6')).toBeTruthy();
+    expect(view.getByTestId('grid-hour-22')).toBeTruthy();
+    expect(view.getByTestId('grid-card-LATE')).toBeTruthy();
+  });
+
+  it('places overlapping courses in separate lanes and both remain actionable', async () => {
+    const onPress = jest.fn();
+    const view = await renderApp(<TimetableGrid testID="grid" onPressMeeting={onPress}
+      week={week({ 1: [meeting(), meeting({ course_code: 'OTHER', start_time: '09:00', end_time: '11:00' })] })} />);
+    const first = flattenStyle(view.getByTestId('grid-card-G0173').props.style);
+    const second = flattenStyle(view.getByTestId('grid-card-OTHER').props.style);
+    expect(first.left).not.toEqual(second.left);
+    expect(first.width).toEqual('50%');
+    expect(second.width).toEqual('50%');
+    const user = require('@testing-library/react-native').userEvent.setup();
+    await user.press(view.getByTestId('grid-card-G0173'));
+    await user.press(view.getByTestId('grid-card-OTHER'));
+    expect(onPress.mock.calls.map(([course]: [ { courseCode: string } ]) => course.courseCode)).toEqual(['G0173', 'OTHER']);
+  });
   it('没课的周也画完整 08:00–21:00 刻度', async () => {
     const view = await renderApp(<TimetableGrid testID="grid" week={week({})} />);
     expect(view.getAllByTestId(/^grid-hour-/)).toHaveLength(14); // 08…21 共 14 个整点刻度
