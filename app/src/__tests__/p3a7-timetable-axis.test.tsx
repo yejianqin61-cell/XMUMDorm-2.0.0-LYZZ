@@ -124,6 +124,17 @@ describe('P3A7 时间轴渲染', () => {
     await user.press(view.getByTestId('grid-card-OTHER'));
     expect(onPress.mock.calls.map(([course]: [ { courseCode: string } ]) => course.courseCode)).toEqual(['G0173', 'OTHER']);
   });
+  it('shows an overnight course on both days and opens the original course', async () => {
+    const onPress = jest.fn();
+    const view = await renderApp(<TimetableGrid testID="grid" onPressMeeting={onPress}
+      week={week({ 5: [meeting({ course_code: 'NIGHT', day_of_week: 5, start_time: '23:30', end_time: '00:30' })] })} />);
+    expect(view.getByTestId('grid-head-6')).toBeTruthy();
+    expect(view.getByTestId('grid-card-NIGHT')).toBeTruthy();
+    expect(view.getByTestId('grid-card-NIGHT-continuation')).toBeTruthy();
+    const user = require('@testing-library/react-native').userEvent.setup();
+    await user.press(view.getByTestId('grid-card-NIGHT-continuation'));
+    expect(onPress).toHaveBeenCalledWith(expect.objectContaining({ courseCode: 'NIGHT', dayOfWeek: 5 }));
+  });
   it('没课的周也画完整 08:00–21:00 刻度', async () => {
     const view = await renderApp(<TimetableGrid testID="grid" week={week({})} />);
     expect(view.getAllByTestId(/^grid-hour-/)).toHaveLength(14); // 08…21 共 14 个整点刻度
