@@ -96,7 +96,7 @@ export function ToolsDashboardContent({ onRequestError }: { onRequestError?: (er
           }
         }
       } catch {
-        if (active) setFutureError(true);
+        if (active && timetableIdentity().epoch === epoch) setFutureError(true);
       }
     };
     void seek();
