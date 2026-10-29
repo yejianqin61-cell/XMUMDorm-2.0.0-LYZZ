@@ -12,6 +12,13 @@ const authenticateToken = require('../middleware/auth');
 const { assetUrl } = require('../utils/assets');
 const { simpleCache } = require('../utils/simpleCache');
 const {
+  registerRowExcerptResolver,
+  registerBatchExcerptResolver,
+  resolveRowExcerpt,
+  resolveBatchExcerpts,
+  truncate,
+} = require('../services/notificationTargetResolvers');
+const {
   CATEGORY_TYPES,
   MODULE_TYPES,
   getCategoryTypes,
@@ -19,6 +26,33 @@ const {
   getNotificationCategory,
   getNotificationModule,
 } = require('../services/notificationService');
+
+/**
+ * 匿名域的通知类型：**不返回真实作者身份**（契约 §互动消息：匿名域不返回作者身份）。
+ * - 树洞：`treehole_*`（以及历史兼容的 `like`/`comment`）
+ * - 万能墙：`campus_*`
+ * ⛔ `trending_*`（热门）是公开内容，作者可见，不在本表。
+ */
+const ANONYMOUS_TYPES = new Set([
+  'treehole_like',
+  'treehole_comment',
+  'like',
+  'comment',
+  'campus_like',
+  'campus_comment',
+]);
+
+/** 评论类通知（有 comment_id 的才可能带"被回复评论"） */
+const COMMENT_TYPES = new Set([
+  'treehole_comment',
+  'comment',
+  'campus_comment',
+  'trending_comment',
+  'club_comment',
+  'handbook_comment',
+  'course_review_comment',
+  'canteen_reply',
+]);
 
 const MAX_READ_BATCH_SIZE = 100;
 
@@ -72,6 +106,42 @@ function getPostTarget(type, postId, available) {
   return { type: 'post', key: `post:${postId}`, path: available ? `/post/${postId}` : '#' };
 }
 
+/**
+ * 评论通知的"被回复评论"摘要（阶段3-01）
+ *
+ * `notifications.comment_id` 指向**新评论**，它的 `parent_id` 才是被回复的那条；
+ * ⛔ `extra.content` 是新评论内容（`routes/posts.js` 写入时已截 80 字），不能当作"被回复的原评论"。
+ * 只对评论类通知**批量查一次**；列表里没有评论通知就不查。
+ */
+async function attachReplyExcerpts(list) {
+  const candidates = list.filter(
+    (item) => COMMENT_TYPES.has(item.type) && Number.isInteger(Number(item.comment_id)) && Number(item.comment_id) > 0
+  );
+  if (candidates.length === 0) return;
+  const ids = [...new Set(candidates.map((item) => Number(item.comment_id)))];
+  const placeholders = ids.map(() => '?').join(',');
+  let rows = [];
+  try {
+    rows = await query(
+      `SELECT c.id, c.parent_id, pc.content AS parent_content
+       FROM comments c
+       LEFT JOIN comments pc ON pc.id = c.parent_id AND pc.deleted_at IS NULL
+       WHERE c.id IN (${placeholders})`,
+      ids
+    );
+  } catch {
+    // 摘要拿不到不该把列表打成 500：只让这一段为空
+    return;
+  }
+  const parentByComment = new Map(
+    (rows || []).map((row) => [Number(row.id), typeof row.parent_content === 'string' ? row.parent_content : null])
+  );
+  for (const item of candidates) {
+    const available = !item.target || item.target.available !== false;
+    item.reply_to_excerpt = available ? truncate(parentByComment.get(Number(item.comment_id))) : null;
+  }
+}
+
 // 为通知附加帖子/发送者等摘要
 async function attachNotificationExtra(rows, viewerIsAdmin = false) {
   if (!rows || rows.length === 0) return [];
@@ -94,7 +164,10 @@ async function attachNotificationExtra(rows, viewerIsAdmin = false) {
       comment_id: r.comment_id,
       from_user_id: r.from_user_id,
       extra,
-      created_at: r.created_at
+      created_at: r.created_at,
+      // 阶段3-01：两段摘要先占位 null，后面按目标与类型填
+      source_excerpt: null,
+      reply_to_excerpt: null
     };
     item.category = getNotificationCategory(r.type);
     item.module = getNotificationModule(r.type);
@@ -145,8 +218,19 @@ async function attachNotificationExtra(rows, viewerIsAdmin = false) {
     } catch {
       item.target = { type: 'unknown', id: item.id, key: `unknown:${item.id}`, title: null, path: '#' };
     }
+
+    // 来源摘要：只对**可用**目标给；失效一律清空（D2-03，不留原文）
+    item.source_excerpt = item.target.available === false ? null : resolveRowExcerpt(item.target.type, r);
+    // 契约要求：评论定位 ID 放在 target 上（null 也带上，客户端不用猜）
+    item.target.comment_id = item.comment_id ?? null;
+    // 匿名域：不返回真实作者身份（契约 §互动消息）
+    if (ANONYMOUS_TYPES.has(item.type)) {
+      delete item.from_user;
+      item.from_user_id = null;
+    }
     list.push(item);
   }
+  await attachReplyExcerpts(list);
   return list;
 }
 
@@ -218,6 +302,7 @@ router.get('/', authenticateToken, async (req, res) => {
         `SELECT n.id, n.type, n.is_read, n.post_id, n.comment_id, n.from_user_id, n.extra, n.created_at,
           p.id AS resolved_post_id, p.deleted_at AS post_deleted_at, p.hidden_by_admin AS post_hidden_by_admin,
           p.title AS post_title,
+          p.content AS post_content,
           u.username AS from_username, u.nickname AS from_nickname, u.avatar AS from_avatar
          FROM notifications n
          LEFT JOIN posts p ON n.post_id = p.id
@@ -234,6 +319,7 @@ router.get('/', authenticateToken, async (req, res) => {
           `SELECT n.id, n.type, n.is_read, n.post_id, n.comment_id, n.from_user_id, n.extra, n.created_at,
             p.id AS resolved_post_id, p.deleted_at AS post_deleted_at, p.hidden_by_admin AS post_hidden_by_admin,
             NULL AS post_title,
+            NULL AS post_content,
             u.username AS from_username, u.nickname AS from_nickname, u.avatar AS from_avatar
            FROM notifications n
            LEFT JOIN posts p ON n.post_id = p.id

@@ -74,6 +74,8 @@ describe('Notifications Routes', () => {
         title: 'Campus News',
         path: '/post/42',
         available: true,
+        // 阶段3-01 起 target 固定带评论定位（null 也带上，客户端不用猜）
+        comment_id: null,
       });
       expect(res.body.data.unreadSummary.byCategory).toEqual({
         interaction: 0,
@@ -533,5 +535,127 @@ describe('Notifications Routes', () => {
       expect(res.status).toBe(500);
       expect(simpleCache.delete).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('通知来源摘要与匿名裁剪（阶段3-01/02）', () => {
+  beforeEach(() => {
+    query.mockReset();
+    simpleCache.get.mockReset();
+    simpleCache.set.mockReset();
+    simpleCache.delete.mockReset();
+    simpleCache.getOrSet.mockReset();
+  });
+
+  function row(overrides = {}) {
+    return {
+      id: 2,
+      type: 'treehole_like',
+      is_read: 0,
+      post_id: 11,
+      comment_id: null,
+      from_user_id: 9,
+      extra: null,
+      created_at: '2026-06-02 10:00:00',
+      resolved_post_id: 11,
+      post_deleted_at: null,
+      post_hidden_by_admin: null,
+      post_title: 'Treehole post',
+      post_content: '来源正文',
+      from_username: 'author',
+      from_nickname: 'Author',
+      from_avatar: null,
+      ...overrides,
+    };
+  }
+
+  it('帖子正文 → source_excerpt，且长度有上限（140 + 省略号）', async () => {
+    const long = '甲'.repeat(200);
+    query
+      .mockResolvedValueOnce([row({ post_content: long })])
+      .mockResolvedValueOnce([{ type: 'treehole_like', cnt: 1 }]);
+
+    const res = await supertest(app()).get('/api/notifications');
+    const item = res.body.data.list[0];
+    expect(item.source_excerpt).toHaveLength(141);
+    expect(item.source_excerpt.endsWith('…')).toBe(true);
+  });
+
+  it('失效目标：available=false 时两段原文都清空（D2-03）', async () => {
+    query
+      .mockResolvedValueOnce([
+        row({
+          type: 'treehole_comment',
+          comment_id: 50,
+          post_deleted_at: '2026-06-03 00:00:00',
+          post_content: '来源正文',
+        }),
+      ])
+      .mockResolvedValueOnce([{ type: 'treehole_comment', cnt: 1 }])
+      .mockResolvedValueOnce([{ id: 50, parent_id: 40, parent_content: '父评论' }]);
+
+    const res = await supertest(app()).get('/api/notifications');
+    const item = res.body.data.list[0];
+    expect(item.target.available).toBe(false);
+    expect(item.source_excerpt).toBeNull();
+    expect(item.reply_to_excerpt).toBeNull();
+  });
+
+  it('匿名域不返回 from_user；公开域仍保留', async () => {
+    query
+      .mockResolvedValueOnce([
+        row({ id: 2, type: 'treehole_like' }),
+        row({ id: 3, type: 'club_like', post_id: null, from_user_id: 12, extra: JSON.stringify({ targetType: 'club', targetId: 5 }) }),
+      ])
+      .mockResolvedValueOnce([
+        { type: 'treehole_like', cnt: 1 },
+        { type: 'club_like', cnt: 1 },
+      ]);
+
+    const res = await supertest(app()).get('/api/notifications');
+    const [anonymous, club] = res.body.data.list;
+    expect(anonymous.from_user).toBeUndefined();
+    expect(anonymous.from_user_id).toBeNull();
+    expect(club.from_user).toEqual(expect.objectContaining({ id: 12, username: 'author' }));
+  });
+
+  it('评论通知：target.comment_id 定位；reply_to_excerpt 来自父评论（≠ extra.content）', async () => {
+    query
+      .mockResolvedValueOnce([
+        row({
+          id: 4,
+          type: 'treehole_comment',
+          comment_id: 60,
+          extra: JSON.stringify({ content: '这是新评论本身' }),
+        }),
+      ])
+      .mockResolvedValueOnce([{ type: 'treehole_comment', cnt: 1 }])
+      .mockResolvedValueOnce([{ id: 60, parent_id: 55, parent_content: '这是被回复的原评论' }]);
+
+    const res = await supertest(app()).get('/api/notifications');
+    const item = res.body.data.list[0];
+    expect(item.target.comment_id).toBe(60);
+    expect(item.reply_to_excerpt).toBe('这是被回复的原评论');
+    expect(item.reply_to_excerpt).not.toBe('这是新评论本身');
+    expect(item.source_excerpt).toBe('来源正文');
+  });
+
+  it('未注册的非帖子域（二手）摘要为 null，但字段仍在', async () => {
+    query
+      .mockResolvedValueOnce([
+        row({
+          id: 5,
+          type: 'marketplace_want',
+          post_id: null,
+          extra: JSON.stringify({ targetType: 'marketplace_item', targetId: 77, targetTitle: '旧教材' }),
+        }),
+      ])
+      .mockResolvedValueOnce([{ type: 'marketplace_want', cnt: 1 }]);
+
+    const res = await supertest(app()).get('/api/notifications');
+    const item = res.body.data.list[0];
+    expect(item.source_excerpt).toBeNull();
+    expect(item.reply_to_excerpt).toBeNull();
+    expect(item.target).toEqual(expect.objectContaining({ type: 'marketplace_item', id: 77, comment_id: null }));
   });
 });
