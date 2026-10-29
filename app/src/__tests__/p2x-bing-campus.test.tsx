@@ -1650,6 +1650,110 @@ describe('列表状态闭环 L-3 身份与失效', () => {
   });
 });
 
+describe('列表状态返工 LS-1 GC与自动重读', () => {
+  function batch(kind: 'treehole' | 'wall', id: number, content: string, more = true) {
+    return kind === 'treehole'
+      ? { list: [{ id, content }], hasMore: more }
+      : { items: [{ id, content }], has_older: more, oldest_cursor: id };
+  }
+  const prefixFor = (kind: 'treehole' | 'wall') => kind === 'treehole' ? ['posts', 'infinite'] : ['confessions', 'window'];
+
+  it.each(['treehole', 'wall'] as const)('真实QueryCache GC后更新数据但不产生用户回顶信号（%s）', async (kind) => {
+    jest.useFakeTimers();
+    const client = getQueryClient();
+    const prefix = prefixFor(kind);
+    client.setQueryDefaults(prefix, { gcTime: 1000 });
+    const api = kind === 'treehole' ? list : wall;
+    api.mockResolvedValueOnce(batch(kind, 40, 'GC前内容', false))
+      .mockResolvedValue(batch(kind, 40, 'GC后已更新', false));
+    const view = await renderApp(kind === 'treehole' ? <TreeholeFeed /> : <WallFeed />);
+    try {
+      await waitFor(() => expect(view.getByText('GC前内容')).toBeTruthy());
+      await act(async () => mockListProps.onScrollOffset?.(480));
+      const signal = mockListProps.scrollToTopSignal;
+      const query = client.getQueryCache().findAll({ queryKey: prefix }).find((entry) =>
+        entry.queryKey.includes(kind === 'treehole' ? 'campusReadSnapshot' : 'wallReadSnapshot'));
+      expect(query?.getObserversCount()).toBe(0);
+      await act(async () => { jest.advanceTimersByTime(1001); });
+      expect(view.getByText('GC后已更新')).toBeTruthy();
+      expect(api).toHaveBeenCalledTimes(2);
+      expect(mockListProps.scrollToTopSignal).toBe(signal);
+      expect(secondaryTabStore.get('square', kind === 'treehole' ? 'confession' : 'wall').scrollOffset).toBe(480);
+    } finally {
+      await view.unmount();
+      client.setQueryDefaults(prefix, { gcTime: 900000 });
+      jest.useRealTimers();
+    }
+  });
+
+  it.each(['treehole', 'wall'] as const)('失效重读已加载范围，更新结果且保留页码和位置（%s）', async (kind) => {
+    const api = kind === 'treehole' ? list : wall;
+    api.mockResolvedValueOnce(batch(kind, 40, '旧首批'))
+      .mockResolvedValueOnce(batch(kind, 39, '旧次批'))
+      .mockResolvedValueOnce(batch(kind, 41, '新首批'))
+      .mockResolvedValueOnce(batch(kind, 39, '次批已更新'))
+      .mockResolvedValueOnce(batch(kind, 38, '第三批', false));
+    const view = await renderApp(kind === 'treehole' ? <TreeholeFeed /> : <WallFeed />);
+    await waitFor(() => expect(view.getByText('旧首批')).toBeTruthy());
+    await act(async () => mockListProps.onEndReached());
+    await waitFor(() => expect(view.getByText('旧次批')).toBeTruthy());
+    await act(async () => mockListProps.onScrollOffset?.(480));
+    const signal = mockListProps.scrollToTopSignal;
+    await act(async () => getQueryClient().removeQueries({ queryKey: prefixFor(kind) }));
+    await waitFor(() => expect(view.getByText('次批已更新')).toBeTruthy());
+    expect(view.getByText('新首批')).toBeTruthy();
+    expect(view.queryByText('旧首批')).toBeNull();
+    expect(mockListProps.scrollToTopSignal).toBe(signal);
+    expect(secondaryTabStore.get('square', kind === 'treehole' ? 'confession' : 'wall').scrollOffset).toBe(480);
+    await act(async () => mockListProps.onEndReached());
+    await waitFor(() => expect(view.getByText('第三批')).toBeTruthy());
+    expect(api.mock.calls.map((call) => kind === 'treehole' ? call[0].page : call[0].cursor))
+      .toEqual(kind === 'treehole' ? [1, 2, 1, 2, 3] : [null, 40, null, 41, 39]);
+  });
+
+  it.each(['treehole', 'wall'] as const)('自动重读失败仍可返回原快照，不多发请求或回顶（%s）', async (kind) => {
+    const api = kind === 'treehole' ? list : wall;
+    api.mockResolvedValueOnce(batch(kind, 40, '可恢复的旧内容', false)).mockRejectedValueOnce(new TypeError('offline'));
+    function Harness(): React.ReactElement {
+      const [open, setOpen] = React.useState(true);
+      return <><Button label="模拟详情返回" onPress={() => setOpen(!open)} />
+        {open ? (kind === 'treehole' ? <TreeholeFeed /> : <WallFeed />) : null}</>;
+    }
+    const view = await renderApp(<Harness />);
+    await waitFor(() => expect(view.getByText('可恢复的旧内容')).toBeTruthy());
+    await act(async () => mockListProps.onScrollOffset?.(480));
+    const signal = mockListProps.scrollToTopSignal;
+    await act(async () => getQueryClient().removeQueries({ queryKey: prefixFor(kind) }));
+    expect(view.getByText('刷新失败，重试')).toBeTruthy();
+    expect(mockListProps.scrollToTopSignal).toBe(signal);
+    await fireEvent.press(view.getByText('模拟详情返回'));
+    await fireEvent.press(view.getByText('模拟详情返回'));
+    expect(view.getByText('可恢复的旧内容')).toBeTruthy();
+    expect(mockListProps.restoredScrollOffset).toBe(480);
+    expect(api).toHaveBeenCalledTimes(2);
+  });
+
+  it.each(['treehole', 'wall'] as const)('用户刷新可取代自动重读，自动旧响应不回填（%s）', async (kind) => {
+    let finishOld!: (value: unknown) => void;
+    const api = kind === 'treehole' ? list : wall;
+    api.mockResolvedValueOnce(batch(kind, 40, '原有内容', false))
+      .mockReturnValueOnce(new Promise((resolve) => { finishOld = resolve; }))
+      .mockResolvedValueOnce(batch(kind, 41, '用户刷新内容', false));
+    const view = await renderApp(kind === 'treehole' ? <TreeholeFeed /> : <WallFeed />);
+    await waitFor(() => expect(view.getByText('原有内容')).toBeTruthy());
+    await act(async () => mockListProps.onScrollOffset?.(480));
+    const signal = mockListProps.scrollToTopSignal ?? 0;
+    await act(async () => getQueryClient().removeQueries({ queryKey: prefixFor(kind) }));
+    await act(async () => mockListProps.onRefresh());
+    await waitFor(() => expect(view.getByText('用户刷新内容')).toBeTruthy());
+    expect(mockListProps.scrollToTopSignal).toBeGreaterThan(signal);
+    expect(secondaryTabStore.get('square', kind === 'treehole' ? 'confession' : 'wall').scrollOffset).toBe(0);
+    await act(async () => finishOld(batch(kind, 39, '自动旧响应', false)));
+    expect(view.queryByText('自动旧响应')).toBeNull();
+    expect(view.getByText('用户刷新内容')).toBeTruthy();
+  });
+});
+
 describe('万能墙清单模板图标化', () => {
   it('checklist 每行渲染方框图标，不再出现文字符号', async () => {
     const view = await renderApp(<WallTemplateContent templateKey="checklist" content={'买水\n买咖啡'} />);
