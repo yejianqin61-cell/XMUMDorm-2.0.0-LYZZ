@@ -65,7 +65,9 @@ function WallFeedSession({ testID, identity }: { testID: string; identity: strin
     }
   );
   const [rows, setRows] = React.useState(snapshot.current.rows);
-  const [restoredScrollOffset, setRestoredScrollOffset] = React.useState(snapshot.current.scrollOffset ?? 0);
+  const [restoredScrollOffset, setRestoredScrollOffset] = React.useState(
+    () => cached?.viewerIdentity === identity ? cached.scrollOffset ?? 0 : 0
+  );
   const [scrollToTopSignal, setScrollToTopSignal] = React.useState(0);
   const { pagination, dispatch, persistScrollOffset: persistTabScrollOffset, setCursor } =
     useListPagination({
@@ -106,7 +108,8 @@ function WallFeedSession({ testID, identity }: { testID: string; identity: strin
           if (request !== generation.current) return;
           if (!Array.isArray(data?.items) || typeof data.has_older !== 'boolean') throw { kind: 'content' };
           hasMore = data.has_older;
-          const nextCursor = Number.isSafeInteger(data.oldest_cursor) && data.oldest_cursor > 0 ? data.oldest_cursor : null;
+          const nextCursor = typeof data.oldest_cursor === 'number' && Number.isSafeInteger(data.oldest_cursor) && data.oldest_cursor > 0
+            ? data.oldest_cursor : null;
           // 每个窗口都校验游标进展，自动重读同样不能循环请求。
           if (hasMore && (nextCursor === null || nextCursor === cursor)) throw { kind: 'content' };
           incoming.push(...data.items.map(asWall));

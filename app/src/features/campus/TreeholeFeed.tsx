@@ -111,13 +111,13 @@ function TreeholeFeedSession({ testID, identity }: { testID: string; identity: s
     ...QK.postsInfinite(session.isSignedIn ? '_user' : '_guest', TREEHOLE_PAGE_SIZE),
     'campusSearchState', identity,
   ], [session.isSignedIn, identity]);
-  const initial = React.useRef(client.getQueryData<{
+  const [initial] = React.useState(() => client.getQueryData<{
     expanded: boolean; draft: string; query: string; history: readonly string[];
   }>(searchKey));
-  const [expanded, setExpanded] = React.useState(initial.current?.expanded ?? false);
-  const [draft, setDraft] = React.useState(initial.current?.draft ?? '');
-  const [query, setQuery] = React.useState(initial.current?.query ?? '');
-  const [history, setHistory] = React.useState<readonly string[]>(initial.current?.history ?? []);
+  const [expanded, setExpanded] = React.useState(initial?.expanded ?? false);
+  const [draft, setDraft] = React.useState(initial?.draft ?? '');
+  const [query, setQuery] = React.useState(initial?.query ?? '');
+  const [history, setHistory] = React.useState<readonly string[]>(initial?.history ?? []);
   React.useEffect(() => {
     client.setQueryData(searchKey, { expanded, draft, query, history });
   }, [client, searchKey, expanded, draft, query, history]);
@@ -254,7 +254,9 @@ function TreeholeFeedData({
   const snapshot = React.useRef<Snapshot>(initial.current ?? { rows: [], page: 0, hasMore: true });
   const [rows, setRows] = React.useState(snapshot.current.rows);
   // 恢复值属于当前关键词/筛选的快照，不能取另一个筛选最近写入的Tab位置。
-  const [restoredScrollOffset, setRestoredScrollOffset] = React.useState(snapshot.current.scrollOffset ?? 0);
+  const [restoredScrollOffset, setRestoredScrollOffset] = React.useState(
+    () => client.getQueryData<Snapshot>(key)?.scrollOffset ?? 0
+  );
   const [scrollToTopSignal, setScrollToTopSignal] = React.useState(0);
   const {
     pagination,
