@@ -3,6 +3,7 @@ import { act, fireEvent, waitFor, within } from '@testing-library/react-native';
 import { Button } from '@/components/ui/Button';
 import { TreeholeMedia } from '@/features/campus/TreeholeMedia';
 import type { TreeholeSaveResult } from '@/features/campus/treeholeImageSave';
+import { configureApi } from '../../../shared/api/platform';
 import { renderApp } from './helpers/renderApp';
 
 const urls = ['https://assets.example.test/a.png', 'https://assets.example.test/b.webp'];
@@ -132,4 +133,16 @@ it('英文词条由调用方提供，不硬编码模块中文', async () => {
   await fireEvent.press(view.getByTestId('treehole-save-detail'));
   await waitFor(() => expect(view.getByTestId('treehole-save-detail-notice')).toHaveTextContent(english.saved));
   expect(view.queryByText(messages.saved)).toBeNull();
+});
+
+it('本地uploads路径沿用现有后端地址解析，显示与保存同一真实地址', async () => {
+  configureApi({ baseUrl: 'https://api.example.test' });
+  try {
+    const view = await renderApp(<TreeholeMedia postId={7} urls={['/uploads/posts/local.png']} mode="detail" imageSave={config} />);
+    expect(JSON.stringify(view.getByTestId('treehole-media-detail-image').props.source)).toContain('https://api.example.test/uploads/posts/local.png');
+    await fireEvent.press(view.getByTestId('treehole-save-detail'));
+    await waitFor(() => expect(save).toHaveBeenCalledWith('https://api.example.test/uploads/posts/local.png'));
+    await fireEvent.press(view.getByTestId('treehole-media-drag-area'));
+    expect(JSON.stringify(view.getByTestId('treehole-media-preview-image').props.source)).toContain('https://api.example.test/uploads/posts/local.png');
+  } finally { configureApi({ baseUrl: null }); }
 });
