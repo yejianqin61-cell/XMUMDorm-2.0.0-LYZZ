@@ -11,7 +11,7 @@
 
 import * as React from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
 
@@ -97,10 +97,14 @@ export function CampusDetailScreen({
 }: CampusDetailScreenProps): React.ReactElement {
   const { t, locale } = useI18n();
   const router = useRouter();
-  const { handleAuthFailure } = useSession();
+  const { handleAuthFailure, status: sessionStatus, identifier, isSignedIn } = useSession();
+  const identity = JSON.stringify(kind === 'wall' ? [sessionStatus, identifier, isSignedIn] : []);
+  const identityRef = React.useRef(identity);
+  identityRef.current = identity;
   const theme = useTheme();
   const toast = useToast();
   const [post, setPost] = React.useState<Post | null>(null);
+  const [postIdentity, setPostIdentity] = React.useState<string | null>(null);
   const [error, setError] = React.useState<AppError | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [menuOpen, setMenuOpen] = React.useState(false);
@@ -114,12 +118,23 @@ export function CampusDetailScreen({
   const [deleteCommentId, setDeleteCommentId] = React.useState<string | null>(null);
   const scrollRef = React.useRef<ScrollView | null>(null);
   const generation = React.useRef(0);
+  const readPending = React.useRef<number | null>(null);
+  const loginRequired = React.useRef<string | null>(null);
 
   const load = React.useCallback(async () => {
+    if (readPending.current !== null) return;
     const request = ++generation.current;
+    readPending.current = request;
+    const current = () => request === generation.current && identity === identityRef.current;
     setPost(null);
+    setPostIdentity(null);
     setError(null);
     setLoading(true);
+    setMenuOpen(false);
+    setDeleteOpen(false);
+    setDeleteError(null);
+    setDeleting(false);
+    deleteLocked.current = false;
     try {
       if (!/^[1-9]\d*$/.test(postId) || !Number.isSafeInteger(Number(postId))) throw { kind: 'content' };
       const row =
@@ -127,20 +142,57 @@ export function CampusDetailScreen({
           ? asWall(await getConfession(Number(postId)))
           : asPost(await getPostDetail(Number(postId)));
       if (row.id !== Number(postId)) throw { kind: 'content' };
-      if (request === generation.current) setPost(row);
+      if (current()) {
+        setPost(row);
+        setPostIdentity(identity);
+        loginRequired.current = null;
+      }
     } catch (failure) {
-      if (request === generation.current) setError(errorFor(failure));
+      if (!current()) return;
+      setError(errorFor(failure));
+      const status = (failure as { status?: unknown } | null)?.status;
+      if (kind === 'wall' && status === 401) {
+        loginRequired.current = postId;
+        setDeleteError('login');
+        setLoading(false);
+        await handleAuthFailure(failure).catch(() => undefined);
+      } else if (kind === 'wall' && status === 403) {
+        setDeleteError('denied');
+      }
     } finally {
-      if (request === generation.current) setLoading(false);
+      if (current()) {
+        readPending.current = null;
+        setLoading(false);
+      }
     }
-  }, [postId, kind]);
+  }, [postId, kind, identity, handleAuthFailure]);
 
   React.useEffect(() => {
+    if (kind === 'wall') return;
     void load();
     return () => {
       generation.current++;
+      readPending.current = null;
     };
-  }, [load]);
+  }, [load, kind]);
+
+  useFocusEffect(React.useCallback(() => {
+    if (kind !== 'wall') return;
+    setDeleting(false);
+    deleteLocked.current = false;
+    if (loginRequired.current === postId && !isSignedIn) {
+      // 取消登录仍可再次恢复；不带失效身份重读，也不保留请求中状态。
+      setLoading(false);
+      setDeleteError('login');
+    } else {
+      void load();
+    }
+    return () => {
+      generation.current++;
+      readPending.current = null;
+      deleteLocked.current = false;
+    };
+  }, [kind, postId, isSignedIn, load]));
 
   const actions = useCampusActions(post, kind);
 
@@ -194,7 +246,7 @@ export function CampusDetailScreen({
   }, [kind, published, router]);
 
   const removeWallPost = React.useCallback(async (): Promise<void> => {
-    if (deleteLocked.current) return;
+    if (deleteLocked.current || !isSignedIn || postIdentity !== identity || !post?.is_mine) return;
     deleteLocked.current = true;
     const request = generation.current;
     const deletedId = Number(postId);
@@ -216,12 +268,13 @@ export function CampusDetailScreen({
           deletedIds: [...new Set([...(snapshot.deletedIds ?? []), deletedId])],
         };
       });
-      if (request === generation.current) backToFeed();
+      if (request === generation.current && identity === identityRef.current) backToFeed();
     } catch (failure) {
-      if (request !== generation.current) return;
+      if (request !== generation.current || identity !== identityRef.current) return;
       // shared API 的 Error.status 是 HTTP 状态；403 也用于非作者，不能统一按登录过期处理。
       const status = (failure as { status?: unknown } | null)?.status;
       if (status === 401) {
+        loginRequired.current = postId;
         setDeleteError('login');
         // 即使凭据存储清理失败，页内登录恢复入口仍可用。
         await handleAuthFailure(failure).catch(() => undefined);
@@ -235,12 +288,12 @@ export function CampusDetailScreen({
         setDeleteError('retry');
       }
     } finally {
-      if (request === generation.current) {
+      if (request === generation.current && identity === identityRef.current) {
         deleteLocked.current = false;
         setDeleting(false);
       }
     }
-  }, [backToFeed, handleAuthFailure, postId]);
+  }, [backToFeed, handleAuthFailure, postId, identity, isSignedIn, postIdentity, post?.is_mine]);
 
   const headerOptions = React.useMemo(
     () => ({
@@ -473,7 +526,7 @@ export function CampusDetailScreen({
                 setReportOpen(true);
               }}
               deleteAction={
-                kind === 'wall' && post?.is_mine
+                kind === 'wall' && isSignedIn && postIdentity === identity && post?.is_mine
                   ? {
                       label: t('screen.campus.read.delete'),
                       disabled: deleting || deleteError === 'login' || deleteError === 'denied',
