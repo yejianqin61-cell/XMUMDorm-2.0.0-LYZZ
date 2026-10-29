@@ -31,6 +31,16 @@ it('renders the actions bar in the screen footer slot, outside the scrolling con
   expect(scrollStyle.padding).toBeTruthy();
   expect(view.getByTestId('dish-images-placeholder')).toBeTruthy();
 });
+it('keeps dish images readable when one image fails to load', async () => {
+  jest.mocked(getProduct).mockResolvedValue({ id: 7, name: 'Rice', images: ['/good.png', '/bad.png'],
+    comments: { list: [], page: 1, pageSize: 10, hasMore: false } });
+  const view = await renderApp(<DishDetail />);
+  await waitFor(() => expect(view.getByTestId('dish-images-1-image')).toBeTruthy());
+  await fireEvent(view.getByTestId('dish-images-1-image'), 'error', { nativeEvent: { error: 'unavailable' } });
+  expect(view.getByTestId('dish-images-1-placeholder')).toBeTruthy();
+  expect(view.getByTestId('dish-images-0-image')).toBeTruthy();
+  expect(view.getByTestId('dish-review')).toBeTruthy();
+});
 it('uses one image entry until the review limit and enables it again after removal', async () => {
   const pick = jest.fn().mockResolvedValue({ ok: true, image: { uri: 'file:///meal.png', mimeType: 'image/png', sizeBytes: 10 } });
   const view = await renderApp(<ReviewScreen productId={7} pickImage={pick} />);
