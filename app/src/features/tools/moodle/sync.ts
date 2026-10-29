@@ -31,12 +31,19 @@ export function createMoodleSync(port: MoodleSyncPort) {
   let courseOffsets = new Set<number>();
   let eventCursors = new Set<number>();
   let remaining: number[] = [];
+  let previousData: ReturnType<typeof readMoodleCache> | null = null;
 
   const listeners = new Set<() => void>();
   function changed() { port.changed?.(); for (const listener of listeners) listener(); }
   function subscribe(listener: () => void) { listeners.add(listener); return () => { listeners.delete(listener); }; }
   function fail(reason: MoodleFailure) {
     stopTimer();
+    if ((reason === 'unavailable' || reason === 'timeout') && previousData
+      && generation === moodleCacheGeneration()) {
+      writeMoodleCache('courses', { courses: previousData.courses, nextOffset: 0 }, generation);
+      for (const state of previousData.states) writeMoodleCache('state', state, generation);
+      writeMoodleCache('events', { events: previousData.events, firstId: null, lastId: null }, generation);
+    } else previousData = null;
     pending = null;
     phase = 'error';
     failure = reason;
@@ -44,6 +51,7 @@ export function createMoodleSync(port: MoodleSyncPort) {
   }
   function cancel(clear = true) {
     stopTimer();
+    previousData = null;
     if (clear) clearMoodleCache();
     pending = null;
     phase = 'idle';
@@ -68,6 +76,7 @@ export function createMoodleSync(port: MoodleSyncPort) {
   }
   function start() {
     stopTimer();
+    if (phase === 'ready') previousData = readMoodleCache();
     pending = null;
     phase = 'loading-courses';
     failure = null;
@@ -78,6 +87,7 @@ export function createMoodleSync(port: MoodleSyncPort) {
   }
   function choose(ids: readonly number[]) {
     if (phase !== 'choosing' && phase !== 'ready') return;
+    previousData = null;
     selectedIds = [...new Set(ids)].filter((id) => candidates.has(id));
     selectMoodleCourses(selectedIds);
     generation = moodleCacheGeneration();
@@ -138,6 +148,7 @@ export function createMoodleSync(port: MoodleSyncPort) {
   }
   function adoptCache() {
     stopTimer(); pending = null; failure = null;
+    previousData = null;
     const data = readMoodleCache(); generation = data.generation;
     candidates = new Map(data.courses.map((course) => [course.id, course]));
     selectedIds = data.courses.map((course) => course.id); phase = 'ready'; changed();

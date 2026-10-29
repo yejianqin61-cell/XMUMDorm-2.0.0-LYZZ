@@ -110,7 +110,7 @@ it('p3y3 ends a matched fatal response after host invalidation and bounds missin
   } finally { jest.useRealTimers(); }
 });
 
-it('keeps the last completed courses on a temporary refresh failure but drops them on clear', () => {
+it.each(['unavailable', 'timeout'])('keeps completed courses on %s and replaces them after retry', (failure) => {
   const { sync, reply } = harness();
   sync.start();
   reply({ courses: [course(1)], nextOffset: 0 });
@@ -118,11 +118,30 @@ it('keeps the last completed courses on a temporary refresh failure but drops th
   reply({ courseId: 1, sections: [], modules: [] });
   reply({ events: [], firstId: null, lastId: null });
   sync.start();
-  reply(undefined, 'unavailable');
-  expect(sync.snapshot().failure).toBe('unavailable');
+  reply(undefined, failure);
+  expect(sync.snapshot().failure).toBe(failure);
   expect(sync.snapshot().data.courses.map((item) => item.id)).toEqual([1]);
+  sync.start();
+  reply({ courses: [course(2)], nextOffset: 0 });
+  sync.choose([2]);
+  reply({ courseId: 2, sections: [], modules: [] });
+  reply({ events: [], firstId: null, lastId: null });
+  expect(sync.snapshot().phase).toBe('ready');
+  expect(sync.snapshot().data.courses.map((item) => item.id)).toEqual([2]);
   sync.cancel();
   expect(sync.snapshot().data.courses).toEqual([]);
+});
+
+it.each(['expired', 'denied', 'wrong-origin'])('does not restore content after %s', (failure) => {
+  const { sync, reply } = harness();
+  sync.start();
+  reply({ courses: [course(1)], nextOffset: 0 });
+  sync.choose([1]);
+  reply({ courseId: 1, sections: [], modules: [] });
+  reply({ events: [], firstId: null, lastId: null });
+  sync.start();
+  reply(undefined, failure);
+  expect(readMoodleCache().courses).toEqual([]);
 });
 
 it('does not restore previous content after cache invalidation during refresh', () => {
