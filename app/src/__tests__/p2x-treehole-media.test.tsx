@@ -6,7 +6,9 @@
  * - 媒体块外面套了一层 HeroUI Card（Surface 套 Surface，图片只有 83.6% 宽）：现在不套卡。
  */
 
-import { fireEvent, waitFor } from '@testing-library/react-native';
+import * as React from 'react';
+import { Button } from '@/components/ui/Button';
+import { act, fireEvent, waitFor } from '@testing-library/react-native';
 import {
   resolveTreeholeSwipe,
   treeholeDeckLayers,
@@ -192,5 +194,99 @@ describe('P2X TreeholeMedia', () => {
   it('帖子 ID 或图片序列变化拥有新的重置键', () => {
     expect(treeholeMediaKey(7, urls)).not.toBe(treeholeMediaKey(8, urls));
     expect(treeholeMediaKey(7, urls)).not.toBe(treeholeMediaKey(7, [...urls].reverse()));
+  });
+});
+
+// 审查19242c4的真实组件探针；保留原生事件包装回调，以模拟请求完成与切图交错。
+describe('树洞图片请求归属', () => {
+  const loading = { includeHiddenElements: true };
+  const eventFor = (uri: string) => ({ nativeEvent: {
+    source: { url: uri, width: 100, height: 100 }, error: 'late request',
+  } });
+  type View = Awaited<ReturnType<typeof renderApp>>;
+  const front = (view: View) => view.getByTestId('treehole-media-detail-image');
+  const switchNext = (view: View) => fireEvent(view.getByTestId('treehole-media-drag-area'),
+    'accessibilityAction', { nativeEvent: { actionName: 'increment' } });
+  const expectSource = (view: View, uri: string) => waitFor(() =>
+    expect(JSON.stringify(front(view).props.source)).toContain(uri));
+  async function expectReady(view: View, uri: string) {
+    expect(view.queryByTestId('treehole-media-error')).toBeNull();
+    expect(view.queryByTestId('treehole-media-detail-loading', loading)).toBeNull();
+    await fireEvent.press(view.getByTestId('treehole-media-drag-area'));
+    expect(JSON.stringify(view.getByTestId('treehole-media-preview-image').props.source)).toContain(uri);
+  }
+
+  it.each(['onError', 'onLoad'] as const)('B成功后A迟到%s不改变B预览与骨架', async (event) => {
+    const view = await renderApp(<TreeholeMedia postId={7} urls={urls} mode="detail" />);
+    const oldCallback = front(view).props[event];
+    await switchNext(view);
+    await expectSource(view, urls[1]);
+    await act(async () => front(view).props.onLoad(eventFor(urls[1])));
+    expect(view.queryByTestId('treehole-media-error')).toBeNull();
+    expect(view.queryByTestId('treehole-media-detail-loading', loading)).toBeNull();
+    await act(async () => oldCallback(eventFor(urls[0])));
+    await expectReady(view, urls[1]);
+  });
+
+  it.each(['onError', 'onLoad'] as const)('同图重试前的%s不能提前结束加载或覆盖新成功', async (event) => {
+    const view = await renderApp(<TreeholeMedia postId={7} urls={[urls[0]]} mode="detail" />);
+    const oldCallback = front(view).props[event];
+    await fireEvent(front(view), 'error', eventFor(urls[0]));
+    await fireEvent.press(view.getByTestId('treehole-media-retry'));
+    const newLoad = front(view).props.onLoad;
+    await act(async () => oldCallback(eventFor(urls[0])));
+    expect(view.queryByTestId('treehole-media-error')).toBeNull();
+    expect(view.getByTestId('treehole-media-detail-loading', loading)).toBeTruthy();
+    await act(async () => newLoad(eventFor(urls[0])));
+    await act(async () => oldCallback(eventFor(urls[0])));
+    await expectReady(view, urls[0]);
+  });
+
+  it.each(['onError', 'onLoad'] as const)('A到B再到A时旧A的%s不属于新A请求', async (event) => {
+    const view = await renderApp(<TreeholeMedia postId={7} urls={urls.slice(0, 2)} mode="detail" />);
+    const oldCallback = front(view).props[event];
+    await switchNext(view);
+    await expectSource(view, urls[1]);
+    await switchNext(view);
+    await expectSource(view, urls[0]);
+    await act(async () => oldCallback(eventFor(urls[0])));
+    expect(view.queryByTestId('treehole-media-error')).toBeNull();
+    expect(view.getByTestId('treehole-media-detail-loading', loading)).toBeTruthy();
+    await fireEvent(front(view), 'load', eventFor(urls[0]));
+    await expectReady(view, urls[0]);
+  });
+
+  it('快速切过未加载A和B，旧回调不覆盖最终C的请求状态', async () => {
+    const view = await renderApp(<TreeholeMedia postId={7} urls={urls} mode="detail" />);
+    const oldA = front(view).props.onError;
+    await switchNext(view);
+    await expectSource(view, urls[1]);
+    const oldB = front(view).props.onLoad;
+    await switchNext(view);
+    await expectSource(view, urls[2]);
+    await act(async () => { oldB(eventFor(urls[1])); oldA(eventFor(urls[0])); });
+    expect(view.queryByTestId('treehole-media-error')).toBeNull();
+    expect(view.getByTestId('treehole-media-detail-loading', loading)).toBeTruthy();
+    await fireEvent(front(view), 'load', eventFor(urls[2]));
+    await expectReady(view, urls[2]);
+  });
+
+  it.each(['post', 'url'] as const)('媒体身份变化（%s）后旧请求失效', async (change) => {
+    function Harness() {
+      const [changed, setChanged] = React.useState(false);
+      return <><Button label="更换媒体" onPress={() => setChanged(true)} />
+        <TreeholeMedia postId={changed && change === 'post' ? 8 : 7}
+          urls={changed && change === 'url' ? [urls[1]] : [urls[0]]} mode="detail" /></>;
+    }
+    const view = await renderApp(<Harness />);
+    const oldLoad = front(view).props.onLoad;
+    const oldError = front(view).props.onError;
+    await fireEvent.press(view.getByText('更换媒体'));
+    await act(async () => { oldLoad(eventFor(urls[0])); oldError(eventFor(urls[0])); });
+    expect(view.queryByTestId('treehole-media-error')).toBeNull();
+    expect(view.getByTestId('treehole-media-detail-loading', loading)).toBeTruthy();
+    const current = change === 'url' ? urls[1] : urls[0];
+    await fireEvent(front(view), 'load', eventFor(current));
+    await expectReady(view, current);
   });
 });
