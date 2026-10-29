@@ -24,6 +24,7 @@ import { useTheme } from '@/design-system/theme';
 import { useI18n } from '@/i18n';
 import { TreeholeImageSaveControls, useTreeholeImageSave } from './TreeholeImageSaveControls';
 import type { TreeholeImageSaveOptions } from './TreeholeImageSaveControls';
+import { getUploadUrl } from '../../../../shared/api/config';
 
 export type TreeholeMediaMode = 'feed' | 'detail';
 
@@ -97,10 +98,12 @@ export function TreeholeMedia({
   imageSave?: TreeholeImageSaveOptions;
 }): React.ReactElement | null {
   if (urls.length === 0) return null;
+  // posts生产端可能返回本地/uploads路径；展示、预览和保存始终消费同一解析结果。
+  const mediaUrls = urls.map(url => url.startsWith('/uploads/') ? getUploadUrl(url) : url);
   return mode === 'feed' ? (
-    <TreeholeFeedMedia postId={postId} urls={urls} />
+    <TreeholeFeedMedia postId={postId} urls={mediaUrls} />
   ) : (
-    <TreeholeDetailMedia key={treeholeMediaKey(postId, urls)} urls={urls} imageSave={imageSave} />
+    <TreeholeDetailMedia key={treeholeMediaKey(postId, mediaUrls)} urls={mediaUrls} imageSave={imageSave} />
   );
 }
 
