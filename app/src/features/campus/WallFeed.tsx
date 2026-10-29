@@ -141,9 +141,10 @@ export function WallFeed({ testID = 'wall-feed' }: { testID?: string }): React.R
   // 详情删除会更新快照；仍挂载在返回栈中的列表也要同步，不能只在重挂时读一次。
   React.useEffect(() => {
     const snapshotKey = JSON.stringify(key);
+    let publishing = false;
     return client.getQueryCache().subscribe((event) => {
       if (
-        event.type !== 'updated' || event.action.type !== 'success' ||
+        publishing || event.type !== 'updated' || event.action.type !== 'success' ||
         JSON.stringify(event.query.queryKey) !== snapshotKey
       ) return;
       const next = client.getQueryData<WallFeedSnapshot>(key);
@@ -157,7 +158,15 @@ export function WallFeed({ testID = 'wall-feed' }: { testID?: string }): React.R
         } : next;
         snapshot.current = merged;
         setRows(merged.rows);
-        if (merged !== next) client.setQueryData(key, merged);
+        if (merged !== next) {
+          // setQueryData 也会同步通知此订阅；结构共享可能返回旧对象，不能用引用变化防重入。
+          publishing = true;
+          try {
+            snapshot.current = client.setQueryData<WallFeedSnapshot>(key, merged) ?? merged;
+          } finally {
+            publishing = false;
+          }
+        }
       }
     });
   }, [client, key]);
