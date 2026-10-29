@@ -123,6 +123,14 @@ describe('P2B-03 M-11 会话列表页', () => {
       );
       expect(merged.map((row) => row.thread_id)).toEqual([21, 20]);
     });
+
+    it('空时间不会被猜成最新时间', () => {
+      const merged = mergeThreadRows([], [
+        { ...ROW, thread_id: 30, last_message_at: null },
+        { ...ROW, thread_id: 31, last_message_at: '2026-10-29 10:00:00' },
+      ]);
+      expect(merged.map((row) => row.thread_id)).toEqual([31, 30]);
+    });
   });
 
   describe('TC-P2B-03-4A · 空态与错误态是两件事', () => {
