@@ -22,11 +22,15 @@ import { asWall, errorFor, type Post } from './campusModel';
 /** 万能墙一屏一篇的窗口大小（后端 limit 1–10） */
 export const WALL_WINDOW_LIMIT = 5;
 
-type Snapshot = {
+export type WallFeedSnapshot = {
   rows: readonly Post[];
   cursor: number | null;
   hasMore: boolean;
   scrollOffset?: number;
+  /** 服务端已确认删除；与窗口快照同寿命，刷新/分页不得重新引入。 */
+  deletedIds?: readonly number[];
+  /** 从详情直接删除时可能尚无列表，标记空快照仍需首次加载。 */
+  needsRefresh?: boolean;
 };
 
 export function WallFeed({ testID = 'wall-feed' }: { testID?: string }): React.ReactElement {
@@ -34,8 +38,8 @@ export function WallFeed({ testID = 'wall-feed' }: { testID?: string }): React.R
   const router = useRouter();
   const client = getQueryClient();
   const key = React.useMemo(() => [...QK.confessionWindow('_guest'), 'wallReadSnapshot'], []);
-  const initial = React.useRef(client.getQueryData<Snapshot>(key));
-  const snapshot = React.useRef<Snapshot>(
+  const initial = React.useRef(client.getQueryData<WallFeedSnapshot>(key));
+  const snapshot = React.useRef<WallFeedSnapshot>(
     initial.current ?? { rows: [], cursor: null, hasMore: true }
   );
   const [rows, setRows] = React.useState(snapshot.current.rows);
@@ -91,12 +95,20 @@ export function WallFeed({ testID = 'wall-feed' }: { testID?: string }): React.R
           throw { kind: 'content' };
         }
         const unique = new Map<number, Post>();
-        for (const row of mode === 'refresh' ? [] : snapshot.current.rows) unique.set(row.id, row);
-        for (const row of incoming) unique.set(row.id, row);
-        const next: Snapshot = {
+        // 在响应落地时读取最新删除回执，覆盖请求发出后发生的删除。
+        const deletedIds = snapshot.current.deletedIds;
+        const deleted = new Set(deletedIds);
+        for (const row of mode === 'refresh' ? [] : snapshot.current.rows) {
+          if (!deleted.has(row.id)) unique.set(row.id, row);
+        }
+        for (const row of incoming) {
+          if (!deleted.has(row.id)) unique.set(row.id, row);
+        }
+        const next: WallFeedSnapshot = {
           rows: Array.from(unique.values()),
           cursor,
           hasMore,
+          deletedIds,
           scrollOffset: mode === 'refresh' ? 0 : snapshot.current.scrollOffset,
         };
         snapshot.current = next;
@@ -119,7 +131,7 @@ export function WallFeed({ testID = 'wall-feed' }: { testID?: string }): React.R
     [client, dispatch, key, persistScrollOffset, setCursor]
   );
   React.useEffect(() => {
-    if (!initial.current) void load('refresh');
+    if (!initial.current || initial.current.needsRefresh) void load('refresh');
     return () => {
       generation.current++;
       pending.current = null;
@@ -134,7 +146,7 @@ export function WallFeed({ testID = 'wall-feed' }: { testID?: string }): React.R
         event.type !== 'updated' || event.action.type !== 'success' ||
         JSON.stringify(event.query.queryKey) !== snapshotKey
       ) return;
-      const next = client.getQueryData<Snapshot>(key);
+      const next = client.getQueryData<WallFeedSnapshot>(key);
       if (next && next !== snapshot.current) {
         snapshot.current = next;
         setRows(next.rows);

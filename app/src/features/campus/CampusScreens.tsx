@@ -38,7 +38,7 @@ import { QK } from '../../../../shared/query/queryKeys';
 import { formatPostTime } from '../../../../shared/utils/formatTime';
 import { asPost, asWall, errorFor, type Post } from './campusModel';
 import { TreeholeFeed } from './TreeholeFeed';
-import { WallFeed } from './WallFeed';
+import { WallFeed, type WallFeedSnapshot } from './WallFeed';
 import { TreeholePostDetail } from './TreeholePostDetail';
 import { toTreeholePostViewModel } from './treeholePostViewModel';
 import { WallTemplateContent } from './wallTemplates';
@@ -206,10 +206,14 @@ export function CampusDetailScreen({
       }
       const client = getQueryClient();
       const snapshotKey = [...QK.confessionWindow('_guest'), 'wallReadSnapshot'];
-      const snapshot = client.getQueryData<{ rows?: { id: number }[] }>(snapshotKey);
-      if (snapshot && Array.isArray(snapshot.rows)) {
-        client.setQueryData(snapshotKey, { ...snapshot, rows: snapshot.rows.filter((row) => row.id !== deletedId) });
-      }
+      client.setQueryData<WallFeedSnapshot>(snapshotKey, (previous) => {
+        const snapshot = previous ?? { rows: [], cursor: null, hasMore: true, needsRefresh: true };
+        return {
+          ...snapshot,
+          rows: snapshot.rows.filter((row) => row.id !== deletedId),
+          deletedIds: [...new Set([...(snapshot.deletedIds ?? []), deletedId])],
+        };
+      });
       if (request === generation.current) backToFeed();
     } catch {
       if (request === generation.current) setDeleteError(true);
