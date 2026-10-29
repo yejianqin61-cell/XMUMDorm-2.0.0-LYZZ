@@ -97,7 +97,8 @@ function decodeThreadCursor(raw) {
   if (typeof raw !== 'string' || !raw) return null;
   try {
     const value = JSON.parse(Buffer.from(raw, 'base64url').toString('utf8'));
-    if (typeof value.lastMessageAt !== 'string' || !Number.isInteger(Number(value.id)) || Number(value.id) <= 0) return null;
+    if (value.lastMessageAt !== null && typeof value.lastMessageAt !== 'string') return null;
+    if (!Number.isInteger(Number(value.id)) || Number(value.id) <= 0) return null;
     return { lastMessageAt: value.lastMessageAt, id: Number(value.id) };
   } catch (_) {
     return null;
@@ -962,10 +963,14 @@ router.get('/chat/threads', authenticateToken, async (req, res) => {
     const cursor = req.query.cursor == null ? null : decodeThreadCursor(req.query.cursor);
     if (req.query.cursor != null && !cursor) return res.status(400).json({ status: -1, message: 'cursor 不合法' });
     const cursorSql = cursor
-      ? ' AND (t.last_message_at < ? OR (t.last_message_at = ? AND t.id < ?))'
+      ? cursor.lastMessageAt === null
+        ? ' AND t.last_message_at IS NULL AND t.id < ?'
+        : ' AND (t.last_message_at < ? OR (t.last_message_at = ? AND t.id < ?) OR t.last_message_at IS NULL)'
       : '';
     const params = cursor
-      ? [userId, userId, userId, userId, cursor.lastMessageAt, cursor.lastMessageAt, cursor.id]
+      ? cursor.lastMessageAt === null
+        ? [userId, userId, userId, userId, cursor.id]
+        : [userId, userId, userId, userId, cursor.lastMessageAt, cursor.lastMessageAt, cursor.id]
       : [userId, userId, userId, userId];
 
     const rows = await query(
