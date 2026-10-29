@@ -221,3 +221,30 @@ it('reports an unknown login page load failure and lets the user retry', async (
   expect(view.queryByText('failure unavailable')).toBeNull();
   await view.unmount(); await settleMoodleStorage();
 });
+
+it('opens the selected discussion original after its detail fails and preserves the retry target', async () => {
+  const onOriginal = jest.fn();
+  const view = await renderApp(<MoodleWorkspaceHost labels={labels} now={() => now}
+    onOpenOriginal={onOriginal} />, { inScreen: true });
+  await confirm();
+  await fireEvent.press(view.getByTestId('moodle-sync'));
+  await core('courses', { courses: [course], nextOffset: 0 });
+  await fireEvent.press(view.getByTestId('moodle-select-1'));
+  await fireEvent.press(view.getByTestId('moodle-confirm-selection'));
+  await core('state', state);
+  await core('events', { events: [], firstId: null, lastId: null });
+  await fireEvent.press(view.getByTestId('moodle-module-101'));
+  await message({ kind: 'dorm:moodle:detail', requestId: requestId('detail'), status: 'success', data: {
+    kind: 'forum', courseId: 1, moduleId: 101, url: moduleUrl, description: '',
+    announcements: [{ id: 71, title: 'Selected discussion', author: 'Dr One', pinned: false, url: discussionUrl }],
+  } });
+  await fireEvent.press(view.getByTestId('moodle-discussion-71'));
+  const failedId = requestId('detail');
+  await message({ kind: 'dorm:moodle:detail', requestId: failedId, status: 'timeout' });
+  await fireEvent.press(view.getByText('Original'));
+  expect(onOriginal).toHaveBeenCalledWith(discussionUrl);
+  await fireEvent.press(view.getByTestId('moodle-detail-retry'));
+  expect(requestId('detail')).not.toBe(failedId);
+  expect(mockInject.mock.calls.at(-1)?.[0]).toContain(discussionUrl);
+  await view.unmount(); await settleMoodleStorage();
+});
