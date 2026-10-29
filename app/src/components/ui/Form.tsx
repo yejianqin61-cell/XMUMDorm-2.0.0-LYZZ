@@ -425,10 +425,19 @@ export type FormLabels = {
   leaveCancel: string;
 };
 
+/**
+ * 提交位（S2-01）：`inline` 是**既有默认**（动作行在滚动内容末尾，7 个既有消费页零变化）；
+ * `footer` 把动作行交给**唯一安全区容器**的 `footer` 槽（键盘与底部留白都在那里合并计算）。
+ * ⛔ 只有发布表单启用 footer；表单自己不计算任何 inset。
+ */
+export type SubmitPlacement = 'inline' | 'footer';
+
 export type FormProps = {
   titleKey?: MessageKey;
   unreadCount?: ScreenProps['unreadCount'];
   onMailboxPress?: ScreenProps['onMailboxPress'];
+  /** 提交位形态；默认 `inline`（既有行为）。 */
+  submitPlacement?: SubmitPlacement;
   /** 路由宿主启用系统返回保护；非导航环境的原语消费者不挂导航 hook。 */
   guardNavigation?: boolean;
   form: UseFormReturn;
@@ -490,6 +499,7 @@ export function Form({
   titleKey,
   unreadCount,
   onMailboxPress,
+  submitPlacement = 'inline',
   guardNavigation = false,
   form,
   sections,
@@ -516,8 +526,55 @@ export function Form({
   const validating = form.state.status === 'validating';
   const leaveGuard = useFormLeaveGuard({ dirty: form.shouldConfirmLeave, busy, discardDraft: form.discardDraft });
 
+  /**
+   * 动作行是**同一个元素树**，只换挂载位置（⛔ 不做第二套按钮实现）。
+   * `footer` 模式下 `Screen` 会忽略 `bottomMode`，底部留白归 footer 自己算
+   * （`resolveFooterBottomPadding`：键盘优先 / 收起用 bottomInset）——所以这里只给内边距。
+   */
+  const actionRow = (
+    <View style={{ flexDirection: 'row', gap: theme.space('space_2') }}>
+      <Button
+        testID={testID ? `${testID}-submit` : undefined}
+        label={labels.submit}
+        variant="primary"
+        loading={busy || validating}
+        onPress={() => {
+          void form.submit();
+        }}
+      />
+      {labels.cancel ? (
+        <Button
+          testID={testID ? `${testID}-cancel` : undefined}
+          label={labels.cancel}
+          variant="ghost"
+          disabled={busy}
+          onPress={() => {
+            // 有未保存内容就先确认（DirtyGuard）
+            leaveGuard.requestLeave(onCancel ?? (() => undefined));
+          }}
+        />
+      ) : null}
+    </View>
+  );
+  const footer =
+    submitPlacement === 'footer' ? (
+      <View
+        testID={testID ? `${testID}-actions` : undefined}
+        style={{ paddingHorizontal: theme.space('space_4'), paddingTop: theme.space('space_2') }}
+      >
+        {actionRow}
+      </View>
+    ) : undefined;
+
   return (
-    <Screen bottomMode="own" testID={testID} titleKey={titleKey} unreadCount={unreadCount} onMailboxPress={onMailboxPress}>
+    <Screen
+      bottomMode="own"
+      footer={footer}
+      testID={testID}
+      titleKey={titleKey}
+      unreadCount={unreadCount}
+      onMailboxPress={onMailboxPress}
+    >
       {guardNavigation ? <FormNavigationGuard prevent={leaveGuard.prevent} onBlocked={leaveGuard.requestLeave} /> : null}
       <ScrollView
         // ⛔ 提交中**不得**整屏变灰（§3.2.5-④）：表单保持可用，只有主按钮 loading
@@ -554,30 +611,8 @@ export function Form({
           </FormSection>
         ))}
 
-        {/* 粘性底栏：主行动 + 次行动（§3.2.1 的 Footer） */}
-        <View style={{ flexDirection: 'row', gap: theme.space('space_2') }}>
-          <Button
-            testID={testID ? `${testID}-submit` : undefined}
-            label={labels.submit}
-            variant="primary"
-            loading={busy || validating}
-            onPress={() => {
-              void form.submit();
-            }}
-          />
-          {labels.cancel ? (
-            <Button
-              testID={testID ? `${testID}-cancel` : undefined}
-              label={labels.cancel}
-              variant="ghost"
-              disabled={busy}
-              onPress={() => {
-                // 有未保存内容就先确认（DirtyGuard）
-                leaveGuard.requestLeave(onCancel ?? (() => undefined));
-              }}
-            />
-          ) : null}
-        </View>
+        {/* inline 模式：动作行在内容末尾（既有行为）；footer 模式由 Screen 的 footer 槽承载 */}
+        {submitPlacement === 'inline' ? actionRow : null}
       </ScrollView>
 
       {/* DirtyGuard：仅在**真有**未保存内容时触发（§3.2.1） */}
