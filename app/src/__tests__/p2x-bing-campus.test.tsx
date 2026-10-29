@@ -875,7 +875,7 @@ describe('万能墙删除自己的帖子', () => {
     expect(wall).toHaveBeenCalledTimes(1);
   });
 
-  it.each([401, 403, 404, 500, 'invalid-ack'] as const)('删除未成功时保留详情和列表（%s）', async (failure) => {
+  it.each([500, 'invalid-ack'] as const)('删除未成功时保留详情和列表（%s）', async (failure) => {
     wall.mockResolvedValue({ items: [{ id: 40, content: '我的墙帖', template_key: 'note', viewer_is_author: true }], has_older: false, oldest_cursor: 40 });
     wallDetail.mockResolvedValue({ id: 40, content: '我的墙帖', template_key: 'note', viewer_is_author: true });
     if (failure === 'invalid-ack') removeConfession.mockResolvedValue({ status: -1 });
@@ -893,6 +893,66 @@ describe('万能墙删除自己的帖子', () => {
     expect(routerMock.back).not.toHaveBeenCalled();
     expect(routerMock.replace).not.toHaveBeenCalled();
     expect(getQueryClient().getQueryData<{ rows: { id: number }[] }>([...QK.confessionWindow('_guest'), 'wallReadSnapshot'])?.rows.map((row) => row.id)).toEqual([40]);
+  });
+
+  it.each([401, 403, 404])('D-2 删除 HTTP %s 提供对应恢复动作，不伪装成功', async (status) => {
+    wall.mockResolvedValue(windowRows([40, 39]));
+    wallDetail.mockResolvedValue(windowRows([40]).items[0]);
+    const failure = Object.assign(new Error('internal-secret'), { status, apiStatus: -1, body: { status: -1, message: 'internal-secret' } });
+    removeConfession.mockRejectedValue(failure);
+    const view = await renderApp(<DeletionFlow remountFeed={false} />);
+    await waitFor(() => expect(view.getByTestId('campus-row-40')).toBeTruthy());
+    await confirmDelete(view);
+    if (status === 404) {
+      await waitFor(() => expect(view.getByTestId('campus-detail-empty')).toHaveTextContent(/内容不存在或已删除/));
+      expect(view.queryByTestId('campus-detail-more')).toBeNull();
+    } else {
+      await waitFor(() => expect(view.getByTestId('wall-delete-notice')).toHaveTextContent(status === 401 ? /登录已过期/ : /当前账号不能进行此操作/));
+      expect(view.getByTestId('campus-detail-more')).toBeTruthy();
+      expect(within(view.getByTestId('wall-delete-notice')).queryByText('重试')).toBeNull();
+    }
+    expect(view.queryByText('internal-secret')).toBeNull();
+    expect(view.getByTestId('campus-row-40')).toBeTruthy();
+    expect(routerMock.back).not.toHaveBeenCalled();
+    expect(routerMock.replace).not.toHaveBeenCalled();
+    const cached = getQueryClient().getQueryData<{ rows: { id: number }[]; deletedIds?: number[] }>([...QK.confessionWindow('_guest'), 'wallReadSnapshot']);
+    expect(cached?.rows.map((row) => row.id)).toEqual([40, 39]);
+    expect(cached?.deletedIds ?? []).toEqual([]);
+    if (status === 401) {
+      expect(mockAuthFailure).toHaveBeenCalledWith(failure);
+      await fireEvent.press(within(view.getByTestId('wall-delete-notice')).getByText('登录'));
+      expect(routerMock.push).toHaveBeenCalledWith('/login');
+    } else {
+      expect(mockAuthFailure).not.toHaveBeenCalled();
+      const recovery = view.getByTestId(status === 404 ? 'campus-detail-empty' : 'wall-delete-notice');
+      await fireEvent.press(within(recovery).getByText('返回列表'));
+      await waitFor(() => expect(view.queryByTestId('campus-detail')).toBeNull());
+      expect(removeConfession).toHaveBeenCalledTimes(1);
+      // 失败回执不剔除缓存；用户随后真实刷新才按服务端列表收敛。
+      wall.mockResolvedValueOnce(windowRows([39]));
+      await act(async () => mockListProps.onRefresh());
+      await waitFor(() => expect(view.queryByTestId('campus-row-40')).toBeNull());
+      expect(view.getByTestId('campus-row-39')).toBeTruthy();
+    }
+  });
+
+  it('D-2 断网保留内容，提示中的重试再次确认后可成功', async () => {
+    wall.mockResolvedValue(windowRows([40, 39]));
+    wallDetail.mockResolvedValue(windowRows([40]).items[0]);
+    removeConfession.mockRejectedValueOnce(new TypeError('Network request failed')).mockResolvedValue({ status: 0 });
+    const view = await renderApp(<DeletionFlow remountFeed={false} />);
+    await waitFor(() => expect(view.getByTestId('campus-row-40')).toBeTruthy());
+    await confirmDelete(view);
+    await waitFor(() => expect(view.getByTestId('wall-delete-notice')).toHaveTextContent(/帖子未删除/));
+    expect(view.getByTestId('campus-row-40')).toBeTruthy();
+    expect(view.getByTestId('campus-detail-more')).toBeTruthy();
+    await fireEvent.press(within(view.getByTestId('wall-delete-notice')).getByText('重试'));
+    expect(removeConfession).toHaveBeenCalledTimes(1);
+    await fireEvent.press(within(view.getByTestId('wall-delete-dialog')).getAllByText('删除').at(-1)!);
+    await waitFor(() => expect(view.queryByTestId('campus-row-40')).toBeNull());
+    expect(view.getByTestId('campus-row-39')).toBeTruthy();
+    expect(routerMock.back).toHaveBeenCalledTimes(1);
+    expect(mockAuthFailure).not.toHaveBeenCalled();
   });
 
   it('取消确认不会发送删除请求', async () => {
