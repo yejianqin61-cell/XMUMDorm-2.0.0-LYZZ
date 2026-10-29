@@ -1113,17 +1113,29 @@ router.get('/feed', async (req, res, next) => {
     const page = Math.max(1, toInt(req.query.page, 1));
     const pageSize = Math.min(30, Math.max(5, toInt(req.query.pageSize, 10)));
     const offset = (page - 1) * pageSize;
+    // clubId 可选：社团主页的动态流只看本社团；不传则看全站动态。
+    const rawClubId = req.query.clubId;
+    const clubId = rawClubId === undefined || rawClubId === '' ? null : toInt(rawClubId, 0);
+    if (clubId !== null && clubId <= 0) {
+      return res.status(400).json({ status: -1, message: '无效社团ID' });
+    }
+    const clubFilter = (alias) => (clubId === null ? '' : `WHERE ${alias}.club_id = ?`);
+    const clubParams = clubId === null ? [] : [clubId];
+    // 每类各取 offset+pageSize 条前缀，合并后再切页：保证跨页顺序稳定，
+    // 不会像「两类各取一页再拼」那样在第 2 页漏掉或重复条目。
+    const prefixLimit = offset + pageSize;
 
-    // Simple strategy: take latest activities + latest posts then merge by created_at.
     const [actRows, postRows] = await Promise.all([
       query(
         `
       SELECT a.*, c.name AS club_name, c.category AS club_category
       FROM club_activities a
       JOIN clubs c ON c.id = a.club_id
-      ORDER BY a.created_at DESC
-      LIMIT ${pageSize} OFFSET ${offset};
-      `
+      ${clubFilter('a')}
+      ORDER BY a.created_at DESC, a.id DESC
+      LIMIT ${prefixLimit};
+      `,
+        clubParams
       ),
       query(
         `
@@ -1132,14 +1144,27 @@ router.get('/feed', async (req, res, next) => {
              p.images, p.created_at, p.club_id, c.name AS club_name, c.category AS club_category
       FROM club_posts p
       JOIN clubs c ON c.id = p.club_id
-      ORDER BY p.created_at DESC
-      LIMIT ${pageSize} OFFSET ${offset};
-      `
+      ${clubFilter('p')}
+      ORDER BY p.created_at DESC, p.id DESC
+      LIMIT ${prefixLimit};
+      `,
+        clubParams
       ),
     ]);
 
-    const actIds = (actRows || []).map((r) => Number(r.id));
-    const postIds = (postRows || []).map((r) => Number(r.id));
+    const merged = [
+      ...(actRows || []).map((row) => ({ type: 'activity', row })),
+      ...(postRows || []).map((row) => ({ type: 'post', row })),
+    ].sort((left, right) => {
+      const byTime = new Date(right.row.created_at).getTime() - new Date(left.row.created_at).getTime();
+      if (byTime !== 0) return byTime;
+      // 同一时刻用类型和 id 兜底，保证同一页在两次请求里顺序一致。
+      if (left.type !== right.type) return left.type === 'activity' ? -1 : 1;
+      return Number(right.row.id) - Number(left.row.id);
+    });
+    const pageRows = merged.slice(offset, offset + pageSize);
+    const actIds = pageRows.filter((entry) => entry.type === 'activity').map((entry) => Number(entry.row.id));
+    const postIds = pageRows.filter((entry) => entry.type === 'post').map((entry) => Number(entry.row.id));
     // 分类型 IN 可走 (target_type,target_id) / 主键；大 OR 在部分 MySQL 版本上计划较差，故四路并行
     const [actStats, postStats, actLiked, postLiked] = await Promise.all([
       getStatsForTargets('activity', actIds),
@@ -1148,48 +1173,46 @@ router.get('/feed', async (req, res, next) => {
       getViewerLikedMap(viewerId, 'post', postIds),
     ]);
 
-    const items = [
-      ...(actRows || []).map((r) => {
-        const media = activityMediaForClient(r);
+    const items = pageRows.map(({ type, row }) => {
+      if (type === 'activity') {
+        const media = activityMediaForClient(row);
         return {
           type: 'activity',
-          id: r.id,
+          id: row.id,
           cover: media.cover,
           images: media.images,
-          title: r.title,
-          summary: r.summary || '',
-          clubId: r.club_id,
-          clubName: r.club_name,
-          clubCategory: r.club_category || null,
-          tag: r.tag || null,
-          status: computeActivityStatus2(r),
-          createdAt: r.created_at,
-          stats: actStats.get(Number(r.id)) || { likes: 0, views: 0 },
-          viewer: { liked: !!actLiked.get(Number(r.id)) },
+          title: row.title,
+          summary: row.summary || '',
+          clubId: row.club_id,
+          clubName: row.club_name,
+          clubCategory: row.club_category || null,
+          tag: row.tag || null,
+          status: computeActivityStatus2(row),
+          createdAt: row.created_at,
+          stats: actStats.get(Number(row.id)) || { likes: 0, views: 0 },
+          viewer: { liked: !!actLiked.get(Number(row.id)) },
         };
-      }),
-      ...(postRows || []).map((r) => ({
+      }
+      return {
         type: 'post',
-        id: r.id,
+        id: row.id,
         cover: (() => {
-          const keys = parseJsonImageArray(r.images, 4);
+          const keys = parseJsonImageArray(row.images, 4);
           const first = keys[0];
           return first ? assetUrl(String(first)) : null;
         })(),
-        title: r.title || cleanText(r.content, 40),
-        summary: cleanText(r.content, 90),
-        clubId: r.club_id,
-        clubName: r.club_name,
-        clubCategory: r.club_category || null,
-        createdAt: r.created_at,
-        stats: postStats.get(Number(r.id)) || { likes: 0, views: 0 },
-        viewer: { liked: !!postLiked.get(Number(r.id)) },
-      })),
-    ]
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, pageSize);
+        title: row.title || cleanText(row.content, 40),
+        summary: cleanText(row.content, 90),
+        clubId: row.club_id,
+        clubName: row.club_name,
+        clubCategory: row.club_category || null,
+        createdAt: row.created_at,
+        stats: postStats.get(Number(row.id)) || { likes: 0, views: 0 },
+        viewer: { liked: !!postLiked.get(Number(row.id)) },
+      };
+    });
 
-    res.json({ status: 0, data: { list: items, page, pageSize } });
+    res.json({ status: 0, data: { list: items, page, pageSize, hasMore: merged.length > offset + pageSize } });
   } catch (e) {
     next(e);
   }
