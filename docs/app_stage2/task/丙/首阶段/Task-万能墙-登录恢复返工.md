@@ -3,14 +3,14 @@
 ## 1. 任务位置
 
 Phase 1 真实回执与列表状态闭环；仅返工 D-3 登录返回仍禁删，补齐 D-2 失败恢复。
-基线 4d908f9；D-1 旧响应复活已关闭，不重改。状态：实施中，完成后待复审。
+基线 4d908f9；D-1 旧响应复活已关闭，不重改。状态：实施与专项验证已交付，D-2、D-3 待复审；任务不自行关闭。
 前置：复读限定审查、既有会话和聚焦机制；后续业务任务不在本轮授权内。
 
 ## 2. 开发所需信息
 
 **先读**
 
-- `evaluation/丙/审查报告-本人删除两项返工-b97bf30.md` — 登录返回为何持续禁删？
+- `docs/app_stage2/evaluation/丙/审查报告-本人删除两项返工-b97bf30.md` — 登录返回为何持续禁删？
 - `app/src/features/campus/CampusScreens.tsx` — 详情请求、删除失败与锁如何接线？
 - `app/src/features/auth/session.tsx`、`app/src/app/login.tsx` — 状态、账号标识与返回机制是什么？
 - `app/src/__tests__/p2x-bing-campus.test.tsx` — 如何用真实页面验证权限与请求交错？
