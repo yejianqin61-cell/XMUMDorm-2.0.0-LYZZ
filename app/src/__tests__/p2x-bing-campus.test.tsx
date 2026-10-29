@@ -696,7 +696,7 @@ describe('万能墙删除自己的帖子', () => {
   const removeConfession = deleteConfession as jest.Mock;
 
   it('作者在 ⋯ 菜单看到删除，确认后删除并返回', async () => {
-    wallDetail.mockResolvedValue({ id: 40, content: '我的墙帖', template_key: 'announcement', viewer_is_author: 1 });
+    wallDetail.mockResolvedValue({ id: 40, content: '我的墙帖', template_key: 'announcement', viewer_is_author: true });
     removeConfession.mockResolvedValue({ status: 0 });
     const view = await renderApp(<CampusDetailScreen postId="40" kind="wall" />);
 
@@ -709,8 +709,8 @@ describe('万能墙删除自己的帖子', () => {
     await waitFor(() => expect(routerMock.back).toHaveBeenCalled());
   });
 
-  it('非作者不见删除入口', async () => {
-    wallDetail.mockResolvedValue({ id: 40, content: '别人的墙帖', template_key: 'announcement', viewer_is_author: 0 });
+  it.each([false, undefined])('本人标记为 %s 时不见删除入口', async (viewerIsAuthor) => {
+    wallDetail.mockResolvedValue({ id: 40, content: '别人的墙帖', template_key: 'announcement', ...(viewerIsAuthor === undefined ? {} : { viewer_is_author: viewerIsAuthor }) });
     const view = await renderApp(<CampusDetailScreen postId="40" kind="wall" />);
 
     await waitFor(() => expect(view.getByText('别人的墙帖')).toBeTruthy());
@@ -719,7 +719,7 @@ describe('万能墙删除自己的帖子', () => {
   });
 
   it('删除失败停留本页并给出可读提示', async () => {
-    wallDetail.mockResolvedValue({ id: 40, content: '我的墙帖', template_key: 'announcement', viewer_is_author: 1 });
+    wallDetail.mockResolvedValue({ id: 40, content: '我的墙帖', template_key: 'announcement', viewer_is_author: true });
     removeConfession.mockRejectedValue(new TypeError('Network request failed'));
     const view = await renderApp(<CampusDetailScreen postId="40" kind="wall" />);
 
