@@ -68,4 +68,26 @@ describe('marketplace chat lifecycle for an on-sale item', () => {
     expect(res.status).toBe(200);
     expect(res.body.data).toMatchObject({ id: 11, seller_user_id: 7, buyer_user_id: 9 });
   });
+
+  it('rejects a stranger before reading message history', async () => {
+    query.mockResolvedValueOnce([{ id: 11, item_id: 5, seller_user_id: 7, buyer_user_id: 9, item_title: '二手键盘' }]);
+
+    const res = await supertest(app())
+      .get('/api/marketplace/chat/threads/11/messages')
+      .set('x-test-user-id', '88');
+
+    expect(res.status).toBe(403);
+    expect(query).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns not found for a missing thread without querying messages', async () => {
+    query.mockResolvedValueOnce([]);
+
+    const res = await supertest(app())
+      .get('/api/marketplace/chat/threads/999/messages')
+      .set('x-test-user-id', '9');
+
+    expect(res.status).toBe(404);
+    expect(query).toHaveBeenCalledTimes(1);
+  });
 });
