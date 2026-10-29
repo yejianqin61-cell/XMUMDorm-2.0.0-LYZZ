@@ -174,6 +174,16 @@ describe('P2X TreeholeMedia', () => {
     expect(JSON.stringify(view.getByTestId('treehole-media-preview-image').props.source)).toContain(urls[0]);
   });
 
+  it('详情首图失败仍能切到下一张，错误不串图', async () => {
+    const view = await renderApp(<TreeholeMedia postId={7} urls={urls} mode="detail" />);
+    await fireEvent(view.getByTestId('treehole-media-detail-image'), 'error', { nativeEvent: { error: 'offline' } });
+    expect(view.getByTestId('treehole-media-error')).toBeTruthy();
+    await fireEvent(view.getByTestId('treehole-media-drag-area'), 'accessibilityAction', { nativeEvent: { actionName: 'increment' } });
+    await waitFor(() => expect(JSON.stringify(view.getByTestId('treehole-media-detail-image').props.source)).toContain(urls[1]));
+    expect(view.queryByTestId('treehole-media-error')).toBeNull();
+    expect(view.getByTestId('treehole-media-position')).toHaveTextContent('第 2 张，共 3 张');
+  });
+
   it('无图不渲染媒体或骨架', async () => {
     const view = await renderApp(<TreeholeMedia postId={7} urls={[]} mode="feed" />);
     expect(view.queryByTestId('treehole-media-feed')).toBeNull();
