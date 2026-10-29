@@ -9,7 +9,7 @@
  * 依据：`docs/app/task/phase-2/P2A-05-路由接线与端到端证明.md`。
  */
 import * as React from 'react';
-import { userEvent, waitFor } from '@testing-library/react-native';
+import { userEvent, waitFor, within } from '@testing-library/react-native';
 
 import { renderApp } from './helpers/renderApp';
 import { zh } from '@/i18n';
@@ -159,8 +159,11 @@ describe('P2A-05 发布表单路由接线与端到端', () => {
 
       const view = await renderApp(withProviders(<PublishRoute />));
 
-      expect(view.getByText(zh['secondary.confession'])).toBeTruthy();
-      expect(view.getByText(zh['secondary.wall'])).toBeTruthy();
+      // A2-11 起发布表单有**顶部标题**（取注册表类型名），可能与分节标题同文 ——
+      // 分节断言只扫内容区，不扫顶栏（同一段文字不该在两个位置各算一次失败）。
+      const content = within(view.getByTestId('screen-content'));
+      expect(content.getByText(zh['secondary.confession'])).toBeTruthy();
+      expect(content.getByText(zh['secondary.wall'])).toBeTruthy();
 
       // 必填为空时不能提交（校验先拦下）
       await user.press(view.getByTestId('publish-form-confession-submit'));
