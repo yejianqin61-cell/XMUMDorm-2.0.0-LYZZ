@@ -156,3 +156,17 @@ it('does not restore previous content after cache invalidation during refresh', 
   reply(undefined, 'unavailable');
   expect(readMoodleCache().courses).toEqual([]);
 });
+
+it('recovers matching selected course content when its refreshed resources fail', () => {
+  const { sync, reply } = harness();
+  sync.start(); reply({ courses: [course(1)], nextOffset: 0 }); sync.choose([1]);
+  reply({ courseId: 1, sections: [], modules: [] });
+  reply({ events: [], firstId: null, lastId: null });
+  sync.start(); reply({ courses: [course(1), course(2)], nextOffset: 0 }); sync.choose([1]);
+  reply(undefined, 'unavailable');
+  expect(readMoodleCache().states.map((item) => item.courseId)).toEqual([1]);
+  sync.start(); reply({ courses: [course(2)], nextOffset: 0 }); sync.choose([2]);
+  reply(undefined, 'unavailable');
+  expect(readMoodleCache().courses.map((item) => item.id)).toEqual([2]);
+  expect(readMoodleCache().states).toEqual([]);
+});
