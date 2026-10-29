@@ -72,12 +72,24 @@ export function deleteMarketplaceItem(id) {
 // Marketplace Chat
 // =========================
 
+// 首发按钮可能因双击或网络重试在同一事件循环内触发多次。
+// 同一商品、同一内容复用进行中的请求；响应失败后删除锁，不替调用方猜测是否已写入。
+const pendingBuyerMessages = new Map();
+
 export function getMarketplaceMyThreadByItem(itemId) {
   return get(`/api/marketplace/items/${itemId}/chat/thread`);
 }
 
 export function buyerSendMarketplaceMessage(itemId, content) {
-  return post(`/api/marketplace/items/${itemId}/chat/messages`, { content });
+  const key = `${itemId}:${String(content)}`;
+  const pending = pendingBuyerMessages.get(key);
+  if (pending) return pending;
+  const request = post(`/api/marketplace/items/${itemId}/chat/messages`, { content });
+  pendingBuyerMessages.set(key, request);
+  request.finally(() => {
+    if (pendingBuyerMessages.get(key) === request) pendingBuyerMessages.delete(key);
+  }).catch(() => undefined);
+  return request;
 }
 
 export function sellerListItemChatThreads(itemId) {
@@ -104,6 +116,7 @@ export function markMarketplaceThreadRead(threadId) {
 export function listMyChatThreads(params = {}) {
   const qs = new URLSearchParams();
   if (params.limit) qs.set('limit', String(params.limit));
+  if (params.cursor) qs.set('cursor', String(params.cursor));
   const query = qs.toString();
   return get(`/api/marketplace/chat/threads${query ? `?${query}` : ''}`);
 }
