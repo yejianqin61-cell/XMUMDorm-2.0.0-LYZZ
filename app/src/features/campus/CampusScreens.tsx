@@ -99,8 +99,11 @@ export function CampusDetailScreen({
   const router = useRouter();
   const { handleAuthFailure, status: sessionStatus, identifier, isSignedIn } = useSession();
   const identity = JSON.stringify(kind === 'wall' ? [sessionStatus, identifier, isSignedIn] : []);
-  const identityRef = React.useRef(identity);
-  React.useLayoutEffect(() => { identityRef.current = identity; }, [identity]);
+  const scope = JSON.stringify([kind, postId, identity]);
+  const scopeRef = React.useRef(scope);
+  React.useLayoutEffect(() => { scopeRef.current = scope; }, [scope]);
+  const client = getQueryClient();
+  const detailKey = React.useMemo(() => QK.confessionDetail(Number(postId), identity), [postId, identity]);
   const theme = useTheme();
   const toast = useToast();
   const [post, setPost] = React.useState<Post | null>(null);
@@ -122,11 +125,40 @@ export function CampusDetailScreen({
   const readPending = React.useRef<number | null>(null);
   const loginRequired = React.useRef<string | null>(null);
 
+  const showUnavailable = React.useCallback(() => {
+    generation.current++;
+    readPending.current = null;
+    setPost(null);
+    setPostIdentity(null);
+    setError({ kind: 'content' });
+    setLoading(false);
+    setMenuOpen(false);
+    setDeleteOpen(false);
+    setDeleteError(null);
+  }, []);
+
+  React.useEffect(() => {
+    if (kind !== 'wall') return;
+    const key = JSON.stringify(detailKey);
+    return client.getQueryCache().subscribe((event) => {
+      if (
+        event.type === 'updated' && event.action.type === 'success' &&
+        JSON.stringify(event.query.queryKey) === key && event.query.state.data === null &&
+        scope === scopeRef.current
+      ) showUnavailable();
+    });
+  }, [client, detailKey, kind, scope, showUnavailable]);
+
   const load = React.useCallback(async () => {
+    // null 是成功删除后的详情失效结果；undefined 仍代表尚未确认，必须正常取数。
+    if (kind === 'wall' && client.getQueryData(detailKey) === null) {
+      showUnavailable();
+      return;
+    }
     if (readPending.current !== null) return;
     const request = ++generation.current;
     readPending.current = request;
-    const current = () => request === generation.current && identity === identityRef.current;
+    const current = () => request === generation.current && scope === scopeRef.current;
     setPost(null);
     setPostIdentity(null);
     setError(null);
@@ -142,6 +174,10 @@ export function CampusDetailScreen({
           : asPost(await getPostDetail(Number(postId)));
       if (row.id !== Number(postId)) throw { kind: 'content' };
       if (current()) {
+        if (kind === 'wall' && client.getQueryData(detailKey) === null) {
+          showUnavailable();
+          return;
+        }
         setPost(row);
         setPostIdentity(identity);
         loginRequired.current = null;
@@ -164,7 +200,7 @@ export function CampusDetailScreen({
         setLoading(false);
       }
     }
-  }, [postId, kind, identity, handleAuthFailure]);
+  }, [postId, kind, identity, scope, handleAuthFailure, client, detailKey, showUnavailable]);
 
   React.useEffect(() => {
     if (kind === 'wall') return;
@@ -240,7 +276,10 @@ export function CampusDetailScreen({
   }, [kind, published, router]);
 
   const removeWallPost = React.useCallback(async (): Promise<void> => {
-    if (deleteLocked.current || !isSignedIn || postIdentity !== identity || !post?.is_mine) return;
+    if (
+      deleteLocked.current || !isSignedIn || postIdentity !== identity || !post?.is_mine ||
+      client.getQueryData(detailKey) === null
+    ) return;
     deleteLocked.current = true;
     const operation = { identity, postId };
     const request = generation.current;
@@ -253,7 +292,8 @@ export function CampusDetailScreen({
       if (!acknowledgement || typeof acknowledgement !== 'object' || (acknowledgement as { status?: unknown }).status !== 0) {
         throw new Error('Invalid delete acknowledgement');
       }
-      const client = getQueryClient();
+      // 先记录导航资格；发布详情失效结果会使当前读取 generation 失效。
+      const shouldReturn = request === generation.current && scope === scopeRef.current;
       const snapshotKey = [...QK.confessionWindow('_guest'), 'wallReadSnapshot'];
       client.setQueryData<WallFeedSnapshot>(snapshotKey, (previous) => {
         const snapshot = previous ?? { rows: [], cursor: null, hasMore: true, needsRefresh: true };
@@ -263,9 +303,11 @@ export function CampusDetailScreen({
           deletedIds: [...new Set([...(snapshot.deletedIds ?? []), deletedId])],
         };
       });
-      if (request === generation.current && identity === identityRef.current) backToFeed();
+      // 成功事实按原账号/内容保存。订阅只更新匹配详情，不导航无关页或新账号。
+      client.setQueryData<null>(QK.confessionDetail(deletedId, identity), null);
+      if (shouldReturn) backToFeed();
     } catch (failure) {
-      if (request !== generation.current || identity !== identityRef.current) return;
+      if (request !== generation.current || scope !== scopeRef.current) return;
       // shared API 的 Error.status 是 HTTP 状态；403 也用于非作者，不能统一按登录过期处理。
       const status = (failure as { status?: unknown } | null)?.status;
       if (status === 401) {
@@ -287,7 +329,7 @@ export function CampusDetailScreen({
       deleteLocked.current = false;
       setDeleteOperation((current) => current === operation ? null : current);
     }
-  }, [backToFeed, handleAuthFailure, postId, identity, isSignedIn, postIdentity, post?.is_mine]);
+  }, [backToFeed, handleAuthFailure, postId, identity, scope, isSignedIn, postIdentity, post?.is_mine, client, detailKey]);
 
   const deleteNotice = deleteError ? (
     <View style={{ paddingHorizontal: theme.space('space_4'), paddingTop: theme.space('space_2') }}>
