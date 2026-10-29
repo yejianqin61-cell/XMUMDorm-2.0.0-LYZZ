@@ -165,6 +165,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
         // 换账号：旧账号的 Moodle 快照不得进入新会话（审计 D-3）
         clearMoodleCache();
         await saveToken(result.token);
+        // 换账号：清掉上一账号的资料/列表缓存（与 logout 同口径；否则「我的」会先显示旧账号的资料）
+        getQueryClient().clear();
         dispatch({ type: 'login:success', identifier });
         return { ok: true };
       } catch (error) {
@@ -197,6 +199,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
         // 注册成功等同换账号，同样清旧 Moodle 快照（审计 D-3）
         clearMoodleCache();
         await saveToken(result.token);
+        // 注册成功等同换账号：同样清缓存（与 login/logout 同口径）
+        getQueryClient().clear();
         dispatch({ type: 'login:success', identifier: body.username });
         return { ok: true };
       } catch (error) {
