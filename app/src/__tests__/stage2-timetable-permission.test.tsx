@@ -48,6 +48,19 @@ it('does not record a failed permission request as completed', async () => {
   await view.unmount();
 });
 
+it('shares a pending first permission request between timetable instances', async () => {
+  let finish!: (value: string) => void;
+  permissions.request.mockImplementation(() => new Promise((resolve) => { finish = resolve; }));
+  const view = await renderApp(<SessionProvider>
+    <TimetableScreen renderGrid={() => null} /><TimetableScreen renderGrid={() => null} />
+  </SessionProvider>);
+  await waitFor(() => expect(storage.getItem).toHaveBeenCalledWith('@dorm:timetable-notification-requested'));
+  await waitFor(() => expect(permissions.request).toHaveBeenCalledTimes(1));
+  finish('granted');
+  await waitFor(() => expect(storage.setItem).toHaveBeenCalledWith('@dorm:timetable-notification-requested', '1'));
+  await view.unmount();
+});
+
 it('does not request again after an earlier request', async () => {
   storage.getItem.mockResolvedValue('1');
   await renderApp(<SessionProvider><TimetableScreen renderGrid={() => null} /></SessionProvider>);
