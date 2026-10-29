@@ -179,6 +179,7 @@ export function MoodleWorkspaceHost(props: MoodleWorkspaceHostProps): React.Reac
     reminder: labels.reminderStatus(reminderStatus),
     empty: labels.noDeadlines,
   };
+  const detailOriginalUrl = detail?.request?.url ?? detail?.module.url;
   return <View testID="moodle-host" style={{ flex: 1 }}>
     {mode === 'web' ? <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: theme.space('space_2'),
       padding: theme.space('space_3') }}>
@@ -207,7 +208,7 @@ export function MoodleWorkspaceHost(props: MoodleWorkspaceHostProps): React.Reac
           {detail.request && detail.status !== 'loading' ? <Button testID="moodle-detail-retry"
             label={t('action.retry')} onPress={() => readDetail(detail.courseId, detail.module,
               detail.request?.kind === 'discussion' ? detail.request.url : undefined)} /> : null}
-          {detail.module.url ? <Button label={labels.original} variant="link" onPress={() => openOriginal(detail.module.url!)} /> : null}
+          {detailOriginalUrl ? <Button label={labels.original} variant="link" onPress={() => openOriginal(detailOriginalUrl)} /> : null}
         </ScrollView> : <>
         <MoodleWorkspaceScreen labels={labels} snapshot={snapshot} entry={entry} maintenance={maintenance}
           headerActions={clearButton}
