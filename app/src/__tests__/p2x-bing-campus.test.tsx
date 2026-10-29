@@ -908,7 +908,6 @@ describe('万能墙删除自己的帖子', () => {
       await fireEvent.press(view.getByText('完成原账号登录'));
       await waitFor(() => expect(wallDetail).toHaveBeenCalledTimes(2));
       expect(view.getByTestId('campus-detail-loading')).toBeTruthy();
-      await fireEvent.press(view.getByTestId('campus-detail-more'));
       expect(view.queryByTestId('campus-detail-menu-delete')).toBeNull();
       await act(async () => finish(mine));
       await waitFor(() => expect(view.getByText('恢复后的内容')).toBeTruthy());
