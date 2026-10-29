@@ -113,7 +113,8 @@ export function CampusDetailScreen({
   const [reportDetail, setReportDetail] = React.useState('');
   const [deleteOpen, setDeleteOpen] = React.useState(false);
   const [deleteError, setDeleteError] = React.useState<'login' | 'denied' | 'retry' | null>(null);
-  const [deleting, setDeleting] = React.useState(false);
+  const [deleteOperation, setDeleteOperation] = React.useState<{ identity: string; postId: string } | null>(null);
+  const deleting = deleteOperation?.identity === identity && deleteOperation.postId === postId;
   const deleteLocked = React.useRef(false);
   const [deleteCommentId, setDeleteCommentId] = React.useState<string | null>(null);
   const scrollRef = React.useRef<ScrollView | null>(null);
@@ -133,8 +134,6 @@ export function CampusDetailScreen({
     setMenuOpen(false);
     setDeleteOpen(false);
     setDeleteError(null);
-    setDeleting(false);
-    deleteLocked.current = false;
     try {
       if (!/^[1-9]\d*$/.test(postId) || !Number.isSafeInteger(Number(postId))) throw { kind: 'content' };
       const row =
@@ -178,8 +177,6 @@ export function CampusDetailScreen({
 
   useFocusEffect(React.useCallback(() => {
     if (kind !== 'wall') return;
-    setDeleting(false);
-    deleteLocked.current = false;
     if (loginRequired.current === postId && !isSignedIn) {
       // 取消登录仍可再次恢复；不带失效身份重读，也不保留请求中状态。
       setLoading(false);
@@ -190,7 +187,6 @@ export function CampusDetailScreen({
     return () => {
       generation.current++;
       readPending.current = null;
-      deleteLocked.current = false;
     };
   }, [kind, postId, isSignedIn, load]));
 
@@ -200,8 +196,6 @@ export function CampusDetailScreen({
     setMenuOpen(false);
     setDeleteOpen(false);
     setDeleteError(null);
-    setDeleting(false);
-    deleteLocked.current = false;
     setReportOpen(false);
     setReportReason(null);
     setReportDetail('');
@@ -248,11 +242,12 @@ export function CampusDetailScreen({
   const removeWallPost = React.useCallback(async (): Promise<void> => {
     if (deleteLocked.current || !isSignedIn || postIdentity !== identity || !post?.is_mine) return;
     deleteLocked.current = true;
+    const operation = { identity, postId };
     const request = generation.current;
     const deletedId = Number(postId);
     setDeleteOpen(false);
     setDeleteError(null);
-    setDeleting(true);
+    setDeleteOperation(operation);
     try {
       const acknowledgement = await deleteConfession(deletedId);
       if (!acknowledgement || typeof acknowledgement !== 'object' || (acknowledgement as { status?: unknown }).status !== 0) {
@@ -288,10 +283,9 @@ export function CampusDetailScreen({
         setDeleteError('retry');
       }
     } finally {
-      if (request === generation.current && identity === identityRef.current) {
-        deleteLocked.current = false;
-        setDeleting(false);
-      }
+      // 请求的锁随真实请求结束；聚焦切换只让结果失效，不能提前允许重复删除。
+      deleteLocked.current = false;
+      setDeleteOperation((current) => current === operation ? null : current);
     }
   }, [backToFeed, handleAuthFailure, postId, identity, isSignedIn, postIdentity, post?.is_mine]);
 
@@ -531,7 +525,7 @@ export function CampusDetailScreen({
                 kind === 'wall' && isSignedIn && postIdentity === identity && post?.is_mine
                   ? {
                       label: t('screen.campus.read.delete'),
-                      disabled: deleting || deleteError === 'login' || deleteError === 'denied',
+                      disabled: deleteOperation !== null || deleteError === 'login' || deleteError === 'denied',
                       onPress: () => {
                         setMenuOpen(false);
                         setDeleteOpen(true);
