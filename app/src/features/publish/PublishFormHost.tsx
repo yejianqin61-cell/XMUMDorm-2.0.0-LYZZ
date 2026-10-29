@@ -26,6 +26,7 @@ import { useI18n, type MessageKey } from '@/i18n';
 import { TERMS_ROUTE, type SubmitGate } from './complianceGate';
 import type { PublishFormDescriptor } from './descriptor';
 import { PUBLISH_DESCRIPTORS } from './descriptors';
+import { getPublishEntry } from './registry';
 import { useResolvedDescriptor } from './resolveDescriptor';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -53,6 +54,7 @@ function RegisteredPublishFormHost({descriptor}: PublishFormHostProps): React.Re
 function ResolvedPublishFormHost({descriptor}: PublishFormHostProps): React.ReactElement {
   const host = usePublishForm(descriptor);
   const router = useRouter();
+  const entry = getPublishEntry(descriptor.id);
 
   // A-05：门禁是**拦截点**，不是字段错误 —— 所以不渲染表单，只给三要素 + 一个动作
   if (!host.gate.allowed) {
@@ -70,6 +72,16 @@ function ResolvedPublishFormHost({descriptor}: PublishFormHostProps): React.Reac
       onSettled={host.onSettled}
       onCancel={() => router.back()}
       onRetrySubmit={host.form.state.formError?.kind === 'terms' ? () => router.push(TERMS_ROUTE) : undefined}
+      /*
+       * A2-11：发布表单必须有**顶部标题**（原先整页没有标题行），
+       * 标题取注册表里的类型名（如"万能墙"），⛔ 不是技术性文案。
+       */
+      titleKey={entry?.titleKey}
+      /*
+       * A2-11：提交位落进唯一安全区容器的 footer 槽 —— 键盘打开时最后一项输入与提交都可触达。
+       * ⛔ 只发布宿主启用；登录/注册/找回/资料/待办/点评/菜品点评保持 inline。
+       */
+      submitPlacement="footer"
     />
   );
 }
