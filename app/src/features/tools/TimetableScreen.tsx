@@ -42,6 +42,21 @@ export type TimetableRenderProps = {
   testID: string;
 };
 
+let firstPermissionRequest: Promise<NotificationPermission> | null = null;
+function requestFirstTimetablePermission(): Promise<NotificationPermission> {
+  if (!firstPermissionRequest) {
+    firstPermissionRequest = (async () => {
+      const status = await notificationPermission.request();
+      if (status !== 'unavailable') {
+        // Storage failure must not hide the actual OS result.
+        await AsyncStorage.setItem('@dorm:timetable-notification-requested', '1').catch(() => undefined);
+      }
+      return status;
+    })().finally(() => { firstPermissionRequest = null; });
+  }
+  return firstPermissionRequest;
+}
+
 function WeekNumbers({ value, totalWeeks, onChange, legacyControls }: { value: number; totalWeeks: number; onChange: (value: number) => void; legacyControls: boolean }) {
   const theme = useTheme();
   const { t } = useI18n();
@@ -119,11 +134,7 @@ function OwnedTimetableScreen({ renderGrid, legacyControls }: { renderGrid: (pro
         if (firstEntry && status === 'undetermined') {
           const asked = await AsyncStorage.getItem('@dorm:timetable-notification-requested');
           if (!asked && active) {
-            status = await notificationPermission.request();
-            if (status !== 'unavailable') {
-              // Only persist a request that returned; storage failure must not hide the OS result.
-              await AsyncStorage.setItem('@dorm:timetable-notification-requested', '1').catch(() => undefined);
-            }
+            status = await requestFirstTimetablePermission();
           }
         }
         if (!active) return;
