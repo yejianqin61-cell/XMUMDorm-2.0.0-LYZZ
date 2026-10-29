@@ -780,6 +780,23 @@ describe('万能墙删除自己的帖子', () => {
     expect(view.queryByTestId('campus-row-40')).toBeNull();
   });
 
+  it('D-1 窗口缓存被回收后删除不丢已挂载列表中的其他记录', async () => {
+    wall.mockResolvedValueOnce(windowRows([40, 39]));
+    wallDetail.mockResolvedValue(windowRows([40]).items[0]);
+    removeConfession.mockResolvedValue({ status: 0 });
+    const view = await renderApp(<DeletionFlow remountFeed={false} />);
+    await waitFor(() => expect(view.getByTestId('campus-row-40')).toBeTruthy());
+    await act(async () => getQueryClient().removeQueries({ queryKey: [...QK.confessionWindow('_guest'), 'wallReadSnapshot'], exact: true }));
+    await confirmDelete(view);
+    await waitFor(() => expect(view.queryByTestId('campus-row-40')).toBeNull());
+    expect(view.getByTestId('campus-row-39')).toBeTruthy();
+    wall.mockResolvedValueOnce(windowRows([40, 39, 38]));
+    await act(async () => mockListProps.onRefresh());
+    await waitFor(() => expect(view.getByTestId('campus-row-38')).toBeTruthy());
+    expect(view.getByTestId('campus-row-39')).toBeTruthy();
+    expect(view.queryByTestId('campus-row-40')).toBeNull();
+  });
+
   it('D-1 先从详情删除再首次进入列表仍加载其他记录', async () => {
     function DetailThenFeed(): React.ReactElement {
       const [detail, setDetail] = React.useState(true);
@@ -797,6 +814,31 @@ describe('万能墙删除自己的帖子', () => {
     await waitFor(() => expect(view.getByTestId('campus-row-39')).toBeTruthy());
     expect(view.queryByTestId('campus-row-40')).toBeNull();
     expect(wall).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([true, false])('D-1 删除中离开详情，迟到回执只在成功时更新列表（成功=%s）', async (success) => {
+    let finish: (value: unknown) => void = () => undefined;
+    let fail: (error: unknown) => void = () => undefined;
+    removeConfession.mockReturnValueOnce(new Promise((resolve, reject) => { finish = resolve; fail = reject; }));
+    wall.mockResolvedValue(windowRows([40, 39]));
+    wallDetail.mockResolvedValue(windowRows([40]).items[0]);
+    function LeaveDetail(): React.ReactElement {
+      const [open, setOpen] = React.useState(true);
+      return <><WallFeed /><Button label="离开详情" onPress={() => setOpen(false)} />{open ? <CampusDetailScreen postId="40" kind="wall" /> : null}</>;
+    }
+    const view = await renderApp(<LeaveDetail />);
+    await waitFor(() => expect(view.getByTestId('campus-row-40')).toBeTruthy());
+    await confirmDelete(view);
+    await waitFor(() => expect(view.getByTestId('wall-delete-pending')).toBeTruthy());
+    await fireEvent.press(view.getByText('离开详情'));
+    await act(async () => { if (success) finish({ status: 0 }); else fail(new TypeError('Network request failed')); });
+    expect(view.queryByTestId('campus-detail')).toBeNull();
+    expect(view.queryByTestId('wall-delete-notice')).toBeNull();
+    expect(view.queryByTestId('wall-delete-pending')).toBeNull();
+    expect(routerMock.back).not.toHaveBeenCalled();
+    expect(view.getByTestId('campus-row-39')).toBeTruthy();
+    if (success) expect(view.queryByTestId('campus-row-40')).toBeNull();
+    else expect(view.getByTestId('campus-row-40')).toBeTruthy();
   });
 
   function DeletionFlow({ remountFeed }: { remountFeed: boolean }): React.ReactElement {
