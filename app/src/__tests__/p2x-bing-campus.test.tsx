@@ -767,12 +767,12 @@ describe('万能墙删除自己的帖子', () => {
     expect(removeConfession).toHaveBeenCalledTimes(2);
   });
 
-  it('D-1 首次列表仍在请求时删除成功，首次旧响应也不能复活记录', async () => {
+  it.each([false, true])('D-1 首次列表仍在请求时删除成功，首次旧响应也不能复活记录（重挂=%s）', async (remountFeed) => {
     let resolveWindow: (value: unknown) => void = () => undefined;
-    wall.mockReturnValueOnce(new Promise((resolve) => { resolveWindow = resolve; }));
+    wall.mockReturnValueOnce(new Promise((resolve) => { resolveWindow = resolve; })).mockResolvedValue(windowRows([40, 39]));
     wallDetail.mockResolvedValue(windowRows([40]).items[0]);
     removeConfession.mockResolvedValue({ status: 0 });
-    const view = await renderApp(<DeletionFlow remountFeed={false} />);
+    const view = await renderApp(<DeletionFlow remountFeed={remountFeed} />);
     await confirmDelete(view);
     await waitFor(() => expect(routerMock.back).toHaveBeenCalledTimes(1));
     await act(async () => resolveWindow(windowRows([40, 39])));
