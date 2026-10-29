@@ -109,3 +109,31 @@ it('p3y3 ends a matched fatal response after host invalidation and bounds missin
     expect(sync.snapshot().failure).toBe('timeout');
   } finally { jest.useRealTimers(); }
 });
+
+it('keeps the last completed courses on a temporary refresh failure but drops them on clear', () => {
+  const { sync, reply } = harness();
+  sync.start();
+  reply({ courses: [course(1)], nextOffset: 0 });
+  sync.choose([1]);
+  reply({ courseId: 1, sections: [], modules: [] });
+  reply({ events: [], firstId: null, lastId: null });
+  sync.start();
+  reply(undefined, 'unavailable');
+  expect(sync.snapshot().failure).toBe('unavailable');
+  expect(sync.snapshot().data.courses.map((item) => item.id)).toEqual([1]);
+  sync.cancel();
+  expect(sync.snapshot().data.courses).toEqual([]);
+});
+
+it('does not restore previous content after cache invalidation during refresh', () => {
+  const { sync, reply } = harness();
+  sync.start();
+  reply({ courses: [course(1)], nextOffset: 0 });
+  sync.choose([1]);
+  reply({ courseId: 1, sections: [], modules: [] });
+  reply({ events: [], firstId: null, lastId: null });
+  sync.start();
+  clearMoodleCache();
+  reply(undefined, 'unavailable');
+  expect(readMoodleCache().courses).toEqual([]);
+});
