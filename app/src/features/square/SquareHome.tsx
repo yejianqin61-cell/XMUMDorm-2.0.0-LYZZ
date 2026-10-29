@@ -11,6 +11,7 @@ import { SquareBrandHeader } from './SquareBrandHeader';
 import { SquareModuleEntries } from './SquareModuleEntries';
 import { TodayPane } from './TodayPane';
 import { AgentEntry } from './AgentEntry';
+import { SquarePaneScrollScope, type SquarePaneScrollHandle } from './SquarePaneScroll';
 
 /**
  * ⚠️ 集合来自 `secondaryTabs.ts` 的**唯一真源**（`SQUARE_TABS`），⛔ 不在这里再写一份。
@@ -41,6 +42,38 @@ export function SquareHome({ tabBarHeight }: { tabBarHeight: number }): React.Re
   const pager = React.useRef<ScrollView>(null);
   const dragging = React.useRef(false);
   const selectedIndex = TABS.findIndex(item => item.key === selected);
+
+  /**
+   * 阶段4-02：滚动上报接缝。
+   * 句柄必须**稳定**（`useMemo` 空依赖）：每帧新建对象会让 Provider 的消费者全部重渲染。
+   * 这里只记录数字；收起进度与吸顶在阶段4-03 由本壳消费。
+   */
+  const paneMetrics = React.useRef<
+    Partial<Record<HomeTab, { offsetY: number; dragStart: number | null }>>
+  >({});
+  const paneHandles = React.useMemo(() => {
+    const metric = (tab: HomeTab) =>
+      (paneMetrics.current[tab] ??= { offsetY: 0, dragStart: null });
+    return Object.fromEntries(
+      TABS.map(({ key }) => [
+        key,
+        {
+          tab: key,
+          collapsed: false,
+          reportOffset: (offsetY: number) => {
+            metric(key).offsetY = offsetY;
+          },
+          beginDrag: () => {
+            metric(key).dragStart = metric(key).offsetY;
+          },
+          endDrag: (offsetY: number) => {
+            metric(key).offsetY = offsetY;
+            metric(key).dragStart = null;
+          },
+        },
+      ])
+    ) as Record<HomeTab, SquarePaneScrollHandle>;
+  }, []);
 
   const remember = React.useCallback((keys: readonly HomeTab[]) => {
     setVisited(current => keys.every(key => current.has(key)) ? current : new Set([...current, ...keys]));
@@ -134,7 +167,11 @@ export function SquareHome({ tabBarHeight }: { tabBarHeight: number }): React.Re
               accessibilityElementsHidden={item.key !== selected}
               importantForAccessibility={item.key === selected ? 'auto' : 'no-hide-descendants'}
             >
-              {visited.has(item.key) ? <ModuleContent tab={item.key} /> : null}
+              {visited.has(item.key) ? (
+                <SquarePaneScrollScope handle={paneHandles[item.key]}>
+                  <ModuleContent tab={item.key} />
+                </SquarePaneScrollScope>
+              ) : null}
             </View>
           ))}
         </ScrollView>

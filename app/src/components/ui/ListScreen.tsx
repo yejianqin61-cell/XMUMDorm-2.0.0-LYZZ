@@ -27,6 +27,7 @@ import {
   type SecondaryTabKey,
   type SecondaryTabState,
 } from '@/features/navigation/secondaryTabs';
+import { useSquarePaneScroll } from '@/features/square/SquarePaneScroll';
 import { EmptyState, type EmptyKind } from './EmptyState';
 import { ErrorState } from './ErrorState';
 import { ListFooter } from './ListFooter';
@@ -340,6 +341,11 @@ export function ListScreen<T>({
   const theme = useTheme();
   const screenState = resolveListState({ pagination, itemCount: data.length });
   const footer = listFooterState(pagination);
+  /**
+   * 广场接缝（阶段4-02）：只有被广场壳的 `SquarePaneScrollScope` 包住时才有句柄。
+   * ⛔ 单独使用的 26 个页面拿到的仍是 `null`，三个回调与下拉刷新都保持原样。
+   */
+  const paneScroll = useSquarePaneScroll();
 
   /**
    * 滚动位置恢复：只在**第一次拿到数据后**做一次。
@@ -417,6 +423,8 @@ export function ListScreen<T>({
       <FlashList
         style={{ flex: 1, minHeight: 0 }}
         ref={listRef as never}
+        // 广场壳要靠它驱动收起；给了 testID 才加后缀，避免影响既有页面的测试树
+        testID={testID ? `${testID}-scroll` : undefined}
         data={data as T[]}
         renderItem={({ item, index }) => renderItem(item, index)}
         keyExtractor={keyExtractor}
@@ -424,14 +432,27 @@ export function ListScreen<T>({
         ItemSeparatorComponent={(itemSeparator ?? undefined) as never}
         ListHeaderComponent={listHeader === undefined || listHeader === null ? null : <>{listHeader}</>}
         refreshControl={
-          <PullToRefresh refreshing={pagination.refresh === 'loading'} onRefresh={onRefresh} />
+          // 上部已收起时让出原生下拉刷新：先"下拉展开"，再下拉才是刷新（A2-02c）
+          paneScroll?.collapsed ? undefined : (
+            <PullToRefresh refreshing={pagination.refresh === 'loading'} onRefresh={onRefresh} />
+          )
         }
         onEndReached={() => {
           // 双保险：reducer 也会挡，但这里挡掉就不必白跑一次滚动分支
           if (canAutoAppend(pagination)) onEndReached();
         }}
         onEndReachedThreshold={0.5}
-        onScroll={(event) => onScrollOffset?.(event.nativeEvent.contentOffset.y)}
+        onScroll={(event) => {
+          const offset = event.nativeEvent.contentOffset.y;
+          onScrollOffset?.(offset);
+          paneScroll?.reportOffset(offset);
+        }}
+        onScrollBeginDrag={paneScroll ? () => paneScroll.beginDrag() : undefined}
+        onScrollEndDrag={
+          paneScroll
+            ? (event) => paneScroll.endDrag(event.nativeEvent.contentOffset.y)
+            : undefined
+        }
         scrollEventThrottle={16}
         ListFooterComponent={
           footer === 'idle' ? null : (
