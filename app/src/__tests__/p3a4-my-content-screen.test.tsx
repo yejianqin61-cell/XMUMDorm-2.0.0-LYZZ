@@ -1,4 +1,6 @@
 import * as React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { SessionProvider } from '@/features/auth/session';
 import { fireEvent, waitFor } from '@testing-library/react-native';
 
 import { renderApp } from './helpers/renderApp';
@@ -22,6 +24,13 @@ const canteen = require('../../../shared/api/canteen') as { getMyProductReviews:
 const marketplace = require('../../../shared/api/marketplace') as { listMarketplaceMyItems: jest.Mock };
 const errands = require('../../../shared/api/errands') as { listMyErrands: jest.Mock };
 
+/** 页面自阶段2-02 起走「单一取数点」：需要会话与缓存 Provider（与真实根布局同口径） */
+const withProviders = (node: React.ReactElement): React.ReactElement => (
+  <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } })}>
+    <SessionProvider>{node}</SessionProvider>
+  </QueryClientProvider>
+);
+
 beforeEach(() => {
   for (const module of [users, posts, canteen, marketplace, errands]) {
     for (const fn of Object.values(module)) fn.mockReset();
@@ -36,7 +45,7 @@ beforeEach(() => {
 describe('P3A4-08 我的内容 Tab 接线', () => {
   it('uses the shared TopTabStrip and loads each real ownership endpoint after selection', async () => {
     // C-05 拍板后「我的内容」就是**一级主页本身**（子页面与 PostsScreen 已删）
-  const view = await renderApp(<MeScreen />);
+  const view = await renderApp(withProviders(<MeScreen />));
 
     expect(view.getByTestId('me-content-tabs')).toBeTruthy();
     expect(view.getByTestId('top-tab-posts')).toBeTruthy();

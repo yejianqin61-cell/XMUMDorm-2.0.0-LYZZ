@@ -12,6 +12,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import * as React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { SessionProvider } from '@/features/auth/session';
 import { fireEvent, waitFor } from '@testing-library/react-native';
 
 import { renderApp } from './helpers/renderApp';
@@ -35,9 +37,24 @@ import { unreadStore } from '@/features/mailbox/unread';
 import { secondaryTabStore } from '@/features/navigation/secondaryTabs';
 import { clearToken } from '@/features/auth/tokenStore';
 
+/** 页面自阶段2-02 起走「单一取数点」：需要会话与缓存 Provider（与真实根布局同口径） */
+const withProviders = (node: React.ReactElement): React.ReactElement => (
+  <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } })}>
+    <SessionProvider>{node}</SessionProvider>
+  </QueryClientProvider>
+);
+
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush, replace: jest.fn(), back: jest.fn(), canGoBack: () => true }),
+}));
+/** 资料取数自阶段2-02 起有会话门：这些用例只关心页面，直接给一个已登录会话 */
+jest.mock('@/features/auth/session', () => ({
+  SessionProvider: ({ children }: { children: React.ReactNode }) => children,
+  useSession: () => ({
+    status: 'signedIn', identifier: 'tester', isSignedIn: true,
+    login: jest.fn(), register: jest.fn(), logout: jest.fn(), markExpired: jest.fn(), handleAuthFailure: jest.fn(),
+  }),
 }));
 
 /**
@@ -230,7 +247,7 @@ describe('P2C-03 M-01 我的仪表盘', () => {
 
   describe('TC-P2C-03-4A · 页面：身份、内容与管理入口', () => {
     it('资料卡 + 顶栏编辑/设置 + 四个内容 Tab；入口列表已撤下', async () => {
-      const view = await renderApp(<MeScreen />);
+      const view = await renderApp(withProviders(<MeScreen />));
 
       await waitFor(() => expect(view.getByTestId('me-profile')).toBeTruthy());
       expect(view.getByText('小明')).toBeTruthy();

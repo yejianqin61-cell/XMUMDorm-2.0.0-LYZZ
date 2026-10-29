@@ -12,6 +12,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import * as React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { SessionProvider } from '@/features/auth/session';
 import { fireEvent, waitFor } from '@testing-library/react-native';
 
 import { renderApp } from './helpers/renderApp';
@@ -23,9 +25,24 @@ import { avatarUploadFile, EditProfileScreen, PROFILE_MAX_LENGTH, formValuesToPr
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn(), canGoBack: () => true }),
 }));
+/** 资料取数自阶段2-03 起有会话门：这些用例只关心页面，直接给一个已登录会话 */
+jest.mock('@/features/auth/session', () => ({
+  SessionProvider: ({ children }: { children: React.ReactNode }) => children,
+  useSession: () => ({
+    status: 'signedIn', identifier: 'tester', isSignedIn: true,
+    login: jest.fn(), register: jest.fn(), logout: jest.fn(), markExpired: jest.fn(), handleAuthFailure: jest.fn(),
+  }),
+}));
 jest.mock('../../../shared/api/users', () => ({ getMe: jest.fn(), updateProfileInfo: jest.fn() }));
 
 const api = require('../../../shared/api/users') as { getMe: jest.Mock; updateProfileInfo: jest.Mock };
+
+/** 页面自阶段2-03 起走「单一取数点」：需要会话与缓存 Provider（与真实根布局同口径） */
+const withProviders = (node: React.ReactElement): React.ReactElement => (
+  <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } })}>
+    <SessionProvider>{node}</SessionProvider>
+  </QueryClientProvider>
+);
 
 const SRC_ROOT = path.resolve(__dirname, '..');
 const PROFILE = {
@@ -140,7 +157,7 @@ describe('P2C-06 M-02 资料编辑 / C20 MediaPicker', () => {
 
   describe('TC-P2C-06-4A · 页面：表单可填、提交走 PATCH、失败不跳转', () => {
     it('拉不到资料也不白屏；拉到后表单出现', async () => {
-      const view = await renderApp(<EditProfileScreen />);
+      const view = await renderApp(withProviders(<EditProfileScreen />));
       await waitFor(() => expect(view.getByTestId('me-edit-form')).toBeTruthy());
       expect(view.getByTestId('me-edit-form-nickname')).toBeTruthy();
       expect(view.getByTestId('me-edit-avatar')).toBeTruthy();
