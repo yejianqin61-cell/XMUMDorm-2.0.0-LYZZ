@@ -85,7 +85,7 @@ export function TimetableGrid({
 }: TimetableGridProps): React.ReactElement {
   const theme = useTheme();
   const { t } = useI18n();
-  const days = visibleWeekdays ?? visibleTimetableWeekdays(week);
+  const days = React.useMemo(() => visibleWeekdays ?? visibleTimetableWeekdays(week), [visibleWeekdays, week]);
   // 一小时格高 40dp（令牌相加，⛔ 不写裸数字）：13 小时一屏放得下，21:00 不用滚到底才看到
   const hourHeight = theme.space('space_8') + theme.space('space_2');
   const minCardHeight = Math.max(theme.touchTarget + theme.space('space_1'), theme.space('space_12') - theme.space('space_1'));
@@ -139,7 +139,7 @@ export function TimetableGrid({
       map.set(day, placed);
     }
     return map;
-  }, [week, days.join(','), getCourseAccent, hourHeight, minCardHeight, axisStart, axisEnd]);
+  }, [week, days, getCourseAccent, hourHeight, minCardHeight, axisStart, axisEnd]);
 
   const dayMinWidth = (day: number) => theme.touchTarget * Math.max(1, ...(cardsByDay.get(day) ?? []).map((card) => card.lanes));
   const minWidth = theme.space('space_8') + theme.space('space_2')
