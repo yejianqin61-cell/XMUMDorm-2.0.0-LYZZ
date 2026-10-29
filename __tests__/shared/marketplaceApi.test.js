@@ -11,6 +11,7 @@ const {
   createMarketplaceItem,
   updateMarketplaceItem,
   listMarketplaceMyItems,
+  listMarketplaceMyWants,
 } = require('../../shared/api/marketplace');
 
 describe('marketplace buyer chat API', () => {
@@ -29,10 +30,13 @@ describe('marketplace buyer chat API', () => {
     await expect(createMarketplaceItem(form)).resolves.toEqual({ id: 31 });
     await expect(updateMarketplaceItem(31, { title: '改后标题' })).resolves.toEqual({ id: 31, title: '改后标题' });
     await expect(listMarketplaceMyItems({ page: 2, pageSize: 10 })).resolves.toEqual({ list: [{ id: 31 }], hasMore: false });
+    get.mockResolvedValueOnce({ list: [{ id: 31, wanted_at: '2026-10-29' }], hasMore: false });
+    await expect(listMarketplaceMyWants({ page: 1, pageSize: 20 })).resolves.toEqual({ list: [{ id: 31, wanted_at: '2026-10-29' }], hasMore: false });
 
     expect(post).toHaveBeenCalledWith('/api/marketplace/items', form);
     expect(patch).toHaveBeenCalledWith('/api/marketplace/items/31', { title: '改后标题' });
     expect(get).toHaveBeenCalledWith('/api/marketplace/me/items?page=2&pageSize=10');
+    expect(get).toHaveBeenLastCalledWith('/api/marketplace/me/wants?page=1&pageSize=20');
   });
 
   it('deduplicates a repeated first-send while the request is pending', async () => {
