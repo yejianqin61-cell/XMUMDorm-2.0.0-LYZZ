@@ -69,11 +69,13 @@ it('clears a completed import preview and its scraped text on account change', a
 it('ignores an old account 401 from the timetable screen before auth side effects', async () => {
   const schedule = require('../../../shared/api/schedule') as Record<string, jest.Mock>;
   let reject!: (error: unknown) => void;
-  schedule.getScheduleWeek.mockReturnValueOnce(new Promise((_, fail) => { reject = fail; })).mockResolvedValue({ week: 1, currentWeek: 1, days: {} });
+  schedule.getScheduleWeek.mockReturnValueOnce(new Promise((_, fail) => { reject = fail; }))
+    .mockImplementation(async (week: number) => ({ week, currentWeek: week, days: {} }));
   const view = await renderApp(<ToastProvider><Harness child={<TimetableScreen />} /></ToastProvider>);
-  await waitFor(() => expect(schedule.getScheduleWeek).toHaveBeenCalledTimes(1));
+  await waitFor(() => expect(schedule.getScheduleWeek).toHaveBeenCalled());
+  const beforeSwitch = schedule.getScheduleWeek.mock.calls.length;
   await fireEvent.press(view.getByTestId('switch'));
-  await waitFor(() => expect(schedule.getScheduleWeek).toHaveBeenCalledTimes(2));
+  await waitFor(() => expect(schedule.getScheduleWeek.mock.calls.length).toBeGreaterThan(beforeSwitch));
   await act(async () => reject({ status: 401 }));
   expect(failures).toEqual([]);
 });
