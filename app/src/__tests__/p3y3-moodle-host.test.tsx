@@ -10,10 +10,11 @@ import { clearMoodleCache, settleMoodleStorage, confirmMoodleSchoolIdentity, sel
 import { readTokenSync, saveToken, clearToken } from '@/features/auth/tokenStore';
 
 const mockInject = jest.fn();
+const mockReload = jest.fn();
 let mockProps: WebViewProps;
 jest.mock('react-native-webview', () => ({ __esModule: true,
   default: mockReact.forwardRef(function FakeWebView(props: WebViewProps, ref) {
-    mockReact.useImperativeHandle(ref, () => ({ injectJavaScript: mockInject }));
+    mockReact.useImperativeHandle(ref, () => ({ injectJavaScript: mockInject, reload: mockReload }));
     mockReact.useLayoutEffect(() => { mockProps = props; }); return <MockView />;
   }),
 }));
@@ -204,5 +205,19 @@ it('allows retrying a failed Moodle detail without leaving the selected resource
   await fireEvent.press(view.getByTestId('moodle-detail-retry'));
   expect(requestId('detail')).not.toBe(firstId);
   expect(view.getByText('detail loading')).toBeTruthy();
+  await view.unmount(); await settleMoodleStorage();
+});
+
+it('reports an unknown login page load failure and lets the user retry', async () => {
+  mockReload.mockClear();
+  const view = await renderApp(<MoodleWorkspaceHost labels={labels} now={() => now}
+    onOpenOriginal={jest.fn()} />, { inScreen: true });
+  await act(() => mockProps.onError?.({ nativeEvent: { code: -2, description: 'unknown',
+    url: 'https://l.xmu.edu.my/' } } as never));
+  expect(view.getByText('failure unavailable')).toBeTruthy();
+  await fireEvent.press(view.getByTestId('moodle-login-retry'));
+  expect(mockReload).toHaveBeenCalledTimes(1);
+  await act(() => mockProps.onLoadStart?.({ nativeEvent: {} } as never));
+  expect(view.queryByText('failure unavailable')).toBeNull();
   await view.unmount(); await settleMoodleStorage();
 });
