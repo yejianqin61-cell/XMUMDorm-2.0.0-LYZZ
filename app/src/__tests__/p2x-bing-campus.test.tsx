@@ -1806,3 +1806,39 @@ describe('万能墙清单模板图标化', () => {
     expect(view.getAllByText(/• /)).toHaveLength(2);
   });
 });
+
+describe('当前图片保存的真实详情接线', () => {
+  const messages = { save: '保存图片', saving: '保存中', saved: '已保存到相册',
+    permissionDenied: '未获相册权限', failed: '保存失败，请重试' };
+  it('模块props经过真实详情和正文组合，传到详情及全屏预览', async () => {
+    const image = 'https://assets.example.test/current.png';
+    detail.mockResolvedValue({ id: 7, content: '带图正文', images: [{ url: image }] });
+    const save = jest.fn().mockResolvedValue({ status: 'saved' });
+    const view = await renderApp(<CampusDetailScreen postId="7" imageSave={{ save, messages }} />);
+    await waitFor(() => expect(view.getByTestId('treehole-save-detail')).toBeTruthy());
+    await fireEvent.press(view.getByTestId('treehole-media-drag-area'));
+    await fireEvent.press(view.getByTestId('treehole-save-preview'));
+    await waitFor(() => expect(view.getByTestId('treehole-save-preview-notice')).toHaveTextContent(messages.saved));
+    expect(save).toHaveBeenCalledWith(image);
+    expect(routerMock.back).not.toHaveBeenCalled();
+  });
+
+  it('匿名墙即使收到媒体字段和保存配置也不展示媒体入口', async () => {
+    wallDetail.mockResolvedValue({ id: 40, content: '匿名内容', template_key: 'note', images: [{ url: 'https://example.test/private.png' }] });
+    const save = jest.fn();
+    const view = await renderApp(<CampusDetailScreen postId="40" kind="wall" imageSave={{ save, messages }} />);
+    await waitFor(() => expect(view.getByText(/匿名内容/)).toBeTruthy());
+    expect(view.queryByTestId('treehole-save-detail')).toBeNull();
+    expect(view.queryByTestId('treehole-media-detail')).toBeNull();
+    expect(save).not.toHaveBeenCalled();
+  });
+
+  it('无图帖子不展示保存按钮，原正文与操作仍可达', async () => {
+    detail.mockResolvedValue({ id: 7, content: '纯文字正文' });
+    const save = jest.fn();
+    const view = await renderApp(<CampusDetailScreen postId="7" imageSave={{ save, messages }} />);
+    await waitFor(() => expect(view.getByText('纯文字正文')).toBeTruthy());
+    expect(view.queryByTestId('treehole-save-detail')).toBeNull();
+    expect(view.getByTestId('campus-detail-like')).toBeTruthy();
+  });
+});
