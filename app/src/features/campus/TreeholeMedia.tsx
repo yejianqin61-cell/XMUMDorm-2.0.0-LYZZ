@@ -22,6 +22,8 @@ import { Surface } from '@/components/ui/Surface';
 import { Text } from '@/components/ui/Text';
 import { useTheme } from '@/design-system/theme';
 import { useI18n } from '@/i18n';
+import { TreeholeImageSaveControls, useTreeholeImageSave } from './TreeholeImageSaveControls';
+import type { TreeholeImageSaveOptions } from './TreeholeImageSaveControls';
 
 export type TreeholeMediaMode = 'feed' | 'detail';
 
@@ -87,16 +89,18 @@ export function TreeholeMedia({
   postId,
   urls,
   mode,
+  imageSave,
 }: {
   postId: number;
   urls: readonly string[];
   mode: TreeholeMediaMode;
+  imageSave?: TreeholeImageSaveOptions;
 }): React.ReactElement | null {
   if (urls.length === 0) return null;
   return mode === 'feed' ? (
     <TreeholeFeedMedia postId={postId} urls={urls} />
   ) : (
-    <TreeholeDetailMedia key={treeholeMediaKey(postId, urls)} urls={urls} />
+    <TreeholeDetailMedia key={treeholeMediaKey(postId, urls)} urls={urls} imageSave={imageSave} />
   );
 }
 
@@ -203,7 +207,10 @@ function TreeholeFeedImage({ uri, testID }: { uri: string; testID: string }): Re
  *   - 释放未过阈值 → 弹簧回中（有回弹）；过阈值 → 弹簧飞出（不是线性 timing），
  *     这就是所有者要的"弹性动效"。
  */
-function TreeholeDetailMedia({ urls }: { urls: readonly string[] }): React.ReactElement {
+function TreeholeDetailMedia({ urls, imageSave }: {
+  urls: readonly string[];
+  imageSave?: TreeholeImageSaveOptions;
+}): React.ReactElement {
   const theme = useTheme();
   const { t } = useI18n();
   /** 当前前卡（已提交）。飞出动画期间不变，动画结束才前进 */
@@ -247,6 +254,7 @@ function TreeholeDetailMedia({ urls }: { urls: readonly string[] }): React.React
   const flyDirection = useSharedValue(1);
   const layers = treeholeDeckLayers(urls.length);
   const current = urls[index] ?? urls[0];
+  const saveController = useTreeholeImageSave(current, JSON.stringify([current, revision]), imageSave?.save);
   // 帖子/URL序列由外层key隔离；此处再核对真实URL与请求代次。
   // 函数式更新核对最新状态，避免批处理、重试或A→B→A复用旧闭包。
   const finishImage = (result: 'loaded' | 'failed') => {
@@ -528,6 +536,8 @@ function TreeholeDetailMedia({ urls }: { urls: readonly string[] }): React.React
           </View>
         </View>
 
+      {imageSave ? <TreeholeImageSaveControls options={imageSave} controller={saveController} testID="treehole-save-detail" /> : null}
+
       <Modal
         visible={previewOpen}
         transparent
@@ -567,6 +577,11 @@ function TreeholeDetailMedia({ urls }: { urls: readonly string[] }): React.React
               style={{ width: '100%', height: '100%' }}
             />
           </View>
+          {imageSave ? (
+            <View style={{ padding: theme.space('space_4') }}>
+              <TreeholeImageSaveControls options={imageSave} controller={saveController} testID="treehole-save-preview" />
+            </View>
+          ) : null}
           {urls.length > 1 ? (
             <View style={{ padding: theme.space('space_4'), alignItems: 'center' }}>
               <Text role="caption" colorToken="text-secondary">

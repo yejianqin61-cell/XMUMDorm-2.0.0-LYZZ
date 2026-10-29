@@ -19,6 +19,7 @@ import { useTheme } from '@/design-system/theme';
 import { TreeholeMedia } from './TreeholeMedia';
 import { TreeholeActionBar, TreeholeAuthorLine, TreeholeTagList } from './TreeholePostParts';
 import type { TreeholePostViewModel } from './treeholePostViewModel';
+import type { TreeholeImageSaveOptions } from './TreeholeImageSaveControls';
 
 export type TreeholePostDetailProps = {
   post: TreeholePostViewModel;
@@ -35,6 +36,7 @@ export type TreeholePostDetailProps = {
   wallContent?: React.ReactNode;
   likeNotice?: React.ReactNode;
   testID?: string;
+  imageSave?: TreeholeImageSaveOptions;
 };
 
 export function TreeholePostDetail({
@@ -49,6 +51,7 @@ export function TreeholePostDetail({
   wallContent,
   likeNotice,
   testID = 'treehole-post-detail',
+  imageSave,
 }: TreeholePostDetailProps): React.ReactElement {
   const theme = useTheme();
   const hasMedia = !anonymous && post.mediaUrls.length > 0;
@@ -84,7 +87,7 @@ export function TreeholePostDetail({
 
       {anonymous ? null : <TreeholeTagList tags={post.tags} />}
 
-      {hasMedia ? <TreeholeMedia postId={post.id} urls={post.mediaUrls} mode="detail" /> : null}
+      {hasMedia ? <TreeholeMedia postId={post.id} urls={post.mediaUrls} mode="detail" imageSave={imageSave} /> : null}
 
       <Divider />
 

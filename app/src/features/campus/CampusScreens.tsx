@@ -41,6 +41,7 @@ import { asPost, asWall, errorFor, type Post } from './campusModel';
 import { TreeholeFeed } from './TreeholeFeed';
 import { WallFeed, type WallFeedSnapshot } from './WallFeed';
 import { TreeholePostDetail } from './TreeholePostDetail';
+import type { TreeholeImageSaveOptions } from './TreeholeImageSaveControls';
 import { toTreeholePostViewModel } from './treeholePostViewModel';
 import { WallTemplateContent } from './wallTemplates';
 import { useCampusActions } from './useCampusActions';
@@ -88,12 +89,14 @@ export type CampusDetailScreenProps = {
   kind?: CampusKind;
   /** 发布成功后进入详情：返回一律回广场（不得回到发布表单） */
   published?: boolean;
+  imageSave?: TreeholeImageSaveOptions;
 };
 
 export function CampusDetailScreen({
   postId,
   kind = 'confession',
   published = false,
+  imageSave,
 }: CampusDetailScreenProps): React.ReactElement {
   const { t, locale } = useI18n();
   const router = useRouter();
@@ -485,6 +488,7 @@ export function CampusDetailScreen({
             {deleting ? <LoadingState testID="wall-delete-pending" variant="spinner" /> : null}
             {deleteNotice}
             <TreeholePostDetail
+              imageSave={imageSave}
               post={vm}
               timeLabel={timeLabel}
               liked={actions.interactions.liked}
