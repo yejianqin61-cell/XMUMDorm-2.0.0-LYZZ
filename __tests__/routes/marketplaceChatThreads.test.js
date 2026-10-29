@@ -110,7 +110,7 @@ describe('P2B-02 跨商品私信会话列表', () => {
 
     await supertest(app()).get('/api/marketplace/chat/threads');
 
-    expect(lastSql()).toMatch(/WHERE\s+t\.seller_user_id\s*=\s*\?\s*OR\s+t\.buyer_user_id\s*=\s*\?/);
+    expect(lastSql()).toMatch(/WHERE\s+\(t\.seller_user_id\s*=\s*\?\s*OR\s+t\.buyer_user_id\s*=\s*\?\)/);
     expect(lastParams()).toEqual([7, 7, 7, 7]);
   });
 
@@ -118,13 +118,13 @@ describe('P2B-02 跨商品私信会话列表', () => {
     query.mockResolvedValue([]);
 
     await supertest(app()).get('/api/marketplace/chat/threads?limit=999');
-    expect(lastSql()).toMatch(/LIMIT 100$/);
+    expect(lastSql()).toMatch(/LIMIT 101$/);
 
     await supertest(app()).get('/api/marketplace/chat/threads?limit=abc');
-    expect(lastSql()).toMatch(/LIMIT 50$/);
+    expect(lastSql()).toMatch(/LIMIT 51$/);
 
     await supertest(app()).get('/api/marketplace/chat/threads?limit=3');
-    expect(lastSql()).toMatch(/LIMIT 3$/);
+    expect(lastSql()).toMatch(/LIMIT 4$/);
   });
 
   it('6A · 数据库报错 → 500 且不泄露内部信息', async () => {
@@ -136,5 +136,23 @@ describe('P2B-02 跨商品私信会话列表', () => {
     expect(res.status).toBe(500);
     expect(JSON.stringify(res.body)).not.toContain('ER_NO_SUCH_TABLE');
     warn.mockRestore();
+  });
+
+  it('7A · 会话列表支持复合游标，兼容旧 limit 调用', async () => {
+    const cursor = Buffer.from(JSON.stringify({ lastMessageAt: '2026-10-06 10:00:00', id: 11 })).toString('base64url');
+    query.mockResolvedValueOnce([thread({ id: 10, last_message_at: '2026-10-06 09:00:00' })]);
+
+    const res = await supertest(app()).get(`/api/marketplace/chat/threads?limit=1&cursor=${cursor}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({ hasMore: false, nextCursor: null });
+    expect(query.mock.calls[0][0]).toContain('t.last_message_at < ? OR (t.last_message_at = ? AND t.id < ?)');
+    expect(query.mock.calls[0][1]).toEqual([7, 7, 7, 7, '2026-10-06 10:00:00', '2026-10-06 10:00:00', 11]);
+  });
+
+  it('8A · 非法会话游标返回 400，不访问数据库', async () => {
+    const res = await supertest(app()).get('/api/marketplace/chat/threads?cursor=bad');
+    expect(res.status).toBe(400);
+    expect(query).not.toHaveBeenCalled();
   });
 });

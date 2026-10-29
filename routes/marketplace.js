@@ -89,6 +89,21 @@ function decodeChatCursor(raw) {
   }
 }
 
+function encodeThreadCursor(row) {
+  return Buffer.from(JSON.stringify({ lastMessageAt: row.last_message_at, id: Number(row.id) })).toString('base64url');
+}
+
+function decodeThreadCursor(raw) {
+  if (typeof raw !== 'string' || !raw) return null;
+  try {
+    const value = JSON.parse(Buffer.from(raw, 'base64url').toString('utf8'));
+    if (typeof value.lastMessageAt !== 'string' || !Number.isInteger(Number(value.id)) || Number(value.id) <= 0) return null;
+    return { lastMessageAt: value.lastMessageAt, id: Number(value.id) };
+  } catch (_) {
+    return null;
+  }
+}
+
 function ensureUploadsDir(relDir) {
   const dir = path.join(process.cwd(), 'uploads', relDir);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
@@ -944,6 +959,14 @@ router.get('/chat/threads', authenticateToken, async (req, res) => {
   try {
     const userId = Number(req.user.id);
     const limitNum = clamp(toInt(req.query.limit, 50), 1, 100);
+    const cursor = req.query.cursor == null ? null : decodeThreadCursor(req.query.cursor);
+    if (req.query.cursor != null && !cursor) return res.status(400).json({ status: -1, message: 'cursor 不合法' });
+    const cursorSql = cursor
+      ? ' AND (t.last_message_at < ? OR (t.last_message_at = ? AND t.id < ?))'
+      : '';
+    const params = cursor
+      ? [userId, userId, userId, userId, cursor.lastMessageAt, cursor.lastMessageAt, cursor.id]
+      : [userId, userId, userId, userId];
 
     const rows = await query(
       `SELECT t.id, t.item_id, t.seller_user_id, t.buyer_user_id, t.last_message_at,
@@ -966,13 +989,16 @@ router.get('/chat/threads', authenticateToken, async (req, res) => {
          JOIN marketplace_items i ON i.id = t.item_id
          LEFT JOIN users sb ON sb.id = t.seller_user_id
          LEFT JOIN users bb ON bb.id = t.buyer_user_id
-        WHERE t.seller_user_id = ? OR t.buyer_user_id = ?
+        WHERE (t.seller_user_id = ? OR t.buyer_user_id = ?)${cursorSql}
         ORDER BY t.last_message_at DESC, t.id DESC
-        LIMIT ${limitNum}`,
-      [userId, userId, userId, userId]
+        LIMIT ${limitNum + 1}`,
+      params
     );
 
-    const list = (rows || []).map((r) => {
+    const pageRows = rows || [];
+    const hasMore = pageRows.length > limitNum;
+    const visibleRows = pageRows.slice(0, limitNum);
+    const list = visibleRows.map((r) => {
       const iAmSeller = Number(r.seller_user_id) === userId;
       const peer = iAmSeller
         ? { id: r.buyer_user_id, username: r.buyer_username, nickname: r.buyer_nickname, avatar: r.buyer_avatar }
@@ -992,7 +1018,11 @@ router.get('/chat/threads', authenticateToken, async (req, res) => {
       };
     });
 
-    res.status(200).json({ status: 0, message: 'ok', data: { list } });
+    res.status(200).json({
+      status: 0,
+      message: 'ok',
+      data: { list, hasMore, nextCursor: hasMore ? encodeThreadCursor(pageRows[limitNum - 1]) : null },
+    });
   } catch (e) {
     console.error('marketplace my chat threads error:', e);
     res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });

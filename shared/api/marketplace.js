@@ -116,6 +116,7 @@ export function markMarketplaceThreadRead(threadId) {
 export function listMyChatThreads(params = {}) {
   const qs = new URLSearchParams();
   if (params.limit) qs.set('limit', String(params.limit));
+  if (params.cursor) qs.set('cursor', String(params.cursor));
   const query = qs.toString();
   return get(`/api/marketplace/chat/threads${query ? `?${query}` : ''}`);
 }

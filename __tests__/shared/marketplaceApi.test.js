@@ -12,6 +12,7 @@ const {
   updateMarketplaceItem,
   listMarketplaceMyItems,
   listMarketplaceMyWants,
+  listMyChatThreads,
 } = require('../../shared/api/marketplace');
 
 describe('marketplace buyer chat API', () => {
@@ -59,5 +60,11 @@ describe('marketplace buyer chat API', () => {
     await expect(buyerSendMarketplaceMessage(5, '稍后联系')).rejects.toThrow('offline');
     await expect(buyerSendMarketplaceMessage(5, '稍后联系')).resolves.toEqual({ thread_id: 11, id: 102 });
     expect(post).toHaveBeenCalledTimes(2);
+  });
+
+  it('passes the conversation cursor without breaking the limit-only call', async () => {
+    get.mockResolvedValueOnce({ list: [], hasMore: true, nextCursor: 'next' });
+    await expect(listMyChatThreads({ limit: 20, cursor: 'abc+/=' })).resolves.toMatchObject({ hasMore: true });
+    expect(get).toHaveBeenCalledWith('/api/marketplace/chat/threads?limit=20&cursor=abc%2B%2F%3D');
   });
 });
