@@ -100,7 +100,7 @@ export function CampusDetailScreen({
   const { handleAuthFailure, status: sessionStatus, identifier, isSignedIn } = useSession();
   const identity = JSON.stringify(kind === 'wall' ? [sessionStatus, identifier, isSignedIn] : []);
   const identityRef = React.useRef(identity);
-  identityRef.current = identity;
+  React.useLayoutEffect(() => { identityRef.current = identity; }, [identity]);
   const theme = useTheme();
   const toast = useToast();
   const [post, setPost] = React.useState<Post | null>(null);
@@ -295,6 +295,29 @@ export function CampusDetailScreen({
     }
   }, [backToFeed, handleAuthFailure, postId, identity, isSignedIn, postIdentity, post?.is_mine]);
 
+  const deleteNotice = deleteError ? (
+    <View style={{ paddingHorizontal: theme.space('space_4'), paddingTop: theme.space('space_2') }}>
+      <InlineNotice
+        testID="wall-delete-notice"
+        tone="danger"
+        message={t(
+          deleteError === 'login' ? 'auth.expired'
+            : deleteError === 'denied' ? 'screen.campus.write.denied'
+              : 'screen.campus.read.deleteFailed'
+        )}
+        actionLabel={t(
+          deleteError === 'login' ? 'action.login'
+            : deleteError === 'denied' ? 'screen.campus.read.backToList'
+              : 'action.retry'
+        )}
+        onAction={
+          deleteError === 'login' ? () => router.push('/login')
+            : deleteError === 'denied' ? backToFeed : () => setDeleteOpen(true)
+        }
+      />
+    </View>
+  ) : null;
+
   const headerOptions = React.useMemo(
     () => ({
       headerShown: true,
@@ -424,28 +447,7 @@ export function CampusDetailScreen({
             contentContainerStyle={{ paddingBottom: theme.space('space_6') }}
           >
             {deleting ? <LoadingState testID="wall-delete-pending" variant="spinner" /> : null}
-            {deleteError ? (
-              <View style={{ paddingHorizontal: theme.space('space_4'), paddingTop: theme.space('space_2') }}>
-                <InlineNotice
-                  testID="wall-delete-notice"
-                  tone="danger"
-                  message={t(
-                    deleteError === 'login' ? 'auth.expired'
-                      : deleteError === 'denied' ? 'screen.campus.write.denied'
-                        : 'screen.campus.read.deleteFailed'
-                  )}
-                  actionLabel={t(
-                    deleteError === 'login' ? 'action.login'
-                      : deleteError === 'denied' ? 'screen.campus.read.backToList'
-                        : 'action.retry'
-                  )}
-                  onAction={
-                    deleteError === 'login' ? () => router.push('/login')
-                      : deleteError === 'denied' ? backToFeed : () => setDeleteOpen(true)
-                  }
-                />
-              </View>
-            ) : null}
+            {deleteNotice}
             <TreeholePostDetail
               post={vm}
               timeLabel={timeLabel}
@@ -606,6 +608,8 @@ export function CampusDetailScreen({
           <View style={{ flex: 1, justifyContent: 'center' }}>
             <LoadingState testID="campus-detail-loading" />
           </View>
+        ) : state === 'error' && deleteNotice ? (
+          <View style={{ flex: 1, justifyContent: 'center' }}>{deleteNotice}</View>
         ) : state === 'error' ? (
           <View style={{ flex: 1, justifyContent: 'center' }}>
             <ErrorState
