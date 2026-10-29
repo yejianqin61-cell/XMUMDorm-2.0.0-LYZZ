@@ -25,6 +25,8 @@ import { asWall, errorFor, type Post } from './campusModel';
 
 /** 万能墙一屏一篇的窗口大小（后端 limit 1–10） */
 export const WALL_WINDOW_LIMIT = 5;
+// 与详情删除回执保持同一入口；模块常量避免把不可变key交给组件内手工memo。
+const WALL_SNAPSHOT_KEY = [...QK.confessionWindow('_guest'), 'wallReadSnapshot'];
 
 export type WallFeedSnapshot = {
   /** 固定删除回执入口不变；只有当前身份可以恢复带互动/本人标记的行。 */
@@ -50,7 +52,7 @@ function WallFeedSession({ testID, identity }: { testID: string; identity: strin
   const theme = useTheme();
   const router = useRouter();
   const client = getQueryClient();
-  const key = React.useMemo(() => [...QK.confessionWindow('_guest'), 'wallReadSnapshot'], []);
+  const key = WALL_SNAPSHOT_KEY;
   const cached = client.getQueryData<WallFeedSnapshot>(key);
   const initial = React.useRef(cached?.viewerIdentity === identity ? cached : undefined);
   const snapshot = React.useRef<WallFeedSnapshot>(
