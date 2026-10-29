@@ -265,6 +265,7 @@ function TreeholeDetailMedia({
   const fly = React.useCallback(
     (direction: 'next' | 'previous') => {
       if (urls.length <= 1) return;
+      setFailed(false);
       const from = labelRef.current;
       const target =
         direction === 'next' ? (from + 1) % urls.length : (from - 1 + urls.length) % urls.length;
@@ -435,8 +436,8 @@ function TreeholeDetailMedia({
             }}
           />
         </View>
-      ) : (
-        // 外层留出后卡露边：⛔ 不裁切（裁掉就看不见"多张堆叠"了）
+      ) : null}
+        {/* 失败时仍保留画框与切图手势，后续图片继续可读。 */}
         <View
           testID="treehole-media-box"
           style={{ paddingTop: DECK_TOP_PADDING, paddingRight: DECK_RIGHT_PADDING }}
@@ -462,7 +463,7 @@ function TreeholeDetailMedia({
               >
                 <AppPressable
                   testID="treehole-media-drag-area"
-                  onPress={() => setPreviewOpen(true)}
+                  onPress={() => { if (!failed) setPreviewOpen(true); }}
                   accessibilityRole="image"
                   accessibilityLabel={t('screen.campus.mediaPosition', {
                     index: labelIndex + 1,
@@ -498,7 +499,7 @@ function TreeholeDetailMedia({
                     style={{ width: '100%', height: '100%' }}
                   />
                 </AppPressable>
-                {loadedUri !== current ? (
+                {!failed && loadedUri !== current ? (
                   <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
                     <Skeleton testID="treehole-media-detail-loading" kind="media" style={{ height: '100%' }} />
                   </View>
@@ -532,7 +533,6 @@ function TreeholeDetailMedia({
             ) : null}
           </View>
         </View>
-      )}
 
       <Modal
         visible={previewOpen}
