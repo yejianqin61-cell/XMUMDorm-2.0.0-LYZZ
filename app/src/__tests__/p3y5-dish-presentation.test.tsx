@@ -32,7 +32,7 @@ it('renders the actions bar in the screen footer slot, outside the scrolling con
   expect(view.getByTestId('dish-images-placeholder')).toBeTruthy();
 });
 it('keeps dish images readable when one image fails to load', async () => {
-  jest.mocked(getProduct).mockResolvedValue({ id: 7, name: 'Rice', images: ['/good.png', '/bad.png'],
+  jest.mocked(getProduct).mockResolvedValue({ id: 7, name: 'Rice', images: [{ url: '/good.png' }, { url: '/bad.png' }],
     comments: { list: [], page: 1, pageSize: 10, hasMore: false } });
   const view = await renderApp(<DishDetail />);
   await waitFor(() => expect(view.getByTestId('dish-images-1-image')).toBeTruthy());
