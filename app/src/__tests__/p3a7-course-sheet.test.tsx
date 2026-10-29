@@ -5,7 +5,7 @@
  *   · 点卡片弹半屏；· 展示全部字段；· 本周安排列出该课所有时段；· 关闭后不 push 路由。
  */
 import * as React from 'react';
-import { userEvent, waitFor } from '@testing-library/react-native';
+import { fireEvent, userEvent, waitFor } from '@testing-library/react-native';
 
 import { renderApp } from './helpers/renderApp';
 import { ToastProvider } from '@/components/ui/Toast';
@@ -78,8 +78,7 @@ describe('P3A7 课程详情半屏弹窗', () => {
     try {
       const view = await renderApp(withProviders(<TimetableScreen />));
       await waitFor(() => expect(view.getByTestId('timetable-grid-card-SUN-continuation')).toBeTruthy());
-      const user = userEvent.setup();
-      await user.press(view.getByTestId('timetable-grid-card-SUN-continuation'));
+      await fireEvent.press(view.getByTestId('timetable-grid-card-SUN-continuation'));
       expect(view.getByTestId('course-sheet-occurrence-0', { includeHiddenElements: true })).toBeTruthy();
       expect(view.getByTestId('course-sheet-occurrence-1', { includeHiddenElements: true })).toBeTruthy();
       expect(api.getScheduleWeek).toHaveBeenCalledWith(1);

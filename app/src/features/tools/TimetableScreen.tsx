@@ -174,7 +174,7 @@ function OwnedTimetableScreen({ renderGrid, legacyControls }: { renderGrid: (pro
         if (courseKey(meeting) === key) list.push(meeting);
       }
     }
-    if (list.length === 0 && shown.previousSunday?.includes(selected)) list.push(selected);
+    if (shown.previousSunday?.includes(selected)) list.push(selected);
     return list;
   }, [selected, shown]);
   const closeSheet = React.useCallback(() => setSelected(null), []);
