@@ -60,6 +60,7 @@ export function MoodleWorkspaceHost(props: MoodleWorkspaceHostProps): React.Reac
   const [entry, setEntry] = React.useState<'first-login' | 'current-native' | 'restored-native'>('first-login');
   const [trusted, setTrusted] = React.useState(false);
   const [loadFailed, setLoadFailed] = React.useState(false);
+  const [sessionFailure, setSessionFailure] = React.useState<'expired' | 'wrong-origin' | null>(null);
   const [detail, setDetail] = React.useState<DetailView | null>(null);
   const [reminderStatus, setReminderStatus] = React.useState<MoodleReminderStatus>('unavailable');
   const pendingDetail = React.useRef<{ id: string; generation: number; view: DetailView } | null>(null);
@@ -95,6 +96,7 @@ export function MoodleWorkspaceHost(props: MoodleWorkspaceHostProps): React.Reac
     const unsubscribeCache = subscribeMoodleInvalidation(() => {
       schoolUser.current = null; proofSequence.current += 1; pendingDetail.current = null;
       controller.cancel(false); setTrusted(false); setDetail(null); setEntry('first-login'); setMode('web');
+      setSessionFailure(null);
       deliverReminders(null);
     });
     return () => {
@@ -104,18 +106,22 @@ export function MoodleWorkspaceHost(props: MoodleWorkspaceHostProps): React.Reac
   }, [controller, deliverReminders, read]);
 
   const onIdentity = React.useCallback(async (result: MoodleIdentityResult) => {
+    if (result.status === 'expired' || result.status === 'wrong-origin') setSessionFailure(result.status);
     if (result.status !== 'confirmed' || schoolUser.current === result.userId) return;
     schoolUser.current = result.userId;
     const sequence = ++proofSequence.current;
     const restored = await restoreMoodleSnapshot();
     if (!mounted.current || sequence !== proofSequence.current || confirmedMoodleSchoolIdentity() !== result.userId) return;
     if (restored) controller.adoptCache(); else controller.cancel(false);
+    setSessionFailure(null); setLoadFailed(false);
     setTrusted(true); setEntry(restored ? 'restored-native' : 'current-native'); setMode('native');
   }, [controller]);
   const onResponse = React.useCallback((result: MoodleBridgeResult, generation: number) => {
+    if (result.status === 'expired' || result.status === 'wrong-origin') setSessionFailure(result.status);
     controller.receive(result, generation);
   }, [controller]);
   const onDetail = React.useCallback((result: MoodleDetailResult, generation: number) => {
+    if (result.status === 'expired' || result.status === 'wrong-origin') setSessionFailure(result.status);
     const item = pendingDetail.current;
     if (!item || item.id !== result.requestId || item.generation !== generation || generation !== moodleCacheGeneration()) return;
     pendingDetail.current = null;
@@ -184,6 +190,7 @@ export function MoodleWorkspaceHost(props: MoodleWorkspaceHostProps): React.Reac
     {mode === 'web' ? <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: theme.space('space_2'),
       padding: theme.space('space_3') }}>
       <Text>{labels.firstLogin}</Text>
+      {sessionFailure ? <Text testID="moodle-session-failure" colorToken="text-danger">{labels.failure(sessionFailure)}</Text> : null}
       {loadFailed ? <><Text colorToken="text-danger">{labels.failure('unavailable')}</Text>
         <Button testID="moodle-login-retry" label={t('action.retry')} onPress={() => bridge.current?.reload?.()} /></> : null}
       <Button testID="moodle-native" label={labels.backToNative} disabled={!trusted} variant="secondary"
