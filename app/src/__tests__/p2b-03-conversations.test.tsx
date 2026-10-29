@@ -112,6 +112,17 @@ describe('P2B-03 M-11 会话列表页', () => {
       expect(merged.find((row) => row.thread_id === 11)?.last_content).toBe('新');
       expect(merged.map((row) => row.thread_id)).toEqual([12, 11]);
     });
+
+    it('按最后消息时间排序，同一时间再按 thread_id 排序', () => {
+      const merged = mergeThreadRows(
+        [],
+        [
+          { ...ROW, thread_id: 20, last_message_at: '2026-10-29 10:00:00' },
+          { ...ROW, thread_id: 21, last_message_at: '2026-10-29 10:01:00' },
+        ]
+      );
+      expect(merged.map((row) => row.thread_id)).toEqual([21, 20]);
+    });
   });
 
   describe('TC-P2B-03-4A · 空态与错误态是两件事', () => {
