@@ -69,6 +69,16 @@ it('does not request again after an earlier request', async () => {
   expect(permissions.request).not.toHaveBeenCalled();
 });
 
+it('lets the user retry when a previous request left permission undecided', async () => {
+  storage.getItem.mockResolvedValue('1');
+  const view = await renderApp(<SessionProvider><TimetableScreen renderGrid={() => null} /></SessionProvider>);
+  await waitFor(() => expect(view.getByTestId('timetable-reminder-request')).toBeTruthy());
+  expect(permissions.request).not.toHaveBeenCalled();
+  await fireEvent.press(view.getByTestId('timetable-reminder-request'));
+  await waitFor(() => expect(permissions.request).toHaveBeenCalledTimes(1));
+  await waitFor(() => expect(refresh).toHaveBeenCalled());
+});
+
 it('offers settings when permission is denied', async () => {
   permissions.read.mockResolvedValue('denied');
   const view = await renderApp(<SessionProvider><TimetableScreen renderGrid={() => null} /></SessionProvider>);
