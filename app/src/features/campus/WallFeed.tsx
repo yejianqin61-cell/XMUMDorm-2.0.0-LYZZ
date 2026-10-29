@@ -15,6 +15,7 @@ import { InlineNotice } from '@/components/ui/InlineNotice';
 import { ListItem } from '@/components/ui/ListItem';
 import { ListScreen, useListPagination } from '@/components/ui/ListScreen';
 import { useTheme } from '@/design-system/theme';
+import { useSession } from '@/features/auth/session';
 import { useI18n } from '@/i18n';
 import { getQueryClient } from '@/shared/queryClient';
 import { QK } from '../../../../shared/query/queryKeys';
@@ -26,6 +27,8 @@ import { asWall, errorFor, type Post } from './campusModel';
 export const WALL_WINDOW_LIMIT = 5;
 
 export type WallFeedSnapshot = {
+  /** 固定删除回执入口不变；只有当前身份可以恢复带互动/本人标记的行。 */
+  viewerIdentity?: string;
   rows: readonly Post[];
   cursor: number | null;
   hasMore: boolean;
@@ -37,14 +40,25 @@ export type WallFeedSnapshot = {
 };
 
 export function WallFeed({ testID = 'wall-feed' }: { testID?: string }): React.ReactElement {
+  const session = useSession();
+  const identity = JSON.stringify([session.status, session.identifier, session.isSignedIn]);
+  return <WallFeedSession key={identity} testID={testID} identity={identity} />;
+}
+
+function WallFeedSession({ testID, identity }: { testID: string; identity: string }): React.ReactElement {
   const { t } = useI18n();
   const theme = useTheme();
   const router = useRouter();
   const client = getQueryClient();
   const key = React.useMemo(() => [...QK.confessionWindow('_guest'), 'wallReadSnapshot'], []);
-  const initial = React.useRef(client.getQueryData<WallFeedSnapshot>(key));
+  const cached = client.getQueryData<WallFeedSnapshot>(key);
+  const initial = React.useRef(cached?.viewerIdentity === identity ? cached : undefined);
   const snapshot = React.useRef<WallFeedSnapshot>(
-    initial.current ?? { rows: [], cursor: null, hasMore: true, needsRefresh: true }
+    initial.current ?? {
+      viewerIdentity: identity, rows: [], cursor: null, hasMore: true, needsRefresh: true,
+      // 删除是公开内容的服务端成功事实，不因换号重新引入；旧身份的行与互动状态不复用。
+      deletedIds: cached?.deletedIds,
+    }
   );
   const [rows, setRows] = React.useState(snapshot.current.rows);
   const [restoredScrollOffset, setRestoredScrollOffset] = React.useState(snapshot.current.scrollOffset ?? 0);
@@ -111,6 +125,7 @@ export function WallFeed({ testID = 'wall-feed' }: { testID?: string }): React.R
           if (!deleted.has(row.id)) unique.set(row.id, row);
         }
         const next: WallFeedSnapshot = {
+          viewerIdentity: identity,
           rows: Array.from(unique.values()),
           cursor,
           hasMore,
@@ -138,7 +153,7 @@ export function WallFeed({ testID = 'wall-feed' }: { testID?: string }): React.R
         if (request === generation.current) pending.current = null;
       }
     },
-    [client, dispatch, key, persistScrollOffset, setCursor]
+    [client, dispatch, key, persistScrollOffset, setCursor, identity]
   );
   React.useEffect(() => {
     if (!initial.current || initial.current.needsRefresh) void load('refresh');
@@ -153,11 +168,18 @@ export function WallFeed({ testID = 'wall-feed' }: { testID?: string }): React.R
     const snapshotKey = JSON.stringify(key);
     let publishing = false;
     return client.getQueryCache().subscribe((event) => {
+      if (event.type === 'removed' && JSON.stringify(event.query.queryKey) === snapshotKey) {
+        generation.current++;
+        pending.current = null;
+        void load('refresh');
+        return;
+      }
       if (
         publishing || event.type !== 'updated' || event.action.type !== 'success' ||
         JSON.stringify(event.query.queryKey) !== snapshotKey
       ) return;
       const next = client.getQueryData<WallFeedSnapshot>(key);
+      if (next?.viewerIdentity !== undefined && next.viewerIdentity !== identity) return;
       if (next && next !== snapshot.current) {
         // 缓存可能已 GC，但列表仍挂载。仅含删除回执的空快照不能清空现有其他行。
         const deletedIds = [...new Set([...(snapshot.current.deletedIds ?? []), ...(next.deletedIds ?? [])])];
@@ -179,7 +201,7 @@ export function WallFeed({ testID = 'wall-feed' }: { testID?: string }): React.R
         }
       }
     });
-  }, [client, key]);
+  }, [client, key, load, identity]);
 
   const refresh = () => void load('refresh');
   const append = () => void load('append');

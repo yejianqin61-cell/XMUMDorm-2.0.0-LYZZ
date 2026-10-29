@@ -97,14 +97,20 @@ type Snapshot = {
 };
 
 export function TreeholeFeed({ testID = 'treehole-feed' }: { testID?: string }): React.ReactElement {
+  const session = useSession();
+  const identity = JSON.stringify([session.status, session.identifier, session.isSignedIn]);
+  return <TreeholeFeedSession key={identity} testID={testID} identity={identity} />;
+}
+
+function TreeholeFeedSession({ testID, identity }: { testID: string; identity: string }): React.ReactElement {
   const { t } = useI18n();
   const theme = useTheme();
   const client = getQueryClient();
   const session = useSession();
   const searchKey = React.useMemo(() => [
     ...QK.postsInfinite(session.isSignedIn ? '_user' : '_guest', TREEHOLE_PAGE_SIZE),
-    'campusSearchState', session.identifier,
-  ], [session.isSignedIn, session.identifier]);
+    'campusSearchState', identity,
+  ], [session.isSignedIn, identity]);
   const initial = React.useRef(client.getQueryData<{
     expanded: boolean; draft: string; query: string; history: readonly string[];
   }>(searchKey));
@@ -239,8 +245,10 @@ function TreeholeFeedData({
       ),
       'campusReadSnapshot',
       query,
+      session.status,
+      session.identifier,
     ],
-    [scoped, session.isSignedIn, tagId, query]
+    [scoped, session.isSignedIn, session.status, session.identifier, tagId, query]
   );
   const initial = React.useRef(client.getQueryData<Snapshot>(key));
   const snapshot = React.useRef<Snapshot>(initial.current ?? { rows: [], page: 0, hasMore: true });
