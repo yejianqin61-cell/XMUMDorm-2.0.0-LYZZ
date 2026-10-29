@@ -36,11 +36,9 @@ import { getSecondaryTabs } from '@/features/navigation/secondaryTabs';
 import { useTheme } from '@/design-system/theme';
 import { useI18n } from '@/i18n';
 import { TAB_BAR_CLEARANCE } from '@/app/(tabs)/_layout';
-import { getMe } from '../../../../shared/api/users';
-import { levelNameKey, normalizeProfile, type MeProfile } from './profile';
+import { levelNameKey, type MeProfile } from './profile';
 import { MeContentPane, type MeContentKey } from './ContentPanes';
-
-type Loadable<T> = { data: T; loading: boolean; failed: boolean };
+import { useMeProfile } from './useMeProfile';
 
 const EMPTY_PROFILE: MeProfile = {
   id: null,
@@ -59,32 +57,12 @@ export function MeScreen(): React.ReactElement {
   const theme = useTheme();
   const router = useRouter();
 
-  const [profile, setProfile] = React.useState<Loadable<MeProfile>>({
-    data: EMPTY_PROFILE,
-    loading: true,
-    failed: false,
-  });
-  const [nonce, setNonce] = React.useState(0);
-
-  React.useEffect(() => {
-    let cancelled = false;
-    setProfile((prev) => ({ ...prev, loading: true, failed: false }));
-    void (async () => {
-      try {
-        const payload = await getMe();
-        if (!cancelled) setProfile({ data: normalizeProfile(payload), loading: false, failed: false });
-      } catch {
-        if (!cancelled) setProfile((prev) => ({ ...prev, loading: false, failed: true }));
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [nonce]);
-
-  const reload = React.useCallback(() => {
-    setNonce((n) => n + 1);
-  }, []);
+  /**
+   * 资料单一取数点（阶段2-02）：会话就绪才取、失败保留旧数据、重试走同一个查询。
+   * ⛔ 本页不再自己 `getMe()`（冷启动抢跑 401 的病根就在那）。
+   */
+  const me = useMeProfile();
+  const profile = me.profile ?? EMPTY_PROFILE;
 
   // 集合来自**唯一真源**（`secondaryTabs.ts`），⛔ 主页不另写一份（P2A-03 扫描盯着）
   const tabs = getSecondaryTabs('me');
@@ -128,15 +106,15 @@ export function MeScreen(): React.ReactElement {
         <View style={{ padding: theme.space('space_4') }}>
           <Card testID="me-profile" variant="outlined" padding="space_4">
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.space('space_3') }}>
-              <Avatar size="space_12" uri={profile.data.avatarUri ?? undefined} />
+              <Avatar size="space_12" uri={profile.avatarUri ?? undefined} />
               <View style={{ flex: 1, gap: theme.space('space_1') }}>
                 <Text role="headline" emphasis="strong" colorToken="text-primary" numberOfLines={1}>
-                  {profile.data.displayName ?? t('auth.signedOut')}
+                  {profile.displayName ?? t('auth.signedOut')}
                 </Text>
                 <LevelBadge
                   testID="me-level"
-                  level={profile.data.level}
-                  name={t(levelNameKey(profile.data.level))}
+                  level={profile.level}
+                  name={t(levelNameKey(profile.level))}
                   variant="iconWithName"
                 />
               </View>
@@ -144,18 +122,18 @@ export function MeScreen(): React.ReactElement {
             <View style={{ marginTop: theme.space('space_3') }}>
               <ExpBar
                 testID="me-exp"
-                progress={profile.data.progress}
-                text={profile.data.progressText ?? undefined}
+                progress={profile.progress}
+                text={profile.progressText ?? undefined}
                 variant="full"
               />
             </View>
-            {profile.failed ? (
+            {me.failed ? (
               <InlineNotice
                 testID="me-profile-failed"
                 tone="warning"
                 message={t('me.section.failed')}
                 actionLabel={t('action.retry')}
-                onAction={reload}
+                onAction={() => void me.refresh()}
               />
             ) : null}
           </Card>
