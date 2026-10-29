@@ -125,6 +125,16 @@ function OwnedTimetableScreen({ renderGrid, legacyControls }: { renderGrid: (pro
   }, [t]);
   const refreshRef = React.useRef(refreshReminders);
   refreshRef.current = refreshReminders;
+  const retryPermission = React.useCallback(async () => {
+    try {
+      const status = await requestFirstTimetablePermission();
+      if (!mounted.current) return;
+      setPermission(status);
+      if (status === 'granted') await refreshRef.current();
+    } catch {
+      if (mounted.current) setPermission('unavailable');
+    }
+  }, []);
   React.useEffect(() => {
     let active = true;
     mounted.current = true;
@@ -197,6 +207,8 @@ function OwnedTimetableScreen({ renderGrid, legacyControls }: { renderGrid: (pro
         <Text testID="timetable-reminder-explanation" role="body" colorToken="text-secondary">
           {t('me.settings.notifications.description')}
         </Text>
+        {permission === 'undetermined' ? <Button testID="timetable-reminder-request" variant="secondary"
+          label={t('action.retry')} onPress={() => { void retryPermission(); }} /> : null}
         {permission === 'denied' || permission === 'undetermined' ?
           <Button testID="timetable-reminder-settings" variant="secondary"
             label={t('me.settings.notifications.openSettings')}
