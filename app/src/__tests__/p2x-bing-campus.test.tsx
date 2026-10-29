@@ -41,6 +41,7 @@ import { renderApp } from './helpers/renderApp';
 jest.mock('expo-router', () => {
   const React = require('react');
   const { Text, View } = require('react-native');
+  const FocusContext = React.createContext(true);
   const router = {
     push: jest.fn(),
     back: jest.fn(),
@@ -50,6 +51,11 @@ jest.mock('expo-router', () => {
   };
   return {
     __router: router,
+    __FocusProvider: FocusContext.Provider,
+    useFocusEffect: (effect: () => void | (() => void)) => {
+      const focused = React.useContext(FocusContext);
+      React.useEffect(() => focused ? effect() : undefined, [effect, focused]);
+    },
     useRouter: () => router,
     useLocalSearchParams: () => ({}),
     Redirect: (props: unknown) => React.createElement(View, props),
@@ -83,7 +89,7 @@ const routerMock = (require('expo-router') as {
 }).__router;
 
 const mockAuthFailure = jest.fn(async () => ({ kind: 'permission' }));
-const mockSession = { isSignedIn: true, handleAuthFailure: mockAuthFailure };
+const mockSession = { status: 'signedIn', identifier: 'owner-a' as string | null, isSignedIn: true, handleAuthFailure: mockAuthFailure };
 jest.mock('@/features/auth/session', () => ({ useSession: () => mockSession }));
 
 jest.mock('../../../shared/api/posts', () => ({
@@ -138,7 +144,9 @@ beforeEach(() => {
   jest.clearAllMocks();
   resetRouter();
   mockSession.isSignedIn = true;
-  mockAuthFailure.mockClear();
+  mockSession.status = 'signedIn';
+  mockSession.identifier = 'owner-a';
+  mockAuthFailure.mockReset().mockResolvedValue({ kind: 'permission' });
   list.mockReset();
   detail.mockReset();
   tags.mockReset().mockResolvedValue([]);
@@ -853,6 +861,132 @@ describe('万能墙删除自己的帖子', () => {
     }, [remountFeed]);
     return <><WallFeed key={feedRevision} />{detailOpen ? <CampusDetailScreen postId="40" kind="wall" /> : null}</>;
   }
+
+  describe('D-3 登录恢复', () => {
+    const mine = { id: 40, content: '恢复后的内容', template_key: 'announcement', viewer_is_author: true };
+    const expired = () => Object.assign(new Error('expired'), { status: 401, apiStatus: -1, body: { status: -1 } });
+    const FocusProvider = (require('expo-router') as { __FocusProvider: React.Provider<boolean> }).__FocusProvider;
+
+    function RecoveryFlow(): React.ReactElement {
+      const [focused, setFocused] = React.useState(true);
+      const [, renderSession] = React.useReducer((value: number) => value + 1, 0);
+      React.useEffect(() => {
+        routerMock.push.mockImplementation(() => setFocused(false));
+        mockAuthFailure.mockImplementation(async () => {
+          mockSession.status = 'expired'; mockSession.identifier = null; mockSession.isSignedIn = false;
+          renderSession();
+          return { kind: 'permission' };
+        });
+        return () => { routerMock.push.mockReset(); };
+      }, []);
+      const login = (identifier: string) => {
+        mockSession.status = 'signedIn'; mockSession.identifier = identifier; mockSession.isSignedIn = true;
+        renderSession(); setFocused(true);
+      };
+      return <>
+        <Button label="完成原账号登录" onPress={() => login('owner-a')} />
+        <Button label="完成其他账号登录" onPress={() => login('other-b')} />
+        <Button label="取消登录" onPress={() => setFocused(true)} />
+        <Button label="离开详情" onPress={() => setFocused(false)} />
+        <Button label="回到详情" onPress={() => setFocused(true)} />
+        <FocusProvider value={focused}><CampusDetailScreen postId="40" kind="wall" /></FocusProvider>
+      </>;
+    }
+    async function loginAfter401(view: Awaited<ReturnType<typeof renderApp>>) {
+      await confirmDelete(view);
+      await waitFor(() => expect(view.getByTestId('wall-delete-notice')).toHaveTextContent(/登录已过期/));
+      await fireEvent.press(within(view.getByTestId('wall-delete-notice')).getByText('登录'));
+      expect(routerMock.push).toHaveBeenCalledWith('/login');
+    }
+
+    it('同账号返回先重新确认权限，完成前不开放删除，随后可再次删除', async () => {
+      let finish: (value: unknown) => void = () => undefined;
+      wallDetail.mockResolvedValueOnce(mine).mockReturnValueOnce(new Promise((resolve) => { finish = resolve; }));
+      removeConfession.mockRejectedValueOnce(expired()).mockResolvedValue({ status: 0 });
+      const view = await renderApp(<RecoveryFlow />);
+      await loginAfter401(view);
+      await fireEvent.press(view.getByText('完成原账号登录'));
+      await waitFor(() => expect(wallDetail).toHaveBeenCalledTimes(2));
+      expect(view.getByTestId('campus-detail-loading')).toBeTruthy();
+      await fireEvent.press(view.getByTestId('campus-detail-more'));
+      expect(view.queryByTestId('campus-detail-menu-delete')).toBeNull();
+      await act(async () => finish(mine));
+      await waitFor(() => expect(view.getByText('恢复后的内容')).toBeTruthy());
+      expect(view.queryByTestId('wall-delete-notice')).toBeNull();
+      await confirmDelete(view);
+      await waitFor(() => expect(removeConfession).toHaveBeenCalledTimes(2));
+      expect(routerMock.back).toHaveBeenCalledTimes(1);
+      expect(wallDetail).toHaveBeenCalledTimes(2);
+    });
+
+    it('换账号返回重新读取本人标记，不沿用原账号删除资格', async () => {
+      wallDetail.mockResolvedValueOnce(mine).mockResolvedValueOnce({ ...mine, viewer_is_author: false });
+      removeConfession.mockRejectedValueOnce(expired());
+      const view = await renderApp(<RecoveryFlow />);
+      await loginAfter401(view);
+      await fireEvent.press(view.getByText('完成其他账号登录'));
+      await waitFor(() => expect(wallDetail).toHaveBeenCalledTimes(2));
+      await waitFor(() => expect(view.queryByTestId('campus-detail-loading')).toBeNull());
+      await fireEvent.press(view.getByTestId('campus-detail-more'));
+      expect(view.queryByTestId('campus-detail-menu-delete')).toBeNull();
+      expect(view.queryByTestId('wall-delete-notice')).toBeNull();
+      expect(removeConfession).toHaveBeenCalledTimes(1);
+    });
+
+    it('取消登录返回不残留忙态，能再次登录并恢复', async () => {
+      wallDetail.mockResolvedValue(mine);
+      removeConfession.mockRejectedValueOnce(expired());
+      const view = await renderApp(<RecoveryFlow />);
+      await loginAfter401(view);
+      await fireEvent.press(view.getByText('取消登录'));
+      expect(view.queryByTestId('wall-delete-pending')).toBeNull();
+      expect(view.queryByTestId('campus-detail-loading')).toBeNull();
+      expect(wallDetail).toHaveBeenCalledTimes(1);
+      await fireEvent.press(within(view.getByTestId('wall-delete-notice')).getByText('登录'));
+      await fireEvent.press(view.getByText('完成原账号登录'));
+      await waitFor(() => expect(wallDetail).toHaveBeenCalledTimes(2));
+      await waitFor(() => expect(view.queryByTestId('wall-delete-notice')).toBeNull());
+      await fireEvent.press(view.getByTestId('campus-detail-more'));
+      expect(view.getByTestId('campus-detail-menu-delete')).not.toBeDisabled();
+      expect(routerMock.push).toHaveBeenCalledTimes(2);
+    });
+
+    it('恢复时旧账号详情后返回，不覆盖当前账号权限', async () => {
+      let finishOld: (value: unknown) => void = () => undefined;
+      wallDetail.mockResolvedValueOnce(mine)
+        .mockReturnValueOnce(new Promise((resolve) => { finishOld = resolve; }))
+        .mockResolvedValueOnce({ ...mine, content: '新账号内容', viewer_is_author: false });
+      removeConfession.mockRejectedValueOnce(expired());
+      const view = await renderApp(<RecoveryFlow />);
+      await loginAfter401(view);
+      await fireEvent.press(view.getByText('完成原账号登录'));
+      await waitFor(() => expect(wallDetail).toHaveBeenCalledTimes(2));
+      await fireEvent.press(view.getByText('离开详情'));
+      await fireEvent.press(view.getByText('完成其他账号登录'));
+      await waitFor(() => expect(view.getByText('新账号内容')).toBeTruthy());
+      await act(async () => finishOld(mine));
+      expect(view.queryByText('恢复后的内容')).toBeNull();
+      await fireEvent.press(view.getByTestId('campus-detail-more'));
+      expect(view.queryByTestId('campus-detail-menu-delete')).toBeNull();
+      expect(mockAuthFailure).toHaveBeenCalledTimes(1);
+    });
+
+    it('换账号后旧删除401不清理新会话，也不留下旧错误', async () => {
+      let rejectOld: (error: unknown) => void = () => undefined;
+      wallDetail.mockResolvedValueOnce(mine).mockResolvedValueOnce({ ...mine, viewer_is_author: false });
+      removeConfession.mockReturnValueOnce(new Promise((_, reject) => { rejectOld = reject; }));
+      const view = await renderApp(<RecoveryFlow />);
+      await confirmDelete(view);
+      await fireEvent.press(view.getByText('离开详情'));
+      await fireEvent.press(view.getByText('完成其他账号登录'));
+      await waitFor(() => expect(wallDetail).toHaveBeenCalledTimes(2));
+      await act(async () => rejectOld(expired()));
+      expect(mockAuthFailure).not.toHaveBeenCalled();
+      expect(mockSession.identifier).toBe('other-b');
+      expect(view.queryByTestId('wall-delete-notice')).toBeNull();
+      expect(view.queryByTestId('wall-delete-pending')).toBeNull();
+    });
+  });
 
   it('作者在 ⋯ 菜单看到删除，确认后删除并返回', async () => {
     wallDetail.mockResolvedValue({ id: 40, content: '我的墙帖', template_key: 'announcement', viewer_is_author: true });
