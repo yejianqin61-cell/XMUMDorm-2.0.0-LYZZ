@@ -55,6 +55,8 @@ describe('marketplace chat lifecycle for an on-sale item', () => {
     expect(res.status).toBe(201);
     expect(res.body.data).toEqual({ id: 102 });
     expect(query.mock.calls[1][1]).toEqual([11, 7, '还在，可以面交。']);
+    expect(query.mock.calls[3][1][1]).toBe('marketplace_chat');
+    expect(JSON.parse(query.mock.calls[3][1][3])).toMatchObject({ targetType: 'marketplace_thread', targetId: 11, itemId: 5 });
   });
 
   it('buyer can query the same thread after the first message', async () => {
