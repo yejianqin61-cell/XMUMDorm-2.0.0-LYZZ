@@ -57,6 +57,14 @@ export function CanteenSearchScreen(): React.ReactElement {
       dispatch({ type: mode === 'refresh' ? 'refresh:failure' : 'append:failure', error: toResourceError(error) });
     } finally { if (generation.current === request) loading.current = false; }
   };
+  React.useEffect(() => {
+    if (typeof params.query !== 'string' || !params.query.trim()) return;
+    setInput(params.query);
+    setType('all');
+    void load(params.query, 'all', 'refresh');
+    // The route parameter is the submitted search; typing is handled separately.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.query]);
   const submit = () => void load(input, type, 'refresh');
   const edit = (next: string) => {
     generation.current += 1; loading.current = false; queryRef.current = ''; setInput(next); setRows([]);
