@@ -48,7 +48,7 @@ it.each(['permission-denied', 'failed', 'throw'] as const)('%s留在预览，提
   await fireEvent.press(view.getByTestId('treehole-media-drag-area'));
   await fireEvent.press(view.getByTestId('treehole-save-preview'));
   const notice = await waitFor(() => view.getByTestId('treehole-save-preview-notice'));
-  expect(notice).toHaveTextContent(status === 'permission-denied' ? messages.permissionDenied : messages.failed);
+  expect(within(notice).getByText(status === 'permission-denied' ? messages.permissionDenied : messages.failed)).toBeTruthy();
   expect(view.getByTestId('treehole-media-preview-dialog')).toBeTruthy();
   expect(view.queryByText('secret native path')).toBeNull();
   if (status !== 'permission-denied') await fireEvent.press(within(notice).getByText('重试'));
