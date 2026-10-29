@@ -59,6 +59,7 @@ export function MoodleWorkspaceHost(props: MoodleWorkspaceHostProps): React.Reac
   const [mode, setMode] = React.useState<'web' | 'native'>('web');
   const [entry, setEntry] = React.useState<'first-login' | 'current-native' | 'restored-native'>('first-login');
   const [trusted, setTrusted] = React.useState(false);
+  const [loadFailed, setLoadFailed] = React.useState(false);
   const [detail, setDetail] = React.useState<DetailView | null>(null);
   const [reminderStatus, setReminderStatus] = React.useState<MoodleReminderStatus>('unavailable');
   const pendingDetail = React.useRef<{ id: string; generation: number; view: DetailView } | null>(null);
@@ -182,6 +183,8 @@ export function MoodleWorkspaceHost(props: MoodleWorkspaceHostProps): React.Reac
     {mode === 'web' ? <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: theme.space('space_2'),
       padding: theme.space('space_3') }}>
       <Text>{labels.firstLogin}</Text>
+      {loadFailed ? <><Text colorToken="text-danger">{labels.failure('unavailable')}</Text>
+        <Button testID="moodle-login-retry" label={t('action.retry')} onPress={() => bridge.current?.reload?.()} /></> : null}
       <Button testID="moodle-native" label={labels.backToNative} disabled={!trusted} variant="secondary"
         onPress={() => { controller.adoptCache(); setMode('native'); }} />
       {clearButton}
@@ -190,6 +193,7 @@ export function MoodleWorkspaceHost(props: MoodleWorkspaceHostProps): React.Reac
       accessibilityElementsHidden={mode !== 'web'} importantForAccessibility={mode === 'web' ? 'auto' : 'no-hide-descendants'}>
       <SchoolSystemWebView ref={bridge} system={SCHOOL_SYSTEMS.find((system) => system.id === 'moodle')!} preserveSnapshotOnClose
         onMoodleIdentity={onIdentity} onMoodleResponse={onResponse} onMoodleDetail={onDetail}
+        onMoodleLoadFailureChange={setLoadFailed}
         onSessionProbe={(probe) => latest.current.onSessionProbe?.(probe)} />
     </View>
     {mode === 'native' ? <View style={{ flex: 1 }}>
