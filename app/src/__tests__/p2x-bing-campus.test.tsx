@@ -771,6 +771,65 @@ describe('万能墙删除自己的帖子', () => {
     expect(cached?.cursor).toBe(39);
     expect(wall).toHaveBeenCalledTimes(1);
   });
+
+  it.each([401, 403, 404, 500, 'invalid-ack'] as const)('删除未成功时保留详情和列表（%s）', async (failure) => {
+    wall.mockResolvedValue({ items: [{ id: 40, content: '我的墙帖', template_key: 'note', viewer_is_author: true }], has_older: false, oldest_cursor: 40 });
+    wallDetail.mockResolvedValue({ id: 40, content: '我的墙帖', template_key: 'note', viewer_is_author: true });
+    if (failure === 'invalid-ack') removeConfession.mockResolvedValue({ status: -1 });
+    else removeConfession.mockRejectedValue({ status: failure, message: 'internal-secret' });
+    const view = await renderApp(<DeletionFlow remountFeed={false} />);
+    await waitFor(() => expect(view.getByTestId('campus-row-40')).toBeTruthy());
+    await waitFor(() => expect(view.getByTestId('campus-detail-more')).toBeTruthy());
+    await fireEvent.press(view.getByTestId('campus-detail-more'));
+    await fireEvent.press(view.getByTestId('campus-detail-menu-delete'));
+    await fireEvent.press(within(view.getByTestId('wall-delete-dialog')).getAllByText('删除').at(-1)!);
+    await waitFor(() => expect(view.getByTestId('wall-delete-notice')).toHaveTextContent(/帖子未删除/));
+    expect(view.getByTestId('campus-detail')).toBeTruthy();
+    expect(view.getByTestId('campus-row-40')).toBeTruthy();
+    expect(view.queryByText('internal-secret')).toBeNull();
+    expect(routerMock.back).not.toHaveBeenCalled();
+    expect(routerMock.replace).not.toHaveBeenCalled();
+    expect(getQueryClient().getQueryData<{ rows: { id: number }[] }>([...QK.confessionWindow('_guest'), 'wallReadSnapshot'])?.rows.map((row) => row.id)).toEqual([40]);
+  });
+
+  it('取消确认不会发送删除请求', async () => {
+    wallDetail.mockResolvedValue({ id: 40, content: '我的墙帖', template_key: 'note', viewer_is_author: true });
+    const view = await renderApp(<CampusDetailScreen postId="40" kind="wall" />);
+    await waitFor(() => expect(view.getByTestId('campus-detail-more')).toBeTruthy());
+    await fireEvent.press(view.getByTestId('campus-detail-more'));
+    await fireEvent.press(view.getByTestId('campus-detail-menu-delete'));
+    await fireEvent.press(within(view.getByTestId('wall-delete-dialog')).getByText('取消'));
+    expect(removeConfession).not.toHaveBeenCalled();
+    expect(routerMock.back).not.toHaveBeenCalled();
+    expect(view.getByText(/我的墙帖/)).toBeTruthy();
+  });
+
+  it('删除中显示进度且禁止重复提交，失败后能重新确认', async () => {
+    let rejectDelete: (error: unknown) => void = () => undefined;
+    removeConfession.mockReturnValueOnce(new Promise((_, reject) => { rejectDelete = reject; }));
+    wallDetail.mockResolvedValue({ id: 40, content: '我的墙帖', template_key: 'note', viewer_is_author: true });
+    const view = await renderApp(<CampusDetailScreen postId="40" kind="wall" />);
+    await waitFor(() => expect(view.getByTestId('campus-detail-more')).toBeTruthy());
+    await fireEvent.press(view.getByTestId('campus-detail-more'));
+    await fireEvent.press(view.getByTestId('campus-detail-menu-delete'));
+    await fireEvent.press(within(view.getByTestId('wall-delete-dialog')).getAllByText('删除').at(-1)!);
+    await waitFor(() => expect(view.getByTestId('wall-delete-pending')).toBeTruthy());
+    expect(routerMock.back).not.toHaveBeenCalled();
+    await fireEvent.press(view.getByTestId('campus-detail-more'));
+    expect(view.getByTestId('campus-detail-menu-delete')).toHaveAccessibilityState({ disabled: true });
+    await fireEvent.press(view.getByTestId('campus-detail-menu-delete'));
+    expect(removeConfession).toHaveBeenCalledTimes(1);
+    await fireEvent.press(view.getByTestId('campus-detail-menu-cancel'));
+    await act(async () => rejectDelete(new TypeError('Network request failed')));
+    await waitFor(() => expect(view.queryByTestId('wall-delete-pending')).toBeNull());
+    expect(view.getByTestId('wall-delete-notice')).toBeTruthy();
+    removeConfession.mockResolvedValue({ status: 0 });
+    await fireEvent.press(view.getByTestId('campus-detail-more'));
+    await fireEvent.press(view.getByTestId('campus-detail-menu-delete'));
+    await fireEvent.press(within(view.getByTestId('wall-delete-dialog')).getAllByText('删除').at(-1)!);
+    await waitFor(() => expect(routerMock.back).toHaveBeenCalledTimes(1));
+    expect(removeConfession).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe('万能墙删除自己的评论', () => {
