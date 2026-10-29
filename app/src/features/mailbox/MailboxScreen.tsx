@@ -17,7 +17,7 @@
 
 import * as React from 'react';
 import { View } from 'react-native';
-import { useRouter, type Href } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 
 import { AlertDialog } from '@/components/ui/AlertDialog';
 import { Badge } from '@/components/ui/Badge';
@@ -36,7 +36,6 @@ import {
 } from '../../../../shared/api/notifications';
 import {
   NOTIFICATION_CATEGORIES,
-  canOpenNotification,
   chunkIds,
   isClearable,
   normalizeNotificationPage,
@@ -46,29 +45,14 @@ import {
   type NotificationRow,
 } from './notifications';
 import { toMailboxError } from './conversations';
+import { resolveTarget } from './targets';
 import { useUnread } from './useUnread';
 
-type StringHref = Extract<Href, string>;
-
 /**
- * 通知目标 → App 内路由。
- * 社团路由已注册后，只映射拥有稳定 App 路由的三种服务端目标。
- * 其余 `target.path` 仍是 Web 路径，不能直接推给 Expo Router。
+ * 通知目标 → App 内路由（阶段3-03 起**唯一实现在 `./targets`**）。
+ * 这里保留同名导出，供既有调用方/用例使用。
  */
-export function resolveNotificationRoute(row: NotificationRow): StringHref | null {
-  const { target } = row;
-  if (!target.available || !Number.isSafeInteger(target.id) || target.id <= 0) return null;
-  switch (target.type) {
-    case 'club':
-      return `/clubs/${target.id}` as StringHref;
-    case 'club_activity':
-      return `/clubs/activity/${target.id}` as StringHref;
-    case 'club_post':
-      return `/clubs/post/${target.id}` as StringHref;
-    default:
-      return null;
-  }
-}
+export { resolveNotificationRoute } from './targets';
 
 export function MailboxScreen(): React.ReactElement {
   const { t } = useI18n();
@@ -111,9 +95,15 @@ export function MailboxScreen(): React.ReactElement {
     [dispatch]
   );
 
-  React.useEffect(() => {
-    void load('refresh', category);
-  }, [load, category]);
+  /**
+   * 阶段3-04：**聚焦时重取第一页**（避免展示旧摘要/旧未读）。
+   * 首次进入由同一个 focus 生效；⛔ 不做本地扣减，也不伪造成功。
+   */
+  useFocusEffect(
+    React.useCallback(() => {
+      void load('refresh', category);
+    }, [load, category])
+  );
 
   /** 单条已读：乐观更新 + 重新拉汇总（⛔ 不本地递减角标） */
   const markOneRead = React.useCallback(
@@ -134,8 +124,8 @@ export function MailboxScreen(): React.ReactElement {
   const onPressRow = React.useCallback(
     (row: NotificationRow) => {
       void markOneRead(row);
-      const route = resolveNotificationRoute(row);
-      if (route) router.push(route);
+      const resolution = resolveTarget(row.target);
+      if (resolution.kind === 'route') router.push(resolution.href);
     },
     [markOneRead, router]
   );
@@ -243,17 +233,21 @@ export function MailboxScreen(): React.ReactElement {
             endLabel: t('mailbox.conversations.end'),
           }}
           renderItem={(row) => {
-            const openable = canOpenNotification(row);
+            // 阶段3-03/04：可点性、落点与说明都来自唯一映射函数
+            const resolution = resolveTarget(row.target);
+            const openable = resolution.kind === 'route';
+            // 摘要优先（被回复 > 来源），没有再退回作者名；⛔ 不留空白行
+            const subtitle = row.replyExcerpt ?? row.sourceExcerpt ?? row.fromName ?? undefined;
             return (
               <ListItem
                 testID={`notification-${row.id}`}
                 variant={openable ? 'nav' : 'action'}
                 title={row.title ?? t(notificationKindKey(row.type))}
-                subtitle={row.fromName ?? undefined}
-                meta={t(notificationKindKey(row.type))}
+                subtitle={subtitle}
+                meta={openable ? t(notificationKindKey(row.type)) : t('mailbox.targetUnavailable')}
                 trailing={row.isRead ? undefined : <Badge text={t('mailbox.unread')} />}
-                disabled={!openable}
-                onPress={openable ? () => onPressRow(row) : undefined}
+                // 失效/待补目标：仍可标已读，但⛔ 不跳转（行内已给"内容不可查看"）
+                onPress={openable ? () => onPressRow(row) : () => void markOneRead(row)}
               />
             );
           }}

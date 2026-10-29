@@ -449,6 +449,7 @@ export const en: Record<MessageKey, string> = {
   'mailbox.kind.announcement': 'Announcement',
   'mailbox.kind.other': 'Notification',
   'mailbox.unread': 'Unread',
+  'mailbox.targetUnavailable': 'Content unavailable',
   'mailbox.markAllRead': 'Mark all read',
   'mailbox.empty.title': 'Nothing here yet',
   'mailbox.empty.description': 'New likes and trades land here',

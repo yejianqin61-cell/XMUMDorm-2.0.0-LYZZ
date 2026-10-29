@@ -34,6 +34,8 @@ export type NotificationTarget = {
   title: string | null;
   path: string;
   available: boolean;
+  /** 阶段3-01：评论定位 ID（null 也返回；服务端固定带这个字段） */
+  comment_id?: number | null;
 };
 
 export type NotificationRow = {
@@ -46,6 +48,10 @@ export type NotificationRow = {
   module: string | null;
   fromName: string | null;
   createdAt: string | null;
+  /** 阶段3-01：来源正文摘要（帖子类由服务端 JOIN 给；其余域未注册时为 null） */
+  sourceExcerpt?: string | null;
+  /** 阶段3-01：被回复评论摘要（评论类才有；⛔ 不是新评论内容） */
+  replyExcerpt?: string | null;
 };
 
 export type NotificationPage = {
@@ -63,6 +69,7 @@ const asString = (value: unknown): string | null =>
 
 function normalizeTarget(raw: unknown): NotificationTarget {
   const target = isObject(raw) ? raw : {};
+  const commentId = Number(target.comment_id);
   return {
     type: asString(target.type) ?? 'unknown',
     id: Number(target.id) || 0,
@@ -70,6 +77,7 @@ function normalizeTarget(raw: unknown): NotificationTarget {
     path: asString(target.path) ?? '#',
     // ⚠️ `available` 只在帖子类目标上出现；**缺失按可用**处理（后端只用 false 表达不可用）
     available: target.available !== false,
+    comment_id: Number.isSafeInteger(commentId) && commentId > 0 ? commentId : null,
   };
 }
 
@@ -94,6 +102,9 @@ export function normalizeNotificationPage(payload: unknown): NotificationPage {
       module: asString(entry.module),
       fromName: fromUser ? asString(fromUser.nickname) ?? asString(fromUser.username) : null,
       createdAt: asString(entry.created_at),
+      // 阶段3-01：摘要缺失即为 null（页面回退到类型/标题）
+      sourceExcerpt: asString(entry.source_excerpt),
+      replyExcerpt: asString(entry.reply_to_excerpt),
     });
   }
 

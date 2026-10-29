@@ -27,9 +27,14 @@ import {
 import { unreadStore } from '@/features/mailbox/unread';
 import { secondaryTabStore } from '@/features/navigation/secondaryTabs';
 
-jest.mock('expo-router', () => ({
-  useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn(), canGoBack: () => true }),
-}));
+jest.mock('expo-router', () => {
+  const React = require('react');
+  return {
+    useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn(), canGoBack: () => true }),
+    // 阶段3-04 起信箱在**聚焦**时重取；测试里等价为挂载时执行一次
+    useFocusEffect: (callback: () => void) => React.useEffect(callback, [callback]),
+  };
+});
 jest.mock('../../../shared/api/notifications', () => ({
   getNotifications: jest.fn(),
   getUnreadSummary: jest.fn(),

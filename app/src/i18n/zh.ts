@@ -456,6 +456,7 @@ export const zh = {
   'mailbox.kind.announcement': '公告',
   'mailbox.kind.other': '通知',
   'mailbox.unread': '未读',
+  'mailbox.targetUnavailable': '内容不可查看',
   'mailbox.markAllRead': '全部已读',
   'mailbox.empty.title': '这里还没有消息',
   'mailbox.empty.description': '新的互动与交易会出现在这里',
