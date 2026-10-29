@@ -6,6 +6,7 @@
 
 - [`requirements/`](requirements/)：第二阶段需求与范围说明。
 - [`team/`](team/)：本阶段协作时使用的团队规范文档副本。
+- [`task/`](task/README.md)：实施计划与任务书；[丙方开工材料](task/丙/README.md)覆盖树洞与万能墙，当前待协调复核。
 - [`design/assets/广场首包参考-2026-10-28.jpg`](design/assets/广场首包参考-2026-10-28.jpg)：广场首包截图。
 
 团队领导已于 2026-10-28 确认统一执行标准。开工先读[`requirements/Stage2统一口径与接口契约.md`](requirements/Stage2统一口径与接口契约.md)和[`test/Stage2验收矩阵.md`](test/Stage2验收矩阵.md)；产品裁决以[`requirements/Stage2待裁决登记册.md`](requirements/Stage2待裁决登记册.md)为准。实施中出现新产品选择时，先记入登记册再由团队领导裁决。
