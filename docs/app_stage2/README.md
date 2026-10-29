@@ -6,7 +6,7 @@
 
 - [`requirements/`](requirements/)：第二阶段需求与范围说明。
 - [`team/`](team/)：本阶段协作时使用的团队规范文档副本。
-- [`task/`](task/README.md)：实施计划与任务书；[丙方任务](task/丙/README.md)覆盖树洞与万能墙，当前执行首阶段本人删除任务。
+- [`task/`](task/README.md)：实施计划与任务书；[丙方任务](task/丙/README.md)的本人删除实现与自动验证已交付，设备验收未验证。
 - [`evaluation/`](evaluation/README.md)：审查与验收；[丙方首次开工审查](evaluation/丙/审查报告-首次开工-5d5d346.md)仅针对提交 `5d5d346`。
 - [`design/assets/广场首包参考-2026-10-28.jpg`](design/assets/广场首包参考-2026-10-28.jpg)：广场首包截图。
 
