@@ -107,6 +107,8 @@ export function CampusDetailScreen({
   const [reportDetail, setReportDetail] = React.useState('');
   const [deleteOpen, setDeleteOpen] = React.useState(false);
   const [deleteError, setDeleteError] = React.useState(false);
+  const [deleting, setDeleting] = React.useState(false);
+  const deleteLocked = React.useRef(false);
   const [deleteCommentId, setDeleteCommentId] = React.useState<string | null>(null);
   const scrollRef = React.useRef<ScrollView | null>(null);
   const generation = React.useRef(0);
@@ -142,6 +144,10 @@ export function CampusDetailScreen({
 
   React.useEffect(() => {
     setMenuOpen(false);
+    setDeleteOpen(false);
+    setDeleteError(false);
+    setDeleting(false);
+    deleteLocked.current = false;
     setReportOpen(false);
     setReportReason(null);
     setReportDetail('');
@@ -186,10 +192,15 @@ export function CampusDetailScreen({
   }, [kind, published, router]);
 
   const removeWallPost = React.useCallback(async (): Promise<void> => {
+    if (deleteLocked.current) return;
+    deleteLocked.current = true;
+    const request = generation.current;
+    const deletedId = Number(postId);
     setDeleteOpen(false);
     setDeleteError(false);
+    setDeleting(true);
     try {
-      const acknowledgement = await deleteConfession(Number(postId));
+      const acknowledgement = await deleteConfession(deletedId);
       if (!acknowledgement || typeof acknowledgement !== 'object' || (acknowledgement as { status?: unknown }).status !== 0) {
         throw new Error('Invalid delete acknowledgement');
       }
@@ -197,11 +208,16 @@ export function CampusDetailScreen({
       const snapshotKey = [...QK.confessionWindow('_guest'), 'wallReadSnapshot'];
       const snapshot = client.getQueryData<{ rows?: { id: number }[] }>(snapshotKey);
       if (snapshot && Array.isArray(snapshot.rows)) {
-        client.setQueryData(snapshotKey, { ...snapshot, rows: snapshot.rows.filter((row) => row.id !== Number(postId)) });
+        client.setQueryData(snapshotKey, { ...snapshot, rows: snapshot.rows.filter((row) => row.id !== deletedId) });
       }
-      backToFeed();
+      if (request === generation.current) backToFeed();
     } catch {
-      setDeleteError(true);
+      if (request === generation.current) setDeleteError(true);
+    } finally {
+      if (request === generation.current) {
+        deleteLocked.current = false;
+        setDeleting(false);
+      }
     }
   }, [backToFeed, postId]);
 
@@ -333,6 +349,7 @@ export function CampusDetailScreen({
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={{ paddingBottom: theme.space('space_6') }}
           >
+            {deleting ? <LoadingState testID="wall-delete-pending" variant="spinner" /> : null}
             {deleteError ? (
               <View style={{ paddingHorizontal: theme.space('space_4'), paddingTop: theme.space('space_2') }}>
                 <InlineNotice testID="wall-delete-notice" tone="danger" message={t('screen.campus.read.deleteFailed')} />
@@ -421,6 +438,7 @@ export function CampusDetailScreen({
                 kind === 'wall' && post?.is_mine
                   ? {
                       label: t('screen.campus.read.delete'),
+                      disabled: deleting,
                       onPress: () => {
                         setMenuOpen(false);
                         setDeleteOpen(true);
@@ -548,7 +566,7 @@ function DetailSheetHost({
   onCloseMenu: () => void;
   onReport: () => void;
   /** 万能墙作者本人的删除入口；不传（树洞/非作者）时菜单里不出现 */
-  deleteAction?: { label: string; onPress: () => void };
+  deleteAction?: { label: string; onPress: () => void; disabled?: boolean };
   reportOpen: boolean;
   reportReasons: readonly { value: string; label: string }[];
   reportReason: string | null;
@@ -571,7 +589,7 @@ function DetailSheetHost({
         visible={menuOpen}
         title={menuLabels.title}
         actions={[
-          ...(deleteAction ? [{ key: 'delete', label: deleteAction.label }] : []),
+          ...(deleteAction ? [{ key: 'delete', label: deleteAction.label, disabled: deleteAction.disabled }] : []),
           { key: 'report', label: menuLabels.report },
         ]}
         onSelect={(key) => {
