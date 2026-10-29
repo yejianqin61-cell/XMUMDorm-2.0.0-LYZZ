@@ -871,6 +871,8 @@ describe('万能墙删除自己的帖子', () => {
 
     function RecoveryFlow(): React.ReactElement {
       const [focused, setFocused] = React.useState(true);
+      const [contentId, setContentId] = React.useState('40');
+      const [mounted, setMounted] = React.useState(true);
       const [, renderSession] = React.useReducer((value: number) => value + 1, 0);
       React.useEffect(() => {
         routerMock.push.mockImplementation(() => setFocused(false));
@@ -891,7 +893,10 @@ describe('万能墙删除自己的帖子', () => {
         <Button label="取消登录" onPress={() => setFocused(true)} />
         <Button label="离开详情" onPress={() => setFocused(false)} />
         <Button label="回到详情" onPress={() => setFocused(true)} />
-        <FocusProvider value={focused}><CampusDetailScreen postId="40" kind="wall" /></FocusProvider>
+        <Button label="打开其他内容" onPress={() => { setContentId('41'); setFocused(true); }} />
+        <Button label="卸载详情" onPress={() => setMounted(false)} />
+        <Button label="重挂详情" onPress={() => { setMounted(true); setFocused(true); }} />
+        <FocusProvider value={focused}>{mounted ? <CampusDetailScreen postId={contentId} kind="wall" /> : null}</FocusProvider>
       </>;
     }
     async function loginAfter401(view: Awaited<ReturnType<typeof renderApp>>) {
@@ -900,6 +905,125 @@ describe('万能墙删除自己的帖子', () => {
       await fireEvent.press(within(view.getByTestId('wall-delete-notice')).getByText('登录'));
       expect(routerMock.push).toHaveBeenCalledWith('/login');
     }
+
+    describe('D-4 迟到成功收尾', () => {
+      const ownerKey = QK.confessionDetail(40, '["signedIn","owner-a",true]');
+
+      it('重聚焦读完详情后旧删除成功，同内容失效且不能再删除', async () => {
+        let finish: (value: unknown) => void = () => undefined;
+        wallDetail.mockResolvedValue(mine);
+        removeConfession.mockReturnValueOnce(new Promise((resolve) => { finish = resolve; }));
+        const view = await renderApp(<RecoveryFlow />);
+        await confirmDelete(view);
+        await fireEvent.press(view.getByText('离开详情'));
+        await fireEvent.press(view.getByText('回到详情'));
+        await waitFor(() => expect(wallDetail).toHaveBeenCalledTimes(2));
+        await waitFor(() => expect(view.getByText('恢复后的内容')).toBeTruthy());
+        await act(async () => finish({ status: 0 }));
+        await waitFor(() => expect(view.getByTestId('campus-detail-empty')).toHaveTextContent(/内容不存在或已删除/));
+        expect(view.queryByText('恢复后的内容')).toBeNull();
+        expect(view.queryByTestId('campus-detail-more')).toBeNull();
+        expect(view.queryByTestId('wall-delete-pending')).toBeNull();
+        expect(getQueryClient().getQueryData(ownerKey)).toBeNull();
+        expect(getQueryClient().getQueryData<{ deletedIds: number[] }>([...QK.confessionWindow('_guest'), 'wallReadSnapshot'])?.deletedIds).toEqual([40]);
+        expect(routerMock.back).not.toHaveBeenCalled();
+      });
+
+      it('停留其他内容时旧删除成功，不清空或返回无关详情', async () => {
+        let finish: (value: unknown) => void = () => undefined;
+        wallDetail.mockResolvedValueOnce(mine).mockResolvedValueOnce({ ...mine, id: 41, content: '其他内容41' });
+        removeConfession.mockReturnValueOnce(new Promise((resolve) => { finish = resolve; }));
+        const view = await renderApp(<RecoveryFlow />);
+        await confirmDelete(view);
+        await fireEvent.press(view.getByText('离开详情'));
+        await fireEvent.press(view.getByText('打开其他内容'));
+        await waitFor(() => expect(view.getByText('其他内容41')).toBeTruthy());
+        await act(async () => finish({ status: 0 }));
+        expect(view.getByText('其他内容41')).toBeTruthy();
+        expect(view.queryByTestId('campus-detail-empty')).toBeNull();
+        expect(routerMock.back).not.toHaveBeenCalled();
+        expect(routerMock.replace).not.toHaveBeenCalled();
+        await fireEvent.press(view.getByTestId('campus-detail-more'));
+        expect(view.getByTestId('campus-detail-menu-delete')).not.toBeDisabled();
+        expect(getQueryClient().getQueryData(QK.confessionDetail(41, '["signedIn","owner-a",true]'))).toBeUndefined();
+      });
+
+      it('换账号后旧删除成功，不修改新账号详情与资格', async () => {
+        let finish: (value: unknown) => void = () => undefined;
+        wallDetail.mockResolvedValueOnce(mine).mockResolvedValueOnce({ ...mine, content: '新账号的当前详情', viewer_is_author: false });
+        removeConfession.mockReturnValueOnce(new Promise((resolve) => { finish = resolve; }));
+        const view = await renderApp(<RecoveryFlow />);
+        await confirmDelete(view);
+        await fireEvent.press(view.getByText('离开详情'));
+        await fireEvent.press(view.getByText('完成其他账号登录'));
+        await waitFor(() => expect(view.getByText('新账号的当前详情')).toBeTruthy());
+        await act(async () => finish({ status: 0 }));
+        expect(view.getByText('新账号的当前详情')).toBeTruthy();
+        expect(view.queryByTestId('campus-detail-empty')).toBeNull();
+        await fireEvent.press(view.getByTestId('campus-detail-more'));
+        expect(view.queryByTestId('campus-detail-menu-delete')).toBeNull();
+        expect(routerMock.back).not.toHaveBeenCalled();
+        expect(mockAuthFailure).not.toHaveBeenCalled();
+        expect(getQueryClient().getQueryData(QK.confessionDetail(40, '["signedIn","other-b",true]'))).toBeUndefined();
+      });
+
+      it('重聚焦后旧删除失败不写成功结果，仍能重新确认', async () => {
+        let fail: (error: unknown) => void = () => undefined;
+        wallDetail.mockResolvedValue(mine);
+        removeConfession.mockReturnValueOnce(new Promise((_, reject) => { fail = reject; })).mockResolvedValue({ status: 0 });
+        const view = await renderApp(<RecoveryFlow />);
+        await confirmDelete(view);
+        await fireEvent.press(view.getByText('离开详情'));
+        await fireEvent.press(view.getByText('回到详情'));
+        await waitFor(() => expect(wallDetail).toHaveBeenCalledTimes(2));
+        await waitFor(() => expect(view.getByText('恢复后的内容')).toBeTruthy());
+        await act(async () => fail(new TypeError('Network request failed')));
+        expect(view.queryByTestId('campus-detail-empty')).toBeNull();
+        expect(view.queryByTestId('wall-delete-pending')).toBeNull();
+        expect(getQueryClient().getQueryData(ownerKey)).toBeUndefined();
+        await confirmDelete(view);
+        await waitFor(() => expect(removeConfession).toHaveBeenCalledTimes(2));
+        expect(routerMock.back).toHaveBeenCalledTimes(1);
+      });
+
+      it.each(['row', '401'])('成功回执先到，旧详情 %s 后返回不能恢复正文或旧错误', async (response) => {
+        let finishDelete: (value: unknown) => void = () => undefined;
+        let finishRead: (value: unknown) => void = () => undefined;
+        let failRead: (error: unknown) => void = () => undefined;
+        wallDetail.mockResolvedValueOnce(mine).mockReturnValueOnce(new Promise((resolve, reject) => { finishRead = resolve; failRead = reject; }));
+        removeConfession.mockReturnValueOnce(new Promise((resolve) => { finishDelete = resolve; }));
+        const view = await renderApp(<RecoveryFlow />);
+        await confirmDelete(view);
+        await fireEvent.press(view.getByText('离开详情'));
+        await fireEvent.press(view.getByText('回到详情'));
+        await waitFor(() => expect(wallDetail).toHaveBeenCalledTimes(2));
+        await act(async () => finishDelete({ status: 0 }));
+        await waitFor(() => expect(view.getByTestId('campus-detail-empty')).toBeTruthy());
+        await act(async () => { if (response === 'row') finishRead(mine); else failRead(expired()); });
+        expect(view.getByTestId('campus-detail-empty')).toBeTruthy();
+        expect(view.queryByText('恢复后的内容')).toBeNull();
+        expect(view.queryByTestId('wall-delete-notice')).toBeNull();
+        expect(view.queryByTestId('campus-detail-more')).toBeNull();
+        expect(mockAuthFailure).not.toHaveBeenCalled();
+        expect(routerMock.back).not.toHaveBeenCalled();
+      });
+
+      it('成功时原详情已卸载，重新挂载同内容仍恢复失效', async () => {
+        let finish: (value: unknown) => void = () => undefined;
+        wallDetail.mockResolvedValue(mine);
+        removeConfession.mockReturnValueOnce(new Promise((resolve) => { finish = resolve; }));
+        const view = await renderApp(<RecoveryFlow />);
+        await confirmDelete(view);
+        await fireEvent.press(view.getByText('卸载详情'));
+        await act(async () => finish({ status: 0 }));
+        expect(routerMock.back).not.toHaveBeenCalled();
+        await fireEvent.press(view.getByText('重挂详情'));
+        await waitFor(() => expect(view.getByTestId('campus-detail-empty')).toBeTruthy());
+        expect(view.queryByText('恢复后的内容')).toBeNull();
+        expect(wallDetail).toHaveBeenCalledTimes(1);
+        expect(getQueryClient().getQueryData(ownerKey)).toBeNull();
+      });
+    });
 
     it('同账号返回先重新确认权限，完成前不开放删除，随后可再次删除', async () => {
       let finish: (value: unknown) => void = () => undefined;
