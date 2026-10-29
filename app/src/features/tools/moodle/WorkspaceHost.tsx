@@ -3,6 +3,7 @@ import { ScrollView, View } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { Text } from '@/components/ui/Text';
 import { useTheme } from '@/design-system/theme';
+import { useI18n } from '@/i18n';
 import { SchoolSystemWebView, type SchoolSystemWebViewHandle } from '../SchoolSystemWebView';
 import { SCHOOL_SYSTEMS } from '../schoolSystems';
 import { MoodleWorkspaceScreen, type MoodleDeadlineView,
@@ -51,6 +52,7 @@ export function MoodleWorkspaceHost(props: MoodleWorkspaceHostProps): React.Reac
   React.useLayoutEffect(() => { latest.current = props; }, [props]);
   const bridge = React.useRef<SchoolSystemWebViewHandle>(null);
   const theme = useTheme();
+  const { t } = useI18n();
   const read = React.useCallback((request: MoodleReadRequest) => bridge.current?.readMoodle(request) ?? null, []);
   const [controller] = React.useState(() => createMoodleSync({ read: () => null }));
   const [snapshot, setSnapshot] = React.useState(() => controller.snapshot());
@@ -198,6 +200,9 @@ export function MoodleWorkspaceHost(props: MoodleWorkspaceHostProps): React.Reac
           <Button label={labels.back} variant="ghost" onPress={() => { pendingDetail.current = null; setDetail(null); }} />
           <Text colorToken={detail.status === 'loading' ? 'text-secondary' : 'text-danger'}>
             {labels.detailStatus(detail.status === 'success' ? 'invalid-data' : detail.status)}</Text>
+          {detail.request && detail.status !== 'loading' ? <Button testID="moodle-detail-retry"
+            label={t('action.retry')} onPress={() => readDetail(detail.courseId, detail.module,
+              detail.request?.kind === 'discussion' ? detail.request.url : undefined)} /> : null}
           {detail.module.url ? <Button label={labels.original} variant="link" onPress={() => openOriginal(detail.module.url!)} /> : null}
         </ScrollView> : <>
         <MoodleWorkspaceScreen labels={labels} snapshot={snapshot} entry={entry} maintenance={maintenance}
