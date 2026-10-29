@@ -126,6 +126,22 @@ export function WallFeed({ testID = 'wall-feed' }: { testID?: string }): React.R
     };
   }, [load]);
 
+  // 详情删除会更新快照；仍挂载在返回栈中的列表也要同步，不能只在重挂时读一次。
+  React.useEffect(() => {
+    const snapshotKey = JSON.stringify(key);
+    return client.getQueryCache().subscribe((event) => {
+      if (
+        event.type !== 'updated' || event.action.type !== 'success' ||
+        JSON.stringify(event.query.queryKey) !== snapshotKey
+      ) return;
+      const next = client.getQueryData<Snapshot>(key);
+      if (next && next !== snapshot.current) {
+        snapshot.current = next;
+        setRows(next.rows);
+      }
+    });
+  }, [client, key]);
+
   const refresh = () => void load('refresh');
   const append = () => void load('append');
 
