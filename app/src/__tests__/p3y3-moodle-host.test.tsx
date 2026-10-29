@@ -248,3 +248,37 @@ it('opens the selected discussion original after its detail fails and preserves 
   expect(mockInject.mock.calls.at(-1)?.[0]).toContain(discussionUrl);
   await view.unmount(); await settleMoodleStorage();
 });
+
+it('keeps same-session data when visiting login and returning to the native workspace', async () => {
+  const view = await renderApp(<MoodleWorkspaceHost labels={labels} now={() => now}
+    onOpenOriginal={jest.fn()} />, { inScreen: true });
+  await confirm();
+  await fireEvent.press(view.getByTestId('moodle-sync'));
+  await core('courses', { courses: [course], nextOffset: 0 });
+  await fireEvent.press(view.getByTestId('moodle-select-1'));
+  await fireEvent.press(view.getByTestId('moodle-confirm-selection'));
+  await core('state', state);
+  await core('events', { events: [], firstId: null, lastId: null });
+  await fireEvent.press(view.getByTestId('moodle-login'));
+  expect(view.queryByTestId('moodle-workspace')).toBeNull();
+  await fireEvent.press(view.getByTestId('moodle-native'));
+  expect(view.getByText('Course one')).toBeTruthy();
+  expect(view.getByTestId('moodle-module-101')).toBeTruthy();
+  await view.unmount(); await settleMoodleStorage();
+});
+
+it('explains session expiry and hides private content until a new identity is confirmed', async () => {
+  const view = await renderApp(<MoodleWorkspaceHost labels={labels} now={() => now}
+    onOpenOriginal={jest.fn()} />, { inScreen: true });
+  await confirm();
+  await fireEvent.press(view.getByTestId('moodle-sync'));
+  await message({ kind: 'dorm:moodle', requestId: requestId('moodle'), method: 'courses', status: 'expired' });
+  expect(view.queryByTestId('moodle-workspace')).toBeNull();
+  expect(view.getByText('failure expired')).toBeTruthy();
+  expect(readMoodleCache().courses).toEqual([]);
+  await confirm(456);
+  expect(view.queryByText('failure expired')).toBeNull();
+  expect(view.getByTestId('moodle-workspace')).toBeTruthy();
+  expect(view.queryByText('Course one')).toBeNull();
+  await view.unmount(); await settleMoodleStorage();
+});
