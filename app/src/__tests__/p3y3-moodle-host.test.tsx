@@ -186,3 +186,23 @@ it('p3g2 gathers the native workspace actions into one tool row', async () => {
   expect(view.queryByTestId('moodle-native')).toBeNull();
   await view.unmount(); await settleMoodleStorage();
 });
+
+it('allows retrying a failed Moodle detail without leaving the selected resource', async () => {
+  const view = await renderApp(<MoodleWorkspaceHost labels={labels} now={() => now}
+    onOpenOriginal={jest.fn()} />, { inScreen: true });
+  await confirm();
+  await fireEvent.press(view.getByTestId('moodle-sync'));
+  await core('courses', { courses: [course], nextOffset: 0 });
+  await fireEvent.press(view.getByTestId('moodle-select-1'));
+  await fireEvent.press(view.getByTestId('moodle-confirm-selection'));
+  await core('state', state);
+  await core('events', { events: [], firstId: null, lastId: null });
+  await fireEvent.press(view.getByTestId('moodle-module-101'));
+  const firstId = requestId('detail');
+  await message({ kind: 'dorm:moodle:detail', requestId: firstId, status: 'timeout' });
+  expect(view.getByText('detail timeout')).toBeTruthy();
+  await fireEvent.press(view.getByTestId('moodle-detail-retry'));
+  expect(requestId('detail')).not.toBe(firstId);
+  expect(view.getByText('detail loading')).toBeTruthy();
+  await view.unmount(); await settleMoodleStorage();
+});
