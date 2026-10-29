@@ -67,7 +67,7 @@ export function normalizeThreadRows(payload: unknown): ChatThreadRow[] {
   return rows;
 }
 
-/** 同一条会话只留一条（列表刷新与追加重叠时会发生），并按 `thread_id` 稳定排序 */
+/** 同一条会话只留一条，并按服务端最后消息时间排序。 */
 export function mergeThreadRows(
   previous: readonly ChatThreadRow[],
   incoming: readonly ChatThreadRow[]
@@ -75,7 +75,12 @@ export function mergeThreadRows(
   const byId = new Map<number, ChatThreadRow>();
   for (const row of previous) byId.set(row.thread_id, row);
   for (const row of incoming) byId.set(row.thread_id, row);
-  return [...byId.values()].sort((a, b) => b.thread_id - a.thread_id);
+  return [...byId.values()].sort((a, b) => {
+    const timeA = a.last_message_at ? Date.parse(a.last_message_at) : 0;
+    const timeB = b.last_message_at ? Date.parse(b.last_message_at) : 0;
+    if (timeA !== timeB) return timeB - timeA;
+    return b.thread_id - a.thread_id;
+  });
 }
 
 /** 会话标题：商品名可能为空（商品被删/老数据）→ 兜底词条，⛔ 不显示 `undefined` */
