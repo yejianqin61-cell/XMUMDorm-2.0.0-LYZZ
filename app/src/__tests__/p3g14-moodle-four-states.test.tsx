@@ -87,3 +87,11 @@ it('offers login recovery instead of another sync for an expired session', async
   expect(onLogin).toHaveBeenCalledTimes(1);
   expect(onSync).not.toHaveBeenCalled();
 });
+
+it('shows an actionable empty result when Moodle returns no course candidates', async () => {
+  const view = await renderApp(<MoodleWorkspaceScreen {...props} snapshot={{ ...base,
+    phase: 'choosing', candidates: [], selectedIds: [],
+    data: { generation: 1, courses: [], states: [], events: [] } }} />);
+  expect(view.getByTestId('moodle-empty-candidates')).toBeTruthy();
+  expect(view.queryByTestId('moodle-confirm-selection')).toBeNull();
+});
