@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { act, fireEvent, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, waitFor, within } from '@testing-library/react-native';
 import { renderApp } from './helpers/renderApp';
 import { CanteenSearchScreen } from '@/features/square/CanteenSearchScreen';
 import { validateSearchQuery, mergeSearchRows, normalizeSearchPage } from '@/features/square/canteenSearch';
@@ -69,4 +69,8 @@ it('keeps previous results visible when refreshing the same search fails', async
   await fireEvent.press(view.getByTestId('canteen-search-submit'));
   await waitFor(() => expect(view.getByTestId('canteen-search-stale')).toBeTruthy());
   expect(view.getByTestId('search-product-9')).toBeTruthy();
+  api.searchCanteen.mockResolvedValueOnce(page('Updated', 10));
+  await fireEvent.press(within(view.getByTestId('canteen-search-stale')).getByRole('button'));
+  await waitFor(() => expect(view.getByTestId('search-product-10')).toBeTruthy());
+  expect(view.queryByTestId('canteen-search-stale')).toBeNull();
 });
