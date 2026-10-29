@@ -16,6 +16,7 @@ import { CampusDetailScreen, TreeholeFeed, WallFeed } from '@/features/campus/Ca
 import { WallTemplateContent } from '@/features/campus/wallTemplates';
 import { getQueryClient } from '@/shared/queryClient';
 import { secondaryTabStore } from '@/features/navigation/secondaryTabs';
+import { QK } from '../../../shared/query/queryKeys';
 import {
   getPostComments,
   getPostDetail,
@@ -695,6 +696,19 @@ describe('树洞四态（中英双语）', () => {
 describe('万能墙删除自己的帖子', () => {
   const removeConfession = deleteConfession as jest.Mock;
 
+  function DeletionFlow({ remountFeed }: { remountFeed: boolean }): React.ReactElement {
+    const [detailOpen, setDetailOpen] = React.useState(true);
+    const [feedRevision, setFeedRevision] = React.useState(0);
+    React.useEffect(() => {
+      routerMock.back.mockImplementation(() => {
+        setDetailOpen(false);
+        if (remountFeed) setFeedRevision((revision) => revision + 1);
+      });
+      return () => { routerMock.back.mockReset(); };
+    }, [remountFeed]);
+    return <><WallFeed key={feedRevision} />{detailOpen ? <CampusDetailScreen postId="40" kind="wall" /> : null}</>;
+  }
+
   it('作者在 ⋯ 菜单看到删除，确认后删除并返回', async () => {
     wallDetail.mockResolvedValue({ id: 40, content: '我的墙帖', template_key: 'announcement', viewer_is_author: true });
     removeConfession.mockResolvedValue({ status: 0 });
@@ -729,6 +743,33 @@ describe('万能墙删除自己的帖子', () => {
     await fireEvent.press(within(view.getByTestId('wall-delete-dialog')).getAllByText('删除').at(-1)!);
     await waitFor(() => expect(view.getByTestId('wall-delete-notice')).toBeTruthy());
     expect(routerMock.back).not.toHaveBeenCalled();
+  });
+
+  it.each([false, true])('删除成功后详情退出且列表无残留（重新挂载=%s）', async (remountFeed) => {
+    wall.mockResolvedValue({
+      items: [
+        { id: 40, content: '我的墙帖', template_key: 'announcement', viewer_is_author: true },
+        { id: 39, content: '保留的墙帖', template_key: 'note', viewer_is_author: false },
+      ],
+      has_older: false,
+      oldest_cursor: 39,
+    });
+    wallDetail.mockResolvedValue({ id: 40, content: '我的墙帖', template_key: 'announcement', viewer_is_author: true });
+    removeConfession.mockResolvedValue({ status: 0 });
+    const view = await renderApp(<DeletionFlow remountFeed={remountFeed} />);
+    await waitFor(() => expect(view.getByTestId('campus-row-40')).toBeTruthy());
+    await waitFor(() => expect(view.getByTestId('campus-detail-more')).toBeTruthy());
+    await fireEvent.press(view.getByTestId('campus-detail-more'));
+    await fireEvent.press(view.getByTestId('campus-detail-menu-delete'));
+    await fireEvent.press(within(view.getByTestId('wall-delete-dialog')).getAllByText('删除').at(-1)!);
+
+    await waitFor(() => expect(view.queryByTestId('campus-detail')).toBeNull());
+    await waitFor(() => expect(view.queryByTestId('campus-row-40')).toBeNull());
+    expect(view.getByTestId('campus-row-39')).toBeTruthy();
+    const cached = getQueryClient().getQueryData<{ rows: { id: number }[]; cursor: number }>([...QK.confessionWindow('_guest'), 'wallReadSnapshot']);
+    expect(cached?.rows.map((row) => row.id)).toEqual([39]);
+    expect(cached?.cursor).toBe(39);
+    expect(wall).toHaveBeenCalledTimes(1);
   });
 });
 
