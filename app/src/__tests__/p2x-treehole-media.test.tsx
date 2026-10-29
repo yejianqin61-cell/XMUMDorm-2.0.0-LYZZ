@@ -10,7 +10,6 @@ import { fireEvent, waitFor } from '@testing-library/react-native';
 import {
   resolveTreeholeSwipe,
   treeholeDeckLayers,
-  treeholeMediaAspect,
   treeholeMediaKey,
   TreeholeMedia,
 } from '@/features/campus/TreeholeMedia';
@@ -141,25 +140,43 @@ describe('P2X TreeholeMedia', () => {
     expect(view.queryByTestId('treehole-media-back-2')).toBeNull();
   });
 
-  it('信息流统一 4:3 且半列宽；详情 16:9（2026-10-18 第六轮：详情不缩、信息流缩小到一屏 2 篇）', () => {
-    // 信息流不再用 4:5 竖幅：竖幅会把一屏挤到只剩 1 篇
-    expect(treeholeMediaAspect(1)).toBeCloseTo(4 / 3);
-    expect(treeholeMediaAspect(2)).toBeCloseTo(4 / 3);
-    expect(treeholeMediaAspect(3)).toBeCloseTo(4 / 3);
-    expect(treeholeMediaAspect(1, 'detail')).toBeCloseTo(16 / 9);
-    expect(treeholeMediaAspect(3, 'detail')).toBeCloseTo(16 / 9);
-  });
-
-  it('信息流单图按 40% 列宽、多图按 80%（两张并排）等比例缩小', async () => {
+  it('列表单图使用内容列宽并完整等比显示，加载完成后移除骨架', async () => {
     const view = await renderApp(<TreeholeMedia postId={7} urls={[urls[0]]} mode="feed" />);
-    expect(JSON.stringify(view.getByTestId('treehole-media-feed').props.style)).toContain('"40%"');
+    expect(view.getByTestId('treehole-media-feed')).toHaveStyle({ width: '100%' });
+    expect(view.getByTestId('treehole-media-feed-image').props.contentFit).toBe('contain');
+    expect(view.getByTestId('treehole-media-feed-image-loading')).toBeTruthy();
+    await fireEvent(view.getByTestId('treehole-media-feed-image'), 'load');
+    expect(view.queryByTestId('treehole-media-feed-image-loading')).toBeNull();
   });
 
-  it('信息流多图宽度为 80%（一屏 2 篇的算式不变）', async () => {
-    const view = await renderApp(
-      <TreeholeMedia postId={7} urls={[urls[0], urls[1]]} mode="feed" />
-    );
-    expect(JSON.stringify(view.getByTestId('treehole-media-feed').props.style)).toContain('"80%"');
+  it('列表一张失败不影响其他图，仍保留媒体入口', async () => {
+    const view = await renderApp(<TreeholeMedia postId={7} urls={urls} mode="feed" />);
+    await fireEvent(view.getByTestId('treehole-media-feed-image'), 'error');
+    expect(view.getByTestId('treehole-media-feed-image-error')).toHaveTextContent('图片不可用');
+    expect(view.queryByTestId('treehole-media-feed-image-loading')).toBeNull();
+    await fireEvent(view.getByTestId('treehole-media-feed-image-1'), 'load');
+    expect(view.getByTestId('treehole-media-feed-image-1').props.source.uri).toBe(urls[1]);
+    expect(view.queryByTestId('treehole-media-feed-image-1-loading')).toBeNull();
+  });
+
+  it('详情加载失败可重试原图，成功后恢复预览与互动入口', async () => {
+    const view = await renderApp(<TreeholeMedia postId={7} urls={[urls[0]]} mode="detail" />);
+    expect(view.getByTestId('treehole-media-detail-loading')).toBeTruthy();
+    await fireEvent(view.getByTestId('treehole-media-detail-image'), 'error');
+    expect(view.getByTestId('treehole-media-error')).toHaveTextContent('图片不可用');
+    await fireEvent.press(view.getByTestId('treehole-media-retry'));
+    expect(view.getByTestId('treehole-media-detail-image').props.source.uri).toBe(urls[0]);
+    expect(view.getByTestId('treehole-media-detail-loading')).toBeTruthy();
+    await fireEvent(view.getByTestId('treehole-media-detail-image'), 'load');
+    expect(view.queryByTestId('treehole-media-detail-loading')).toBeNull();
+    expect(view.getByTestId('treehole-media-detail-image').props.contentFit).toBe('contain');
+    await fireEvent.press(view.getByTestId('treehole-media-drag-area'));
+    expect(view.getByTestId('treehole-media-preview-image').props.source.uri).toBe(urls[0]);
+  });
+
+  it('无图不渲染媒体或骨架', async () => {
+    const view = await renderApp(<TreeholeMedia postId={7} urls={[]} mode="feed" />);
+    expect(view.queryByTestId('treehole-media-feed')).toBeNull();
   });
 
   it('帖子 ID 或图片序列变化拥有新的重置键', () => {
