@@ -60,3 +60,13 @@ it('shows network failure with a retry action', async () => {
   await waitFor(() => expect(view.getByTestId('canteen-search-list-error')).toBeTruthy());
   expect(view.getByText('网络没连上')).toBeTruthy();
 });
+it('keeps previous results visible when refreshing the same search fails', async () => {
+  api.searchCanteen.mockResolvedValueOnce(page('Rice')).mockRejectedValueOnce({ kind: 'offline' });
+  const view = await renderApp(<CanteenSearchScreen />);
+  await fireEvent.changeText(view.getByLabelText('搜索菜品或美食文章'), 'Rice');
+  await fireEvent.press(view.getByTestId('canteen-search-submit'));
+  await waitFor(() => expect(view.getByTestId('search-product-9')).toBeTruthy());
+  await fireEvent.press(view.getByTestId('canteen-search-submit'));
+  await waitFor(() => expect(view.getByTestId('canteen-search-stale')).toBeTruthy());
+  expect(view.getByTestId('search-product-9')).toBeTruthy();
+});
