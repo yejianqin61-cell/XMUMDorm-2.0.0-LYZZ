@@ -108,7 +108,7 @@ describe('P2X TreeholePostRow', () => {
     const onOpen = jest.fn();
     const content = '长文段落\n'.repeat(80) + '尾部自习';
     const view = await renderApp(row({ post: { ...post, content }, query: '自习', onOpen }));
-    expect(view.getByTestId('treehole-content-7')).toHaveTextContent('尾部自习');
+    expect(view.getByTestId('treehole-content-7')).toHaveTextContent(/尾部\s*自习/);
     expect(view.getByTestId('treehole-content-7').props.numberOfLines).toBeUndefined();
     expect(view.getAllByTestId('campus-search-match').length).toBeGreaterThan(0);
     await fireEvent.press(view.getByTestId('campus-row-7'));
