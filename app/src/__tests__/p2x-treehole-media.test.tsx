@@ -144,31 +144,31 @@ describe('P2X TreeholeMedia', () => {
     const view = await renderApp(<TreeholeMedia postId={7} urls={[urls[0]]} mode="feed" />);
     expect(view.getByTestId('treehole-media-feed')).toHaveStyle({ width: '100%' });
     expect(view.getByTestId('treehole-media-feed-image').props.contentFit).toBe('contain');
-    expect(view.getByTestId('treehole-media-feed-image-loading')).toBeTruthy();
-    await fireEvent(view.getByTestId('treehole-media-feed-image'), 'load');
-    expect(view.queryByTestId('treehole-media-feed-image-loading')).toBeNull();
+    expect(view.getByTestId('treehole-media-feed-image-loading', { includeHiddenElements: true })).toBeTruthy();
+    await fireEvent(view.getByTestId('treehole-media-feed-image'), 'load', { nativeEvent: { source: { width: 100, height: 100, url: urls[0] } } });
+    expect(view.queryByTestId('treehole-media-feed-image-loading', { includeHiddenElements: true })).toBeNull();
   });
 
   it('列表一张失败不影响其他图，仍保留媒体入口', async () => {
     const view = await renderApp(<TreeholeMedia postId={7} urls={urls} mode="feed" />);
-    await fireEvent(view.getByTestId('treehole-media-feed-image'), 'error');
+    await fireEvent(view.getByTestId('treehole-media-feed-image'), 'error', { nativeEvent: { error: 'offline' } });
     expect(view.getByTestId('treehole-media-feed-image-error')).toHaveTextContent('图片不可用');
-    expect(view.queryByTestId('treehole-media-feed-image-loading')).toBeNull();
-    await fireEvent(view.getByTestId('treehole-media-feed-image-1'), 'load');
+    expect(view.queryByTestId('treehole-media-feed-image-loading', { includeHiddenElements: true })).toBeNull();
+    await fireEvent(view.getByTestId('treehole-media-feed-image-1'), 'load', { nativeEvent: { source: { width: 100, height: 100, url: urls[0] } } });
     expect(view.getByTestId('treehole-media-feed-image-1').props.source.uri).toBe(urls[1]);
-    expect(view.queryByTestId('treehole-media-feed-image-1-loading')).toBeNull();
+    expect(view.queryByTestId('treehole-media-feed-image-1-loading', { includeHiddenElements: true })).toBeNull();
   });
 
   it('详情加载失败可重试原图，成功后恢复预览与互动入口', async () => {
     const view = await renderApp(<TreeholeMedia postId={7} urls={[urls[0]]} mode="detail" />);
-    expect(view.getByTestId('treehole-media-detail-loading')).toBeTruthy();
-    await fireEvent(view.getByTestId('treehole-media-detail-image'), 'error');
+    expect(view.getByTestId('treehole-media-detail-loading', { includeHiddenElements: true })).toBeTruthy();
+    await fireEvent(view.getByTestId('treehole-media-detail-image'), 'error', { nativeEvent: { error: 'offline' } });
     expect(view.getByTestId('treehole-media-error')).toHaveTextContent('图片不可用');
     await fireEvent.press(view.getByTestId('treehole-media-retry'));
     expect(view.getByTestId('treehole-media-detail-image').props.source.uri).toBe(urls[0]);
-    expect(view.getByTestId('treehole-media-detail-loading')).toBeTruthy();
-    await fireEvent(view.getByTestId('treehole-media-detail-image'), 'load');
-    expect(view.queryByTestId('treehole-media-detail-loading')).toBeNull();
+    expect(view.getByTestId('treehole-media-detail-loading', { includeHiddenElements: true })).toBeTruthy();
+    await fireEvent(view.getByTestId('treehole-media-detail-image'), 'load', { nativeEvent: { source: { width: 100, height: 100, url: urls[0] } } });
+    expect(view.queryByTestId('treehole-media-detail-loading', { includeHiddenElements: true })).toBeNull();
     expect(view.getByTestId('treehole-media-detail-image').props.contentFit).toBe('contain');
     await fireEvent.press(view.getByTestId('treehole-media-drag-area'));
     expect(view.getByTestId('treehole-media-preview-image').props.source.uri).toBe(urls[0]);
