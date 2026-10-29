@@ -1,23 +1,5 @@
 /* eslint-disable react-hooks/immutability -- Reanimated shared values intentionally mutate outside React state. */
-/**
- * TreeholeMedia —— 树洞的唯一媒体组件（feed 静态预览 / detail 叠卡轮播）
- *
- * 设计文档口径（`App树洞HeroUI-Native重构设计与实施计划.md` §媒体布局与手势）：
- * - **feed**：统一 4:3、宽度半列；多图必须"看得出来是多图"（外层露边 + 数量徽标）；
- * - **feed 不注册任何媒体手势**（横滑留给广场模块切换、纵滑留给列表）；
- * - **detail**：**多张堆叠的叠卡**（前卡 + 两层后卡），**只用手势滑动切图**；
- *   后卡按 1/2 层缩放、右上偏移、逆时针旋转表达景深；切图时前卡飞出、后卡弹性上浮；
- *   ⛔ 不再有左右箭头按钮（2026-10-18 第六轮所有者裁决：箭头去掉，只留手势）；
- *   读屏用户走 `accessibilityActions`（上一张 / 下一张），不靠视觉箭头。
- * - 画幅：**详情 16:9**（2026-10-18 第六轮所有者：「图片不用缩小」→ 从 5:2 回到 16:9）。
- * - 切图动效：reduced-motion 时立即换图。
- *
- * 实现纪律：
- * - **不用 HeroUI Card 包一层**（旧实现是 Card 套 Card：多一层 16dp 内边距、图片只有 83.6% 宽，违反 9.14）；
- * - 手势用 PanResponder、动画用 Reanimated（与旧实现同一套机制），⛔ 不引入第二套动画库；
- *   ⛔ 也不用 gesture-handler：详情页不在列表滚动容器里，PanResponder 足够，且省掉根节点要求；
- * - feed / detail 拆成两个组件：feed 分支**零 hooks 状态**，避免每条帖子实例化 PanResponder 与共享值。
- */
+/** 树洞媒体：信息流静态预览；详情复用叠卡、切图与预览。Stage 2 使用完整等比画面和稳定占位。 */
 
 import * as React from 'react';
 import { Modal, PanResponder, Pressable, View } from 'react-native';
@@ -35,6 +17,7 @@ import X from 'lucide-react-native/icons/x';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { Pressable as AppPressable } from '@/components/ui/Pressable';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { Surface } from '@/components/ui/Surface';
 import { Text } from '@/components/ui/Text';
 import { useTheme } from '@/design-system/theme';
@@ -90,34 +73,15 @@ export function treeholeMediaKey(postId: number, urls: readonly string[]): strin
   return `${postId}:${urls.join('|')}`;
 }
 
-/**
- * 画幅：**信息流**统一 4:3；**详情** 16:9。
- *
- * 2026-10-18 第五轮：所有者要求详情图"再缩小约一半" → 5:2；
- * 2026-10-18 第六轮：所有者改为「详情图不用缩小」→ 回到 16:9（约 213dp 高）。
- * 信息流的多图不再用 4:5 竖幅 —— 竖幅会把一屏挤到只剩 1 篇，见 `TREEHOLE_FEED_MEDIA_WIDTH`。
- */
+/** 稳定媒体画框；contain 保留原图比例，网络加载不改变列表行高。 */
 export function treeholeMediaAspect(count: number, mode: TreeholeMediaMode = 'feed'): number {
   if (mode === 'detail') return 16 / 9;
   return 4 / 3;
 }
 
-/**
- * 信息流**单图**宽度（相对正文列）：**40%**。
- * 2026-10-18 第六轮所有者：「树洞瀑布流的图片要等比例缩小，保证一屏能看见 2 篇树洞」。
- * 实测（Pixel_7haha 1080×2400 / 420dpi）：列表视口只有 **540dp**（顶栏 + 固定搜索框 + 底栏之后），
- * 一篇行高 = 非媒体部分 ≈160dp + 图高；50% 宽（图高 124dp）时一行 296dp，**2 行 592dp 放不进 540dp**。
- * 40% 宽 → 图 135×101dp、一行约 261dp → 2 行 522dp，一屏能完整看到 2 篇。
- * ⚠️ 用百分比而不是 dp：宽度随分栏与平板变化，图片按比例缩放（等比例）。
- */
-export const TREEHOLE_FEED_MEDIA_WIDTH = '40%';
-
-/**
- * 信息流**多图**宽度：**80%**（横向两张并排，每张仍是 40% 列宽 + 4:3，与单图同尺寸）。
- * 2026-10-18 第七轮所有者：不再堆叠，两张横排，第三张起省略。行高与单图一致（仍是 4:3 高度），
- * 所以"一屏 2 篇"的算式不受影响。
- */
-export const TREEHOLE_FEED_MULTI_MEDIA_WIDTH = '80%';
+/** 媒体占满同一正文列；不按一屏两篇反推行高。 */
+export const TREEHOLE_FEED_MEDIA_WIDTH = '100%';
+export const TREEHOLE_FEED_MULTI_MEDIA_WIDTH = '100%';
 
 export function TreeholeMedia({
   postId,
@@ -136,13 +100,6 @@ export function TreeholeMedia({
   );
 }
 
-/**
- * 信息流多图：**横向两张**（2026-10-18 第七轮所有者：不再堆叠，横向排两张，第三张起省略）。
- *
- * - 每张仍是 40% 列宽 + 4:3，与单图**同样大小**（等比例缩小），两张并排后整行占 80% 列宽；
- * - 3 张及以上只画前两张，用右下角数量徽标说明"还有"；⛔ 不再有任何叠层/露边。
- * - 多图仍**不注册手势**、点进帖子才看全部（设计文档 R-7）。
- */
 function CountBadge({ label }: { label: string }): React.ReactElement {
   const theme = useTheme();
   return (
@@ -163,7 +120,7 @@ function CountBadge({ label }: { label: string }): React.ReactElement {
   );
 }
 
-/** feed：单图 / 多图两张并排 + 数量徽标；⛔ 不注册手势、不提供切图控件（设计文档 R-7） */
+/** feed 只保留图片状态，不注册手势；错误后点整块进入详情重试。 */
 function TreeholeFeedMedia({
   postId,
   urls,
@@ -182,7 +139,7 @@ function TreeholeFeedMedia({
       <View style={{ flexDirection: 'row', gap: theme.space('space_1') }}>
         {visible.map((uri, index) => (
           <View
-            key={`${postId}:${uri}`}
+            key={`${postId}:${index}:${uri}`}
             style={{
               flex: 1,
               aspectRatio: treeholeMediaAspect(urls.length),
@@ -191,22 +148,45 @@ function TreeholeFeedMedia({
               backgroundColor: theme.color['bg-sunken'].value,
             }}
           >
-            <Image
-              testID={
-                index === 0 ? 'treehole-media-feed-image' : `treehole-media-feed-image-${index}`
-              }
-              source={{ uri }}
-              recyclingKey={`${postId}:${uri}`}
-              cachePolicy="memory-disk"
-              contentFit="cover"
-              accessible={false}
-              style={{ width: '100%', height: '100%' }}
+            <TreeholeFeedImage
+              uri={uri}
+              testID={index === 0 ? 'treehole-media-feed-image' : `treehole-media-feed-image-${index}`}
             />
           </View>
         ))}
       </View>
       {urls.length > 2 ? (
         <CountBadge label={t('screen.campus.mediaCount', { count: urls.length })} />
+      ) : null}
+    </View>
+  );
+}
+
+/** 与外层 URL key 一起重置，防止回收行沿用旧图片的失败状态。 */
+function TreeholeFeedImage({ uri, testID }: { uri: string; testID: string }): React.ReactElement {
+  const { t } = useI18n();
+  const [status, setStatus] = React.useState<'loading' | 'loaded' | 'failed'>('loading');
+  return (
+    <View style={{ flex: 1 }}>
+      <Image
+        testID={testID}
+        source={{ uri }}
+        recyclingKey={uri}
+        cachePolicy="memory-disk"
+        contentFit="contain"
+        accessible={false}
+        onLoad={() => setStatus('loaded')}
+        onError={() => setStatus('failed')}
+        style={{ width: '100%', height: '100%' }}
+      />
+      {status === 'loading' ? (
+        <Skeleton testID={`${testID}-loading`} kind="media"
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, height: '100%' }} />
+      ) : null}
+      {status === 'failed' ? (
+        <View testID={`${testID}-error`} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center' }}>
+          <Text role="caption" colorToken="text-secondary">{t('screen.campus.mediaFailed')}</Text>
+        </View>
       ) : null}
     </View>
   );
@@ -253,6 +233,7 @@ function TreeholeDetailMedia({
   const flightToken = React.useRef(0);
   const [previewOpen, setPreviewOpen] = React.useState(false);
   const [failed, setFailed] = React.useState(false);
+  const [loadedUri, setLoadedUri] = React.useState<string | null>(null);
   const [retryRevision, setRetryRevision] = React.useState(0);
   // 叠卡要按卡片宽度计算飞出距离，所以得知道画幅的实际像素宽
   const [mediaWidth, setMediaWidth] = React.useState(0);
@@ -327,6 +308,7 @@ function TreeholeDetailMedia({
     setPendingDirection(null);
     setPreviewOpen(false);
     setFailed(false);
+    setLoadedUri(null);
     dragX.value = 0;
     dragY.value = 0;
     exit.value = 0;
@@ -427,7 +409,7 @@ function TreeholeDetailMedia({
         source={{ uri }}
         recyclingKey={uri}
         cachePolicy="memory-disk"
-        contentFit="cover"
+        contentFit="contain"
         accessible={false}
         style={{ width: '100%', height: '100%' }}
       />
@@ -448,6 +430,7 @@ function TreeholeDetailMedia({
             variant="secondary"
             onPress={() => {
               setFailed(false);
+              setLoadedUri(null);
               setRetryRevision((value) => value + 1);
             }}
           />
@@ -508,12 +491,18 @@ function TreeholeDetailMedia({
                     source={{ uri: current }}
                     recyclingKey={current}
                     cachePolicy="memory-disk"
-                    contentFit="cover"
+                    contentFit="contain"
                     accessible={false}
+                    onLoad={() => setLoadedUri(current)}
                     onError={() => setFailed(true)}
                     style={{ width: '100%', height: '100%' }}
                   />
                 </AppPressable>
+                {loadedUri !== current ? (
+                  <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
+                    <Skeleton testID="treehole-media-detail-loading" kind="media" style={{ height: '100%' }} />
+                  </View>
+                ) : null}
               </View>
             </Animated.View>
 
