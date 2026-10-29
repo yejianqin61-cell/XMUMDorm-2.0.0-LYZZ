@@ -155,4 +155,15 @@ describe('P2B-02 跨商品私信会话列表', () => {
     expect(res.status).toBe(400);
     expect(query).not.toHaveBeenCalled();
   });
+
+  it('9A · 卖家单商品咨询列表保留当前 200 条上限', async () => {
+    query
+      .mockResolvedValueOnce([{ id: 5, title: '二手键盘', seller_user_id: 7 }])
+      .mockResolvedValueOnce([]);
+
+    const res = await supertest(app()).get('/api/marketplace/items/5/chat/threads');
+
+    expect(res.status).toBe(200);
+    expect(query.mock.calls[1][0]).toMatch(/LIMIT 200/);
+  });
 });
