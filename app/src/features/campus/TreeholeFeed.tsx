@@ -274,32 +274,38 @@ function TreeholeFeedData({
     [scoped, client, key, persistTabScrollOffset]
   );
   const generation = React.useRef(0),
-    pending = React.useRef<'refresh' | 'append' | null>(null);
+    pending = React.useRef<'refresh' | 'append' | 'reload' | null>(null);
   const load = React.useCallback(
-    async (mode: 'refresh' | 'append') => {
+    async (mode: 'refresh' | 'append' | 'reload') => {
       if (
         pending.current === 'refresh' ||
+        (pending.current === 'reload' && (mode !== 'refresh' || snapshot.current.rows.length === 0)) ||
         (mode === 'append' && (pending.current || !snapshot.current.hasMore))
       ) {
         return;
       }
       const request = ++generation.current;
-      const page = mode === 'refresh' ? 1 : snapshot.current.page + 1;
       pending.current = mode;
-      dispatch({ type: mode === 'refresh' ? 'refresh:start' : 'append:start' });
+      dispatch({ type: mode === 'append' ? 'append:start' : 'refresh:start' });
       try {
-        const data = await getPostList({
-          page,
-          pageSize: TREEHOLE_PAGE_SIZE,
-          ...(query ? { q: query } : {}),
-          ...(tagId != null ? { tagId } : {}),
-        });
-        if (request !== generation.current) return;
-        if (!Array.isArray(data?.list) || typeof data.hasMore !== 'boolean') throw { kind: 'content' };
-        const incoming = data.list.map(asPost);
-        const hasMore = data.hasMore;
+        let page = mode === 'append' ? snapshot.current.page + 1 : 1;
+        const lastPage = mode === 'reload' ? Math.max(1, snapshot.current.page) : page;
+        const incoming: Post[] = [];
+        let hasMore = true;
+        // 自动失效重读当前范围，避免只取第一页丢掉用户已经阅读的后续页。
+        for (; page <= lastPage; page++) {
+          const data = await getPostList({
+            page, pageSize: TREEHOLE_PAGE_SIZE,
+            ...(query ? { q: query } : {}), ...(tagId != null ? { tagId } : {}),
+          });
+          if (request !== generation.current) return;
+          if (!Array.isArray(data?.list) || typeof data.hasMore !== 'boolean') throw { kind: 'content' };
+          incoming.push(...data.list.map(asPost));
+          hasMore = data.hasMore;
+          if (!hasMore || page === lastPage) break;
+        }
         const unique = new Map<number, Post>();
-        for (const row of mode === 'refresh' ? [] : snapshot.current.rows) unique.set(row.id, row);
+        for (const row of mode === 'append' ? snapshot.current.rows : []) unique.set(row.id, row);
         for (const row of incoming) unique.set(row.id, row);
         const next: Snapshot = {
           rows: Array.from(unique.values()),
@@ -312,15 +318,17 @@ function TreeholeFeedData({
         setRows(next.rows);
         setCursor(String(page));
         if (mode === 'refresh') {
-          persistScrollOffset(0);
           setRestoredScrollOffset(0);
           setScrollToTopSignal((signal) => signal + 1);
         }
-        dispatch({ type: mode === 'refresh' ? 'refresh:success' : 'append:success', hasMore });
+        if (mode !== 'append') persistScrollOffset(next.scrollOffset ?? 0);
+        dispatch({ type: mode === 'append' ? 'append:success' : 'refresh:success', hasMore });
       } catch (error) {
         if (request === generation.current) {
+          // Query被移除后重读失败，仍保留可供详情返回恢复的旧快照。
+          if (mode === 'reload') client.setQueryData(key, snapshot.current);
           dispatch({
-            type: mode === 'refresh' ? 'refresh:failure' : 'append:failure',
+            type: mode === 'append' ? 'append:failure' : 'refresh:failure',
             error: errorFor(error),
           });
         }
@@ -331,7 +339,7 @@ function TreeholeFeedData({
     [query, tagId, key, client, dispatch, setCursor, persistScrollOffset]
   );
   React.useEffect(() => {
-    if (!initial.current) void load('refresh');
+    if (!initial.current) void load('reload');
     return () => {
       generation.current++;
       pending.current = null;
@@ -341,9 +349,11 @@ function TreeholeFeedData({
   React.useEffect(() => {
     const unsubscribe = client.getQueryCache().subscribe((event) => {
       if (event.type === 'removed' && JSON.stringify(event.query.queryKey) === JSON.stringify(key)) {
+        // 移除事件没有“用户刷新”的语义；只保留已经明确发起的刷新意图。
+        const mode = pending.current === 'refresh' ? 'refresh' : 'reload';
         generation.current++;
         pending.current = null;
-        void load('refresh');
+        void load(mode);
       }
     });
     return unsubscribe;

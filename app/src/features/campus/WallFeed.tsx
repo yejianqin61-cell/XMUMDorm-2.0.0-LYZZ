@@ -34,6 +34,8 @@ export type WallFeedSnapshot = {
   rows: readonly Post[];
   cursor: number | null;
   hasMore: boolean;
+  /** 已加载窗口数，仅用于自动失效时重读相同范围。 */
+  windows?: number;
   scrollOffset?: number;
   /** 服务端已确认删除；与窗口快照同寿命，刷新/分页不得重新引入。 */
   deletedIds?: readonly number[];
@@ -79,48 +81,44 @@ function WallFeedSession({ testID, identity }: { testID: string; identity: strin
     [client, key, persistTabScrollOffset]
   );
   const generation = React.useRef(0),
-    pending = React.useRef<'refresh' | 'append' | null>(null);
+    pending = React.useRef<'refresh' | 'append' | 'reload' | null>(null);
   const load = React.useCallback(
-    async (mode: 'refresh' | 'append') => {
+    async (mode: 'refresh' | 'append' | 'reload') => {
       if (
         pending.current === 'refresh' ||
+        (pending.current === 'reload' && (mode !== 'refresh' || snapshot.current.rows.length === 0)) ||
         (mode === 'append' && (pending.current || !snapshot.current.hasMore))
       ) {
         return;
       }
       const request = ++generation.current;
       pending.current = mode;
-      dispatch({ type: mode === 'refresh' ? 'refresh:start' : 'append:start' });
+      dispatch({ type: mode === 'append' ? 'append:start' : 'refresh:start' });
       try {
-        const data = await getConfessionWindow({
-          cursor: mode === 'refresh' ? null : snapshot.current.cursor,
-          direction: 'older',
-          limit: WALL_WINDOW_LIMIT,
-        });
-        if (request !== generation.current) return;
-        if (!Array.isArray(data?.items) || typeof data.has_older !== 'boolean') {
-          throw { kind: 'content' };
-        }
-        const incoming = data.items.map(asWall);
-        const hasMore = data.has_older;
-        const cursor =
-          typeof data.oldest_cursor === 'number' &&
-          Number.isSafeInteger(data.oldest_cursor) &&
-          data.oldest_cursor > 0
-            ? data.oldest_cursor
-            : null;
-        // 声称还有下一页却没有游标 = 后端契约破坏：显示错误，⛔ 不循环请求
-        if (
-          hasMore &&
-          (!Number.isSafeInteger(cursor) || Number(cursor) <= 0 || (cursor === snapshot.current.cursor && mode === 'append'))
-        ) {
-          throw { kind: 'content' };
+        let cursor = mode === 'append' ? snapshot.current.cursor : null;
+        const previousWindows = snapshot.current.windows ?? Math.max(1, Math.ceil(snapshot.current.rows.length / WALL_WINDOW_LIMIT));
+        const targetWindows = mode === 'reload' ? previousWindows : 1;
+        let windows = 0;
+        let hasMore = true;
+        const incoming: Post[] = [];
+        for (; windows < targetWindows;) {
+          const data = await getConfessionWindow({ cursor, direction: 'older', limit: WALL_WINDOW_LIMIT });
+          if (request !== generation.current) return;
+          if (!Array.isArray(data?.items) || typeof data.has_older !== 'boolean') throw { kind: 'content' };
+          hasMore = data.has_older;
+          const nextCursor = Number.isSafeInteger(data.oldest_cursor) && data.oldest_cursor > 0 ? data.oldest_cursor : null;
+          // 每个窗口都校验游标进展，自动重读同样不能循环请求。
+          if (hasMore && (nextCursor === null || nextCursor === cursor)) throw { kind: 'content' };
+          incoming.push(...data.items.map(asWall));
+          cursor = nextCursor;
+          windows++;
+          if (!hasMore) break;
         }
         const unique = new Map<number, Post>();
         // 在响应落地时读取最新删除回执，覆盖请求发出后发生的删除。
         const deletedIds = snapshot.current.deletedIds;
         const deleted = new Set(deletedIds);
-        for (const row of mode === 'refresh' ? [] : snapshot.current.rows) {
+        for (const row of mode === 'append' ? snapshot.current.rows : []) {
           if (!deleted.has(row.id)) unique.set(row.id, row);
         }
         for (const row of incoming) {
@@ -131,6 +129,7 @@ function WallFeedSession({ testID, identity }: { testID: string; identity: strin
           rows: Array.from(unique.values()),
           cursor,
           hasMore,
+          windows: mode === 'append' ? previousWindows + windows : windows,
           deletedIds,
           scrollOffset: mode === 'refresh' ? 0 : snapshot.current.scrollOffset,
         };
@@ -139,15 +138,16 @@ function WallFeedSession({ testID, identity }: { testID: string; identity: strin
         setRows(next.rows);
         setCursor(cursor === null ? null : String(cursor));
         if (mode === 'refresh') {
-          persistScrollOffset(0);
           setRestoredScrollOffset(0);
           setScrollToTopSignal((signal) => signal + 1);
         }
-        dispatch({ type: mode === 'refresh' ? 'refresh:success' : 'append:success', hasMore });
+        if (mode !== 'append') persistScrollOffset(next.scrollOffset ?? 0);
+        dispatch({ type: mode === 'append' ? 'append:success' : 'refresh:success', hasMore });
       } catch (error) {
         if (request === generation.current) {
+          if (mode === 'reload') client.setQueryData(key, snapshot.current);
           dispatch({
-            type: mode === 'refresh' ? 'refresh:failure' : 'append:failure',
+            type: mode === 'append' ? 'append:failure' : 'refresh:failure',
             error: errorFor(error),
           });
         }
@@ -158,7 +158,7 @@ function WallFeedSession({ testID, identity }: { testID: string; identity: strin
     [client, dispatch, key, persistScrollOffset, setCursor, identity]
   );
   React.useEffect(() => {
-    if (!initial.current || initial.current.needsRefresh) void load('refresh');
+    if (!initial.current || initial.current.needsRefresh) void load('reload');
     return () => {
       generation.current++;
       pending.current = null;
@@ -171,9 +171,10 @@ function WallFeedSession({ testID, identity }: { testID: string; identity: strin
     let publishing = false;
     return client.getQueryCache().subscribe((event) => {
       if (event.type === 'removed' && JSON.stringify(event.query.queryKey) === snapshotKey) {
+        const mode = pending.current === 'refresh' ? 'refresh' : 'reload';
         generation.current++;
         pending.current = null;
-        void load('refresh');
+        void load(mode);
         return;
       }
       if (
