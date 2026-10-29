@@ -175,7 +175,7 @@ export function Screen({
     <ScreenInsetsContext.Provider value={resolved}>
       <View
         testID={testID}
-        style={[{ flex: 1, minHeight: 0, backgroundColor: theme.color['bg-canvas'].value }, style]}
+        style={[{ flex: 1, minHeight: 0, backgroundColor: theme.color['bg-canvas']['value'] }, style]}
       >
       {resolvedTopMode === 'topbar' && hasHeader ? (
         // 自定义头：背景同样铺到屏幕顶边，内容从真实 inset 之下开始（S1 / 17.2-1）
@@ -183,7 +183,7 @@ export function Screen({
           testID="screen-header"
           style={{
             paddingTop: resolved.headerPaddingTop,
-            backgroundColor: theme.color['bg-canvas'].value,
+            backgroundColor: theme.color['bg-canvas']['value'],
           }}
         >
           {header}

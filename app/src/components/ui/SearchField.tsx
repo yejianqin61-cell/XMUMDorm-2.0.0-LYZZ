@@ -58,7 +58,7 @@ export function SearchField({
           gap: theme.space('space_2'),
           paddingHorizontal: theme.space('space_3'),
           minHeight: theme.touchTarget,
-          backgroundColor: theme.color['bg-sunken'].value,
+          backgroundColor: theme.color['bg-sunken']['value'],
           borderRadius: theme.radius('radius_full'),
         },
         appearance === 'full' ? { alignSelf: 'stretch' } : null,
@@ -72,14 +72,14 @@ export function SearchField({
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={theme.color['text-muted'].value}
+        placeholderTextColor={theme.color['text-muted']['value']}
         onSubmitEditing={onSubmit}
         returnKeyType="search"
         allowFontScaling
         autoFocus={autoFocus}
         accessibilityLabel={placeholder ?? '搜索'}
         accessibilityRole="search"
-        style={{ flex: 1, color: theme.color['text-primary'].value }}
+        style={{ flex: 1, color: theme.color['text-primary']['value'] }}
       />
       {hasText ? (
         <Pressable
