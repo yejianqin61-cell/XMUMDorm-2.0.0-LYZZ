@@ -1470,6 +1470,101 @@ describe('列表状态闭环 L-1 墙失败反馈', () => {
   });
 });
 
+describe('列表状态闭环 L-2 返回与分页', () => {
+  function RoundTrip({ children }: { children: React.ReactNode }): React.ReactElement {
+    const [open, setOpen] = React.useState(true);
+    return <><Button label="切换列表挂载" onPress={() => setOpen(!open)} />{open ? children : null}</>;
+  }
+
+  it('搜索详情返回后恢复关键词、已加载页和搜索位置，不污染普通流位置', async () => {
+    list.mockImplementation(({ q, page }: { q?: string; page: number }) => Promise.resolve({
+      list: [{ id: q ? (page === 1 ? 8 : 9) : 7, content: q ? `搜索第${page}篇` : '普通流' }], hasMore: page === 1,
+    }));
+    const view = await renderApp(<RoundTrip><TreeholeFeed /></RoundTrip>);
+    await waitFor(() => expect(view.getByText('普通流')).toBeTruthy());
+    await act(async () => mockListProps.onScrollOffset?.(180));
+    await fireEvent.press(view.getByTestId('campus-search-toggle'));
+    await fireEvent.changeText(view.getByTestId('campus-search-field-input'), '自习');
+    await waitFor(() => expect(view.getByText('搜索第1篇')).toBeTruthy(), { timeout: 3000 });
+    await act(async () => mockListProps.onEndReached());
+    await waitFor(() => expect(view.getByText('搜索第2篇')).toBeTruthy());
+    await act(async () => mockListProps.onScrollOffset?.(360));
+    await fireEvent.press(view.getByTestId('campus-row-9'));
+    expect(routerMock.push).toHaveBeenCalledWith('/campus/9');
+    await fireEvent.press(view.getByText('切换列表挂载'));
+    const requests = list.mock.calls.length;
+    await fireEvent.press(view.getByText('切换列表挂载'));
+    await waitFor(() => expect(view.getByText('搜索第2篇')).toBeTruthy());
+    expect(view.getByTestId('campus-search-field-input').props.value).toBe('自习');
+    expect(mockListProps.restoredScrollOffset).toBe(360);
+    expect(list).toHaveBeenCalledTimes(requests);
+    expect(secondaryTabStore.get('square', 'confession').scrollOffset).toBe(180);
+    await fireEvent.press(view.getByTestId('campus-search-cancel'));
+    expect(view.getByText('普通流')).toBeTruthy();
+    expect(mockListProps.restoredScrollOffset).toBe(180);
+  });
+
+  it('各标签使用各自快照位置，新标签从顶部开始，返回恢复筛选与页码', async () => {
+    tags.mockResolvedValue([{ id: 7, name_zh: '组队自习' }]);
+    list.mockImplementation(({ tagId, page }: { tagId?: number; page: number }) => Promise.resolve({
+      list: [{ id: tagId ? 70 + page : 7, content: tagId ? `筛选第${page}篇` : '全部内容' }], hasMore: page === 1,
+    }));
+    const view = await renderApp(<RoundTrip><TreeholeFeed /></RoundTrip>);
+    await waitFor(() => expect(view.getByText('全部内容')).toBeTruthy());
+    await act(async () => mockListProps.onScrollOffset?.(180));
+    await fireEvent.press(view.getByTestId('campus-tag-filter'));
+    await fireEvent.press(await waitFor(() => view.getByLabelText('组队自习')));
+    await waitFor(() => expect(view.getByText('筛选第1篇')).toBeTruthy());
+    expect(mockListProps.restoredScrollOffset).toBe(0);
+    await act(async () => mockListProps.onEndReached());
+    await waitFor(() => expect(view.getByText('筛选第2篇')).toBeTruthy());
+    await act(async () => mockListProps.onScrollOffset?.(540));
+    await fireEvent.press(view.getByText('切换列表挂载'));
+    const requests = list.mock.calls.length;
+    await fireEvent.press(view.getByText('切换列表挂载'));
+    await waitFor(() => expect(view.getByText('筛选第2篇')).toBeTruthy());
+    expect(mockListProps.restoredScrollOffset).toBe(540);
+    expect(secondaryTabStore.get('square', 'confession').filters).toEqual({ tag: '7' });
+    expect(list).toHaveBeenCalledTimes(requests);
+    await fireEvent.press(view.getByTestId('campus-tag-filter'));
+    await fireEvent.press(await waitFor(() => view.getByLabelText('全部')));
+    expect(view.getByText('全部内容')).toBeTruthy();
+    expect(mockListProps.restoredScrollOffset).toBe(180);
+  });
+
+  it.each(['treehole', 'wall'] as const)('重挂恢复后刷新消费公共回顶信号，更新顺序并从首批重新分页（%s）', async (kind) => {
+    if (kind === 'treehole') {
+      list.mockResolvedValueOnce({ list: [{ id: 7, content: '原首批' }], hasMore: true })
+        .mockResolvedValueOnce({ list: [{ id: 8, content: '原次批' }], hasMore: true })
+        .mockResolvedValueOnce({ list: [{ id: 9, content: '刷新首批' }], hasMore: true })
+        .mockResolvedValueOnce({ list: [{ id: 10, content: '刷新次批' }], hasMore: false });
+    } else {
+      wall.mockResolvedValueOnce({ items: [{ id: 40, content: '原首批' }], has_older: true, oldest_cursor: 40 })
+        .mockResolvedValueOnce({ items: [{ id: 39, content: '原次批' }], has_older: true, oldest_cursor: 39 })
+        .mockResolvedValueOnce({ items: [{ id: 42, content: '刷新首批' }], has_older: true, oldest_cursor: 42 })
+        .mockResolvedValueOnce({ items: [{ id: 41, content: '刷新次批' }], has_older: false, oldest_cursor: 41 });
+    }
+    const view = await renderApp(<RoundTrip>{kind === 'treehole' ? <TreeholeFeed /> : <WallFeed />}</RoundTrip>);
+    await waitFor(() => expect(view.getByText('原首批')).toBeTruthy());
+    await act(async () => mockListProps.onEndReached());
+    await waitFor(() => expect(view.getByText('原次批')).toBeTruthy());
+    await act(async () => mockListProps.onScrollOffset?.(480));
+    await fireEvent.press(view.getByText('切换列表挂载'));
+    await fireEvent.press(view.getByText('切换列表挂载'));
+    expect(mockListProps.restoredScrollOffset).toBe(480);
+    const signal = mockListProps.scrollToTopSignal ?? 0;
+    await act(async () => mockListProps.onRefresh());
+    await waitFor(() => expect(view.getByText('刷新首批')).toBeTruthy());
+    expect(view.queryByText('原次批')).toBeNull();
+    expect(mockListProps.restoredScrollOffset).toBe(0);
+    expect(mockListProps.scrollToTopSignal).toBeGreaterThan(signal);
+    await act(async () => mockListProps.onEndReached());
+    await waitFor(() => expect(view.getByText('刷新次批')).toBeTruthy());
+    if (kind === 'treehole') expect(list.mock.calls.map((call) => call[0].page)).toEqual([1, 2, 1, 2]);
+    else expect(wall.mock.calls.map((call) => call[0].cursor)).toEqual([null, 40, null, 42]);
+  });
+});
+
 describe('万能墙清单模板图标化', () => {
   it('checklist 每行渲染方框图标，不再出现文字符号', async () => {
     const view = await renderApp(<WallTemplateContent templateKey="checklist" content={'买水\n买咖啡'} />);
