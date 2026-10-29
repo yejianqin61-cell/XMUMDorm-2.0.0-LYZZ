@@ -14,6 +14,12 @@ import {
   markNotificationRead,
 } from '@shared/api/notifications';
 import { getApiErrorMessage } from '@shared/utils/apiError';
+import {
+  buildAffairsText,
+  buildAggregateText,
+  buildMarketplaceText,
+  displayName,
+} from './mailboxDisplay';
 import './Mailbox.css';
 
 function formatTime(createdAt) {
@@ -30,60 +36,6 @@ function formatTime(createdAt) {
   if (diffDay === 1) return '昨天';
   if (diffDay < 7) return `${diffDay} 天前`;
   return date.toLocaleDateString();
-}
-
-function displayName(u) {
-  if (!u) return 'Someone';
-  return (u.nickname || u.username || 'Someone').trim();
-}
-
-function buildAffairsText({ isZh, latest }) {
-  const title = latest?.extra?.targetTitle || latest?.target?.title || '';
-  const titlePart = title ? (isZh ? `《${title}》` : `"${title}"`) : (isZh ? '该活动' : 'this activity');
-  if (latest?.type === 'activity_deadline_reminder') {
-    return isZh ? `${titlePart} 的报名即将截止，请及时处理。` : `Registration for ${titlePart} is closing soon.`;
-  }
-  if (latest?.type === 'activity_start_reminder') {
-    return isZh ? `${titlePart} 即将开始，请留意活动安排。` : `${titlePart} is starting soon.`;
-  }
-  return isZh ? `你已成功报名 ${titlePart}。` : `You have successfully registered for ${titlePart}.`;
-}
-
-function buildMarketplaceText({ isZh, names, othersCount, contentTitle }) {
-  const a = names[0] || (isZh ? '有人' : 'Someone');
-  const b = names[1] || '';
-  const others = othersCount > 0 ? othersCount : 0;
-  const join2 = b ? (isZh ? `${a}、${b}` : `${a}, ${b}`) : a;
-  const prefix = others > 0
-    ? (isZh ? `${join2} 和另外 ${others} 人` : `${join2} and ${others} others`)
-    : join2;
-  const t = (contentTitle || '').trim();
-  const titlePart = t ? (isZh ? `《${t}》` : `"${t}"`) : (isZh ? '该商品' : 'the item');
-  return isZh ? `${prefix} 在二手市场就 ${titlePart} 发来新消息。` : `${prefix} sent a new message about ${titlePart}.`;
-}
-
-function buildAggregateText({ isZh, names, othersCount, likeCount, commentCount, isPost, contentTitle }) {
-  const a = names[0] || (isZh ? '有人' : 'Someone');
-  const b = names[1] || '';
-  const others = othersCount > 0 ? othersCount : 0;
-  const join2 = b ? (isZh ? `${a}、${b}` : `${a}, ${b}`) : a;
-  const prefix = others > 0
-    ? (isZh ? `${join2} 和另外 ${others} 人` : `${join2} and ${others} others`)
-    : join2;
-
-  if (!isPost) {
-    return isZh ? `${prefix} 更新了一条系统消息。` : `${prefix} triggered a system update.`;
-  }
-
-  const t = (contentTitle || '').trim();
-  const titlePart = t ? (isZh ? `《${t}》` : `"${t}"`) : (isZh ? '你的帖子' : 'your post');
-  if (likeCount > 0 && commentCount > 0) {
-    return isZh ? `${prefix} 赞了或评论了 ${titlePart}。` : `${prefix} liked or commented on ${titlePart}.`;
-  }
-  if (commentCount > 0) {
-    return isZh ? `${prefix} 评论了 ${titlePart}。` : `${prefix} commented on ${titlePart}.`;
-  }
-  return isZh ? `${prefix} 赞了 ${titlePart}。` : `${prefix} liked ${titlePart}.`;
 }
 
 function Mailbox() {
