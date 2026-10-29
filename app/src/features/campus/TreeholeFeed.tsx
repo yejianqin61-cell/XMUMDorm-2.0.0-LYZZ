@@ -99,10 +99,22 @@ type Snapshot = {
 export function TreeholeFeed({ testID = 'treehole-feed' }: { testID?: string }): React.ReactElement {
   const { t } = useI18n();
   const theme = useTheme();
-  const [expanded, setExpanded] = React.useState(false);
-  const [draft, setDraft] = React.useState('');
-  const [query, setQuery] = React.useState('');
-  const [history, setHistory] = React.useState<readonly string[]>([]);
+  const client = getQueryClient();
+  const session = useSession();
+  const searchKey = React.useMemo(() => [
+    ...QK.postsInfinite(session.isSignedIn ? '_user' : '_guest', TREEHOLE_PAGE_SIZE),
+    'campusSearchState', session.identifier,
+  ], [session.isSignedIn, session.identifier]);
+  const initial = React.useRef(client.getQueryData<{
+    expanded: boolean; draft: string; query: string; history: readonly string[];
+  }>(searchKey));
+  const [expanded, setExpanded] = React.useState(initial.current?.expanded ?? false);
+  const [draft, setDraft] = React.useState(initial.current?.draft ?? '');
+  const [query, setQuery] = React.useState(initial.current?.query ?? '');
+  const [history, setHistory] = React.useState<readonly string[]>(initial.current?.history ?? []);
+  React.useEffect(() => {
+    client.setQueryData(searchKey, { expanded, draft, query, history });
+  }, [client, searchKey, expanded, draft, query, history]);
 
   // 打字期间不发请求：300ms 防抖后才替换结果流
   React.useEffect(() => {
@@ -233,10 +245,12 @@ function TreeholeFeedData({
   const initial = React.useRef(client.getQueryData<Snapshot>(key));
   const snapshot = React.useRef<Snapshot>(initial.current ?? { rows: [], page: 0, hasMore: true });
   const [rows, setRows] = React.useState(snapshot.current.rows);
+  // 恢复值属于当前关键词/筛选的快照，不能取另一个筛选最近写入的Tab位置。
+  const [restoredScrollOffset, setRestoredScrollOffset] = React.useState(snapshot.current.scrollOffset ?? 0);
+  const [scrollToTopSignal, setScrollToTopSignal] = React.useState(0);
   const {
     pagination,
     dispatch,
-    restoredScrollOffset,
     persistScrollOffset: persistTabScrollOffset,
     setCursor,
   } = useListPagination({
@@ -289,7 +303,11 @@ function TreeholeFeedData({
         client.setQueryData(key, next);
         setRows(next.rows);
         setCursor(String(page));
-        if (mode === 'refresh') persistScrollOffset(0);
+        if (mode === 'refresh') {
+          persistScrollOffset(0);
+          setRestoredScrollOffset(0);
+          setScrollToTopSignal((signal) => signal + 1);
+        }
         dispatch({ type: mode === 'refresh' ? 'refresh:success' : 'append:success', hasMore });
       } catch (error) {
         if (request === generation.current) {
@@ -361,6 +379,7 @@ function TreeholeFeedData({
       keyExtractor={(row) => String(row.id)}
       pagination={pagination}
       restoredScrollOffset={restoredScrollOffset}
+      scrollToTopSignal={scrollToTopSignal}
       onScrollOffset={persistScrollOffset}
       onRefresh={refresh}
       onEndReached={append}

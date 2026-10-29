@@ -47,7 +47,9 @@ export function WallFeed({ testID = 'wall-feed' }: { testID?: string }): React.R
     initial.current ?? { rows: [], cursor: null, hasMore: true, needsRefresh: true }
   );
   const [rows, setRows] = React.useState(snapshot.current.rows);
-  const { pagination, dispatch, restoredScrollOffset, persistScrollOffset: persistTabScrollOffset, setCursor } =
+  const [restoredScrollOffset, setRestoredScrollOffset] = React.useState(snapshot.current.scrollOffset ?? 0);
+  const [scrollToTopSignal, setScrollToTopSignal] = React.useState(0);
+  const { pagination, dispatch, persistScrollOffset: persistTabScrollOffset, setCursor } =
     useListPagination({
       scope: { primaryTab: 'square', secondaryTab: 'wall' },
       initial: { hasMore: snapshot.current.hasMore },
@@ -119,7 +121,11 @@ export function WallFeed({ testID = 'wall-feed' }: { testID?: string }): React.R
         client.setQueryData(key, next);
         setRows(next.rows);
         setCursor(cursor === null ? null : String(cursor));
-        if (mode === 'refresh') persistScrollOffset(0);
+        if (mode === 'refresh') {
+          persistScrollOffset(0);
+          setRestoredScrollOffset(0);
+          setScrollToTopSignal((signal) => signal + 1);
+        }
         dispatch({ type: mode === 'refresh' ? 'refresh:success' : 'append:success', hasMore });
       } catch (error) {
         if (request === generation.current) {
@@ -185,6 +191,7 @@ export function WallFeed({ testID = 'wall-feed' }: { testID?: string }): React.R
       keyExtractor={(row) => String(row.id)}
       pagination={pagination}
       restoredScrollOffset={restoredScrollOffset}
+      scrollToTopSignal={scrollToTopSignal}
       onScrollOffset={persistScrollOffset}
       onRefresh={refresh}
       onEndReached={append}
