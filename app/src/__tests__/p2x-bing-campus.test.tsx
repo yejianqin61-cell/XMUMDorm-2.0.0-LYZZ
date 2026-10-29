@@ -909,6 +909,9 @@ describe('万能墙删除自己的帖子', () => {
       await waitFor(() => expect(wallDetail).toHaveBeenCalledTimes(2));
       expect(view.getByTestId('campus-detail-loading')).toBeTruthy();
       expect(view.queryByTestId('campus-detail-menu-delete')).toBeNull();
+      await fireEvent.press(view.getByText('回到详情'));
+      await fireEvent.press(view.getByText('回到详情'));
+      expect(wallDetail).toHaveBeenCalledTimes(2);
       await act(async () => finish(mine));
       await waitFor(() => expect(view.getByText('恢复后的内容')).toBeTruthy());
       expect(view.queryByTestId('wall-delete-notice')).toBeNull();
@@ -984,6 +987,52 @@ describe('万能墙删除自己的帖子', () => {
       expect(mockSession.identifier).toBe('other-b');
       expect(view.queryByTestId('wall-delete-notice')).toBeNull();
       expect(view.queryByTestId('wall-delete-pending')).toBeNull();
+    });
+
+    it('身份未变但重新聚焦也重新确认已变化的权限', async () => {
+      wallDetail.mockResolvedValueOnce(mine).mockResolvedValueOnce({ ...mine, viewer_is_author: false });
+      const view = await renderApp(<RecoveryFlow />);
+      await waitFor(() => expect(view.getByText('恢复后的内容')).toBeTruthy());
+      await fireEvent.press(view.getByText('离开详情'));
+      await fireEvent.press(view.getByText('回到详情'));
+      await waitFor(() => expect(wallDetail).toHaveBeenCalledTimes(2));
+      await waitFor(() => expect(view.queryByTestId('campus-detail-loading')).toBeNull());
+      await fireEvent.press(view.getByTestId('campus-detail-more'));
+      expect(view.queryByTestId('campus-detail-menu-delete')).toBeNull();
+    });
+
+    it.each([401, 403, 404, 'network'] as const)('重新确认详情失败仍有正确恢复动作（%s）', async (failure) => {
+      wallDetail.mockResolvedValueOnce(mine).mockRejectedValueOnce(
+        failure === 'network' ? new TypeError('Network request failed')
+          : Object.assign(new Error('internal-secret'), { status: failure, apiStatus: -1, body: { status: -1 } })
+      ).mockResolvedValue(mine);
+      removeConfession.mockRejectedValueOnce(expired());
+      const view = await renderApp(<RecoveryFlow />);
+      await loginAfter401(view);
+      await fireEvent.press(view.getByText('完成原账号登录'));
+      await waitFor(() => expect(wallDetail).toHaveBeenCalledTimes(2));
+      await waitFor(() => expect(view.queryByTestId('campus-detail-loading')).toBeNull());
+      expect(view.queryByTestId('wall-delete-pending')).toBeNull();
+      expect(view.queryByText('internal-secret')).toBeNull();
+      expect(removeConfession).toHaveBeenCalledTimes(1);
+      if (failure === 401 || failure === 403) {
+        const notice = view.getByTestId('wall-delete-notice');
+        expect(notice).toHaveTextContent(failure === 401 ? /登录已过期/ : /当前账号不能进行此操作/);
+        await fireEvent.press(within(notice).getByText(failure === 401 ? '登录' : '返回列表'));
+        if (failure === 401) expect(routerMock.push).toHaveBeenCalledTimes(2);
+        else expect(routerMock.back).toHaveBeenCalledTimes(1);
+      } else if (failure === 404) {
+        const empty = view.getByTestId('campus-detail-empty');
+        expect(empty).toHaveTextContent(/内容不存在或已删除/);
+        await fireEvent.press(within(empty).getByText('返回列表'));
+        expect(routerMock.back).toHaveBeenCalledTimes(1);
+      } else {
+        await fireEvent.press(within(view.getByTestId('campus-detail-error')).getByText('连上校园网后重试'));
+        await waitFor(() => expect(view.getByText('恢复后的内容')).toBeTruthy());
+        await fireEvent.press(view.getByTestId('campus-detail-more'));
+        expect(view.getByTestId('campus-detail-menu-delete')).not.toBeDisabled();
+        expect(wallDetail).toHaveBeenCalledTimes(3);
+      }
     });
   });
 
