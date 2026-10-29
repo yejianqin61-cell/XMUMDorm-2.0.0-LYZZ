@@ -1504,6 +1504,44 @@ describe('列表状态闭环 L-2 返回与分页', () => {
     expect(mockListProps.restoredScrollOffset).toBe(180);
   });
 
+  it('长文多图搜索进入真实详情组合再返回，保留查询、两页和位置', async () => {
+    const content = '长文阅读段落\n'.repeat(40) + '自习尾句';
+    const images = [{ url: 'https://example.test/wide.jpg' }, { url: 'https://example.test/tall.jpg' }, { url: 'https://example.test/third.jpg' }];
+    list.mockImplementation(({ q, page }: { q?: string; page: number }) => Promise.resolve({
+      list: [{ id: q ? (page === 1 ? 8 : 9) : 7, title: `第${page}篇`, content: q ? content : '普通流', images }],
+      hasMore: page === 1,
+    }));
+    detail.mockResolvedValue({ id: 9, title: '第2篇', content, images });
+    function ReadingFlow(): React.ReactElement {
+      const [opened, setOpened] = React.useState(false);
+      routerMock.push.mockImplementation(() => setOpened(true));
+      routerMock.back.mockImplementation(() => setOpened(false));
+      return opened ? <><Button label="返回阅读列表" onPress={() => routerMock.back()} />
+        <CampusDetailScreen postId="9" kind="confession" /></> : <TreeholeFeed />;
+    }
+    const view = await renderApp(<ReadingFlow />);
+    await waitFor(() => expect(view.getByText('普通流')).toBeTruthy());
+    await fireEvent.press(view.getByTestId('campus-search-toggle'));
+    await fireEvent.changeText(view.getByTestId('campus-search-field-input'), '自习');
+    await waitFor(() => expect(view.getByTestId('treehole-content-8')).toBeTruthy(), { timeout: 3000 });
+    await act(async () => mockListProps.onEndReached());
+    await waitFor(() => expect(view.getByTestId('treehole-content-9')).toBeTruthy());
+    expect(view.getByTestId('treehole-content-9').props.numberOfLines).toBeUndefined();
+    await act(async () => mockListProps.onScrollOffset?.(960));
+    await fireEvent.press(view.getByTestId('campus-row-9-media'));
+    await waitFor(() => expect(view.getByTestId('treehole-post-content')).toHaveTextContent(/自习尾句/));
+    expect(view.getByTestId('treehole-post-content').props.numberOfLines).toBeUndefined();
+    expect(view.getByTestId('treehole-media-drag-area')).toBeTruthy();
+    const requests = list.mock.calls.length;
+    await fireEvent.press(view.getByText('返回阅读列表'));
+    await waitFor(() => expect(view.getByTestId('treehole-content-9')).toBeTruthy());
+    expect(view.getByTestId('campus-search-field-input').props.value).toBe('自习');
+    expect(mockListProps.restoredScrollOffset).toBe(960);
+    expect(list).toHaveBeenCalledTimes(requests);
+    expect(view.getByTestId('treehole-content-8')).toBeTruthy();
+    expect(mockListProps.pagination.hasMore).toBe(false);
+  });
+
   it('各标签使用各自快照位置，新标签从顶部开始，返回恢复筛选与页码', async () => {
     tags.mockResolvedValue([{ id: 7, name_zh: '组队自习' }]);
     list.mockImplementation(({ tagId, page }: { tagId?: number; page: number }) => Promise.resolve({
