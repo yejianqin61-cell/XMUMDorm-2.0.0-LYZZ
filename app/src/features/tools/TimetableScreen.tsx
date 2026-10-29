@@ -119,9 +119,11 @@ function OwnedTimetableScreen({ renderGrid, legacyControls }: { renderGrid: (pro
         if (firstEntry && status === 'undetermined') {
           const asked = await AsyncStorage.getItem('@dorm:timetable-notification-requested');
           if (!asked && active) {
-            await AsyncStorage.setItem('@dorm:timetable-notification-requested', '1');
-            if (!active) return;
             status = await notificationPermission.request();
+            if (status !== 'unavailable') {
+              // Only persist a request that returned; storage failure must not hide the OS result.
+              await AsyncStorage.setItem('@dorm:timetable-notification-requested', '1').catch(() => undefined);
+            }
           }
         }
         if (!active) return;

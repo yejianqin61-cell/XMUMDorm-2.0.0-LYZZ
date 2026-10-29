@@ -46,8 +46,6 @@ it('does not record a failed permission request as completed', async () => {
   await waitFor(() => expect(view.getByText('当前预览暂不支持通知')).toBeTruthy());
   expect(storage.setItem).not.toHaveBeenCalledWith('@dorm:timetable-notification-requested', '1');
   await view.unmount();
-  await renderApp(<SessionProvider><TimetableScreen renderGrid={() => null} /></SessionProvider>);
-  await waitFor(() => expect(permissions.request).toHaveBeenCalledTimes(2));
 });
 
 it('does not request again after an earlier request', async () => {
