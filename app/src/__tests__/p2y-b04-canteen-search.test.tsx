@@ -3,11 +3,19 @@ import { act, fireEvent, waitFor } from '@testing-library/react-native';
 import { renderApp } from './helpers/renderApp';
 import { CanteenSearchScreen } from '@/features/square/CanteenSearchScreen';
 import { validateSearchQuery, mergeSearchRows, normalizeSearchPage } from '@/features/square/canteenSearch';
-jest.mock('expo-router', () => ({ __state: { targets: [] as unknown[] }, useLocalSearchParams: () => ({}), useRouter: () => ({ push: (target: unknown) => require('expo-router').__state.targets.push(target) }) }));
+jest.mock('expo-router', () => ({ __state: { targets: [] as unknown[], query: '' }, useLocalSearchParams: () => ({ query: require('expo-router').__state.query }), useRouter: () => ({ push: (target: unknown) => require('expo-router').__state.targets.push(target) }) }));
 jest.mock('../../../shared/api/canteen', () => ({ searchCanteen: jest.fn() }));
 const api = require('../../../shared/api/canteen') as { searchCanteen: jest.Mock };
 const page = (name: string, id = 9) => ({ products: [{ id, name, shop_name: 'Kitchen', comprehensive_score: 7 }], articles: [], hasMore: { products: false, articles: false } });
-beforeEach(() => { api.searchCanteen.mockReset().mockResolvedValue(page('Rice')); require('expo-router').__state.targets.length = 0; });
+beforeEach(() => { api.searchCanteen.mockReset().mockResolvedValue(page('Rice')); require('expo-router').__state.targets.length = 0; require('expo-router').__state.query = ''; });
+it('searches the keyword submitted from the canteen home and opens its result', async () => {
+  require('expo-router').__state.query = ' Rice ';
+  const view = await renderApp(<CanteenSearchScreen />);
+  await waitFor(() => expect(view.getByTestId('search-product-9')).toBeTruthy());
+  expect(api.searchCanteen).toHaveBeenCalledWith('Rice', { type: 'all', page: 1, pageSize: 10 });
+  await fireEvent.press(view.getByTestId('search-product-9'));
+  expect(require('expo-router').__state.targets).toContainEqual({ pathname: '/canteen/product/[id]', params: { id: '9' } });
+});
 it('classifies empty and overlong keywords as business states', () => {
   expect(validateSearchQuery('   ')).toBe('empty'); expect(validateSearchQuery('x'.repeat(51))).toBe('tooLong'); expect(validateSearchQuery('x'.repeat(50))).toBeNull();
 });
