@@ -90,4 +90,27 @@ describe('marketplace chat lifecycle for an on-sale item', () => {
     expect(res.status).toBe(404);
     expect(query).toHaveBeenCalledTimes(1);
   });
+
+  it('allows the seller to mark an on-sale item sold', async () => {
+    query.mockResolvedValueOnce([{ id: 5, seller_user_id: 7, status: 'on_sale' }]).mockResolvedValueOnce({ affectedRows: 1 });
+
+    const res = await supertest(app())
+      .post('/api/marketplace/items/5/status')
+      .set('x-test-user-id', '7')
+      .send({ status: 'sold' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.status).toBe('sold');
+  });
+
+  it('rejects a buyer from changing item status', async () => {
+    query.mockResolvedValueOnce([{ id: 5, seller_user_id: 7, status: 'on_sale' }]);
+
+    const res = await supertest(app())
+      .post('/api/marketplace/items/5/status')
+      .set('x-test-user-id', '9')
+      .send({ status: 'sold' });
+
+    expect(res.status).toBe(403);
+  });
 });
