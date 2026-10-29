@@ -43,7 +43,7 @@ it('uses a placeholder when a search result image fails to load', async () => {
   await fireEvent.changeText(view.getByLabelText('搜索菜品或美食文章'), 'Rice');
   await fireEvent.press(view.getByTestId('canteen-search-submit'));
   await waitFor(() => expect(view.getByTestId('search-product-media-9-image')).toBeTruthy());
-  await fireEvent(view.getByTestId('search-product-media-9-image'), 'error');
+  await fireEvent(view.getByTestId('search-product-media-9-image'), 'error', { nativeEvent: { error: 'unavailable' } });
   expect(view.getByTestId('search-product-media-9-placeholder')).toBeTruthy();
 });
 it('discards a slow result after the keyword has changed', async () => {

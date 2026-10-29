@@ -15,6 +15,7 @@ import { toResourceError } from './useCanteenResource';
 import { searchCanteen } from '../../../../shared/api/canteen';
 import { getUploadUrl } from '../../../../shared/api/config';
 import { mergeSearchRows, normalizeSearchPage, validateSearchQuery, type SearchRow, type SearchType } from './canteenSearch';
+import { CanteenMedia } from './CanteenMedia';
 
 export function CanteenSearchScreen(): React.ReactElement {
   const badge = useMailboxBadge();
@@ -85,7 +86,9 @@ export function CanteenSearchScreen(): React.ReactElement {
         onRefresh={() => void load(queryRef.current || input, typeRef.current, 'refresh')} onEndReached={() => void load(queryRef.current, typeRef.current, 'append')}
         onRetryRefresh={() => void load(queryRef.current, typeRef.current, 'refresh')} onRetryAppend={() => void load(queryRef.current, typeRef.current, 'append')}
         labels={{ empty: { kind: 'noResult', title: t(problem === 'tooLong' ? 'canteen.search.tooLong' : problem === 'empty' ? 'canteen.search.enterQuery' : 'canteen.search.noResults'), description: t('canteen.search.emptyHelp'), actionLabel: t('canteen.search.submit'), onAction: submit }, retryLabel: t('action.retry'), endLabel: t('canteen.search.end') }}
-        renderItem={(row) => row.kind === 'product' ? <EntityCard testID={`search-product-${row.id}`} domain="food" title={row.title} subtitle={row.subtitle ?? undefined} mediaUri={row.cover ? getUploadUrl(row.cover) : null} score={row.score} onPress={() => router.push({ pathname: '/canteen/product/[id]', params: { id: String(row.id) } })} /> :
+        renderItem={(row) => row.kind === 'product' ? <EntityCard testID={`search-product-${row.id}`} domain="food" title={row.title} subtitle={row.subtitle ?? undefined} score={row.score}
+          badges={<CanteenMedia uri={row.cover} name={row.title} testID={`search-product-media-${row.id}`} style={{ width: '100%', height: undefined, aspectRatio: 16 / 9 }} />}
+          onPress={() => router.push({ pathname: '/canteen/product/[id]', params: { id: String(row.id) } })} /> :
           <EntityCard testID={`search-article-${row.id}`} domain="post" title={row.title} authorLabel={row.subtitle ?? t('canteen.anonymous')} mediaUri={row.cover ? getUploadUrl(row.cover) : null} onPress={() => router.push({ pathname: '/campus/[id]', params: { id: String(row.id) } })} />} />
     </View>
   </Screen>;
