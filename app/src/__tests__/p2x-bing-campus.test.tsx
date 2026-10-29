@@ -816,7 +816,7 @@ describe('万能墙删除自己的帖子', () => {
     await waitFor(() => expect(view.getByTestId('wall-delete-pending')).toBeTruthy());
     expect(routerMock.back).not.toHaveBeenCalled();
     await fireEvent.press(view.getByTestId('campus-detail-more'));
-    expect(view.getByTestId('campus-detail-menu-delete')).toHaveAccessibilityState({ disabled: true });
+    expect(view.getByTestId('campus-detail-menu-delete')).toBeDisabled();
     await fireEvent.press(view.getByTestId('campus-detail-menu-delete'));
     expect(removeConfession).toHaveBeenCalledTimes(1);
     await fireEvent.press(view.getByTestId('campus-detail-menu-cancel'));
