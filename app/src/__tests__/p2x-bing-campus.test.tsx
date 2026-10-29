@@ -78,7 +78,8 @@ jest.mock('expo-symbols', () => {
   return { SymbolView: (props: unknown) => React.createElement(View, props) };
 });
 
-const routerMock = (require('expo-router') as {
+const routerModuleMock = require('expo-router') as {
+  __FocusProvider: React.Provider<boolean>;
   __router: {
     push: jest.Mock;
     back: jest.Mock;
@@ -86,7 +87,8 @@ const routerMock = (require('expo-router') as {
     canGoBack: jest.Mock;
     setParams: jest.Mock;
   };
-}).__router;
+};
+const routerMock = routerModuleMock.__router;
 
 const mockAuthFailure = jest.fn(async () => ({ kind: 'permission' }));
 const mockSession = { status: 'signedIn', identifier: 'owner-a' as string | null, isSignedIn: true, handleAuthFailure: mockAuthFailure };
@@ -865,7 +867,7 @@ describe('万能墙删除自己的帖子', () => {
   describe('D-3 登录恢复', () => {
     const mine = { id: 40, content: '恢复后的内容', template_key: 'announcement', viewer_is_author: true };
     const expired = () => Object.assign(new Error('expired'), { status: 401, apiStatus: -1, body: { status: -1 } });
-    const FocusProvider = (require('expo-router') as { __FocusProvider: React.Provider<boolean> }).__FocusProvider;
+    const FocusProvider = routerModuleMock.__FocusProvider;
 
     function RecoveryFlow(): React.ReactElement {
       const [focused, setFocused] = React.useState(true);

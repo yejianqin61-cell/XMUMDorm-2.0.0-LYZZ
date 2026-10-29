@@ -56,7 +56,8 @@ describe('P2X Treehole 视觉层契约（令牌组件层）', () => {
 
   it('详情走原生 Header + 粘性底栏，⛔ 不再在内容里画返回按钮', () => {
     const screens = read('src', 'features', 'campus', 'CampusScreens.tsx');
-    expect(screens).toContain("import { Stack, useRouter } from 'expo-router'");
+    expect(screens).toMatch(/import \{[^}]*\bStack\b[^}]*\} from 'expo-router'/);
+    expect(screens).toMatch(/import \{[^}]*\buseRouter\b[^}]*\} from 'expo-router'/);
     expect(screens).toContain('<Stack.Screen options={headerOptions} />');
     expect(screens).toContain('footer={state === \'content\' ? composer : undefined}');
     expect(screens).toContain('CommentComposer');
