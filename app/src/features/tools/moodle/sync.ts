@@ -87,7 +87,6 @@ export function createMoodleSync(port: MoodleSyncPort) {
   }
   function choose(ids: readonly number[]) {
     if (phase !== 'choosing' && phase !== 'ready') return;
-    previousData = null;
     selectedIds = [...new Set(ids)].filter((id) => candidates.has(id));
     selectMoodleCourses(selectedIds);
     generation = moodleCacheGeneration();
