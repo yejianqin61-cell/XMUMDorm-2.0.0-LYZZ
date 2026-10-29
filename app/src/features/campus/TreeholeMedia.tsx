@@ -70,7 +70,7 @@ export function resolveTreeholeSwipe(dx: number, velocityX = 0): 'next' | 'previ
 
 /** 帖子 ID 或图片序列变化时的重置键 */
 export function treeholeMediaKey(postId: number, urls: readonly string[]): string {
-  return `${postId}:${urls.join('|')}`;
+  return JSON.stringify([postId, urls]);
 }
 
 /** 稳定媒体画框；contain 保留原图比例，网络加载不改变列表行高。 */
@@ -96,7 +96,7 @@ export function TreeholeMedia({
   return mode === 'feed' ? (
     <TreeholeFeedMedia postId={postId} urls={urls} />
   ) : (
-    <TreeholeDetailMedia postId={postId} urls={urls} />
+    <TreeholeDetailMedia key={treeholeMediaKey(postId, urls)} urls={urls} />
   );
 }
 
@@ -203,17 +203,23 @@ function TreeholeFeedImage({ uri, testID }: { uri: string; testID: string }): Re
  *   - 释放未过阈值 → 弹簧回中（有回弹）；过阈值 → 弹簧飞出（不是线性 timing），
  *     这就是所有者要的"弹性动效"。
  */
-function TreeholeDetailMedia({
-  postId,
-  urls,
-}: {
-  postId: number;
-  urls: readonly string[];
-}): React.ReactElement {
+function TreeholeDetailMedia({ urls }: { urls: readonly string[] }): React.ReactElement {
   const theme = useTheme();
   const { t } = useI18n();
   /** 当前前卡（已提交）。飞出动画期间不变，动画结束才前进 */
-  const [index, setIndex] = React.useState(0);
+  // 一次选图/重试是一代请求；即使URL相同，回到该图也重新分配代次。
+  const [imageRequest, setImageRequest] = React.useState<{
+    index: number;
+    revision: number;
+    status: 'loading' | 'loaded' | 'failed';
+  }>({ index: 0, revision: 0, status: 'loading' });
+  const { index, revision, status } = imageRequest;
+  const failed = status === 'failed';
+  const startImage = React.useCallback((nextIndex: number) => {
+    setImageRequest((previous) => ({
+      index: nextIndex, revision: previous.revision + 1, status: 'loading',
+    }));
+  }, []);
   /**
    * 计数/读屏用的**目标序号**：手势松开（判定换图）的那一刻就前进，不等动画落位。
    * 为什么：飞出动画里"后卡已经顶到前层"的那 200ms 里，用户看到的是下一张图，
@@ -232,9 +238,6 @@ function TreeholeDetailMedia({
   /** 连点保护：只让**最后一次**动画的完成回调提交 index */
   const flightToken = React.useRef(0);
   const [previewOpen, setPreviewOpen] = React.useState(false);
-  const [failed, setFailed] = React.useState(false);
-  const [loadedUri, setLoadedUri] = React.useState<string | null>(null);
-  const [retryRevision, setRetryRevision] = React.useState(0);
   // 叠卡要按卡片宽度计算飞出距离，所以得知道画幅的实际像素宽
   const [mediaWidth, setMediaWidth] = React.useState(0);
   const dragX = useSharedValue(0);
@@ -242,9 +245,17 @@ function TreeholeDetailMedia({
   const exit = useSharedValue(0);
   /** 飞出方向：-1 = 下一张（向左飞出），1 = 上一张（向右飞出） */
   const flyDirection = useSharedValue(1);
-  const key = treeholeMediaKey(postId, urls);
   const layers = treeholeDeckLayers(urls.length);
   const current = urls[index] ?? urls[0];
+  // 帖子/URL序列由外层key隔离；此处再核对真实URL与请求代次。
+  // 函数式更新核对最新状态，避免批处理、重试或A→B→A复用旧闭包。
+  const finishImage = (result: 'loaded' | 'failed') => {
+    setImageRequest((previous) =>
+      previous.revision === revision && urls[previous.index] === current && previous.status === 'loading'
+        ? { ...previous, status: result }
+        : previous
+    );
+  };
   const travel = mediaWidth > 0 ? mediaWidth : 320;
   const at = (offset: number) => urls[((offset % urls.length) + urls.length) % urls.length];
   // 后卡内容：next → 下一张 / 再下一张；previous → 上一张 / 当前前卡（见 pendingDirection 注释）
@@ -255,8 +266,8 @@ function TreeholeDetailMedia({
   const commit = React.useCallback((token: number) => {
     if (token !== flightToken.current) return;
     setPendingDirection(null);
-    setIndex(targetRef.current);
-  }, []);
+    startImage(targetRef.current);
+  }, [startImage]);
 
   /**
    * 统一换图路径（**手势拖动**与**读屏动作**共用）：前卡按方向飞出、后卡弹性上浮，落位后换图。
@@ -265,7 +276,6 @@ function TreeholeDetailMedia({
   const fly = React.useCallback(
     (direction: 'next' | 'previous') => {
       if (urls.length <= 1) return;
-      setFailed(false);
       const from = labelRef.current;
       const target =
         direction === 'next' ? (from + 1) % urls.length : (from - 1 + urls.length) % urls.length;
@@ -277,7 +287,7 @@ function TreeholeDetailMedia({
         dragY.value = 0;
         exit.value = 0;
         setPendingDirection(null);
-        setIndex(target);
+        startImage(target);
         return;
       }
       setPendingDirection(direction);
@@ -287,7 +297,7 @@ function TreeholeDetailMedia({
         if (finished) runOnJS(commit)(token);
       });
     },
-    [commit, dragX, dragY, exit, flyDirection, theme.reduceMotion, urls.length]
+    [commit, dragX, dragY, exit, flyDirection, startImage, theme.reduceMotion, urls.length]
   );
 
   // 换图提交后清零共享值：此刻新前卡在 exit=0 的样子与旧第二层在 exit=1 的样子一致，
@@ -300,20 +310,8 @@ function TreeholeDetailMedia({
     exit.value = 0;
   }, [dragX, dragY, exit, index]);
 
-  React.useEffect(() => {
-    setIndex(0);
-    setLabelIndex(0);
-    labelRef.current = 0;
-    targetRef.current = 0;
-    flightToken.current++;
-    setPendingDirection(null);
-    setPreviewOpen(false);
-    setFailed(false);
-    setLoadedUri(null);
-    dragX.value = 0;
-    dragY.value = 0;
-    exit.value = 0;
-  }, [key, dragX, dragY, exit]);
+  // 媒体身份变化会整组重挂，旧实例的图片/动画回执失去写入新组的资格。
+  React.useEffect(() => () => { flightToken.current++; }, []);
 
   const snapBack = React.useCallback(() => {
     if (theme.reduceMotion) {
@@ -429,11 +427,7 @@ function TreeholeDetailMedia({
             label={t('action.retry')}
             size="small"
             variant="secondary"
-            onPress={() => {
-              setFailed(false);
-              setLoadedUri(null);
-              setRetryRevision((value) => value + 1);
-            }}
+            onPress={() => startImage(index)}
           />
         </View>
       ) : null}
@@ -487,19 +481,19 @@ function TreeholeDetailMedia({
                   style={{ flex: 1 }}
                 >
                   <Image
-                    key={`${current}:${retryRevision}`}
+                    key={`${current}:${revision}`}
                     testID="treehole-media-detail-image"
                     source={{ uri: current }}
                     recyclingKey={current}
                     cachePolicy="memory-disk"
                     contentFit="contain"
                     accessible={false}
-                    onLoad={() => setLoadedUri(current)}
-                    onError={() => setFailed(true)}
+                    onLoad={() => finishImage('loaded')}
+                    onError={() => finishImage('failed')}
                     style={{ width: '100%', height: '100%' }}
                   />
                 </AppPressable>
-                {!failed && loadedUri !== current ? (
+                {status === 'loading' ? (
                   <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
                     <Skeleton testID="treehole-media-detail-loading" kind="media" style={{ height: '100%' }} />
                   </View>
