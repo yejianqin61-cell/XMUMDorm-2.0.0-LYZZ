@@ -30,6 +30,7 @@ import { Text } from '@/components/ui/Text';
 import { useToast } from '@/components/ui/Toast';
 import { useTheme } from '@/design-system/theme';
 import { useI18n } from '@/i18n';
+import { useSession } from '@/features/auth/session';
 import type { AppError } from '@/i18n/errors';
 import { getPostDetail } from '../../../../shared/api/posts';
 import { deleteConfession, getConfession } from '../../../../shared/api/confessions';
@@ -96,6 +97,7 @@ export function CampusDetailScreen({
 }: CampusDetailScreenProps): React.ReactElement {
   const { t, locale } = useI18n();
   const router = useRouter();
+  const { handleAuthFailure } = useSession();
   const theme = useTheme();
   const toast = useToast();
   const [post, setPost] = React.useState<Post | null>(null);
@@ -106,7 +108,7 @@ export function CampusDetailScreen({
   const [reportReason, setReportReason] = React.useState<string | null>(null);
   const [reportDetail, setReportDetail] = React.useState('');
   const [deleteOpen, setDeleteOpen] = React.useState(false);
-  const [deleteError, setDeleteError] = React.useState(false);
+  const [deleteError, setDeleteError] = React.useState<'login' | 'denied' | 'retry' | null>(null);
   const [deleting, setDeleting] = React.useState(false);
   const deleteLocked = React.useRef(false);
   const [deleteCommentId, setDeleteCommentId] = React.useState<string | null>(null);
@@ -145,7 +147,7 @@ export function CampusDetailScreen({
   React.useEffect(() => {
     setMenuOpen(false);
     setDeleteOpen(false);
-    setDeleteError(false);
+    setDeleteError(null);
     setDeleting(false);
     deleteLocked.current = false;
     setReportOpen(false);
@@ -197,7 +199,7 @@ export function CampusDetailScreen({
     const request = generation.current;
     const deletedId = Number(postId);
     setDeleteOpen(false);
-    setDeleteError(false);
+    setDeleteError(null);
     setDeleting(true);
     try {
       const acknowledgement = await deleteConfession(deletedId);
@@ -215,15 +217,30 @@ export function CampusDetailScreen({
         };
       });
       if (request === generation.current) backToFeed();
-    } catch {
-      if (request === generation.current) setDeleteError(true);
+    } catch (failure) {
+      if (request !== generation.current) return;
+      // shared API 的 Error.status 是 HTTP 状态；403 也用于非作者，不能统一按登录过期处理。
+      const status = (failure as { status?: unknown } | null)?.status;
+      if (status === 401) {
+        setDeleteError('login');
+        // 即使凭据存储清理失败，页内登录恢复入口仍可用。
+        await handleAuthFailure(failure).catch(() => undefined);
+      } else if (status === 403) {
+        setDeleteError('denied');
+      } else if (status === 404) {
+        // 失败回执只切换详情失效态；不写成功删除标记，也不乐观删除列表。
+        setPost(null);
+        setError({ kind: 'content' });
+      } else {
+        setDeleteError('retry');
+      }
     } finally {
       if (request === generation.current) {
         deleteLocked.current = false;
         setDeleting(false);
       }
     }
-  }, [backToFeed, postId]);
+  }, [backToFeed, handleAuthFailure, postId]);
 
   const headerOptions = React.useMemo(
     () => ({
@@ -356,7 +373,24 @@ export function CampusDetailScreen({
             {deleting ? <LoadingState testID="wall-delete-pending" variant="spinner" /> : null}
             {deleteError ? (
               <View style={{ paddingHorizontal: theme.space('space_4'), paddingTop: theme.space('space_2') }}>
-                <InlineNotice testID="wall-delete-notice" tone="danger" message={t('screen.campus.read.deleteFailed')} />
+                <InlineNotice
+                  testID="wall-delete-notice"
+                  tone="danger"
+                  message={t(
+                    deleteError === 'login' ? 'auth.expired'
+                      : deleteError === 'denied' ? 'screen.campus.write.denied'
+                        : 'screen.campus.read.deleteFailed'
+                  )}
+                  actionLabel={t(
+                    deleteError === 'login' ? 'action.login'
+                      : deleteError === 'denied' ? 'screen.campus.read.backToList'
+                        : 'action.retry'
+                  )}
+                  onAction={
+                    deleteError === 'login' ? () => router.push('/login')
+                      : deleteError === 'denied' ? backToFeed : () => setDeleteOpen(true)
+                  }
+                />
               </View>
             ) : null}
             <TreeholePostDetail
@@ -442,7 +476,7 @@ export function CampusDetailScreen({
                 kind === 'wall' && post?.is_mine
                   ? {
                       label: t('screen.campus.read.delete'),
-                      disabled: deleting,
+                      disabled: deleting || deleteError === 'login' || deleteError === 'denied',
                       onPress: () => {
                         setMenuOpen(false);
                         setDeleteOpen(true);
