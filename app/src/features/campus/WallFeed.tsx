@@ -40,7 +40,7 @@ export function WallFeed({ testID = 'wall-feed' }: { testID?: string }): React.R
   const key = React.useMemo(() => [...QK.confessionWindow('_guest'), 'wallReadSnapshot'], []);
   const initial = React.useRef(client.getQueryData<WallFeedSnapshot>(key));
   const snapshot = React.useRef<WallFeedSnapshot>(
-    initial.current ?? { rows: [], cursor: null, hasMore: true }
+    initial.current ?? { rows: [], cursor: null, hasMore: true, needsRefresh: true }
   );
   const [rows, setRows] = React.useState(snapshot.current.rows);
   const { pagination, dispatch, restoredScrollOffset, persistScrollOffset: persistTabScrollOffset, setCursor } =
@@ -148,8 +148,16 @@ export function WallFeed({ testID = 'wall-feed' }: { testID?: string }): React.R
       ) return;
       const next = client.getQueryData<WallFeedSnapshot>(key);
       if (next && next !== snapshot.current) {
-        snapshot.current = next;
-        setRows(next.rows);
+        // 缓存可能已 GC，但列表仍挂载。仅含删除回执的空快照不能清空现有其他行。
+        const deletedIds = [...new Set([...(snapshot.current.deletedIds ?? []), ...(next.deletedIds ?? [])])];
+        const merged = next.needsRefresh ? {
+          ...snapshot.current,
+          deletedIds,
+          rows: snapshot.current.rows.filter((row) => !deletedIds.includes(row.id)),
+        } : next;
+        snapshot.current = merged;
+        setRows(merged.rows);
+        if (merged !== next) client.setQueryData(key, merged);
       }
     });
   }, [client, key]);
