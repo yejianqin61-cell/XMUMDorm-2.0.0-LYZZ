@@ -695,6 +695,109 @@ describe('树洞四态（中英双语）', () => {
 
 describe('万能墙删除自己的帖子', () => {
   const removeConfession = deleteConfession as jest.Mock;
+  const windowRows = (ids: number[], hasMore = false, content = '墙帖') => ({
+    items: ids.map((id) => ({ id, content: `${content}${id}`, template_key: 'announcement', viewer_is_author: id === 40 })),
+    has_older: hasMore,
+    oldest_cursor: ids.at(-1) ?? null,
+  });
+  async function confirmDelete(view: Awaited<ReturnType<typeof renderApp>>) {
+    await waitFor(() => expect(view.getByTestId('campus-detail-more')).toBeTruthy());
+    await fireEvent.press(view.getByTestId('campus-detail-more'));
+    await fireEvent.press(view.getByTestId('campus-detail-menu-delete'));
+    await fireEvent.press(within(view.getByTestId('wall-delete-dialog')).getAllByText('删除').at(-1)!);
+  }
+
+  it('D-1 旧刷新在删除后返回不能复活记录，随后正常刷新仍更新其他记录', async () => {
+    let resolveRefresh: (value: unknown) => void = () => undefined;
+    wall.mockResolvedValueOnce(windowRows([40, 39])).mockReturnValueOnce(new Promise((resolve) => { resolveRefresh = resolve; }));
+    wallDetail.mockResolvedValue(windowRows([40]).items[0]);
+    removeConfession.mockResolvedValue({ status: 0 });
+    const view = await renderApp(<DeletionFlow remountFeed={false} />);
+    await waitFor(() => expect(view.getByTestId('campus-row-40')).toBeTruthy());
+    await act(async () => mockListProps.onRefresh());
+    await confirmDelete(view);
+    await waitFor(() => expect(view.queryByTestId('campus-row-40')).toBeNull());
+    await act(async () => resolveRefresh(windowRows([40, 39])));
+    expect(view.queryByTestId('campus-row-40')).toBeNull();
+    expect(view.getByTestId('campus-row-39')).toBeTruthy();
+    wall.mockResolvedValueOnce(windowRows([39, 38], false, '已更新'));
+    await act(async () => mockListProps.onRefresh());
+    await waitFor(() => expect(view.getByTestId('campus-row-38')).toBeTruthy());
+    expect(within(view.getByTestId('campus-row-39')).getByText('已更新39')).toBeTruthy();
+    expect(view.queryByTestId('campus-row-40')).toBeNull();
+    expect(wall).toHaveBeenCalledTimes(3);
+  });
+
+  it('D-1 分页与删除交错仍保留其他记录和后续分页能力', async () => {
+    let resolveAppend: (value: unknown) => void = () => undefined;
+    wall.mockResolvedValueOnce(windowRows([40, 39], true)).mockReturnValueOnce(new Promise((resolve) => { resolveAppend = resolve; }));
+    wallDetail.mockResolvedValue(windowRows([40]).items[0]);
+    removeConfession.mockResolvedValue({ status: 0 });
+    const view = await renderApp(<DeletionFlow remountFeed={false} />);
+    await waitFor(() => expect(view.getByTestId('campus-row-40')).toBeTruthy());
+    await act(async () => mockListProps.onEndReached());
+    expect(wall).toHaveBeenLastCalledWith(expect.objectContaining({ cursor: 39 }));
+    await confirmDelete(view);
+    await waitFor(() => expect(view.queryByTestId('campus-row-40')).toBeNull());
+    await act(async () => resolveAppend(windowRows([38, 37], true)));
+    for (const id of [39, 38, 37]) expect(view.getByTestId(`campus-row-${id}`)).toBeTruthy();
+    expect(view.queryByTestId('campus-row-40')).toBeNull();
+    wall.mockResolvedValueOnce(windowRows([36]));
+    await act(async () => mockListProps.onEndReached());
+    await waitFor(() => expect(view.getByTestId('campus-row-36')).toBeTruthy());
+    expect(wall).toHaveBeenLastCalledWith(expect.objectContaining({ cursor: 37 }));
+  });
+
+  it('D-1 删除失败不屏蔽记录，旧刷新后可重新删除', async () => {
+    let resolveRefresh: (value: unknown) => void = () => undefined;
+    wall.mockResolvedValueOnce(windowRows([40, 39])).mockReturnValueOnce(new Promise((resolve) => { resolveRefresh = resolve; }));
+    wallDetail.mockResolvedValue(windowRows([40]).items[0]);
+    removeConfession.mockRejectedValueOnce(new TypeError('Network request failed')).mockResolvedValue({ status: 0 });
+    const view = await renderApp(<DeletionFlow remountFeed={false} />);
+    await waitFor(() => expect(view.getByTestId('campus-row-40')).toBeTruthy());
+    await act(async () => mockListProps.onRefresh());
+    await confirmDelete(view);
+    await waitFor(() => expect(view.getByTestId('wall-delete-notice')).toBeTruthy());
+    await act(async () => resolveRefresh(windowRows([40, 39])));
+    expect(view.getByTestId('campus-row-40')).toBeTruthy();
+    expect(routerMock.back).not.toHaveBeenCalled();
+    await confirmDelete(view);
+    await waitFor(() => expect(view.queryByTestId('campus-row-40')).toBeNull());
+    expect(view.getByTestId('campus-row-39')).toBeTruthy();
+    expect(removeConfession).toHaveBeenCalledTimes(2);
+  });
+
+  it('D-1 首次列表仍在请求时删除成功，首次旧响应也不能复活记录', async () => {
+    let resolveWindow: (value: unknown) => void = () => undefined;
+    wall.mockReturnValueOnce(new Promise((resolve) => { resolveWindow = resolve; }));
+    wallDetail.mockResolvedValue(windowRows([40]).items[0]);
+    removeConfession.mockResolvedValue({ status: 0 });
+    const view = await renderApp(<DeletionFlow remountFeed={false} />);
+    await confirmDelete(view);
+    await waitFor(() => expect(routerMock.back).toHaveBeenCalledTimes(1));
+    await act(async () => resolveWindow(windowRows([40, 39])));
+    await waitFor(() => expect(view.getByTestId('campus-row-39')).toBeTruthy());
+    expect(view.queryByTestId('campus-row-40')).toBeNull();
+  });
+
+  it('D-1 先从详情删除再首次进入列表仍加载其他记录', async () => {
+    function DetailThenFeed(): React.ReactElement {
+      const [detail, setDetail] = React.useState(true);
+      React.useEffect(() => {
+        routerMock.back.mockImplementation(() => setDetail(false));
+        return () => { routerMock.back.mockReset(); };
+      }, []);
+      return detail ? <CampusDetailScreen postId="40" kind="wall" /> : <WallFeed />;
+    }
+    wall.mockResolvedValueOnce(windowRows([40, 39]));
+    wallDetail.mockResolvedValue(windowRows([40]).items[0]);
+    removeConfession.mockResolvedValue({ status: 0 });
+    const view = await renderApp(<DetailThenFeed />);
+    await confirmDelete(view);
+    await waitFor(() => expect(view.getByTestId('campus-row-39')).toBeTruthy());
+    expect(view.queryByTestId('campus-row-40')).toBeNull();
+    expect(wall).toHaveBeenCalledTimes(1);
+  });
 
   function DeletionFlow({ remountFeed }: { remountFeed: boolean }): React.ReactElement {
     const [detailOpen, setDetailOpen] = React.useState(true);
