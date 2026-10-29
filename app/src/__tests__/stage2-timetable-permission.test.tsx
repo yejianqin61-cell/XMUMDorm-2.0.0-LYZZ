@@ -35,8 +35,19 @@ it('explains class notifications and requests permission on first timetable entr
   const view = await renderApp(<SessionProvider><TimetableScreen renderGrid={() => null} /></SessionProvider>);
   expect(view.getByTestId('timetable-reminder-explanation')).toBeTruthy();
   await waitFor(() => expect(permissions.request).toHaveBeenCalledTimes(1));
-  expect(storage.setItem).toHaveBeenCalled();
+  expect(storage.setItem).not.toHaveBeenCalledWith('@dorm:timetable-notification-requested', '1');
   finish('granted');
+  await waitFor(() => expect(storage.setItem).toHaveBeenCalledWith('@dorm:timetable-notification-requested', '1'));
+});
+
+it('does not record a failed permission request as completed', async () => {
+  permissions.request.mockRejectedValueOnce(new Error('notification service unavailable'));
+  const view = await renderApp(<SessionProvider><TimetableScreen renderGrid={() => null} /></SessionProvider>);
+  await waitFor(() => expect(view.getByText('当前预览暂不支持通知')).toBeTruthy());
+  expect(storage.setItem).not.toHaveBeenCalledWith('@dorm:timetable-notification-requested', '1');
+  await view.unmount();
+  await renderApp(<SessionProvider><TimetableScreen renderGrid={() => null} /></SessionProvider>);
+  await waitFor(() => expect(permissions.request).toHaveBeenCalledTimes(2));
 });
 
 it('does not request again after an earlier request', async () => {
