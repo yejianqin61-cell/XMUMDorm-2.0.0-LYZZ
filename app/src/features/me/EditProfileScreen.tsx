@@ -23,8 +23,9 @@ import type { FormFieldDescriptor } from '@/components/ui/FormField';
 import { MediaPicker } from '@/components/ui/MediaPicker';
 import { Screen } from '@/components/ui/Screen';
 import { useI18n } from '@/i18n';
-import { getMe, updateAvatar, updateProfileInfo } from '../../../../shared/api/users';
+import { updateAvatar, updateProfileInfo } from '../../../../shared/api/users';
 import { normalizeProfile } from './profile';
+import { useMeProfile } from './useMeProfile';
 
 /** 昵称/学院/专业的上限由**页面**给（服务端不拦） */
 export const PROFILE_MAX_LENGTH = 40;
@@ -83,28 +84,45 @@ export function avatarUploadFile(value: unknown): AvatarUploadFile | null {
 }
 
 export function EditProfileScreen(): React.ReactElement {
+  /**
+   * 资料取数复用「我的」的**同一个** query（阶段2-03）：
+   * 缓存命中时本页零请求；未命中时由 hook 发一次，⛔ 不再有第二个取数点。
+   * 取数失败仍允许进空表单（原兜底），否则弱网时用户连资料都改不了。
+   */
+  const me = useMeProfile();
+  const initial = React.useMemo(() => {
+    if (me.raw !== null) return profileToFormValues(me.raw);
+    return me.failed ? profileToFormValues(null) : null;
+  }, [me.raw, me.failed]);
+
+  // 资料没回来就**不挂表单**：`useForm` 的初始值只在首次渲染取（`Form.tsx:292-293`），
+  // 早挂会把空值当初始值 —— 用户一提交就把昵称清空。
+  if (initial === null) {
+    return <Screen testID="screen-me-edit" titleKey="me.edit.title" bottomMode="none" />;
+  }
+
+  return (
+    <EditProfileForm
+      initial={initial}
+      initialAvatarUri={me.profile?.avatarUri ?? null}
+      invalidate={me.invalidate}
+    />
+  );
+}
+
+/** 表单本体：**只在资料就绪后挂载一次**，初始值因此是真实的（阶段2-03） */
+function EditProfileForm({
+  initial,
+  initialAvatarUri,
+  invalidate,
+}: {
+  initial: Record<string, unknown>;
+  initialAvatarUri: string | null;
+  invalidate: () => Promise<void>;
+}): React.ReactElement {
   const { t } = useI18n();
   const router = useRouter();
-  const [initial, setInitial] = React.useState<Record<string, unknown> | null>(null);
-  const [avatarUri, setAvatarUri] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      try {
-        const payload = await getMe();
-        if (cancelled) return;
-        setInitial(profileToFormValues(payload));
-        setAvatarUri(normalizeProfile(payload).avatarUri);
-      } catch {
-        // 拉不到资料也要能进来（空表单），⛔ 不白屏
-        if (!cancelled) setInitial(profileToFormValues(null));
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const [avatarUri, setAvatarUri] = React.useState<string | null>(initialAvatarUri);
 
   /** 头像走 `kind:'custom'`（DSL 没有媒体 kind；`render` 就是为这种字段准备的） */
   const fields = React.useMemo<readonly FormFieldDescriptor[]>(
@@ -145,14 +163,19 @@ export function EditProfileScreen(): React.ReactElement {
     [avatarUri, t]
   );
 
+  const invalidateRef = React.useRef(invalidate);
+  invalidateRef.current = invalidate;
+
   const form = useForm({
     formId: 'me:edit',
     fields,
-    initialValues: initial ?? undefined,
+    initialValues: initial,
     onSubmit: async (values) => {
       await updateProfileInfo(formValuesToProfileBody(values));
       const avatar = avatarUploadFile(values.avatar);
       if (avatar) await updateAvatar(avatar);
+      // 保存成功 → 显式失效资料 query（返回「我的」立即是新值，⛔ 不靠"下一页碰巧重拉"）
+      await invalidateRef.current();
     },
   });
 
@@ -168,11 +191,6 @@ export function EditProfileScreen(): React.ReactElement {
     }),
     [t]
   );
-
-  // 资料还没拉回来就先不渲染表单：否则会把空值当初始值，用户一提交就把昵称清空
-  if (initial === null) {
-    return <Screen testID="screen-me-edit" titleKey="me.edit.title" bottomMode="none" />;
-  }
 
   return (
     <Form
