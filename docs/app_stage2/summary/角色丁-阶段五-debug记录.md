@@ -16,3 +16,11 @@
 ## 判断
 
 当前没有发现需要在丁侧继续修补的自动化回归缺陷。剩余问题是验收证据和甲侧集成缺口，不应通过改测试或模拟器截图掩盖。
+
+## 后续整体 Debug
+
+- 角色丁相关服务端回归再次通过：4 suites / 27 tests。
+- App 二手、私聊、mailbox、未读、分段控件和 Marketplace UI 套件通过：7 suites / 74 tests；静默复跑确认无新增运行时输出。
+- 完整 `npm run verify:serial` 再次通过。
+- 修复了 `SearchField`、`Screen`、`TopBar` 和 `SegmentedControl` 中会触发 Reanimated shared-value 警告的 token 访问写法；未改变颜色令牌或视觉值。
+- 仍存在其他历史组件的测试 warning（例如部分 Avatar、Progress、TopTab 代码），但不属于本次 Marketplace/私聊改动引入，且不导致测试失败。

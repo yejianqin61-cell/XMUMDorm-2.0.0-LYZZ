@@ -67,7 +67,7 @@ export function SegmentedControl({
           padding: theme.space('space_1'),
           gap: theme.space('space_1'),
           borderRadius: theme.radius('radius_medium'),
-          backgroundColor: theme.color['bg-sunken'].value,
+          backgroundColor: theme.color['bg-sunken']['value'],
         },
         style,
       ]}
