@@ -8,10 +8,13 @@
  */
 
 import * as React from 'react';
+import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 
+import { InlineNotice } from '@/components/ui/InlineNotice';
 import { ListItem } from '@/components/ui/ListItem';
 import { ListScreen, useListPagination } from '@/components/ui/ListScreen';
+import { useTheme } from '@/design-system/theme';
 import { useI18n } from '@/i18n';
 import { getQueryClient } from '@/shared/queryClient';
 import { QK } from '../../../../shared/query/queryKeys';
@@ -35,6 +38,7 @@ export type WallFeedSnapshot = {
 
 export function WallFeed({ testID = 'wall-feed' }: { testID?: string }): React.ReactElement {
   const { t } = useI18n();
+  const theme = useTheme();
   const router = useRouter();
   const client = getQueryClient();
   const key = React.useMemo(() => [...QK.confessionWindow('_guest'), 'wallReadSnapshot'], []);
@@ -186,6 +190,16 @@ export function WallFeed({ testID = 'wall-feed' }: { testID?: string }): React.R
       onEndReached={append}
       onRetryRefresh={refresh}
       onRetryAppend={append}
+      listHeader={pagination.errorScope === 'refresh' && rows.length > 0 ? (
+        <View style={{ paddingHorizontal: theme.space('space_4'), paddingVertical: theme.space('space_2') }}>
+          <InlineNotice
+            tone="warning"
+            message={t('screen.campus.read.refreshFailed')}
+            actionLabel={t('action.retry')}
+            onAction={refresh}
+          />
+        </View>
+      ) : undefined}
       labels={{
         retryLabel: t('action.retry'),
         endLabel: t('screen.campus.read.listEnd'),
