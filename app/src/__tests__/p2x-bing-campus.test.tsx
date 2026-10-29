@@ -1003,6 +1003,28 @@ describe('万能墙删除自己的帖子', () => {
       expect(view.queryByTestId('campus-detail-menu-delete')).toBeNull();
     });
 
+    it('删除请求中重新聚焦仍防重复，迟到请求结束后可以再操作', async () => {
+      let rejectOld: (error: unknown) => void = () => undefined;
+      wallDetail.mockResolvedValue(mine);
+      removeConfession.mockReturnValueOnce(new Promise((_, reject) => { rejectOld = reject; })).mockResolvedValue({ status: 0 });
+      const view = await renderApp(<RecoveryFlow />);
+      await confirmDelete(view);
+      await fireEvent.press(view.getByText('离开详情'));
+      await fireEvent.press(view.getByText('回到详情'));
+      await waitFor(() => expect(wallDetail).toHaveBeenCalledTimes(2));
+      await waitFor(() => expect(view.getByText('恢复后的内容')).toBeTruthy());
+      await fireEvent.press(view.getByTestId('campus-detail-more'));
+      expect(view.getByTestId('campus-detail-menu-delete')).toBeDisabled();
+      await fireEvent.press(view.getByTestId('campus-detail-menu-delete'));
+      expect(removeConfession).toHaveBeenCalledTimes(1);
+      await fireEvent.press(view.getByTestId('campus-detail-menu-cancel'));
+      await act(async () => rejectOld(new TypeError('Network request failed')));
+      expect(view.queryByTestId('wall-delete-pending')).toBeNull();
+      await confirmDelete(view);
+      await waitFor(() => expect(removeConfession).toHaveBeenCalledTimes(2));
+      expect(routerMock.back).toHaveBeenCalledTimes(1);
+    });
+
     it.each([401, 403, 404, 'network'] as const)('重新确认详情失败仍有正确恢复动作（%s）', async (failure) => {
       wallDetail.mockResolvedValueOnce(mine).mockRejectedValueOnce(
         failure === 'network' ? new TypeError('Network request failed')
