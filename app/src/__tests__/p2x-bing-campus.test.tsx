@@ -1565,6 +1565,91 @@ describe('列表状态闭环 L-2 返回与分页', () => {
   });
 });
 
+describe('列表状态闭环 L-3 身份与失效', () => {
+  it.each(['treehole', 'wall'] as const)('同为登录态换号时清除已挂载旧行，并隔离迟到分页（%s）', async (kind) => {
+    let finishOld!: (value: unknown) => void;
+    let finishNew!: (value: unknown) => void;
+    const api = kind === 'treehole' ? list : wall;
+    const response = (id: number, content: string) => kind === 'treehole'
+      ? { list: [{ id, content, user_liked: true }], hasMore: true }
+      : { items: [{ id, content, viewer_is_author: true }], has_older: true, oldest_cursor: id };
+    api.mockResolvedValueOnce(response(40, 'A账号旧行'))
+      .mockReturnValueOnce(new Promise((resolve) => { finishOld = resolve; }))
+      .mockReturnValueOnce(new Promise((resolve) => { finishNew = resolve; }));
+    function Harness(): React.ReactElement {
+      const [, update] = React.useState(0);
+      return <><Button label="切换到B" onPress={() => { mockSession.identifier = 'account-b'; update((v) => v + 1); }} />
+        {kind === 'treehole' ? <TreeholeFeed /> : <WallFeed />}</>;
+    }
+    const view = await renderApp(<Harness />);
+    await waitFor(() => expect(view.getByText('A账号旧行')).toBeTruthy());
+    await act(async () => { void mockListProps.onEndReached(); });
+    await fireEvent.press(view.getByText('切换到B'));
+    expect(view.queryByText('A账号旧行')).toBeNull();
+    await waitFor(() => expect(api).toHaveBeenCalledTimes(3));
+    await act(async () => finishOld(response(39, 'A账号迟到分页')));
+    expect(view.queryByText('A账号迟到分页')).toBeNull();
+    await act(async () => finishNew(response(41, 'B账号新行')));
+    expect(view.getByText('B账号新行')).toBeTruthy();
+    expect(view.queryByText('A账号旧行')).toBeNull();
+    expect(api.mock.calls[2][0]).toEqual(kind === 'treehole'
+      ? { page: 1, pageSize: 10 } : { cursor: null, direction: 'older', limit: 5 });
+  });
+
+  it.each(['treehole', 'wall'] as const)('卸载后换号不能消费上一账号缓存（%s）', async (kind) => {
+    const api = kind === 'treehole' ? list : wall;
+    api.mockResolvedValueOnce(kind === 'treehole'
+      ? { list: [{ id: 40, content: '旧身份缓存', user_liked: true }], hasMore: false }
+      : { items: [{ id: 40, content: '旧身份缓存', viewer_is_author: true }], has_older: false, oldest_cursor: 40 })
+      .mockResolvedValueOnce(kind === 'treehole'
+        ? { list: [], hasMore: false } : { items: [], has_older: false, oldest_cursor: null });
+    function Harness(): React.ReactElement {
+      const [open, setOpen] = React.useState(true);
+      return <><Button label="离开列表" onPress={() => setOpen(false)} />
+        <Button label="B返回列表" onPress={() => { mockSession.identifier = 'account-b'; setOpen(true); }} />
+        {open ? (kind === 'treehole' ? <TreeholeFeed /> : <WallFeed />) : null}</>;
+    }
+    const view = await renderApp(<Harness />);
+    await waitFor(() => expect(view.getByText('旧身份缓存')).toBeTruthy());
+    await fireEvent.press(view.getByText('离开列表'));
+    await fireEvent.press(view.getByText('B返回列表'));
+    await waitFor(() => expect(api).toHaveBeenCalledTimes(2));
+    expect(view.queryByText('旧身份缓存')).toBeNull();
+  });
+
+  it.each(['treehole', 'wall'] as const)('退出清缓存后已挂载列表不展示旧私有行（%s）', async (kind) => {
+    const api = kind === 'treehole' ? list : wall;
+    api.mockResolvedValueOnce(kind === 'treehole'
+      ? { list: [{ id: 40, content: '退出前私有行', user_liked: true }], hasMore: false }
+      : { items: [{ id: 40, content: '退出前私有行', viewer_is_author: true }], has_older: false, oldest_cursor: 40 })
+      .mockResolvedValue(kind === 'treehole'
+        ? { list: [], hasMore: false } : { items: [], has_older: false, oldest_cursor: null });
+    function Harness(): React.ReactElement {
+      const [, update] = React.useState(0);
+      return <><Button label="模拟退出完成" onPress={() => {
+        getQueryClient().clear();
+        mockSession.status = 'signedOut'; mockSession.identifier = null; mockSession.isSignedIn = false;
+        update((v) => v + 1);
+      }} />{kind === 'treehole' ? <TreeholeFeed /> : <WallFeed />}</>;
+    }
+    const view = await renderApp(<Harness />);
+    await waitFor(() => expect(view.getByText('退出前私有行')).toBeTruthy());
+    await fireEvent.press(view.getByText('模拟退出完成'));
+    await waitFor(() => expect(view.queryByText('退出前私有行')).toBeNull());
+    expect(mockAuthFailure).not.toHaveBeenCalled();
+  });
+
+  it('墙发布移除快照后已挂载列表也重新读取，不只等待下次挂载', async () => {
+    wall.mockResolvedValueOnce({ items: [{ id: 40, content: '发布前窗口' }], has_older: false, oldest_cursor: 40 })
+      .mockResolvedValueOnce({ items: [{ id: 41, content: '发布后窗口' }], has_older: false, oldest_cursor: 41 });
+    const view = await renderApp(<WallFeed />);
+    await waitFor(() => expect(view.getByText('发布前窗口')).toBeTruthy());
+    await act(async () => getQueryClient().removeQueries({ queryKey: QK.confessionWindow('_guest') }));
+    await waitFor(() => expect(view.getByText('发布后窗口')).toBeTruthy());
+    expect(view.queryByText('发布前窗口')).toBeNull();
+  });
+});
+
 describe('万能墙清单模板图标化', () => {
   it('checklist 每行渲染方框图标，不再出现文字符号', async () => {
     const view = await renderApp(<WallTemplateContent templateKey="checklist" content={'买水\n买咖啡'} />);
