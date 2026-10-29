@@ -1412,6 +1412,64 @@ describe('万能墙删除自己的评论', () => {
   });
 });
 
+describe('列表状态闭环 L-1 墙失败反馈', () => {
+  it.each(['zh', 'en'] as const)('有旧行刷新失败保留内容和位置，显示真实重试入口（%s）', async (locale) => {
+    wall.mockResolvedValueOnce({ items: [{ id: 40, content: '旧墙正文' }], has_older: true, oldest_cursor: 40 })
+      .mockRejectedValueOnce(new TypeError('internal-endpoint'))
+      .mockResolvedValueOnce({ items: [{ id: 41, content: '更新正文' }], has_older: false, oldest_cursor: 41 });
+    const view = await renderApp(<WallFeed />, { locale });
+    await waitFor(() => expect(view.getByText('旧墙正文')).toBeTruthy());
+    await act(async () => mockListProps.onScrollOffset?.(260));
+    await act(async () => mockListProps.onRefresh());
+    expect(view.getByText('旧墙正文')).toBeTruthy();
+    expect(secondaryTabStore.get('square', 'wall').scrollOffset).toBe(260);
+    expect(view.getByText(locale === 'zh' ? '刷新失败，重试' : 'Refresh failed. Retry')).toBeTruthy();
+    expect(view.queryByText('internal-endpoint')).toBeNull();
+    await fireEvent.press(view.getByText(locale === 'zh' ? '重试' : 'Retry'));
+    await waitFor(() => expect(view.getByText('更新正文')).toBeTruthy());
+    expect(view.queryByText('旧墙正文')).toBeNull();
+    expect(wall.mock.calls.map((call) => call[0].cursor)).toEqual([null, null, null]);
+    expect(secondaryTabStore.get('square', 'wall').scrollOffset).toBe(0);
+  });
+
+  it('追加失败的可见重试仍请求同一游标，服务端末页停止追加', async () => {
+    wall.mockResolvedValueOnce({ items: [{ id: 40, content: '第一篇' }], has_older: true, oldest_cursor: 40 })
+      .mockRejectedValueOnce(new TypeError('offline'))
+      .mockResolvedValueOnce({ items: [{ id: 40, content: '第一篇' }, { id: 39, content: '第二篇' }], has_older: false, oldest_cursor: 39 });
+    const view = await renderApp(<WallFeed />);
+    await waitFor(() => expect(view.getByText('第一篇')).toBeTruthy());
+    await act(async () => mockListProps.onEndReached());
+    expect(mockListProps.pagination.errorScope).toBe('append');
+    await fireEvent.press(view.getByText('重试'));
+    await waitFor(() => expect(view.getByText('第二篇')).toBeTruthy());
+    expect(view.getAllByText('第一篇')).toHaveLength(1);
+    expect(wall.mock.calls.map((call) => call[0].cursor)).toEqual([null, 40, 40]);
+    await act(async () => mockListProps.onEndReached());
+    expect(wall).toHaveBeenCalledTimes(3);
+  });
+
+  it('无旧行首次失败使用公共错误态和重试，成功空结果使用业务空态', async () => {
+    wall.mockRejectedValueOnce(new TypeError('offline'))
+      .mockResolvedValueOnce({ items: [], has_older: false, oldest_cursor: null });
+    const view = await renderApp(<WallFeed />);
+    await waitFor(() => expect(view.getByTestId('wall-feed-error')).toBeTruthy());
+    await act(async () => mockListProps.onRetryRefresh?.());
+    await waitFor(() => expect(view.getByTestId('wall-feed-empty')).toBeTruthy());
+    expect(view.getByText('还没有帖子')).toBeTruthy();
+  });
+
+  it('首次加载使用公共加载态，重复刷新不发送第二个请求', async () => {
+    let finish!: (value: unknown) => void;
+    wall.mockReturnValueOnce(new Promise((resolve) => { finish = resolve; }));
+    const view = await renderApp(<WallFeed />);
+    await waitFor(() => expect(view.getByTestId('wall-feed-loading')).toBeTruthy());
+    await act(async () => mockListProps.onRefresh());
+    expect(wall).toHaveBeenCalledTimes(1);
+    await act(async () => finish({ items: [], has_older: false, oldest_cursor: null }));
+    expect(view.getByTestId('wall-feed-empty')).toBeTruthy();
+  });
+});
+
 describe('万能墙清单模板图标化', () => {
   it('checklist 每行渲染方框图标，不再出现文字符号', async () => {
     const view = await renderApp(<WallTemplateContent templateKey="checklist" content={'买水\n买咖啡'} />);
