@@ -26,7 +26,7 @@ import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { LoadingState } from '@/components/ui/LoadingState';
-import { MediaGrid } from '@/components/ui/MediaGrid';
+import { mediaGridColumns } from '@/components/ui/MediaGrid';
 import { Screen } from '@/components/ui/Screen';
 import { useMailboxBadge } from '@/features/mailbox/useUnread';
 import { SectionHeader } from '@/components/ui/SectionHeader';
@@ -62,6 +62,24 @@ type ExtraComments = {
 };
 
 const NO_EXTRA: ExtraComments = { list: [], page: 0, hasMore: false };
+
+function DishImages({ images, name }: { images: readonly string[]; name: string }): React.ReactElement {
+  const theme = useTheme();
+  if (images.length === 0) return <CanteenMedia testID="dish-images" uri={null} name={name}
+    style={{ width: '100%', height: undefined, aspectRatio: 16 / 9 }} />;
+  const columns = mediaGridColumns(images.length);
+  const rows = Math.ceil(images.length / columns);
+  return <View testID="dish-images" style={{ gap: theme.space('space_1') }}>
+    {Array.from({ length: rows }, (_, row) => <View key={row} style={{ flexDirection: 'row', gap: theme.space('space_1') }}>
+      {Array.from({ length: columns }, (_, column) => {
+        const index = row * columns + column;
+        return index < images.length ? <CanteenMedia key={index} uri={images[index]} name={name}
+          testID={`dish-images-${index}`} style={{ flex: 1, width: undefined, height: undefined, aspectRatio: 1 }} />
+          : <View key={index} style={{ flex: 1 }} />;
+      })}
+    </View>)}
+  </View>;
+}
 
 export function DishDetail(): React.ReactElement {
   const badge = useMailboxBadge();
@@ -163,11 +181,7 @@ export function DishDetail(): React.ReactElement {
           />
         ) : (
           <>
-            {detail.data.product.images.length === 0 ? <CanteenMedia testID="dish-images" uri={null} name={detail.data.product.name} style={{ width: '100%', height: undefined, aspectRatio: 16 / 9 }} /> : <MediaGrid
-              testID="dish-images"
-              uris={detail.data.product.images}
-              alt={detail.data.product.images.map(() => detail.data?.product.name ?? '')}
-            />}
+            <DishImages images={detail.data.product.images} name={detail.data.product.name} />
 
             <View style={{ gap: theme.space('space_2') }}>
               <Text role="title" emphasis="strong" colorToken="text-primary">

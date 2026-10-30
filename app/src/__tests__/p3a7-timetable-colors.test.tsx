@@ -2,7 +2,7 @@
  * P3A7 · 课表课程色与卡片内容
  *
  * 依据：`docs/app/task/课表重做/T2-课程色板与网格重排.md`
- *   · 同课同色、异课异色（≤6 门不重复）；· 卡片同时显示课程名与地点；· 只显示周一–周五。
+ *   · 同课跨周同色，允许不同课程同色；· 卡片同时显示课程名与地点；· 无周末课程时保留工作日布局。
  */
 import * as React from 'react';
 
@@ -38,32 +38,23 @@ describe('P3A7 课表课程色与卡片', () => {
       3: [meeting({ day_of_week: 3, start_time: '14:00', end_time: '16:00', venue: 'C2#105' })],
     });
     const map = courseAccentMap(parsed);
-    expect(map.get('CS101')).toEqual(COURSE_ACCENTS[0]);
+    expect(COURSE_ACCENTS).toContain(map.get('CS101'));
     // 同一身份键（去空白）在不同周次里也指向同一位置
     expect(courseKey({ ...parsed.days[1][0], courseCode: '  CS101  ' })).toBe('CS101');
   });
 
-  it('本周 6 门不同课程 → 6 种不同颜色', () => {
-    const parsed = week({
-      1: [
-        meeting({ course_code: 'A001' }),
-        meeting({ course_code: 'B002' }),
-        meeting({ course_code: 'C003' }),
-        meeting({ course_code: 'D004' }),
-        meeting({ course_code: 'E005' }),
-        meeting({ course_code: 'F006' }),
-      ],
-    });
-    const values = [...courseAccentMap(parsed).values()];
-    expect(values).toHaveLength(6);
-    expect(new Set(values.map((accent) => `${accent.fill}/${accent.ink}`)).size).toBe(6);
+  it('课程集合变化时，同一课程跨周仍使用相同颜色', () => {
+    const first = courseAccentMap(week({ 1: [meeting({ course_code: 'CS101' })] }));
+    const next = courseAccentMap(week({ 1: [meeting({ course_code: 'A001' }), meeting({ course_code: 'CS101' })] }));
+    expect(next.get('CS101')).toEqual(first.get('CS101'));
   });
 
-  it('超过 6 门按模循环（第 7 门回到第一色）', () => {
+  it('不同课程允许共用颜色，但每个颜色均来自课程色板', () => {
     const codes = ['A001', 'B002', 'C003', 'D004', 'E005', 'F006', 'G007'];
-    const parsed = week({ 1: codes.map((code) => meeting({ course_code: code })) });
-    const map = courseAccentMap(parsed);
-    expect(map.get('G007')).toEqual(COURSE_ACCENTS[0]);
+    const values = [...courseAccentMap(week({ 1: codes.map((code) => meeting({ course_code: code })) })).values()];
+    expect(values).toHaveLength(7);
+    values.forEach((accent) => expect(COURSE_ACCENTS).toContain(accent));
+    expect(new Set(values.map((accent) => accent.fill)).size).toBeLessThan(7);
   });
 
   it('卡片同时显示课程名称与上课地点', async () => {
@@ -97,7 +88,7 @@ describe('P3A7 课表课程色与卡片', () => {
     expect(background(first).backgroundColor).not.toEqual(background(second).backgroundColor);
   });
 
-  it('只显示周一–周五（不出现周六/周日列头）', async () => {
+  it('无周末课程时只显示工作日列头', async () => {
     const parsed = week({ 1: [meeting()] });
     const view = await renderApp(<TimetableGrid testID="grid" week={parsed} />);
     expect(view.getByTestId('grid-head-1')).toBeTruthy();

@@ -119,20 +119,25 @@ export function MoodleWorkspaceScreen({ labels, snapshot, entry, onLogin, onSync
       <Text testID="moodle-phase" role="caption" colorToken="text-secondary">{labels.phase(snapshot.phase)}</Text>
       {!online ? <InlineNotice testID="moodle-offline" tone="warning" message={labels.offline} /> : null}
       {snapshot.failure ? <InlineNotice testID="moodle-failure" tone="danger"
-        message={maintenance ? labels.maintenance : labels.failure(snapshot.failure)}
-        actionLabel={labels.sync} onAction={onSync} /> : null}
+        message={maintenance && snapshot.failure !== 'expired' && snapshot.failure !== 'wrong-origin'
+          ? labels.maintenance : labels.failure(snapshot.failure)}
+        actionLabel={snapshot.failure === 'expired' || snapshot.failure === 'wrong-origin' ? labels.login : labels.sync}
+        onAction={snapshot.failure === 'expired' || snapshot.failure === 'wrong-origin' ? onLogin : onSync} /> : null}
     </View>
     <View testID="moodle-section-courses" style={{ gap: theme.space('space_3') }}>
       <SectionHeader title={snapshot.phase === 'choosing' ? labels.chooseCourses : labels.courses}
         style={{ paddingHorizontal: 0 }} />
-      {snapshot.phase === 'choosing' ? <Card variant="plain" padding="space_3">
+      {snapshot.phase === 'choosing' && snapshot.candidates.length === 0 ? <EmptyState kind="noResult"
+        testID="moodle-empty-candidates" title={labels.empty} actionLabel={labels.sync} onAction={onSync} /> : null}
+      {snapshot.phase === 'choosing' && snapshot.candidates.length > 0 ? <Card variant="plain" padding="space_3">
         {snapshot.candidates.map((course) => <Checkbox key={course.id} testID={`moodle-select-${course.id}`}
           label={course.name} state={draft.includes(course.id) ? 'checked' : 'unchecked'}
           onPress={() => setChoice({ generation: snapshot.data.generation, ids: draft.includes(course.id)
             ? draft.filter((id) => id !== course.id) : [...draft, course.id] })} />)}
         <Button testID="moodle-confirm-selection" label={labels.confirmSelection} onPress={() => onChoose(draft)} />
       </Card> : null}
-      {snapshot.phase !== 'choosing' && !hasCourses ? <EmptyState kind="firstRun"
+      {busy && !hasCourses ? <LoadingState testID="moodle-courses-loading" /> : null}
+      {!busy && snapshot.phase !== 'choosing' && !hasCourses ? <EmptyState kind="firstRun"
         testID="moodle-empty-courses" title={labels.empty} actionLabel={labels.sync} onAction={onSync} /> : null}
       {snapshot.phase !== 'choosing' && hasCourses ? <>
         <View style={{ gap: theme.space('space_1') }}>

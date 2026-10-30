@@ -8,6 +8,20 @@ const plan = (id: string, at = '2026-09-28T00:30:00Z'): ReminderTime => ({ id, f
 const tagged = (identifier: string, owner: string, domain: string): NativeReminderRequest => ({
   identifier, content: { data: { dormReminder: 'phase3-v1', owner, domain } },
 });
+
+it('replaces repeated and modified class schedules, then removes deleted courses without affecting Moodle', async () => {
+  const h = setup([tagged('moodle', 'user:7', 'moodle')]);
+  const classPlan = [plan('class:2026-09:CS101')];
+  await h.scheduler.replaceDomain('user:7', 'class', classPlan, labels);
+  await h.scheduler.replaceDomain('user:7', 'class', classPlan, labels);
+  expect(h.requests().filter((item) => item.content.data?.domain === 'class')).toHaveLength(1);
+  await h.scheduler.replaceDomain('user:7', 'class', [plan('class:2027-02:CS101', '2027-02-01T02:30:00Z')], labels);
+  expect(jest.mocked(h.port.scheduleNotificationAsync).mock.calls.at(-1)?.[0].trigger)
+    .toEqual(new Date('2027-02-01T02:30:00Z'));
+  expect(h.requests().filter((item) => item.content.data?.domain === 'class')).toHaveLength(1);
+  await h.scheduler.replaceDomain('user:7', 'class', [], labels);
+  expect(h.requests().map((item) => item.identifier)).toEqual(['moodle']);
+});
 function setup(initial: NativeReminderRequest[] = [], capacity = 50) {
   let owner: string | null = 'user:7', epoch = 1;
   let requests = [...initial];
