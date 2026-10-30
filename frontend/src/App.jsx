@@ -15,7 +15,6 @@ import ResetPassword from './pages/ResetPassword';
 import ShopRouter from './pages/Shop/Shop';
 import AdminLayout from './components/Admin/AdminLayout';
 import AdminDashboard from './pages/Admin/AdminDashboard';
-import MerchantApplications from './pages/Admin/MerchantApplications';
 import UserList from './pages/Admin/UserList';
 import UserDetail from './pages/Admin/UserDetail';
 import ReportList from './pages/Admin/ReportList';
@@ -107,7 +106,6 @@ function MainApp() {
                   )}
                 >
                   <Route index element={<AdminDashboard />} />
-                  <Route path="shop-applications" element={<MerchantApplications />} />
 
                   <Route path="users" element={<UserList />} />
                   <Route path="users/:id" element={<UserDetail />} />

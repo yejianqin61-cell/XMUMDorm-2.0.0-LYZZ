@@ -14,7 +14,6 @@ import {
 
 const SECTIONS = [
   { key: 'shop', to: '/myzone/admin/shop', icon: ClipboardList, label: 'Shop', zh: '商城管理' },
-  { key: 'shop-applications', to: '/myzone/admin/shop-applications', icon: FileText, label: 'Merchant applications', zh: '商家申请' },
   { key: 'dashboard', to: '/myzone/admin', icon: LayoutDashboard, label: 'Dashboard', zh: '数据面板', exact: true },
   { key: 'users', to: '/myzone/admin/users', icon: Users, label: 'Users', zh: '用户管理' },
   { key: 'reports', to: '/myzone/admin/reports', icon: Flag, label: 'Reports', zh: '举报中心' },

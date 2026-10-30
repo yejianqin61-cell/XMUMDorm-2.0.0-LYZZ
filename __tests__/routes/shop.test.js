@@ -236,8 +236,8 @@ describe('merchant payment settings independent from student catalog',()=>{
    });
  }
  test('requires authentication',async()=>{expect((await request(app).get('/api/shop/admin/settings')).status).toBe(401);});
- test.each([['student',false],['merchant',false]])('%s cannot read another store settings',async(role,member)=>{access(role,member);expect((await authed('get','/admin/settings',role)).status).toBe(403);expect(query.mock.calls.some(([sql])=>sql.includes('FROM shop_settings'))).toBe(false);});
- test.each(['student','merchant','admin'])('%s who belongs to the store reads stored methods even without any open ordering slots',async role=>{access(role);const r=await authed('get','/admin/settings',role);expect(r.status).toBe(200);expect(r.body.data).toEqual({id:1,payment_methods:methods,has_payment_methods:true});expect(query.mock.calls.some(([sql])=>sql.includes('shop_slots'))).toBe(false);});
+ test.each([['student',true],['merchant',false]])('%s cannot read another store settings',async(role,member)=>{access(role,member);expect((await authed('get','/admin/settings',role)).status).toBe(403);expect(query.mock.calls.some(([sql])=>sql.includes('FROM shop_settings'))).toBe(false);});
+ test.each(['merchant','admin'])('%s reads stored methods even without any open ordering slots',async role=>{access(role);const r=await authed('get','/admin/settings',role);expect(r.status).toBe(200);expect(r.body.data).toEqual({id:1,payment_methods:methods,has_payment_methods:true});expect(query.mock.calls.some(([sql])=>sql.includes('shop_slots'))).toBe(false);});
  test('missing configuration is a valid empty result',async()=>{access('merchant',true,null);const r=await authed('get','/admin/settings','merchant');expect(r.status).toBe(200);expect(r.body.data.payment_methods).toEqual([]);expect(r.body.data.has_payment_methods).toBe(false);});
  test('JSON-driver decoded array is supported',async()=>{access('merchant',true,methods);expect((await authed('get','/admin/settings','merchant')).body.data.payment_methods).toEqual(methods);});
 });
