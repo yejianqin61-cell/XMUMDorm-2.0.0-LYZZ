@@ -105,6 +105,8 @@ export function TreeholePostRow({
             accessibilityRole="button"
             accessibilityLabel={openLabel}
             contentAlign="stretch"
+            // 图组距正文 12dp：内容列已给 space_1(4)，这里补 space_2(8)
+            style={{ marginTop: theme.space('space_2') }}
           >
             <TreeholeMedia postId={post.id} urls={post.mediaUrls} mode="feed" />
           </Pressable>

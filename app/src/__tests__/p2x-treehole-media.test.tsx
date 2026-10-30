@@ -12,6 +12,7 @@ import { act, fireEvent, waitFor } from '@testing-library/react-native';
 import {
   resolveTreeholeSwipe,
   treeholeDeckLayers,
+  treeholeFeedAspect,
   treeholeMediaKey,
   TreeholeMedia,
 } from '@/features/campus/TreeholeMedia';
@@ -20,21 +21,20 @@ import { renderApp } from './helpers/renderApp';
 const urls = ['https://example.com/one.jpg', 'https://example.com/two.jpg', 'https://example.com/three.jpg'];
 
 describe('P2X TreeholeMedia', () => {
-  it('列表三图只显示前两张，第三张省略，不暴露切换控件', async () => {
+  it('列表三图按 3 列方格全部展示（不再用数量徽标代替第三张）', async () => {
     const view = await renderApp(<TreeholeMedia postId={7} urls={urls} mode="feed" />);
-    // 2026-10-18 第七轮：不再堆叠，横向并排两张；第三张起省略
+    // 2026-10-30：三图及以上 = 3 列方格，图本身圆角、无衬底
     expect(view.getByTestId('treehole-media-feed-image')).toBeTruthy();
     expect(view.getByTestId('treehole-media-feed-image-1')).toBeTruthy();
-    expect(view.queryByTestId('treehole-media-feed-image-2')).toBeNull();
-    expect(view.queryByTestId('treehole-media-feed-back')).toBeNull();
-    // 省略的图片用数量徽标说明总数
-    expect(view.getByTestId('treehole-media-count')).toHaveTextContent('3 张图片');
-    expect(view.queryByTestId('treehole-media-next')).toBeNull();
-    expect(view.queryByTestId('treehole-media-preview')).toBeNull();
+    expect(view.getByTestId('treehole-media-feed-image-2')).toBeTruthy();
+    expect(view.queryByTestId('treehole-media-count')).toBeNull();
+    expect(view.getByTestId('treehole-media-feed-row')).toHaveStyle({ flexDirection: 'row', gap: 8 });
+    expect(view.getByTestId('treehole-media-feed-frame')).toHaveStyle({ flex: 1, aspectRatio: 1 });
+    expect(view.getByTestId('treehole-media-feed-frame-2')).toHaveStyle({ flex: 1, aspectRatio: 1 });
     expect(view.queryByTestId('treehole-media-drag-area')).toBeNull();
   });
 
-  it('列表两图并排且不需要数量徽标', async () => {
+  it('列表两图各占一半、1:1、8dp 白缝，不套灰底画框', async () => {
     const view = await renderApp(
       <TreeholeMedia postId={7} urls={[urls[0], urls[1]]} mode="feed" />
     );
@@ -42,6 +42,12 @@ describe('P2X TreeholeMedia', () => {
     expect(view.getByTestId('treehole-media-feed-image-1')).toBeTruthy();
     expect(view.queryByTestId('treehole-media-feed-image-2')).toBeNull();
     expect(view.queryByTestId('treehole-media-count')).toBeNull();
+    expect(view.getByTestId('treehole-media-feed-row')).toHaveStyle({ flexDirection: 'row', gap: 8 });
+    const frame = view.getByTestId('treehole-media-feed-frame');
+    expect(frame).toHaveStyle({ flex: 1, aspectRatio: 1, borderRadius: 12, overflow: 'hidden' });
+    // 圆角裁在图片像素上，框本身没有底色 → 不再有灰盒衬底
+    expect(frame.props.style.backgroundColor).toBeUndefined();
+    expect(view.getByTestId('treehole-media-feed-image').props.contentFit).toBe('cover');
   });
 
   it('列表单图没有第二张与数量徽标', async () => {
@@ -142,13 +148,36 @@ describe('P2X TreeholeMedia', () => {
     expect(view.queryByTestId('treehole-media-back-2')).toBeNull();
   });
 
-  it('列表单图使用内容列宽并完整等比显示，加载完成后移除骨架', async () => {
+  it('列表单图左对齐 75% 宽、限高 320、按原图比例收敛，加载完成后移除骨架', async () => {
     const view = await renderApp(<TreeholeMedia postId={7} urls={[urls[0]]} mode="feed" />);
-    expect(view.getByTestId('treehole-media-feed')).toHaveStyle({ width: '100%' });
-    expect(view.getByTestId('treehole-media-feed-image').props.contentFit).toBe('contain');
+    expect(view.getByTestId('treehole-media-feed')).toHaveStyle({
+      width: '100%',
+      alignItems: 'flex-start',
+    });
+    const frame = view.getByTestId('treehole-media-feed-frame');
+    expect(frame).toHaveStyle({
+      width: '75%',
+      maxHeight: 320,
+      aspectRatio: 1,
+      borderRadius: 12,
+      overflow: 'hidden',
+    });
+    // 框上没有底色：图直接贴在帖子底上，不露灰边
+    expect(frame.props.style.backgroundColor).toBeUndefined();
+    expect(view.getByTestId('treehole-media-feed-image').props.contentFit).toBe('cover');
     expect(view.getByTestId('treehole-media-feed-image-loading', { includeHiddenElements: true })).toBeTruthy();
-    await fireEvent(view.getByTestId('treehole-media-feed-image'), 'load', { nativeEvent: { source: { width: 100, height: 100, url: urls[0] } } });
+    // 竖图 300×400 → 画框收敛到 3:4（不再用固定 4:3 把竖图夹出灰边）
+    // ⚠️ expo-image 的 onLoad 收口后是 { source }，但测试必须按 RN 原生事件形状触发（它内部再解包 nativeEvent）
+    await fireEvent(view.getByTestId('treehole-media-feed-image'), 'load', { nativeEvent: { source: { width: 300, height: 400, url: urls[0] } } });
+    expect(view.getByTestId('treehole-media-feed-frame')).toHaveStyle({ aspectRatio: 0.75 });
     expect(view.queryByTestId('treehole-media-feed-image-loading', { includeHiddenElements: true })).toBeNull();
+  });
+
+  it('单图比例收敛到 0.72–1.6，缺尺寸时用 1:1', () => {
+    expect(treeholeFeedAspect()).toBe(1);
+    expect(treeholeFeedAspect(300, 400)).toBe(0.75);
+    expect(treeholeFeedAspect(100, 1000)).toBe(0.72);
+    expect(treeholeFeedAspect(4000, 1000)).toBe(1.6);
   });
 
   it('列表一张失败不影响其他图，仍保留媒体入口', async () => {

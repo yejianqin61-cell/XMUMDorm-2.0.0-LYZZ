@@ -141,6 +141,13 @@ describe('P2X TreeholePostRow', () => {
     expect(view.queryByTestId('treehole-media-preview')).toBeNull();
   });
 
+  it('图组距正文 12dp：内容列 4 + 媒体上边距 8', async () => {
+    const view = await renderApp(
+      row({ post: { ...post, mediaUrls: ['https://example.test/a.jpg'] } })
+    );
+    expect(view.getByTestId('campus-row-7-media')).toHaveStyle({ marginTop: 8 });
+  });
+
   it('正文在媒体之前：详情顺序 = 标题/正文 → 标签 → 媒体', async () => {
     const view = await renderApp(
       <TreeholePostDetail

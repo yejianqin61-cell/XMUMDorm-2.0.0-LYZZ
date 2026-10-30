@@ -1,5 +1,11 @@
 /* eslint-disable react-hooks/immutability -- Reanimated shared values intentionally mutate outside React state. */
-/** 树洞媒体：信息流静态预览；详情复用叠卡、切图与预览。Stage 2 使用完整等比画面和稳定占位。 */
+/**
+ * 树洞媒体：信息流是**无衬底的静态图组**（图本身圆角、cover 填满、无灰边）；
+ * 详情复用叠卡、切图与预览。
+ *
+ * 两套画幅是**故意分开**的：信息流按图组规则（单图 75% / 双图各半 / 三图方格），
+ * 详情固定 16:9 叠卡（`TREEHOLE_DETAIL_ASPECT`）。
+ */
 
 import * as React from 'react';
 import { Modal, PanResponder, Pressable, View } from 'react-native';
@@ -76,15 +82,42 @@ export function treeholeMediaKey(postId: number, urls: readonly string[]): strin
   return JSON.stringify([postId, urls]);
 }
 
-/** 稳定媒体画框；contain 保留原图比例，网络加载不改变列表行高。 */
-export function treeholeMediaAspect(count: number, mode: TreeholeMediaMode = 'feed'): number {
-  if (mode === 'detail') return 16 / 9;
-  return 4 / 3;
-}
+/** 详情画幅：16:9（叠卡需要足够大的画面；信息流不用这个比例，见 `treeholeFeedAspect`）。 */
+export const TREEHOLE_DETAIL_ASPECT = 16 / 9;
 
-/** 媒体占满同一正文列；不按一屏两篇反推行高。 */
+/**
+ * 信息流媒体规则（所有者 2026-10-30 指令，**取代** 2026-10-18 的「灰底画框 + contain」）：
+ *   · 图**直接贴在帖子底上**：画框不再有 background / padding，灰盒子消失；
+ *   · 圆角 `radius_medium` 落在**直接包图的那层**（`overflow: hidden`），裁的是图片像素；
+ *   · 图撑满自己的框（`contentFit="cover"`），四周不再露底色；
+ *   · 单图：正文列 **75%** 宽、左对齐、高 ≤ **320dp**、宽随原图比例收敛；
+ *   · 双图：各占一半、1:1、间距 **8dp**（白缝，不是灰缝）；
+ *   · 三图及以上：**3 列方格**、间距 8dp（帖子最多 3 张图，格数正好一行）。
+ */
 export const TREEHOLE_FEED_MEDIA_WIDTH = '100%';
-export const TREEHOLE_FEED_MULTI_MEDIA_WIDTH = '100%';
+/** 单图宽度：正文列 75%，左对齐（⛔ 不再居中飘在大画框里） */
+export const TREEHOLE_FEED_SINGLE_WIDTH = '75%';
+/** 单图限高：320dp（450dp 以上的宽屏才真正生效） */
+export const TREEHOLE_FEED_SINGLE_MAX_HEIGHT = 320;
+/**
+ * 单图自适应比例区间（宽/高）：竖图最窄 0.72、横图最宽 1.6。
+ * 区间外的极端图（长截图 / 全景图）按边界裁切，避免在信息流里变成细高条或超宽条。
+ */
+export const TREEHOLE_FEED_MIN_ASPECT = 0.72;
+export const TREEHOLE_FEED_MAX_ASPECT = 1.6;
+/** 拿到原图尺寸前的占位比例（1:1，横图竖图都不偏） */
+export const TREEHOLE_FEED_FALLBACK_ASPECT = 1;
+/** 三图及以上：3 列方格 */
+export const TREEHOLE_FEED_GRID_COLUMNS = 3;
+
+/** 单图比例（纯函数）：按原图宽高比收敛到 [0.72, 1.6]；拿不到尺寸时用 1:1。 */
+export function treeholeFeedAspect(naturalWidth?: number, naturalHeight?: number): number {
+  if (!naturalWidth || !naturalHeight || naturalWidth <= 0 || naturalHeight <= 0) {
+    return TREEHOLE_FEED_FALLBACK_ASPECT;
+  }
+  const ratio = naturalWidth / naturalHeight;
+  return Math.min(TREEHOLE_FEED_MAX_ASPECT, Math.max(TREEHOLE_FEED_MIN_ASPECT, ratio));
+}
 
 export function TreeholeMedia({
   postId,
@@ -107,27 +140,13 @@ export function TreeholeMedia({
   );
 }
 
-function CountBadge({ label }: { label: string }): React.ReactElement {
-  const theme = useTheme();
-  return (
-    <Surface
-      variant="surface"
-      rounded="radius_full"
-      padding="space_1"
-      style={{
-        position: 'absolute',
-        right: theme.space('space_2'),
-        bottom: theme.space('space_2'),
-      }}
-    >
-      <Text role="caption" colorToken="text-secondary" testID="treehole-media-count">
-        {label}
-      </Text>
-    </Surface>
-  );
-}
-
-/** feed 只保留图片状态，不注册手势；错误后点整块进入详情重试。 */
+/**
+ * 信息流媒体：**零手势**的静态图组。
+ *
+ * 单图 / 双图 / 3 列方格的分工写在 `TREEHOLE_FEED_*` 常量上方；这里只负责拼版：
+ * 圆角与裁切落在**直接包图**的框上（图本身圆角、无灰边、无衬底），间距一律走间距令牌。
+ * 帖子最多 3 张图（后端 `postImagesUpload` 上限 3），≥3 就是一整行方格。
+ */
 function TreeholeFeedMedia({
   postId,
   urls,
@@ -136,41 +155,112 @@ function TreeholeFeedMedia({
   urls: readonly string[];
 }): React.ReactElement {
   const theme = useTheme();
-  const { t } = useI18n();
-  const multi = urls.length > 1;
-  // 第三张起省略：信息流只展示前两张
-  const visible = urls.slice(0, 2);
-  const width = multi ? TREEHOLE_FEED_MULTI_MEDIA_WIDTH : TREEHOLE_FEED_MEDIA_WIDTH;
-  return (
-    <View testID="treehole-media-feed" style={{ width }}>
-      <View style={{ flexDirection: 'row', gap: theme.space('space_1') }}>
-        {visible.map((uri, index) => (
-          <View
-            key={`${postId}:${index}:${uri}`}
-            style={{
-              flex: 1,
-              aspectRatio: treeholeMediaAspect(urls.length),
-              borderRadius: theme.radius('radius_medium'),
-              overflow: 'hidden',
-              backgroundColor: theme.color['bg-sunken'].value,
-            }}
-          >
-            <TreeholeFeedImage
-              uri={uri}
-              testID={index === 0 ? 'treehole-media-feed-image' : `treehole-media-feed-image-${index}`}
-            />
-          </View>
-        ))}
+  const gap = theme.space('space_2');
+  const radius = theme.radius('radius_medium');
+
+  if (urls.length === 1) {
+    return (
+      <View
+        testID="treehole-media-feed"
+        style={{ width: TREEHOLE_FEED_MEDIA_WIDTH, alignItems: 'flex-start' }}
+      >
+        {/* key 带 URL：换图 / 回收行时比例状态一起重置 */}
+        <TreeholeFeedSingleImage key={`${postId}:${urls[0]}`} uri={urls[0]} radius={radius} />
       </View>
-      {urls.length > 2 ? (
-        <CountBadge label={t('screen.campus.mediaCount', { count: urls.length })} />
-      ) : null}
+    );
+  }
+
+  const columns = urls.length === 2 ? 2 : TREEHOLE_FEED_GRID_COLUMNS;
+  const rows: string[][] = [];
+  for (let index = 0; index < urls.length; index += columns) {
+    rows.push(urls.slice(index, index + columns));
+  }
+
+  return (
+    <View testID="treehole-media-feed" style={{ width: TREEHOLE_FEED_MEDIA_WIDTH, gap }}>
+      {rows.map((row, rowIndex) => (
+        <View
+          key={`treehole-media-row-${rowIndex}`}
+          testID={rowIndex === 0 ? 'treehole-media-feed-row' : `treehole-media-feed-row-${rowIndex}`}
+          style={{ flexDirection: 'row', gap }}
+        >
+          {row.map((uri, columnIndex) => {
+            const index = rowIndex * columns + columnIndex;
+            return (
+              <View
+                key={`${postId}:${index}:${uri}`}
+                testID={
+                  index === 0 ? 'treehole-media-feed-frame' : `treehole-media-feed-frame-${index}`
+                }
+                style={{ flex: 1, aspectRatio: 1, borderRadius: radius, overflow: 'hidden' }}
+              >
+                <TreeholeFeedImage
+                  uri={uri}
+                  testID={
+                    index === 0 ? 'treehole-media-feed-image' : `treehole-media-feed-image-${index}`
+                  }
+                />
+              </View>
+            );
+          })}
+          {/* 末行不足一列时补等宽占位：格子不被拉宽（微信九宫格的同一做法） */}
+          {Array.from({ length: columns - row.length }, (_, spacer) => (
+            <View key={`treehole-media-spacer-${rowIndex}-${spacer}`} style={{ flex: 1 }} />
+          ))}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/**
+ * 单图：正文列 75% 宽、左对齐、限高 320dp，宽随原图比例。
+ *
+ * 原图尺寸只能等 `onLoad` 才拿到，所以先用 1:1 占位；拿到后收敛到
+ * `treeholeFeedAspect`（0.72–1.6），横图变矮、竖图变高，极端比例按边界裁切。
+ */
+function TreeholeFeedSingleImage({
+  uri,
+  radius,
+}: {
+  uri: string;
+  radius: number;
+}): React.ReactElement {
+  const [aspect, setAspect] = React.useState(TREEHOLE_FEED_FALLBACK_ASPECT);
+  return (
+    <View
+      testID="treehole-media-feed-frame"
+      style={{
+        width: TREEHOLE_FEED_SINGLE_WIDTH,
+        aspectRatio: aspect,
+        maxHeight: TREEHOLE_FEED_SINGLE_MAX_HEIGHT,
+        borderRadius: radius,
+        overflow: 'hidden',
+      }}
+    >
+      <TreeholeFeedImage
+        uri={uri}
+        testID="treehole-media-feed-image"
+        onLoadSource={(source) => {
+          const next = treeholeFeedAspect(source.width, source.height);
+          setAspect((current) => (current === next ? current : next));
+        }}
+      />
     </View>
   );
 }
 
 /** 与外层 URL key 一起重置，防止回收行沿用旧图片的失败状态。 */
-function TreeholeFeedImage({ uri, testID }: { uri: string; testID: string }): React.ReactElement {
+function TreeholeFeedImage({
+  uri,
+  testID,
+  onLoadSource,
+}: {
+  uri: string;
+  testID: string;
+  onLoadSource?: (source: { width?: number; height?: number }) => void;
+}): React.ReactElement {
+  const theme = useTheme();
   const { t } = useI18n();
   const [status, setStatus] = React.useState<'loading' | 'loaded' | 'failed'>('loading');
   return (
@@ -180,9 +270,14 @@ function TreeholeFeedImage({ uri, testID }: { uri: string; testID: string }): Re
         source={{ uri }}
         recyclingKey={uri}
         cachePolicy="memory-disk"
-        contentFit="contain"
+        // cover：图撑满自己的框，四周不露底色；只对极端比例做边界裁切
+        contentFit="cover"
         accessible={false}
-        onLoad={() => setStatus('loaded')}
+        onLoad={(event) => {
+          setStatus('loaded');
+          // expo-image 给的是扁平事件（`event.source`），不是 RN Image 的 `nativeEvent.source`
+          onLoadSource?.(event.source);
+        }}
         onError={() => setStatus('failed')}
         style={{ width: '100%', height: '100%' }}
       />
@@ -191,7 +286,8 @@ function TreeholeFeedImage({ uri, testID }: { uri: string; testID: string }): Re
           style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, height: '100%' }} />
       ) : null}
       {status === 'failed' ? (
-        <View testID={`${testID}-error`} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center' }}>
+        // 失败态才有底色：没有图片像素可看时，文字需要一块能读的底（⛔ 不是常驻画框）
+        <View testID={`${testID}-error`} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.color['bg-sunken'].value }}>
           <Text role="caption" colorToken="text-secondary">{t('screen.campus.mediaFailed')}</Text>
         </View>
       ) : null}
@@ -448,7 +544,7 @@ function TreeholeDetailMedia({ urls, imageSave }: {
           style={{ paddingTop: DECK_TOP_PADDING, paddingRight: DECK_RIGHT_PADDING }}
         >
           <View
-            style={{ aspectRatio: treeholeMediaAspect(urls.length, 'detail') }}
+            style={{ aspectRatio: TREEHOLE_DETAIL_ASPECT }}
             onLayout={(event) => setMediaWidth(event.nativeEvent.layout.width)}
           >
             {layers >= 3 ? backCard(thirdUri, thirdStyle, 'treehole-media-back-2') : null}
