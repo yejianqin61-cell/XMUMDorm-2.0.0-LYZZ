@@ -73,10 +73,12 @@ async function submit(userId, body) {
 async function mine(userId) {
   try {
     const rows = await query(
-      `SELECT id, status, name_zh, name_en, business_scope, created_at, reviewed_at, review_note, merchant_id
-       FROM shop_merchant_applications
-       WHERE applicant_user_id = ?
-       ORDER BY id DESC
+      `SELECT a.id, a.status, a.name_zh, a.name_en, a.business_scope, a.created_at, a.reviewed_at, a.review_note,
+              a.merchant_id, m.slug AS merchant_slug
+       FROM shop_merchant_applications a
+       LEFT JOIN shop_merchants m ON m.id = a.merchant_id
+       WHERE a.applicant_user_id = ?
+       ORDER BY a.id DESC
        LIMIT 20`,
       [userId]
     );

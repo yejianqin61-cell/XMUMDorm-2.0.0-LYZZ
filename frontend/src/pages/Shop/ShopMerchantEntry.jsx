@@ -66,8 +66,13 @@ export default function ShopMerchantEntry() {
           {latest.status === 'rejected' && latest.review_note && (
             <p role="status">{t('原因：', 'Reason: ')}{latest.review_note}</p>
           )}
-          {latest.status === 'approved' && latest.merchant_id && (
-            <p>{t('店铺已上架，可在「商城管理」中维护商品和营业状态。', 'Your store is live. Manage products and opening status in the store admin.')}</p>
+          {latest.status === 'approved' && (
+            <div className="shop-merchant-status">
+              <p>{t('店铺已上架，可在「商城管理」中维护商品和营业状态。', 'Your store is live. Manage products and opening status in the store admin.')}</p>
+              {latest.merchant_slug && (
+                <Link to={`/shop/store/${latest.merchant_slug}/manage`}>{t('进入店铺管理', 'Open store admin')}</Link>
+              )}
+            </div>
           )}
           {(latest.status === 'rejected' || latest.status === 'withdrawn') && (
             <Link to="/shop/merchant-apply">{t('重新申请', 'Apply again')}</Link>
