@@ -2,6 +2,7 @@ import * as React from 'react';
 import { fireEvent, within } from '@testing-library/react-native';
 import { Button } from '@/components/ui/Button';
 import { WallTemplateBody } from '@/features/campus/wallTemplates';
+import { WallPublishPreview } from '@/features/campus/WallPublishPreview';
 import { renderApp } from './helpers/renderApp';
 
 describe('万能墙同源模板块', () => {
@@ -32,5 +33,26 @@ describe('万能墙同源模板块', () => {
     expect(within(view.getByTestId('wall-template-content')).getByText('带学生卡')).toBeTruthy();
     expect(view.getByText('带水杯')).toBeTruthy();
     expect(view.getByTestId('wall-checklist-icon-1', { includeHiddenElements: true })).toBeTruthy();
+  });
+});
+
+describe('万能墙发布业务预览', () => {
+  it('切换到公告仍显示完整输入并复用阅读标识', async () => {
+    const content = '请于今晚八点前归还借用设备\n谢谢配合';
+    function Example() {
+      const [key, setKey] = React.useState('letter');
+      return <><WallPublishPreview values={{ template_key: key, content }} /><Button label="选公告" onPress={() => setKey('announcement')} /></>;
+    }
+    const view = await renderApp(<Example />);
+    expect(view.getByText('档案卡')).toBeTruthy();
+    await fireEvent.press(view.getByText('选公告'));
+    expect(view.getByText('公告卡')).toBeTruthy();
+    expect(view.getByText(content)).toBeTruthy();
+    expect(view.getByText(content).props.numberOfLines).toBeUndefined();
+  });
+
+  it('空输入不给伪造的公告正文', async () => {
+    const view = await renderApp(<WallPublishPreview values={{ template_key: 'announcement', content: '' }} />);
+    expect(view.queryByTestId('wall-template-content')).toBeNull();
   });
 });
