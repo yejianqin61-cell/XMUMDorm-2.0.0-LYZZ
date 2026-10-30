@@ -1,6 +1,6 @@
 # App 依赖准入登记（Phase 0–2）
 
-**日期**：2026-10-18　**版本**：v1.5
+**日期**：2026-10-30　**版本**：v1.6
 **性质**：**evaluation 层**（判定记录）。承接 [生产开发计划 §Phase 0](../task/phase-0/P0-01-工程脚手架与依赖准入.md) 与 **P0-11**。
 **判据来源**：App 设计宪法 **3.4**（准入五项）· **9.13**（最后发布时间必须读**该版本自己的时间戳**，⛔ 不用 `time.modified`）· **11.4**（含原生代码的变更**必须重建**，不能 OTA）· **9.11**（⛔ 自带调色板/样式引擎不得作基座）· **16.2**（⛔ 不得引入第二套图标库）
 
@@ -50,6 +50,12 @@
 | `@react-native-async-storage/async-storage` | **2.2.0** | MIT | **有**（android/ ios/ `RNCAsyncStorage.podspec`） | **有**（变更须重建） | 2025-06-05 | 否（只做落盘）。⛔ **凭据禁止入内**（宪法 4.1.2-2），由 `app/src/shared/storage.ts` 的护栏 + 单测守着 |
 | `@react-native-community/netinfo` | **12.0.1** | MIT | **有**（android/ ios/ `react-native-netinfo.podspec`） | **有** | 2026-02-14 | 否（只提供连通性布尔，用来驱动 TanStack 的 `onlineManager`）。**版本由 SDK 57 钉死** |
 | `@ronradtke/react-native-markdown-display` | **9.0.3** | MIT | **无**（实测 0 原生文件） | **无** → 可 OTA | 2026-06-29 | 否（样式全由 props 传入）；⚠️ **必须显式覆盖它的默认主题**，否则等于引入第二套排版（宪法 1.4 / 2.5）。选它而非原版 `react-native-markdown-display@7.0.2`（后者 2023-12-11 起停更） |
+
+**阶段 5（A2-01 启动链路，采集于 2026-10-30）**
+
+| 包 | 版本 | 许可证 | 含原生代码 | OTA 影响 | 该版本发布时间 | 是否强加视觉身份 |
+|---|---|---|---|---|---|---|
+| `expo-splash-screen` | **~57.0.10** | MIT | **有**（android/ ios/ `ExpoSplashScreen.podspec`） | **有**（变更须重建） | 2026-10-12 | 否（只做原生启动画面：底色 + 启动图；⛔ 不介入首屏视觉，首屏由 `SessionSplash` 与页面自己决定）。**版本由 SDK 57 的 `bundledNativeModules.json` 钉死**；启动底色取自 `bg-canvas` 令牌（亮 `#f7f8fa` / 暗 `#12141a`），启动图用 `assets/android-icon-foreground.png`；见[阶段5 证据清单](../../app_stage2/test/角色甲-公共壳与消息/阶段5-证据清单.md) |
 
 ### 1.2 开发依赖（不进 App 包）
 
@@ -156,3 +162,4 @@ Lint：标准 Expo flat config。当前未启用 React Compiler，refs／set-sta
 | v1.3 | 2026-10-11 | Phase 5 XLSX 导出登记 `expo-file-system@57.0.7` 与 `expo-sharing@57.0.22`。两者均含原生代码；后续变更必须新原生构建，并保留 Android/iOS 真机保存与分享验收。 |
 | **v1.1** | **2026-10-02** | **Phase 1 第二批 5 个直接依赖**（P1-02）：`@tanstack/react-query@5.96.2` · `@shopify/flash-list@2.0.2` · `@react-native-async-storage/async-storage@2.2.0` · `@react-native-community/netinfo@12.0.1` · `@ronradtke/react-native-markdown-display@9.0.3`，逐条登记五项判据（采集方式不变，`.scratch/collect-deps.js`）。新增排障记录 **#9**（react-query 两端版本漂移 → 钉到与 Web 一致）与 **#10**（原生依赖的官方 Jest mock + `setupFiles` 必须展开 preset）。修正 §4-3：`runtimeVersion` 经复检**当前无消费者**（`expo-updates` 未安装 → 无 OTA 层），不再写"阻塞首次构建" |
 | v1.4 | 2026-10-18 | 补齐树洞 HeroUI 重构时漏登的 **7 个依赖**（§5.1）：`expo-blur` · `heroui-native` · `react-native-gesture-handler` · `tailwind-merge` · `tailwind-variants` · `tailwindcss` · `uniwind`。其中 `heroui-native`/`uniwind` 的**基座判定不及格**（9.11），已随 2026-10-18 树洞视觉层回退而停用消费；`expo-blur` 0 引用。移除登记为 TD-74/TD-75 |
+| v1.6 | 2026-10-30 | 阶段5（A2-01 启动链路）登记 `expo-splash-screen@~57.0.10`：MIT、含原生代码（android/ ios/ podspec）→ **变更须重建**；发布时间 2026-10-12；不介入首屏视觉。判据采集方式同上；漏登会被 `p1-02-data-layer` 的准入闸门红灯（本轮实测演练了一次） |
