@@ -28,7 +28,18 @@
         }
       ],
       "@react-native-community/datetimepicker",
-      "expo-sharing"
+      "expo-sharing",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#f7f8fa",
+          "image": "./assets/android-icon-foreground.png",
+          "imageWidth": 256,
+          "dark": {
+            "backgroundColor": "#12141a"
+          }
+        }
+      ]
     ],
     "ios": {
       "supportsTablet": true,
