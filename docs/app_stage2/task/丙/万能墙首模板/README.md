@@ -11,6 +11,7 @@
 允许修改：`app/src/features/campus/wallTemplates.tsx`、`WallFeed.tsx`、`CampusScreens.tsx`、`campusModel.ts`、`publishFields.ts`。
 允许新增：同目录`WallPostRow.tsx`、`WallPublishPreview.tsx`。
 测试允许：`app/src/__tests__/p2x-bing-campus.test.tsx`、`p2x-bing-wall-publish.test.ts`及新增`p2x-bing-wall-template.test.tsx`。
+回归发现后补登记：`p2x-treehole-phase-two-contract.test.ts`仅更新墙独立列表/匿名的结构断言，旧ListItem快照已被完整模板替换。
 文档允许：本目录、丙当前接续/索引/实施计划、丙交甲材料及丙审查目录。
 公共路由/UI/词条/发布宿主/共享配置、shared及后端仅阅读；缺能力交具体接线，不声称集成。
 
