@@ -9,6 +9,7 @@ const proofUpload = multer({storage:multer.memoryStorage(),limits:{fileSize:5*10
 const { checkBan } = require('../middleware/checkSanction');
 const { logAudit } = require('../services/auditLog');
 const s = require('../services/shop');
+const merchantApplications = require('../services/shopMerchantApplications');
 const coupons = require('../services/shopCoupons');
 const rateLimit = require('express-rate-limit');
 const wrap = fn => async (req, res) => {
@@ -60,7 +61,7 @@ const currentAdmin = async (req, res, next) => {
   try {
     const rows = await query('SELECT role, status FROM users WHERE id = ?', [req.user.id]);
     const membership=await query('SELECT user_id FROM shop_merchant_members WHERE merchant_id = ? AND user_id = ?', [req.merchant.id,req.user.id]);
-    if (!rows[0] || rows[0].status === 'deactivated' || (rows[0].role !== 'admin' && !(rows[0].role === 'merchant' && membership.length))) return res.status(403).json({ status: -1, message: '需要管理员权限 / Admin required' });
+    if (!rows[0] || rows[0].status === 'deactivated' || (rows[0].role !== 'admin' && !membership.length)) return res.status(403).json({ status: -1, message: '需要管理员权限 / Admin required' });
     next();
   } catch { res.status(500).json({ status: -1, message: '权限校验失败 / Authorization unavailable' }); }
 };
@@ -322,12 +323,30 @@ entry.delete('/admin/stores/:id',auth,checkBan,requireShopAdmin,wrap(async(req,r
  void logAudit({userId:req.user.id,role:'admin',action:'SHOP_STORE_DELETE',targetType:'shop',targetId:merchantId,meta:{scope:'admin'}});
  ok(res,{deleted:true});
 }));
-entry.get('/merchants', wrap(async (req,res)=>ok(res,await query('SELECT id,slug,name_zh,name_en FROM shop_merchants WHERE enabled=1 AND deleted_at IS NULL ORDER BY id'))));
+entry.get('/merchants', wrap(async (req,res)=>ok(res,await query('SELECT id,slug,name_zh,name_en,business_scope FROM shop_merchants WHERE enabled=1 AND paused=0 AND deleted_at IS NULL ORDER BY id'))));
 entry.get('/my-merchants',auth,checkBan,wrap(async(req,res)=>{
  const users=await query('SELECT role,status FROM users WHERE id=?',[req.user.id]);
  if(users[0]?.status==='deactivated') s.fail('账号停用 / Inactive',403);
- const rows=users[0]?.role==='admin'?await query('SELECT * FROM shop_merchants WHERE enabled=1 AND deleted_at IS NULL'):users[0]?.role==='merchant'?await query('SELECT m.* FROM shop_merchants m JOIN shop_merchant_members u ON u.merchant_id=m.id WHERE u.user_id=? AND m.enabled=1 AND m.deleted_at IS NULL',[req.user.id]):[];
+ const rows=users[0]?.role==='admin'
+   ? await query('SELECT * FROM shop_merchants WHERE enabled=1 AND deleted_at IS NULL ORDER BY id')
+   : await query('SELECT m.* FROM shop_merchants m JOIN shop_merchant_members u ON u.merchant_id=m.id WHERE u.user_id=? AND m.deleted_at IS NULL ORDER BY m.id',[req.user.id]);
  ok(res,rows);
+}));
+entry.post('/merchant-applications',auth,checkBan,wrap(async(req,res)=>{
+ const result=await merchantApplications.submit(req.user.id,req.body);
+ await logAudit({userId:req.user.id,role:req.user.role,action:'SHOP_MERCHANT_APPLY',targetType:'shop_application',targetId:result.id,meta:{name_en:req.body?.name_en}});
+ ok(res,result);
+}));
+entry.get('/merchant-applications/mine',auth,checkBan,wrap(async(req,res)=>ok(res,await merchantApplications.mine(req.user.id))));
+entry.post('/merchant-applications/:id/withdraw',auth,checkBan,wrap(async(req,res)=>{
+ const result=await merchantApplications.withdraw(req.user.id,id(req.params.id));
+ await logAudit({userId:req.user.id,role:req.user.role,action:'SHOP_MERCHANT_WITHDRAW',targetType:'shop_application',targetId:result.id,meta:{}});
+ ok(res,result);
+}));
+entry.patch('/my-merchants/:id/paused',auth,checkBan,wrap(async(req,res)=>{
+ const result=await merchantApplications.setPaused(req.user.id,id(req.params.id),!!req.body?.paused);
+ await logAudit({userId:req.user.id,role:req.user.role,action:'SHOP_STORE_PAUSE',targetType:'shop',targetId:result.id,meta:{paused:result.paused}});
+ ok(res,result);
 }));
 entry.post('/merchants',auth,checkBan,wrap(async(req,res)=>{
  const users=await query('SELECT role,status FROM users WHERE id=?',[req.user.id]);
