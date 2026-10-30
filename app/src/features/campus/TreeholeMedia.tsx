@@ -1,23 +1,5 @@
 /* eslint-disable react-hooks/immutability -- Reanimated shared values intentionally mutate outside React state. */
-/**
- * TreeholeMedia —— 树洞的唯一媒体组件（feed 静态预览 / detail 叠卡轮播）
- *
- * 设计文档口径（`App树洞HeroUI-Native重构设计与实施计划.md` §媒体布局与手势）：
- * - **feed**：统一 4:3、宽度半列；多图必须"看得出来是多图"（外层露边 + 数量徽标）；
- * - **feed 不注册任何媒体手势**（横滑留给广场模块切换、纵滑留给列表）；
- * - **detail**：**多张堆叠的叠卡**（前卡 + 两层后卡），**只用手势滑动切图**；
- *   后卡按 1/2 层缩放、右上偏移、逆时针旋转表达景深；切图时前卡飞出、后卡弹性上浮；
- *   ⛔ 不再有左右箭头按钮（2026-10-18 第六轮所有者裁决：箭头去掉，只留手势）；
- *   读屏用户走 `accessibilityActions`（上一张 / 下一张），不靠视觉箭头。
- * - 画幅：**详情 16:9**（2026-10-18 第六轮所有者：「图片不用缩小」→ 从 5:2 回到 16:9）。
- * - 切图动效：reduced-motion 时立即换图。
- *
- * 实现纪律：
- * - **不用 HeroUI Card 包一层**（旧实现是 Card 套 Card：多一层 16dp 内边距、图片只有 83.6% 宽，违反 9.14）；
- * - 手势用 PanResponder、动画用 Reanimated（与旧实现同一套机制），⛔ 不引入第二套动画库；
- *   ⛔ 也不用 gesture-handler：详情页不在列表滚动容器里，PanResponder 足够，且省掉根节点要求；
- * - feed / detail 拆成两个组件：feed 分支**零 hooks 状态**，避免每条帖子实例化 PanResponder 与共享值。
- */
+/** 树洞媒体：信息流静态预览；详情复用叠卡、切图与预览。Stage 2 使用完整等比画面和稳定占位。 */
 
 import * as React from 'react';
 import { Modal, PanResponder, Pressable, View } from 'react-native';
@@ -35,10 +17,14 @@ import X from 'lucide-react-native/icons/x';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { Pressable as AppPressable } from '@/components/ui/Pressable';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { Surface } from '@/components/ui/Surface';
 import { Text } from '@/components/ui/Text';
 import { useTheme } from '@/design-system/theme';
 import { useI18n } from '@/i18n';
+import { TreeholeImageSaveControls, useTreeholeImageSave } from './TreeholeImageSaveControls';
+import type { TreeholeImageSaveOptions } from './TreeholeImageSaveControls';
+import { getUploadUrl } from '../../../../shared/api/config';
 
 export type TreeholeMediaMode = 'feed' | 'detail';
 
@@ -87,62 +73,40 @@ export function resolveTreeholeSwipe(dx: number, velocityX = 0): 'next' | 'previ
 
 /** 帖子 ID 或图片序列变化时的重置键 */
 export function treeholeMediaKey(postId: number, urls: readonly string[]): string {
-  return `${postId}:${urls.join('|')}`;
+  return JSON.stringify([postId, urls]);
 }
 
-/**
- * 画幅：**信息流**统一 4:3；**详情** 16:9。
- *
- * 2026-10-18 第五轮：所有者要求详情图"再缩小约一半" → 5:2；
- * 2026-10-18 第六轮：所有者改为「详情图不用缩小」→ 回到 16:9（约 213dp 高）。
- * 信息流的多图不再用 4:5 竖幅 —— 竖幅会把一屏挤到只剩 1 篇，见 `TREEHOLE_FEED_MEDIA_WIDTH`。
- */
+/** 稳定媒体画框；contain 保留原图比例，网络加载不改变列表行高。 */
 export function treeholeMediaAspect(count: number, mode: TreeholeMediaMode = 'feed'): number {
   if (mode === 'detail') return 16 / 9;
   return 4 / 3;
 }
 
-/**
- * 信息流**单图**宽度（相对正文列）：**40%**。
- * 2026-10-18 第六轮所有者：「树洞瀑布流的图片要等比例缩小，保证一屏能看见 2 篇树洞」。
- * 实测（Pixel_7haha 1080×2400 / 420dpi）：列表视口只有 **540dp**（顶栏 + 固定搜索框 + 底栏之后），
- * 一篇行高 = 非媒体部分 ≈160dp + 图高；50% 宽（图高 124dp）时一行 296dp，**2 行 592dp 放不进 540dp**。
- * 40% 宽 → 图 135×101dp、一行约 261dp → 2 行 522dp，一屏能完整看到 2 篇。
- * ⚠️ 用百分比而不是 dp：宽度随分栏与平板变化，图片按比例缩放（等比例）。
- */
-export const TREEHOLE_FEED_MEDIA_WIDTH = '40%';
-
-/**
- * 信息流**多图**宽度：**80%**（横向两张并排，每张仍是 40% 列宽 + 4:3，与单图同尺寸）。
- * 2026-10-18 第七轮所有者：不再堆叠，两张横排，第三张起省略。行高与单图一致（仍是 4:3 高度），
- * 所以"一屏 2 篇"的算式不受影响。
- */
-export const TREEHOLE_FEED_MULTI_MEDIA_WIDTH = '80%';
+/** 媒体占满同一正文列；不按一屏两篇反推行高。 */
+export const TREEHOLE_FEED_MEDIA_WIDTH = '100%';
+export const TREEHOLE_FEED_MULTI_MEDIA_WIDTH = '100%';
 
 export function TreeholeMedia({
   postId,
   urls,
   mode,
+  imageSave,
 }: {
   postId: number;
   urls: readonly string[];
   mode: TreeholeMediaMode;
+  imageSave?: TreeholeImageSaveOptions;
 }): React.ReactElement | null {
   if (urls.length === 0) return null;
+  // posts生产端可能返回本地/uploads路径；展示、预览和保存始终消费同一解析结果。
+  const mediaUrls = urls.map(url => url.startsWith('/uploads/') ? getUploadUrl(url) : url);
   return mode === 'feed' ? (
-    <TreeholeFeedMedia postId={postId} urls={urls} />
+    <TreeholeFeedMedia postId={postId} urls={mediaUrls} />
   ) : (
-    <TreeholeDetailMedia postId={postId} urls={urls} />
+    <TreeholeDetailMedia key={treeholeMediaKey(postId, mediaUrls)} urls={mediaUrls} imageSave={imageSave} />
   );
 }
 
-/**
- * 信息流多图：**横向两张**（2026-10-18 第七轮所有者：不再堆叠，横向排两张，第三张起省略）。
- *
- * - 每张仍是 40% 列宽 + 4:3，与单图**同样大小**（等比例缩小），两张并排后整行占 80% 列宽；
- * - 3 张及以上只画前两张，用右下角数量徽标说明"还有"；⛔ 不再有任何叠层/露边。
- * - 多图仍**不注册手势**、点进帖子才看全部（设计文档 R-7）。
- */
 function CountBadge({ label }: { label: string }): React.ReactElement {
   const theme = useTheme();
   return (
@@ -163,7 +127,7 @@ function CountBadge({ label }: { label: string }): React.ReactElement {
   );
 }
 
-/** feed：单图 / 多图两张并排 + 数量徽标；⛔ 不注册手势、不提供切图控件（设计文档 R-7） */
+/** feed 只保留图片状态，不注册手势；错误后点整块进入详情重试。 */
 function TreeholeFeedMedia({
   postId,
   urls,
@@ -182,7 +146,7 @@ function TreeholeFeedMedia({
       <View style={{ flexDirection: 'row', gap: theme.space('space_1') }}>
         {visible.map((uri, index) => (
           <View
-            key={`${postId}:${uri}`}
+            key={`${postId}:${index}:${uri}`}
             style={{
               flex: 1,
               aspectRatio: treeholeMediaAspect(urls.length),
@@ -191,22 +155,45 @@ function TreeholeFeedMedia({
               backgroundColor: theme.color['bg-sunken'].value,
             }}
           >
-            <Image
-              testID={
-                index === 0 ? 'treehole-media-feed-image' : `treehole-media-feed-image-${index}`
-              }
-              source={{ uri }}
-              recyclingKey={`${postId}:${uri}`}
-              cachePolicy="memory-disk"
-              contentFit="cover"
-              accessible={false}
-              style={{ width: '100%', height: '100%' }}
+            <TreeholeFeedImage
+              uri={uri}
+              testID={index === 0 ? 'treehole-media-feed-image' : `treehole-media-feed-image-${index}`}
             />
           </View>
         ))}
       </View>
       {urls.length > 2 ? (
         <CountBadge label={t('screen.campus.mediaCount', { count: urls.length })} />
+      ) : null}
+    </View>
+  );
+}
+
+/** 与外层 URL key 一起重置，防止回收行沿用旧图片的失败状态。 */
+function TreeholeFeedImage({ uri, testID }: { uri: string; testID: string }): React.ReactElement {
+  const { t } = useI18n();
+  const [status, setStatus] = React.useState<'loading' | 'loaded' | 'failed'>('loading');
+  return (
+    <View style={{ flex: 1 }}>
+      <Image
+        testID={testID}
+        source={{ uri }}
+        recyclingKey={uri}
+        cachePolicy="memory-disk"
+        contentFit="contain"
+        accessible={false}
+        onLoad={() => setStatus('loaded')}
+        onError={() => setStatus('failed')}
+        style={{ width: '100%', height: '100%' }}
+      />
+      {status === 'loading' ? (
+        <Skeleton testID={`${testID}-loading`} kind="media"
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, height: '100%' }} />
+      ) : null}
+      {status === 'failed' ? (
+        <View testID={`${testID}-error`} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center' }}>
+          <Text role="caption" colorToken="text-secondary">{t('screen.campus.mediaFailed')}</Text>
+        </View>
       ) : null}
     </View>
   );
@@ -223,17 +210,26 @@ function TreeholeFeedMedia({
  *   - 释放未过阈值 → 弹簧回中（有回弹）；过阈值 → 弹簧飞出（不是线性 timing），
  *     这就是所有者要的"弹性动效"。
  */
-function TreeholeDetailMedia({
-  postId,
-  urls,
-}: {
-  postId: number;
+function TreeholeDetailMedia({ urls, imageSave }: {
   urls: readonly string[];
+  imageSave?: TreeholeImageSaveOptions;
 }): React.ReactElement {
   const theme = useTheme();
   const { t } = useI18n();
   /** 当前前卡（已提交）。飞出动画期间不变，动画结束才前进 */
-  const [index, setIndex] = React.useState(0);
+  // 一次选图/重试是一代请求；即使URL相同，回到该图也重新分配代次。
+  const [imageRequest, setImageRequest] = React.useState<{
+    index: number;
+    revision: number;
+    status: 'loading' | 'loaded' | 'failed';
+  }>({ index: 0, revision: 0, status: 'loading' });
+  const { index, revision, status } = imageRequest;
+  const failed = status === 'failed';
+  const startImage = React.useCallback((nextIndex: number) => {
+    setImageRequest((previous) => ({
+      index: nextIndex, revision: previous.revision + 1, status: 'loading',
+    }));
+  }, []);
   /**
    * 计数/读屏用的**目标序号**：手势松开（判定换图）的那一刻就前进，不等动画落位。
    * 为什么：飞出动画里"后卡已经顶到前层"的那 200ms 里，用户看到的是下一张图，
@@ -252,8 +248,6 @@ function TreeholeDetailMedia({
   /** 连点保护：只让**最后一次**动画的完成回调提交 index */
   const flightToken = React.useRef(0);
   const [previewOpen, setPreviewOpen] = React.useState(false);
-  const [failed, setFailed] = React.useState(false);
-  const [retryRevision, setRetryRevision] = React.useState(0);
   // 叠卡要按卡片宽度计算飞出距离，所以得知道画幅的实际像素宽
   const [mediaWidth, setMediaWidth] = React.useState(0);
   const dragX = useSharedValue(0);
@@ -261,9 +255,18 @@ function TreeholeDetailMedia({
   const exit = useSharedValue(0);
   /** 飞出方向：-1 = 下一张（向左飞出），1 = 上一张（向右飞出） */
   const flyDirection = useSharedValue(1);
-  const key = treeholeMediaKey(postId, urls);
   const layers = treeholeDeckLayers(urls.length);
   const current = urls[index] ?? urls[0];
+  const saveController = useTreeholeImageSave(current, JSON.stringify([current, revision]), imageSave?.save);
+  // 帖子/URL序列由外层key隔离；此处再核对真实URL与请求代次。
+  // 函数式更新核对最新状态，避免批处理、重试或A→B→A复用旧闭包。
+  const finishImage = (result: 'loaded' | 'failed') => {
+    setImageRequest((previous) =>
+      previous.revision === revision && urls[previous.index] === current && previous.status === 'loading'
+        ? { ...previous, status: result }
+        : previous
+    );
+  };
   const travel = mediaWidth > 0 ? mediaWidth : 320;
   const at = (offset: number) => urls[((offset % urls.length) + urls.length) % urls.length];
   // 后卡内容：next → 下一张 / 再下一张；previous → 上一张 / 当前前卡（见 pendingDirection 注释）
@@ -274,8 +277,8 @@ function TreeholeDetailMedia({
   const commit = React.useCallback((token: number) => {
     if (token !== flightToken.current) return;
     setPendingDirection(null);
-    setIndex(targetRef.current);
-  }, []);
+    startImage(targetRef.current);
+  }, [startImage]);
 
   /**
    * 统一换图路径（**手势拖动**与**读屏动作**共用）：前卡按方向飞出、后卡弹性上浮，落位后换图。
@@ -295,7 +298,7 @@ function TreeholeDetailMedia({
         dragY.value = 0;
         exit.value = 0;
         setPendingDirection(null);
-        setIndex(target);
+        startImage(target);
         return;
       }
       setPendingDirection(direction);
@@ -305,7 +308,7 @@ function TreeholeDetailMedia({
         if (finished) runOnJS(commit)(token);
       });
     },
-    [commit, dragX, dragY, exit, flyDirection, theme.reduceMotion, urls.length]
+    [commit, dragX, dragY, exit, flyDirection, startImage, theme.reduceMotion, urls.length]
   );
 
   // 换图提交后清零共享值：此刻新前卡在 exit=0 的样子与旧第二层在 exit=1 的样子一致，
@@ -318,19 +321,8 @@ function TreeholeDetailMedia({
     exit.value = 0;
   }, [dragX, dragY, exit, index]);
 
-  React.useEffect(() => {
-    setIndex(0);
-    setLabelIndex(0);
-    labelRef.current = 0;
-    targetRef.current = 0;
-    flightToken.current++;
-    setPendingDirection(null);
-    setPreviewOpen(false);
-    setFailed(false);
-    dragX.value = 0;
-    dragY.value = 0;
-    exit.value = 0;
-  }, [key, dragX, dragY, exit]);
+  // 媒体身份变化会整组重挂，旧实例的图片/动画回执失去写入新组的资格。
+  React.useEffect(() => () => { flightToken.current++; }, []);
 
   const snapBack = React.useCallback(() => {
     if (theme.reduceMotion) {
@@ -427,7 +419,7 @@ function TreeholeDetailMedia({
         source={{ uri }}
         recyclingKey={uri}
         cachePolicy="memory-disk"
-        contentFit="cover"
+        contentFit="contain"
         accessible={false}
         style={{ width: '100%', height: '100%' }}
       />
@@ -446,14 +438,11 @@ function TreeholeDetailMedia({
             label={t('action.retry')}
             size="small"
             variant="secondary"
-            onPress={() => {
-              setFailed(false);
-              setRetryRevision((value) => value + 1);
-            }}
+            onPress={() => startImage(index)}
           />
         </View>
-      ) : (
-        // 外层留出后卡露边：⛔ 不裁切（裁掉就看不见"多张堆叠"了）
+      ) : null}
+        {/* 失败时仍保留画框与切图手势，后续图片继续可读。 */}
         <View
           testID="treehole-media-box"
           style={{ paddingTop: DECK_TOP_PADDING, paddingRight: DECK_RIGHT_PADDING }}
@@ -479,7 +468,7 @@ function TreeholeDetailMedia({
               >
                 <AppPressable
                   testID="treehole-media-drag-area"
-                  onPress={() => setPreviewOpen(true)}
+                  onPress={() => { if (!failed) setPreviewOpen(true); }}
                   accessibilityRole="image"
                   accessibilityLabel={t('screen.campus.mediaPosition', {
                     index: labelIndex + 1,
@@ -503,17 +492,23 @@ function TreeholeDetailMedia({
                   style={{ flex: 1 }}
                 >
                   <Image
-                    key={`${current}:${retryRevision}`}
+                    key={`${current}:${revision}`}
                     testID="treehole-media-detail-image"
                     source={{ uri: current }}
                     recyclingKey={current}
                     cachePolicy="memory-disk"
-                    contentFit="cover"
+                    contentFit="contain"
                     accessible={false}
-                    onError={() => setFailed(true)}
+                    onLoad={() => finishImage('loaded')}
+                    onError={() => finishImage('failed')}
                     style={{ width: '100%', height: '100%' }}
                   />
                 </AppPressable>
+                {status === 'loading' ? (
+                  <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
+                    <Skeleton testID="treehole-media-detail-loading" kind="media" style={{ height: '100%' }} />
+                  </View>
+                ) : null}
               </View>
             </Animated.View>
 
@@ -543,7 +538,8 @@ function TreeholeDetailMedia({
             ) : null}
           </View>
         </View>
-      )}
+
+      {imageSave ? <TreeholeImageSaveControls options={imageSave} controller={saveController} testID="treehole-save-detail" /> : null}
 
       <Modal
         visible={previewOpen}
@@ -584,6 +580,11 @@ function TreeholeDetailMedia({
               style={{ width: '100%', height: '100%' }}
             />
           </View>
+          {imageSave ? (
+            <View style={{ padding: theme.space('space_4') }}>
+              <TreeholeImageSaveControls options={imageSave} controller={saveController} testID="treehole-save-preview" />
+            </View>
+          ) : null}
           {urls.length > 1 ? (
             <View style={{ padding: theme.space('space_4'), alignItems: 'center' }}>
               <Text role="caption" colorToken="text-secondary">
