@@ -396,6 +396,34 @@ describe('树洞搜索（就地展开）', () => {
 });
 
 describe('万能墙列表 / 详情', () => {
+  it('公告从列表进入详情保留同一类型、完整长文及公开时间', async () => {
+    const content = `图书馆闭馆通知\n${'请提前办理借还手续。'.repeat(22)}`.slice(0, 200);
+    const row = {
+      id: 40, content, template_key: 'announcement', created_at: '2026-10-29T12:00:00Z',
+      author: { nickname: '不应公开的名字' }, title: '不应公开的标题',
+    };
+    wall.mockResolvedValue({ items: [row], has_older: false, oldest_cursor: 40 });
+    wallDetail.mockResolvedValue(row);
+    function ReadingPath() {
+      const [opened, setOpened] = React.useState(false);
+      return <><WallFeed /><Button label="查看详情" onPress={() => setOpened(true)} />{opened ? <CampusDetailScreen postId="40" kind="wall" /> : null}</>;
+    }
+    const view = await renderApp(<ReadingPath />);
+    await waitFor(() => expect(view.getByText(content)).toBeTruthy());
+    expect(view.getByText(content).props.numberOfLines).toBeUndefined();
+    expect(view.getByText('公告卡')).toBeTruthy();
+    expect(view.getByTestId('wall-row-time-40')).toBeTruthy();
+    await fireEvent.press(view.getByTestId('campus-row-40'));
+    expect(routerMock.push).toHaveBeenCalledWith('/campus/wall/40');
+    await fireEvent.press(view.getByText('查看详情'));
+    await waitFor(() => expect(view.getAllByText(content)).toHaveLength(2));
+    expect(view.getAllByText('公告卡')).toHaveLength(2);
+    expect(view.queryByText('不应公开的名字')).toBeNull();
+    expect(view.queryByText('不应公开的标题')).toBeNull();
+    expect(view.queryByTestId('treehole-author-avatar')).toBeNull();
+    expect(view.getByTestId('campus-detail-time')).not.toHaveTextContent(/^$/);
+  });
+
   it('窗口游标分页且不展示服务端身份', async () => {
     wall
       .mockResolvedValueOnce({
