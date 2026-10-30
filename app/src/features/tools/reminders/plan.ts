@@ -1,7 +1,9 @@
 import { addDaysYmd, parseYmd, weekDateRange } from '../../../../../shared/config/semesters';
 import type { TimetableWeek } from '../timetable';
 
-export type ClassReminder = { id: string; startsAt: string; fireAt: number; week: number; dayOfWeek: number };
+export type ClassReminderTarget = { semesterId: string; courseCode: string; date: string; startTime: string };
+export type ClassReminder = { id: string; startsAt: string; fireAt: number; week: number; dayOfWeek: number;
+  target: ClassReminderTarget };
 export type ReminderSemester = { id: string; startDate: string; weeks: number };
 const SCHOOL_OFFSET_MS = 8 * 60 * 60 * 1000; // Asia/Kuala_Lumpur, no daylight-saving transition.
 const LEAD_MS = 30 * 60 * 1000;
@@ -35,7 +37,8 @@ export function buildClassReminderPlan(input: { semester: ReminderSemester;
         const clock = `${time[1]}:${time[2]}:${time[3] ?? '00'}`;
         const id = ['class', semester.id.trim(), meeting.courseCode.trim(), date, clock].map(encodeURIComponent).join(':');
         plan.set(id, { id, startsAt: new Date(startsAt).toISOString(), fireAt: fireAt,
-          week: week.week, dayOfWeek: day });
+          week: week.week, dayOfWeek: day,
+          target: { semesterId: semester.id.trim(), courseCode: meeting.courseCode.trim(), date, startTime: clock } });
       }
     }
   }

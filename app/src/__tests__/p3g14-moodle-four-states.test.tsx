@@ -69,3 +69,29 @@ it('p3g14 reports the offline state without taking the content away', async () =
   expect(within(view.getByTestId('moodle-offline')).getByText('You are offline')).toBeTruthy();
   expect(view.getByTestId('moodle-section-content')).toBeTruthy();
 });
+
+it('shows loading rather than empty courses during the first course scan', async () => {
+  const view = await renderApp(<MoodleWorkspaceScreen {...props} snapshot={{ ...base,
+    phase: 'loading-courses', data: { generation: 1, courses: [], states: [], events: [] } }} />);
+  expect(view.getByTestId('moodle-courses-loading')).toBeTruthy();
+  expect(view.queryByTestId('moodle-empty-courses')).toBeNull();
+});
+
+it('offers login recovery instead of another sync for an expired session', async () => {
+  const onLogin = jest.fn(), onSync = jest.fn();
+  const view = await renderApp(<MoodleWorkspaceScreen {...props} onLogin={onLogin} onSync={onSync}
+    maintenance snapshot={{ ...base, phase: 'error', failure: 'expired' }} />);
+  const notice = within(view.getByTestId('moodle-failure'));
+  expect(notice.getByText('failure expired')).toBeTruthy();
+  await fireEvent.press(notice.getByText('Login'));
+  expect(onLogin).toHaveBeenCalledTimes(1);
+  expect(onSync).not.toHaveBeenCalled();
+});
+
+it('shows an actionable empty result when Moodle returns no course candidates', async () => {
+  const view = await renderApp(<MoodleWorkspaceScreen {...props} snapshot={{ ...base,
+    phase: 'choosing', candidates: [], selectedIds: [],
+    data: { generation: 1, courses: [], states: [], events: [] } }} />);
+  expect(view.getByTestId('moodle-empty-candidates')).toBeTruthy();
+  expect(view.queryByTestId('moodle-confirm-selection')).toBeNull();
+});

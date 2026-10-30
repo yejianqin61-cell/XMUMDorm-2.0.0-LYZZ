@@ -38,6 +38,7 @@ import { authorizeMoodleDetail, buildMoodleDetailReadScript, parseMoodleDetailMe
   type MoodleDetailRequest, type MoodleDetailResult } from './moodle/detail';
 
 export type SchoolSystemWebViewHandle = {
+  reload?: () => void;
   readSchedule: () => void;
   probeSession: () => void;
   readMoodle: (request: MoodleReadRequest) => string | null;
@@ -53,6 +54,7 @@ export type SchoolSystemWebViewProps = {
   onMoodleResponse?: (response: MoodleBridgeResult, generation: number) => void;
   onMoodleIdentity?: (identity: MoodleIdentityResult) => void;
   onMoodleDetail?: (detail: MoodleDetailResult, generation: number) => void;
+  onMoodleLoadFailureChange?: (failed: boolean) => void;
   /** Opt-in workspace mode; only a fresh confirmed identity can preserve on close. */
   preserveSnapshotOnClose?: boolean;
   onSessionProbe?: (probe: { hasPasswordField: boolean }) => void;
@@ -127,6 +129,7 @@ export const SchoolSystemWebView = React.forwardRef<SchoolSystemWebViewHandle, S
     }, [system.id, invalidateMoodleData]);
 
     React.useImperativeHandle(ref, () => ({
+      reload: () => webRef.current?.reload(),
       readSchedule: () => { webRef.current?.injectJavaScript(scrapeScript); },
       probeSession: () => { webRef.current?.injectJavaScript(probeScript); },
       probeMoodleIdentity: probeIdentity,
@@ -257,10 +260,13 @@ export const SchoolSystemWebView = React.forwardRef<SchoolSystemWebViewHandle, S
         sharedCookiesEnabled cacheEnabled thirdPartyCookiesEnabled domStorageEnabled javaScriptEnabled
         applicationNameForUserAgent="XMUMDorm/1.0" injectedJavaScriptBeforeContentLoaded={insetScript}
         injectedJavaScript={probeScript} onMessage={handleMessage} onLoadStart={() => {
+          if (system.id === 'moodle') callbacks.current.onMoodleLoadFailureChange?.(false);
           currentUrl.current = null;
           if (system.id === 'moodle' && preserveSnapshotOnClose && initialPage.current) {
             cancelMoodleReads(); identity.current = null; prepareMoodlePage();
           } else invalidateMoodleData();
+        }} onError={() => {
+          if (system.id === 'moodle') callbacks.current.onMoodleLoadFailureChange?.(true);
         }} onLoadEnd={handleLoadEnd} onNavigationStateChange={handleNavigation}
         allowsBackForwardNavigationGestures={false} />
     </View>;

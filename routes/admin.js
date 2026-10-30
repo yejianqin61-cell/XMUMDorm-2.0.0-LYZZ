@@ -1237,15 +1237,15 @@ const CONTENT_MODULES = {
     label: '课程点评',
     table: 'course_reviews',
     idField: 'id',
-    titleField: 'cr.title AS title',
-    contentField: 'cr.content',
+    titleField: 'cr.course_name AS title',
+    contentField: 'cr.comment',
     userField: 'cr.created_by',
     timeField: 'cr.created_at',
     deletedField: 'cr.deleted_at',
     hiddenField: null,
-    searchFields: ['cr.title', 'cr.content'],
+    searchFields: ['cr.course_name', 'cr.teacher', 'cr.comment'],
     joinUser: true,
-    listFields: 'cr.id, cr.title, u.username, cr.created_at, cr.deleted_at',
+    listFields: 'cr.id, cr.course_name AS title, cr.teacher, cr.rating, cr.difficulty, u.username, cr.created_at, cr.deleted_at',
     listOrder: 'cr.created_at DESC',
     tableAlias: 'cr',
     hasComments: true,
@@ -1274,7 +1274,9 @@ router.get('/contents/:module', async (req, res) => {
     let where = 'WHERE 1=1';
     const params = [];
 
-    if (mod.deletedField) {
+    // 软删模块默认只看未删除记录；includeDeleted=1 用于管理端找回并恢复已删除内容。
+    const includeDeleted = req.query.includeDeleted === '1' || req.query.includeDeleted === 'true';
+    if (mod.deletedField && !includeDeleted) {
       where += ` AND ${mod.deletedField} IS NULL`;
     }
     if (mod.hiddenField) {
@@ -1384,13 +1386,18 @@ router.patch('/contents/:module/:id/toggle-visibility', async (req, res) => {
       return res.status(400).json({ status: -1, message: '该模块不支持隐藏/恢复操作，请使用删除' });
     }
 
-    if (mod.hiddenField) {
-      await query(`UPDATE ${mod.table} SET ${mod.hiddenField} = ? WHERE ${mod.idField} = ?`, [hidden ? 1 : 0, contentId]);
-    } else if (mod.deletedField) {
+    // UPDATE 语句里没有表别名，列名必须去掉配置中的 `alias.` 前缀。
+    const idColumn = mod.idField.split('.').pop();
+    const hiddenColumn = mod.hiddenField ? mod.hiddenField.split('.').pop() : null;
+    const deletedColumn = mod.deletedField ? mod.deletedField.split('.').pop() : null;
+
+    if (hiddenColumn) {
+      await query(`UPDATE ${mod.table} SET ${hiddenColumn} = ? WHERE ${idColumn} = ?`, [hidden ? 1 : 0, contentId]);
+    } else if (deletedColumn) {
       if (hidden) {
-        await query(`UPDATE ${mod.table} SET ${mod.deletedField} = NOW() WHERE ${mod.idField} = ?`, [contentId]);
+        await query(`UPDATE ${mod.table} SET ${deletedColumn} = NOW() WHERE ${idColumn} = ?`, [contentId]);
       } else {
-        await query(`UPDATE ${mod.table} SET ${mod.deletedField} = NULL WHERE ${mod.idField} = ?`, [contentId]);
+        await query(`UPDATE ${mod.table} SET ${deletedColumn} = NULL WHERE ${idColumn} = ?`, [contentId]);
       }
     }
 
@@ -1419,10 +1426,12 @@ router.delete('/contents/:module/:id', async (req, res) => {
     const contentId = parseInt(req.params.id, 10);
     const adminId = req.user.id;
 
+    const idColumn = mod.idField.split('.').pop();
     if (mod.deletedField) {
-      await query(`UPDATE ${mod.table} SET ${mod.deletedField} = NOW() WHERE ${mod.idField} = ?`, [contentId]);
+      const deletedColumn = mod.deletedField.split('.').pop();
+      await query(`UPDATE ${mod.table} SET ${deletedColumn} = NOW() WHERE ${idColumn} = ?`, [contentId]);
     } else {
-      await query(`DELETE FROM ${mod.table} WHERE ${mod.idField} = ?`, [contentId]);
+      await query(`DELETE FROM ${mod.table} WHERE ${idColumn} = ?`, [contentId]);
     }
 
     logAudit({

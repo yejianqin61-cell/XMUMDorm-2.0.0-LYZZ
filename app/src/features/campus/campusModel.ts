@@ -63,10 +63,11 @@ export function asWall(value: unknown): Post {
     id: row.id,
     content: row.content,
     template_key: row.template_key,
+    created_at: row.created_at,
     liked: row.liked,
     like_count: row.like_count,
     comment_count: row.comment_count,
-    is_mine: (value as { viewer_is_author?: unknown } | null)?.viewer_is_author === 1 ? true : undefined,
+    is_mine: (value as { viewer_is_author?: unknown } | null)?.viewer_is_author === true ? true : undefined,
   };
 }
 

@@ -135,7 +135,7 @@ beforeEach(async () => {
   }
   api.users.getMe.mockResolvedValue(PROFILE);
   api.todos.getTodayTodos.mockResolvedValue({ total: 4, completed: 1, active: 3, topItems: [{ id: 9, title: '交作业' }] });
-  api.schedule.getScheduleWeek.mockResolvedValue(WEEK_PAYLOAD);
+  api.schedule.getScheduleWeek.mockImplementation(async (week: number) => ({ ...WEEK_PAYLOAD, week }));
   api.notifications.getUnreadSummary.mockResolvedValue({ total: 2, byType: {}, byModule: {}, byCategory: {} });
   await clearToken();
   unreadStore.reset();
