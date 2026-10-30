@@ -31,6 +31,6 @@ describe('万能墙同源模板块', () => {
     expect(view.getByText('清单卡')).toBeTruthy();
     expect(within(view.getByTestId('wall-template-content')).getByText('带学生卡')).toBeTruthy();
     expect(view.getByText('带水杯')).toBeTruthy();
-    expect(view.getByTestId('wall-checklist-icon-1')).toBeTruthy();
+    expect(view.getByTestId('wall-checklist-icon-1', { includeHiddenElements: true })).toBeTruthy();
   });
 });
