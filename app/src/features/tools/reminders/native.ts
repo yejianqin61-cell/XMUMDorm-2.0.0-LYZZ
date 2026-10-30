@@ -65,23 +65,29 @@ export async function clearReminderOwner(previousOwner: string): Promise<void> {
   await scheduler.clearOwner(previousOwner);
 }
 
+let classRefreshRevision = 0;
 export async function refreshClassReminders(labels: ReminderLabels): Promise<ReminderScheduleResult | null> {
+  const revision = ++classRefreshRevision;
+  const identity = timetableIdentity();
   const current = owner();
   if (!current) return null;
   const semester = resolveSemesterContext().semester as ReminderSemester | null;
   if (!semester) {
     return scheduler.replaceDomain(current, 'class', [], labels);
   }
-  const epoch = timetableIdentity().epoch;
-  const plan = await loadSemesterClassReminderPlan({
-    semester,
-    now: new Date(),
-    loadWeek: getScheduleWeek,
-    isCurrent: () => timetableIdentity().epoch === epoch && owner() === current,
-  });
-  return scheduler.replaceDomain(current, 'class', plan, labels);
+  const isCurrent = () => classRefreshRevision === revision
+    && timetableIdentity().epoch === identity.epoch && timetableIdentity().scope === identity.scope;
+  try {
+    const plan = await loadSemesterClassReminderPlan({ semester, now: new Date(), loadWeek: getScheduleWeek, isCurrent });
+    if (!isCurrent()) return { status: 'stale', scheduled: [], deferred: 0 };
+    return scheduler.replaceDomain(current, 'class', plan, labels);
+  } catch (error) {
+    if (!isCurrent()) return { status: 'stale', scheduled: [], deferred: 0 };
+    throw error;
+  }
 }
 
 export function invalidateReminderSession(): void {
+  classRefreshRevision += 1;
   scheduler.invalidateSession();
 }
