@@ -12,7 +12,6 @@ import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { InlineNotice } from '@/components/ui/InlineNotice';
-import { ListItem } from '@/components/ui/ListItem';
 import { ListScreen, useListPagination } from '@/components/ui/ListScreen';
 import { useTheme } from '@/design-system/theme';
 import { useSession } from '@/features/auth/session';
@@ -20,7 +19,7 @@ import { useI18n } from '@/i18n';
 import { getQueryClient } from '@/shared/queryClient';
 import { QK } from '../../../../shared/query/queryKeys';
 import { getConfessionWindow } from '../../../../shared/api/confessions';
-import { wallTemplateLabel } from './wallTemplates';
+import { WallPostRow } from './WallPostRow';
 import { asWall, errorFor, type Post } from './campusModel';
 
 /** 万能墙一屏一篇的窗口大小（后端 limit 1–10） */
@@ -246,12 +245,9 @@ function WallFeedSession({ testID, identity }: { testID: string; identity: strin
         },
       }}
       renderItem={(row) => (
-        <ListItem
-          testID={`campus-row-${row.id}`}
-          title={wallTemplateLabel(t, row.template_key)}
-          subtitle={row.content}
-          meta={t('screen.campus.read.anonymous')}
-          onPress={() => router.push(`/campus/wall/${row.id}` as never)}
+        <WallPostRow
+          post={row}
+          onOpen={() => router.push(`/campus/wall/${row.id}` as never)}
         />
       )}
     />

@@ -63,6 +63,7 @@ export function asWall(value: unknown): Post {
     id: row.id,
     content: row.content,
     template_key: row.template_key,
+    created_at: row.created_at,
     liked: row.liked,
     like_count: row.like_count,
     comment_count: row.comment_count,

@@ -43,7 +43,7 @@ import { WallFeed, type WallFeedSnapshot } from './WallFeed';
 import { TreeholePostDetail } from './TreeholePostDetail';
 import type { TreeholeImageSaveOptions } from './TreeholeImageSaveControls';
 import { toTreeholePostViewModel } from './treeholePostViewModel';
-import { WallTemplateContent } from './wallTemplates';
+import { WallTemplateBody } from './wallTemplates';
 import { useCampusActions } from './useCampusActions';
 import type { CampusReportReason } from './useCampusReport';
 
@@ -499,7 +499,7 @@ export function CampusDetailScreen({
               anonymous={kind === 'wall'}
               wallContent={
                 kind === 'wall' ? (
-                  <WallTemplateContent templateKey={post?.template_key} content={vm.content} />
+                  <WallTemplateBody templateKey={post?.template_key} content={vm.content} />
                 ) : undefined
               }
               likeNotice={likeNotice}
