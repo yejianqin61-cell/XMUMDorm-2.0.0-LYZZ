@@ -86,11 +86,14 @@ describe('P2X Treehole 视觉层契约（令牌组件层）', () => {
 
   it('万能墙继续走匿名投影与独立列表，不接实名帖子部件', () => {
     const wall = read('src', 'features', 'campus', 'WallFeed.tsx');
-    expect(wall).toContain('ListItem');
-    expect(wall).toContain('wallTemplateLabel');
+    expect(wall).toContain('WallPostRow');
+    const wallRow = read('src', 'features', 'campus', 'WallPostRow.tsx');
+    expect(wallRow).toContain('WallTemplateBody');
+    expect(wallRow).toContain("t('screen.campus.read.anonymous')");
+    expect(wallRow.includes('TreeholePostRow')).toBe(false);
     expect(wall.includes('TreeholePostRow')).toBe(false);
     const screens = read('src', 'features', 'campus', 'CampusScreens.tsx');
-    expect(screens).toContain('WallTemplateContent');
+    expect(screens).toContain('WallTemplateBody');
     expect(screens).toContain('anonymous={kind === \'wall\'}');
   });
 
