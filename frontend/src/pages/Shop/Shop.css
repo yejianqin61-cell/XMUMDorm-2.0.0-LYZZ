@@ -53,13 +53,3 @@
 .shop-coupon-entry { border-top:1px solid var(--color-border-default); margin:20px 0; padding-top:16px; }
 .shop-order-amounts { padding:12px 0; }
 .shop-order-amounts .shop-line { display:flex; justify-content:space-between; gap:16px; }
-
-/* 网站端：商家入驻面板与备案表单 */
-.shop-merchant-panel{margin-top:28px;display:grid;gap:12px}
-.shop-merchant-panel h2{margin:0}
-.shop-merchant-cta{display:inline-flex;align-items:center;min-height:44px;font-weight:600}
-.shop-merchant-status{display:grid;gap:10px}
-.shop-merchant-form{display:grid;gap:16px;max-width:720px;margin-top:12px}
-.shop-merchant-form h2{margin-top:8px}
-.shop-merchant-form textarea{width:100%;padding:12px 14px;border:1px solid var(--color-border-default);border-radius:12px;background:var(--color-surface-raised);color:var(--color-text-primary);font:inherit;resize:vertical}
-.shop-merchant-form textarea:focus{outline:2px solid var(--color-brand-text);outline-offset:1px}

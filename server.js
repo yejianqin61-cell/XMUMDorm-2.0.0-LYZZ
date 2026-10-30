@@ -176,7 +176,6 @@ app.use('/api/organizations', organizationsRoutes);
 app.use('/api/square', squareRoutes);
 app.use('/api/todos', todosRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/admin/shop-applications', require('./routes/shopMerchantApplications'));
 app.use('/api/reports', reportRoutes);
 app.use('/api/advertisements', advertisementRoutes);
 app.use('/api/confessions', confessionRoutes);
