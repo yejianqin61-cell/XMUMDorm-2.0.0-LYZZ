@@ -32,6 +32,14 @@ import { ToastHost, ToastProvider } from '@/components/ui/Toast';
 import { SessionProvider } from '@/features/auth/session';
 import { SessionGate } from '@/features/auth/SessionGate';
 import { ReminderRuntimeHost } from '@/features/tools/reminders/ReminderRuntimeHost';
+import { SplashRelease, holdSplashScreen } from '@/features/launch/splash';
+
+/**
+ * 阶段5-03：**先按住原生启动画面**，等首帧提交后由 `<SplashRelease />` 收起。
+ * ⚠️ 官方要求 `preventAutoHideAsync()` 放模块顶层（放组件里可能太晚，启动画面已自动收起）；
+ *    同一条规则见 `features/launch/splash.ts` 的注释。
+ */
+holdSplashScreen();
 
 /**
  * P1-01：把后端地址与 token 来源交给 `shared/` 的请求层。
@@ -114,6 +122,8 @@ export default function RootLayout(): React.ReactElement {
                   {/* 会话（P1-13）：注入同步 token 读取器 + 冷启动水合；页面用 useSession() */}
                   <SessionProvider>
                     <ThemedShell>
+                      {/* 阶段5-03：首帧提交后收起原生启动画面（减少动态效果时不淡出） */}
+                      <SplashRelease />
                       {/*
                         顶栏由我们自己的 TopBar 提供（标题 + 唯一动作），故 Stack 默认不显示原生 header。
                         ⚠️ 详情页的顶栏仍应交给原生导航栏（宪法 4.3）—— 那属于 Phase 2 的逐页口径。
