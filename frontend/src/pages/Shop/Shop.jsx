@@ -11,6 +11,7 @@ import { categories, statuses, money, localized } from './shopLabels';
 import './Shop.css';
 import ShopAdmin from './ShopAdmin';
 import ShopDirectory from './ShopDirectory';
+import ShopMerchantApply from './ShopMerchantApply';
 import PaymentPanel from './ShopPayment';
 import ShopOrderSuccess from './ShopOrderSuccess';
 import ShopCartFlight from './ShopCartFlight';
@@ -41,6 +42,7 @@ export default function ShopRouter() {
  const slug=location.pathname.match(/^\/shop\/store\/([a-z0-9-]+)/)?.[1];
  if(location.pathname==='/myzone/admin/shop') return <ShopManageRedirect />;
  if(location.pathname==='/shop') return <ShopDirectory />;
+ if(location.pathname==='/shop/merchant-apply') return <ShopMerchantApply />;
  if(location.pathname==='/shop/manage') return <ShopManageRedirect />;
  if(slug && location.pathname.endsWith('/manage')) return <ShopAdmin key={slug} slug={slug} />;
  return <Shop key={slug||'water-home'} slug={slug} />;

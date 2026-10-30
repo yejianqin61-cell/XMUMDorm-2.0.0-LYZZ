@@ -7,6 +7,7 @@ import { useLanguage } from '../../context/LanguageContextState';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { localized } from './shopLabels';
+import ShopMerchantEntry from './ShopMerchantEntry';
 import './Shop.css';
 
 const empty = { slug:'', name_zh:'', name_en:'' };
@@ -41,6 +42,7 @@ export default function ShopDirectory() {
   return <section className="shop-page">
     <h1>{t('订水 / 超市','Water & groceries')}</h1>
     <p>{t('每家商户独立管理商品、订单和配送。','Each merchant manages its own products, orders and delivery.')}</p>
+    {searchParams.get('merchantApplication') === 'sent' && <p role="status">{t('备案已提交，管理员审核通过后店铺会出现在这里。','Application submitted. Your store appears here once an admin approves it.')}</p>}
     {stores.error && <p role="alert">{stores.error.message}</p>}
     {stores.isLoading && <p>{t('加载中…','Loading…')}</p>}
     {stores.data?.length===0 && <p>{t('暂无店铺。商家登录后点击「创建我的店铺」即可开店。','No stores yet. Sign in as a merchant to create your store.')}</p>}
@@ -85,5 +87,6 @@ export default function ShopDirectory() {
         <Button type="submit" loading={create.isPending}>{t('创建并进入管理','Create and manage')}</Button>
       </form>}
     </>}
+    <ShopMerchantEntry />
   </section>;
 }
