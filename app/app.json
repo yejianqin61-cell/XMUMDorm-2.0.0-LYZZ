@@ -30,6 +30,15 @@
       "@react-native-community/datetimepicker",
       "expo-sharing",
       [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow photo access when required by the system",
+          "savePhotosPermission": "Allow saving the current treehole image to Photos",
+          "isAccessMediaLocationEnabled": false,
+          "granularPermissions": []
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#f7f8fa",
