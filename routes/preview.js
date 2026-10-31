@@ -1,5 +1,5 @@
 /**
- * 只读本地预览接口。只允许已登记协作者读取固定的课程资料与已发布指南。
+ * 只读本地预览接口。只允许已登记协作者读取已发布指南。
  */
 
 const express = require('express');
@@ -38,36 +38,6 @@ router.use(previewLimiter);
 
 router.get('/health', (req, res) => {
   res.json({ status: 0, data: { clientId: req.previewClientId } });
-});
-
-router.get('/materials/courses', async (req, res, next) => {
-  try {
-    const courses = await gateway.listCourses({ q: req.query.q, limit: req.query.limit });
-    res.json({ status: 0, data: { courses } });
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.get('/materials', async (req, res, next) => {
-  try {
-    const items = await gateway.listMaterials({
-      q: req.query.q,
-      // Keep the public Materials API's query name so the Web client can use
-      // its existing call shape without a broad /api proxy.
-      courseId: req.query.courseId || req.query.course,
-      type: req.query.type,
-      examNode: req.query.examNode,
-      lesson: req.query.lesson,
-      kind: req.query.kind,
-      sort: req.query.sort,
-      page: req.query.page,
-      pageSize: req.query.pageSize,
-    });
-    res.json({ status: 0, data: items });
-  } catch (error) {
-    next(error);
-  }
 });
 
 router.get('/handbook/export', async (req, res) => {
