@@ -15,6 +15,9 @@ const config = { save, messages };
 type View = Awaited<ReturnType<typeof renderApp>>;
 const next = (view: View) => fireEvent(view.getByTestId('treehole-media-drag-area'),
   'accessibilityAction', { nativeEvent: { actionName: 'increment' } });
+// 2026-10-31：详情不循环，末张再"下一张"不换图 —— 回上一张必须用 decrement
+const prev = (view: View) => fireEvent(view.getByTestId('treehole-media-drag-area'),
+  'accessibilityAction', { nativeEvent: { actionName: 'decrement' } });
 const source = (view: View, url: string) => waitFor(() =>
   expect(JSON.stringify(view.getByTestId('treehole-media-detail-image').props.source)).toContain(url));
 
@@ -80,7 +83,7 @@ it('A保存迟到失败不覆盖B已保存，返回A也不显示旧回执', asyn
   await waitFor(() => expect(view.getByTestId('treehole-save-detail-notice')).toHaveTextContent(messages.saved));
   await act(async () => finishA({ status: 'failed', reason: 'write' }));
   expect(view.getByTestId('treehole-save-detail-notice')).toHaveTextContent(messages.saved);
-  await next(view); await source(view, urls[0]);
+  await prev(view); await source(view, urls[0]);
   expect(view.queryByTestId('treehole-save-detail-notice')).toBeNull();
 });
 
@@ -90,7 +93,7 @@ it('A到B到A时旧A保存成功不冒充新A操作的结果', async () => {
   const view = await renderApp(<TreeholeMedia postId={7} urls={urls} mode="detail" imageSave={config} />);
   await fireEvent.press(view.getByTestId('treehole-save-detail'));
   await next(view); await source(view, urls[1]);
-  await next(view); await source(view, urls[0]);
+  await prev(view); await source(view, urls[0]);
   await act(async () => finish({ status: 'saved' }));
   expect(view.queryByTestId('treehole-save-detail-notice')).toBeNull();
   await fireEvent.press(view.getByTestId('treehole-save-detail'));

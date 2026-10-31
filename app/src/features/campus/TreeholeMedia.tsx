@@ -1,22 +1,33 @@
 /* eslint-disable react-hooks/immutability -- Reanimated shared values intentionally mutate outside React state. */
 /**
  * 树洞媒体：信息流是**无衬底的静态图组**（图本身圆角、cover 填满、无灰边）；
- * 详情复用叠卡、切图与预览。
+ * 详情是**标准横向 swiper**（一页一张、不循环、首尾弹簧回弹），点图进全屏看图器。
  *
  * 两套画幅是**故意分开**的：信息流按图组规则（单图 75% / 双图各半 / 三图方格），
- * 详情固定 16:9 叠卡（`TREEHOLE_DETAIL_ASPECT`）。
+ * 详情按**首图原始比例**定高（上限宽:高 = 9:16，超长图 cover 裁切），全屏看图器
+ * 用 `contain` 看完整图。
+ *
+ * ⛔ 详情不再有"叠卡"：叠卡会让第 2 张从下方顶上来（所有者 2026-10-31 验收失败截图），
+ * 与"横向滑入"是两种语义。切图只做水平位移。
  */
 
 import * as React from 'react';
-import { Modal, PanResponder, Pressable, View, type LayoutChangeEvent } from 'react-native';
+import {
+  Modal,
+  PanResponder,
+  Pressable,
+  View,
+  useWindowDimensions,
+  type LayoutChangeEvent,
+} from 'react-native';
 import { Image } from 'expo-image';
 import Animated, {
   Easing,
-  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
   withTiming,
+  type SharedValue,
 } from 'react-native-reanimated';
 import X from 'lucide-react-native/icons/x';
 
@@ -34,41 +45,44 @@ import { getUploadUrl } from '../../../../shared/api/config';
 
 export type TreeholeMediaMode = 'feed' | 'detail';
 
-/** 详情叠卡最多同时渲染几张（前卡 + 两张后卡） */
-export const TREEHOLE_DECK_MAX_LAYERS = 3;
-
-/** 叠卡层数（纯函数）：1 张图没有后卡，2 张图只叠一层，3 张及以上叠满三层 */
-export function treeholeDeckLayers(count: number): number {
-  if (count <= 0) return 0;
-  return Math.min(TREEHOLE_DECK_MAX_LAYERS, count);
-}
-
+/** 切页动画时长（只做水平位移，不做缩放/旋转/淡出） */
+const PAGE_MS = 220;
 /**
- * 后卡的景深参数：第二层缩放 0.95、右上偏移 12 / 6、逆时针 1.5°；
- * 第三层 0.89、24 / 12、3°。切图时这些值线性收敛到 0（后卡上浮成前卡）。
+ * 首尾继续拖拽的阻尼系数：只跟 30% 的位移。
+ * 松手后 `withSpring` 回弹 —— 这就是"到边了，但手感还有弹性"，而不是换页或硬停。
  */
-const DECK_SECOND = { scale: 0.95, x: 12, y: -6, rotate: -1.5 } as const;
-const DECK_THIRD = { scale: 0.89, x: 24, y: -12, rotate: -3 } as const;
-/** 前卡飞出的距离（占卡片宽度比例）、上移量与旋转上限 */
-const FLY_RATIO = 0.5;
-const FLY_UP = 40;
-const FLY_ROTATE_DIVISOR = 14;
-/** 后卡露边需要的顶部/右侧留白（不让叠层压到标题或右边界） */
-const DECK_TOP_PADDING = 16;
-const DECK_RIGHT_PADDING = 6;
-/**
- * 前卡飞出 / 后卡上浮：**带过冲的缓动**（`Easing.back`）而不是线性 timing ——
- * 后卡会先冲过落点一点点再回来，这就是"弹性"的观感。
- *
- * ⚠️ 为什么不用 `withSpring` 承担整段位移（2026-10-18 实测）：
- *   ① `damping:18 / stiffness:260` 要 ~0.7s 才 finished，期间"后卡已经顶到前层、计数还是旧值"；
- *   ② 更关键的是 **Jest 里 spring 的完成回调不触发**，换图永远提交不了 —— 动画实现不能只靠
- *   真机才能跑通的那条路径。回弹（拖拽松手）仍走 `withSpring`，它不依赖完成回调。
- */
-const FLY_MS = 260;
-const FLY_EASING = Easing.out(Easing.back(1.3));
+const EDGE_RESISTANCE = 0.3;
+const EDGE_SPRING = { damping: 18, stiffness: 260, mass: 0.8 };
+
 /** 拖拽未过阈值时的回弹：阻尼比 ≈0.65，松手后会先冲过一点再回来（弹性） */
 const SNAP_SPRING = { damping: 12, stiffness: 220, mass: 0.7 };
+
+/** 全屏看图器下滑关闭阈值 */
+const DISMISS_DISTANCE = 120;
+const DISMISS_VELOCITY = 1.1;
+
+/**
+ * 详情轮播比例（宽/高）的**下限**：9:16。
+ * 超过这个比例的超长图（长截图 / 超长漫画）在详情页里按 9:16 cover 裁上下，
+ * 点进全屏看图器可看完整图。
+ */
+export const TREEHOLE_DETAIL_MIN_ASPECT = 9 / 16;
+/** 首图尺寸还没回来时的占位比例（宽/高 = 4:3，横竖图都不会太离谱） */
+export const TREEHOLE_DETAIL_FALLBACK_ASPECT = 4 / 3;
+
+/** 详情首图比例（纯函数）：按原图宽高比，夹到不小于 9:16；拿不到尺寸时用 4:3。 */
+export function treeholeDetailAspect(naturalWidth?: number, naturalHeight?: number): number {
+  if (!naturalWidth || !naturalHeight || naturalWidth <= 0 || naturalHeight <= 0) {
+    return TREEHOLE_DETAIL_FALLBACK_ASPECT;
+  }
+  return Math.max(naturalWidth / naturalHeight, TREEHOLE_DETAIL_MIN_ASPECT);
+}
+
+/** 详情轮播高度（纯函数）：宽度 ÷ 首图比例（比例已夹到 ≥9:16）。 */
+export function treeholeDetailHeight(width: number, aspect: number): number {
+  if (width <= 0 || aspect <= 0) return 0;
+  return Math.round(width / aspect);
+}
 
 /** 详情切图阈值（纯函数）：位移 ≥60 或水平速度 ≥700 才换图 */
 export function resolveTreeholeSwipe(dx: number, velocityX = 0): 'next' | 'previous' | null {
@@ -77,13 +91,24 @@ export function resolveTreeholeSwipe(dx: number, velocityX = 0): 'next' | 'previ
   return null;
 }
 
+/**
+ * 页码边界（纯函数）：**不循环**。首张再往前 / 末张再往后都停在原地，
+ * 由手势层负责弹簧回弹（`resolveTreeholeSwipe` 仍会返回方向，这里把它钳住）。
+ */
+export function resolveTreeholePage(
+  index: number,
+  count: number,
+  direction: 'next' | 'previous'
+): number {
+  if (count <= 0) return 0;
+  const target = direction === 'next' ? index + 1 : index - 1;
+  return Math.min(count - 1, Math.max(0, target));
+}
+
 /** 帖子 ID 或图片序列变化时的重置键 */
 export function treeholeMediaKey(postId: number, urls: readonly string[]): string {
   return JSON.stringify([postId, urls]);
 }
-
-/** 详情画幅：16:9（叠卡需要足够大的画面；信息流不用这个比例，见 `treeholeFeedAspect`）。 */
-export const TREEHOLE_DETAIL_ASPECT = 16 / 9;
 
 /**
  * 信息流媒体规则（所有者 2026-10-30 指令，**取代** 2026-10-18 的「灰底画框 + contain」）：
@@ -345,231 +370,255 @@ function TreeholeFeedImage({
 }
 
 /**
- * 详情：**16:9 画幅的叠卡**（前卡 + 后卡若干层）+ **只用手势切图** + 预览。
+ * 详情：**标准横向 swiper**（一页一张、不循环、首尾弹簧回弹）+ 全屏看图器。
  *
- * 动画模型（一套共享值驱动三层，避免"每层各写一套动画"）：
- *   - `dragX / dragY`：手指拖动量（只作用于前卡，后卡不动）；
- *   - `exit` 0→1：切图进度。前卡沿方向飞出并淡出；第二层收敛到 0（变成前卡），
- *     第三层收敛到第二层的位置。`exit = 1` 时后卡已经就位，此时换 index 并清零共享值，
- *     画面**在数学上连续**（旧第二层在 exit=1 的样子 = 新前卡在 exit=0 的样子）。
- *   - 释放未过阈值 → 弹簧回中（有回弹）；过阈值 → 弹簧飞出（不是线性 timing），
- *     这就是所有者要的"弹性动效"。
+ * 为什么不再叠卡（所有者 2026-10-31 验收截图）：叠卡的后卡从**下方**顶上来，
+ * 第 2 张看起来是"上下错开叠放"，与"横向滑入"是两种语义。这里改成一条横向轨道：
+ *   - 所有页一次挂载（图片预加载，切换不重挂 → 不闪）；
+ *   - 拖动只改 `translateX`，松手后整页滑到目标位；
+ *   - 首/末页继续拖只跟 30% 位移，松手 `withSpring` 回弹，⛔ 不循环；
+ *   - 页高由**首图**比例决定（上限宽:高 9:16），后续图 `cover` 填满同一框，高度不跳。
+ *
+ * 全屏看图器同一套横向逻辑 + 下滑关闭（只有竖向位移才关闭，横向位移只翻页）。
  */
-function TreeholeDetailMedia({ urls, imageSave }: {
+type PageStatus = 'loading' | 'loaded' | 'failed';
+
+type PagerPanOptions = {
+  count: number;
+  width: number;
+  /** 当前页（渲染期值；换页后组件重渲染，手势层跟着拿到新值） */
+  index: number;
+  translateX: SharedValue<number>;
+  /** 手势判定要换页时调用；调用方负责提交页码并播放位移动画 */
+  onSelect: (index: number) => void;
+  reduceMotion: boolean;
+  /** 传入即启用竖向手势（仅全屏看图器）：下滑关闭 */
+  dismiss?: { translateY: SharedValue<number>; onDismiss: () => void };
+};
+
+/**
+ * 横向 swiper 的手势层（详情轮播与全屏看图器共用）。
+ *
+ * 三条约束：
+ *   1. **轴锁**：一次手势只认一个方向 —— 横向翻页、竖向关闭，互不抢；
+ *   2. **边界阻尼**：首/末页继续拖只跟 30%，松手弹簧回弹（不换页、不循环）；
+ *   3. 未过阈值只回弹，不承担"换页动画"（换页由 `onSelect` 统一播）。
+ */
+function usePagerPan({
+  count,
+  width,
+  index,
+  translateX,
+  onSelect,
+  reduceMotion,
+  dismiss,
+}: PagerPanOptions): ReturnType<typeof PanResponder.create>['panHandlers'] {
+  return React.useMemo(() => {
+    /** 本手势实例的轴锁（只活在 create 的闭包里，不进 React state、不用 ref） */
+    let axis: 'horizontal' | 'vertical' | null = null;
+    /** 在 shouldClaim 时确定方向：grant 时 PanResponder 会把 dx/dy 清零，不能在那里判断 */
+    let claimedAxis: 'horizontal' | 'vertical' | null = null;
+    /**
+     * ⚠️ 必须同时挂 **capture** 版本（2026-10-31）：
+     *   图区里的 `Pressable` 会在触摸开始时成为 responder，此时祖先的
+     *   `onMoveShouldSetResponder`（冒泡）不会再被询问，只有 capture 会被问；
+     *   只写冒泡版 = 在图片上滑不动（只能从图外的空隙滑）。
+     */
+    const shouldClaim = (gesture: { dx: number; dy: number }): boolean => {
+      const horizontal = Math.abs(gesture.dx) > Math.abs(gesture.dy);
+      const claim = horizontal
+        ? count > 1 && Math.abs(gesture.dx) > 12
+        : dismiss !== undefined && gesture.dy > 8;
+      if (claim) claimedAxis = horizontal ? 'horizontal' : 'vertical';
+      return claim;
+    };
+    return PanResponder.create({
+        onStartShouldSetPanResponder: () => false,
+        onMoveShouldSetPanResponder: (_, gesture) => shouldClaim(gesture),
+        onMoveShouldSetPanResponderCapture: (_, gesture) => shouldClaim(gesture),
+        onPanResponderGrant: () => {
+          axis = claimedAxis;
+        },
+        onPanResponderMove: (_, gesture) => {
+          if (axis === 'vertical') {
+            if (dismiss) dismiss.translateY.value = Math.max(0, gesture.dy);
+            return;
+          }
+          if (count <= 1 || width <= 0) return;
+          const base = -index * width;
+          const min = -(count - 1) * width;
+          let next = base + gesture.dx;
+          // 首尾阻尼：只跟 30%，松手回弹（⛔ 不循环到另一端）
+          if (next > 0) next *= EDGE_RESISTANCE;
+          else if (next < min) next = min + (next - min) * EDGE_RESISTANCE;
+          translateX.value = next;
+        },
+        onPanResponderRelease: (_, gesture) => {
+          if (axis === 'vertical') {
+            if (!dismiss) return;
+            if (gesture.dy > DISMISS_DISTANCE || gesture.vy > DISMISS_VELOCITY) {
+              dismiss.onDismiss();
+              return;
+            }
+            dismiss.translateY.value = reduceMotion ? 0 : withSpring(0, SNAP_SPRING);
+            return;
+          }
+          if (count <= 1 || width <= 0) return;
+          const direction = resolveTreeholeSwipe(gesture.dx, gesture.vx * 1000);
+          const target =
+            direction === null ? index : resolveTreeholePage(index, count, direction);
+          if (target !== index) {
+            // 换页：由调用方提交页码并播放整页位移（这里不重复做动画）
+            onSelect(target);
+            return;
+          }
+          // 未过阈值 / 已经到边：弹簧回中（有回弹手感，画面不切）
+          const destination = -index * width;
+          translateX.value = reduceMotion
+            ? destination
+            : withSpring(destination, EDGE_SPRING);
+        },
+        onPanResponderTerminate: () => {
+          if (axis === 'vertical' && dismiss) {
+            dismiss.translateY.value = reduceMotion ? 0 : withSpring(0, SNAP_SPRING);
+            return;
+          }
+          if (width > 0) {
+            const destination = -index * width;
+            translateX.value = reduceMotion
+              ? destination
+              : withSpring(destination, SNAP_SPRING);
+          }
+        },
+      }).panHandlers;
+  }, [count, dismiss, index, onSelect, reduceMotion, translateX, width]);
+}
+
+/** 详情媒体：横向轮播 + 计数角标 + 全屏看图器。 */
+function TreeholeDetailMedia({
+  urls,
+  imageSave,
+}: {
   urls: readonly string[];
   imageSave?: TreeholeImageSaveOptions;
 }): React.ReactElement {
   const theme = useTheme();
   const { t } = useI18n();
-  /** 当前前卡（已提交）。飞出动画期间不变，动画结束才前进 */
-  // 一次选图/重试是一代请求；即使URL相同，回到该图也重新分配代次。
-  const [imageRequest, setImageRequest] = React.useState<{
-    index: number;
-    revision: number;
-    status: 'loading' | 'loaded' | 'failed';
-  }>({ index: 0, revision: 0, status: 'loading' });
-  const { index, revision, status } = imageRequest;
-  const failed = status === 'failed';
-  const startImage = React.useCallback((nextIndex: number) => {
-    setImageRequest((previous) => ({
-      index: nextIndex, revision: previous.revision + 1, status: 'loading',
-    }));
-  }, []);
-  /**
-   * 计数/读屏用的**目标序号**：手势松开（判定换图）的那一刻就前进，不等动画落位。
-   * 为什么：飞出动画里"后卡已经顶到前层"的那 200ms 里，用户看到的是下一张图，
-   * 如果计数还停在旧值就是"图已经换了、字还没换"。
-   */
-  const [labelIndex, setLabelIndex] = React.useState(0);
-  /**
-   * 过渡方向：决定**后卡显示哪一张**。
-   * - `next`：后卡 = 下一张（叠卡的天然方向）；
-   * - `previous`：后卡 = 上一张（第二层）+ 当前前卡（第三层）。
-   *   ⚠️ 第三层放"当前前卡"是为了落位后第二层正好接上它（否则最深那层会闪一下别的图）。
-   */
-  const [pendingDirection, setPendingDirection] = React.useState<'next' | 'previous' | null>(null);
-  const labelRef = React.useRef(0);
-  const targetRef = React.useRef(0);
-  /** 连点保护：只让**最后一次**动画的完成回调提交 index */
-  const flightToken = React.useRef(0);
-  const [previewOpen, setPreviewOpen] = React.useState(false);
-  // 叠卡要按卡片宽度计算飞出距离，所以得知道画幅的实际像素宽
-  const [mediaWidth, setMediaWidth] = React.useState(0);
-  const dragX = useSharedValue(0);
-  const dragY = useSharedValue(0);
-  const exit = useSharedValue(0);
-  /** 飞出方向：-1 = 下一张（向左飞出），1 = 上一张（向右飞出） */
-  const flyDirection = useSharedValue(1);
-  const layers = treeholeDeckLayers(urls.length);
-  const current = urls[index] ?? urls[0];
-  const saveController = useTreeholeImageSave(current, JSON.stringify([current, revision]), imageSave?.save);
-  // 帖子/URL序列由外层key隔离；此处再核对真实URL与请求代次。
-  // 函数式更新核对最新状态，避免批处理、重试或A→B→A复用旧闭包。
-  const finishImage = (result: 'loaded' | 'failed') => {
-    setImageRequest((previous) =>
-      previous.revision === revision && urls[previous.index] === current && previous.status === 'loading'
-        ? { ...previous, status: result }
-        : previous
-    );
-  };
-  const travel = mediaWidth > 0 ? mediaWidth : 320;
-  const at = (offset: number) => urls[((offset % urls.length) + urls.length) % urls.length];
-  // 后卡内容：next → 下一张 / 再下一张；previous → 上一张 / 当前前卡（见 pendingDirection 注释）
-  const secondUri = pendingDirection === 'previous' ? at(index - 1) : at(index + 1);
-  const thirdUri = pendingDirection === 'previous' ? at(index) : at(index + 2);
+  const radius = theme.radius('radius_medium');
 
-  /** 动画结束后提交：index 追到目标，后卡回到"下一张"序列 */
-  const commit = React.useCallback((token: number) => {
-    if (token !== flightToken.current) return;
-    setPendingDirection(null);
-    startImage(targetRef.current);
-  }, [startImage]);
+  const [inlineWidth, setInlineWidth] = React.useState(0);
+  const inlineWidthRef = React.useRef(0);
+  const [firstAspect, setFirstAspect] = React.useState(TREEHOLE_DETAIL_FALLBACK_ASPECT);
+  /** index 立即生效；epoch 只在"换页/重试"时递增，用来隔离保存回执（A→B→A 不串） */
+  const [nav, setNav] = React.useState({ index: 0, epoch: 0 });
+  const { width: windowWidth } = useWindowDimensions();
+  const [attempts, setAttempts] = React.useState<Record<number, number>>({});
+  const [statusByKey, setStatusByKey] = React.useState<Record<string, PageStatus>>({});
+  const [viewerOpen, setViewerOpen] = React.useState(false);
 
-  /**
-   * 统一换图路径（**手势拖动**与**读屏动作**共用）：前卡按方向飞出、后卡弹性上浮，落位后换图。
-   * reduced-motion 时直接换图（不飞、不转、不淡出）。
-   */
-  const fly = React.useCallback(
-    (direction: 'next' | 'previous') => {
-      if (urls.length <= 1) return;
-      const from = labelRef.current;
-      const target =
-        direction === 'next' ? (from + 1) % urls.length : (from - 1 + urls.length) % urls.length;
-      labelRef.current = target;
-      targetRef.current = target;
-      setLabelIndex(target);
-      if (theme.reduceMotion) {
-        dragX.value = 0;
-        dragY.value = 0;
-        exit.value = 0;
-        setPendingDirection(null);
-        startImage(target);
-        return;
-      }
-      setPendingDirection(direction);
-      flyDirection.value = direction === 'next' ? -1 : 1;
-      const token = ++flightToken.current;
-      exit.value = withTiming(1, { duration: FLY_MS, easing: FLY_EASING }, (finished) => {
-        if (finished) runOnJS(commit)(token);
+  const inlineX = useSharedValue(0);
+  const viewerX = useSharedValue(0);
+  const viewerY = useSharedValue(0);
+
+  const activeIndex = nav.index;
+  const current = urls[activeIndex] ?? urls[0] ?? '';
+  const activeAttempt = attempts[activeIndex] ?? 0;
+  const activeStatus = statusByKey[`${activeIndex}:${activeAttempt}`] ?? 'loading';
+  const failed = activeStatus === 'failed';
+  const detailHeight = treeholeDetailHeight(inlineWidth, firstAspect);
+
+  const saveController = useTreeholeImageSave(
+    current,
+    JSON.stringify([current, nav.epoch]),
+    imageSave?.save
+  );
+
+  const commitIndex = React.useCallback(
+    (next: number) => {
+      setNav((previous) => {
+        const target = Math.min(urls.length - 1, Math.max(0, next));
+        return target === previous.index
+          ? previous
+          : { index: target, epoch: previous.epoch + 1 };
       });
     },
-    [commit, dragX, dragY, exit, flyDirection, startImage, theme.reduceMotion, urls.length]
+    [urls.length]
   );
 
-  // 换图提交后清零共享值：此刻新前卡在 exit=0 的样子与旧第二层在 exit=1 的样子一致，
-  // 所以这一帧前后画面连续（不会出现"闪回原位"）。
-  // ⚠️ layout-effect 而不是普通 effect：它在画面刷出**之前**跑，避免看到一帧"旧前卡又回来"。
+  /** 详情页内的换页：提交页码 + 横向整页滑动（不缩放、不旋转、不淡出） */
+  const selectInline = React.useCallback(
+    (next: number) => {
+      const target = Math.min(urls.length - 1, Math.max(0, next));
+      if (target === nav.index) return;
+      commitIndex(target);
+      const destination = -target * inlineWidthRef.current;
+      inlineX.value = theme.reduceMotion
+        ? destination
+        : withTiming(destination, { duration: PAGE_MS, easing: Easing.out(Easing.cubic) });
+    },
+    [commitIndex, inlineX, nav.index, theme.reduceMotion, urls.length]
+  );
+
+  const handleLayout = React.useCallback(
+    (event: LayoutChangeEvent) => {
+      const next = Math.round(event.nativeEvent.layout.width);
+      inlineWidthRef.current = next;
+      setInlineWidth((previous) => (previous === next ? previous : next));
+      if (next > 0) inlineX.value = -nav.index * next;
+    },
+    [inlineX, nav.index]
+  );
+
+  const recordStatus = React.useCallback((key: string, status: PageStatus) => {
+    setStatusByKey((previous) =>
+      previous[key] === status ? previous : { ...previous, [key]: status }
+    );
+  }, []);
+
+  const recordFirstAspect = React.useCallback((source: { width?: number; height?: number }) => {
+    const next = treeholeDetailAspect(source.width, source.height);
+    setFirstAspect((previous) => (previous === next ? previous : next));
+  }, []);
+
+  const retryActive = React.useCallback(() => {
+    setAttempts((previous) => ({
+      ...previous,
+      [activeIndex]: (previous[activeIndex] ?? 0) + 1,
+    }));
+  }, [activeIndex]);
+
+  /** 打开前先把全屏轨道对齐到当前页（不等弹层首帧，避免打开时闪一下第 1 张） */
+  const openViewer = React.useCallback(() => {
+    viewerY.value = 0;
+    viewerX.value = -nav.index * windowWidth;
+    setViewerOpen(true);
+  }, [nav.index, viewerX, viewerY, windowWidth]);
+  const closeViewer = React.useCallback(() => {
+    viewerY.value = 0;
+    setViewerOpen(false);
+  }, [viewerY]);
+
+  // 全屏看图器里翻页时，详情轨道在弹层下面同步归位（关闭后停在同一张）
   React.useLayoutEffect(() => {
-    if (exit.value !== 1) return;
-    dragX.value = 0;
-    dragY.value = 0;
-    exit.value = 0;
-  }, [dragX, dragY, exit, index]);
-
-  // 媒体身份变化会整组重挂，旧实例的图片/动画回执失去写入新组的资格。
-  React.useEffect(() => () => { flightToken.current++; }, []);
-
-  const snapBack = React.useCallback(() => {
-    if (theme.reduceMotion) {
-      dragX.value = 0;
-      dragY.value = 0;
-      return;
+    if (viewerOpen && inlineWidthRef.current > 0) {
+      inlineX.value = -nav.index * inlineWidthRef.current;
     }
-    dragX.value = withSpring(0, SNAP_SPRING);
-    dragY.value = withSpring(0, SNAP_SPRING);
-  }, [dragX, dragY, theme.reduceMotion]);
+  }, [inlineX, nav.index, viewerOpen]);
 
-  const panHandlers = React.useMemo(
-    () =>
-      PanResponder.create({
-        onMoveShouldSetPanResponder: (_, gesture) =>
-          urls.length > 1 && Math.abs(gesture.dx) > Math.abs(gesture.dy) && Math.abs(gesture.dx) > 12,
-        onPanResponderMove: (_, gesture) => {
-          dragX.value = gesture.dx;
-          // 竖向只跟一点点：横向拖拽仍是主语义，竖向留给页面滚动
-          dragY.value = gesture.dy * 0.25;
-        },
-        onPanResponderRelease: (_, gesture) => {
-          const direction = resolveTreeholeSwipe(gesture.dx, gesture.vx * 1000);
-          if (direction === null) snapBack();
-          else fly(direction);
-        },
-        onPanResponderTerminate: snapBack,
-      }).panHandlers,
-    [dragX, dragY, fly, snapBack, urls.length]
-  );
-
-  const frontStyle = useAnimatedStyle(() => {
-    const offset = dragX.value + flyDirection.value * exit.value * travel * FLY_RATIO;
-    return {
-      transform: [
-        { translateX: offset },
-        { translateY: dragY.value - exit.value * FLY_UP },
-        { rotate: `${offset / FLY_ROTATE_DIVISOR}deg` },
-      ],
-      // Easing.back 会过冲到 >1；透明度必须夹住（负数会被 RN 当成 0，但显式写出来更清楚）
-      opacity: Math.max(0, 1 - exit.value),
-    };
+  const inlineTrackStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: inlineX.value }],
+  }));
+  const panHandlers = usePagerPan({
+    count: urls.length,
+    width: inlineWidth,
+    index: nav.index,
+    translateX: inlineX,
+    onSelect: selectInline,
+    reduceMotion: theme.reduceMotion,
   });
-  const secondStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: DECK_SECOND.x * (1 - exit.value) },
-      { translateY: DECK_SECOND.y * (1 - exit.value) },
-      { rotate: `${DECK_SECOND.rotate * (1 - exit.value)}deg` },
-      { scale: DECK_SECOND.scale + (1 - DECK_SECOND.scale) * exit.value },
-    ],
-    opacity: 1,
-  }));
-  const thirdStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: DECK_THIRD.x * (1 - exit.value) },
-      { translateY: DECK_THIRD.y * (1 - exit.value) },
-      { rotate: `${DECK_THIRD.rotate * (1 - exit.value)}deg` },
-      {
-        scale: DECK_THIRD.scale + (DECK_SECOND.scale - DECK_THIRD.scale) * exit.value,
-      },
-    ],
-    opacity: 1,
-  }));
 
-  /** 后卡：只负责景深暗示；读屏忽略（前卡已经报了"第几张"） */
-  const backCard = (
-    uri: string,
-    style: ReturnType<typeof useAnimatedStyle>,
-    testID: string
-  ): React.ReactElement => (
-    <Animated.View
-      testID={testID}
-      pointerEvents="none"
-      accessible={false}
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
-      style={[
-        {
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          borderRadius: theme.radius('radius_medium'),
-          overflow: 'hidden',
-          backgroundColor: theme.color['bg-sunken'].value,
-        },
-        // Reanimated 的 style handle 与 Animated.View 的样式入参在 TS 里不是同一支类型，
-        // 但运行期它就是合法的 animated style —— 这里只做类型对齐，不改变行为。
-        style as never,
-      ]}
-    >
-      <Image
-        source={{ uri }}
-        recyclingKey={uri}
-        cachePolicy="memory-disk"
-        contentFit="contain"
-        accessible={false}
-        style={{ width: '100%', height: '100%' }}
-      />
-    </Animated.View>
-  );
+  const goByAccessibility = (direction: 'next' | 'previous') =>
+    selectInline(resolveTreeholePage(nav.index, urls.length, direction));
 
   return (
     <View testID="treehole-media-detail" style={{ gap: theme.space('space_2') }}>
@@ -583,119 +632,271 @@ function TreeholeDetailMedia({ urls, imageSave }: {
             label={t('action.retry')}
             size="small"
             variant="secondary"
-            onPress={() => startImage(index)}
+            onPress={retryActive}
           />
         </View>
       ) : null}
-        {/* 失败时仍保留画框与切图手势，后续图片继续可读。 */}
-        <View
-          testID="treehole-media-box"
-          style={{ paddingTop: DECK_TOP_PADDING, paddingRight: DECK_RIGHT_PADDING }}
-        >
-          <View
-            style={{ aspectRatio: TREEHOLE_DETAIL_ASPECT }}
-            onLayout={(event) => setMediaWidth(event.nativeEvent.layout.width)}
-          >
-            {layers >= 3 ? backCard(thirdUri, thirdStyle, 'treehole-media-back-2') : null}
-            {layers >= 2 ? backCard(secondUri, secondStyle, 'treehole-media-back-1') : null}
 
-            <Animated.View
-              style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }, frontStyle]}
-              {...panHandlers}
-            >
-              <View
-                style={{
-                  flex: 1,
-                  borderRadius: theme.radius('radius_medium'),
-                  overflow: 'hidden',
-                  backgroundColor: theme.color['bg-sunken'].value,
-                }}
-              >
-                <AppPressable
-                  testID="treehole-media-drag-area"
-                  onPress={() => { if (!failed) setPreviewOpen(true); }}
-                  accessibilityRole="image"
-                  accessibilityLabel={t('screen.campus.mediaPosition', {
-                    index: labelIndex + 1,
-                    total: urls.length,
-                  })}
-                  // 2026-10-18 第六轮：箭头删除后，**手势是唯一的视觉入口** → 读屏必须另有一条路
-                  accessibilityActions={
-                    urls.length > 1
-                      ? [
-                          { name: 'increment', label: t('screen.campus.mediaNext') },
-                          { name: 'decrement', label: t('screen.campus.mediaPrevious') },
-                        ]
-                      : undefined
-                  }
-                  onAccessibilityAction={(event) => {
-                    const action = event.nativeEvent.actionName;
-                    if (action === 'increment') fly('next');
-                    else if (action === 'decrement') fly('previous');
-                  }}
-                  contentAlign="stretch"
-                  style={{ flex: 1 }}
-                >
-                  <Image
-                    key={`${current}:${revision}`}
-                    testID="treehole-media-detail-image"
-                    source={{ uri: current }}
-                    recyclingKey={current}
-                    cachePolicy="memory-disk"
-                    contentFit="contain"
-                    accessible={false}
-                    onLoad={() => finishImage('loaded')}
-                    onError={() => finishImage('failed')}
-                    style={{ width: '100%', height: '100%' }}
-                  />
-                </AppPressable>
-                {status === 'loading' ? (
-                  <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
-                    <Skeleton testID="treehole-media-detail-loading" kind="media" style={{ height: '100%' }} />
-                  </View>
-                ) : null}
-              </View>
-            </Animated.View>
-
-            {/* 只剩右下角计数：左右箭头已按所有者第六轮要求删除，切图只走手势
-                （读屏走 drag-area 的 accessibilityActions） */}
-            {urls.length > 1 ? (
-              <Surface
-                variant="surface"
-                rounded="radius_full"
-                padding="space_1"
-                style={{
-                  position: 'absolute',
-                  right: theme.space('space_2'),
-                  bottom: theme.space('space_2'),
-                  opacity: 0.92,
-                }}
-              >
-                <Text
-                  testID="treehole-media-position"
-                  role="caption"
-                  colorToken="text-secondary"
-                  accessibilityLiveRegion="polite"
-                >
-                  {t('screen.campus.mediaPosition', { index: labelIndex + 1, total: urls.length })}
-                </Text>
-              </Surface>
-            ) : null}
-          </View>
-        </View>
-
-      {imageSave ? <TreeholeImageSaveControls options={imageSave} controller={saveController} testID="treehole-save-detail" /> : null}
-
-      <Modal
-        visible={previewOpen}
-        transparent
-        animationType={theme.reduceMotion ? 'none' : 'fade'}
-        onRequestClose={() => setPreviewOpen(false)}
+      {/*
+        图与正文同栏：容器只有 `width: 100%`，⛔ 没有 background / padding / 灰盒；
+        圆角 12 落在**直接包图**的页框上（overflow:hidden 裁的是图片像素）。
+      */}
+      <View
+        testID="treehole-media-carousel"
+        onLayout={handleLayout}
+        style={[
+          { width: '100%', borderRadius: radius },
+          inlineWidth > 0
+            ? { height: detailHeight, overflow: 'hidden' }
+            : { aspectRatio: firstAspect, overflow: 'hidden' },
+        ]}
       >
-        <View
-          testID="treehole-media-preview-dialog"
-          style={{ flex: 1, backgroundColor: theme.color['bg-canvas'].value }}
-        >
+        {urls.length > 0 ? (
+          <Animated.View
+            testID="treehole-media-track"
+            {...panHandlers}
+            style={[
+              {
+                flexDirection: 'row',
+                // 首帧还没量到列宽：先让各页等分整栏（只在真实布局前活一帧，测试里也能查到节点）
+                width: inlineWidth > 0 ? inlineWidth * urls.length : '100%',
+                height: inlineWidth > 0 ? detailHeight : '100%',
+              },
+              inlineTrackStyle,
+            ]}
+          >
+            {urls.map((uri, pageIndex) => {
+              const active = pageIndex === activeIndex;
+              const attempt = attempts[pageIndex] ?? 0;
+              const statusKey = `${pageIndex}:${attempt}`;
+              const status = statusByKey[statusKey] ?? 'loading';
+              return (
+                <View
+                  key={uri}
+                  testID={`treehole-media-page-${pageIndex}`}
+                  style={{
+                    width: inlineWidth > 0 ? inlineWidth : undefined,
+                    flex: inlineWidth > 0 ? undefined : 1,
+                    height: inlineWidth > 0 ? detailHeight : '100%',
+                    borderRadius: radius,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <AppPressable
+                    testID={active ? 'treehole-media-drag-area' : undefined}
+                    onPress={openViewer}
+                    accessibilityRole="image"
+                    accessibilityLabel={t('screen.campus.mediaPosition', {
+                      index: pageIndex + 1,
+                      total: urls.length,
+                    })}
+                    accessibilityElementsHidden={!active}
+                    importantForAccessibility={active ? 'auto' : 'no-hide-descendants'}
+                    // 手势是唯一视觉入口 → 读屏必须另有一条路（到边就停，不循环）
+                    accessibilityActions={
+                      urls.length > 1
+                        ? [
+                            { name: 'increment', label: t('screen.campus.mediaNext') },
+                            { name: 'decrement', label: t('screen.campus.mediaPrevious') },
+                          ]
+                        : undefined
+                    }
+                    onAccessibilityAction={(event) => {
+                      const action = event.nativeEvent.actionName;
+                      if (action === 'increment') goByAccessibility('next');
+                      else if (action === 'decrement') goByAccessibility('previous');
+                    }}
+                    contentAlign="stretch"
+                    style={{ flex: 1, minHeight: 0 }}
+                  >
+                    <Image
+                      key={`${uri}#${attempt}`}
+                      testID={
+                        active
+                          ? 'treehole-media-detail-image'
+                          : `treehole-media-detail-image-${pageIndex}`
+                      }
+                      source={{ uri }}
+                      recyclingKey={uri}
+                      cachePolicy="memory-disk"
+                      // 详情页按首图比例框定高度，后续图 cover 填满同一框（高度不跳）
+                      contentFit="cover"
+                      accessible={false}
+                      onLoad={(event) => {
+                        recordStatus(statusKey, 'loaded');
+                        if (pageIndex === 0) recordFirstAspect(event.source);
+                      }}
+                      onError={() => recordStatus(statusKey, 'failed')}
+                      style={{ width: '100%', height: '100%' }}
+                    />
+                  </AppPressable>
+                  {active && status === 'loading' ? (
+                    <View
+                      pointerEvents="none"
+                      style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+                    >
+                      <Skeleton
+                        testID="treehole-media-detail-loading"
+                        kind="media"
+                        style={{ height: '100%' }}
+                      />
+                    </View>
+                  ) : null}
+                  {active && status === 'failed' ? (
+                    <View
+                      testID="treehole-media-detail-error"
+                      pointerEvents="none"
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: theme.color['bg-sunken'].value,
+                      }}
+                    >
+                      <Text role="caption" colorToken="text-secondary">
+                        {t('screen.campus.mediaFailed')}
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+              );
+            })}
+          </Animated.View>
+        ) : null}
+
+        {/* 单图不显示角标（2026-10-31：只有 ≥2 张才需要页码） */}
+        {urls.length > 1 ? (
+          <Surface
+            variant="surface"
+            rounded="radius_full"
+            padding="space_1"
+            style={{
+              position: 'absolute',
+              right: theme.space('space_2'),
+              bottom: theme.space('space_2'),
+              opacity: 0.92,
+            }}
+          >
+            <Text
+              testID="treehole-media-position"
+              role="caption"
+              colorToken="text-secondary"
+              accessibilityLiveRegion="polite"
+            >
+              {t('screen.campus.mediaPosition', {
+                index: activeIndex + 1,
+                total: urls.length,
+              })}
+            </Text>
+          </Surface>
+        ) : null}
+      </View>
+
+      {imageSave ? (
+        <TreeholeImageSaveControls
+          options={imageSave}
+          controller={saveController}
+          testID="treehole-save-detail"
+        />
+      ) : null}
+
+      <TreeholeImageViewer
+        visible={viewerOpen}
+        urls={urls}
+        index={activeIndex}
+        translateX={viewerX}
+        translateY={viewerY}
+        onSelect={commitIndex}
+        onClose={closeViewer}
+        imageSave={imageSave}
+        controller={saveController}
+      />
+    </View>
+  );
+}
+
+/**
+ * 全屏看图器：纯图 + 关闭 + 底部计数（⛔ 没有帖子文字、没有评论栏）。
+ * 背景与"页面最底"同令牌（亮色近白 / 暗色近黑，统一一套），图 `contain` 撑满宽度并垂直居中。
+ */
+function TreeholeImageViewer({
+  visible,
+  urls,
+  index,
+  translateX,
+  translateY,
+  onSelect,
+  onClose,
+  imageSave,
+  controller,
+}: {
+  visible: boolean;
+  urls: readonly string[];
+  index: number;
+  translateX: SharedValue<number>;
+  translateY: SharedValue<number>;
+  /** 提交页码（由详情持有，保证关闭后停在当前图） */
+  onSelect: (index: number) => void;
+  onClose: () => void;
+  imageSave?: TreeholeImageSaveOptions;
+  controller: ReturnType<typeof useTreeholeImageSave>;
+}): React.ReactElement {
+  const theme = useTheme();
+  const { t } = useI18n();
+  const { width } = useWindowDimensions();
+
+  const selectViewer = React.useCallback(
+    (next: number) => {
+      const target = Math.min(urls.length - 1, Math.max(0, next));
+      if (target === index) return;
+      onSelect(target);
+      const destination = -target * width;
+      translateX.value = theme.reduceMotion
+        ? destination
+        : withTiming(destination, { duration: PAGE_MS, easing: Easing.out(Easing.cubic) });
+    },
+    [index, onSelect, theme.reduceMotion, translateX, urls.length, width]
+  );
+
+  const dismiss = React.useMemo(
+    () => ({ translateY, onDismiss: onClose }),
+    [onClose, translateY]
+  );
+
+  const panHandlers = usePagerPan({
+    count: urls.length,
+    width,
+    index,
+    translateX,
+    onSelect: selectViewer,
+    reduceMotion: theme.reduceMotion,
+    dismiss,
+  });
+
+  const trackStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+  }));
+  const sheetStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+    opacity: 1 - Math.min(0.55, Math.max(0, translateY.value) / 600),
+  }));
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType={theme.reduceMotion ? 'none' : 'fade'}
+      onRequestClose={onClose}
+    >
+      <View
+        testID="treehole-media-preview-dialog"
+        style={{ flex: 1, backgroundColor: theme.color['bg-canvas'].value }}
+      >
+        <Animated.View style={[{ flex: 1 }, sheetStyle]}>
           <View
             style={{
               paddingTop: theme.space('space_8'),
@@ -704,7 +905,7 @@ function TreeholeDetailMedia({ urls, imageSave }: {
             }}
           >
             <Pressable
-              onPress={() => setPreviewOpen(false)}
+              onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel={t('action.close')}
               style={{
@@ -717,28 +918,98 @@ function TreeholeDetailMedia({ urls, imageSave }: {
               <Icon source={X} size="body" tint="primary" />
             </Pressable>
           </View>
-          <View style={{ flex: 1, justifyContent: 'center' }}>
-            <Image
-              testID="treehole-media-preview-image"
-              source={{ uri: current }}
-              contentFit="contain"
-              style={{ width: '100%', height: '100%' }}
+
+          <View {...panHandlers} style={{ flex: 1, overflow: 'hidden' }}>
+            <Animated.View
+              style={[
+                { flexDirection: 'row', width: width * urls.length, height: '100%' },
+                trackStyle,
+              ]}
+            >
+              {urls.map((uri, pageIndex) => (
+                <View
+                  key={uri}
+                  testID={`treehole-media-preview-page-${pageIndex}`}
+                  style={{ width, height: '100%', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <Image
+                    testID={
+                      pageIndex === index
+                        ? 'treehole-media-preview-image'
+                        : `treehole-media-preview-image-${pageIndex}`
+                    }
+                    source={{ uri }}
+                    recyclingKey={uri}
+                    cachePolicy="memory-disk"
+                    // 全屏看完整图：contain（详情页 cover 裁掉的超长图在这里能看全）
+                    contentFit="contain"
+                    accessible={false}
+                    style={{ width: '100%', height: '100%' }}
+                  />
+                </View>
+              ))}
+            </Animated.View>
+            {/* 盖在图上的一层可读屏元素：整块画面 = 一张图 + 上一张/下一张动作 */}
+            <AppPressable
+              testID="treehole-media-preview-pager"
+              accessibilityRole="image"
+              accessibilityLabel={t('screen.campus.mediaPosition', {
+                index: index + 1,
+                total: urls.length,
+              })}
+              accessibilityActions={
+                urls.length > 1
+                  ? [
+                      { name: 'increment', label: t('screen.campus.mediaNext') },
+                      { name: 'decrement', label: t('screen.campus.mediaPrevious') },
+                    ]
+                  : undefined
+              }
+              onAccessibilityAction={(event) => {
+                const action = event.nativeEvent.actionName;
+                if (action === 'increment') {
+                  selectViewer(resolveTreeholePage(index, urls.length, 'next'));
+                } else if (action === 'decrement') {
+                  selectViewer(resolveTreeholePage(index, urls.length, 'previous'));
+                }
+              }}
+              contentAlign="stretch"
+              style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, minHeight: 0 }}
             />
           </View>
-          {imageSave ? (
-            <View style={{ padding: theme.space('space_4') }}>
-              <TreeholeImageSaveControls options={imageSave} controller={saveController} testID="treehole-save-preview" />
-            </View>
-          ) : null}
-          {urls.length > 1 ? (
-            <View style={{ padding: theme.space('space_4'), alignItems: 'center' }}>
-              <Text role="caption" colorToken="text-secondary">
+
+          <View
+            style={{
+              paddingHorizontal: theme.space('space_4'),
+              paddingTop: theme.space('space_2'),
+              paddingBottom: theme.space('space_4'),
+              gap: theme.space('space_2'),
+              alignItems: 'center',
+            }}
+          >
+            {imageSave ? (
+              <View style={{ alignSelf: 'stretch' }}>
+                <TreeholeImageSaveControls
+                  options={imageSave}
+                  controller={controller}
+                  testID="treehole-save-preview"
+                />
+              </View>
+            ) : null}
+            {urls.length > 1 ? (
+              <Text
+                testID="treehole-media-preview-position"
+                role="caption"
+                colorToken="text-secondary"
+                align="center"
+                accessibilityLiveRegion="polite"
+              >
                 {t('screen.campus.mediaPosition', { index: index + 1, total: urls.length })}
               </Text>
-            </View>
-          ) : null}
-        </View>
-      </Modal>
-    </View>
+            ) : null}
+          </View>
+        </Animated.View>
+      </View>
+    </Modal>
   );
 }

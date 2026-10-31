@@ -114,6 +114,8 @@ describe('P2D-02 安全区 10 条清单', () => {
       path.join('components', 'ui', 'Screen.tsx'),
       // LoginLayout 按窗口尺寸安排品牌画，不等于实现平板断点。
       path.join('features', 'auth', 'LoginLayout.tsx'),
+      // 2026-10-31：树洞详情全屏看图器按窗口宽度分页/对齐（全屏弹层，不是大屏断点布局）
+      path.join('features', 'campus', 'TreeholeMedia.tsx'),
     ]);
   });
 

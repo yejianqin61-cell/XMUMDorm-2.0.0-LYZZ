@@ -1845,6 +1845,11 @@ describe('当前图片保存的真实详情接线', () => {
     const view = await renderApp(<CampusDetailScreen postId="7" imageSave={{ save, messages }} />);
     await waitFor(() => expect(view.getByTestId('treehole-save-detail')).toBeTruthy());
     await fireEvent.press(view.getByTestId('treehole-media-drag-area'));
+    // 全屏看图器只有图与计数：⛔ 不带帖子正文、互动条、评论输入框
+    const dialog = view.getByTestId('treehole-media-preview-dialog');
+    expect(within(dialog).queryByTestId('treehole-post-content')).toBeNull();
+    expect(within(dialog).queryByTestId('treehole-actions')).toBeNull();
+    expect(within(dialog).queryByTestId('campus-composer')).toBeNull();
     await fireEvent.press(view.getByTestId('treehole-save-preview'));
     await waitFor(() => expect(view.getByTestId('treehole-save-preview-notice')).toHaveTextContent(messages.saved));
     expect(save).toHaveBeenCalledWith(image);
