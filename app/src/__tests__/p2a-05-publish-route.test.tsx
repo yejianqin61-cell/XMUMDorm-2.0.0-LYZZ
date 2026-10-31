@@ -9,7 +9,7 @@
  * 依据：`docs/app/task/phase-2/P2A-05-路由接线与端到端证明.md`。
  */
 import * as React from 'react';
-import { userEvent, waitFor, within } from '@testing-library/react-native';
+import { act, userEvent, waitFor, within } from '@testing-library/react-native';
 
 import { renderApp } from './helpers/renderApp';
 import { zh } from '@/i18n';
@@ -198,6 +198,35 @@ describe('P2A-05 发布表单路由接线与端到端', () => {
       expect(view.getByText(zh['error.content.perceive'])).toBeTruthy();
       expect(routerState.replaced).toEqual([]);
       expect(routerState.backCount).toBe(0);
+    });
+
+    it('失败后输入仍在；提交中连点只发一次（阶段B-01）', async () => {
+      let finish: (() => void) | undefined;
+      const descriptor = makeDescriptor({
+        submit: jest.fn(
+          () =>
+            new Promise<void>((_resolve, reject) => {
+              finish = () => reject({ kind: 'content' });
+            })
+        ),
+      });
+      descriptors.getPublishDescriptor.mockReturnValue(descriptor);
+      const user = userEvent.setup();
+
+      const view = await renderApp(withProviders(<PublishRoute />));
+      await user.type(view.getByTestId('publish-form-confession-body'), '保留这句话');
+      await user.press(view.getByTestId('publish-form-confession-submit'));
+      await user.press(view.getByTestId('publish-form-confession-submit'));
+      expect(descriptor.submit).toHaveBeenCalledTimes(1);
+
+      await act(async () => {
+        finish?.();
+      });
+      await waitFor(() =>
+        expect(view.getByTestId('publish-form-confession-summary')).toBeTruthy()
+      );
+      expect(view.getByTestId('publish-form-confession-body').props.value).toContain('保留这句话');
+      expect(routerState.replaced).toEqual([]);
     });
   });
 });
