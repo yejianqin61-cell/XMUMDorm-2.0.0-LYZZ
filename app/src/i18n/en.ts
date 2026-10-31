@@ -1,10 +1,10 @@
-﻿/**
- * è‹±æ–‡è¯æ¡ã€‚
+/**
+ * 英文词条。
  *
- * âš ï¸ **ç±»åž‹å³å¥‘çº¦**ï¼š`Record<MessageKey, string>` è®©"å°‘ä¸€æ¡ / å¤šä¸€æ¡"æˆä¸º**ç¼–è¯‘æœŸé”™è¯¯**
- * ï¼ˆ`MessageKey` æ¥è‡ª `zh.ts`ï¼‰ï¼Œå› æ­¤ä¸ä¾èµ–è¿è¡ŒæœŸæ£€æŸ¥æ¥ä¿è¯åŒè¯­å®Œæ•´ï¼ˆDoIT ç¬¬ 7 æ¡ï¼‰ã€‚
+ * ⚠️ **类型即契约**：`Record<MessageKey, string>` 让"少一条 / 多一条"成为**编译期错误**
+ * （`MessageKey` 来自 `zh.ts`），因此不依赖运行期检查来保证双语完整（DoIT 第 7 条）。
  *
- * â›” æ ‡ç­¾æŒ‰**è‹±æ–‡**å®šå°ºå¯¸ï¼ˆå®ªæ³• 6.2ï¼šè‹±æ–‡é•¿åº¦ä¸­ä½æ•°æ˜¯ä¸­æ–‡çš„ 2.50Ã—ï¼‰ï¼›æ”¾ä¸‹ä¸å°±æ”¹æ ‡ç­¾ï¼Œä¸åŠ çœç•¥å·ã€‚
+ * ⛔ 标签按**英文**定尺寸（宪法 6.2：英文长度中位数是中文的 2.50×）；放下不就改标签，不加省略号。
  */
 import type { MessageKey } from './zh';
 
@@ -51,14 +51,14 @@ export const en: Record<MessageKey, string> = {
   'screen.campus.mediaPreview': 'Preview image',
   'screen.campus.mediaFailed': 'Image unavailable',
   'screen.campus.read.replyThread': '{count} replies',
-  // é˜¶æ®µAï¼šå›¾ç‰‡ä¿å­˜ï¼ˆç”²ç»Ÿä¸€å£å¾„ï¼›æ–‡æ¡ˆå€™é€‰æ¥è‡ªä¸™çš„ 09 ææ–™ï¼‰
+  // 阶段A：图片保存（甲统一口径；文案候选来自丙的 09 材料）
   'screen.campus.mediaSave': 'Save image',
   'screen.campus.mediaSaving': 'Saving',
   'screen.campus.mediaSaved': 'Saved to Photos',
   'screen.campus.mediaPermissionDenied': 'Allow Photos access in Settings, then retry',
   'screen.campus.mediaSaveFailed': "Couldn't save. Try again.",
 
-  // ä¸™ï¼šä¸‡èƒ½å¢™æŠ•ç¨¿
+  // 丙：万能墙投稿
   'publish.wall.template': 'Template',
   'publish.wall.content': 'Content',
   'publish.wall.bigtype': 'Poster',
@@ -68,9 +68,9 @@ export const en: Record<MessageKey, string> = {
   'publish.wall.dialogue': 'Dialogue',
   'publish.wall.checklist': 'Checklist',
   'publish.wall.invalidTemplate': 'This template is unavailable. Choose an available template.',
-  'publish.wall.tooLong': 'Content exceeds this templateâ€™s limit. Shorten it or choose another template.',
+  'publish.wall.tooLong': 'Content exceeds this template’s limit. Shorten it or choose another template.',
 
-  // â”€â”€ Primary navigation (five slots) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Primary navigation (five slots) ──────────────────────────
   'tab.square': 'Square',
   'tab.tools': 'Tools',
   'tab.campus': 'Campus',
@@ -79,17 +79,17 @@ export const en: Record<MessageKey, string> = {
   'tab.publish': 'Publish',
   'tab.publishHint': 'Open publish center',
 
-  // â”€â”€ Top bar (one action only) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Top bar (one action only) ────────────────────────────────
   'topbar.mailbox': 'Mailbox',
   'topbar.mailboxUnread': 'Mailbox, {n} unread',
 
-  // â”€â”€ Accessibility â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Accessibility ────────────────────────────────────────────
   'a11y.tabPosition': 'Tab {i} of {n}',
   'a11y.ratingTier': '{label}, weight {weight}',
   'a11y.starRating': '{label}, {filled} of {max}',
   'a11y.starRatingBare': '{filled} stars',
 
-  // â”€â”€ Publish center â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Publish center ───────────────────────────────────────────
   'publish.title': 'Publish',
   'publish.submit': 'Publish',
   'publish.submitted': 'Published',
@@ -109,7 +109,7 @@ export const en: Record<MessageKey, string> = {
   'publish.gate.terms.understand': 'Posting is user content, so the user policy applies',
   'publish.gate.terms.fix': 'Open the terms and accept',
 
-  // â”€â”€ Tools tab: the three school systems â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Tools tab: the three school systems ──────────────────────
   'tools.system.ac': 'AC System',
   'tools.system.moodle': 'Moodle',
   'tools.system.checkin': 'Check-in',
@@ -128,7 +128,7 @@ export const en: Record<MessageKey, string> = {
   'tools.moodle.original': 'Open original',
   'tools.moodle.details': 'Details',
   'tools.moodle.unknownSection': 'Other section',
-  'tools.moodle.maintenance': 'Moodle under maintenance (03:00â€“04:30)',
+  'tools.moodle.maintenance': 'Moodle under maintenance (03:00–04:30)',
   'tools.moodle.offline': 'You are offline',
   'tools.moodle.deadlines': 'Deadlines',
   'tools.moodle.noDeadlines': 'No deadlines yet',
@@ -137,7 +137,7 @@ export const en: Record<MessageKey, string> = {
   'tools.moodle.backToNative': 'Open workspace',
   'tools.moodle.locked': 'Content is locked',
   'tools.moodle.fileUnknown': 'File details unavailable',
-  'tools.moodle.fileMetadata': '{mime} Â· {size}',
+  'tools.moodle.fileMetadata': '{mime} · {size}',
   'tools.moodle.reminders.unavailable': 'Reminders unavailable',
   'tools.moodle.reminders.planned': 'Reminders planned',
   'tools.moodle.reminders.partial': 'Some reminders not scheduled',
@@ -203,11 +203,11 @@ export const en: Record<MessageKey, string> = {
   'tools.systems.empty': 'No systems configured',
   'tools.open': 'Open',
   'tools.sessions.notice':
-    'Session state is what this device observed; clearing removes the local record only â€” the school site may still remember you',
+    'Session state is what this device observed; clearing removes the local record only — the school site may still remember you',
   'tools.sessions.short': 'View and clear session state',
   'tools.readSchedule': 'Read timetable on this page',
-  'tools.schedule.scraped': 'Read {rows} rows â€” confirm in Import',
-  'tools.schedule.none': 'No timetable found on this page â€” try again on the timetable page',
+  'tools.schedule.scraped': 'Read {rows} rows — confirm in Import',
+  'tools.schedule.none': 'No timetable found on this page — try again on the timetable page',
 
   // T-03 schedule import (P1-15)
   'import.title': 'Import timetable',
@@ -215,8 +215,8 @@ export const en: Record<MessageKey, string> = {
   'import.pasteHelp': 'Use "Read timetable on this page" in AC, or paste the text directly',
   'import.preview': 'Preview',
   'import.commit': 'Import',
-  'import.tooShort': 'Too short â€” paste the whole timetable',
-  'import.summary': '{courses} courses Â· {meetings} sessions',
+  'import.tooShort': 'Too short — paste the whole timetable',
+  'import.summary': '{courses} courses · {meetings} sessions',
   'import.errorsTitle': '{n} lines could not be parsed',
   'import.overwriteTitle': 'Replace the whole timetable',
   'import.overwriteBody': 'Your current timetable will be replaced and this cannot be undone',
@@ -240,7 +240,7 @@ export const en: Record<MessageKey, string> = {
   'timetable.sheet.unknown': 'Not listed',
   'timetable.sheet.occurrences': 'This week',
 
-  // Weekdays (backend `day_of_week`: 1=Mon â€¦ 7=Sun)
+  // Weekdays (backend `day_of_week`: 1=Mon … 7=Sun)
   'weekday.1': 'Mon',
   'weekday.2': 'Tue',
   'weekday.3': 'Wed',
@@ -303,14 +303,14 @@ export const en: Record<MessageKey, string> = {
   'canteen.rating.above': 'Decent',
   'canteen.rating.npc': 'Mid',
   'canteen.rating.dead': 'Avoid',
-  // Canteen slice S-07â€¦S-10 (P1-17)
+  // Canteen slice S-07…S-10 (P1-17)
   'square.services': 'Services',
   'canteen.title': 'Canteen',
   'canteen.regions': 'Browse by area',
   'canteen.noRegions': 'No areas open yet',
   'canteen.pick': 'Pick for me',
   'canteen.pickEmpty': 'Nothing to recommend yet',
-  'canteen.pickFailed': 'No luck this time â€” try later',
+  'canteen.pickFailed': 'No luck this time — try later',
   'canteen.shopsTitle': 'Shops in area',
   'canteen.noShops': 'No shops in this area yet',
   'canteen.regionTop': 'Top in this area',
@@ -330,12 +330,12 @@ export const en: Record<MessageKey, string> = {
   'canteen.reviews': 'Reviews',
   'canteen.reviewCount': '{n}',
   'canteen.comments': 'Reviews',
-  'canteen.noComments': 'No reviews yet â€” be the first',
+  'canteen.noComments': 'No reviews yet — be the first',
   'canteen.anonymous': 'Anonymous',
   'canteen.merchant': 'Shop reply',
   'canteen.loadMore': 'Load more',
 
-  // â”€â”€ Destination placeholders â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Destination placeholders ─────────────────────────────────
   'screen.square': 'Square',
   'screen.tools': 'Tools',
   'screen.campus': 'Campus',
@@ -391,7 +391,7 @@ export const en: Record<MessageKey, string> = {
   'me.content.reviews.empty.description': 'Your reviews will show up here',
   // My posts (M-04; from P2C-04)
   'me.posts.noText': 'No content',
-  'me.posts.meta': '{likes} likes Â· {comments} comments',
+  'me.posts.meta': '{likes} likes · {comments} comments',
   'me.posts.delete': 'Delete',
   'me.posts.delete.title': 'Delete this post',
   'me.posts.delete.body': 'This cannot be undone',
@@ -402,7 +402,7 @@ export const en: Record<MessageKey, string> = {
   // Settings & legal (M-13/M-18/M-19/M-20; from P2C-05)
   'me.settings.title': 'Settings',
   'me.settings.language': 'Language',
-  'me.settings.language.zh': 'ä¸­æ–‡',
+  'me.settings.language.zh': '中文',
   'me.settings.language.en': 'English',
   'me.settings.notifications': 'Class reminders and important messages',
   'me.settings.notifications.description': 'Course reminders and important campus messages are sent only after you enable them.',
@@ -472,12 +472,12 @@ export const en: Record<MessageKey, string> = {
   'mailbox.chat.empty.description': 'Say hello first',
   'mailbox.chat.read': 'Read',
 
-  // â”€â”€ Secondary tabs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Secondary tabs ───────────────────────────────────────────
   'secondary.today': 'Today',
   'secondary.confession': 'Confessions',
   'secondary.wall': 'Wall',
 
-  // â”€â”€ Error copy: perceive / understand / fix â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Error copy: perceive / understand / fix ──────────────────
   'error.net.offline.perceive': 'No connection',
   'error.net.offline.understand': 'This phone has no network right now',
   'error.net.offline.fix': 'Turn on network, then retry',
@@ -506,7 +506,7 @@ export const en: Record<MessageKey, string> = {
   'error.unknown.understand': 'An unexpected error happened and we logged it',
   'error.unknown.fix': 'Go back, then retry',
 
-  // â”€â”€ Actions (verb first) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Actions (verb first) ─────────────────────────────────────
   'canteen.review.title': 'Write review',
   'canteen.review.rating': 'Rating',
   'canteen.review.chooseRating': 'Choose a rating tier',
@@ -542,7 +542,7 @@ export const en: Record<MessageKey, string> = {
   'tools.todos.deleteConfirm': 'Confirm delete',
   'tools.todos.notFound': 'This todo does not exist or has been deleted',
   'tools.todos.saveFailed': 'Todo was not saved',
-  'tools.todos.serverRule': 'Enter a title of 1â€“500 characters, a priority of 0â€“3, and valid dates and times. If the todo was deleted, return to the list and create it again',
+  'tools.todos.serverRule': 'Enter a title of 1–500 characters, a priority of 0–3, and valid dates and times. If the todo was deleted, return to the list and create it again',
   'tools.todos.chooseDate': 'Choose date',
   'tools.todos.chooseTime': 'Choose time',
   'tools.todos.clearValue': 'Clear',
@@ -552,16 +552,16 @@ export const en: Record<MessageKey, string> = {
   'canteen.favorite.serverRule': 'The dish must remain available. Refresh its saved status, then choose Save or Unsave',
   'canteen.favorite.add': 'Save',
   'canteen.favorite.remove': 'Unsave',
-  'tools.dashboard.schedule': 'Todayâ€™s schedule',
+  'tools.dashboard.schedule': 'Today’s schedule',
   'tools.dashboard.current': 'Current class: {name}',
   'tools.dashboard.next': 'Next class: {name}',
   'tools.dashboard.holiday': 'Upcoming holiday',
-  'tools.dashboard.holidayLine': '{name} Â· {start} to {end}',
+  'tools.dashboard.holidayLine': '{name} · {start} to {end}',
   'tools.dashboard.noHoliday': 'No upcoming holidays in the local calendar',
-  'tools.dashboard.todos': 'Todayâ€™s todos',
+  'tools.dashboard.todos': 'Today’s todos',
   'tools.dashboard.noCourses': 'No classes today',
   'tools.dashboard.noTodos': 'No active todos today',
-  'tools.dashboard.courseLine': '{start}â€“{end} Â· {venue}',
+  'tools.dashboard.courseLine': '{start}–{end} · {venue}',
   'tools.dashboard.noVenue': 'Venue to be confirmed',
   'tools.dashboard.todoCount': '{total} todos today, {completed} completed',
   'tools.dashboard.active': 'Active',
@@ -571,7 +571,7 @@ export const en: Record<MessageKey, string> = {
   'canteen.review.imagesUnavailable': 'Image selection is unavailable. You can submit a text review',
   'canteen.review.imageTooLarge': 'Each image must be within 8MB',
   'canteen.review.imageFormat': 'Choose JPG, PNG or WebP images',
-  'canteen.review.serverRule': 'Choose a rating, enter 1â€“300 characters and attach up to 3 JPG, PNG or WebP images',
+  'canteen.review.serverRule': 'Choose a rating, enter 1–300 characters and attach up to 3 JPG, PNG or WebP images',
   'canteen.review.submit': 'Submit review',
   'canteen.review.failed': 'Review was not submitted',
   'canteen.search.title': 'Search canteen',
@@ -790,7 +790,7 @@ export const en: Record<MessageKey, string> = {
   'screen.agent.new': 'New conversation',
   'screen.agent.deleted': 'Conversation deleted',
   'screen.agent.undo': 'Undo',
-  'screen.agent.loadingHistory': 'Loading conversationsâ€¦',
+  'screen.agent.loadingHistory': 'Loading conversations…',
   'screen.agent.noHistory': 'No conversations yet.',
   'screen.agent.legacy': 'Earlier conversation',
   'screen.agent.earlier': 'Earlier',
@@ -799,8 +799,8 @@ export const en: Record<MessageKey, string> = {
   'screen.agent.send': 'Send',
   'screen.agent.checkLater': 'Check later',
   'screen.agent.welcome': 'A place for campus questions.',
-  'screen.agent.thinking': 'Thinkingâ€¦',
-  'screen.agent.loading': 'Loading conversationâ€¦',
+  'screen.agent.thinking': 'Thinking…',
+  'screen.agent.loading': 'Loading conversation…',
   'screen.agent.stillWorking': 'Still answering. The result will appear here.',
   'screen.agent.accessFailed': 'Your session is unavailable. Please sign in again.',
   'screen.agent.notFound': 'Conversation unavailable. Choose another from history.',
@@ -813,7 +813,6 @@ export const en: Record<MessageKey, string> = {
   'screen.agent.pending': 'This conversation cannot continue right now. Start a new one.',
   'screen.agent.you': 'You',
   'screen.agent.suggest.schedule': 'What time are my classes tomorrow?',
-  'screen.agent.suggest.todo': 'Whatâ€™s still on my to-do list?',
+  'screen.agent.suggest.todo': 'What’s still on my to-do list?',
   'screen.agent.suggest.food': 'Where can I eat near campus?',
 };
-
