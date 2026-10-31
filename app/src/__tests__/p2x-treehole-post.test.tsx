@@ -10,7 +10,7 @@
 
 import * as React from 'react';
 import { PixelRatio } from 'react-native';
-import { fireEvent } from '@testing-library/react-native';
+import { fireEvent, within } from '@testing-library/react-native';
 
 import { TreeholePostRow } from '@/features/campus/TreeholePostRow';
 import { TreeholePostDetail } from '@/features/campus/TreeholePostDetail';
@@ -141,6 +141,22 @@ describe('P2X TreeholePostRow', () => {
     expect(view.queryByTestId('treehole-media-preview')).toBeNull();
   });
 
+  it('图组距正文 12dp：内容列 4 + 媒体上边距 8', async () => {
+    const view = await renderApp(
+      row({ post: { ...post, mediaUrls: ['https://example.test/a.jpg'] } })
+    );
+    expect(view.getByTestId('campus-row-7-media')).toHaveStyle({ marginTop: 8 });
+  });
+
+  it('点图组仍进详情（2026-10-31：只去掉按压变灰，不减少交互）', async () => {
+    const onOpen = jest.fn();
+    const view = await renderApp(
+      row({ onOpen, post: { ...post, mediaUrls: ['https://example.test/a.jpg'] } })
+    );
+    await fireEvent.press(view.getByTestId('campus-row-7-media'));
+    expect(onOpen).toHaveBeenCalledTimes(1);
+  });
+
   it('正文在媒体之前：详情顺序 = 标题/正文 → 标签 → 媒体', async () => {
     const view = await renderApp(
       <TreeholePostDetail
@@ -157,6 +173,29 @@ describe('P2X TreeholePostRow', () => {
     expect(tree.indexOf('晚自习搭子')).toBeLessThan(tree.indexOf('今晚有人想去图书馆吗？'));
     expect(tree.indexOf('今晚有人想去图书馆吗？')).toBeLessThan(tree.indexOf('treehole-tags'));
     expect(tree.indexOf('treehole-tags')).toBeLessThan(tree.indexOf('treehole-media-detail'));
+  });
+
+  it('详情 tag 退为辅助信息：字号 = 正文 × 0.85（12sp），胶囊内边距收到 4/12', async () => {
+    const view = await renderApp(
+      <TreeholePostDetail
+        post={post}
+        timeLabel="2026-10-18 10:00"
+        liked={false}
+        likeCount={2}
+        commentCount={3}
+        onLike={() => undefined}
+        onComment={() => undefined}
+      />
+    );
+    const chip = view.getByTestId('treehole-tag-1');
+    expect(chip).toHaveStyle({
+      minHeight: 24,
+      paddingHorizontal: 12,
+      paddingVertical: 4,
+      borderRadius: 9999,
+    });
+    // 正文 body = 14sp → tag caption = 12sp（0.857×，落 0.85 档）；常规字重，不抢正文
+    expect(within(chip).getByText('求助')).toHaveStyle({ fontSize: 12, fontWeight: 'normal' });
   });
 
   it('短正文直接完整显示，不给"阅读全文"', async () => {

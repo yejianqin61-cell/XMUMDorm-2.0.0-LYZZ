@@ -45,7 +45,6 @@ export const en: Record<MessageKey, string> = {
   'screen.campus.read.end': 'No more comments',
   'screen.campus.read.noComments': 'No comments yet',
   'screen.campus.read.commentsFailed': 'Comments failed to load. Retry',
-  'screen.campus.mediaCount': '{count} images',
   'screen.campus.mediaPrevious': 'Previous image',
   'screen.campus.mediaNext': 'Next image',
   'screen.campus.mediaPreview': 'Preview image',

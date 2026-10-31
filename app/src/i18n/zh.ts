@@ -46,7 +46,6 @@ export const zh = {
   'screen.campus.read.end': '没有更多评论',
   'screen.campus.read.noComments': '还没有评论',
   'screen.campus.read.commentsFailed': '评论没读出来，重试一次',
-  'screen.campus.mediaCount': '{count} 张图片',
   'screen.campus.mediaPrevious': '上一张',
   'screen.campus.mediaNext': '下一张',
   'screen.campus.mediaPreview': '预览图片',
