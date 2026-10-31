@@ -21,7 +21,7 @@ import {getQueryClient} from '@/shared/queryClient';
 import {useSession} from '@/features/auth/session';
 import {classifyAuthFailure,isSessionInvalid} from '@/features/auth/authFailure';
 import {useReport,type ReportReason} from '@/features/reports/useReport';
-import {listMarketplaceItems,getMarketplaceItemDetail,toggleMarketplaceWant} from '../../../../shared/api/marketplace';
+import {listMarketplaceItems,getMarketplaceItemDetail,toggleMarketplaceWant,updateMarketplaceItemStatus} from '../../../../shared/api/marketplace';
 import {readMarketPage,readMarketDetail,type MarketItem} from './model';
 type Filters={category?:string;status?:string;q?:string};
 type Snapshot={rows:readonly MarketItem[];page:number;hasMore:boolean;scrollOffset:number};
@@ -131,6 +131,12 @@ export function MarketDetailScreen({published=false,itemId}:{published?:boolean;
   finally{if(request===epoch.current){lock.current=false;setBusy(false);}}
  };
  const back=()=>published?router.replace('/market' as never):router.canGoBack()?router.back():router.replace('/market' as never);
+ // 阶段B-04（丁 A-5）：只有卖家且服务端允许时才能标记已售；成功后刷详情并失效列表缓存
+ const markSold=async()=>{if(!item||!item.canMarkSold||lock.current)return;lock.current=true;setBusy(true);setNotice(null);const request=epoch.current;
+  try{await updateMarketplaceItemStatus(item.id,'sold');if(request!==epoch.current)return;getQueryClient().removeQueries({queryKey:['bing-market','list']});await load();}
+  catch(failure){if(request!==epoch.current)return;const auth=classifyAuthFailure(failure);if(isSessionInvalid(auth))await session.handleAuthFailure(failure);if(request===epoch.current)setNotice(isSessionInvalid(auth)?'login':auth==='sanctioned'?'denied':'failed');}
+  finally{if(request===epoch.current){lock.current=false;setBusy(false);}}
+ };
  const reportReasons=['spam','fraud','abuse','nsfw','trolling','privacy','illegal_trade','other'] as const;
  const reportReasonKeys={spam:'screen.campus.report.spam',fraud:'screen.campus.report.fraud',abuse:'screen.campus.report.abuse',nsfw:'screen.campus.report.nsfw',trolling:'screen.campus.report.trolling',privacy:'screen.campus.report.privacy',illegal_trade:'screen.campus.report.illegal_trade',other:'screen.campus.report.other'} as const;
  const reportPanel=<ReportSheet maxDetailLength={1000} visible={reportOpen} reasons={reportReasons.map(value=>({value,label:t(reportReasonKeys[value])}))} reason={reportReason} detail={reportDetail} onReason={setReportReason} onDetail={setReportDetail}
@@ -143,6 +149,7 @@ export function MarketDetailScreen({published=false,itemId}:{published?:boolean;
   hero={item&&item.images.length?<MediaGrid testID="market-media" variant="hero" uris={item.images} alt={item.images.map(()=>item.title)}/>:undefined}
   body={item?<><View testID="market-detail-summary"><Text role="headline" emphasis="strong">{`RM ${item.price.toFixed(2)}`}</Text><Text role="label" colorToken="text-secondary">{t(item.status==='sold'?'screen.market.sold':'screen.market.on_sale')}</Text></View><Text role="body">{item.description}</Text>
    <View testID="market-transaction-actions"><Button testID="market-want" disabled={busy} label={`${t(item.want?'screen.market.wanted':'screen.market.want')} · ${count??'—'}`} onPress={()=>void toggle()}/>
+   {item.canMarkSold?<Button testID="market-mark-sold" disabled={busy} label={t('screen.market.markSold')} onPress={()=>void markSold()}/>:null}
    {notice==='login'?<Button label={t('screen.market.login')} onPress={()=>router.push('/login')}/>:notice?<Text role="body">{t(notice==='denied'?'screen.market.denied':'screen.market.failed')}</Text>:null}</View>{reportPanel}</>:null}
   labels={{back:t('action.back'),like:t('screen.campus.read.like'),favorite:t('action.save'),comment:t('screen.campus.read.comments'),report:t('screen.campus.read.report'),countPlaceholder:'—',anonymous:t('screen.campus.read.anonymous'),comments:{anonymous:t('screen.campus.read.anonymous'),deleteLabel:t('screen.campus.read.delete'),replyLabel:t('screen.campus.read.reply'),likeLabel:t('screen.campus.read.like'),moreReplies:n=>String(n),collapse:t('screen.campus.read.collapse')},commentsEnd:t('screen.campus.read.end'),commentsRetry:t('action.retry')}}/>;
 }

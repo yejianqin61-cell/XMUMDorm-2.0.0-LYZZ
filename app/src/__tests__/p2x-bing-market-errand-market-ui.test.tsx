@@ -3,18 +3,19 @@ import {act,fireEvent,waitFor} from '@testing-library/react-native';
 import {renderApp} from './helpers/renderApp';
 import {within} from '@testing-library/react-native';
 import {MarketListScreen,MarketDetailScreen} from '@/features/marketplace/MarketScreens';
-import {listMarketplaceItems,getMarketplaceItemDetail,toggleMarketplaceWant} from '../../../shared/api/marketplace';
+import {listMarketplaceItems,getMarketplaceItemDetail,toggleMarketplaceWant,updateMarketplaceItemStatus} from '../../../shared/api/marketplace';
 import {getQueryClient} from '@/shared/queryClient';
 import type {ListScreenProps} from '@/components/ui/ListScreen';
 const mockPush=jest.fn();const mockSession={isSignedIn:true,handleAuthFailure:jest.fn()};let mockListProps:ListScreenProps<unknown>;
 jest.mock('expo-router',()=>({useRouter:()=>({push:mockPush,back:jest.fn(),replace:jest.fn(),canGoBack:()=>false})}));
 jest.mock('@/features/auth/session',()=>({useSession:()=>mockSession}));
-jest.mock('../../../shared/api/marketplace',()=>({listMarketplaceItems:jest.fn(),getMarketplaceItemDetail:jest.fn(),toggleMarketplaceWant:jest.fn()}));
+jest.mock('../../../shared/api/marketplace',()=>({listMarketplaceItems:jest.fn(),getMarketplaceItemDetail:jest.fn(),toggleMarketplaceWant:jest.fn(),updateMarketplaceItemStatus:jest.fn()}));
 jest.mock('@/components/ui/ListScreen',()=>{const actual=jest.requireActual('@/components/ui/ListScreen'),React=require('react');return {...actual,ListScreen:(p:ListScreenProps<unknown>)=>{mockListProps=p;return React.createElement(actual.ListScreen,{...p,onEndReached:()=>undefined});}};});
 const list=listMarketplaceItems as jest.Mock,detail=getMarketplaceItemDetail as jest.Mock,want=toggleMarketplaceWant as jest.Mock;
+const markSoldApi=updateMarketplaceItemStatus as jest.Mock;
 const row={id:1,title:'Book',description:'Used',price:12,status:'on_sale',category:'books',sellerName:'Alice'};
 const full={...row,sellerInfo:{name:'Seller'},viewer:{want:false},actions:{want:true},images:[],wants_count:2};
-beforeEach(()=>{getQueryClient().clear();jest.clearAllMocks();list.mockReset();detail.mockReset();want.mockReset();mockSession.isSignedIn=true;});
+beforeEach(()=>{getQueryClient().clear();jest.clearAllMocks();list.mockReset();detail.mockReset();want.mockReset();markSoldApi.mockReset();mockSession.isSignedIn=true;});
 afterEach(()=>getQueryClient().clear());
 it('列表到详情，并带修剪查询及价格筛选',async()=>{
  list.mockResolvedValue({list:[row],hasMore:false});const v=await renderApp(<MarketListScreen/>);
@@ -143,8 +144,25 @@ it('想要响应丢失后下一次操作先读权威状态，不能反向切换'
  await fireEvent.press(v.getByTestId('market-want'));await waitFor(()=>expect(v.getByText('已想要 · 3')).toBeTruthy());expect(want).toHaveBeenCalledTimes(1);
 });
 
-it('二手列表卸载时解绑查询缓存订阅',async()=>{
- const unsubscribe=jest.fn();
+it('卖家可标记已售：只发一次写请求并刷新为已售',async()=>{
+ detail.mockResolvedValueOnce({...full,viewer:{want:false,canEdit:true},actions:{want:true,markSold:true}})
+  .mockResolvedValue({...full,status:'sold',viewer:{want:false,canEdit:true},actions:{want:true,markSold:false}});
+ markSoldApi.mockResolvedValue({});
+ const v=await renderApp(<MarketDetailScreen itemId="1"/>);
+ await waitFor(()=>expect(v.getByTestId('market-mark-sold')).toBeTruthy());
+ await fireEvent.press(v.getByTestId('market-mark-sold'));
+ await waitFor(()=>expect(markSoldApi).toHaveBeenCalledWith(1,'sold'));
+ expect(markSoldApi).toHaveBeenCalledTimes(1);
+ await waitFor(()=>expect(v.getByText('已售')).toBeTruthy());
+});
+it('买家没有标记已售入口',async()=>{
+ detail.mockResolvedValue(full);
+ const v=await renderApp(<MarketDetailScreen itemId="1"/>);
+ await waitFor(()=>expect(v.getByTestId('market-want')).toBeTruthy());
+ expect(v.queryByTestId('market-mark-sold')).toBeNull();
+});
+
+it('二手列表卸载时解绑查询缓存订阅',async()=>{ const unsubscribe=jest.fn();
  const subscribe=jest.spyOn(getQueryClient().getQueryCache(),'subscribe').mockReturnValue(unsubscribe);
  try{
   list.mockResolvedValue({list:[row],hasMore:false});

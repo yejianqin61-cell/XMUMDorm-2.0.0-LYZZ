@@ -671,6 +671,7 @@ export const en: Record<MessageKey, string> = {
   'screen.market.all': "All",
   'screen.market.on_sale': "For sale",
   'screen.market.sold': "Sold",
+  'screen.market.markSold': "Mark sold",
   'screen.market.electronics': "Electronics",
   'screen.market.transport': "Transport",
   'screen.market.dailyuse': "Daily use",
