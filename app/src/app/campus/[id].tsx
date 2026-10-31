@@ -15,7 +15,11 @@ import { createAlbumSaver, isAlbumAvailable } from '@/shared/mediaLibrary';
  * 避免同一张图被重复下载/写入（丙的事务内部还会按 URL 去重）。
  */
 export default function CampusRoute(): React.ReactElement {
-  const { id, published } = useLocalSearchParams<{ id: string | string[]; published?: string }>();
+  const { id, published, comment } = useLocalSearchParams<{
+    id: string | string[];
+    published?: string;
+    comment?: string;
+  }>();
   const { t } = useI18n();
   const [save, setSave] = React.useState<TreeholeImageSaver | null>(null);
 
@@ -52,6 +56,7 @@ export default function CampusRoute(): React.ReactElement {
       published={published === '1'}
       postId={typeof id === 'string' ? id : ''}
       imageSave={imageSave}
+      comment={typeof comment === 'string' ? comment : undefined}
     />
   );
 }

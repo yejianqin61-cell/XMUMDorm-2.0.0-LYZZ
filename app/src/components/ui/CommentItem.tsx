@@ -66,6 +66,11 @@ export type CommentItemProps = {
   };
   style?: StyleProp<ViewStyle>;
   testID?: string;
+  /**
+   * 是否是"从通知定位过来的目标评论"（阶段A-07）：只表达**当前焦点**，
+   * ⛔ 不是点赞态、也不改变可操作性；读屏会播报为选中。
+   */
+  highlighted?: boolean;
 };
 
 export function CommentItem({
@@ -82,6 +87,7 @@ export function CommentItem({
   labels,
   style,
   testID,
+  highlighted = false,
 }: CommentItemProps): React.ReactElement {
   const theme = useTheme();
   const isNamed = author.kind === 'named';
@@ -91,12 +97,21 @@ export function CommentItem({
   return (
     <View
       testID={testID}
+      accessibilityState={highlighted ? { selected: true } : undefined}
       style={[
         {
           flexDirection: 'row',
           gap: theme.space('space_2'),
           paddingVertical: theme.space('space_2'),
         },
+        // 定位目标：只加左侧品牌色细边（⛔ 不用透明度/整块底色，避免与点赞态混淆）
+        highlighted
+          ? {
+              borderLeftWidth: theme.borderWidth('border_width_brutal'),
+              borderLeftColor: theme.color['border-brand'].value,
+              paddingLeft: theme.space('space_2'),
+            }
+          : null,
         style,
       ]}
     >

@@ -90,6 +90,8 @@ export type CampusDetailScreenProps = {
   /** 发布成功后进入详情：返回一律回广场（不得回到发布表单） */
   published?: boolean;
   imageSave?: TreeholeImageSaveOptions;
+  /** 通知定位过来的评论 id（阶段A-07）：只负责展开与标出，滚动归详情页自己 */
+  comment?: string;
 };
 
 export function CampusDetailScreen({
@@ -97,6 +99,7 @@ export function CampusDetailScreen({
   kind = 'confession',
   published = false,
   imageSave,
+  comment,
 }: CampusDetailScreenProps): React.ReactElement {
   const { t, locale } = useI18n();
   const router = useRouter();
@@ -546,6 +549,7 @@ export function CampusDetailScreen({
                 <CommentThread
                   testID="campus-detail-comments"
                   nodes={actions.comments.nodes}
+                  targetId={comment}
                   onReply={actions.comments.onReply}
                   onDelete={kind === 'wall' ? (id: string) => setDeleteCommentId(id) : undefined}
                   labels={{

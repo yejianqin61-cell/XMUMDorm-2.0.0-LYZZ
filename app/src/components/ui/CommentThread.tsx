@@ -113,6 +113,14 @@ export type CommentThreadProps = {
   footer?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   testID?: string;
+  /**
+   * 从通知定位过来的评论 id（阶段A-07）：
+   * - 目标是折叠在"更多回复"里的回复时，**自动展开所在组**；
+   * - 目标条目带 `highlighted`（读屏播报为选中，并加左侧品牌色细边）；
+   * - 目标不存在/未加载：什么都不做，页面照常可读。
+   * ⚠️ 滚动到目标与加载失败提示属**详情页**（内容域），本组件只负责"展开 + 标出"。
+   */
+  targetId?: string;
 };
 
 export function CommentThread({
@@ -124,10 +132,27 @@ export function CommentThread({
   footer,
   style,
   testID,
+  targetId,
 }: CommentThreadProps): React.ReactElement {
   const theme = useTheme();
   const [expanded, setExpanded] = React.useState<ReadonlySet<string>>(new Set());
   const groups = groupComments(nodes);
+
+  /** 目标所属的一级评论（目标可以是根，也可以是某条回复）；不在已加载节点里就是 null */
+  const targetRootId = React.useMemo(() => {
+    if (!targetId) return null;
+    for (const group of groups) {
+      if (group.root.id === targetId) return group.root.id;
+      if (group.replies.some(reply => reply.id === targetId)) return group.root.id;
+    }
+    return null;
+  }, [groups, targetId]);
+
+  // 只在"目标组"首次出现时自动展开；用户随后手动收起不会被强行扳回
+  React.useEffect(() => {
+    if (targetRootId === null) return;
+    setExpanded(prev => (prev.has(targetRootId) ? prev : new Set([...prev, targetRootId])));
+  }, [targetRootId]);
 
   /** ⛔ 回复入口**由 `canReplyTo` 决定**，不是靠"回复那里忘了传 onReply" —— 规则要能被改一处 */
   const replyHandlerFor = (node: CommentNode): (() => void) | undefined =>
@@ -163,6 +188,7 @@ export function CommentThread({
               onDelete={onDelete ? () => onDelete(group.root.id) : undefined}
               // 仅二级：只有一级评论才拿到回复入口（判断走纯函数）
               onReply={replyHandlerFor(group.root)}
+              highlighted={targetId === group.root.id}
               labels={labels}
             />
 
@@ -184,6 +210,7 @@ export function CommentThread({
                     onDelete={onDelete ? () => onDelete(reply.id) : undefined}
                     // 回复的回复：`canReplyTo(1)` 为 false → 这里天然没有入口
                     onReply={replyHandlerFor(reply)}
+                    highlighted={targetId === reply.id}
                     labels={labels}
                   />
                 ))}
