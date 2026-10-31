@@ -27,6 +27,7 @@ import { TERMS_ROUTE, type SubmitGate } from './complianceGate';
 import type { PublishFormDescriptor } from './descriptor';
 import { PUBLISH_DESCRIPTORS } from './descriptors';
 import { getPublishEntry } from './registry';
+import { WallPublishPreview } from '@/features/campus/WallPublishPreview';
 import { useResolvedDescriptor } from './resolveDescriptor';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -77,6 +78,15 @@ function ResolvedPublishFormHost({descriptor}: PublishFormHostProps): React.Reac
        * 标题取注册表里的类型名（如"万能墙"），⛔ 不是技术性文案。
        */
       titleKey={entry?.titleKey}
+      /*
+       * 阶段A-06：万能墙的**实时模板预览**——只消费当前表单值，随输入出现/消失；
+       * 其它发布类型不传（⛔ 不做假预览，也不把预览当校验）。
+       */
+      preview={
+        descriptor.id === 'wall'
+          ? <WallPublishPreview values={host.form.values} />
+          : undefined
+      }
       /*
        * A2-11：提交位落进唯一安全区容器的 footer 槽 —— 键盘打开时最后一项输入与提交都可触达。
        * ⛔ 只发布宿主启用；登录/注册/找回/资料/待办/点评/菜品点评保持 inline。

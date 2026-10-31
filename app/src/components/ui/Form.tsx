@@ -444,6 +444,12 @@ export type FormProps = {
   sections: readonly FormSectionDescriptor[];
   labels: FormLabels;
   semantic: SubmitSemantic;
+  /**
+   * 表单上方的**业务预览**（阶段A-06：万能墙模板预览）。
+   * 与 `tabs`/`filterChips`/`listHeader` 的区别：这里只放"当前输入长什么样"的即时映射，
+   * ⛔ 不放导航、筛选或校验结果；未传时不渲染（既有表单零变化）。
+   */
+  preview?: React.ReactNode;
   /** 成功后按 `postSubmitPlan(semantic)` 执行（页面负责真正的跳转/失效） */
   onSettled?: (plan: PostSubmitPlan) => void;
   onCancel?: () => void;
@@ -505,6 +511,7 @@ export function Form({
   sections,
   labels,
   semantic,
+  preview,
   onSettled,
   onCancel,
   onRetrySubmit,
@@ -610,6 +617,9 @@ export function Form({
             ))}
           </FormSection>
         ))}
+
+        {/* 业务预览（阶段A-06）：只消费当前表单值，未传时不渲染 */}
+        {preview ?? null}
 
         {/* inline 模式：动作行在内容末尾（既有行为）；footer 模式由 Screen 的 footer 槽承载 */}
         {submitPlacement === 'inline' ? actionRow : null}
