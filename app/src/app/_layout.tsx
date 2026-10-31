@@ -32,6 +32,7 @@ import { ToastHost, ToastProvider } from '@/components/ui/Toast';
 import { SessionProvider } from '@/features/auth/session';
 import { SessionGate } from '@/features/auth/SessionGate';
 import { ReminderRuntimeHost } from '@/features/tools/reminders/ReminderRuntimeHost';
+import { ReminderNotificationHost } from '@/features/notifications/ReminderNotificationHost';
 import { SplashRelease, holdSplashScreen } from '@/features/launch/splash';
 
 /**
@@ -81,6 +82,8 @@ function GlobalOverlays(): React.ReactElement {
         ⛔ 门自己不许再调 `useSafeAreaInsets()`（否则就是第三个调用点）。
       */}
       <SessionGate topInset={insets.top} bottomInset={insets.bottom} />
+      {/* 阶段C-02：提醒通知点击的**唯一**监听宿主（冷启动 + 前台） */}
+      <ReminderNotificationHost />
       <ReminderRuntimeHost />
     </>
   );
