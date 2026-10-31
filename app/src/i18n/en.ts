@@ -378,6 +378,8 @@ export const en: Record<MessageKey, string> = {
   'me.content.title': 'My content',
   'me.content.posts': 'Treehole',
   'me.content.marketplace': 'Second-hand',
+  'me.content.marketplace.tabItems': 'My listings',
+  'me.content.marketplace.tabWants': 'Wanted',
   'me.content.errands': 'Errands',
   'me.content.reviews': 'Reviews',
   'me.content.marketplace.empty.title': 'No listings yet',

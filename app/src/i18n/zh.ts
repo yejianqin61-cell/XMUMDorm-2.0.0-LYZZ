@@ -385,6 +385,8 @@ export const zh = {
   'me.content.title': '我的内容',
   'me.content.posts': '树洞',
   'me.content.marketplace': '二手',
+  'me.content.marketplace.tabItems': '我的商品',
+  'me.content.marketplace.tabWants': '我的想要',
   'me.content.errands': '跑腿',
   'me.content.reviews': '点评',
   'me.content.marketplace.empty.title': '还没有二手发布',

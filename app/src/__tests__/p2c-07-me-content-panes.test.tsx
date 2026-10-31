@@ -23,14 +23,14 @@ jest.mock('expo-router', () => ({
 jest.mock('../../../shared/api/users', () => ({ getMe: jest.fn(), getProfile: jest.fn() }));
 jest.mock('../../../shared/api/posts', () => ({ deletePost: jest.fn() }));
 jest.mock('../../../shared/api/canteen', () => ({ getMyProductReviews: jest.fn() }));
-jest.mock('../../../shared/api/marketplace', () => ({ listMarketplaceMyItems: jest.fn() }));
+jest.mock('../../../shared/api/marketplace', () => ({ listMarketplaceMyItems: jest.fn(), listMarketplaceMyWants: jest.fn() }));
 jest.mock('../../../shared/api/errands', () => ({ listMyErrands: jest.fn() }));
 
 const api = {
   users: require('../../../shared/api/users') as { getMe: jest.Mock; getProfile: jest.Mock },
   posts: require('../../../shared/api/posts') as { deletePost: jest.Mock },
   canteen: require('../../../shared/api/canteen') as { getMyProductReviews: jest.Mock },
-  marketplace: require('../../../shared/api/marketplace') as { listMarketplaceMyItems: jest.Mock },
+  marketplace: require('../../../shared/api/marketplace') as { listMarketplaceMyItems: jest.Mock; listMarketplaceMyWants: jest.Mock },
   errands: require('../../../shared/api/errands') as { listMyErrands: jest.Mock },
 };
 
@@ -62,6 +62,7 @@ beforeEach(() => {
   api.users.getProfile.mockResolvedValue(PROFILE_PAYLOAD);
   api.posts.deletePost.mockResolvedValue({ status: 0 });
   api.marketplace.listMarketplaceMyItems.mockResolvedValue({ items: [], page: 1, hasMore: false });
+  api.marketplace.listMarketplaceMyWants.mockResolvedValue({ list: [], hasMore: false });
   api.errands.listMyErrands.mockResolvedValue({ items: [], page: 1, hasMore: false });
   api.canteen.getMyProductReviews.mockResolvedValue({ items: [], page: 1, hasMore: false });
   secondaryTabStore.clear();
@@ -102,6 +103,25 @@ describe('P2C-07 「我的」四个内容分页', () => {
       const view = await renderApp(<MeContentPane kind="marketplace" active />);
       await waitFor(() => expect(api.marketplace.listMarketplaceMyItems).toHaveBeenCalled());
       expect(view.getByTestId('me-content-pane-marketplace')).toBeTruthy();
+    });
+  });
+
+  describe('TC-P2C-07-4A · 二手面板内切「我的想要」（阶段B-05）', () => {
+    it('切到想要才调用想要接口，且不改内容 Tab 集合', async () => {
+      const view = await renderApp(<MeContentPane kind="marketplace" active />);
+      await waitFor(() => expect(view.getByTestId('me-content-marketplace')).toBeTruthy());
+      expect(api.marketplace.listMarketplaceMyItems).toHaveBeenCalled();
+      expect(api.marketplace.listMarketplaceMyWants).not.toHaveBeenCalled();
+
+      await fireEvent.press(view.getByTestId('me-market-mode-wants'));
+      await waitFor(() =>
+        expect(api.marketplace.listMarketplaceMyWants).toHaveBeenCalledWith({ page: 1, pageSize: 20 })
+      );
+
+      await fireEvent.press(view.getByTestId('me-market-mode-items'));
+      await waitFor(() =>
+        expect(api.marketplace.listMarketplaceMyItems).toHaveBeenCalledTimes(2)
+      );
     });
   });
 

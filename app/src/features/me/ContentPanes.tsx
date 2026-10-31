@@ -26,10 +26,11 @@ import { IconButton } from '@/components/ui/IconButton';
 import { ListScreen, useListPagination } from '@/components/ui/ListScreen';
 import { useTheme } from '@/design-system/theme';
 import { useI18n } from '@/i18n';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { getMe, getProfile } from '../../../../shared/api/users';
 import { deletePost } from '../../../../shared/api/posts';
 import { getMyProductReviews } from '../../../../shared/api/canteen';
-import { listMarketplaceMyItems } from '../../../../shared/api/marketplace';
+import { listMarketplaceMyItems, listMarketplaceMyWants } from '../../../../shared/api/marketplace';
 import { listMyErrands } from '../../../../shared/api/errands';
 import { toMailboxError } from '@/features/mailbox/conversations';
 import { readMarketPage, type MarketItem } from '@/features/marketplace/model';
@@ -198,6 +199,9 @@ function MeOwnedPane({
   const { t } = useI18n();
   const router = useRouter();
   const [rows, setRows] = React.useState<readonly ContentRow[]>([]);
+  /** 阶段B-05：二手面板内的两段（我的商品 / 我的想要），⛔ 不新增内容 Tab */
+  const [marketMode, setMarketMode] = React.useState<'items' | 'wants'>('items');
+  const marketModeRef = React.useRef<'items' | 'wants'>('items');
   const pageRef = React.useRef(0);
   const loadedRef = React.useRef(false);
   const { pagination, dispatch, restoredScrollOffset, persistScrollOffset } = useListPagination({
@@ -212,7 +216,11 @@ function MeOwnedPane({
         let nextRows: readonly ContentRow[];
         let hasMore: boolean;
         if (kind === 'marketplace') {
-          const result = readMarketPage(await listMarketplaceMyItems({ page, pageSize: PAGE_SIZE }));
+          const result = readMarketPage(
+            marketModeRef.current === 'wants'
+              ? await listMarketplaceMyWants({ page, pageSize: PAGE_SIZE })
+              : await listMarketplaceMyItems({ page, pageSize: PAGE_SIZE })
+          );
           nextRows = result.rows;
           hasMore = result.hasMore;
         } else if (kind === 'errands') {
@@ -234,7 +242,7 @@ function MeOwnedPane({
         });
       }
     },
-    [dispatch, kind]
+    [dispatch, kind, marketModeRef]
   );
 
   React.useEffect(() => {
@@ -242,6 +250,18 @@ function MeOwnedPane({
     loadedRef.current = true;
     void load('refresh');
   }, [active, load]);
+
+  /** 切换"我的商品 / 我的想要"：重置分页与行，再按新数据源重取 */
+  const switchMarketMode = (next: string): void => {
+    const mode = next === 'wants' ? 'wants' : 'items';
+    if (mode === marketModeRef.current) return;
+    marketModeRef.current = mode;
+    setMarketMode(mode);
+    pageRef.current = 0;
+    setRows([]);
+    dispatch({ type: 'reset' });
+    void load('refresh');
+  };
 
   const emptyCopy = {
     marketplace: ['me.content.marketplace.empty.title', 'me.content.marketplace.empty.description'],
@@ -252,6 +272,17 @@ function MeOwnedPane({
 
   return (
     <View style={{ flex: 1 }} testID={`me-content-pane-${kind}`}>
+      {kind === 'marketplace' ? (
+        <SegmentedControl
+          testID="me-market-mode"
+          value={marketMode}
+          onChange={switchMarketMode}
+          options={[
+            { value: 'items', label: t('me.content.marketplace.tabItems') },
+            { value: 'wants', label: t('me.content.marketplace.tabWants') },
+          ]}
+        />
+      ) : null}
       <ListScreen
         testID={`me-content-${kind}`}
         data={rows}
