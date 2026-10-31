@@ -45,7 +45,8 @@ export function NotificationSettingsSection(): React.ReactElement {
     <View style={{gap: theme.space('space_2')}}>
       <SectionHeader title={t('me.settings.notifications')} />
       <Text role="body" colorToken="text-secondary">
-        {t('me.settings.notifications.description')}
+        {/* D-2（团队领导 2026-10-31）：提醒说明全 App 用同一句，含 30 分钟提前量 */}
+        {t('tools.reminders.class.explanation')}
       </Text>
       {status === 'unavailable' ? (
         <Text testID="settings-notifications-unavailable" role="body">

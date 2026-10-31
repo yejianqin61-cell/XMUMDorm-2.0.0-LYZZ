@@ -191,6 +191,7 @@ export const en: Record<MessageKey, string> = {
   'tools.moodle.value.grading.unknown': 'Unknown',
   'tools.reminders.class.title': 'Class reminder',
   'tools.reminders.class.body': 'Your class starts soon',
+  'tools.reminders.class.explanation': 'Enable notifications to get a reminder 30 minutes before each class.',
   'tools.reminders.moodle.title': 'Moodle deadline',
   'tools.reminders.moodle.body': 'A Moodle deadline is coming up',
   // School-system session states (D27; states must be announced, not colour-only)

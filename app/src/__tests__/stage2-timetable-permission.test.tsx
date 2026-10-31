@@ -95,3 +95,16 @@ it('shows partial scheduling and allows retry after failure', async () => {
   await fireEvent.press(view.getByTestId('timetable-reminder-retry'));
   await waitFor(() => expect(view.getByText('部分提醒未安排')).toBeTruthy());
 });
+
+it.each([
+  ['zh' as const, '开启通知后，在课程开始前 30 分钟提醒你。'],
+  ['en' as const, 'Enable notifications to get a reminder 30 minutes before each class.'],
+])('explains the 30-minute lead in %s while consent is pending', async (locale, explanation) => {
+  let finish!: (value: string) => void;
+  permissions.request.mockImplementation(() => new Promise((resolve) => { finish = resolve; }));
+  const view = await renderApp(<SessionProvider><TimetableScreen renderGrid={() => null} /></SessionProvider>, { locale });
+  expect(view.getByText(explanation)).toBeTruthy();
+  await waitFor(() => expect(permissions.request).toHaveBeenCalledTimes(1));
+  finish('granted');
+  await waitFor(() => expect(storage.setItem).toHaveBeenCalledWith('@dorm:timetable-notification-requested', '1'));
+});

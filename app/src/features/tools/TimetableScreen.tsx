@@ -205,7 +205,7 @@ function OwnedTimetableScreen({ renderGrid, legacyControls }: { renderGrid: (pro
     <View style={{ flex: 1, padding: theme.space('space_4'), gap: theme.space('space_3') }}>
       {permission !== 'granted' ? <View style={{ gap: theme.space('space_1') }}>
         <Text testID="timetable-reminder-explanation" role="body" colorToken="text-secondary">
-          {t('me.settings.notifications.description')}
+          {t('tools.reminders.class.explanation')}
         </Text>
         {permission === 'undetermined' ? <Button testID="timetable-reminder-request" variant="secondary"
           label={t('action.retry')} onPress={() => { void retryPermission(); }} /> : null}

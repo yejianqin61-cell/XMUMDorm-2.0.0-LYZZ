@@ -195,6 +195,7 @@ export const zh = {
   'tools.moodle.value.grading.unknown': '未知',
   'tools.reminders.class.title': '上课提醒',
   'tools.reminders.class.body': '课程即将开始',
+  'tools.reminders.class.explanation': '开启通知后，在课程开始前 30 分钟提醒你。',
   'tools.reminders.moodle.title': 'Moodle 截止提醒',
   'tools.reminders.moodle.body': 'Moodle 有任务即将截止',
   // 校方系统会话三态（`D27 SchoolSystemCard`；状态**必须可播报且不只靠色块**）──
