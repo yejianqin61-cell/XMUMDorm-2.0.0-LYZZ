@@ -148,6 +148,15 @@ describe('P2X TreeholePostRow', () => {
     expect(view.getByTestId('campus-row-7-media')).toHaveStyle({ marginTop: 8 });
   });
 
+  it('点图组仍进详情（2026-10-31：只去掉按压变灰，不减少交互）', async () => {
+    const onOpen = jest.fn();
+    const view = await renderApp(
+      row({ onOpen, post: { ...post, mediaUrls: ['https://example.test/a.jpg'] } })
+    );
+    await fireEvent.press(view.getByTestId('campus-row-7-media'));
+    expect(onOpen).toHaveBeenCalledTimes(1);
+  });
+
   it('正文在媒体之前：详情顺序 = 标题/正文 → 标签 → 媒体', async () => {
     const view = await renderApp(
       <TreeholePostDetail

@@ -21,6 +21,8 @@ export function WallPostRow({ post, onOpen }: { post: Post; onOpen: () => void }
       accessibilityRole="button"
       accessibilityLabel={`${wallTemplateLabel(t, post.template_key)}\n${post.content}`}
       contentAlign="stretch"
+      // 2026-10-31 所有者：整条卡片不做按压变灰（滑动时误触会一闪一闪）；跳转保留
+      feedback="none"
       style={{ paddingHorizontal: theme.space('space_4'), paddingVertical: theme.space('space_3'), gap: theme.space('space_2') }}
     >
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: theme.space('space_2') }}>

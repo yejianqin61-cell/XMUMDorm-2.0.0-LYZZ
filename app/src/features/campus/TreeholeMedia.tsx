@@ -707,6 +707,9 @@ function TreeholeDetailMedia({
                       else if (action === 'decrement') goByAccessibility('previous');
                     }}
                     contentAlign="stretch"
+                    // 2026-10-31 所有者：按住 / 左右滑时图会整块发灰 → 图区不做按压变灰；
+                    // 点图进全屏看图器、左右滑翻页都保留（手势层不受影响）。
+                    feedback="none"
                     style={{ flex: 1, minHeight: 0 }}
                   >
                     <Image
@@ -974,6 +977,8 @@ function TreeholeImageViewer({
                 }
               }}
               contentAlign="stretch"
+              // 全屏看图器：整块画面只是读屏容器 + 翻页手势，⛔ 同样不做按压变灰
+              feedback="none"
               style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, minHeight: 0 }}
             />
           </View>

@@ -68,6 +68,9 @@ export function TreeholePostRow({
           accessibilityRole="button"
           accessibilityLabel={openLabel}
           contentAlign="stretch"
+          // 2026-10-31 所有者：⛔ 不要"手指刚碰到就整块变灰"的按压态 ——
+          // 列表滑动会反复误触发，一闪一闪像卡顿；点进详情的交互一点不动。
+          feedback="none"
         >
           {title.length === 0 ? null : query ? (
             <SearchHighlight
@@ -105,6 +108,8 @@ export function TreeholePostRow({
             accessibilityRole="button"
             accessibilityLabel={openLabel}
             contentAlign="stretch"
+            // 图组（含每张缩略图）同样不做按压变灰：一条帖子只有一次按压态，且不可见
+            feedback="none"
             // 图组距正文 12dp：内容列已给 space_1(4)，这里补 space_2(8)
             style={{ marginTop: theme.space('space_2') }}
           >
