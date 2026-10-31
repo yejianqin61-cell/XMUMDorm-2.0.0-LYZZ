@@ -67,9 +67,25 @@ export function normalizeThreadRows(payload: unknown): ChatThreadRow[] {
   return rows;
 }
 
+/**
+ * 会话列表的一页（阶段B-03）：行 + 是否还有下一页 + 服务端游标。
+ * ⚠️ 游标**只从服务端拿**；它缺失时客户端就必须停止请求，⛔ 不自己拼。
+ */
+export type ThreadPage = {
+  rows: ChatThreadRow[];
+  hasMore: boolean;
+  nextCursor: string | null;
+};
+
+export function readThreadPage(payload: unknown): ThreadPage {
+  const meta = isObject(payload) ? payload : {};
+  const nextCursor = typeof meta.nextCursor === 'string' && meta.nextCursor !== '' ? meta.nextCursor : null;
+  // 游标是"还能不能翻"的唯一依据：服务端没给游标就必须停，⛔ 不拿 hasMore 硬翻
+  return { rows: normalizeThreadRows(payload), hasMore: nextCursor !== null, nextCursor };
+}
+
 /** 同一条会话只留一条，并按服务端最后消息时间排序。 */
-export function mergeThreadRows(
-  previous: readonly ChatThreadRow[],
+export function mergeThreadRows(  previous: readonly ChatThreadRow[],
   incoming: readonly ChatThreadRow[]
 ): ChatThreadRow[] {
   const byId = new Map<number, ChatThreadRow>();

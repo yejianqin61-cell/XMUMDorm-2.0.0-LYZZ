@@ -28,7 +28,7 @@ import {
   conversationTitle,
   hasUnread,
   mergeThreadRows,
-  normalizeThreadRows,
+  readThreadPage,
   toMailboxError,
   type ChatThreadRow,
 } from './conversations';
@@ -39,22 +39,31 @@ export function ConversationsScreen(): React.ReactElement {
   const { t } = useI18n();
   const router = useRouter();
   const [rows, setRows] = React.useState<readonly ChatThreadRow[]>([]);
+  /** 服务端游标：第一页刷新时清空，追加时带上（阶段B-03） */
+  const cursorRef = React.useRef<string | null>(null);
   const { pagination, dispatch, restoredScrollOffset, persistScrollOffset } =
     useListPagination({ scope: SCOPE });
 
   const load = React.useCallback(
     async (mode: 'refresh' | 'append') => {
+      if (mode === 'append' && cursorRef.current === null) {
+        dispatch({ type: 'append:success', hasMore: false });
+        return;
+      }
       dispatch({ type: mode === 'refresh' ? 'refresh:start' : 'append:start' });
       try {
-        const payload = await listMyChatThreads({ limit: 100 });
-        const incoming = normalizeThreadRows(payload);
+        const payload = await listMyChatThreads({
+          limit: 30,
+          ...(mode === 'append' && cursorRef.current ? { cursor: cursorRef.current } : {}),
+        });
+        const page = readThreadPage(payload);
+        cursorRef.current = page.nextCursor;
         setRows((previous) =>
-          mode === 'refresh' ? incoming : mergeThreadRows(previous, incoming)
+          mode === 'refresh' ? page.rows : mergeThreadRows(previous, page.rows)
         );
-        // 后端这条接口本轮不分页 → 一次到底
         dispatch({
           type: mode === 'refresh' ? 'refresh:success' : 'append:success',
-          hasMore: false,
+          hasMore: page.hasMore,
         });
       } catch (error) {
         dispatch({
