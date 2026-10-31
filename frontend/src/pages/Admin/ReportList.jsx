@@ -29,7 +29,6 @@ const TARGET_LABELS = {
   club_activity: '社团活动', club_post: '社团帖子',
   marketplace: '二手商品', errand: '跑腿帖子',
   handbook_article: '一站通文章', handbook_comment: '一站通评论',
-  course_review: '课程点评',
 };
 
 function ReportStatusBadge({ status, isZh }) {

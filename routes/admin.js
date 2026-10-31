@@ -37,7 +37,6 @@ router.get('/dashboard', async (req, res) => {
       query('SELECT COUNT(*) AS c FROM posts WHERE deleted_at IS NULL AND type != \'announcement\''),
       query('SELECT COUNT(*) AS c FROM product_comments WHERE deleted_at IS NULL'),
       query('SELECT COUNT(*) AS c FROM trending_posts WHERE deleted_at IS NULL'),
-      query('SELECT COUNT(*) AS c FROM course_reviews WHERE deleted_at IS NULL'),
       query('SELECT COUNT(*) AS c FROM club_activities'),
       query('SELECT COUNT(*) AS c FROM marketplace_items WHERE deleted_at IS NULL'),
       query('SELECT COUNT(*) AS c FROM errands'),
@@ -54,7 +53,7 @@ router.get('/dashboard', async (req, res) => {
     ]);
 
     const count = (i) => results[i]?.[0]?.c ?? 0;
-    const recentReports = results[17] || [];
+    const recentReports = results[16] || [];
 
     logAudit({
       userId: adminId,
@@ -80,11 +79,10 @@ router.get('/dashboard', async (req, res) => {
           treeholePosts: count(9),
           canteenReviews: count(10),
           trendingPosts: count(11),
-          courseReviews: count(12),
-          clubActivities: count(13),
-          marketplaceItems: count(14),
-          errandPosts: count(15),
-          handbookArticles: count(16),
+          clubActivities: count(12),
+          marketplaceItems: count(13),
+          errandPosts: count(14),
+          handbookArticles: count(15),
         },
         recentReports,
       },
@@ -947,7 +945,6 @@ async function resolveContentUrl(targetType, targetId) {
     club_activity: '查看社团活动', club_post: '查看社团帖子',
     marketplace: '查看二手商品', errand: '查看跑腿帖子',
     handbook_article: '查看一站通文章', handbook_comment: '查看一站通评论',
-    course_review: '查看课程点评',
   };
 
   try {
@@ -980,11 +977,6 @@ async function resolveContentUrl(targetType, targetId) {
         if (t?.target_type === 'post') return { url: `/about/club/post/${t.target_id}`, label: `社团评论 → 帖子#${t.target_id}` };
         return { url: null, label: '社团评论' };
       }
-      case 'course_review_comment': {
-        const crr = await query('SELECT review_id FROM course_review_comments WHERE id = ?', [id]);
-        const rid = crr[0]?.review_id;
-        return { url: rid ? `/about/freshman-guide/course-review/${rid}` : null, label: rid ? `课程评论 → #${rid}` : '课程评论' };
-      }
       case 'product_comment': {
         const pcRows = await query('SELECT product_id FROM product_comments WHERE id = ?', [id]);
         const productId = pcRows[0]?.product_id;
@@ -1005,8 +997,6 @@ async function resolveContentUrl(targetType, targetId) {
         const articleId = hcRows[0]?.article_id;
         return { url: articleId ? `/about/freshman-guide/a/${articleId}` : null, label: articleId ? `${labels.handbook_comment} → 文章#${articleId}` : labels.handbook_comment };
       }
-      case 'course_review':
-        return { url: `/about/freshman-guide/course-review/${id}`, label: labels.course_review };
       default:
         return { url: null, label: null };
     }
@@ -1228,30 +1218,6 @@ const CONTENT_MODULES = {
     commentTable: 'handbook_comments',
     commentIdField: 'id',
     commentParentField: 'article_id',
-    commentUserField: 'user_id',
-    commentContentField: 'content',
-    commentTimeField: 'created_at',
-    commentDeletedField: 'deleted_at',
-  },
-  'course-review': {
-    label: '课程点评',
-    table: 'course_reviews',
-    idField: 'id',
-    titleField: 'cr.course_name AS title',
-    contentField: 'cr.comment',
-    userField: 'cr.created_by',
-    timeField: 'cr.created_at',
-    deletedField: 'cr.deleted_at',
-    hiddenField: null,
-    searchFields: ['cr.course_name', 'cr.teacher', 'cr.comment'],
-    joinUser: true,
-    listFields: 'cr.id, cr.course_name AS title, cr.teacher, cr.rating, cr.difficulty, u.username, cr.created_at, cr.deleted_at',
-    listOrder: 'cr.created_at DESC',
-    tableAlias: 'cr',
-    hasComments: true,
-    commentTable: 'course_review_comments',
-    commentIdField: 'id',
-    commentParentField: 'review_id',
     commentUserField: 'user_id',
     commentContentField: 'content',
     commentTimeField: 'created_at',

@@ -49,9 +49,6 @@ const PublishErrand = lazy(() => import('../pages/Errands/PublishErrand'));
 const HandbookArticleDetail = lazy(() => import('../pages/Handbook/HandbookArticleDetail'));
 const HandbookEditor = lazy(() => import('../pages/Handbook/HandbookEditor'));
 const HandbookMe = lazy(() => import('../pages/Handbook/HandbookMe'));
-const CourseReviewPage = lazy(() => import('../pages/Handbook/CourseReviewPage'));
-const CourseReviewDetail = lazy(() => import('../pages/Handbook/CourseReviewDetail'));
-const CourseReviewCreate = lazy(() => import('../pages/Handbook/CourseReviewCreate'));
 const Schedule = lazy(() => import('../pages/Schedule'));
 const AgentChat = lazy(() => import('../pages/Agent/AgentChat'));
 const Diary = lazy(() => import('../pages/Diary'));
@@ -155,10 +152,6 @@ export const layoutRoutes = (
     <Route path="about/freshman-guide/me" element={renderLazyRoute(HandbookMe)} />
     <Route path="about/freshman-guide/new" element={renderLazyRoute(HandbookEditor)} />
     <Route path="about/freshman-guide/a/:id" element={renderLazyRoute(HandbookArticleDetail)} />
-    <Route path="about/freshman-guide/course-review" element={renderLazyRoute(CourseReviewPage)} />
-    <Route path="about/freshman-guide/course-review/new" element={renderLazyRoute(CourseReviewCreate)} />
-    <Route path="about/freshman-guide/course-review/:id/edit" element={renderLazyRoute(CourseReviewCreate)} />
-    <Route path="about/freshman-guide/course-review/:id" element={renderLazyRoute(CourseReviewDetail)} />
     <Route path="about/errands" element={renderLazyRoute(SquareErrands)} />
     <Route path="about/errands/new" element={renderLazyRoute(PublishErrand)} />
     <Route path="about/errands/:id" element={renderLazyRoute(ErrandDetail)} />

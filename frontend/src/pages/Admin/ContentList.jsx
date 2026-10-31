@@ -17,7 +17,6 @@ const MODULES = [
   { key: 'marketplace', label: '二手市场', labelEn: 'Marketplace' },
   { key: 'errand', label: '跑腿帖子', labelEn: 'Errands' },
   { key: 'handbook', label: '一站通文章', labelEn: 'Handbook' },
-  { key: 'course-review', label: '课程点评', labelEn: 'Course Reviews' },
 ];
 
 export default function ContentList() {
