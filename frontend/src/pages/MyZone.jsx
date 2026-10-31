@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   CalendarDays,
+  CalendarRange,
   ChevronRight,
   Clock3,
   Gauge,
@@ -47,6 +48,7 @@ function MyZoneStrings(isZh) {
     schedule: isZh ? '课程表' : 'Schedule',
     diary: isZh ? '多年日记本' : 'Diary',
     todo: 'Todo',
+    studyCalendar: isZh ? '学习日历' : 'Calendar',
     more: isZh ? '更多' : 'More',
     aboutProfile: isZh ? '关于' : 'About',
     aboutDisclaimer: isZh ? '免责声明' : 'Disclaimer',
@@ -318,6 +320,7 @@ function MyZone() {
         <UtilityTile to="/myzone/schedule" title={t.schedule} icon={<CalendarDays className="h-5 w-5" />} iconStyle={softIcon('rgba(34,197,94,0.12)', 'rgb(22,163,74)')} />
         <UtilityTile to="/myzone/diary" title={t.diary} icon={<NotebookText className="h-5 w-5" />} iconStyle={softIcon('rgba(168,85,247,0.12)', 'rgb(147,51,234)')} />
         <UtilityTile to="/myzone/todos" title={t.todo} icon={<Star className="h-5 w-5" />} iconStyle={softIcon('rgba(234,179,8,0.14)', 'rgb(202,138,4)')} />
+        <UtilityTile to="/myzone/calendar" title={t.studyCalendar} icon={<CalendarRange className="h-5 w-5" />} iconStyle={softIcon('rgba(14,165,233,0.12)', 'rgb(2,132,199)')} />
         {isLoggedIn && isMerchant ? (
           <UtilityTile to="/merchant/manage" title={t.storeManage} icon={<Store className="h-5 w-5" />} iconStyle={softIcon('rgba(99,102,241,0.12)', 'rgb(79,70,229)')} />
         ) : null}
