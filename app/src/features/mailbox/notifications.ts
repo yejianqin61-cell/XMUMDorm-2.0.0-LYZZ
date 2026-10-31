@@ -81,6 +81,23 @@ function normalizeTarget(raw: unknown): NotificationTarget {
   };
 }
 
+/**
+ * `GET /api/notifications/unread-summary` 的载荷 → 分类未读数（纯函数）。
+ *
+ * 阶段D-01 起有第二个消费方：信箱「交易」分类列的是会话，不再加载通知页，
+ * 所以它的分类角标改读这个端点（契约 L83-85：分类角标读未读汇总）。
+ * ⛔ 拿不到/形状不对就返回空对象（页面显示 0），不猜一个数字。
+ */
+export function unreadCountsByCategory(payload: unknown): Record<string, number> {
+  const summary = isObject(payload) ? payload : {};
+  const byCategory = isObject(summary.byCategory) ? summary.byCategory : {};
+  const counts: Record<string, number> = {};
+  for (const [key, value] of Object.entries(byCategory)) {
+    counts[key] = Math.max(0, Number(value) || 0);
+  }
+  return counts;
+}
+
 /** 列表载荷 → 行（`id` 不是正整数就整行丢掉：没有 id 就标不了已读） */
 export function normalizeNotificationPage(payload: unknown): NotificationPage {
   const body = isObject(payload) ? payload : {};
@@ -109,11 +126,7 @@ export function normalizeNotificationPage(payload: unknown): NotificationPage {
   }
 
   const summary = isObject(body.unreadSummary) ? body.unreadSummary : null;
-  const byCategory = summary && isObject(summary.byCategory) ? summary.byCategory : {};
-  const unreadByCategory: Record<string, number> = {};
-  for (const [key, value] of Object.entries(byCategory)) {
-    unreadByCategory[key] = Math.max(0, Number(value) || 0);
-  }
+  const unreadByCategory = unreadCountsByCategory(summary);
 
   return {
     list,

@@ -35,6 +35,8 @@ jest.mock('expo-router', () => {
       },
       canGoBack: () => true,
     }),
+    // 阶段D-01 起会话列表在**聚焦**时重取（读完后回来行上未读要跟着变）；测试里等价为挂载时一次
+    useFocusEffect: (callback: () => void) => require('react').useEffect(callback, [callback]),
   };
 });
 jest.mock('../../../shared/api/marketplace', () => ({ listMyChatThreads: jest.fn() }));
