@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Bookmark, ExternalLink, Eye, Heart, Search } from 'lucide-react';
@@ -35,7 +35,6 @@ function HandbookHome() {
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
   const qs = useQueryString();
-  const navigate = useNavigate();
 
   const tab = (qs.get('tab') || 'all').trim();
 
@@ -58,12 +57,6 @@ function HandbookHome() {
     }, 60);
     return () => clearTimeout(t);
   }, [searchOpen]);
-
-  // course-review 是独立实体（course_reviews），不走文章列表
-  useEffect(() => {
-    if (tab !== 'course-review') return;
-    navigate('/about/freshman-guide/course-review', { replace: true });
-  }, [navigate, tab]);
 
   useEffect(() => {
     if (!searchOpen) return;
@@ -159,17 +152,12 @@ function HandbookHome() {
           </div>
         </div>
         <div className="handbook-hero-sub">
-          {isZh ? '美食 · 游玩 · 榴莲 · 校内周边咨询 · 学法分享 · 课程测评' : 'Food · Explore · Durian · Campus Guide · Study Tips · Reviews'}
+          {isZh ? '美食 · 游玩 · 榴莲 · 校内周边咨询 · 学法分享' : 'Food · Explore · Durian · Campus Guide · Study Tips'}
         </div>
         <div className="handbook-hero-actions">
           <Link to="/about/freshman-guide/new">
             <NeoButton variant="default" size="sm">
               {isZh ? '投稿/发布' : 'Write'}
-            </NeoButton>
-          </Link>
-          <Link to="/about/freshman-guide/course-review/new">
-            <NeoButton variant="outline" size="sm">
-              {isZh ? '新建课程评价' : 'New course review'}
             </NeoButton>
           </Link>
         </div>
@@ -180,9 +168,7 @@ function HandbookHome() {
           <Link
             key={t.slug}
             to={
-              t.slug === 'course-review'
-                ? '/about/freshman-guide/course-review'
-                : `/about/freshman-guide?tab=${encodeURIComponent(t.slug)}&q=${encodeURIComponent(keyword || '')}`
+              `/about/freshman-guide?tab=${encodeURIComponent(t.slug)}&q=${encodeURIComponent(keyword || '')}`
             }
             className={`handbook-tab ${t.slug === tab ? 'is-active' : ''}`}
           >

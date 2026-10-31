@@ -32,7 +32,6 @@ const CONTENT_KEYS = [
   { key: 'treeholePosts', label: '树洞', labelEn: 'Treehole' },
   { key: 'canteenReviews', label: '食堂点评', labelEn: 'Canteen' },
   { key: 'trendingPosts', label: '热搜', labelEn: 'Trending' },
-  { key: 'courseReviews', label: '课程点评', labelEn: 'Course Reviews' },
   { key: 'clubActivities', label: '社团活动', labelEn: 'Club Activities' },
   { key: 'marketplaceItems', label: '二手市场', labelEn: 'Marketplace' },
   { key: 'errandPosts', label: '跑腿', labelEn: 'Errands' },
@@ -62,7 +61,6 @@ const TARGET_LABELS = {
   errand: '跑腿帖子',
   handbook_article: '一站通文章',
   handbook_comment: '一站通评论',
-  course_review: '课程点评',
 };
 
 const QUICK_LINKS = [

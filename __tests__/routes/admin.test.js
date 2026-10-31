@@ -58,7 +58,6 @@ describe('Admin Routes', () => {
         .mockResolvedValueOnce(c(2000))  // treeholePosts
         .mockResolvedValueOnce(c(500))   // canteenReviews
         .mockResolvedValueOnce(c(300))   // trendingPosts
-        .mockResolvedValueOnce(c(150))   // courseReviews
         .mockResolvedValueOnce(c(100))   // clubActivities
         .mockResolvedValueOnce(c(350))   // marketplaceItems
         .mockResolvedValueOnce(c(90))    // errandPosts
