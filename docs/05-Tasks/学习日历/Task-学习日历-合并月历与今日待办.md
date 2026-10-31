@@ -13,7 +13,7 @@
 
 | 做 | 不做（原因） |
 | --- | --- |
-| Web 新页面 `/myzone/calendar`（学习日历） | **Moodle DDL / 考试 / 公告汇总**：Web 端拿不到 Moodle 数据——校方 Moodle（`l.xmu.edu.my`）只能在 App 内经 WebView 登录同步，Railway 上的 Web 后端与浏览器都读不到 |
+| Web 新页面 `/myzone/calendar`（学习日历） | **Moodle DDL / 考试 / 公告汇总**：Web 端拿不到 Moodle 数据——浏览器同源策略禁止网页读取 `l.xmu.edu.my`，后端代取又需要收集校方密码（违背 D-08 口径）；App 是在内嵌 WebView 内同源读取。电脑端方案见 [Moodle 浏览器扩展需求](../../01-Requirement/Moodle浏览器扩展/Moodle浏览器扩展需求.md)（草案） |
 | 待办页顶部「今天还有 N 项待办」统计 + 日历入口 | **App 端**：本次只做 Web |
 | 「我的」工具区新增「学习日历」入口 | **PDF 出题**：学习资料整体出局（App 宪法 4.2.2-5） |
 | 共享纯函数 `shared/utils/studyCalendar.js` + 单元测试 | 新接口、数据库迁移（全部复用现有 `/api/todos` 与 `/api/schedule/week`） |
