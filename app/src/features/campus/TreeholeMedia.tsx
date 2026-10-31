@@ -8,7 +8,7 @@
  */
 
 import * as React from 'react';
-import { Modal, PanResponder, Pressable, View } from 'react-native';
+import { Modal, PanResponder, Pressable, View, type LayoutChangeEvent } from 'react-native';
 import { Image } from 'expo-image';
 import Animated, {
   Easing,
@@ -97,6 +97,13 @@ export const TREEHOLE_DETAIL_ASPECT = 16 / 9;
 export const TREEHOLE_FEED_MEDIA_WIDTH = '100%';
 /** 单图宽度：正文列 75%，左对齐（⛔ 不再居中飘在大画框里） */
 export const TREEHOLE_FEED_SINGLE_WIDTH = '75%';
+/**
+ * 单图宽度比例（量到正文列宽后按像素算）。
+ * ⚠️ 为什么不用百分比 + `aspectRatio` 直接排版：2026-10-31 真机实测，
+ * `flex: 1 + aspectRatio: 1` 的格子会被 expo-image 的**固有比例**盖回去
+ * （双图变成 2.15:1 的扁条、三图高度跟着原图走）——见 `TreeholeFeedMedia` 的注释。
+ */
+export const TREEHOLE_FEED_SINGLE_WIDTH_RATIO = 0.75;
 /** 单图限高：320dp（450dp 以上的宽屏才真正生效） */
 export const TREEHOLE_FEED_SINGLE_MAX_HEIGHT = 320;
 /**
@@ -146,6 +153,12 @@ export function TreeholeMedia({
  * 单图 / 双图 / 3 列方格的分工写在 `TREEHOLE_FEED_*` 常量上方；这里只负责拼版：
  * 圆角与裁切落在**直接包图**的框上（图本身圆角、无灰边、无衬底），间距一律走间距令牌。
  * 帖子最多 3 张图（后端 `postImagesUpload` 上限 3），≥3 就是一整行方格。
+ *
+ * ⚠️ **画框尺寸必须自己算，不能只写 `aspectRatio`**（2026-10-31 真机实测）：
+ *   格子写 `flex: 1 + aspectRatio: 1` 时，框高会被 expo-image 的**固有比例**撑回去 ——
+ *   双图帖子实测成了 427×199（2.15:1 的扁条），三图高度也跟着原图走。
+ *   所以这里先量正文列宽（`onLayout`），再给每个框显式的 `width/height`；
+ *   量到之前用弹性占位，避免首帧塌成 0。
  */
 function TreeholeFeedMedia({
   postId,
@@ -157,27 +170,43 @@ function TreeholeFeedMedia({
   const theme = useTheme();
   const gap = theme.space('space_2');
   const radius = theme.radius('radius_medium');
+  const [available, setAvailable] = React.useState(0);
+  const handleLayout = React.useCallback((event: LayoutChangeEvent) => {
+    const next = Math.round(event.nativeEvent.layout.width);
+    setAvailable((current) => (current === next ? current : next));
+  }, []);
 
   if (urls.length === 1) {
     return (
       <View
         testID="treehole-media-feed"
+        onLayout={handleLayout}
         style={{ width: TREEHOLE_FEED_MEDIA_WIDTH, alignItems: 'flex-start' }}
       >
         {/* key 带 URL：换图 / 回收行时比例状态一起重置 */}
-        <TreeholeFeedSingleImage key={`${postId}:${urls[0]}`} uri={urls[0]} radius={radius} />
+        <TreeholeFeedSingleImage
+          key={`${postId}:${urls[0]}`}
+          uri={urls[0]}
+          radius={radius}
+          available={available}
+        />
       </View>
     );
   }
 
   const columns = urls.length === 2 ? 2 : TREEHOLE_FEED_GRID_COLUMNS;
+  const cell = available > 0 ? Math.floor((available - gap * (columns - 1)) / columns) : 0;
   const rows: string[][] = [];
   for (let index = 0; index < urls.length; index += columns) {
     rows.push(urls.slice(index, index + columns));
   }
 
   return (
-    <View testID="treehole-media-feed" style={{ width: TREEHOLE_FEED_MEDIA_WIDTH, gap }}>
+    <View
+      testID="treehole-media-feed"
+      onLayout={handleLayout}
+      style={{ width: TREEHOLE_FEED_MEDIA_WIDTH, gap }}
+    >
       {rows.map((row, rowIndex) => (
         <View
           key={`treehole-media-row-${rowIndex}`}
@@ -192,7 +221,11 @@ function TreeholeFeedMedia({
                 testID={
                   index === 0 ? 'treehole-media-feed-frame' : `treehole-media-feed-frame-${index}`
                 }
-                style={{ flex: 1, aspectRatio: 1, borderRadius: radius, overflow: 'hidden' }}
+                style={[
+                  // 未量到列宽前先弹性占位；量到后是**显式正方形**（宽高相等）
+                  cell > 0 ? { width: cell, height: cell } : { flex: 1, aspectRatio: 1 },
+                  { borderRadius: radius, overflow: 'hidden' },
+                ]}
               >
                 <TreeholeFeedImage
                   uri={uri}
@@ -205,7 +238,10 @@ function TreeholeFeedMedia({
           })}
           {/* 末行不足一列时补等宽占位：格子不被拉宽（微信九宫格的同一做法） */}
           {Array.from({ length: columns - row.length }, (_, spacer) => (
-            <View key={`treehole-media-spacer-${rowIndex}-${spacer}`} style={{ flex: 1 }} />
+            <View
+              key={`treehole-media-spacer-${rowIndex}-${spacer}`}
+              style={cell > 0 ? { width: cell } : { flex: 1 }}
+            />
           ))}
         </View>
       ))}
@@ -218,25 +254,38 @@ function TreeholeFeedMedia({
  *
  * 原图尺寸只能等 `onLoad` 才拿到，所以先用 1:1 占位；拿到后收敛到
  * `treeholeFeedAspect`（0.72–1.6），横图变矮、竖图变高，极端比例按边界裁切。
+ * 宽度按实测列宽算，高度由比例算出来再夹到 320dp —— 不依赖 `aspectRatio` 与 `maxHeight` 的相互作用。
  */
 function TreeholeFeedSingleImage({
   uri,
   radius,
+  available,
 }: {
   uri: string;
   radius: number;
+  available: number;
 }): React.ReactElement {
   const [aspect, setAspect] = React.useState(TREEHOLE_FEED_FALLBACK_ASPECT);
+  const width =
+    available > 0 ? Math.round(available * TREEHOLE_FEED_SINGLE_WIDTH_RATIO) : 0;
+  const height =
+    width > 0
+      ? Math.min(Math.round(width / aspect), TREEHOLE_FEED_SINGLE_MAX_HEIGHT)
+      : 0;
   return (
     <View
       testID="treehole-media-feed-frame"
-      style={{
-        width: TREEHOLE_FEED_SINGLE_WIDTH,
-        aspectRatio: aspect,
-        maxHeight: TREEHOLE_FEED_SINGLE_MAX_HEIGHT,
-        borderRadius: radius,
-        overflow: 'hidden',
-      }}
+      style={[
+        width > 0
+          ? { width, height }
+          : {
+              // 首帧（还没量到列宽）的占位；只活一帧
+              width: TREEHOLE_FEED_SINGLE_WIDTH,
+              aspectRatio: aspect,
+              maxHeight: TREEHOLE_FEED_SINGLE_MAX_HEIGHT,
+            },
+        { borderRadius: radius, overflow: 'hidden' },
+      ]}
     >
       <TreeholeFeedImage
         uri={uri}
