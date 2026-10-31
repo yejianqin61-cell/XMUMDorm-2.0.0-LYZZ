@@ -218,19 +218,36 @@ describe('P2B-06 M-12 私信会话', () => {
       );
     });
 
-    it('深链线程不在当前用户会话列表时，不读取消息并进入错误态', async () => {
+    // 阶段B-02（丁 A-1）：授权以消息端点为准，不再用首批会话列表做预检
+    it('深链线程不在首批会话列表时仍可读取（阶段B-02）', async () => {
       api.marketplace.listMyChatThreads.mockResolvedValue({ list: [{ thread_id: 99 }] });
+      api.marketplace.getMarketplaceThreadMessages.mockResolvedValue(THREAD_PAYLOAD);
+
+      const view = await renderApp(<ChatScreen />);
+
+      await waitFor(() =>
+        expect(api.marketplace.getMarketplaceThreadMessages).toHaveBeenCalledWith(11, undefined)
+      );
+      expect(view.queryByTestId('chat-messages-error')).toBeNull();
+      expect(view.getByText('还在吗')).toBeTruthy();
+    });
+
+    it('消息端点 403：进入权限错误且不能发送（阶段B-02）', async () => {
+      api.marketplace.getMarketplaceThreadMessages.mockRejectedValue({ status: 403 });
 
       const view = await renderApp(<ChatScreen />);
 
       await waitFor(() => expect(view.getByTestId('chat-messages-error')).toBeTruthy());
-      expect(api.marketplace.getMarketplaceThreadMessages).not.toHaveBeenCalled();
-      expect(api.marketplace.sendMarketplaceThreadMessage).not.toHaveBeenCalled();
-      expect(api.marketplace.markMarketplaceThreadRead).not.toHaveBeenCalled();
       const user = userEvent.setup();
       await user.type(view.getByPlaceholderText(zh['mailbox.chat.placeholder']), '不能发送');
       await user.press(view.getByTestId('chat-composer-send'));
       expect(api.marketplace.sendMarketplaceThreadMessage).not.toHaveBeenCalled();
+    });
+
+    it('消息端点 404：内容不存在（阶段B-02）', async () => {
+      api.marketplace.getMarketplaceThreadMessages.mockRejectedValue({ status: 404 });
+      const view = await renderApp(<ChatScreen />);
+      await waitFor(() => expect(view.getByTestId('chat-messages-error')).toBeTruthy());
     });
 
     it('缺失 threadId 不请求会话或消息，并进入错误态', async () => {

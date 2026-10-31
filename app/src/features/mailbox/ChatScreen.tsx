@@ -26,10 +26,10 @@ import { ListScreen, useListPagination } from '@/components/ui/ListScreen';
 import { Screen } from '@/components/ui/Screen';
 import { Text } from '@/components/ui/Text';
 import { useTheme } from '@/design-system/theme';
+import type { AppError } from '@/i18n/errors';
 import { useI18n } from '@/i18n';
 import {
   getMarketplaceThreadMessages,
-  listMyChatThreads,
   markMarketplaceThreadRead,
   sendMarketplaceThreadMessage,
 } from '../../../../shared/api/marketplace';
@@ -46,8 +46,19 @@ import {
   type ChatMessage,
   type ChatThread,
 } from './chat';
-import { normalizeThreadRows, toMailboxError } from './conversations';
+import { toMailboxError } from './conversations';
 import { useUnread } from './useUnread';
+
+/**
+ * 阶段B-02（丁 A-1）：授权以**消息端点自己**的结果为准 —— 403 无权、404 不存在、
+ * 其它归网络类。⛔ 不再用"首批会话列表是否包含本线程"做预检（那会把旧线程拦死）。
+ */
+function chatLoadError(error: unknown): AppError {
+  const status = (error as { status?: number } | null)?.status;
+  if (status === 401 || status === 403) return { kind: 'permission' };
+  if (status === 404) return { kind: 'content' };
+  return toMailboxError(error);
+}
 
 export function ChatScreen(): React.ReactElement {
   const { t } = useI18n();
@@ -95,13 +106,6 @@ export function ChatScreen(): React.ReactElement {
       try {
         if (mode === 'initial') {
           setThreadAccessGranted(false);
-          // 客户端只做深链预检；后端消息接口仍是最终授权边界。
-          const threads = normalizeThreadRows(await listMyChatThreads());
-          if (!threads.some((row) => row.thread_id === threadId)) {
-            dispatch({ type: 'refresh:failure', error: { kind: 'unknown' } });
-            return;
-          }
-          setThreadAccessGranted(true);
         } else if (!threadAccessGranted || (mode === 'history' && !historyCursor)) {
           if (mode === 'history') dispatch({ type: 'append:success', hasMore: false });
           return;
@@ -130,6 +134,8 @@ export function ChatScreen(): React.ReactElement {
           setMessages(normalized.messages);
           lastSeenRef.current = lastSeenId(normalized.messages);
           setHistoryCursor(normalized.nextCursor);
+          // 消息端点成功 = 已经拿到本线程的授权（服务端是最终边界）
+          setThreadAccessGranted(true);
           dispatch({ type: 'refresh:success', hasMore: normalized.hasMore });
         } else if (mode === 'history') {
           setMessages((previous) => mergeMessages(previous, normalized.messages));
@@ -146,8 +152,8 @@ export function ChatScreen(): React.ReactElement {
         }
       } catch (error) {
         setThreadAccessGranted(false);
-        if (mode === 'initial') dispatch({ type: 'refresh:failure', error: toMailboxError(error) });
-        if (mode === 'history') dispatch({ type: 'append:failure', error: toMailboxError(error) });
+        if (mode === 'initial') dispatch({ type: 'refresh:failure', error: chatLoadError(error) });
+        if (mode === 'history') dispatch({ type: 'append:failure', error: chatLoadError(error) });
       } finally {
         if (mode === 'initial') setFocusReady(true);
       }
