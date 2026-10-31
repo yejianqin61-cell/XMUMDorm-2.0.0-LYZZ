@@ -22,7 +22,8 @@ import { notificationPermission, type NotificationPermission } from '@/features/
 import { refreshClassReminders } from './reminders/native';
 import { CourseInfoSheet } from './CourseInfoSheet';
 import { timetableIdentity } from './cacheIdentity';
-import { shouldHighlightToday, todayWeekday, useTimetableWeek, type TimetableMeeting, type TimetableWeek } from './timetable';
+import { shouldHighlightToday, todayWeekday, useTimetableWeek, type TimetableMeeting, type TimetableWeek } from './timetable'
+import { focusCourseWeekday } from './timetableFocus';;
 import { toToolsError } from './requestError';
 import {
   FALLBACK_COURSE_ACCENT,
@@ -98,12 +99,25 @@ function WeekNumbers({ value, totalWeeks, onChange, legacyControls }: { value: n
 }
 
 /** The navigation/UI owner supplies the existing P11 renderer with its extended inputs. */
-export function TimetableScreen({ renderGrid, legacyControls = false }: { renderGrid: (props: TimetableRenderProps) => React.ReactNode; legacyControls?: boolean }): React.ReactElement {
+export function TimetableScreen({ renderGrid, legacyControls = false, initialWeek = null, focusCourseCode = null }: {
+  renderGrid: (props: TimetableRenderProps) => React.ReactNode;
+  legacyControls?: boolean;
+  /** 阶段C-03：通知/深链带进来的周次（非法由路由层过滤） */
+  initialWeek?: number | null;
+  /** 阶段C-03：要标出的课程码（只用于高亮那天，不选课、不弹详情） */
+  focusCourseCode?: string | null;
+}): React.ReactElement {
   useSession();
-  return <OwnedTimetableScreen key={timetableIdentity().epoch} renderGrid={renderGrid} legacyControls={legacyControls} />;
+  return <OwnedTimetableScreen key={timetableIdentity().epoch} renderGrid={renderGrid} legacyControls={legacyControls}
+    initialWeek={initialWeek} focusCourseCode={focusCourseCode} />;
 }
 
-function OwnedTimetableScreen({ renderGrid, legacyControls }: { renderGrid: (props: TimetableRenderProps) => React.ReactNode; legacyControls: boolean }): React.ReactElement {
+function OwnedTimetableScreen({ renderGrid, legacyControls, initialWeek, focusCourseCode }: {
+  renderGrid: (props: TimetableRenderProps) => React.ReactNode;
+  legacyControls: boolean;
+  initialWeek: number | null;
+  focusCourseCode: string | null;
+}): React.ReactElement {
   const theme = useTheme();
   const { t } = useI18n();
   const router = useRouter();
@@ -160,7 +174,20 @@ function OwnedTimetableScreen({ renderGrid, legacyControls }: { renderGrid: (pro
     });
     return () => { active = false; mounted.current = false; listener.remove(); };
   }, []);
-  const [week, setWeek] = React.useState(() => clampWeek(currentTeachingWeek() ?? 1));
+  const [week, setWeek] = React.useState(() =>
+    clampWeek(initialWeek ?? currentTeachingWeek() ?? 1)
+  );
+  /**
+   * 阶段C-03：深链/通知带进来的周次只在**首次或参数变化**时应用，
+   * ⛔ 不覆盖用户手动翻周（用户翻过之后参数没变就不再拉回）。
+   */
+  const appliedFocusWeek = React.useRef<number | null>(initialWeek);
+  React.useEffect(() => {
+    if (initialWeek === null || initialWeek === appliedFocusWeek.current) return;
+    appliedFocusWeek.current = initialWeek;
+    setSelected(null);
+    setWeek(clampWeek(initialWeek));
+  }, [initialWeek]);
   const [selected, setSelected] = React.useState<TimetableMeeting | null>(null);
   const selectWeek = React.useCallback((next: number) => {
     setSelected(null); // 换周后旧课程详情不再成立
@@ -187,6 +214,9 @@ function OwnedTimetableScreen({ renderGrid, legacyControls }: { renderGrid: (pro
   );
   const totalWeeks = shown?.totalWeeks ?? FALLBACK_TOTAL_WEEKS;
   const highlight = shouldHighlightToday(week, shown?.currentWeek ?? null) ? todayWeekday() : null;
+  // 阶段C-03：有定位课程时优先标出它所在的那天（仅当正在显示它所在的那一周）
+  const focusWeekday = shown === null ? null : focusCourseWeekday(shown, focusCourseCode);
+  const resolvedHighlight = focusWeekday ?? highlight;
   // 选中课程在本周的全部时段（同一 courseCode，跨天/跨时段）
   const occurrences = React.useMemo(() => {
     if (selected === null || shown === null) return [];
@@ -233,7 +263,7 @@ function OwnedTimetableScreen({ renderGrid, legacyControls }: { renderGrid: (pro
         <ErrorState testID="timetable-error" error={timetable.error} onAction={timetable.reload} /> : shown === null ? null :
         // 2026-10-18：即使这周没课也**画完整时间轴**（08:00–21:00 空着），不再用空态替换网格
           <View style={{ flex: 1 }}>{renderGrid({ week: shown, visibleWeekdays: visibleTimetableWeekdays(shown),
-            getCourseAccent: resolveAccent, highlightWeekday: highlight, testID: 'timetable-grid',
+            getCourseAccent: resolveAccent, highlightWeekday: resolvedHighlight, testID: 'timetable-grid',
             onPressMeeting: setSelected,
           })}</View>}
       {/* 底部固定一行：导入课表 / 刷新（空周也要能导入，所以不依赖 hasData） */}
