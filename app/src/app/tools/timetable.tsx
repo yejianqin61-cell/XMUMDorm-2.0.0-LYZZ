@@ -7,6 +7,8 @@ import { parseFocusCourse, parseFocusWeek } from '@/features/tools/timetableFocu
 /**
  * T-02 route owner: the feature supplies state; P11 remains the shared renderer.
  * 阶段C-03：接受通知/深链带来的 `week` 与 `course`，非法值一律丢弃（回落到当前周）。
+ *
+ * The feature owns the fetch seam and calls session.handleAuthFailure for 401/403 responses.
  */
 export default function TimetableRoute(): React.ReactElement {
   const params = useLocalSearchParams<{ week?: string; course?: string }>();
