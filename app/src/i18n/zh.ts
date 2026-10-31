@@ -683,6 +683,8 @@ export const zh = {
   'screen.market.on_sale': "在售",
   'screen.market.sold': "已售",
   'screen.market.markSold': "标记已售",
+  'screen.market.edit': "编辑",
+  'screen.market.edited': "已保存",
   'screen.market.electronics': "电子产品",
   'screen.market.transport': "交通出行",
   'screen.market.dailyuse': "日用百货",

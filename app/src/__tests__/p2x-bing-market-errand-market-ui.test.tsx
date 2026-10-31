@@ -161,6 +161,13 @@ it('买家没有标记已售入口',async()=>{
  await waitFor(()=>expect(v.getByTestId('market-want')).toBeTruthy());
  expect(v.queryByTestId('market-mark-sold')).toBeNull();
 });
+it('卖家可从详情进入编辑；买家没有入口（阶段B-06）',async()=>{
+ detail.mockResolvedValue({...full,viewer:{want:false,canEdit:true}});
+ const v=await renderApp(<MarketDetailScreen itemId="1"/>);
+ await waitFor(()=>expect(v.getByTestId('market-edit')).toBeTruthy());
+ await fireEvent.press(v.getByTestId('market-edit'));
+ expect(mockPush).toHaveBeenCalledWith('/market/1/edit');
+});
 
 it('二手列表卸载时解绑查询缓存订阅',async()=>{ const unsubscribe=jest.fn();
  const subscribe=jest.spyOn(getQueryClient().getQueryCache(),'subscribe').mockReturnValue(unsubscribe);
