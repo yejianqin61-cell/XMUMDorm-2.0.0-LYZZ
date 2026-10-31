@@ -14,6 +14,9 @@ import {
 } from '@shared/utils/formatTodoDue';
 import { motion, AnimatePresence } from 'framer-motion';
 import { readPersistedTodos, writePersistedTodos } from '../utils/todoPersist';
+import { Link } from 'react-router-dom';
+import { summarizeTodos } from '@shared/utils/studyCalendar';
+import { useAllTodos } from '../hooks/useAllTodos';
 import './TodoList.css';
 
 const PRIORITY_LABELS = { 0: '无', 1: '低', 2: '中', 3: '高' };
@@ -58,6 +61,13 @@ export default function TodoList() {
   const [formDueDate, setFormDueDate] = useState('');
   const [formDueTime, setFormDueTime] = useState('');
   const [formListType, setFormListType] = useState('personal');
+
+  // 「今天还有 N 项待办」按全部待办统计，不受下方筛选影响
+  const allTodosQuery = useAllTodos(isLoggedIn);
+  const todaySummary = useMemo(
+    () => summarizeTodos(allTodosQuery.data || [], localTodayDateStr()),
+    [allTodosQuery.data]
+  );
 
   const listType = filter === 'all' ? undefined : filter;
   const status = statusFilter === 'all' ? undefined : statusFilter;
@@ -191,6 +201,19 @@ export default function TodoList() {
     <div className="todolist-page">
       <div className="todolist-inner">
         <h2 className="todolist-title">{isZh ? '待办事项' : 'To-Do List'}</h2>
+
+        {allTodosQuery.data ? (
+          <div className="todolist-summary" aria-live="polite">
+            <span className="todolist-summary-count">
+              {todaySummary.open
+                ? (isZh ? <>今天还有 <strong>{todaySummary.open}</strong> 项待办</> : <><strong>{todaySummary.open}</strong> open {todaySummary.open === 1 ? 'to-do' : 'to-dos'}</>)
+                : (isZh ? '全部完成了' : 'All done')}
+            </span>
+            {todaySummary.overdue ? <span className="todolist-summary-tag todolist-summary-tag--danger">{isZh ? `${todaySummary.overdue} 项逾期` : `${todaySummary.overdue} overdue`}</span> : null}
+            {todaySummary.dueToday ? <span className="todolist-summary-tag todolist-summary-tag--danger">{isZh ? `${todaySummary.dueToday} 项今天截止` : `${todaySummary.dueToday} due today`}</span> : null}
+            <Link to="/myzone/calendar" className="todolist-summary-link">{isZh ? '日历视图 ›' : 'Calendar ›'}</Link>
+          </div>
+        ) : null}
 
         <div className="todolist-filters">
           <div className="todolist-filter-row">

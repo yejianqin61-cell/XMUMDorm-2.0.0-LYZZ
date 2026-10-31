@@ -1,0 +1,566 @@
+/* 学习日历 /myzone/calendar —— 颜色全部取自 styles/tokens.css 的语义令牌（Web 为纯亮色） */
+
+.study-calendar {
+  /* tokens.css 没有「危险色文字」令牌（--color-danger 是 #f36d6d，作文字对比度不足 4.5:1），本页局部定义 */
+  --study-calendar-danger-text: #b42318;
+  min-height: 100%;
+  padding: 8px 0 48px;
+}
+
+.study-calendar__inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.study-calendar__back {
+  align-self: flex-start;
+  border: 0;
+  padding: 4px 0 2px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.study-calendar__title-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.study-calendar__icon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  place-items: center;
+  color: var(--color-brand-text);
+  border-left: 2px solid var(--color-brand-primary);
+  background: var(--color-bg-brand-soft);
+}
+
+.study-calendar h1 {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: clamp(26px, 4vw, 34px);
+  letter-spacing: -0.04em;
+}
+
+.study-calendar__title-row p {
+  margin: 5px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+/* 今日待办统计 */
+.study-calendar__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  padding: 16px 18px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 16px;
+  background: var(--color-bg-surface);
+}
+
+.study-calendar__count {
+  color: var(--color-text-primary);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.study-calendar__count strong {
+  padding: 0 4px;
+  color: var(--color-brand-text);
+  font-size: 28px;
+  font-variant-numeric: tabular-nums;
+}
+
+.study-calendar__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.study-calendar__tag {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--color-slate-100);
+  color: var(--color-text-secondary);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.study-calendar__tag--overdue,
+.study-calendar__tag--today {
+  background: var(--color-bg-danger-soft);
+  color: var(--study-calendar-danger-text);
+}
+
+.study-calendar__tag--soon {
+  background: var(--color-bg-warning-soft);
+  color: var(--color-warning-text);
+}
+
+.study-calendar__summary-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+  color: var(--color-brand-text);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.study-calendar__notice {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--color-bg-warning-soft);
+  color: var(--color-warning-text);
+  font-size: 13px;
+}
+
+/* 月历 + 当天详情 */
+.study-calendar__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 16px;
+  align-items: start;
+}
+
+.study-calendar__month,
+.study-calendar__day-panel {
+  min-width: 0;
+  border: 1px solid var(--color-border-default);
+  border-radius: 16px;
+  background: var(--color-bg-surface);
+}
+
+.study-calendar__month {
+  padding: 14px;
+}
+
+.study-calendar__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.study-calendar__toolbar h2 {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: 20px;
+}
+
+.study-calendar__nav {
+  display: flex;
+  gap: 4px;
+}
+
+.study-calendar__nav button {
+  display: grid;
+  min-width: 36px;
+  height: 34px;
+  place-items: center;
+  padding: 0 10px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 10px;
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.study-calendar__nav button:hover {
+  border-color: var(--color-border-strong);
+}
+
+.study-calendar__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 10px 0 12px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.study-calendar__legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.study-calendar__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.study-calendar__dot--todo { background: var(--color-brand-primary); }
+.study-calendar__dot--overdue { background: var(--color-danger); }
+.study-calendar__dot--holiday { background: var(--color-success); }
+.study-calendar__dot--class { background: var(--color-text-tertiary); }
+
+.study-calendar__grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  border-top: 1px solid var(--color-border-soft);
+  border-left: 1px solid var(--color-border-soft);
+}
+
+.study-calendar__weekday {
+  padding: 8px 4px;
+  border-right: 1px solid var(--color-border-soft);
+  border-bottom: 1px solid var(--color-border-soft);
+  background: var(--color-slate-100);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.study-calendar__day {
+  display: flex;
+  min-width: 0;
+  min-height: 104px;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px;
+  border: 0;
+  border-right: 1px solid var(--color-border-soft);
+  border-bottom: 1px solid var(--color-border-soft);
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.study-calendar__day:hover {
+  background: var(--color-bg-surface-soft);
+}
+
+.study-calendar__day:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: -2px;
+}
+
+.study-calendar__day--outside {
+  background: var(--color-slate-100);
+  color: var(--color-text-tertiary);
+}
+
+.study-calendar__day--selected {
+  box-shadow: inset 0 0 0 2px var(--color-brand-primary);
+}
+
+.study-calendar__day-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.study-calendar__date {
+  display: grid;
+  min-width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.study-calendar__day--today .study-calendar__date {
+  background: var(--color-brand-primary);
+  color: var(--color-text-on-brand);
+}
+
+.study-calendar__week {
+  color: var(--color-text-tertiary);
+  font-size: 10.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.study-calendar__chip {
+  display: block;
+  overflow: hidden;
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.study-calendar__chip--holiday {
+  background: var(--color-bg-success-soft);
+  color: var(--color-success-text);
+}
+
+.study-calendar__chip--class {
+  background: var(--color-slate-100);
+  color: var(--color-text-secondary);
+}
+
+.study-calendar__chip--todo {
+  background: var(--color-bg-brand-soft);
+  color: var(--color-brand-text);
+}
+
+.study-calendar__chip--overdue,
+.study-calendar__chip--today {
+  background: var(--color-bg-danger-soft);
+  color: var(--study-calendar-danger-text);
+}
+
+.study-calendar__chip--done {
+  background: transparent;
+  color: var(--color-text-tertiary);
+  text-decoration: line-through;
+}
+
+.study-calendar__more {
+  padding-left: 4px;
+  color: var(--color-text-tertiary);
+  font-size: 11px;
+}
+
+/* 当天详情 */
+.study-calendar__day-panel {
+  position: sticky;
+  top: 16px;
+  padding: 16px;
+}
+
+.study-calendar__day-panel h3 {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: 18px;
+}
+
+.study-calendar__day-sub {
+  margin: 4px 0 10px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.study-calendar__day-panel h4 {
+  margin: 16px 0 6px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.study-calendar__holiday-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--color-bg-success-soft);
+  color: var(--color-success-text);
+  font-size: 13px;
+}
+
+.study-calendar__list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.study-calendar__class,
+.study-calendar__todo {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-border-soft);
+}
+
+.study-calendar__class time {
+  flex: 0 0 auto;
+  min-width: 82px;
+  color: var(--color-text-secondary);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.study-calendar__class div,
+.study-calendar__todo div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.study-calendar__class strong,
+.study-calendar__todo strong {
+  color: var(--color-text-primary);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.study-calendar__class span,
+.study-calendar__todo span {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.study-calendar__todo--overdue span,
+.study-calendar__todo--today span {
+  color: var(--study-calendar-danger-text);
+}
+
+.study-calendar__todo--done strong {
+  color: var(--color-text-tertiary);
+  text-decoration: line-through;
+}
+
+.study-calendar__check {
+  position: relative;
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  border: 2px solid var(--color-border-strong);
+  border-radius: 50%;
+  background: var(--color-bg-surface);
+  cursor: pointer;
+}
+
+.study-calendar__check[aria-pressed='true'] {
+  border-color: var(--color-success);
+  background: var(--color-success);
+}
+
+.study-calendar__check[aria-pressed='true']::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 5px;
+  width: 5px;
+  height: 9px;
+  border: solid var(--color-text-on-brand);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.study-calendar__empty {
+  margin: 0;
+  color: var(--color-text-tertiary);
+  font-size: 13px;
+}
+
+.study-calendar__add {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-border-default);
+}
+
+.study-calendar__add label {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.study-calendar__add input {
+  width: 100%;
+  min-width: 0;
+  height: 38px;
+  box-sizing: border-box;
+  padding: 0 10px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 10px;
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: 14px;
+}
+
+.study-calendar__add input:focus {
+  border-color: var(--color-border-focus);
+  outline: none;
+}
+
+.study-calendar__add-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.study-calendar__add button {
+  height: 38px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--color-brand-primary);
+  color: var(--color-text-on-brand);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.study-calendar__add button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+@media (max-width: 900px) {
+  .study-calendar__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .study-calendar__day-panel {
+    position: static;
+  }
+}
+
+@media (max-width: 600px) {
+  .study-calendar__month {
+    padding: 10px 6px;
+  }
+
+  .study-calendar__day {
+    min-height: 64px;
+    padding: 4px 3px;
+  }
+
+  .study-calendar__week,
+  .study-calendar__chip--class,
+  .study-calendar__more {
+    display: none;
+  }
+
+  .study-calendar__chip {
+    padding: 1px 3px;
+    font-size: 10px;
+  }
+
+  .study-calendar__summary-link {
+    margin-left: 0;
+  }
+}
