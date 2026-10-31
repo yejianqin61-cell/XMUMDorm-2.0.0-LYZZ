@@ -5,7 +5,7 @@
  *   · 点卡片弹半屏；· 展示全部字段；· 本周安排列出该课所有时段；· 关闭后不 push 路由。
  */
 import * as React from 'react';
-import { userEvent, waitFor } from '@testing-library/react-native';
+import { fireEvent, userEvent, waitFor } from '@testing-library/react-native';
 
 import { renderApp } from './helpers/renderApp';
 import { ToastProvider } from '@/components/ui/Toast';
@@ -36,7 +36,7 @@ const withProviders = (node: React.ReactElement): React.ReactElement => (
   </SessionProvider>
 );
 
-const payload = (days: Record<string, unknown[]>) => ({ week: 3, currentWeek: 3, totalWeeks: 20, days });
+const payload = (days: Record<string, unknown[]>, week: number) => ({ week, currentWeek: week, totalWeeks: 20, days });
 
 const ENGLISH: Record<string, unknown> = {
   course_code: 'G0173',
@@ -55,7 +55,7 @@ beforeEach(() => {
 });
 
 async function openSheet(days: Record<string, unknown[]> = { 1: [ENGLISH] }) {
-  api.getScheduleWeek.mockResolvedValue(payload(days));
+  api.getScheduleWeek.mockImplementation(async (week: number) => payload(days, week));
   const view = await renderApp(withProviders(<TimetableScreen />));
   await waitFor(() => expect(view.getAllByTestId('timetable-grid-card-G0173').length).toBeGreaterThan(0));
   const user = userEvent.setup();
@@ -66,6 +66,25 @@ async function openSheet(days: Record<string, unknown[]> = { 1: [ENGLISH] }) {
 const hidden = { includeHiddenElements: true };
 
 describe('P3A7 课程详情半屏弹窗', () => {
+  it('loads the preceding Sunday when the displayed week begins after an overnight course', async () => {
+    jest.useFakeTimers({ doNotFake: ['hrtime', 'nextTick', 'performance', 'queueMicrotask',
+      'requestAnimationFrame', 'cancelAnimationFrame', 'requestIdleCallback', 'cancelIdleCallback',
+      'setImmediate', 'clearImmediate', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] });
+    jest.setSystemTime(new Date('2026-10-05T01:00:00Z'));
+    api.getScheduleWeek.mockImplementation(async (week: number) => ({ week, currentWeek: 2, totalWeeks: 14,
+      days: week === 1 ? { 7: [{ ...ENGLISH, course_code: 'SUN', day_of_week: 7,
+        start_time: '23:30', end_time: '00:30' }] } : { 1: [{ ...ENGLISH,
+        course_code: 'SUN', day_of_week: 1, start_time: '10:00', end_time: '11:00' }] } }));
+    try {
+      const view = await renderApp(withProviders(<TimetableScreen />));
+      await waitFor(() => expect(view.getByTestId('timetable-grid-card-SUN-continuation')).toBeTruthy());
+      await fireEvent.press(view.getByTestId('timetable-grid-card-SUN-continuation'));
+      expect(view.getByTestId('course-sheet-occurrence-0', { includeHiddenElements: true })).toBeTruthy();
+      expect(view.getByTestId('course-sheet-occurrence-1', { includeHiddenElements: true })).toBeTruthy();
+      expect(api.getScheduleWeek).toHaveBeenCalledWith(1);
+      expect(api.getScheduleWeek).toHaveBeenCalledWith(2);
+    } finally { jest.useRealTimers(); }
+  });
   it('点卡片弹出半屏，显示课程名称与地点', async () => {
     const view = await openSheet();
     expect(view.getByTestId('course-sheet')).toBeTruthy();

@@ -39,15 +39,6 @@ return {
   createCoupon: (body,key) => request(`${base}/admin/coupons`,{method:'POST',body,headers:{'Idempotency-Key':key}}),
   couponStatus: (id,status) => request(`${base}/admin/coupons/${id}/status`,{method:'PATCH',body:{status}}),
   couponRedemptions: (id,page=1) => request(`${base}/admin/coupons/${id}/redemptions?page=${page}`),
-  // 网站端商家入驻
-  myApplications: () => request('/api/shop/merchant-applications/mine'),
-  applyMerchant: body => request('/api/shop/merchant-applications', { method: 'POST', body }),
-  withdrawApplication: id => request(`/api/shop/merchant-applications/${id}/withdraw`, { method: 'POST', body: {} }),
-  setStorePaused: (id, paused) => request(`/api/shop/my-merchants/${id}/paused`, { method: 'PATCH', body: { paused } }),
-  adminApplications: (params = {}) => request(`/api/admin/shop-applications?${new URLSearchParams(Object.entries(params).filter(([, v]) => v))}`),
-  adminApplication: id => request(`/api/admin/shop-applications/${id}`),
-  approveApplication: id => request(`/api/admin/shop-applications/${id}/approve`, { method: 'POST', body: {} }),
-  rejectApplication: (id, note) => request(`/api/admin/shop-applications/${id}/reject`, { method: 'POST', body: { note } }),
 };
 }
 export const shopApi = createShopApi();

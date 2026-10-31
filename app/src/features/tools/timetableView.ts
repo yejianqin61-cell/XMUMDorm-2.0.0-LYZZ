@@ -11,16 +11,25 @@
  * ⛔ 不得拿课程色表达状态语义（状态仍用 `state-*`）。
  *
  * ## 颜色怎么分配
- * 按**本周出现的课程码升序**依次取色（模 6）：
- *   · 同一课程（同一 `courseCode`，不论时间/地点）→ 同色；
- *   · 不同课程 → 顺延不同色；本周 ≤6 门时**必不重复**；
- *   · 跨周课程集合不变 → 颜色稳定；集合变化允许位移（文档已注明，不假装全局稳定）。
+ * 按课程身份键稳定映射到 6 色：
+ *   · 同一课程（同一 `courseCode`，不论周次、时间和地点）→ 同色；
+ *   · 色板数量有限，不同课程可能使用同色。
  */
 
 import type { DarkColorTokenName } from '@/design-system/tokens';
 import type { TimetableMeeting, TimetableWeek } from './timetable';
 
 export const VISIBLE_WEEKDAYS = [1, 2, 3, 4, 5] as const;
+
+export function visibleTimetableWeekdays(week: TimetableWeek): readonly number[] {
+  return [...VISIBLE_WEEKDAYS, ...[6, 7].filter((day) => (week.days[day]?.length ?? 0) > 0
+    || (week.days[day - 1] ?? []).some(isOvernightMeeting))];
+}
+
+export function isOvernightMeeting(meeting: TimetableMeeting): boolean {
+  const start = clockMinutes(meeting.startTime), end = clockMinutes(meeting.endTime);
+  return start !== null && end !== null && end > 0 && end < start;
+}
 
 export type CourseAccent = {
   /** 卡片底色令牌（实心课程色） */
@@ -44,7 +53,7 @@ export function courseKey(meeting: TimetableMeeting): string {
   return meeting.courseCode.trim() || (meeting.courseName ?? '').trim();
 }
 
-/** 本周「课程码 → 课程色」的唯一分配处（纯函数，可单测） */
+/** 本周「课程码 → 课程色」的唯一分配处；颜色不依赖其他课程。 */
 export function courseAccentMap(week: TimetableWeek): ReadonlyMap<string, CourseAccent> {
   const keys = new Set<string>();
   for (const day of Object.keys(week.days)) {
@@ -53,10 +62,20 @@ export function courseAccentMap(week: TimetableWeek): ReadonlyMap<string, Course
       if (key !== '') keys.add(key);
     }
   }
+  for (const meeting of week.previousSunday ?? []) {
+    const key = courseKey(meeting);
+    if (key !== '') keys.add(key);
+  }
   return new Map(
     [...keys]
       .sort()
-      .map((key, index) => [key, COURSE_ACCENTS[index % COURSE_ACCENTS.length]])
+      .map((key) => {
+        let hash = 2166136261;
+        for (let index = 0; index < key.length; index += 1) {
+          hash = Math.imul(hash ^ key.charCodeAt(index), 16777619);
+        }
+        return [key, COURSE_ACCENTS[(hash >>> 0) % COURSE_ACCENTS.length]];
+      })
   );
 }
 
@@ -65,10 +84,10 @@ export const FALLBACK_COURSE_ACCENT: CourseAccent = COURSE_ACCENTS[0];
 
 /** Filter display data only; the shared cached week retains all seven days. */
 export function weekdayTimetableWeek(week: TimetableWeek): TimetableWeek {
-  return { ...week, days: Object.fromEntries(VISIBLE_WEEKDAYS.map((day) => [day, week.days[day] ?? []])) };
+  return { ...week, days: Object.fromEntries(visibleTimetableWeekdays(week).map((day) => [day, week.days[day] ?? []])) };
 }
 
-/* ───────────────────────── 时间轴（08:00–21:00 固定窗口） ───────────────────────── */
+/* ───────────────────────── 时间轴（默认 08:00–21:00，可按课程扩展） ───────────────────────── */
 
 /** 时间轴起止小时（所有者 2026-10-18：从早上 8 点到晚上 9 点都要画出来） */
 export const TIMETABLE_AXIS_START_HOUR = 8;
@@ -98,7 +117,7 @@ export type TimetableCardLayout = {
 };
 
 /**
- * 把一节课摆进固定时间轴（纯函数）。
+ * 把一节课摆进指定时间轴（纯函数，默认 08:00–21:00）。
  * - 起止时间非法 → `null`（不画这张卡）；
  * - 与 08:00–21:00 无交集 → `null`；
  * - 跨出窗口的部分钳到窗口内（保证看得见，且不撑破时间轴）；
@@ -107,18 +126,21 @@ export type TimetableCardLayout = {
 export function layoutTimetableCard(
   meeting: TimetableMeeting,
   hourHeight: number,
-  minCardHeight: number
+  minCardHeight: number,
+  startHour = TIMETABLE_AXIS_START_HOUR,
+  endHour = TIMETABLE_AXIS_END_HOUR
 ): TimetableCardLayout | null {
   const start = clockMinutes(meeting.startTime);
   if (start === null) return null;
   const rawEnd = clockMinutes(meeting.endTime);
-  const end = rawEnd === null || rawEnd <= start ? start + 60 : rawEnd;
-  const axisStart = TIMETABLE_AXIS_START_HOUR * 60;
-  const axisEnd = TIMETABLE_AXIS_END_HOUR * 60;
+  const end = rawEnd === null || rawEnd === start ? start + 60 : rawEnd < start ? 24 * 60 : rawEnd;
+  const axisStart = startHour * 60;
+  const axisEnd = endHour * 60;
   if (end <= axisStart || start >= axisEnd) return null;
   const clampedStart = Math.max(axisStart, Math.min(start, axisEnd - 1));
   const clampedEnd = Math.min(axisEnd, Math.max(end, clampedStart + 15));
   const top = ((clampedStart - axisStart) / 60) * hourHeight;
   const rawHeight = ((clampedEnd - clampedStart) / 60) * hourHeight;
-  return { top, height: Math.max(minCardHeight, rawHeight) };
+  const height = Math.max(minCardHeight, rawHeight);
+  return { top, height };
 }
