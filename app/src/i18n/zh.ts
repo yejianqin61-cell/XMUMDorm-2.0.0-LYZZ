@@ -468,7 +468,7 @@ export const zh = {
   'mailbox.targetUnavailable': '内容不可查看',
   'mailbox.markAllRead': '全部已读',
   'mailbox.empty.title': '这里还没有消息',
-  'mailbox.empty.description': '新的互动与交易会出现在这里',
+  'mailbox.empty.description': '新的互动与系统通知会出现在这里',
   'mailbox.clear.action': '清空',
   'mailbox.clear.title': '清空这一类',
   'mailbox.clear.body': '公告不会被清空',

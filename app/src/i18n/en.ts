@@ -461,7 +461,7 @@ export const en: Record<MessageKey, string> = {
   'mailbox.targetUnavailable': 'Content unavailable',
   'mailbox.markAllRead': 'Mark all read',
   'mailbox.empty.title': 'Nothing here yet',
-  'mailbox.empty.description': 'New likes and trades land here',
+  'mailbox.empty.description': 'New likes and system notices land here',
   'mailbox.clear.action': 'Clear',
   'mailbox.clear.title': 'Clear this category',
   'mailbox.clear.body': 'Announcements are never cleared',
