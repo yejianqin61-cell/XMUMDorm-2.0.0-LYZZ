@@ -52,6 +52,12 @@ export const zh = {
   'screen.campus.mediaPreview': '预览图片',
   'screen.campus.mediaFailed': '图片不可用',
   'screen.campus.read.replyThread': '{count} 条回复',
+  // 阶段A：图片保存（甲统一口径；文案候选来自丙的 09 材料）
+  'screen.campus.mediaSave': '保存图片',
+  'screen.campus.mediaSaving': '保存中',
+  'screen.campus.mediaSaved': '已保存到相册',
+  'screen.campus.mediaPermissionDenied': '请在设置中允许相册权限',
+  'screen.campus.mediaSaveFailed': '保存失败，请重试',
 
   // 丙：万能墙投稿
   'publish.wall.template': '版式',

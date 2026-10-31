@@ -51,6 +51,12 @@ export const en: Record<MessageKey, string> = {
   'screen.campus.mediaPreview': 'Preview image',
   'screen.campus.mediaFailed': 'Image unavailable',
   'screen.campus.read.replyThread': '{count} replies',
+  // 阶段A：图片保存（甲统一口径；文案候选来自丙的 09 材料）
+  'screen.campus.mediaSave': 'Save image',
+  'screen.campus.mediaSaving': 'Saving',
+  'screen.campus.mediaSaved': 'Saved to Photos',
+  'screen.campus.mediaPermissionDenied': 'Allow Photos access in Settings, then retry',
+  'screen.campus.mediaSaveFailed': "Couldn't save. Try again.",
 
   // 丙：万能墙投稿
   'publish.wall.template': 'Template',
