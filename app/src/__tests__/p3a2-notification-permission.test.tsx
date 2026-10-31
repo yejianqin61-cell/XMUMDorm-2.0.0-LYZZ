@@ -31,7 +31,8 @@ it('先解释用途，再请求通知权限并显示服务端外的系统回执'
   const view = await renderApp(<SettingsScreen />);
 
   await waitFor(() => expect(view.getByText('上课提醒与重要消息')).toBeTruthy());
-  expect(view.getByText('仅在你开启后发送课程提醒和重要校园消息')).toBeTruthy();
+  // D-2（2026-10-31）：提醒说明全 App 统一为含 30 分钟提前量的那一句
+  expect(view.getByText('开启通知后，在课程开始前 30 分钟提醒你。')).toBeTruthy();
 
   await fireEvent.press(view.getByTestId('settings-notifications-request'));
 
