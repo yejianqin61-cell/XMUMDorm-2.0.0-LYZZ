@@ -20,6 +20,7 @@ import { Pressable as AppPressable } from '@/components/ui/Pressable';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Surface } from '@/components/ui/Surface';
 import { Text } from '@/components/ui/Text';
+import { useOptionalScreenInsets } from '@/components/ui/Screen';
 import { useTheme } from '@/design-system/theme';
 import { useI18n } from '@/i18n';
 import { TreeholeImageSaveControls, useTreeholeImageSave } from './TreeholeImageSaveControls';
@@ -215,6 +216,8 @@ function TreeholeDetailMedia({ urls, imageSave }: {
   imageSave?: TreeholeImageSaveOptions;
 }): React.ReactElement {
   const theme = useTheme();
+  // S7：全屏预览是覆盖层，insets 由唯一安全区容器提供（不在 Screen 内时退回主题间距）
+  const screenInsets = useOptionalScreenInsets();
   const { t } = useI18n();
   /** 当前前卡（已提交）。飞出动画期间不变，动画结束才前进 */
   // 一次选图/重试是一代请求；即使URL相同，回到该图也重新分配代次。
@@ -549,11 +552,18 @@ function TreeholeDetailMedia({ urls, imageSave }: {
       >
         <View
           testID="treehole-media-preview-dialog"
-          style={{ flex: 1, backgroundColor: theme.color['bg-canvas'].value }}
+          style={{
+            flex: 1,
+            backgroundColor: theme.color['bg-canvas'].value,
+            // S7：覆盖层消费容器算好的 insets（状态栏/手势条不再压住关闭钮与保存钮）
+            paddingTop: screenInsets?.insets.top ?? 0,
+            paddingBottom: screenInsets?.insets.bottom ?? 0,
+          }}
         >
           <View
             style={{
-              paddingTop: theme.space('space_8'),
+              // 有 insets 时容器已经让出安全区，这里只留常规间距；裸渲染时保持原间距
+              paddingTop: screenInsets ? theme.space('space_2') : theme.space('space_8'),
               paddingHorizontal: theme.space('space_4'),
               alignItems: 'flex-end',
             }}

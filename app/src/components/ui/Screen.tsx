@@ -50,6 +50,15 @@ export function useScreenInsets(): ResolvedInsets {
   return value;
 }
 
+/**
+ * 覆盖层的**可选**取用入口（S7）：在 `Screen` 内返回容器算好的 insets，
+ * 不在 `Screen` 内返回 `null` —— 覆盖层可据此退回纯主题间距，而不是整屏崩掉。
+ * ⚠️ 与 `useScreenInsets` 一样，**不得**用它绕开唯一容器去自己读原生 insets。
+ */
+export function useOptionalScreenInsets(): ResolvedInsets | null {
+  return React.useContext(ScreenInsetsContext);
+}
+
 /** 键盘高度（S6 的输入来源）。⛔ 不使用 `KeyboardAvoidingView` 的隐式行为，避免两端不一致 */
 function useKeyboardHeight(): number {
   const [height, setHeight] = React.useState(0);
