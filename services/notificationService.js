@@ -49,6 +49,18 @@ const MODULE_TYPES = {
   system: ['system_announcement', 'system_ban', 'announcement'],
 };
 
+/**
+ * 通知类型 → 分类（D2-12，2026-10-28 领导裁决；阶段D-02 落地）
+ *
+ *   interaction ← 互动：帖子/树洞/食堂/社团/手册与测评评论，加上**商品想要**
+ *   transaction ← 交易：**只有二手私聊**（契约：交易 Tab 仅列二手私聊会话）
+ *   system      ← 系统：公告/封禁 + **活动报名与提醒**
+ *
+ * ⚠️ 历史泛型 `marketplace`（全仓无写入方）按契约「不能仅凭名称算作聊天未读」
+ *    **显式落在 interaction**：若漏掉，它就不在任何分类里，`byCategory` 求和会小于
+ *    `total` —— 表现正是契约警告的「有角标但列表空」。它的真实含义待丁的存量样例确认。
+ * ⚠️ `MODULE_TYPES.marketplace` 仍保留三类：**模块筛选 ≠ 分类**（契约 L80）。
+ */
 const CATEGORY_TYPES = {
   interaction: [
     ...MODULE_TYPES.treehole,
@@ -57,12 +69,12 @@ const CATEGORY_TYPES = {
     ...MODULE_TYPES.club,
     'handbook_comment',
     'course_review_comment',
+    'marketplace_want',
+    // 历史泛型（无写入方）：暂落互动，待丁的存量样例确认
+    'marketplace',
   ],
-  transaction: [
-    ...MODULE_TYPES.marketplace,
-    ...MODULE_TYPES.affairs,
-  ],
-  system: [...MODULE_TYPES.system],
+  transaction: ['marketplace_chat'],
+  system: [...MODULE_TYPES.system, ...MODULE_TYPES.affairs],
 };
 
 /**

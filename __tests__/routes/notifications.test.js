@@ -84,7 +84,7 @@ describe('Notifications Routes', () => {
       });
     });
 
-    it('supports category filtering and exposes the derived category', async () => {
+    it('classifies affairs under the system category and exposes the derived category', async () => {
       query
         .mockResolvedValueOnce([{
           id: 5,
@@ -107,13 +107,47 @@ describe('Notifications Routes', () => {
         }])
         .mockResolvedValueOnce([{ type: 'activity_register_success', cnt: 1 }]);
 
-      const res = await supertest(app()).get('/api/notifications?category=transaction');
+      const res = await supertest(app()).get('/api/notifications?category=system');
 
       expect(res.status).toBe(200);
       expect(query.mock.calls[0][0]).toContain('n.type IN');
-      expect(query.mock.calls[0][1]).toContain('activity_register_success');
-      expect(res.body.data.list[0].category).toBe('transaction');
+      expect(query.mock.calls[0][1]).toEqual(
+        expect.arrayContaining(['activity_register_success'])
+      );
+      // D2-12：活动报名与提醒归系统，不再是交易
+      expect(res.body.data.list[0].category).toBe('system');
       expect(res.body.data.list[0].target.path).toBe('/about/club/activity/22');
+    });
+
+    it('keeps the transaction category to chat notifications only', async () => {
+      query
+        .mockResolvedValueOnce([{
+          id: 6,
+          type: 'marketplace_chat',
+          is_read: 0,
+          post_id: null,
+          comment_id: null,
+          from_user_id: 9,
+          extra: JSON.stringify({
+            targetType: 'marketplace_thread',
+            targetId: 44,
+            targetTitle: '二手键盘',
+            targetPath: '/about/second-hand/chat/44',
+          }),
+          created_at: '2026-06-03 10:00:00',
+          post_title: null,
+          from_username: 'buyer',
+          from_nickname: '买家',
+          from_avatar: null,
+        }])
+        .mockResolvedValueOnce([{ type: 'marketplace_chat', cnt: 1 }]);
+
+      const res = await supertest(app()).get('/api/notifications?category=transaction');
+
+      expect(res.status).toBe(200);
+      // 交易=私聊：想要与活动都不得出现在这个分类的类型列表里
+      expect(query.mock.calls[0][1]).toEqual([7, 'marketplace_chat']);
+      expect(res.body.data.list[0].category).toBe('transaction');
     });
 
     it('trims the lookahead row and uses stable ordering', async () => {
@@ -365,9 +399,12 @@ describe('Notifications Routes', () => {
   });
 
   describe('GET /api/notifications/unread-summary', () => {
-    it('returns unread counts grouped by category', async () => {
+    it('returns unread counts grouped by the decided categories', async () => {
       query.mockResolvedValueOnce([
         { type: 'treehole_like', cnt: 2 },
+        { type: 'marketplace_want', cnt: 1 },
+        { type: 'marketplace', cnt: 2 },
+        { type: 'marketplace_chat', cnt: 1 },
         { type: 'activity_register_success', cnt: 1 },
         { type: 'system_announcement', cnt: 3 },
       ]);
@@ -375,11 +412,19 @@ describe('Notifications Routes', () => {
       const res = await supertest(app()).get('/api/notifications/unread-summary');
 
       expect(res.status).toBe(200);
+      // D2-12：想要归互动；活动报名与提醒归系统；交易只剩私聊。
+      // 历史泛型 marketplace 全仓无写入方，按契约「不能仅凭名称算作聊天未读」暂落互动（D-6 待丁样例）
       expect(res.body.data.byCategory).toEqual({
-        interaction: 2,
-        transaction: 1,
-        system: 3,
+        interaction: 5, // treehole_like 2 + marketplace_want 1 + marketplace 2
+        transaction: 1, // marketplace_chat
+        system: 4, // activity_register_success 1 + system_announcement 3
       });
+      // byCategory 求和必须等于 total，否则就是契约说的「有角标但列表空」
+      expect(
+        res.body.data.byCategory.interaction +
+          res.body.data.byCategory.transaction +
+          res.body.data.byCategory.system
+      ).toBe(res.body.data.total);
     });
   });
 
@@ -456,9 +501,10 @@ describe('Notifications Routes', () => {
       const res = await supertest(app()).delete('/api/notifications/clear?category=transaction');
 
       expect(res.status).toBe(200);
+      // 交易只剩私聊：清空交易不得带走活动或想要通知
       expect(query).toHaveBeenCalledWith(
         expect.stringContaining('DELETE FROM notifications WHERE user_id = ? AND type IN'),
-        expect.arrayContaining([7, 'activity_register_success'])
+        [7, 'marketplace_chat']
       );
     });
 
@@ -468,10 +514,14 @@ describe('Notifications Routes', () => {
       const res = await supertest(app()).delete('/api/notifications/clear?category=system');
 
       expect(res.status).toBe(200);
-      expect(query).toHaveBeenCalledWith(
-        expect.stringContaining('DELETE FROM notifications WHERE user_id = ? AND type IN'),
-        [7, 'system_ban']
-      );
+      const [sql, params] = query.mock.calls[0];
+      expect(sql).toContain('DELETE FROM notifications WHERE user_id = ? AND type IN');
+      expect(params).toContain('system_ban');
+      // 公告永不清空
+      expect(params).not.toContain('announcement');
+      expect(params).not.toContain('system_announcement');
+      // 阶段D-02：活动报名与提醒已从交易挪到系统，清系统分类时随之清理
+      expect(params).toContain('activity_register_success');
     });
 
     it('preserves announcements when clearing the system module', async () => {
