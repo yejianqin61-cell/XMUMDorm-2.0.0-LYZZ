@@ -7,6 +7,10 @@ export function getMe() {
   return get('/api/users/me');
 }
 
+export function getMyPosts({ page = 1, pageSize = 10 } = {}) {
+  return get(`/api/users/me/posts?${new URLSearchParams({ page: String(page), pageSize: String(pageSize) })}`);
+}
+
 export function getMyTermsStatus() {
   return get('/api/users/me/terms');
 }
@@ -28,7 +32,7 @@ export function getProfile(userId, options = {}) {
 
 /**
  * 更新当前用户资料
- * @param {{ nickname?: string, username?: string, college?: string, grade?: string, major?: string, show_college?: boolean, show_grade?: boolean, show_major?: boolean }} body
+ * @param {{ nickname?: string, username?: string, college?: string, grade?: string, major?: string, show_college?: boolean, show_grade?: boolean, show_major?: boolean, collegeId?: string|null, programmeId?: string|null }} body
  */
 export function updateProfileInfo(body) {
   return patch('/api/users/me', body);
@@ -48,3 +52,7 @@ export function updateAvatar(file) {
 export function deactivateMyAccount() {
   return del('/api/users/me');
 }
+
+/** Authenticated directory; stable IDs share campus audience colleges. */
+export function getAcademicColleges() { return get('/api/academic-directory/colleges'); }
+export function getAcademicProgrammes(collegeId) { return get(`/api/academic-directory/colleges/${encodeURIComponent(collegeId)}/programmes`); }

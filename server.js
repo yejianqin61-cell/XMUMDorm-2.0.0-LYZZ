@@ -46,6 +46,7 @@ const organizationsRoutes = require('./routes/organizations');
 const squareRoutes = require('./routes/square');
 const todosRoutes = require('./routes/todos');
 const adminRoutes = require('./routes/admin');
+const campusNewsRoutes = require('./services/campusNews');
 const reportRoutes = require('./routes/reports');
 const advertisementRoutes = require('./routes/advertisements');
 const confessionRoutes = require('./routes/confessions');
@@ -55,6 +56,9 @@ const agentPersonalRoutes = require('./routes/agentPersonal');
 
 // 8. 创建一个 Express 应用实例
 const app = express();
+if (process.env.STAGE2_LOCAL_ISOLATED === '1') {
+  app.use(require('./scripts/stage2-local/http-boundary.cjs').localHttpBoundary);
+}
 
 // 如果部署在 Vercel / Railway 等反向代理之后，需要开启 trust proxy
 // 否则 express-rate-limit 在看到 X-Forwarded-For 头时会报错
@@ -165,6 +169,7 @@ app.use('/api/canteen', canteenRoutes);
 app.use('/api/handbook', handbookRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/academic-directory', require('./routes/academicDirectory'));
 app.use('/api/schedule', scheduleRoutes);
 app.use('/api/diary', diaryRoutes);
 app.use('/api/push', pushRoutes);
@@ -174,6 +179,9 @@ app.use('/api/clubs', clubsRoutes);
 app.use('/api/organizations', organizationsRoutes);
 app.use('/api/square', squareRoutes);
 app.use('/api/todos', todosRoutes);
+// Dedicated route checks current database admin status; never inherit JWT-role shortcut.
+app.use('/api/admin/campus-news', campusNewsRoutes.adminRouter);
+app.use('/api/campus-news', campusNewsRoutes.publicRouter);
 app.use('/api/admin', adminRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/advertisements', advertisementRoutes);
@@ -211,6 +219,7 @@ app.listen(PORT, process.env.HOST || undefined, async () => {
   
   // 测试数据库连接
   await testConnection();
+  campusNewsRoutes.startDeliveryLoop();
 
   // 后台定时任务（本地开发默认关闭，避免“没开页面也在狂查库”导致你觉得很卡）
   const ENABLE_JOBS = String(process.env.ENABLE_BACKGROUND_JOBS || '') === '1';

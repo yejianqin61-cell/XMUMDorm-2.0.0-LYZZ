@@ -1,7 +1,10 @@
 const express = require('express');
 const supertest = require('supertest');
 
-jest.mock('../../database', () => ({ query: jest.fn() }));
+jest.mock('../../database', () => ({
+  query: jest.fn(),
+  pool: { execute: jest.fn(), getConnection: jest.fn() },
+}));
 jest.mock('../../middleware/auth', () => (req, _res, next) => {
   req.user = { id: 5, role: 'student' };
   next();
@@ -38,7 +41,7 @@ jest.mock('jsonwebtoken', () => ({
   verify: jest.fn(() => ({ id: 12, role: 'student' })),
 }));
 
-const { query } = require('../../database');
+const { query, pool } = require('../../database');
 const { simpleCache } = require('../../utils/simpleCache');
 const usersRoutes = require('../../routes/users');
 
@@ -57,6 +60,8 @@ function app() {
 describe('Users Routes', () => {
   beforeEach(() => {
     query.mockReset();
+    pool.execute.mockReset();
+    pool.getConnection.mockReset();
     simpleCache.get.mockReset();
     simpleCache.set.mockReset();
     simpleCache.delete.mockReset();
@@ -126,6 +131,7 @@ describe('Users Routes', () => {
         },
       ]);
 
+      pool.execute.mockResolvedValueOnce([[{ id: 5, college: 'FCSIT', major: 'SE' }]]);
       const res = await supertest(app()).get('/api/users/me');
 
       expect(res.status).toBe(200);
@@ -145,6 +151,9 @@ describe('Users Routes', () => {
         show_college: true,
         show_grade: true,
         show_major: false,
+        collegeId: null,
+        programmeId: null,
+        academicIdentity: { available: false, needsSelection: true, legacy: { college: 'FCSIT', major: 'SE' } },
       });
     });
   });
@@ -161,7 +170,16 @@ describe('Users Routes', () => {
     });
 
     it('updates extended profile fields and invalidates the me cache', async () => {
-      query.mockResolvedValueOnce({ affectedRows: 1 });
+      const connection = {
+        beginTransaction: jest.fn(), commit: jest.fn(), rollback: jest.fn(), release: jest.fn(),
+        execute: jest.fn()
+          .mockResolvedValueOnce([[{
+            id: 5, status: 'active', nickname: 'Alice', college: 'FCSIT', major: 'SE',
+            grade: 'Year 2', show_college: 1, show_grade: 1, show_major: 0,
+          }]])
+          .mockResolvedValueOnce([{ affectedRows: 1 }]),
+      };
+      pool.getConnection.mockResolvedValueOnce(connection);
 
       const res = await supertest(app())
         .patch('/api/users/me')
@@ -176,10 +194,13 @@ describe('Users Routes', () => {
         });
 
       expect(res.status).toBe(200);
-      expect(query).toHaveBeenCalledWith(
-        expect.stringContaining('SET nickname = ?, college = ?, grade = ?, major = ?, show_college = ?, show_grade = ?, show_major = ?'),
-        ['New Name', 'Business', 'Year 1', 'Finance', 0, 1, 1, 5]
+      expect(connection.execute).toHaveBeenCalledWith(
+        'UPDATE users SET `nickname`=?,`college`=?,`major`=?,`grade`=?,`show_college`=?,`show_grade`=?,`show_major`=? WHERE id=?',
+        ['New Name', 'Business', 'Finance', 'Year 1', 0, 1, 1, 5]
       );
+      expect(connection.commit).toHaveBeenCalledTimes(1);
+      expect(connection.rollback).not.toHaveBeenCalled();
+      expect(connection.release).toHaveBeenCalledTimes(1);
       expect(simpleCache.delete).toHaveBeenCalledWith('users:me:v1:5');
       expect(res.body.data).toEqual({
         nickname: 'New Name',
@@ -189,6 +210,9 @@ describe('Users Routes', () => {
         show_college: false,
         show_grade: true,
         show_major: true,
+        collegeId: null,
+        programmeId: null,
+        academicIdentity: { available: false, college: null, programme: null, needsSelection: true, legacy: { college: 'Business', major: 'Finance' } },
       });
     });
   });

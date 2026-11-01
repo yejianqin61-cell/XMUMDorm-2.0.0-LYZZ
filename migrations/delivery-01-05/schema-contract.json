@@ -1,0 +1,8137 @@
+{
+  "planHash": "b96949e2d59f55f97f27d86a2ee0f571e324fbf1eecbb9a25016a4f589b54da3",
+  "steps": {
+    "001_dependencies.sql:audit_logs:table:audit_logs:0": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "bigint unsigned",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "user_id": [
+          "bigint unsigned",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "role": [
+          "varchar(32)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "action": [
+          "varchar(64)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "target_type": [
+          "varchar(32)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "target_id": [
+          "bigint unsigned",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "ip": [
+          "varchar(64)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "user_agent": [
+          "varchar(255)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "meta": [
+          "json",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "datetime",
+          "NO",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {},
+      "checks": {},
+      "triggers": []
+    },
+    "001_dependencies.sql:exp_logs:table:exp_logs:0": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "bigint",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "user_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "action": [
+          "varchar(32)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "exp": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "ref_type": [
+          "varchar(32)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "ref_id": [
+          "bigint",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "meta_json": [
+          "json",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "idx_exp_logs_user_action_ref": [
+          [
+            "user_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "action",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "ref_type",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "ref_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_exp_logs_user_created": [
+          [
+            "user_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "created_at",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "exp_logs_ibfk_1": [
+          [
+            "user_id",
+            "users",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "001_dependencies.sql:user_exp_daily:table:user_exp_daily:0": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "user_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "day": [
+          "date",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "action": [
+          "varchar(32)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "exp_sum": [
+          "int",
+          "NO",
+          "0",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "PRIMARY": [
+          [
+            "user_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "day",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "action",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "user_exp_daily_ibfk_1": [
+          [
+            "user_id",
+            "users",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "001_dependencies.sql:user_terms_acceptances:table:user_terms_acceptances:0": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "user_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "terms_version": [
+          "varchar(64)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "accepted_at": [
+          "timestamp",
+          "NO",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "idx_terms_user_time": [
+          [
+            "user_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "accepted_at",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "user_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "terms_version",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "user_terms_acceptances_ibfk_1": [
+          [
+            "user_id",
+            "users",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "001_dependencies.sql:organizations:table:organizations:0": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "int",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "type": [
+          "enum('schooldepartment','college','major','official')",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "name": [
+          "varchar(100)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "avatar": [
+          "varchar(500)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "description": [
+          "text",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "is_active": [
+          "tinyint",
+          "NO",
+          "1",
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ],
+        "updated_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "on update current_timestamp",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "idx_org_active": [
+          [
+            "is_active",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_org_type": [
+          [
+            "type",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {},
+      "checks": {},
+      "triggers": []
+    },
+    "001_dependencies.sql:organization_memberships:table:organization_memberships:0": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "int",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "organization_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "user_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "title": [
+          "varchar(100)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "permission_level": [
+          "tinyint",
+          "NO",
+          "1",
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "idx_user_id": [
+          [
+            "user_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "uk_org_user": [
+          [
+            "organization_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "user_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "organization_memberships_ibfk_1": [
+          [
+            "organization_id",
+            "organizations",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ],
+        "organization_memberships_ibfk_2": [
+          [
+            "user_id",
+            "users",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "001_dependencies.sql:campus_posts:table:campus_posts:0": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "int",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "organization_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "author_user_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "feed_tab": [
+          "enum('school','college')",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "title": [
+          "varchar(200)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "content": [
+          "text",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "deleted_at": [
+          "timestamp",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "hidden_by_admin": [
+          "tinyint",
+          "NO",
+          "0",
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "author_user_id": [
+          [
+            "author_user_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_created_at": [
+          [
+            "created_at",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_feed_tab": [
+          [
+            "feed_tab",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_org_id": [
+          [
+            "organization_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "campus_posts_ibfk_1": [
+          [
+            "organization_id",
+            "organizations",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ],
+        "campus_posts_ibfk_2": [
+          [
+            "author_user_id",
+            "users",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "001_dependencies.sql:campus_post_images:table:campus_post_images:0": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "int",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "post_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "file_path": [
+          "varchar(500)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "sort_order": [
+          "int",
+          "NO",
+          "0",
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "idx_campus_post_images_post": [
+          [
+            "post_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "campus_post_images_ibfk_1": [
+          [
+            "post_id",
+            "campus_posts",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "001_dependencies.sql:campus_post_likes:table:campus_post_likes:0": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "post_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "user_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "PRIMARY": [
+          [
+            "post_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "user_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "campus_post_likes_ibfk_1": [
+          [
+            "post_id",
+            "campus_posts",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "001_dependencies.sql:campus_post_comments:table:campus_post_comments:0": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "int",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "post_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "user_id": [
+          "int",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "parent_id": [
+          "int",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "content": [
+          "text",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "deleted_at": [
+          "timestamp",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "idx_cpc_parent": [
+          [
+            "parent_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_cpc_post": [
+          [
+            "post_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "campus_post_comments_ibfk_1": [
+          [
+            "post_id",
+            "campus_posts",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ],
+        "campus_post_comments_ibfk_2": [
+          [
+            "parent_id",
+            "campus_post_comments",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "001_dependencies.sql:user_sanctions:table:user_sanctions:0": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "bigint unsigned",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "user_id": [
+          "bigint unsigned",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "type": [
+          "enum('ban','mute')",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "duration_days": [
+          "int unsigned",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "reason": [
+          "varchar(255)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "operator_id": [
+          "bigint unsigned",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "starts_at": [
+          "datetime",
+          "NO",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ],
+        "ends_at": [
+          "datetime",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "revoked_at": [
+          "datetime",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "revoked_by": [
+          "bigint unsigned",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "datetime",
+          "NO",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "idx_sanctions_active": [
+          [
+            "user_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "type",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "ends_at",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_sanctions_operator": [
+          [
+            "operator_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_sanctions_user": [
+          [
+            "user_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {},
+      "checks": {},
+      "triggers": []
+    },
+    "001_dependencies.sql:sensitive_words:table:sensitive_words:0": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "bigint unsigned",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "word": [
+          "varchar(128)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "category": [
+          "varchar(32)",
+          "YES",
+          "general",
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "enabled": [
+          "tinyint",
+          "NO",
+          "1",
+          "",
+          null,
+          null
+        ],
+        "created_by": [
+          "bigint unsigned",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "datetime",
+          "NO",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "uk_sensitive_word": [
+          [
+            "word",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {},
+      "checks": {},
+      "triggers": []
+    },
+    "002_news.sql:campus_posts:column:organization_id:0": [
+      "int",
+      "YES",
+      null,
+      "",
+      null,
+      null
+    ],
+    "002_news.sql:campus_posts:column:feed_tab:1": [
+      "enum('school','college')",
+      "YES",
+      null,
+      "",
+      "utf8mb4",
+      "utf8mb4_unicode_ci"
+    ],
+    "002_news.sql:campus_posts:column:content:2": [
+      "mediumtext",
+      "NO",
+      null,
+      "",
+      "utf8mb4",
+      "utf8mb4_unicode_ci"
+    ],
+    "002_news.sql:campus_posts:column:source_kind:3": [
+      "enum('legacy','news')",
+      "NO",
+      "legacy",
+      "",
+      "utf8mb4",
+      "utf8mb4_unicode_ci"
+    ],
+    "002_news.sql:campus_posts:column:lifecycle_status:4": [
+      "enum('draft','published','withdrawn')",
+      "NO",
+      "published",
+      "",
+      "utf8mb4",
+      "utf8mb4_unicode_ci"
+    ],
+    "002_news.sql:campus_posts:column:category:5": [
+      "enum('competition','lecture','campus-life')",
+      "YES",
+      null,
+      "",
+      "utf8mb4",
+      "utf8mb4_unicode_ci"
+    ],
+    "002_news.sql:campus_posts:column:audience_scope:6": [
+      "enum('all','colleges')",
+      "YES",
+      null,
+      "",
+      "utf8mb4",
+      "utf8mb4_unicode_ci"
+    ],
+    "002_news.sql:campus_posts:column:revision:7": [
+      "int unsigned",
+      "NO",
+      "0",
+      "",
+      null,
+      null
+    ],
+    "002_news.sql:campus_posts:column:published_at:8": [
+      "datetime(3)",
+      "YES",
+      null,
+      "",
+      null,
+      null
+    ],
+    "002_news.sql:campus_posts:column:updated_at:9": [
+      "datetime(3)",
+      "NO",
+      "current_timestamp(3)",
+      "",
+      null,
+      null
+    ],
+    "002_news.sql:campus_posts:index:idx_campus_news_feed:10": [
+      [
+        "source_kind",
+        1,
+        null,
+        "BTREE",
+        "YES",
+        "A"
+      ],
+      [
+        "lifecycle_status",
+        1,
+        null,
+        "BTREE",
+        "YES",
+        "A"
+      ],
+      [
+        "hidden_by_admin",
+        1,
+        null,
+        "BTREE",
+        "YES",
+        "A"
+      ],
+      [
+        "deleted_at",
+        1,
+        null,
+        "BTREE",
+        "YES",
+        "A"
+      ],
+      [
+        "published_at",
+        1,
+        null,
+        "BTREE",
+        "YES",
+        "A"
+      ],
+      [
+        "id",
+        1,
+        null,
+        "BTREE",
+        "YES",
+        "A"
+      ]
+    ],
+    "002_news.sql:colleges:table:colleges:0": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "varchar(64)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "code": [
+          "varchar(64)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "name": [
+          "varchar(200)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "is_active": [
+          "tinyint",
+          "NO",
+          "1",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "code": [
+          [
+            "code",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {},
+      "checks": {},
+      "triggers": []
+    },
+    "002_news.sql:campus_post_audiences:table:campus_post_audiences:0": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "post_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "college_id": [
+          "varchar(64)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ]
+      },
+      "indexes": {
+        "college_id": [
+          [
+            "college_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "post_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "college_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "campus_post_audiences_ibfk_1": [
+          [
+            "post_id",
+            "campus_posts",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ],
+        "campus_post_audiences_ibfk_2": [
+          [
+            "college_id",
+            "colleges",
+            "id",
+            "RESTRICT",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "002_news.sql:campus_news_assets:table:campus_news_assets:0": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "char(36)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "object_key": [
+          "varchar(500)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "mime": [
+          "varchar(50)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "byte_size": [
+          "int unsigned",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "storage_kind": [
+          "enum('local','object')",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "state": [
+          "enum('pending','ready','failed')",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "uploaded_by": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "datetime(3)",
+          "NO",
+          "current_timestamp(3)",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "idx_asset_orphans": [
+          [
+            "state",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "created_at",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "object_key": [
+          [
+            "object_key",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {},
+      "checks": {},
+      "triggers": []
+    },
+    "002_news.sql:campus_news_images:table:campus_news_images:0": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "post_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "asset_id": [
+          "char(36)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "sort_order": [
+          "tinyint unsigned",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "asset_id": [
+          [
+            "asset_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "post_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "asset_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "uk_news_image_order": [
+          [
+            "post_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "sort_order",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "campus_news_images_ibfk_1": [
+          [
+            "post_id",
+            "campus_posts",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ],
+        "campus_news_images_ibfk_2": [
+          [
+            "asset_id",
+            "campus_news_assets",
+            "id",
+            "RESTRICT",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {
+        "campus_news_images_chk_1": [
+          "sort_order<10",
+          "YES"
+        ]
+      },
+      "triggers": []
+    },
+    "002_news.sql:campus_news_versions:table:campus_news_versions:0": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "bigint unsigned",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "post_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "revision": [
+          "int unsigned",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "snapshot": [
+          "json",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "actor_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "actor_name": [
+          "varchar(100)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "action": [
+          "varchar(40)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "created_at": [
+          "datetime(3)",
+          "NO",
+          "current_timestamp(3)",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "uk_news_revision": [
+          [
+            "post_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "revision",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {},
+      "checks": {},
+      "triggers": []
+    },
+    "002_news.sql:campus_news_version_assets:table:campus_news_version_assets:0": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "version_id": [
+          "bigint unsigned",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "asset_id": [
+          "char(36)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "sort_order": [
+          "tinyint unsigned",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "asset_id": [
+          [
+            "asset_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "version_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "asset_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "uk_version_image_order": [
+          [
+            "version_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "sort_order",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "campus_news_version_assets_ibfk_1": [
+          [
+            "version_id",
+            "campus_news_versions",
+            "id",
+            "RESTRICT",
+            "RESTRICT",
+            "SELF"
+          ]
+        ],
+        "campus_news_version_assets_ibfk_2": [
+          [
+            "asset_id",
+            "campus_news_assets",
+            "id",
+            "RESTRICT",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "002_news.sql:campus_news_audit:table:campus_news_audit:0": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "bigint unsigned",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "post_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "revision": [
+          "int unsigned",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "version_id": [
+          "bigint unsigned",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "actor_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "actor_name": [
+          "varchar(100)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "action": [
+          "varchar(40)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "created_at": [
+          "datetime(3)",
+          "NO",
+          "current_timestamp(3)",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "uk_news_audit_revision": [
+          [
+            "post_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "revision",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "version_id": [
+          [
+            "version_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "campus_news_audit_ibfk_1": [
+          [
+            "version_id",
+            "campus_news_versions",
+            "id",
+            "RESTRICT",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "003_comments.sql:campus_post_comments:column:reply_to_comment_id:0": [
+      "int",
+      "YES",
+      null,
+      "",
+      null,
+      null
+    ],
+    "003_comments.sql:campus_post_comments:column:reply_to_user_id:1": [
+      "int",
+      "YES",
+      null,
+      "",
+      null,
+      null
+    ],
+    "003_comments.sql:campus_post_comments:column:reply_to_name:2": [
+      "varchar(100)",
+      "YES",
+      null,
+      "",
+      "utf8mb4",
+      "utf8mb4_unicode_ci"
+    ],
+    "003_comments.sql:campus_post_comments:index:idx_cpc_thread_order:3": [
+      [
+        "post_id",
+        1,
+        null,
+        "BTREE",
+        "YES",
+        "A"
+      ],
+      [
+        "parent_id",
+        1,
+        null,
+        "BTREE",
+        "YES",
+        "A"
+      ],
+      [
+        "created_at",
+        1,
+        null,
+        "BTREE",
+        "YES",
+        "A"
+      ],
+      [
+        "id",
+        1,
+        null,
+        "BTREE",
+        "YES",
+        "A"
+      ]
+    ],
+    "003_comments.sql:campus_interaction_requests:table:campus_interaction_requests:0": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "actor_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "request_key": [
+          "char(36)",
+          "NO",
+          null,
+          "",
+          "ascii",
+          "ascii_bin"
+        ],
+        "operation": [
+          "varchar(32)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "post_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "payload_sha256": [
+          "char(64)",
+          "NO",
+          null,
+          "",
+          "ascii",
+          "ascii_bin"
+        ],
+        "result_comment_id": [
+          "int",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "datetime(3)",
+          "NO",
+          "current_timestamp(3)",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "PRIMARY": [
+          [
+            "actor_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "request_key",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {},
+      "checks": {},
+      "triggers": []
+    },
+    "004_favorites.sql:campus_post_favorites:table:campus_post_favorites:0": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "user_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "post_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "datetime(3)",
+          "NO",
+          "current_timestamp(3)",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "idx_cpf_post_user": [
+          [
+            "post_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "user_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_cpf_user_created_post": [
+          [
+            "user_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "created_at",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "D"
+          ],
+          [
+            "post_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "D"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "user_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "post_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "fk_cpf_post": [
+          [
+            "post_id",
+            "campus_posts",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ],
+        "fk_cpf_user": [
+          [
+            "user_id",
+            "users",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "005_academic_notifications.sql:colleges:column:name_en:0": [
+      "varchar(200)",
+      "YES",
+      null,
+      "",
+      "utf8mb4",
+      "utf8mb4_unicode_ci"
+    ],
+    "005_academic_notifications.sql:academic_programmes:table:academic_programmes:0": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "varchar(64)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "code": [
+          "varchar(64)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "college_id": [
+          "varchar(64)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "name": [
+          "varchar(200)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "name_en": [
+          "varchar(200)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "level": [
+          "enum('undergraduate','foundation')",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "is_active": [
+          "tinyint",
+          "NO",
+          "1",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "idx_programmes_college_active": [
+          [
+            "college_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "is_active",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "uk_academic_programme_code": [
+          [
+            "code",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "uk_academic_programme_college": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "college_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "fk_academic_programme_college": [
+          [
+            "college_id",
+            "colleges",
+            "id",
+            "RESTRICT",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "005_academic_notifications.sql:users:column:college_id:0": [
+      "varchar(64)",
+      "YES",
+      null,
+      "",
+      "utf8mb4",
+      "utf8mb4_unicode_ci"
+    ],
+    "005_academic_notifications.sql:users:column:programme_id:1": [
+      "varchar(64)",
+      "YES",
+      null,
+      "",
+      "utf8mb4",
+      "utf8mb4_unicode_ci"
+    ],
+    "005_academic_notifications.sql:users:index:idx_users_college_status_role:2": [
+      [
+        "college_id",
+        1,
+        null,
+        "BTREE",
+        "YES",
+        "A"
+      ],
+      [
+        "status",
+        1,
+        null,
+        "BTREE",
+        "YES",
+        "A"
+      ],
+      [
+        "role",
+        1,
+        null,
+        "BTREE",
+        "YES",
+        "A"
+      ],
+      [
+        "id",
+        1,
+        null,
+        "BTREE",
+        "YES",
+        "A"
+      ]
+    ],
+    "005_academic_notifications.sql:users:index:idx_users_programme_college:3": [
+      [
+        "programme_id",
+        1,
+        null,
+        "BTREE",
+        "YES",
+        "A"
+      ],
+      [
+        "college_id",
+        1,
+        null,
+        "BTREE",
+        "YES",
+        "A"
+      ]
+    ],
+    "005_academic_notifications.sql:users:check:ck_users_programme_requires_college:4": [
+      "programme_idisnullorcollege_idisnotnull",
+      "YES"
+    ],
+    "005_academic_notifications.sql:users:fk:fk_users_academic_college:5": [
+      [
+        "college_id",
+        "colleges",
+        "id",
+        "RESTRICT",
+        "RESTRICT",
+        "SELF"
+      ]
+    ],
+    "005_academic_notifications.sql:users:fk:fk_users_academic_programme:6": [
+      [
+        "programme_id",
+        "academic_programmes",
+        "id",
+        "RESTRICT",
+        "RESTRICT",
+        "SELF"
+      ],
+      [
+        "college_id",
+        "academic_programmes",
+        "college_id",
+        "RESTRICT",
+        "RESTRICT",
+        "SELF"
+      ]
+    ],
+    "005_academic_notifications.sql:campus_news_notification_deliveries:table:campus_news_notification_deliveries:0": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "publication_version_id": [
+          "bigint unsigned",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "user_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "matched_college_id": [
+          "varchar(64)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "state": [
+          "enum('pending','delivered','skipped')",
+          "NO",
+          "pending",
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "attempts": [
+          "int unsigned",
+          "NO",
+          "0",
+          "",
+          null,
+          null
+        ],
+        "next_attempt_at": [
+          "datetime(3)",
+          "NO",
+          "current_timestamp(3)",
+          "",
+          null,
+          null
+        ],
+        "notification_id": [
+          "int",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "last_error_code": [
+          "varchar(64)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "created_at": [
+          "datetime(3)",
+          "NO",
+          "current_timestamp(3)",
+          "",
+          null,
+          null
+        ],
+        "delivered_at": [
+          "datetime(3)",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "idx_news_delivery_pending": [
+          [
+            "state",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "next_attempt_at",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "publication_version_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "user_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_news_delivery_user": [
+          [
+            "user_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "publication_version_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "user_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "fk_news_delivery_publication": [
+          [
+            "publication_version_id",
+            "campus_news_versions",
+            "id",
+            "RESTRICT",
+            "RESTRICT",
+            "SELF"
+          ]
+        ],
+        "fk_news_delivery_recipient": [
+          [
+            "user_id",
+            "users",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    }
+  },
+  "before": {
+    "002_news.sql:campus_posts:column:organization_id:0": [
+      "int",
+      "NO",
+      null,
+      "",
+      null,
+      null
+    ],
+    "002_news.sql:campus_posts:column:feed_tab:1": [
+      "enum('school','college')",
+      "NO",
+      null,
+      "",
+      "utf8mb4",
+      "utf8mb4_unicode_ci"
+    ],
+    "002_news.sql:campus_posts:column:content:2": [
+      "text",
+      "NO",
+      null,
+      "",
+      "utf8mb4",
+      "utf8mb4_unicode_ci"
+    ]
+  },
+  "final": {
+    "academic_programmes": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "varchar(64)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "code": [
+          "varchar(64)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "college_id": [
+          "varchar(64)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "name": [
+          "varchar(200)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "name_en": [
+          "varchar(200)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "level": [
+          "enum('undergraduate','foundation')",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "is_active": [
+          "tinyint",
+          "NO",
+          "1",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "idx_programmes_college_active": [
+          [
+            "college_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "is_active",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "uk_academic_programme_code": [
+          [
+            "code",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "uk_academic_programme_college": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "college_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "fk_academic_programme_college": [
+          [
+            "college_id",
+            "colleges",
+            "id",
+            "RESTRICT",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "advertisement_posts": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "int",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "post_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "status": [
+          "enum('draft','active','archived')",
+          "NO",
+          "draft",
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "sponsor_name": [
+          "varchar(160)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "sponsor_logo": [
+          "varchar(500)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "cta_label": [
+          "varchar(80)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "cta_type": [
+          "enum('none','shop','product','region','internal','https')",
+          "NO",
+          "none",
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "cta_target": [
+          "varchar(500)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "created_by": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "updated_by": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ],
+        "updated_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "on update current_timestamp",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "fk_advertisement_post_created_by": [
+          [
+            "created_by",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "fk_advertisement_post_updated_by": [
+          [
+            "updated_by",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_advertisement_status": [
+          [
+            "status",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "uq_advertisement_post": [
+          [
+            "post_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "fk_advertisement_post_created_by": [
+          [
+            "created_by",
+            "users",
+            "id",
+            "RESTRICT",
+            "RESTRICT",
+            "SELF"
+          ]
+        ],
+        "fk_advertisement_post_post": [
+          [
+            "post_id",
+            "posts",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ],
+        "fk_advertisement_post_updated_by": [
+          [
+            "updated_by",
+            "users",
+            "id",
+            "RESTRICT",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "audit_logs": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "bigint unsigned",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "user_id": [
+          "bigint unsigned",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "role": [
+          "varchar(32)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "action": [
+          "varchar(64)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "target_type": [
+          "varchar(32)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "target_id": [
+          "bigint unsigned",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "ip": [
+          "varchar(64)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "user_agent": [
+          "varchar(255)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "meta": [
+          "json",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "datetime",
+          "NO",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {},
+      "checks": {},
+      "triggers": []
+    },
+    "campus_interaction_requests": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "actor_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "request_key": [
+          "char(36)",
+          "NO",
+          null,
+          "",
+          "ascii",
+          "ascii_bin"
+        ],
+        "operation": [
+          "varchar(32)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "post_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "payload_sha256": [
+          "char(64)",
+          "NO",
+          null,
+          "",
+          "ascii",
+          "ascii_bin"
+        ],
+        "result_comment_id": [
+          "int",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "datetime(3)",
+          "NO",
+          "current_timestamp(3)",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "PRIMARY": [
+          [
+            "actor_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "request_key",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {},
+      "checks": {},
+      "triggers": []
+    },
+    "campus_news_assets": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "char(36)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "object_key": [
+          "varchar(500)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "mime": [
+          "varchar(50)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "byte_size": [
+          "int unsigned",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "storage_kind": [
+          "enum('local','object')",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "state": [
+          "enum('pending','ready','failed')",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "uploaded_by": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "datetime(3)",
+          "NO",
+          "current_timestamp(3)",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "idx_asset_orphans": [
+          [
+            "state",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "created_at",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "object_key": [
+          [
+            "object_key",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {},
+      "checks": {},
+      "triggers": []
+    },
+    "campus_news_audit": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "bigint unsigned",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "post_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "revision": [
+          "int unsigned",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "version_id": [
+          "bigint unsigned",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "actor_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "actor_name": [
+          "varchar(100)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "action": [
+          "varchar(40)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "created_at": [
+          "datetime(3)",
+          "NO",
+          "current_timestamp(3)",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "uk_news_audit_revision": [
+          [
+            "post_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "revision",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "version_id": [
+          [
+            "version_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "campus_news_audit_ibfk_1": [
+          [
+            "version_id",
+            "campus_news_versions",
+            "id",
+            "RESTRICT",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "campus_news_images": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "post_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "asset_id": [
+          "char(36)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "sort_order": [
+          "tinyint unsigned",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "asset_id": [
+          [
+            "asset_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "post_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "asset_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "uk_news_image_order": [
+          [
+            "post_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "sort_order",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "campus_news_images_ibfk_1": [
+          [
+            "post_id",
+            "campus_posts",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ],
+        "campus_news_images_ibfk_2": [
+          [
+            "asset_id",
+            "campus_news_assets",
+            "id",
+            "RESTRICT",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {
+        "campus_news_images_chk_1": [
+          "sort_order<10",
+          "YES"
+        ]
+      },
+      "triggers": []
+    },
+    "campus_news_notification_deliveries": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "publication_version_id": [
+          "bigint unsigned",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "user_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "matched_college_id": [
+          "varchar(64)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "state": [
+          "enum('pending','delivered','skipped')",
+          "NO",
+          "pending",
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "attempts": [
+          "int unsigned",
+          "NO",
+          "0",
+          "",
+          null,
+          null
+        ],
+        "next_attempt_at": [
+          "datetime(3)",
+          "NO",
+          "current_timestamp(3)",
+          "",
+          null,
+          null
+        ],
+        "notification_id": [
+          "int",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "last_error_code": [
+          "varchar(64)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "created_at": [
+          "datetime(3)",
+          "NO",
+          "current_timestamp(3)",
+          "",
+          null,
+          null
+        ],
+        "delivered_at": [
+          "datetime(3)",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "idx_news_delivery_pending": [
+          [
+            "state",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "next_attempt_at",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "publication_version_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "user_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_news_delivery_user": [
+          [
+            "user_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "publication_version_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "user_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "fk_news_delivery_publication": [
+          [
+            "publication_version_id",
+            "campus_news_versions",
+            "id",
+            "RESTRICT",
+            "RESTRICT",
+            "SELF"
+          ]
+        ],
+        "fk_news_delivery_recipient": [
+          [
+            "user_id",
+            "users",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "campus_news_version_assets": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "version_id": [
+          "bigint unsigned",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "asset_id": [
+          "char(36)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "sort_order": [
+          "tinyint unsigned",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "asset_id": [
+          [
+            "asset_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "version_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "asset_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "uk_version_image_order": [
+          [
+            "version_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "sort_order",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "campus_news_version_assets_ibfk_1": [
+          [
+            "version_id",
+            "campus_news_versions",
+            "id",
+            "RESTRICT",
+            "RESTRICT",
+            "SELF"
+          ]
+        ],
+        "campus_news_version_assets_ibfk_2": [
+          [
+            "asset_id",
+            "campus_news_assets",
+            "id",
+            "RESTRICT",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "campus_news_versions": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "bigint unsigned",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "post_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "revision": [
+          "int unsigned",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "snapshot": [
+          "json",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "actor_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "actor_name": [
+          "varchar(100)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "action": [
+          "varchar(40)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "created_at": [
+          "datetime(3)",
+          "NO",
+          "current_timestamp(3)",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "uk_news_revision": [
+          [
+            "post_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "revision",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {},
+      "checks": {},
+      "triggers": []
+    },
+    "campus_post_audiences": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "post_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "college_id": [
+          "varchar(64)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ]
+      },
+      "indexes": {
+        "college_id": [
+          [
+            "college_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "post_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "college_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "campus_post_audiences_ibfk_1": [
+          [
+            "post_id",
+            "campus_posts",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ],
+        "campus_post_audiences_ibfk_2": [
+          [
+            "college_id",
+            "colleges",
+            "id",
+            "RESTRICT",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "campus_post_comments": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "int",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "post_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "user_id": [
+          "int",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "parent_id": [
+          "int",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "content": [
+          "text",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "deleted_at": [
+          "timestamp",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ],
+        "reply_to_comment_id": [
+          "int",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "reply_to_user_id": [
+          "int",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "reply_to_name": [
+          "varchar(100)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ]
+      },
+      "indexes": {
+        "idx_cpc_parent": [
+          [
+            "parent_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_cpc_post": [
+          [
+            "post_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_cpc_thread_order": [
+          [
+            "post_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "parent_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "created_at",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "campus_post_comments_ibfk_1": [
+          [
+            "post_id",
+            "campus_posts",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ],
+        "campus_post_comments_ibfk_2": [
+          [
+            "parent_id",
+            "campus_post_comments",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "campus_post_favorites": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "user_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "post_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "datetime(3)",
+          "NO",
+          "current_timestamp(3)",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "idx_cpf_post_user": [
+          [
+            "post_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "user_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_cpf_user_created_post": [
+          [
+            "user_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "created_at",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "D"
+          ],
+          [
+            "post_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "D"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "user_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "post_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "fk_cpf_post": [
+          [
+            "post_id",
+            "campus_posts",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ],
+        "fk_cpf_user": [
+          [
+            "user_id",
+            "users",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "campus_post_images": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "int",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "post_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "file_path": [
+          "varchar(500)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "sort_order": [
+          "int",
+          "NO",
+          "0",
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "idx_campus_post_images_post": [
+          [
+            "post_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "campus_post_images_ibfk_1": [
+          [
+            "post_id",
+            "campus_posts",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "campus_post_likes": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "post_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "user_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "PRIMARY": [
+          [
+            "post_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "user_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "campus_post_likes_ibfk_1": [
+          [
+            "post_id",
+            "campus_posts",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "campus_posts": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "int",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "organization_id": [
+          "int",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "author_user_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "feed_tab": [
+          "enum('school','college')",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "title": [
+          "varchar(200)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "content": [
+          "mediumtext",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "deleted_at": [
+          "timestamp",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "hidden_by_admin": [
+          "tinyint",
+          "NO",
+          "0",
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ],
+        "source_kind": [
+          "enum('legacy','news')",
+          "NO",
+          "legacy",
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "lifecycle_status": [
+          "enum('draft','published','withdrawn')",
+          "NO",
+          "published",
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "category": [
+          "enum('competition','lecture','campus-life')",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "audience_scope": [
+          "enum('all','colleges')",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "revision": [
+          "int unsigned",
+          "NO",
+          "0",
+          "",
+          null,
+          null
+        ],
+        "published_at": [
+          "datetime(3)",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "updated_at": [
+          "datetime(3)",
+          "NO",
+          "current_timestamp(3)",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "author_user_id": [
+          [
+            "author_user_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_campus_news_feed": [
+          [
+            "source_kind",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "lifecycle_status",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "hidden_by_admin",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "deleted_at",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "published_at",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_created_at": [
+          [
+            "created_at",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_feed_tab": [
+          [
+            "feed_tab",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_org_id": [
+          [
+            "organization_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "campus_posts_ibfk_1": [
+          [
+            "organization_id",
+            "organizations",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ],
+        "campus_posts_ibfk_2": [
+          [
+            "author_user_id",
+            "users",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "colleges": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "varchar(64)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "code": [
+          "varchar(64)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "name": [
+          "varchar(200)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "is_active": [
+          "tinyint",
+          "NO",
+          "1",
+          "",
+          null,
+          null
+        ],
+        "name_en": [
+          "varchar(200)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ]
+      },
+      "indexes": {
+        "code": [
+          [
+            "code",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {},
+      "checks": {},
+      "triggers": []
+    },
+    "comments": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "int",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "post_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "user_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "parent_id": [
+          "int",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "content": [
+          "text",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "deleted_at": [
+          "timestamp",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ],
+        "updated_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "on update current_timestamp",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "idx_parent_id": [
+          [
+            "parent_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_post_id": [
+          [
+            "post_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_user_id": [
+          [
+            "user_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "comments_ibfk_1": [
+          [
+            "post_id",
+            "posts",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ],
+        "comments_ibfk_2": [
+          [
+            "user_id",
+            "users",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ],
+        "comments_ibfk_3": [
+          [
+            "parent_id",
+            "comments",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "exp_logs": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "bigint",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "user_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "action": [
+          "varchar(32)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "exp": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "ref_type": [
+          "varchar(32)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "ref_id": [
+          "bigint",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "meta_json": [
+          "json",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "idx_exp_logs_user_action_ref": [
+          [
+            "user_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "action",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "ref_type",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "ref_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_exp_logs_user_created": [
+          [
+            "user_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "created_at",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "exp_logs_ibfk_1": [
+          [
+            "user_id",
+            "users",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "notifications": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "int",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "user_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "type": [
+          "varchar(50)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "is_read": [
+          "tinyint",
+          "YES",
+          "0",
+          "",
+          null,
+          null
+        ],
+        "post_id": [
+          "int",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "comment_id": [
+          "int",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "from_user_id": [
+          "int",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "extra": [
+          "json",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "idx_created_at": [
+          [
+            "created_at",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_is_read": [
+          [
+            "is_read",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_notifications_user_type_read_created_at": [
+          [
+            "user_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "type",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "is_read",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "created_at",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_s5_local_notifications_from": [
+          [
+            "from_user_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_s5_local_notifications_post": [
+          [
+            "post_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_user_id": [
+          [
+            "user_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "fk_s5_local_notifications_from": [
+          [
+            "from_user_id",
+            "users",
+            "id",
+            "SET NULL",
+            "RESTRICT",
+            "SELF"
+          ]
+        ],
+        "fk_s5_local_notifications_post": [
+          [
+            "post_id",
+            "posts",
+            "id",
+            "SET NULL",
+            "RESTRICT",
+            "SELF"
+          ]
+        ],
+        "fk_s5_local_notifications_user": [
+          [
+            "user_id",
+            "users",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "organization_memberships": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "int",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "organization_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "user_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "title": [
+          "varchar(100)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "permission_level": [
+          "tinyint",
+          "NO",
+          "1",
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "idx_user_id": [
+          [
+            "user_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "uk_org_user": [
+          [
+            "organization_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "user_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "organization_memberships_ibfk_1": [
+          [
+            "organization_id",
+            "organizations",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ],
+        "organization_memberships_ibfk_2": [
+          [
+            "user_id",
+            "users",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "organizations": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "int",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "type": [
+          "enum('schooldepartment','college','major','official')",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "name": [
+          "varchar(100)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "avatar": [
+          "varchar(500)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "description": [
+          "text",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "is_active": [
+          "tinyint",
+          "NO",
+          "1",
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ],
+        "updated_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "on update current_timestamp",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "idx_org_active": [
+          [
+            "is_active",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_org_type": [
+          [
+            "type",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {},
+      "checks": {},
+      "triggers": []
+    },
+    "post_images": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "int",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "post_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "file_path": [
+          "varchar(500)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "sort_order": [
+          "tinyint",
+          "YES",
+          "0",
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "idx_post_id": [
+          [
+            "post_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "post_images_ibfk_1": [
+          [
+            "post_id",
+            "posts",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "post_likes": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "user_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "post_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "idx_post_id": [
+          [
+            "post_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "user_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "post_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "post_likes_ibfk_1": [
+          [
+            "user_id",
+            "users",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ],
+        "post_likes_ibfk_2": [
+          [
+            "post_id",
+            "posts",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "post_tag_map": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "post_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "tag_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "PRIMARY": [
+          [
+            "post_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "tag_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "tag_id": [
+          [
+            "tag_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "post_tag_map_ibfk_1": [
+          [
+            "post_id",
+            "posts",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ],
+        "post_tag_map_ibfk_2": [
+          [
+            "tag_id",
+            "tags",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "posts": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "int",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "user_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "title": [
+          "varchar(120)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "content": [
+          "text",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "type": [
+          "enum('normal','announcement')",
+          "YES",
+          "normal",
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "content_origin": [
+          "enum('original','repost')",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "repost_source": [
+          "varchar(100)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "deleted_at": [
+          "timestamp",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "hidden_by_admin": [
+          "tinyint",
+          "YES",
+          "0",
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ],
+        "updated_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "on update current_timestamp",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "idx_created_at": [
+          [
+            "created_at",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_deleted_at": [
+          [
+            "deleted_at",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_posts_title": [
+          [
+            "title",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_type": [
+          [
+            "type",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_user_id": [
+          [
+            "user_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "fk_s5_local_posts_author": [
+          [
+            "user_id",
+            "users",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "product_categories": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "int",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "shop_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "name": [
+          "varchar(50)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "sort_order": [
+          "tinyint",
+          "YES",
+          "0",
+          "",
+          null,
+          null
+        ],
+        "deleted_at": [
+          "timestamp",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "idx_deleted_at": [
+          [
+            "deleted_at",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_shop_id": [
+          [
+            "shop_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "product_categories_ibfk_1": [
+          [
+            "shop_id",
+            "shops",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "product_comment_images": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "int",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "comment_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "file_path": [
+          "varchar(500)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "sort_order": [
+          "tinyint",
+          "YES",
+          "0",
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "idx_comment_id": [
+          [
+            "comment_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "product_comment_images_ibfk_1": [
+          [
+            "comment_id",
+            "product_comments",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "product_comments": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "int",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "product_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "user_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "parent_id": [
+          "int",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "rating": [
+          "enum('夯爆了','顶级','人上人','npc','拉完了')",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "content": [
+          "varchar(300)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "deleted_at": [
+          "timestamp",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ],
+        "updated_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "on update current_timestamp",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "idx_deleted_at": [
+          [
+            "deleted_at",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_parent_id": [
+          [
+            "parent_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_product_id": [
+          [
+            "product_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_user_id": [
+          [
+            "user_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "product_comments_ibfk_1": [
+          [
+            "product_id",
+            "products",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ],
+        "product_comments_ibfk_2": [
+          [
+            "user_id",
+            "users",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ],
+        "product_comments_ibfk_3": [
+          [
+            "parent_id",
+            "product_comments",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "product_favorites": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "bigint unsigned",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "user_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "product_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "datetime",
+          "NO",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "idx_product_id": [
+          [
+            "product_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_user_id": [
+          [
+            "user_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "uk_user_product": [
+          [
+            "user_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "product_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "product_favorites_ibfk_1": [
+          [
+            "user_id",
+            "users",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ],
+        "product_favorites_ibfk_2": [
+          [
+            "product_id",
+            "products",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "product_images": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "int",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "product_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "file_path": [
+          "varchar(500)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "sort_order": [
+          "tinyint",
+          "YES",
+          "0",
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "idx_product_id": [
+          [
+            "product_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "product_images_ibfk_1": [
+          [
+            "product_id",
+            "products",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "products": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "int",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "shop_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "category_id": [
+          "int",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "name": [
+          "varchar(200)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "description": [
+          "text",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "deleted_at": [
+          "timestamp",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ],
+        "updated_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "on update current_timestamp",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "idx_category_id": [
+          [
+            "category_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_deleted_at": [
+          [
+            "deleted_at",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_shop_id": [
+          [
+            "shop_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "products_ibfk_1": [
+          [
+            "shop_id",
+            "shops",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ],
+        "products_ibfk_2": [
+          [
+            "category_id",
+            "product_categories",
+            "id",
+            "SET NULL",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "regions": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "int",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "code": [
+          "varchar(20)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "name": [
+          "varchar(50)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "sort_order": [
+          "tinyint",
+          "YES",
+          "0",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "code": [
+          [
+            "code",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {},
+      "checks": {},
+      "triggers": []
+    },
+    "sensitive_words": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "bigint unsigned",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "word": [
+          "varchar(128)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "category": [
+          "varchar(32)",
+          "YES",
+          "general",
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "enabled": [
+          "tinyint",
+          "NO",
+          "1",
+          "",
+          null,
+          null
+        ],
+        "created_by": [
+          "bigint unsigned",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "datetime",
+          "NO",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "uk_sensitive_word": [
+          [
+            "word",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {},
+      "checks": {},
+      "triggers": []
+    },
+    "shops": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "int",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "user_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "region_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "name": [
+          "varchar(100)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "deleted_at": [
+          "timestamp",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ],
+        "updated_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "on update current_timestamp",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "idx_deleted_at": [
+          [
+            "deleted_at",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_region_id": [
+          [
+            "region_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "user_id": [
+          [
+            "user_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "shops_ibfk_1": [
+          [
+            "user_id",
+            "users",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ],
+        "shops_ibfk_2": [
+          [
+            "region_id",
+            "regions",
+            "id",
+            "RESTRICT",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "tag_visibility": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "user_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "tag_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "visible": [
+          "tinyint",
+          "NO",
+          "1",
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ],
+        "updated_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "on update current_timestamp",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "PRIMARY": [
+          [
+            "user_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "tag_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "tag_id": [
+          [
+            "tag_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "tag_visibility_ibfk_1": [
+          [
+            "user_id",
+            "users",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ],
+        "tag_visibility_ibfk_2": [
+          [
+            "tag_id",
+            "tags",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "tags": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "int",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "slug": [
+          "varchar(80)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "name_zh": [
+          "varchar(100)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "name_en": [
+          "varchar(100)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "created_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ],
+        "created_by": [
+          "int",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "created_by": [
+          [
+            "created_by",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_tags_created_at": [
+          [
+            "created_at",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "uk_tags_slug": [
+          [
+            "slug",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "tags_ibfk_1": [
+          [
+            "created_by",
+            "users",
+            "id",
+            "SET NULL",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "user_exp_daily": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "user_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "day": [
+          "date",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "action": [
+          "varchar(32)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "exp_sum": [
+          "int",
+          "NO",
+          "0",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "PRIMARY": [
+          [
+            "user_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "day",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "action",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "user_exp_daily_ibfk_1": [
+          [
+            "user_id",
+            "users",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "user_sanctions": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "bigint unsigned",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "user_id": [
+          "bigint unsigned",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "type": [
+          "enum('ban','mute')",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "duration_days": [
+          "int unsigned",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "reason": [
+          "varchar(255)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "operator_id": [
+          "bigint unsigned",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "starts_at": [
+          "datetime",
+          "NO",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ],
+        "ends_at": [
+          "datetime",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "revoked_at": [
+          "datetime",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "revoked_by": [
+          "bigint unsigned",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "datetime",
+          "NO",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "idx_sanctions_active": [
+          [
+            "user_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "type",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "ends_at",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_sanctions_operator": [
+          [
+            "operator_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_sanctions_user": [
+          [
+            "user_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {},
+      "checks": {},
+      "triggers": []
+    },
+    "user_terms_acceptances": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "user_id": [
+          "int",
+          "NO",
+          null,
+          "",
+          null,
+          null
+        ],
+        "terms_version": [
+          "varchar(64)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "accepted_at": [
+          "timestamp",
+          "NO",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ]
+      },
+      "indexes": {
+        "idx_terms_user_time": [
+          [
+            "user_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "accepted_at",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "user_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "terms_version",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "user_terms_acceptances_ibfk_1": [
+          [
+            "user_id",
+            "users",
+            "id",
+            "CASCADE",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {},
+      "triggers": []
+    },
+    "users": {
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci",
+      "type": "BASE TABLE",
+      "columns": {
+        "id": [
+          "int",
+          "NO",
+          null,
+          "auto_increment",
+          null,
+          null
+        ],
+        "student_id": [
+          "varchar(50)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "username": [
+          "varchar(100)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "email": [
+          "varchar(255)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "password_hash": [
+          "varchar(255)",
+          "NO",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "role": [
+          "enum('student','merchant','admin')",
+          "NO",
+          "student",
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "status": [
+          "enum('active','banned','deactivated')",
+          "NO",
+          "active",
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "banned_until": [
+          "datetime",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "muted_until": [
+          "datetime",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "last_login_at": [
+          "datetime",
+          "YES",
+          null,
+          "",
+          null,
+          null
+        ],
+        "email_verified": [
+          "tinyint",
+          "NO",
+          "0",
+          "",
+          null,
+          null
+        ],
+        "avatar": [
+          "varchar(255)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "nickname": [
+          "varchar(100)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "college": [
+          "varchar(100)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "grade": [
+          "varchar(50)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "major": [
+          "varchar(100)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "show_college": [
+          "tinyint",
+          "NO",
+          "1",
+          "",
+          null,
+          null
+        ],
+        "show_grade": [
+          "tinyint",
+          "NO",
+          "1",
+          "",
+          null,
+          null
+        ],
+        "show_major": [
+          "tinyint",
+          "NO",
+          "1",
+          "",
+          null,
+          null
+        ],
+        "level": [
+          "tinyint",
+          "NO",
+          "1",
+          "",
+          null,
+          null
+        ],
+        "exp": [
+          "int",
+          "NO",
+          "0",
+          "",
+          null,
+          null
+        ],
+        "badge": [
+          "varchar(32)",
+          "YES",
+          "freshman",
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "weekly_comment_count": [
+          "int",
+          "NO",
+          "0",
+          "",
+          null,
+          null
+        ],
+        "created_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "",
+          null,
+          null
+        ],
+        "updated_at": [
+          "timestamp",
+          "YES",
+          "current_timestamp",
+          "on update current_timestamp",
+          null,
+          null
+        ],
+        "college_id": [
+          "varchar(64)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ],
+        "programme_id": [
+          "varchar(64)",
+          "YES",
+          null,
+          "",
+          "utf8mb4",
+          "utf8mb4_unicode_ci"
+        ]
+      },
+      "indexes": {
+        "email": [
+          [
+            "email",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_role": [
+          [
+            "role",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_username": [
+          [
+            "username",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_users_college_status_role": [
+          [
+            "college_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "status",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "role",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "idx_users_programme_college": [
+          [
+            "programme_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ],
+          [
+            "college_id",
+            1,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "PRIMARY": [
+          [
+            "id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ],
+        "student_id": [
+          [
+            "student_id",
+            0,
+            null,
+            "BTREE",
+            "YES",
+            "A"
+          ]
+        ]
+      },
+      "fks": {
+        "fk_users_academic_college": [
+          [
+            "college_id",
+            "colleges",
+            "id",
+            "RESTRICT",
+            "RESTRICT",
+            "SELF"
+          ]
+        ],
+        "fk_users_academic_programme": [
+          [
+            "programme_id",
+            "academic_programmes",
+            "id",
+            "RESTRICT",
+            "RESTRICT",
+            "SELF"
+          ],
+          [
+            "college_id",
+            "academic_programmes",
+            "college_id",
+            "RESTRICT",
+            "RESTRICT",
+            "SELF"
+          ]
+        ]
+      },
+      "checks": {
+        "ck_users_programme_requires_college": [
+          "programme_idisnullorcollege_idisnotnull",
+          "YES"
+        ]
+      },
+      "triggers": []
+    }
+  },
+  "ledger": {
+    "engine": "InnoDB",
+    "collation": "utf8mb4_unicode_ci",
+    "type": "BASE TABLE",
+    "columns": {
+      "step_id": [
+        "varchar(200)",
+        "NO",
+        null,
+        "",
+        "utf8mb4",
+        "utf8mb4_unicode_ci"
+      ],
+      "sha256": [
+        "char(64)",
+        "NO",
+        null,
+        "",
+        "utf8mb4",
+        "utf8mb4_unicode_ci"
+      ],
+      "state": [
+        "enum('started','applied')",
+        "NO",
+        null,
+        "",
+        "utf8mb4",
+        "utf8mb4_unicode_ci"
+      ],
+      "applied_at": [
+        "datetime(3)",
+        "YES",
+        null,
+        "",
+        null,
+        null
+      ]
+    },
+    "indexes": {
+      "PRIMARY": [
+        [
+          "step_id",
+          0,
+          null,
+          "BTREE",
+          "YES",
+          "A"
+        ]
+      ]
+    },
+    "fks": {},
+    "checks": {},
+    "triggers": []
+  },
+  "baseline": {
+    "users": {
+      "id": "int",
+      "username": "varchar(100)",
+      "password_hash": "varchar(255)",
+      "student_id": "varchar(50)",
+      "email": "varchar(255)",
+      "role": "enum('student','merchant','admin')",
+      "status": "enum('active','banned','deactivated')",
+      "banned_until": "datetime",
+      "muted_until": "datetime",
+      "email_verified": "tinyint",
+      "avatar": "varchar(255)",
+      "nickname": "varchar(100)",
+      "college": "varchar(100)",
+      "major": "varchar(100)",
+      "grade": "varchar(50)",
+      "show_college": "tinyint",
+      "show_major": "tinyint",
+      "show_grade": "tinyint",
+      "level": "tinyint",
+      "exp": "int",
+      "badge": "varchar(32)",
+      "weekly_comment_count": "int",
+      "created_at": "timestamp",
+      "updated_at": "timestamp"
+    },
+    "posts": {
+      "id": "int",
+      "user_id": "int",
+      "title": "varchar(120)",
+      "content": "text",
+      "type": "enum('normal','announcement')",
+      "content_origin": "enum('original','repost')",
+      "repost_source": "varchar(100)",
+      "deleted_at": "timestamp",
+      "hidden_by_admin": "tinyint",
+      "created_at": "timestamp",
+      "updated_at": "timestamp"
+    },
+    "post_images": {
+      "id": "int",
+      "post_id": "int",
+      "file_path": "varchar(500)",
+      "sort_order": "tinyint"
+    },
+    "post_likes": {
+      "post_id": "int",
+      "user_id": "int"
+    },
+    "comments": {
+      "id": "int",
+      "post_id": "int",
+      "user_id": "int",
+      "content": "text",
+      "parent_id": "int",
+      "deleted_at": "timestamp"
+    },
+    "advertisement_posts": {
+      "post_id": "int"
+    },
+    "notifications": {
+      "id": "int",
+      "user_id": "int",
+      "type": "varchar(50)",
+      "is_read": "tinyint",
+      "post_id": "int",
+      "comment_id": "int",
+      "from_user_id": "int",
+      "extra": "json",
+      "created_at": "timestamp"
+    },
+    "products": {
+      "id": "int",
+      "shop_id": "int",
+      "name": "varchar(200)",
+      "deleted_at": "timestamp"
+    },
+    "shops": {
+      "id": "int",
+      "name": "varchar(100)",
+      "deleted_at": "timestamp"
+    },
+    "product_comments": {
+      "id": "int",
+      "product_id": "int",
+      "user_id": "int",
+      "parent_id": "int",
+      "content": "varchar(300)",
+      "rating": "enum('夯爆了','顶级','人上人','npc','拉完了')",
+      "deleted_at": "timestamp",
+      "created_at": "timestamp"
+    },
+    "product_images": {
+      "id": "int",
+      "product_id": "int",
+      "file_path": "varchar(500)",
+      "sort_order": "tinyint"
+    },
+    "product_comment_images": {
+      "id": "int",
+      "comment_id": "int",
+      "file_path": "varchar(500)",
+      "sort_order": "tinyint"
+    },
+    "product_favorites": {
+      "id": "bigint unsigned",
+      "user_id": "int",
+      "product_id": "int",
+      "created_at": "datetime"
+    },
+    "regions": {
+      "id": "int",
+      "code": "varchar(20)",
+      "name": "varchar(50)"
+    },
+    "product_categories": {
+      "id": "int",
+      "shop_id": "int",
+      "name": "varchar(50)"
+    },
+    "tags": {
+      "id": "int",
+      "slug": "varchar(80)",
+      "name_zh": "varchar(100)",
+      "name_en": "varchar(100)"
+    },
+    "post_tag_map": {
+      "post_id": "int",
+      "tag_id": "int"
+    },
+    "tag_visibility": {
+      "user_id": "int",
+      "tag_id": "int",
+      "visible": "tinyint"
+    }
+  },
+  "directoryHash": "c08a2acfa477a97f5fc3bb44dbf29cdce6d926293239e0a1ea426752cf030361"
+}

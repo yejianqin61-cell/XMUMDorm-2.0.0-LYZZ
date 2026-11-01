@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContextState';
 import { useLanguage } from '../context/LanguageContextState';
@@ -87,13 +87,19 @@ function buildAggregateText({ isZh, names, othersCount, likeCount, commentCount,
 }
 
 function Mailbox() {
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, token } = useAuth();
   const { lang } = useLanguage();
   const isZh = lang !== 'en';
   const [data, setData] = useState({ list: [], hasMore: false });
   const [unreadCounts, setUnreadCounts] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [readError, setReadError] = useState(null);
+  const [moreError, setMoreError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [retry, setRetry] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const activeRequest = useRef(null);
   const [tab, setTab] = useState('all');
 
   const CATEGORY_TABS = [
@@ -103,13 +109,17 @@ function Mailbox() {
     { key: 'system', label: '系统', labelEn: 'System' },
   ];
 
-  const requestKey = `${isLoggedIn}:${tab}`;
+  const requestKey = `${token || ''}:${tab}`;
   const [previousRequestKey, setPreviousRequestKey] = useState(requestKey);
   if (previousRequestKey !== requestKey) {
     setPreviousRequestKey(requestKey);
     setLoading(isLoggedIn);
     setError(null);
-    if (!(isLoggedIn)) { setData({ list: [], hasMore: false }); }
+    setPage(1);
+    setLoadingMore(false);
+    setMoreError(null);
+    setReadError(null);
+    setData({ list: [], hasMore: false });
   }
 
   useEffect(() => {
@@ -117,25 +127,31 @@ function Mailbox() {
       return;
     }
     let cancelled = false;
+    activeRequest.current = requestKey;
 
-    const opts = { page: 1, pageSize: 50 };
+    const opts = { page, pageSize: 50 };
     if (tab !== 'all') opts.category = tab;
 
     Promise.all([getNotifications(opts), getUnreadSummary()])
       .then(([res, summary]) => {
         if (cancelled) return;
-        setData({ list: res?.list ?? [], hasMore: !!res?.hasMore });
+        setData(previous => ({
+          list: page === 1 ? (res?.list ?? []) : [...new Map([...previous.list, ...(res?.list ?? [])].map(item => [item.id, item])).values()],
+          hasMore: !!res?.hasMore,
+        }));
+        setMoreError(null);
         setUnreadCounts(summary?.byCategory || {});
       })
       .catch((err) => {
-        if (!cancelled) setError(getApiErrorMessage(err));
+        if (!cancelled) (page === 1 ? setError : setMoreError)(getApiErrorMessage(err));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
+        if (!cancelled) setLoadingMore(false);
       });
 
-    return () => { cancelled = true; };
-  }, [isLoggedIn, tab]);
+    return () => { cancelled = true; activeRequest.current = null; };
+  }, [isLoggedIn, token, tab, page, retry, requestKey]);
 
   const groups = useMemo(() => {
     const list = Array.isArray(data?.list) ? data.list : [];
@@ -201,7 +217,17 @@ function Mailbox() {
   const handleGroupClick = (g) => {
     const unread = (g?.sorted || []).filter((x) => !x.is_read);
     if (unread.length === 0) return;
-    Promise.allSettled(unread.map((x) => markNotificationRead(x.id))).catch(() => {});
+    if (g.latest?.type !== 'campus_news_publication') { Promise.allSettled(unread.map(x => markNotificationRead(x.id))).catch(() => {}); return; }
+    Promise.allSettled(unread.map(x => markNotificationRead(x.id))).then(async results => {
+      if (activeRequest.current !== requestKey) return;
+      const saved = new Set(unread.filter((_,i) => results[i].status === 'fulfilled').map(x => x.id));
+      setData(previous => ({ ...previous, list: previous.list.map(x => saved.has(x.id) ? { ...x, is_read: true } : x) }));
+      if (saved.size !== unread.length) setReadError(isZh ? '已读状态未全部保存，请重试。' : 'Read state was not fully saved. Please retry.');
+      else setReadError(null);
+      const summary = await getUnreadSummary();
+      if (activeRequest.current === requestKey) setUnreadCounts(summary.byCategory || {});
+    }).catch(() => { if (activeRequest.current === requestKey) setReadError(isZh ? '未读数量更新失败，请刷新重试。' : 'Unable to refresh unread count.'); });
+
   };
 
   const totalUnread = Object.values(unreadCounts).reduce((a, b) => a + b, 0);
@@ -241,6 +267,7 @@ function Mailbox() {
       <section className="mailbox-hero">
         <div className="mailbox-hero__copy">
           <p className="mailbox-hero__eyebrow">{isZh ? '我的工作台消息' : 'Workbench Mailbox'}</p>
+          {readError && <p role="alert">{readError}</p>}
           <h1 className="mailbox-hero__title">
             {isZh ? '信箱' : 'Mailbox'}
           </h1>
@@ -318,7 +345,8 @@ function Mailbox() {
               const title = g.content_title || '';
               const linkTo = g.content_path || '#';
               const isAnnouncement = (g.target && g.target.type === 'announcement') || g.latest?.type === 'announcement' || g.latest?.type === 'system_announcement';
-              const aggregateText = g.isAffair
+              const isCampus = g.latest?.type === 'campus_news_publication';
+              const aggregateText = isCampus ? (g.target?.available ? (isZh ? '校园快讯 · 学院通知' : 'Campus news · College update') : (isZh ? '该校园快讯暂不可查看' : 'This campus news is unavailable')) : g.isAffair
                 ? buildAffairsText({ isZh, latest: g.latest })
                 : g.category === 'transaction'
                   ? buildMarketplaceText({ isZh, names: g.names, othersCount: g.othersCount, contentTitle: title })
@@ -338,7 +366,7 @@ function Mailbox() {
                   className={`social-card ${isUnread ? 'is-unread' : ''}`}
                   style={{ animationDelay: `${idx * 70}ms` }}
                 >
-                  <Link to={linkTo} className="social-card-link" onClick={() => handleGroupClick(g)}>
+                  <Link to={linkTo} className="social-card-link" onClick={e => { if (isCampus && !g.target?.available) e.preventDefault(); handleGroupClick(g); }}>
                     {isAnnouncement ? (
                       <div className="mailbox-ann-only" aria-label={isZh ? '公告内容' : 'Announcement content'}>
                         {String(title || g.latest?.extra?.content || '').trim() || (isZh ? '（公告内容为空）' : '(Empty announcement)')}
@@ -358,7 +386,7 @@ function Mailbox() {
                         </div>
 
                         <div className="social-title" aria-label="title">
-                          {title || (isZh ? '（无标题）' : '(Untitled)')}
+                          {title || (isCampus ? (isZh ? '校园快讯暂不可查看' : 'Campus news unavailable') : (isZh ? '（无标题）' : '(Untitled)'))}
                         </div>
 
                         <div className="social-text" aria-label="text">
@@ -378,6 +406,12 @@ function Mailbox() {
             })}
           </ul>
         )}
+        {moreError && <p role="alert">{moreError}</p>}
+        {data.hasMore && <button type="button" className="mailbox-clear" disabled={loadingMore} onClick={() => {
+          setLoadingMore(true);
+          if (moreError) setRetry(value => value + 1);
+          else setPage(value => value + 1);
+        }}>{loadingMore ? (isZh ? '加载中…' : 'Loading…') : moreError ? (isZh ? '重试加载' : 'Retry') : (isZh ? '加载更多' : 'Load more')}</button>}
       </div>
     </RouteTransition>
   );

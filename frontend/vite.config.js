@@ -66,6 +66,8 @@ export default defineConfig(({ mode }) => {
     },
   },
   server: {
+    port: 5173,
+    strictPort: true,
     host: true, // 允许局域网访问，便于手机通过电脑 IP 访问
     // 代理 /api 到后端，手机访问时请求同源 /api/* 会由 Vite 转发到本机后端
     proxy: {

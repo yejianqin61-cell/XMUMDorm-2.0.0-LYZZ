@@ -1,16 +1,16 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { loginPath } from '../utils/loginReturn';
+import CampusShareButton from '../features/campus-news/CampusShareButton';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContextState';
 import { useLanguage } from '../context/LanguageContextState';
 import {
   getCampusPostDetail,
-  getCampusPostComments,
-  postCampusPostComment,
-  likeCampusPost,
 } from '@shared/api/square';
+import { useCampusLike } from '../features/campus-news/useCampusLike';
 import { API_BASE_URL, getUploadUrl } from '@shared/api/config';
-import { Toast } from '../context/toast';
+import CampusComments from '../features/campus-news/CampusComments';
+import CampusFavoriteButton from '../features/campus-news/CampusFavoriteButton';
 import { getApiErrorMessage } from '@shared/utils/apiError';
 import { QK } from '@shared/query/queryKeys';
 import PostDetailShell from '../components/PostDetailShell';
@@ -19,30 +19,16 @@ function prefixAvatar(url) {
   return url && !url.startsWith('http') ? `${API_BASE_URL}${url}` : url;
 }
 
-function mapCommentTree(comment) {
-  return {
-    ...comment,
-    author: comment.author ? { ...comment.author, avatar: prefixAvatar(comment.author.avatar) } : comment.author,
-    replies: (comment.replies || []).map((reply) => ({
-      ...reply,
-      author: reply.author ? { ...reply.author, avatar: prefixAvatar(reply.author.avatar) } : reply.author,
-    })),
-  };
-}
-
 export default function SquareCampusPostDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const location = useLocation();
   const { isLoggedIn, token, user, isAdmin } = useAuth();
   const { lang } = useLanguage();
   const isEn = lang === 'en';
   const postId = parseInt(id, 10);
   const tokenKey = token ?? 'guest';
 
-  const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
-  const [submitLoading, setSubmitLoading] = useState(false);
 
   const detailQuery = useQuery({
     queryKey: QK.campusPostDetail(postId, tokenKey),
@@ -63,60 +49,11 @@ export default function SquareCampusPostDetail() {
     },
   });
 
-  const commentsQuery = useQuery({
-    queryKey: QK.campusPostComments(postId),
-    queryFn: () => getCampusPostComments(postId),
-    enabled: Number.isFinite(postId) && postId > 0,
-    staleTime: 15 * 1000,
-    select: (list) => (Array.isArray(list) ? list : list?.data || []).map(mapCommentTree),
-  });
 
   const post = detailQuery.data ?? null;
-  const comments = commentsQuery.data ?? [];
 
-  useEffect(() => {
-    if (!post) return;
-    setLiked(!!post.user_liked);
-    setLikeCount(post.like_count ?? 0);
-  }, [post]);
+  const like = useCampusLike({ id: postId, real: Boolean(post) });
 
-  const handleLike = useCallback(async () => {
-    const prevLiked = liked;
-    const prevCount = likeCount;
-    const optimistic = !prevLiked;
-    setLiked(optimistic);
-    setLikeCount((count) => (optimistic ? count + 1 : Math.max(0, count - 1)));
-    try {
-      const data = await likeCampusPost(postId);
-      if (data?.liked != null) setLiked(!!data.liked);
-      if (data?.like_count != null) setLikeCount(data.like_count);
-    } catch (err) {
-      setLiked(prevLiked);
-      setLikeCount(prevCount);
-      Toast.error(getApiErrorMessage(err));
-    }
-  }, [liked, likeCount, postId]);
-
-  const handleSubmitComment = useCallback(
-    async ({ content, parentId }) => {
-      setSubmitLoading(true);
-      try {
-        await postCampusPostComment(postId, {
-          content,
-          parent_id: parentId ?? undefined,
-        });
-        await queryClient.invalidateQueries({ queryKey: QK.campusPostComments(postId) });
-        await queryClient.invalidateQueries({ queryKey: QK.campusPostDetail(postId, tokenKey) });
-        Toast.success(isEn ? 'Comment posted' : '评论成功');
-      } catch (err) {
-        Toast.error(getApiErrorMessage(err));
-        throw err;
-      } finally {
-        setSubmitLoading(false);
-      }
-    },
-    [postId, queryClient, tokenKey, isEn]
-  );
 
   const org = post?.organization;
   const feedLabel =
@@ -139,29 +76,29 @@ export default function SquareCampusPostDetail() {
       </div>
     ) : null;
 
-  return (
+  return (<>
+    {like.error && <p role="alert">{like.error}<button type="button" onClick={() => like.retry()}>重试</button></p>}
     <PostDetailShell
       post={post}
-      comments={comments}
+      commentsSlot={<CampusComments postId={postId} />}
       loading={detailQuery.isPending && !post}
       error={detailQuery.error ? getApiErrorMessage(detailQuery.error) : null}
-      liked={liked}
-      likeCount={likeCount}
-      onLike={handleLike}
-      onSubmitComment={handleSubmitComment}
-      submitLoading={submitLoading}
+      liked={like.liked === true}
+      likeCount={like.likeCount ?? post?.like_count ?? 0}
+      likePending={like.pending || !like.canLike}
+      onLike={like.onLike}
       isLoggedIn={isLoggedIn}
       user={user}
       isAdmin={isAdmin}
-      loginPath="/login"
+      loginPath={loginPath(location)}
       emptyTitle={isEn ? 'Notice not found' : '通知不存在'}
       emptyActionLabel={isEn ? 'Back to square' : '返回广场'}
       onEmptyAction={() => navigate('/about')}
-      headerSlot={headerSlot}
+      headerSlot={<>{headerSlot}{post?.category && <div className="campus-news-actions"><CampusFavoriteButton postId={postId} /><CampusShareButton postId={postId} /></div>}</>}
       title={post?.title || null}
       metaSlot={feedLabel ? ` · ${feedLabel}` : null}
       reportTargetType="campus_post"
       commentReportType="campus_comment"
-    />
+    /></>
   );
 }

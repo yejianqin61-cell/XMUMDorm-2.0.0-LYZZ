@@ -1,7 +1,7 @@
 /**
  * 广场系统 API（热搜 + 校园此刻）
  */
-import { get, post, patch, del } from './request';
+import { get, post, patch, del, request } from './request';
 
 export function getSquareHomeSummary() {
   return get('/api/square/home-summary');
@@ -94,16 +94,39 @@ export function getCampusPostDetail(id) {
   return get(`/api/square/campus-posts/${id}`);
 }
 
-export function getCampusPostComments(postId) {
-  return get(`/api/square/campus-posts/${postId}/comments`);
+export function getCampusPostComments(postId, options = {}) {
+  const { cursor, limit = 20, ...requestOptions } = options;
+  const params = new URLSearchParams({view:'threads',limit:String(limit)});
+  if(cursor) params.set('cursor',cursor);
+  return get(`/api/square/campus-posts/${encodeURIComponent(postId)}/comments?${params}`,requestOptions);
 }
 
-export function postCampusPostComment(postId, body) {
-  return post(`/api/square/campus-posts/${postId}/comments`, body);
+export function postCampusPostComment(postId, body, requestKey, options = {}) {
+  if(!requestKey) throw new TypeError('评论提交必须提供稳定请求UUID');
+  return post(`/api/square/campus-posts/${encodeURIComponent(postId)}/comments`,body,{...options,headers:{...options.headers,'Idempotency-Key':requestKey}});
+}
+export function getCampusCommentReplies(postId,rootId,options={}) {
+  const {cursor,limit=20,...requestOptions}=options;
+  const params=new URLSearchParams({limit:String(limit)});if(cursor)params.set('cursor',cursor);
+  return get(`/api/square/campus-posts/${encodeURIComponent(postId)}/comments/${encodeURIComponent(rootId)}/replies?${params}`,requestOptions);
+}
+export function deleteCampusComment(postId,commentId,reason,options={}) {
+  return request(`/api/square/campus-posts/${encodeURIComponent(postId)}/comments/${encodeURIComponent(commentId)}`,{...options,method:'DELETE',body:reason?{reason}:{}});
 }
 
+/** @deprecated External transition only: non-idempotent. Use setCampusLike. */
 export function likeCampusPost(postId) {
   return post(`/api/square/campus-posts/${postId}/like`, {});
+}
+
+export function getCampusInteractions(postId, options = {}) {
+  return get(`/api/square/campus-posts/${encodeURIComponent(postId)}/interactions`, options);
+}
+
+export function setCampusLike(postId, liked, options = {}) {
+  if (typeof liked !== 'boolean') throw new TypeError('点赞状态必须为布尔值');
+  const path = `/api/square/campus-posts/${encodeURIComponent(postId)}/like`;
+  return request(path, { ...options, method: liked ? 'PUT' : 'DELETE' });
 }
 
 // ---------- 广场轮播 ----------
