@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 420" role="img" aria-labelledby="title desc">
+  <title id="title">XMUMDorm — one campus, many connections</title>
+  <desc id="desc">A deep blue campus-inspired banner with connected buildings and a yellow route line.</desc>
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#0b1832"/><stop offset="1" stop-color="#173874"/></linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#9fbff6" stroke-opacity=".13"/></pattern>
+    <linearGradient id="line" x1="0" x2="1"><stop stop-color="#ffc300"/><stop offset="1" stop-color="#fdefd0"/></linearGradient>
+  </defs>
+  <rect width="1200" height="420" fill="url(#bg)"/><rect width="1200" height="420" fill="url(#grid)"/>
+  <path d="M0 354H1200M0 64H1200" stroke="#9fbff6" stroke-opacity=".24"/>
+  <circle cx="1060" cy="88" r="162" fill="#3d6dc3" opacity=".22"/><circle cx="1040" cy="88" r="102" fill="#5e90ea" opacity=".1"/>
+  <g font-family="Arial, Helvetica, sans-serif">
+    <text x="62" y="42" fill="#a9c4f5" font-size="13" font-weight="700" letter-spacing="3">X I A M E N  U N I V E R S I T Y  M A L A Y S I A</text>
+    <text x="59" y="174" fill="#fff" font-size="79" font-weight="800" letter-spacing="-5">XMUM<tspan fill="#ffc300">DORM</tspan></text>
+    <rect x="62" y="200" width="74" height="5" rx="2.5" fill="#ffc300"/>
+    <text x="62" y="255" fill="#e9f1fd" font-size="29" letter-spacing="-.5">One campus. Many connections.</text>
+    <text x="62" y="304" fill="#a9c4f5" font-size="16" letter-spacing="1.1">DISCOVER  /  CONNECT  /  BELONG</text>
+    <text x="62" y="386" fill="#a9c4f5" font-size="13" letter-spacing="2">CAMPUS LIFE, BUILT TOGETHER</text>
+  </g>
+  <!-- ponytail: The campus is intentionally abstract: no unverified building likeness or map claim. -->
+  <g fill="none" stroke="#9fbff6" stroke-opacity=".45" stroke-width="1.5">
+    <path d="M690 315V159l63-28 64 28v156M817 315V114l88-38 89 38v201M994 315V162l75-33 76 33v153"/>
+    <path d="M675 315h490M753 131v-31l63-25 63 27M905 76V48M1080 129V99"/>
+    <path d="M715 193h78M715 224h78M715 255h78M715 286h78M846 153h117M846 190h117M846 227h117M846 264h117M1022 195h98M1022 231h98M1022 267h98" opacity=".65"/>
+  </g>
+  <path d="M674 310c61-49 105-24 153-55s72-34 124-6 93 34 171-12" fill="none" stroke="url(#line)" stroke-width="4" stroke-linecap="round"/>
+  <g fill="#ffc300" stroke="#0b1832" stroke-width="5"><circle cx="678" cy="307" r="8"/><circle cx="827" cy="255" r="8"/><circle cx="954" cy="250" r="8"/><circle cx="1122" cy="237" r="8"/></g>
+  <g fill="#e9f1fd" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700" letter-spacing="1.5">
+    <text x="678" y="340">CAMPUS</text><text x="809" y="286">PEOPLE</text><text x="935" y="282">IDEAS</text><text x="1080" y="269">EVERYDAY</text>
+  </g>
+</svg>
