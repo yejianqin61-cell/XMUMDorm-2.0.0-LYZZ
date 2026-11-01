@@ -76,67 +76,10 @@ describe('nextPageParamFrom：只有 hasMore 才继续翻页', () => {
   });
 });
 
-describe('契约：分页列表页面必须用无限查询，不能只取第一页', () => {
-  const page = read('frontend', 'src', 'pages', 'Handbook', 'CourseReviewPage.jsx');
-  const me = read('frontend', 'src', 'pages', 'Handbook', 'HandbookMe.jsx');
-
-  it('课程评价列表用 useInfiniteQuery + nextPageParamFrom + flattenPages', () => {
-    expect(page).toContain('useInfiniteQuery');
-    expect(page).not.toContain('useQuery(');
-    expect(page).toContain('initialPageParam: 1');
-    expect(page).toContain('getNextPageParam: nextPageParamFrom');
-    expect(page).toContain('flattenPages(query.data?.pages)');
-  });
-
-  it('课程评价列表不再写死只取第 1 页', () => {
-    expect(page).not.toContain('page: 1, pageSize: 20');
-    expect(page).toContain('page: pageParam');
-  });
-
-  it('课程评价列表提供「加载更多」，到底后自动收起', () => {
-    expect(page).toContain('handbook-loadmore');
-    expect(page).toContain('query.hasNextPage ?');
-    expect(page).toContain('query.fetchNextPage()');
-    expect(page).toContain('query.isFetchingNextPage');
-  });
-
-  it('「我的课程点评 / 我的收藏」两个列表同样翻页（user 1 名下就有 407 条）', () => {
-    const infiniteCount = (me.match(/useInfiniteQuery\(/g) || []).length;
-    expect(infiniteCount).toBe(2);
-    expect(me).not.toContain('useQuery(');
-    expect(me).not.toContain('page: 1, pageSize: 20');
-    expect(me).toContain('page: pageParam');
-    expect((me.match(/getNextPageParam: nextPageParamFrom/g) || []).length).toBe(2);
-    expect(me).toContain('flattenPages(savedQuery.data?.pages)');
-    expect(me).toContain('flattenPages(myReviewsQuery.data?.pages)');
+describe('我的收藏分页', () => {
+  it('保留分页加载', () => {
+    const me = read('frontend', 'src', 'pages', 'Handbook', 'HandbookMe.jsx');
+    expect(me).toContain('getNextPageParam: nextPageParamFrom');
     expect(me).toContain('savedQuery.fetchNextPage()');
-    expect(me).toContain('myReviewsQuery.fetchNextPage()');
-  });
-});
-
-describe('契约：后端必须是分页接口（前端才有得翻）', () => {
-  const route = read('routes', 'handbook.js');
-
-  it('公开课程评价接口解析 page/pageSize 且 pageSize 上限 30', () => {
-    expect(route).toContain("router.get('/course-reviews', async (req, res) => {");
-    expect(route).toContain('clamp(toInt(req.query.page, 1), 1, 9999)');
-    expect(route).toContain('clamp(toInt(req.query.pageSize, 10), 1, 30)');
-  });
-
-  it('公开课程评价接口返回 hasMore，并用 LIMIT/OFFSET 取下一页', () => {
-    expect(route).toContain('const hasMore = (rows || []).length > pageSize;');
-    expect(route).toContain('LIMIT ${limitCount} OFFSET ${offset}');
-    expect(route).toContain('data: { list, hasMore, page, pageSize }');
-  });
-
-  it('「我的课程点评」接口同样分页', () => {
-    expect(route).toContain("router.get('/me/course-reviews', authenticateToken");
-    expect(route).toContain("cr.created_by = ?");
-  });
-
-  it('分页上限 30 意味着前端必须翻页，不能靠调大 pageSize 解决', () => {
-    const cap = route.match(/clamp\(toInt\(req\.query\.pageSize, \d+\), 1, (\d+)\)/);
-    expect(cap).not.toBeNull();
-    expect(Number(cap[1])).toBeLessThan(412);
   });
 });

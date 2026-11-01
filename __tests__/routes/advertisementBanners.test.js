@@ -6,8 +6,15 @@ jest.mock('../../middleware/auth', () => (req, _res, next) => {
   req.user = { id: 1, role: req.get('x-test-role') || 'admin' };
   next();
 });
-jest.mock('../../middleware/checkSanction', () => ({ checkSanction: (_req, _res, next) => next() }));
-jest.mock('../../middleware/sensitiveWordFilter', () => (_req, _res, next) => next());
+jest.mock('../../middleware/checkSanction', () => ({
+  checkSanction: (_req, _res, next) => next(),
+  checkCampusSanction: (_req, _res, next) => next(),
+}));
+jest.mock('../../middleware/sensitiveWordFilter', () => {
+  const filter = (_req, _res, next) => next();
+  filter.strict = filter;
+  return filter;
+});
 jest.mock('../../middleware/upload', () => ({
   productImagesUpload: (_req, _res, next) => next(),
   commentImagesUpload: (_req, _res, next) => next(),

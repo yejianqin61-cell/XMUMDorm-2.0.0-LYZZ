@@ -97,12 +97,30 @@ type Snapshot = {
 };
 
 export function TreeholeFeed({ testID = 'treehole-feed' }: { testID?: string }): React.ReactElement {
+  const session = useSession();
+  const identity = JSON.stringify([session.status, session.identifier, session.isSignedIn]);
+  return <TreeholeFeedSession key={identity} testID={testID} identity={identity} />;
+}
+
+function TreeholeFeedSession({ testID, identity }: { testID: string; identity: string }): React.ReactElement {
   const { t } = useI18n();
   const theme = useTheme();
-  const [expanded, setExpanded] = React.useState(false);
-  const [draft, setDraft] = React.useState('');
-  const [query, setQuery] = React.useState('');
-  const [history, setHistory] = React.useState<readonly string[]>([]);
+  const client = getQueryClient();
+  const session = useSession();
+  const searchKey = React.useMemo(() => [
+    ...QK.postsInfinite(session.isSignedIn ? '_user' : '_guest', TREEHOLE_PAGE_SIZE),
+    'campusSearchState', identity,
+  ], [session.isSignedIn, identity]);
+  const [initial] = React.useState(() => client.getQueryData<{
+    expanded: boolean; draft: string; query: string; history: readonly string[];
+  }>(searchKey));
+  const [expanded, setExpanded] = React.useState(initial?.expanded ?? false);
+  const [draft, setDraft] = React.useState(initial?.draft ?? '');
+  const [query, setQuery] = React.useState(initial?.query ?? '');
+  const [history, setHistory] = React.useState<readonly string[]>(initial?.history ?? []);
+  React.useEffect(() => {
+    client.setQueryData(searchKey, { expanded, draft, query, history });
+  }, [client, searchKey, expanded, draft, query, history]);
 
   // 打字期间不发请求：300ms 防抖后才替换结果流
   React.useEffect(() => {
@@ -227,16 +245,22 @@ function TreeholeFeedData({
       ),
       'campusReadSnapshot',
       query,
+      session.status,
+      session.identifier,
     ],
-    [scoped, session.isSignedIn, tagId, query]
+    [scoped, session.isSignedIn, session.status, session.identifier, tagId, query]
   );
   const initial = React.useRef(client.getQueryData<Snapshot>(key));
   const snapshot = React.useRef<Snapshot>(initial.current ?? { rows: [], page: 0, hasMore: true });
   const [rows, setRows] = React.useState(snapshot.current.rows);
+  // 恢复值属于当前关键词/筛选的快照，不能取另一个筛选最近写入的Tab位置。
+  const [restoredScrollOffset, setRestoredScrollOffset] = React.useState(
+    () => client.getQueryData<Snapshot>(key)?.scrollOffset ?? 0
+  );
+  const [scrollToTopSignal, setScrollToTopSignal] = React.useState(0);
   const {
     pagination,
     dispatch,
-    restoredScrollOffset,
     persistScrollOffset: persistTabScrollOffset,
     setCursor,
   } = useListPagination({
@@ -252,32 +276,38 @@ function TreeholeFeedData({
     [scoped, client, key, persistTabScrollOffset]
   );
   const generation = React.useRef(0),
-    pending = React.useRef<'refresh' | 'append' | null>(null);
+    pending = React.useRef<'refresh' | 'append' | 'reload' | null>(null);
   const load = React.useCallback(
-    async (mode: 'refresh' | 'append') => {
+    async (mode: 'refresh' | 'append' | 'reload') => {
       if (
         pending.current === 'refresh' ||
+        (pending.current === 'reload' && (mode !== 'refresh' || snapshot.current.rows.length === 0)) ||
         (mode === 'append' && (pending.current || !snapshot.current.hasMore))
       ) {
         return;
       }
       const request = ++generation.current;
-      const page = mode === 'refresh' ? 1 : snapshot.current.page + 1;
       pending.current = mode;
-      dispatch({ type: mode === 'refresh' ? 'refresh:start' : 'append:start' });
+      dispatch({ type: mode === 'append' ? 'append:start' : 'refresh:start' });
       try {
-        const data = await getPostList({
-          page,
-          pageSize: TREEHOLE_PAGE_SIZE,
-          ...(query ? { q: query } : {}),
-          ...(tagId != null ? { tagId } : {}),
-        });
-        if (request !== generation.current) return;
-        if (!Array.isArray(data?.list) || typeof data.hasMore !== 'boolean') throw { kind: 'content' };
-        const incoming = data.list.map(asPost);
-        const hasMore = data.hasMore;
+        let page = mode === 'append' ? snapshot.current.page + 1 : 1;
+        const lastPage = mode === 'reload' ? Math.max(1, snapshot.current.page) : page;
+        const incoming: Post[] = [];
+        let hasMore = true;
+        // 自动失效重读当前范围，避免只取第一页丢掉用户已经阅读的后续页。
+        for (; page <= lastPage; page++) {
+          const data = await getPostList({
+            page, pageSize: TREEHOLE_PAGE_SIZE,
+            ...(query ? { q: query } : {}), ...(tagId != null ? { tagId } : {}),
+          });
+          if (request !== generation.current) return;
+          if (!Array.isArray(data?.list) || typeof data.hasMore !== 'boolean') throw { kind: 'content' };
+          incoming.push(...data.list.map(asPost));
+          hasMore = data.hasMore;
+          if (!hasMore || page === lastPage) break;
+        }
         const unique = new Map<number, Post>();
-        for (const row of mode === 'refresh' ? [] : snapshot.current.rows) unique.set(row.id, row);
+        for (const row of mode === 'append' ? snapshot.current.rows : []) unique.set(row.id, row);
         for (const row of incoming) unique.set(row.id, row);
         const next: Snapshot = {
           rows: Array.from(unique.values()),
@@ -289,12 +319,18 @@ function TreeholeFeedData({
         client.setQueryData(key, next);
         setRows(next.rows);
         setCursor(String(page));
-        if (mode === 'refresh') persistScrollOffset(0);
-        dispatch({ type: mode === 'refresh' ? 'refresh:success' : 'append:success', hasMore });
+        if (mode === 'refresh') {
+          setRestoredScrollOffset(0);
+          setScrollToTopSignal((signal) => signal + 1);
+        }
+        if (mode !== 'append') persistScrollOffset(next.scrollOffset ?? 0);
+        dispatch({ type: mode === 'append' ? 'append:success' : 'refresh:success', hasMore });
       } catch (error) {
         if (request === generation.current) {
+          // Query被移除后重读失败，仍保留可供详情返回恢复的旧快照。
+          if (mode === 'reload') client.setQueryData(key, snapshot.current);
           dispatch({
-            type: mode === 'refresh' ? 'refresh:failure' : 'append:failure',
+            type: mode === 'append' ? 'append:failure' : 'refresh:failure',
             error: errorFor(error),
           });
         }
@@ -305,7 +341,7 @@ function TreeholeFeedData({
     [query, tagId, key, client, dispatch, setCursor, persistScrollOffset]
   );
   React.useEffect(() => {
-    if (!initial.current) void load('refresh');
+    if (!initial.current) void load('reload');
     return () => {
       generation.current++;
       pending.current = null;
@@ -315,9 +351,11 @@ function TreeholeFeedData({
   React.useEffect(() => {
     const unsubscribe = client.getQueryCache().subscribe((event) => {
       if (event.type === 'removed' && JSON.stringify(event.query.queryKey) === JSON.stringify(key)) {
+        // 移除事件没有“用户刷新”的语义；只保留已经明确发起的刷新意图。
+        const mode = pending.current === 'refresh' ? 'refresh' : 'reload';
         generation.current++;
         pending.current = null;
-        void load('refresh');
+        void load(mode);
       }
     });
     return unsubscribe;
@@ -361,6 +399,7 @@ function TreeholeFeedData({
       keyExtractor={(row) => String(row.id)}
       pagination={pagination}
       restoredScrollOffset={restoredScrollOffset}
+      scrollToTopSignal={scrollToTopSignal}
       onScrollOffset={persistScrollOffset}
       onRefresh={refresh}
       onEndReached={append}

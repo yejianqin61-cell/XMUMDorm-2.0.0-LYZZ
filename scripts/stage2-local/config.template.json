@@ -1,0 +1,8 @@
+{
+  "DB_HOST": "127.0.0.1",
+  "DB_PORT": 3306,
+  "DB_NAME": "xmumdorm_stage2_dev",
+  "DB_USER": "xmumdorm_dev",
+  "DB_PASSWORD": "REPLACE_WITH_LOCAL_PASSWORD",
+  "JWT_SECRET": "REPLACE_WITH_LOCAL_RANDOM_SECRET_AT_LEAST_32_CHARACTERS"
+}

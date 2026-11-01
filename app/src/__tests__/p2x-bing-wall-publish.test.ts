@@ -54,4 +54,16 @@ describe('丙：万能墙发布描述符', () => {
     api.mockRejectedValue(error);
     await expect(descriptor().submit({template_key:'bigtype',content:'正文'})).rejects.toBe(error);
   });
+  it('公告在200字边界提交真实字段，超限拒绝且失败不修改输入', async () => {
+    const d = descriptor();
+    const values = { template_key: 'announcement', content: '字'.repeat(200), user_id: 9 };
+    api.mockRejectedValueOnce({ kind: 'unreachable' }).mockResolvedValueOnce({ id: 43 });
+    await expect(d.submit(values)).rejects.toMatchObject({ kind: 'unreachable' });
+    expect(values).toEqual({ template_key: 'announcement', content: '字'.repeat(200), user_id: 9 });
+    const result = await d.submit(values);
+    expect(api).toHaveBeenLastCalledWith({ template_key: 'announcement', content: '字'.repeat(200) });
+    expect(d.routeAfterSubmit?.(result)).toBe('/?tab=wall');
+    await expect(d.submit({ ...values, content: '字'.repeat(201) })).rejects.toMatchObject({ kind: 'validation' });
+    expect(api).toHaveBeenCalledTimes(2);
+  });
 });

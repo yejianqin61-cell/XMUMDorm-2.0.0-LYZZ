@@ -6,7 +6,8 @@ import { timetableIdentity } from '../cacheIdentity';
 import { loadSemesterClassReminderPlan } from './runtime';
 import type { ReminderSemester } from './plan';
 import type { MoodleReminderDelivery } from '../moodle/deadlines';
-import { createReminderScheduler, reminderOwnerFromScope, type NativeReminderPort, type ReminderLabels } from './scheduler';
+import { createReminderScheduler, reminderOwnerFromScope, type NativeReminderPort, type ReminderLabels,
+  type ReminderScheduleResult } from './scheduler';
 
 const port: NativeReminderPort = {
   async getPermissionsAsync() {
@@ -64,24 +65,29 @@ export async function clearReminderOwner(previousOwner: string): Promise<void> {
   await scheduler.clearOwner(previousOwner);
 }
 
-export async function refreshClassReminders(labels: ReminderLabels): Promise<void> {
+let classRefreshRevision = 0;
+export async function refreshClassReminders(labels: ReminderLabels): Promise<ReminderScheduleResult | null> {
+  const revision = ++classRefreshRevision;
+  const identity = timetableIdentity();
   const current = owner();
-  if (!current) return;
+  if (!current) return null;
   const semester = resolveSemesterContext().semester as ReminderSemester | null;
   if (!semester) {
-    await scheduler.replaceDomain(current, 'class', [], labels);
-    return;
+    return scheduler.replaceDomain(current, 'class', [], labels);
   }
-  const epoch = timetableIdentity().epoch;
-  const plan = await loadSemesterClassReminderPlan({
-    semester,
-    now: new Date(),
-    loadWeek: getScheduleWeek,
-    isCurrent: () => timetableIdentity().epoch === epoch && owner() === current,
-  });
-  await scheduler.replaceDomain(current, 'class', plan.map((item) => ({ id: item.id, fireAt: item.fireAt })), labels);
+  const isCurrent = () => classRefreshRevision === revision
+    && timetableIdentity().epoch === identity.epoch && timetableIdentity().scope === identity.scope;
+  try {
+    const plan = await loadSemesterClassReminderPlan({ semester, now: new Date(), loadWeek: getScheduleWeek, isCurrent });
+    if (!isCurrent()) return { status: 'stale', scheduled: [], deferred: 0 };
+    return scheduler.replaceDomain(current, 'class', plan, labels);
+  } catch (error) {
+    if (!isCurrent()) return { status: 'stale', scheduled: [], deferred: 0 };
+    throw error;
+  }
 }
 
 export function invalidateReminderSession(): void {
+  classRefreshRevision += 1;
   scheduler.invalidateSession();
 }

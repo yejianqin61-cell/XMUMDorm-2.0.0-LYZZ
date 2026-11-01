@@ -307,7 +307,7 @@ describe('TC-P1-16-6A · 网格渲染：今天那一列**不只靠颜色**', () 
 
 describe('TC-P1-16-7A · T-02 页面', () => {
   it('渲染周切换（`C14`，项数 ≤5）与网格', async () => {
-    api.getScheduleWeek.mockResolvedValue(WEEK_PAYLOAD);
+    api.getScheduleWeek.mockImplementation(async (week: number) => ({ ...WEEK_PAYLOAD, week }));
     const view = await renderApp(withProviders(<TimetableScreen />));
     await waitFor(() => expect(view.getByTestId('timetable-grid')).toBeTruthy());
     expect(view.getByTestId('timetable-weeks')).toBeTruthy();
@@ -316,7 +316,7 @@ describe('TC-P1-16-7A · T-02 页面', () => {
   });
 
   it('空周 → **仍画 08:00–21:00 时间轴**，并给"去导入"（⛔ 不留死屏、不拿空态替换网格）', async () => {
-    api.getScheduleWeek.mockResolvedValue({ ...WEEK_PAYLOAD, days: {} });
+    api.getScheduleWeek.mockImplementation(async (week: number) => ({ ...WEEK_PAYLOAD, week, days: {} }));
     const view = await renderApp(withProviders(<TimetableScreen />));
     await waitFor(() => expect(view.getByTestId('timetable-grid')).toBeTruthy());
     // 没有课也要有空时间轴
@@ -328,7 +328,7 @@ describe('TC-P1-16-7A · T-02 页面', () => {
   });
 
   it('⛔ 课程卡点击**不假跳一个不存在的路由**（用回执说明时间与地点）', async () => {
-    api.getScheduleWeek.mockResolvedValue(WEEK_PAYLOAD);
+    api.getScheduleWeek.mockImplementation(async (week: number) => ({ ...WEEK_PAYLOAD, week }));
     const view = await renderApp(withProviders(<TimetableScreen />));
     await waitFor(() => expect(view.getByTestId('timetable-grid')).toBeTruthy());
     const user = require('@testing-library/react-native').userEvent.setup();

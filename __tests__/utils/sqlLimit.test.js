@@ -6,8 +6,7 @@
  *   在 Railway 托管的 MySQL 上，把 JS number 绑到 LIMIT 占位符会抛
  *   `ER_WRONG_ARGUMENTS (1210) Incorrect arguments to mysqld_stmt_execute`，整条查询 500。
  *
- *   学习资料模块（M10）把 `LIMIT ?` 写进了 3 处，线上 `GET /api/materials/courses`
- *   与 `GET /api/materials/me/uploads` 直接 500 —— 而本地 31 个路由用例全绿，
+ *   曾有路由把 `LIMIT ?` 写入 SQL，线上请求直接 500，而本地用例全绿，
  *   因为那些用例 mock 掉了 `query()`，**SQL 从未真正执行过**。
  *   这正是需要一个「不依赖 DB、也不依赖刚改过哪些文件」的静态守卫的原因。
  *

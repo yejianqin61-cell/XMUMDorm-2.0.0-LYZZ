@@ -1,7 +1,6 @@
 import { createElement, lazy, Suspense } from 'react';
 import { Route, Navigate } from 'react-router-dom';
 import RouteErrorBoundary from '../components/RouteErrorBoundary';
-import { isMaterialsPreviewMode } from '@shared/api/materials';
 import TreeHole from '../pages/TreeHole';
 import SquareHome from '../pages/SquareHome';
 import MyZone from '../pages/MyZone';
@@ -19,8 +18,9 @@ const SquareTrendingDetail = lazy(() => import('../pages/SquareTrendingDetail'))
 const SquareTrendingPostNew = lazy(() => import('../pages/SquareTrendingPostNew'));
 const SquareTrendingPostDetail = lazy(() => import('../pages/SquareTrendingPostDetail'));
 const SquareCampusFeed = lazy(() => import('../pages/SquareCampusFeed'));
+const CampusNewsDetail = lazy(() => import('../features/campus-news/CampusNewsDetail'));
 const SquareCampusPostNew = lazy(() => import('../pages/SquareCampusPostNew'));
-const SquareCampusPostDetail = lazy(() => import('../pages/SquareCampusPostDetail'));
+const SquareCampusPostDetail = lazy(() => import('../features/campus-news/CampusNewsRoute'));
 const SquareOrgAdmin = lazy(() => import('../pages/SquareOrgAdmin'));
 const AboutAlgorithm = lazy(() => import('../pages/AboutAlgorithm'));
 const AboutLevelAlgorithm = lazy(() => import('../pages/AboutLevelAlgorithm'));
@@ -49,19 +49,18 @@ const PublishErrand = lazy(() => import('../pages/Errands/PublishErrand'));
 const HandbookArticleDetail = lazy(() => import('../pages/Handbook/HandbookArticleDetail'));
 const HandbookEditor = lazy(() => import('../pages/Handbook/HandbookEditor'));
 const HandbookMe = lazy(() => import('../pages/Handbook/HandbookMe'));
-const CourseReviewPage = lazy(() => import('../pages/Handbook/CourseReviewPage'));
-const CourseReviewDetail = lazy(() => import('../pages/Handbook/CourseReviewDetail'));
-const CourseReviewCreate = lazy(() => import('../pages/Handbook/CourseReviewCreate'));
 const Schedule = lazy(() => import('../pages/Schedule'));
 const AgentChat = lazy(() => import('../pages/Agent/AgentChat'));
 const Diary = lazy(() => import('../pages/Diary'));
 const TodoList = lazy(() => import('../pages/TodoList'));
 const Holidays = lazy(() => import('../pages/Holidays'));
+const StudyCalendar = lazy(() => import('../pages/StudyCalendar'));
 const Settings = lazy(() => import('../pages/Settings'));
 const Disclaimer = lazy(() => import('../pages/Disclaimer'));
 const UserZone = lazy(() => import('../pages/UserZone'));
 const MyPosts = lazy(() => import('../pages/MyPosts'));
 const MyReviews = lazy(() => import('../pages/MyReviews'));
+const MyFavorites = lazy(() => import('../pages/MyFavorites'));
 const ProfileEdit = lazy(() => import('../pages/ProfileEdit'));
 const Mailbox = lazy(() => import('../pages/Mailbox'));
 const CanteenArea = lazy(() => import('../pages/CanteenArea'));
@@ -82,12 +81,6 @@ const MerchantShopEdit = lazy(() => import('../pages/MerchantShopEdit'));
 const Rankings = lazy(() => import('../pages/Rankings'));
 const ConfessionWall = lazy(() => import('../pages/ConfessionWall'));
 const ConfessionCompose = lazy(() => import('../pages/ConfessionCompose'));
-const MaterialsHome = lazy(() => import('../pages/Materials/MaterialsHome'));
-const MaterialsCourse = lazy(() => import('../pages/Materials/MaterialsCourse'));
-const MaterialDetail = lazy(() => import('../pages/Materials/MaterialDetail'));
-const MaterialsUpload = lazy(() => import('../pages/Materials/MaterialsUpload'));
-const MaterialsMine = lazy(() => import('../pages/Materials/MaterialsMine'));
-const AdminMaterials = lazy(() => import('../pages/Materials/AdminMaterials'));
 
 const Shop = lazy(() => import('../pages/Shop/Shop'));
 
@@ -149,16 +142,13 @@ export const layoutRoutes = (
     <Route path="about/trending/post/:id" element={renderLazyRoute(SquareTrendingPostDetail)} />
     <Route path="about/campus" element={renderLazyRoute(SquareCampusFeed)} />
     <Route path="about/campus/new" element={renderLazyRoute(SquareCampusPostNew)} />
+    <Route path="about/campus/preview/:previewId" element={renderLazyRoute(CampusNewsDetail)} />
     <Route path="about/campus/:id" element={renderLazyRoute(SquareCampusPostDetail)} />
     <Route path="about/admin/orgs" element={renderLazyRoute(SquareOrgAdmin)} />
     <Route path="about/freshman-guide" element={renderLazyRoute(SquareFreshmanGuide)} />
     <Route path="about/freshman-guide/me" element={renderLazyRoute(HandbookMe)} />
     <Route path="about/freshman-guide/new" element={renderLazyRoute(HandbookEditor)} />
     <Route path="about/freshman-guide/a/:id" element={renderLazyRoute(HandbookArticleDetail)} />
-    <Route path="about/freshman-guide/course-review" element={renderLazyRoute(CourseReviewPage)} />
-    <Route path="about/freshman-guide/course-review/new" element={renderLazyRoute(CourseReviewCreate)} />
-    <Route path="about/freshman-guide/course-review/:id/edit" element={renderLazyRoute(CourseReviewCreate)} />
-    <Route path="about/freshman-guide/course-review/:id" element={renderLazyRoute(CourseReviewDetail)} />
     <Route path="about/errands" element={renderLazyRoute(SquareErrands)} />
     <Route path="about/errands/new" element={renderLazyRoute(PublishErrand)} />
     <Route path="about/errands/:id" element={renderLazyRoute(ErrandDetail)} />
@@ -167,12 +157,14 @@ export const layoutRoutes = (
     <Route path="user/:id" element={renderLazyRoute(UserZone)} />
     <Route path="myzone/posts" element={renderLazyRoute(MyPosts)} />
     <Route path="myzone/reviews" element={renderLazyRoute(MyReviews)} />
+    <Route path="myzone/favorites" element={renderLazyRoute(MyFavorites)} />
     <Route path="myzone/profile" element={renderLazyRoute(ProfileEdit)} />
     <Route path="myzone/schedule" element={renderLazyRoute(Schedule)} />
     <Route path="agent" element={renderLazyRoute(AgentChat)} />
     <Route path="myzone/agent" element={<Navigate to="/agent" replace />} />
     <Route path="myzone/todos" element={renderLazyRoute(TodoList)} />
     <Route path="myzone/holidays" element={renderLazyRoute(Holidays)} />
+    <Route path="myzone/calendar" element={renderLazyRoute(StudyCalendar)} />
     <Route path="myzone/settings" element={renderLazyRoute(Settings)} />
     <Route path="myzone/diary" element={renderLazyRoute(Diary)} />
     <Route path="mailbox" element={renderLazyRoute(Mailbox)} />
@@ -197,13 +189,6 @@ export const layoutRoutes = (
     {/* M09 万能墙 */}
     <Route path="confession" element={renderLazyRoute(ConfessionWall)} />
     <Route path="confession/new" element={renderLazyRoute(ConfessionCompose)} />
-    {/* M10 学习资料：课程为中心；/materials/file 用 ?path= 传参避免路径里的 / 被拆段 */}
-    <Route path="materials" element={renderLazyRoute(MaterialsHome)} />
-    <Route path="materials/course/:id" element={renderLazyRoute(MaterialsCourse)} />
-    <Route path="materials/file" element={renderLazyRoute(MaterialDetail)} />
-    <Route path="materials/upload" element={isMaterialsPreviewMode ? <Navigate to="/materials" replace /> : renderLazyRoute(MaterialsUpload)} />
-    <Route path="materials/me" element={isMaterialsPreviewMode ? <Navigate to="/materials" replace /> : renderLazyRoute(MaterialsMine)} />
-    <Route path="admin/materials" element={isMaterialsPreviewMode ? <Navigate to="/materials" replace /> : renderLazyRoute(AdminMaterials)} />
     <Route path="*" element={<Navigate to="/" replace />} />
   </>
 );

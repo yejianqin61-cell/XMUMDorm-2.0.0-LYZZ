@@ -128,8 +128,9 @@ export function TreeholeTagList({
           testID={`treehole-tag-${tag.id}`}
           label={(locale === 'en' ? tag.nameEn || tag.nameZh : tag.nameZh || tag.nameEn) ?? ''}
           variant="static"
-          // 静态标签不需要 48dp 命中区（它不可点）：压到 32 让一行标签不撑高帖子
-          style={{ minHeight: theme.space('space_8') }}
+          // 2026-10-31：tag 是正文的附属信息，不是大按钮 —— 字阶退到 caption、
+          // 胶囊收到 4/12（正文 14sp → tag 12sp ≈ 0.85×）。
+          size="compact"
         />
       ))}
     </View>

@@ -14,7 +14,7 @@ const CACHE_TTL_MS = 60 * 1000; // 1 分钟
 /**
  * 刷新敏感词缓存
  */
-async function refreshCache() {
+async function refreshCache({ failClosed = false } = {}) {
   try {
     const rows = await query(
       'SELECT word FROM sensitive_words WHERE enabled = 1'
@@ -22,6 +22,7 @@ async function refreshCache() {
     if (!Array.isArray(rows)) {
       throw new TypeError('Expected sensitive words query to return an array');
     }
+    if (failClosed && rows.some(row => typeof row?.word !== 'string')) throw new TypeError('Invalid campus sensitive-word row');
     cachedWords = rows
       .map((r) => (typeof r?.word === 'string' ? r.word.trim() : ''))
       .filter(Boolean);
@@ -29,6 +30,7 @@ async function refreshCache() {
     return cachedWords;
   } catch (err) {
     console.error('[sensitiveWordFilter] cache refresh failed:', err.message);
+    if (failClosed) throw err;
     // 缓存过期时回退到空列表（不阻断用户）
     return cachedWords || [];
   }
@@ -37,7 +39,10 @@ async function refreshCache() {
 /**
  * 获取当前敏感词列表（带缓存）
  */
-async function getSensitiveWords() {
+async function getSensitiveWords({ failClosed = false } = {}) {
+  // Campus writes verify the dependency on each request, even with a warm cache.
+  // A successful empty table is valid; a failed query never reuses stale words.
+  if (failClosed) return refreshCache({ failClosed: true });
   if (!cachedWords || Date.now() - cacheTime > CACHE_TTL_MS) {
     await refreshCache();
   }
@@ -111,12 +116,12 @@ function extractTexts(body) {
  * 用法：
  *   router.post('/...', authenticateToken, sensitiveWordFilter, async (req, res) => { ... })
  */
-async function sensitiveWordFilter(req, res, next) {
+async function filterWithPolicy(req, res, next, failClosed) {
   try {
     const texts = extractTexts(req.body);
-    if (texts.length === 0) return next();
+    if (texts.length === 0 && !failClosed) return next();
 
-    const words = await getSensitiveWords();
+    const words = await getSensitiveWords({ failClosed });
     if (words.length === 0) return next();
 
     for (const text of texts) {
@@ -133,16 +138,18 @@ async function sensitiveWordFilter(req, res, next) {
     next();
   } catch (err) {
     console.error('[sensitiveWordFilter]', err.message || err);
+    if (failClosed) return res.status(503).json({ status: -1, message: '敏感词校验暂不可用，本次校园写入已拒绝', code: 'CAMPUS_SAFETY_UNAVAILABLE' });
     // 过滤失败不阻断用户
     next();
   }
 }
+function sensitiveWordFilter(req, res, next) { return filterWithPolicy(req, res, next, false); }
+sensitiveWordFilter.strict = function campusSensitiveWordFilter(req, res, next) { return filterWithPolicy(req, res, next, true); };
 
 // 导出刷新函数供管理端调用（新增/删除/启停敏感词后刷新缓存）
 sensitiveWordFilter.refreshCache = refreshCache;
 
-// 额外导出内部助手，供需要「自行取词表并检查非 req.body 文本」的场景复用
-// （例如学习资料上传时检查 .md/.txt 的**文件内容**）。
+// 额外导出内部助手，供需要「自行取词表并检查非 req.body 文本」的场景复用。
 // 默认导出仍是中间件本身，不影响既有用法。
 sensitiveWordFilter.getSensitiveWords = getSensitiveWords;
 sensitiveWordFilter.checkText = checkText;

@@ -37,9 +37,9 @@ See `docs/README.md` for the full documentation structure.
 
 ### Backend
 - **Entry**: `server.js`
-- **Routes** (20 modules, 273 endpoints): `admin`, `advertisements`, `auth`, `canteen`, `clubs`, `confessions`, `diary`, `errands`, `handbook`, `marketplace`, `materials`, `notifications`, `organizations`, `posts`, `push`, `reports`, `schedule`, `square`, `todos`, `users`
-- **Middleware** (6): `adminAuth`, `auth`, `checkSanction`, `materialUpload`, `sensitiveWordFilter`, `upload`
-- **Services** (16): `objectStorage`, `auditLog`, `expService`, `notificationService`, `pushSend`, `squareHomeService`, `squareRecommendationService`, `imageProcessing`, `email`, `githubMaterials`, `materialValidation`, `materialErrors`, `courseCatalog`, `rankingStats`, `advertisementTarget`, `classReminderPush`
+- **Routes**: `admin`, `advertisements`, `auth`, `canteen`, `clubs`, `confessions`, `diary`, `errands`, `handbook`, `marketplace`, `notifications`, `organizations`, `posts`, `push`, `reports`, `schedule`, `square`, `todos`, `users`
+- **Middleware**: `adminAuth`, `auth`, `checkSanction`, `sensitiveWordFilter`, `upload`
+- **Services**: `objectStorage`, `auditLog`, `expService`, `notificationService`, `pushSend`, `squareHomeService`, `squareRecommendationService`, `imageProcessing`, `email`, `rankingStats`, `advertisementTarget`, `classReminderPush`
 - **Database**: `database.js` (MySQL pool), `init-db.sql`, `migrations/` (73 files)
 
 ### Frontend Web

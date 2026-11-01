@@ -24,10 +24,6 @@ export const QK = {
   handbookArticleComments: (id) => ['handbook', 'article', id, 'comments'],
   handbookMeSaved: (tokenKey, pageSize) => ['handbook', 'me', 'saved', tokenKey, pageSize],
   handbookMeChecklists: (tokenKey) => ['handbook', 'me', 'checklists', tokenKey],
-  handbookMeCourseReviews: (tokenKey, pageSize) => ['handbook', 'me', 'courseReviews', tokenKey, pageSize],
-  courseReviews: (params) => ['handbook', 'courseReviews', params || {}],
-  courseReviewDetail: (id) => ['handbook', 'courseReview', id],
-  courseReviewComments: (id) => ['handbook', 'courseReview', id, 'comments'],
 
   rankingsAll: () => ['rankings', 'all'],
   scheduleWeek: (week) => ['schedule', 'week', week],
@@ -90,13 +86,4 @@ export const QK = {
   confessionDetail: (id, tokenKey) => ['confessions', 'detail', id, tokenKey ?? '_guest'],
   confessionComments: (id) => ['confessions', 'comments', id],
 
-  // M10 学习资料
-  materialsList: (params) => ['materials', 'list', params || {}],
-  materialsCourses: (q) => ['materials', 'courses', q || ''],
-  /** 单份资料的正文（走后端兜底或 CDN，键里带 path 与 ref 便于缓存失效） */
-  materialsText: (path, ref) => ['materials', 'text', path, ref || '_main'],
-  materialsMyUploads: (tokenKey, page, pageSize) => ['materials', 'me', 'uploads', tokenKey ?? '_guest', page, pageSize],
-  materialsMySaves: (tokenKey) => ['materials', 'me', 'saves', tokenKey ?? '_guest'],
-  materialsUploadStatus: (id) => ['materials', 'upload', 'status', id],
-  materialsAdminStats: () => ['materials', 'admin', 'stats'],
 };

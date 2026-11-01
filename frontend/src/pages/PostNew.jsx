@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { ArrowLeft, ImagePlus, Send } from 'lucide-react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Button from '../components/ui/Button';
@@ -40,12 +41,24 @@ export default function PostNew() {
   const [imageFiles, setImageFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [imageNotice, setImageNotice] = useState('');
+  const previewUrlsRef = useRef([]);
+
   const [selectedTagIds, setSelectedTagIds] = useState([]);
   const fileInputRef = useRef(null);
   const [termsStatus, setTermsStatus] = useState(null);
   const [termsLoading, setTermsLoading] = useState(true);
   const [termsAccepting, setTermsAccepting] = useState(false);
   const [termsError, setTermsError] = useState('');
+
+  useEffect(() => {
+    previewUrlsRef.current = previewUrls;
+  }, [previewUrls]);
+
+  useEffect(() => () => {
+    previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+  }, []);
 
   const loadTermsStatus = useCallback(async () => {
     if (!isLoggedIn) {
@@ -104,14 +117,13 @@ export default function PostNew() {
   }, [preselectTagSlug, allTags]);
 
   const toggleTag = (tagId) => {
-    setSelectedTagIds((prev) => {
-      if (prev.includes(tagId)) return prev.filter((item) => item !== tagId);
-      if (prev.length >= 3) {
-        Toast.error(isEn ? 'Up to 3 tags' : '最多选择 3 个标签');
-        return prev;
-      }
-      return [...prev, tagId];
-    });
+    if (selectedTagIds.includes(tagId)) {
+      setSelectedTagIds(selectedTagIds.filter((item) => item !== tagId));
+    } else if (selectedTagIds.length >= 3) {
+      Toast.error(isEn ? 'Up to 3 tags' : '最多选择 3 个标签');
+    } else {
+      setSelectedTagIds([...selectedTagIds, tagId]);
+    }
   };
 
   if (!isLoggedIn) {
@@ -119,7 +131,11 @@ export default function PostNew() {
   }
 
   const handleImageChange = (event) => {
-    const files = Array.from(event.target.files || []).slice(0, 3 - imageFiles.length);
+    const selectedFiles = Array.from(event.target.files || []);
+    const files = selectedFiles.slice(0, 3 - imageFiles.length);
+    setImageNotice(selectedFiles.length > files.length
+      ? (isEn ? 'Up to 3 images. Only the first available images were added.' : '最多上传 3 张图片，已添加剩余名额内的图片。')
+      : '');
     if (files.length === 0) return;
     const newUrls = files.map((file) => URL.createObjectURL(file));
     setImageFiles((prev) => [...prev, ...files].slice(0, 3));
@@ -128,6 +144,7 @@ export default function PostNew() {
   };
 
   const removeImage = (index) => {
+    setImageNotice('');
     URL.revokeObjectURL(previewUrls[index]);
     setImageFiles((prev) => prev.filter((_, itemIndex) => itemIndex !== index));
     setPreviewUrls((prev) => prev.filter((_, itemIndex) => itemIndex !== index));
@@ -135,21 +152,26 @@ export default function PostNew() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (termsStatus?.accepted !== true) return;
+    if (termsStatus?.accepted !== true || loading) return;
+    setSubmitError('');
+    const showError = (message) => {
+      setSubmitError(message);
+      Toast.error(message);
+    };
 
     const trimmedTitle = title.trim();
     const trimmedContent = content.trim();
     if (!isAdmin && !trimmedTitle) {
-      Toast.error(isEn ? 'Title is required' : '请输入标题');
+      showError(isEn ? 'Title is required' : '请输入标题');
       return;
     }
     if (!trimmedContent) {
-      Toast.error(isEn ? 'Content is required' : '请输入内容');
+      showError(isEn ? 'Content is required' : '请输入内容');
       return;
     }
     const attribution = isAdmin ? null : buildPostAttribution(contentOrigin, repostSource, customSource);
     if (!isAdmin && !attribution) {
-      Toast.error(isEn ? 'Enter a plain-text source of 1–100 characters' : '请输入 1–100 字符的纯文本来源');
+      showError(isEn ? 'Enter a plain-text source of 1–100 characters' : '请输入 1–100 字符的纯文本来源');
       return;
     }
 
@@ -219,7 +241,7 @@ export default function PostNew() {
         setTermsError(isEn ? 'Please accept the current Terms of Service first.' : '请先接受当前服务条款。');
         return;
       }
-      Toast.error(getApiErrorMessage(error));
+      showError(getApiErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -233,9 +255,9 @@ export default function PostNew() {
       <div className="postnew-editor">
         <div className="postnew-editor__topbar">
           <button type="button" className="postnew-back" onClick={() => navigate(backTo)}>
-            {isEn ? 'Back' : '返回'}
+            <ArrowLeft size={16} aria-hidden="true" />{isEn ? 'Back' : '返回'}
           </button>
-          <h1>{pageTitle}</h1>
+          <div><h1>{pageTitle}</h1><p className="postnew-intro">{isAdmin ? (isEn ? 'Share an update with the campus.' : '向全校同学发布重要通知。') : (isEn ? 'Share a thought, a question, or a moment on campus.' : '分享校园日常，也聊聊此刻的想法。')}</p></div>
         </div>
 
         {termsLoading || termsStatus?.accepted !== true ? (
@@ -249,136 +271,151 @@ export default function PostNew() {
             onRetry={loadTermsStatus}
           />
         ) : (
-          <form className="postnew-form" onSubmit={handleSubmit}>
-          {!isAdmin ? (
-            <>
-              <Select
-                id="post-content-origin"
-                label={isEn ? 'Content declaration' : '内容声明'}
-                value={contentOrigin}
-                onChange={(event) => setContentOrigin(event.target.value)}
-                required
-                aria-required="true"
-              >
-                <option value="original">{isEn ? 'Original' : '原创'}</option>
-                <option value="repost">{isEn ? 'Repost' : '转载'}</option>
-              </Select>
-              {contentOrigin === 'repost' ? (
-                <>
-                  <Select
-                    id="post-repost-source"
-                    label={isEn ? 'Source' : '转载来源'}
-                    value={repostSource}
-                    onChange={(event) => setRepostSource(event.target.value)}
-                    required
-                    aria-required="true"
-                  >
-                    {POST_REPOST_SOURCES.map((source) => <option key={source} value={source}>{source}</option>)}
-                    <option value="custom">{isEn ? 'Custom' : '自定义'}</option>
-                  </Select>
-                  {repostSource === 'custom' ? (
-                    <Input
-                      id="post-custom-source"
-                      label={isEn ? 'Source description' : '来源说明'}
-                      hint={isEn ? 'Plain text, 1–100 characters. No link required.' : '1–100 字符纯文本，无需链接。'}
-                      value={customSource}
-                      onChange={(event) => setCustomSource(event.target.value)}
-                      maxLength={POST_REPOST_SOURCE_MAX_LENGTH}
-                      required
-                      aria-required="true"
-                    />
-                  ) : null}
-                </>
+          <form className="postnew-form" onSubmit={handleSubmit} aria-busy={loading} aria-describedby={submitError ? 'postnew-error' : undefined}>
+            <div className="postnew-writing">
+              {!isAdmin ? (
+                <Input
+                  id="post-title"
+                  className="postnew-title-field"
+                  hint={isEn ? `${title.length}/120 characters` : `${title.length}/120 字符`}
+                  label={isEn ? 'Title' : '标题'}
+                  placeholder={isEn ? 'Give your post a title...' : '给帖子起个标题...'}
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                  maxLength={120}
+                  required
+                />
               ) : null}
-            </>
-          ) : null}
-          {!isAdmin ? (
-            <Input
-              label={isEn ? 'Title' : '标题'}
-              placeholder={isEn ? 'Give your post a title...' : '给帖子起个标题...'}
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              maxLength={120}
-              required
-            />
-          ) : null}
 
-          <Textarea
-            label={isAdmin ? (isEn ? 'Announcement' : '公告内容') : (isEn ? 'Content' : '内容')}
-            placeholder={isAdmin ? (isEn ? 'Write your announcement...' : '写下要通知全站的内容...') : (isEn ? 'Write something...' : '写点什么...')}
-            value={content}
-            onChange={(event) => setContent(event.target.value)}
-            rows={10}
-          />
+              <Textarea
+                id="post-content"
+                label={isAdmin ? (isEn ? 'Announcement' : '公告内容') : (isEn ? 'Content' : '内容')}
+                placeholder={isAdmin ? (isEn ? 'Write your announcement...' : '写下要通知全站的内容...') : (isEn ? 'Write something...' : '写点什么...')}
+                value={content}
+                onChange={(event) => setContent(event.target.value)}
+                rows={10}
+              />
 
-          <div className="postnew-tools">
-            <div className="postnew-tool">
-              <span className="postnew-label">{isEn ? `Images ${previewUrls.length}/3` : `图片 ${previewUrls.length}/3`}</span>
-              <div className="postnew-images">
-                {previewUrls.map((url, index) => (
-                  <div key={url} className="postnew-image-wrap">
-                    <img src={url} alt="" className="postnew-image" />
-                    <button
-                      type="button"
-                      className="postnew-image-remove"
-                      onClick={() => removeImage(index)}
-                      aria-label={isEn ? 'Remove image' : '移除图片'}
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-                {previewUrls.length < 3 ? (
-                  <label className="postnew-image-add">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp,image/gif"
-                      multiple
-                      onChange={handleImageChange}
-                      className="postnew-file-input"
-                    />
-                    <span className="postnew-image-add-inner">+</span>
-                  </label>
-                ) : null}
+            </div>
+            <div className="postnew-tools">
+              <div className="postnew-tool">
+                <div className="postnew-section-heading"><span className="postnew-label">{isEn ? 'Images' : '添加图片'}</span><span className="postnew-count" aria-live="polite">{previewUrls.length}/3</span></div>
+                <p className="postnew-hint">{isEn ? 'Optional · JPG, PNG, WebP or GIF · Up to 3 images' : '选填 · 支持 JPG、PNG、WebP、GIF · 最多 3 张'}</p>
+                <div className="postnew-images">
+                  {previewUrls.map((url, index) => (
+                    <div key={url} className="postnew-image-wrap">
+                      <img src={url} alt={isEn ? `Image ${index + 1} preview` : `第 ${index + 1} 张图片预览`} className="postnew-image" />
+                      <button
+                        type="button"
+                        className="postnew-image-remove"
+                        onClick={() => removeImage(index)}
+                        aria-label={isEn ? `Remove image ${index + 1}` : `移除第 ${index + 1} 张图片`}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  {previewUrls.length < 3 ? (
+                    <label className="postnew-image-add">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        multiple
+                        aria-label={isEn ? 'Add images' : '添加图片'}
+                        onChange={handleImageChange}
+                        className="postnew-file-input"
+                      />
+                      <span className="postnew-image-add-inner"><ImagePlus size={24} aria-hidden="true" /><span>{isEn ? 'Add images' : '添加图片'}</span></span>
+                    </label>
+                  ) : null}
+                </div>
+                {imageNotice ? <p className="postnew-hint" role="status">{imageNotice}</p> : null}
               </div>
+
+              {!isAdmin && allTags.length > 0 ? (
+                <div className="postnew-tool">
+                  <div className="postnew-section-heading"><span className="postnew-label">{isEn ? 'Topics' : '选择标签'}</span><span className="postnew-count" aria-live="polite">{selectedTagIds.length}/3</span></div>
+                  <p className="postnew-hint">{isEn ? 'Optional · Choose up to 3 topics to help others find your post.' : '选填 · 最多选择 3 个，让同学更容易找到你的帖子。'}</p>
+                  <div className="postnew-tag-pool">
+                    {allTags.map((tag) => {
+                      const active = selectedTagIds.includes(tag.id);
+                      return (
+                        <Tag
+                          key={tag.id}
+                          as="button"
+                          tone="default"
+                          variant={active ? 'soft' : 'outline'}
+                          active={active}
+                          aria-pressed={active}
+                          interactive
+                          className="postnew-tag-chip-ui"
+                          onClick={() => toggleTag(tag.id)}
+                        >
+                          {tagLabel(tag)}
+                        </Tag>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
             </div>
 
-            {!isAdmin && allTags.length > 0 ? (
-              <div className="postnew-tool">
-                <span className="postnew-label">{isEn ? `Tags ${selectedTagIds.length}/3` : `标签 ${selectedTagIds.length}/3`}</span>
-                <div className="postnew-tag-pool">
-                  {allTags.map((tag) => {
-                    const active = selectedTagIds.includes(tag.id);
-                    return (
-                      <Tag
-                        key={tag.id}
-                        as="button"
-                        tone="default"
-                        variant={active ? 'soft' : 'outline'}
-                        active={active}
-                        interactive
-                        className="postnew-tag-chip-ui"
-                        onClick={() => toggleTag(tag.id)}
-                      >
-                        {tagLabel(tag)}
-                      </Tag>
-                    );
-                  })}
-                </div>
+            {!isAdmin ? (
+              <div className="postnew-declaration">
+                <Select
+                  id="post-content-origin"
+                  label={isEn ? 'Content declaration' : '内容声明'}
+                  value={contentOrigin}
+                  onChange={(event) => setContentOrigin(event.target.value)}
+                  required
+                  aria-required="true"
+                >
+                  <option value="original">{isEn ? 'Original' : '原创'}</option>
+                  <option value="repost">{isEn ? 'Repost' : '转载'}</option>
+                </Select>
+                {contentOrigin === 'repost' ? (
+                  <>
+                    <Select
+                      id="post-repost-source"
+                      label={isEn ? 'Source' : '转载来源'}
+                      value={repostSource}
+                      onChange={(event) => setRepostSource(event.target.value)}
+                      required
+                      aria-required="true"
+                    >
+                      {POST_REPOST_SOURCES.map((source) => <option key={source} value={source}>{source}</option>)}
+                      <option value="custom">{isEn ? 'Custom' : '自定义'}</option>
+                    </Select>
+                    {repostSource === 'custom' ? (
+                      <Input
+                        id="post-custom-source"
+                        label={isEn ? 'Source description' : '来源说明'}
+                        hint={isEn ? 'Plain text, 1–100 characters. No link required.' : '1–100 字符纯文本，无需链接。'}
+                        value={customSource}
+                        onChange={(event) => setCustomSource(event.target.value)}
+                        maxLength={POST_REPOST_SOURCE_MAX_LENGTH}
+                        required
+                        aria-required="true"
+                      />
+                    ) : null}
+                  </>
+                ) : null}
               </div>
             ) : null}
-          </div>
 
-          <div className="postnew-submit-row">
-            <Button
-              type="submit"
-              loading={loading}
-              disabled={!isAdmin && !title.trim() ? true : !content.trim()}
-            >
-              {loading ? (isEn ? 'Publishing…' : '发布中…') : pageTitle}
-            </Button>
-          </div>
+            {submitError ? <div id="postnew-error" className="postnew-error" role="alert">{submitError}</div> : null}
+            <div className="postnew-submit-row">
+              <p className="postnew-hint">{loading ? (isEn ? 'Publishing, please wait…' : '正在发布，请稍候…') : (!isAdmin && !title.trim()) || !content.trim() ? (isEn ? (isAdmin ? 'Add announcement content to publish.' : 'Add a title and content to publish.') : isAdmin ? '填写公告内容后即可发布。' : '填写标题和正文后即可发布。') : (isEn ? 'Ready to publish.' : '准备好了，就发布吧。')}</p>
+              <Button
+                type="submit"
+                iconLeft={<Send size={16} aria-hidden="true" />}
+                loading={loading}
+                disabled={!isAdmin && !title.trim() ? true : !content.trim()}
+              >
+                {loading ? (isEn ? 'Publishing…' : '发布中…') : pageTitle}
+              </Button>
+            </div>
           </form>
         )}
       </div>

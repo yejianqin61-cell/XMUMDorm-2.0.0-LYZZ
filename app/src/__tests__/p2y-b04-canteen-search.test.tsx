@@ -1,13 +1,21 @@
 import * as React from 'react';
-import { act, fireEvent, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, waitFor, within } from '@testing-library/react-native';
 import { renderApp } from './helpers/renderApp';
 import { CanteenSearchScreen } from '@/features/square/CanteenSearchScreen';
 import { validateSearchQuery, mergeSearchRows, normalizeSearchPage } from '@/features/square/canteenSearch';
-jest.mock('expo-router', () => ({ __state: { targets: [] as unknown[] }, useLocalSearchParams: () => ({}), useRouter: () => ({ push: (target: unknown) => require('expo-router').__state.targets.push(target) }) }));
+jest.mock('expo-router', () => ({ __state: { targets: [] as unknown[], query: '' }, useLocalSearchParams: () => ({ query: require('expo-router').__state.query }), useRouter: () => ({ push: (target: unknown) => require('expo-router').__state.targets.push(target) }) }));
 jest.mock('../../../shared/api/canteen', () => ({ searchCanteen: jest.fn() }));
 const api = require('../../../shared/api/canteen') as { searchCanteen: jest.Mock };
 const page = (name: string, id = 9) => ({ products: [{ id, name, shop_name: 'Kitchen', comprehensive_score: 7 }], articles: [], hasMore: { products: false, articles: false } });
-beforeEach(() => { api.searchCanteen.mockReset().mockResolvedValue(page('Rice')); require('expo-router').__state.targets.length = 0; });
+beforeEach(() => { api.searchCanteen.mockReset().mockResolvedValue(page('Rice')); require('expo-router').__state.targets.length = 0; require('expo-router').__state.query = ''; });
+it('searches the keyword submitted from the canteen home and opens its result', async () => {
+  require('expo-router').__state.query = ' Rice ';
+  const view = await renderApp(<CanteenSearchScreen />);
+  await waitFor(() => expect(view.getByTestId('search-product-9')).toBeTruthy());
+  expect(api.searchCanteen).toHaveBeenCalledWith('Rice', { type: 'all', page: 1, pageSize: 10 });
+  await fireEvent.press(view.getByTestId('search-product-9'));
+  expect(require('expo-router').__state.targets).toContainEqual({ pathname: '/canteen/product/[id]', params: { id: '9' } });
+});
 it('classifies empty and overlong keywords as business states', () => {
   expect(validateSearchQuery('   ')).toBe('empty'); expect(validateSearchQuery('x'.repeat(51))).toBe('tooLong'); expect(validateSearchQuery('x'.repeat(50))).toBeNull();
 });
@@ -25,8 +33,18 @@ it('navigates a product result to its existing detail route', async () => {
   await fireEvent.changeText(view.getByLabelText('搜索菜品或美食文章'), 'Rice');
   await fireEvent.press(view.getByTestId('canteen-search-submit'));
   await waitFor(() => expect(view.getByTestId('search-product-9')).toBeTruthy());
+  expect(view.getByTestId('search-product-media-9-placeholder')).toBeTruthy();
   await fireEvent.press(view.getByTestId('search-product-9'));
   expect(require('expo-router').__state.targets).toContainEqual({ pathname: '/canteen/product/[id]', params: { id: '9' } });
+});
+it('uses a placeholder when a search result image fails to load', async () => {
+  api.searchCanteen.mockResolvedValue({ ...page('Rice'), products: [{ id: 9, name: 'Rice', cover_url: '/bad.png' }] });
+  const view = await renderApp(<CanteenSearchScreen />);
+  await fireEvent.changeText(view.getByLabelText('搜索菜品或美食文章'), 'Rice');
+  await fireEvent.press(view.getByTestId('canteen-search-submit'));
+  await waitFor(() => expect(view.getByTestId('search-product-media-9-image')).toBeTruthy());
+  await fireEvent(view.getByTestId('search-product-media-9-image'), 'error', { nativeEvent: { error: 'unavailable' } });
+  expect(view.getByTestId('search-product-media-9-placeholder')).toBeTruthy();
 });
 it('discards a slow result after the keyword has changed', async () => {
   let finish!: (value: unknown) => void;
@@ -51,4 +69,18 @@ it('shows network failure with a retry action', async () => {
   await fireEvent.changeText(view.getByLabelText('搜索菜品或美食文章'), 'Rice'); await fireEvent.press(view.getByTestId('canteen-search-submit'));
   await waitFor(() => expect(view.getByTestId('canteen-search-list-error')).toBeTruthy());
   expect(view.getByText('网络没连上')).toBeTruthy();
+});
+it('keeps previous results visible when refreshing the same search fails', async () => {
+  api.searchCanteen.mockResolvedValueOnce(page('Rice')).mockRejectedValueOnce({ kind: 'offline' });
+  const view = await renderApp(<CanteenSearchScreen />);
+  await fireEvent.changeText(view.getByLabelText('搜索菜品或美食文章'), 'Rice');
+  await fireEvent.press(view.getByTestId('canteen-search-submit'));
+  await waitFor(() => expect(view.getByTestId('search-product-9')).toBeTruthy());
+  await fireEvent.press(view.getByTestId('canteen-search-submit'));
+  await waitFor(() => expect(view.getByTestId('canteen-search-stale')).toBeTruthy());
+  expect(view.getByTestId('search-product-9')).toBeTruthy();
+  api.searchCanteen.mockResolvedValueOnce(page('Updated', 10));
+  await fireEvent.press(within(view.getByTestId('canteen-search-stale')).getByRole('button'));
+  await waitFor(() => expect(view.getByTestId('search-product-10')).toBeTruthy());
+  expect(view.queryByTestId('canteen-search-stale')).toBeNull();
 });

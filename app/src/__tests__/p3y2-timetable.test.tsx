@@ -26,10 +26,10 @@ it('assigns every course in the week a stable course accent (2026-10-18 redesign
   expect(map.size).toBe(1);
 });
 
-it('retains Friday and removes both weekend buckets from grid input without mutating the cache', () => {
+it('retains weekday and weekend courses in grid input without mutating the cache', () => {
   const original = normalizeTimetableWeek(payload(1))!;
   const shown = weekdayTimetableWeek(original);
-  expect(Object.keys(shown.days)).toEqual(['1', '2', '3', '4', '5']);
+  expect(Object.keys(shown.days)).toEqual(['1', '2', '3', '4', '5', '6', '7']);
   expect(shown.days[5][0].courseCode).toBe('CS101');
   expect(original.days[6]).toHaveLength(1);
 });
@@ -40,7 +40,7 @@ it('selects a numeric week from the horizontal filter and passes the existing re
   await fireEvent.press(view.getByTestId('week-number-14'));
   await waitFor(() => expect(api.getScheduleWeek).toHaveBeenCalledWith(14));
   await waitFor(() => expect(gridProps?.week.week).toBe(14));
-  expect(gridProps?.visibleWeekdays).toEqual([1, 2, 3, 4, 5]);
+  expect(gridProps?.visibleWeekdays).toEqual([1, 2, 3, 4, 5, 6, 7]);
   expect(view.getByTestId('week-number-14').props.accessibilityLabel).toBe('第 14 周');
   expect(view.queryByTestId('timetable-prev')).toBeNull();
   expect(view.queryByTestId('timetable-next')).toBeNull();

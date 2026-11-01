@@ -12,6 +12,7 @@ import PetAnchorSlot from '../components/pet/PetAnchorSlot';
 import LoginCard from '../components/auth/LoginCard';
 import InputField from '../components/auth/InputField';
 import Button from '../components/auth/Button';
+import { loginReturnTarget } from '../utils/loginReturn';
 
 /** 登录页：手稿风格（渐变 + 玻璃卡片 + 组件化） */
 function Login() {
@@ -24,10 +25,7 @@ function Login() {
   const { handleExpResponse } = useExpFeedback();
   const navigate = useNavigate();
   const location = useLocation();
-  const fromLocation = location.state?.from;
-  const from = fromLocation
-    ? `${fromLocation.pathname || '/'}${fromLocation.search || ''}`
-    : '/';
+  const from = loginReturnTarget(location);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -55,7 +53,7 @@ function Login() {
 
   const handleSkip = () => {
     skipLogin();
-    navigate('/', { replace: true });
+    navigate(/^\/about\/campus\/[1-9]\d*(?:[?#]|$)/.test(from) ? from : '/', { replace: true });
   };
 
   return (
@@ -69,6 +67,7 @@ function Login() {
         <PetAnchorSlot />
         <LoginCard>
           <AuthCardBrandHeader title="XMUMDorm" />
+          {/^\/about\/campus\/[1-9]\d*(?:[?#]|$)/.test(from) && <p role="status" className="text-sm text-slate-600">{isZh ? '校园快讯需要登录有效账号后阅读。登录成功后将返回原快讯。' : 'Sign in with an eligible account to read this news. You will return here after login.'}</p>}
           <form className="mt-0 space-y-4" onSubmit={handleSubmit}>
           <InputField
             id="login-account"

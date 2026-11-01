@@ -10,10 +10,11 @@ import { clearMoodleCache, settleMoodleStorage, confirmMoodleSchoolIdentity, sel
 import { readTokenSync, saveToken, clearToken } from '@/features/auth/tokenStore';
 
 const mockInject = jest.fn();
+const mockReload = jest.fn();
 let mockProps: WebViewProps;
 jest.mock('react-native-webview', () => ({ __esModule: true,
   default: mockReact.forwardRef(function FakeWebView(props: WebViewProps, ref) {
-    mockReact.useImperativeHandle(ref, () => ({ injectJavaScript: mockInject }));
+    mockReact.useImperativeHandle(ref, () => ({ injectJavaScript: mockInject, reload: mockReload }));
     mockReact.useLayoutEffect(() => { mockProps = props; }); return <MockView />;
   }),
 }));
@@ -184,5 +185,100 @@ it('p3g2 gathers the native workspace actions into one tool row', async () => {
   expect(row.getByTestId('moodle-sync')).toBeTruthy();
   expect(row.getByTestId('moodle-clear')).toBeTruthy();
   expect(view.queryByTestId('moodle-native')).toBeNull();
+  await view.unmount(); await settleMoodleStorage();
+});
+
+it('allows retrying a failed Moodle detail without leaving the selected resource', async () => {
+  const view = await renderApp(<MoodleWorkspaceHost labels={labels} now={() => now}
+    onOpenOriginal={jest.fn()} />, { inScreen: true });
+  await confirm();
+  await fireEvent.press(view.getByTestId('moodle-sync'));
+  await core('courses', { courses: [course], nextOffset: 0 });
+  await fireEvent.press(view.getByTestId('moodle-select-1'));
+  await fireEvent.press(view.getByTestId('moodle-confirm-selection'));
+  await core('state', state);
+  await core('events', { events: [], firstId: null, lastId: null });
+  await fireEvent.press(view.getByTestId('moodle-module-101'));
+  const firstId = requestId('detail');
+  await message({ kind: 'dorm:moodle:detail', requestId: firstId, status: 'timeout' });
+  expect(view.getByText('detail timeout')).toBeTruthy();
+  await fireEvent.press(view.getByTestId('moodle-detail-retry'));
+  expect(requestId('detail')).not.toBe(firstId);
+  expect(view.getByText('detail loading')).toBeTruthy();
+  await view.unmount(); await settleMoodleStorage();
+});
+
+it('reports an unknown login page load failure and lets the user retry', async () => {
+  mockReload.mockClear();
+  const view = await renderApp(<MoodleWorkspaceHost labels={labels} now={() => now}
+    onOpenOriginal={jest.fn()} />, { inScreen: true });
+  await act(() => mockProps.onError?.({ nativeEvent: { code: -2, description: 'unknown',
+    url: 'https://l.xmu.edu.my/' } } as never));
+  expect(view.getByText('failure unavailable')).toBeTruthy();
+  await fireEvent.press(view.getByTestId('moodle-login-retry'));
+  expect(mockReload).toHaveBeenCalledTimes(1);
+  await act(() => mockProps.onLoadStart?.({ nativeEvent: {} } as never));
+  expect(view.queryByText('failure unavailable')).toBeNull();
+  await view.unmount(); await settleMoodleStorage();
+});
+
+it('opens the selected discussion original after its detail fails and preserves the retry target', async () => {
+  const onOriginal = jest.fn();
+  const view = await renderApp(<MoodleWorkspaceHost labels={labels} now={() => now}
+    onOpenOriginal={onOriginal} />, { inScreen: true });
+  await confirm();
+  await fireEvent.press(view.getByTestId('moodle-sync'));
+  await core('courses', { courses: [course], nextOffset: 0 });
+  await fireEvent.press(view.getByTestId('moodle-select-1'));
+  await fireEvent.press(view.getByTestId('moodle-confirm-selection'));
+  await core('state', state);
+  await core('events', { events: [], firstId: null, lastId: null });
+  await fireEvent.press(view.getByTestId('moodle-module-101'));
+  await message({ kind: 'dorm:moodle:detail', requestId: requestId('detail'), status: 'success', data: {
+    kind: 'forum', courseId: 1, moduleId: 101, url: moduleUrl, description: '',
+    announcements: [{ id: 71, title: 'Selected discussion', author: 'Dr One', pinned: false, url: discussionUrl }],
+  } });
+  await fireEvent.press(view.getByTestId('moodle-discussion-71'));
+  const failedId = requestId('detail');
+  await message({ kind: 'dorm:moodle:detail', requestId: failedId, status: 'timeout' });
+  await fireEvent.press(view.getByText('Original'));
+  expect(onOriginal).toHaveBeenCalledWith(discussionUrl);
+  await fireEvent.press(view.getByTestId('moodle-detail-retry'));
+  expect(requestId('detail')).not.toBe(failedId);
+  expect(mockInject.mock.calls.at(-1)?.[0]).toContain(discussionUrl);
+  await view.unmount(); await settleMoodleStorage();
+});
+
+it('keeps same-session data when visiting login and returning to the native workspace', async () => {
+  const view = await renderApp(<MoodleWorkspaceHost labels={labels} now={() => now}
+    onOpenOriginal={jest.fn()} />, { inScreen: true });
+  await confirm();
+  await fireEvent.press(view.getByTestId('moodle-sync'));
+  await core('courses', { courses: [course], nextOffset: 0 });
+  await fireEvent.press(view.getByTestId('moodle-select-1'));
+  await fireEvent.press(view.getByTestId('moodle-confirm-selection'));
+  await core('state', state);
+  await core('events', { events: [], firstId: null, lastId: null });
+  await fireEvent.press(view.getByTestId('moodle-login'));
+  expect(view.queryByTestId('moodle-workspace')).toBeNull();
+  await fireEvent.press(view.getByTestId('moodle-native'));
+  expect(view.getByText('Course one')).toBeTruthy();
+  expect(view.getByTestId('moodle-module-101')).toBeTruthy();
+  await view.unmount(); await settleMoodleStorage();
+});
+
+it('explains session expiry and hides private content until a new identity is confirmed', async () => {
+  const view = await renderApp(<MoodleWorkspaceHost labels={labels} now={() => now}
+    onOpenOriginal={jest.fn()} />, { inScreen: true });
+  await confirm();
+  await fireEvent.press(view.getByTestId('moodle-sync'));
+  await message({ kind: 'dorm:moodle', requestId: requestId('moodle'), method: 'courses', status: 'expired' });
+  expect(view.queryByTestId('moodle-workspace')).toBeNull();
+  expect(view.getByText('failure expired')).toBeTruthy();
+  expect(readMoodleCache().courses).toEqual([]);
+  await confirm(456);
+  expect(view.queryByText('failure expired')).toBeNull();
+  expect(view.getByTestId('moodle-workspace')).toBeTruthy();
+  expect(view.queryByText('Course one')).toBeNull();
   await view.unmount(); await settleMoodleStorage();
 });

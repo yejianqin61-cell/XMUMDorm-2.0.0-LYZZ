@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { fireEvent, waitFor } from '@testing-library/react-native';
+import { fireEvent, waitFor, within } from '@testing-library/react-native';
 import { renderApp } from './helpers/renderApp';
 import { ToolsDashboardContent } from '@/features/tools/ToolsDashboard';
 import { clearNamespace } from '@/shared/storage';
@@ -53,4 +53,42 @@ it('renders the same dashboard in English', async () => {
   const view = await renderApp(<ToolsDashboardContent />, { locale: 'en' });
   await waitFor(() => expect(view.getByText('Today’s schedule')).toBeTruthy());
   expect(view.getAllByText('School systems')).toHaveLength(2);
+});
+it('shows the previous Sunday overnight course after midnight on Monday', async () => {
+  jest.setSystemTime(new Date('2026-10-04T16:15:00Z'));
+  api.getScheduleWeek.mockImplementation(async (week: number) => ({ week, currentWeek: 2, totalWeeks: 14,
+    days: week === 1 ? { 7: [{ course_code: 'NIGHT', course_name: 'Night course',
+      day_of_week: 7, start_time: '23:30', end_time: '00:30' }] }
+      : { 1: [{ course_code: 'DAY', course_name: 'Day course', day_of_week: 1,
+        start_time: '08:00', end_time: '10:00' }] } }));
+  const view = await renderApp(<ToolsDashboardContent />);
+  await waitFor(() => expect(view.getByTestId('tools-current-course').props.children).toContain('Night course'));
+  expect(view.getByTestId('tools-next-course').props.children).toContain('Day course');
+  expect(api.getScheduleWeek).toHaveBeenCalledWith(1);
+  expect(api.getScheduleWeek).toHaveBeenCalledWith(2);
+});
+
+it('finds the next course in the following week when the rest of this week is empty', async () => {
+  jest.setSystemTime(new Date('2026-10-11T13:00:00Z')); // Sunday 21:00 in Kuala Lumpur, teaching week 2.
+  api.getScheduleWeek.mockImplementation(async (week: number) => ({ week, currentWeek: 2, totalWeeks: 14,
+    days: week === 3 ? { 1: [{ course_code: 'NEXT', course_name: 'Next week course',
+      day_of_week: 1, start_time: '08:00', end_time: '10:00' }] } : {} }));
+  const view = await renderApp(<ToolsDashboardContent />);
+  await waitFor(() => expect(view.getByTestId('tools-next-course').props.children).toContain('Next week course'));
+  expect(api.getScheduleWeek).toHaveBeenCalledWith(3);
+});
+
+it('offers a retry when a future week cannot be loaded', async () => {
+  jest.setSystemTime(new Date('2026-10-11T13:00:00Z'));
+  api.getScheduleWeek.mockImplementation(async (week: number) => {
+    if (week === 3) throw { kind: 'offline' };
+    return { week, currentWeek: 2, totalWeeks: 14, days: {} };
+  });
+  const view = await renderApp(<ToolsDashboardContent />);
+  await waitFor(() => expect(view.getByTestId('tools-next-error')).toBeTruthy());
+  api.getScheduleWeek.mockImplementation(async (week: number) => ({ week, currentWeek: 2, totalWeeks: 14,
+    days: week === 3 ? { 1: [{ course_code: 'NEXT', course_name: 'Recovered course',
+      day_of_week: 1, start_time: '08:00', end_time: '10:00' }] } : {} }));
+  await fireEvent.press(within(view.getByTestId('tools-next-error')).getByRole('button'));
+  await waitFor(() => expect(view.getByTestId('tools-next-course').props.children).toContain('Recovered course'));
 });

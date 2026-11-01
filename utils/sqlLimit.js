@@ -7,9 +7,8 @@
  *   `ER_WRONG_ARGUMENTS (1210) Incorrect arguments to mysqld_stmt_execute` —— 整条 SQL 直接 500。
  *   （把参数改成字符串反而能过，但那是靠服务端隐式转换，不可依赖。）
  *
- *   这不是理论风险：`routes/canteen.js` 早已踩过同一个坑，并在原处留了注释；
- *   学习资料模块（M10）第一次把 `LIMIT ?` 写回来，线上 `/api/materials/courses`
- *   与 `/api/materials/me/uploads` 立刻 500。守卫测试见 `__tests__/utils/sqlLimit.test.js`。
+ *   这不是理论风险：`routes/canteen.js` 早已踩过同一个坑，并在原处留了注释。
+ *   守卫测试见 `__tests__/utils/sqlLimit.test.js`。
  *
  * 做法：先强制转成**有界整数**，再内联进 SQL 文本。
  * 结果一定只有十进制数字（末尾还会正则二次确认），因此不引入注入面。

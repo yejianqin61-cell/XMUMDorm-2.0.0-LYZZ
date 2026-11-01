@@ -1,0 +1,36 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),jwt=require('jsonwebtoken');
+const root=path.resolve(__dirname,'../..'),out=path.join(root,'.local/stage5/batch05c/run-02');
+const guard=require('../stage2-db/local-config.cjs');require('./network.cjs')([3306,4040]);
+const ids=JSON.parse(fs.readFileSync(path.join(out,'fixtures.json'))),config=JSON.parse(fs.readFileSync(path.join(root,'.local/stage2/config.json')));
+const sessions=Object.fromEntries(Object.entries(ids.users).map(([key,id])=>[key,jwt.sign({id,role:key==='admin'?'admin':'student'},config.JWT_SECRET,{expiresIn:'1h'})]));
+const results=[];
+async function request(url,who='a',method='GET',body){const token=who==='expired'?jwt.sign({id:ids.users.a},config.JWT_SECRET,{expiresIn:-1}):sessions[who];const r=await fetch('http://127.0.0.1:4040'+url,{method,headers:{...(token?{Authorization:'Bearer '+token}:{}),...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined});const b=await r.json();results.push({url,who,method,httpStatus:r.status,body:b});return {httpStatus:r.status,...b};}
+const favorite=id=>'/api/campus-news/'+id+'/favorite';
+(async()=>{const db=await require('mysql2/promise').createConnection(guard.readLocalConfig());await guard.verifyIdentity(db);try{
+ for(const url of [favorite(ids.posts[0]),'/api/campus-news/me/favorites']){assert.equal((await request(url,'guest')).httpStatus,401);assert.equal((await request(url,'expired')).httpStatus,403);}
+ assert.equal((await request('/api/campus-news/me/favorites','empty')).data.total,0);
+ const first=ids.posts[0];assert.equal((await request(favorite(first))).data.favorited,false);
+ assert.equal((await request(favorite(first),'a','PUT',{user_id:ids.users.b})).data.favorited,true);
+ const [saved1]=await db.query('SELECT created_at FROM campus_post_favorites WHERE user_id=? AND post_id=?',[ids.users.a,first]);assert.equal(saved1.length,1);
+ await Promise.all(Array.from({length:16},()=>request(favorite(first),'a','PUT')));const [saved2]=await db.query('SELECT created_at FROM campus_post_favorites WHERE user_id=? AND post_id=?',[ids.users.a,first]);assert.equal(saved2.length,1);assert.equal(String(saved1[0].created_at),String(saved2[0].created_at));
+ assert.equal((await request(favorite(first),'b')).data.favorited,false);await request(favorite(first),'b','DELETE',{user_id:ids.users.a});assert.equal((await request(favorite(first))).data.favorited,true);
+ assert.equal((await request('/api/campus-news/me/favorites?user_id='+ids.users.a,'b')).data.total,0);
+ for(const id of ids.posts.slice(1))assert.equal((await request(favorite(id),'a','PUT')).httpStatus,200);
+ const a1=(await request('/api/campus-news/me/favorites?pageSize=10&userId='+ids.users.b)).data,a2=(await request('/api/campus-news/me/favorites?pageSize=10&page=2')).data;
+ assert.equal(a1.total,11);assert.equal(a1.list.length,10);assert.equal(a1.hasMore,true);assert.equal(a2.list.length,1);assert.equal(a2.hasMore,false);assert.equal(new Set([...a1.list,...a2.list].map(x=>x.id)).size,11);assert.ok(a1.list.every(x=>x.title&&x.summary&&x.published_at&&x.favorited_at&&!x.images));
+ for(const id of Object.values(ids.unavailable)){await db.query('INSERT INTO campus_post_favorites(user_id,post_id) VALUES (?,?)',[ids.users.a,id]);assert.equal((await request(favorite(id))).httpStatus,404);assert.equal((await request(favorite(id),'a','PUT')).httpStatus,404);}
+ const filtered=await request('/api/campus-news/me/favorites?pageSize=50');assert.equal(filtered.data.total,11);assert.ok(!JSON.stringify(filtered.data).includes('STAGE5_05C_TEST_PRIVATE'));
+ for(const id of Object.values(ids.unavailable)){const r=await request(favorite(id),'a','DELETE');assert.deepEqual(r.data,{target_type:'campus_post',post_id:String(id),favorited:false});}
+ await request(favorite(ids.legacy),'a','PUT');assert.equal((await request(favorite(ids.legacy))).data.favorited,true);await request(favorite(ids.legacy),'a','DELETE');
+ await request(favorite(first),'a','DELETE');await Promise.all(Array.from({length:8},()=>request(favorite(first),'a','DELETE')));assert.equal((await request(favorite(first))).data.favorited,false);await request(favorite(first),'a','PUT');
+ await Promise.all(Array.from({length:12},(_,i)=>request(favorite(first),'a',i%2?'DELETE':'PUT')));const [concurrent]=await db.query('SELECT COUNT(*) n FROM campus_post_favorites WHERE user_id=? AND post_id=?',[ids.users.a,first]);assert.ok(Number(concurrent[0].n)<=1);await request(favorite(first),'a','PUT');
+ await request(favorite(ids.mutable),'a','PUT');let revision=1;for(const action of ['withdraw','publish','hide','unhide','delete']){const r=await request('/api/admin/campus-news/'+ids.mutable+'/'+(action==='delete'?'':action),'admin',action==='delete'?'DELETE':'POST',{expectedRevision:revision});assert.equal(r.httpStatus,200,action+' admin operation failed');revision=r.data.revision;const visible=['publish','unhide'].includes(action);assert.equal((await request(favorite(ids.mutable))).httpStatus,visible?200:404);const list=await request('/api/campus-news/me/favorites?pageSize=50');assert.equal(list.data.total,visible?12:11);assert.equal(list.data.list.some(x=>x.id===String(ids.mutable)),visible);}await request(favorite(ids.mutable),'a','DELETE');
+ for(const [field,value]of [['status','banned'],['status','deactivated'],['banned_until','2099-01-01 00:00:00']]){await db.query('UPDATE users SET status=\'active\',banned_until=NULL WHERE id=?',[ids.users.blocked]);await db.query('UPDATE users SET `'+field+'`=? WHERE id=?',[value,ids.users.blocked]);for(const url of [favorite(first),'/api/campus-news/me/favorites'])assert.equal((await request(url,'blocked')).httpStatus,403);assert.equal((await request(favorite(first),'blocked','PUT')).httpStatus,403);}await db.query('UPDATE users SET status=\'active\',banned_until=NULL WHERE id=?',[ids.users.blocked]);
+ assert.equal((await request('/api/campus-news/me/favorites?page=-1')).httpStatus,400);
+ assert.equal((await request('/api/canteen/products/1/favorite','a','POST')).httpStatus,200);assert.equal((await request('/api/canteen/my-favorites')).data.total,1);assert.equal((await request('/api/campus-news/me/favorites')).data.total,11);
+ assert.equal((await request('/api/canteen/products/1/favorite')).data.favorited,true);
+ assert.equal((await request('/api/campus-news/'+first)).httpStatus,200);assert.equal((await request('/api/square/campus-posts/'+first+'/interactions')).httpStatus,200);
+ const [persisted]=await db.query('SELECT user_id,post_id FROM campus_post_favorites WHERE user_id IN (?,?) ORDER BY user_id,post_id',[ids.users.a,ids.users.b]);assert.equal(persisted.length,11);assert.ok(persisted.every(r=>r.user_id===ids.users.a));fs.writeFileSync(path.join(out,'database-verification.json'),JSON.stringify({realMySQL:true,currentUser:ids.users.a,favorites:persisted,foodFavorites:1,tableAndSchemaWrites:false},null,2));
+ console.log('05C real MySQL + HTTP passed: '+results.length+' requests.');
+ }finally{await db.end();}})().catch(e=>{console.error(e.message);process.exitCode=1}).finally(()=>fs.writeFileSync(path.join(out,'http-results.json'),JSON.stringify(results,null,2)));

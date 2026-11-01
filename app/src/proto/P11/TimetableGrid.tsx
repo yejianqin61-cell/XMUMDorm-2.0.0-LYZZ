@@ -6,7 +6,7 @@
  *
  * 2026-10-18 所有者重做：
  *   ① 卡片必须**同时显示课程名称与上课地点**，并按**课程色**填充（同课同色 / 异课异色）；
- *   ② **时间轴固定 08:00–21:00**，没课的小时也要画出来（空行可见）；
+ *   ② **时间轴至少覆盖 08:00–21:00**，有更早或更晚课程时自动扩展；
  *   ③ 课程卡按真实起止时间**绝对定位**在轴上（⛔ 不再按"开始时间行"堆叠）。
  *
  * ⚠️ **"节次"落地为"开始时间"**：接口只给 `start_time`/`end_time`，**没有节次编号也没有节次表**
@@ -28,9 +28,10 @@ import type { TimetableMeeting, TimetableWeek } from '@/features/tools/timetable
 import {
   FALLBACK_COURSE_ACCENT,
   TIMETABLE_AXIS_END_HOUR,
-  TIMETABLE_AXIS_HOURS,
   TIMETABLE_AXIS_START_HOUR,
-  VISIBLE_WEEKDAYS,
+  visibleTimetableWeekdays,
+  isOvernightMeeting,
+  clockMinutes,
   layoutTimetableCard,
   type CourseAccent,
 } from '@/features/tools/timetableView';
@@ -52,7 +53,7 @@ const pad2 = (hour: number): string => `${String(hour).padStart(2, '0')}:00`;
 
 export type TimetableGridProps = {
   week: TimetableWeek;
-  /** 显示哪几列（默认周一–周五） */
+  /** 显示哪几列（默认工作日及有课的周末） */
   visibleWeekdays?: readonly number[];
   /** 课程 → 课程色（由页面按本周分配；缺省时用兜底色） */
   getCourseAccent?: (meeting: TimetableMeeting) => CourseAccent;
@@ -68,11 +69,14 @@ type PlacedCard = {
   accent: CourseAccent;
   top: number;
   height: number;
+  lane: number;
+  lanes: number;
+  continuation: boolean;
 };
 
 export function TimetableGrid({
   week,
-  visibleWeekdays = VISIBLE_WEEKDAYS,
+  visibleWeekdays,
   getCourseAccent,
   highlightWeekday = null,
   onPressMeeting,
@@ -81,34 +85,74 @@ export function TimetableGrid({
 }: TimetableGridProps): React.ReactElement {
   const theme = useTheme();
   const { t } = useI18n();
+  const days = React.useMemo(() => visibleWeekdays ?? visibleTimetableWeekdays(week), [visibleWeekdays, week]);
   // 一小时格高 40dp（令牌相加，⛔ 不写裸数字）：13 小时一屏放得下，21:00 不用滚到底才看到
   const hourHeight = theme.space('space_8') + theme.space('space_2');
-  const minCardHeight = theme.space('space_12') - theme.space('space_1');
-  const axisHeight = TIMETABLE_AXIS_HOURS * hourHeight;
+  const minCardHeight = Math.max(theme.touchTarget + theme.space('space_1'), theme.space('space_12') - theme.space('space_1'));
+  let axisStart = TIMETABLE_AXIS_START_HOUR, axisEnd = TIMETABLE_AXIS_END_HOUR;
+  for (const day of days) {
+    const previous = day === 1 ? week.previousSunday ?? [] : week.days[day - 1] ?? [];
+    if (previous.some(isOvernightMeeting)) axisStart = 0;
+    for (const meeting of week.days[day] ?? []) {
+      const start = clockMinutes(meeting.startTime), end = clockMinutes(meeting.endTime);
+      if (start === null) continue;
+      axisStart = Math.min(axisStart, Math.floor(start / 60));
+      const endMinute = end === null || end === start ? Math.min(1440, start + 60) : end < start ? 1440 : end;
+      axisEnd = Math.max(axisEnd, Math.ceil(endMinute / 60));
+    }
+  }
+  const axisHours = axisEnd - axisStart;
+  const axisHeight = axisHours * hourHeight;
 
   // 每天一张卡列表：先在渲染前算好 top/height（纯函数，可单测）
   const cardsByDay = React.useMemo(() => {
     const resolveAccent = getCourseAccent ?? (() => FALLBACK_COURSE_ACCENT);
     const map = new Map<number, PlacedCard[]>();
-    for (const day of visibleWeekdays) {
+    for (const day of days) {
       const placed: PlacedCard[] = [];
       for (const meeting of week.days[day] ?? []) {
-        const layout = layoutTimetableCard(meeting, hourHeight, minCardHeight);
+        const layout = layoutTimetableCard(meeting, hourHeight, minCardHeight, axisStart, axisEnd);
         if (layout !== null) {
-          placed.push({ meeting, accent: resolveAccent(meeting), top: layout.top, height: layout.height });
+          placed.push({ meeting, accent: resolveAccent(meeting), top: layout.top, height: layout.height, lane: 0, lanes: 1, continuation: false });
         }
       }
+      const previous = day === 1 ? week.previousSunday ?? [] : week.days[day - 1] ?? [];
+      for (const meeting of previous) {
+        if (!isOvernightMeeting(meeting)) continue;
+        const layout = layoutTimetableCard({ ...meeting, startTime: '00:00' }, hourHeight, minCardHeight, axisStart, axisEnd);
+        if (layout) placed.push({ meeting, accent: resolveAccent(meeting), top: layout.top,
+          height: layout.height, lane: 0, lanes: 1, continuation: true });
+      }
+      placed.sort((a, b) => a.top - b.top || b.height - a.height);
+      let group: PlacedCard[] = [], laneEnds: number[] = [], groupEnd = -1;
+      const finish = () => { for (const card of group) card.lanes = laneEnds.length; };
+      for (const card of placed) {
+        if (card.top >= groupEnd) { finish(); group = []; laneEnds = []; groupEnd = -1; }
+        let lane = laneEnds.findIndex((end) => end <= card.top);
+        if (lane < 0) lane = laneEnds.length;
+        card.lane = lane;
+        laneEnds[lane] = card.top + card.height;
+        groupEnd = Math.max(groupEnd, laneEnds[lane]);
+        group.push(card);
+      }
+      finish();
       map.set(day, placed);
     }
     return map;
-  }, [week, visibleWeekdays, getCourseAccent, hourHeight, minCardHeight]);
+  }, [week, days, getCourseAccent, hourHeight, minCardHeight, axisStart, axisEnd]);
+
+  const dayMinWidth = (day: number) => theme.touchTarget * Math.max(1, ...(cardsByDay.get(day) ?? []).map((card) => card.lanes));
+  const minWidth = theme.space('space_8') + theme.space('space_2')
+    + days.reduce((total, day) => total + dayMinWidth(day) + theme.space('space_1'), 0);
 
   return (
     <View testID={testID} style={[{ flex: 1 }, style]}>
+      <ScrollView horizontal contentContainerStyle={{ flexGrow: 1 }}>
+      <View style={{ flex: 1, minWidth }}>
       {/* 列头固定，只有下面的时间轴纵向滚动 */}
       <View style={{ flexDirection: 'row', gap: theme.space('space_1') }}>
         <View style={{ width: theme.space('space_8') + theme.space('space_2') }} />
-        {visibleWeekdays.map((day) => {
+        {days.map((day) => {
           const isToday = highlightWeekday === day;
           return (
             <View
@@ -116,6 +160,7 @@ export function TimetableGrid({
               testID={testID ? `${testID}-head-${day}` : undefined}
               style={{
                 flex: 1,
+                minWidth: dayMinWidth(day),
                 paddingVertical: theme.space('space_1'),
                 alignItems: 'center',
                 backgroundColor: isToday
@@ -137,7 +182,7 @@ export function TimetableGrid({
         })}
       </View>
 
-      {/* 08:00–21:00 固定时间轴：没课的小时也是可见的空行 */}
+      {/* 至少覆盖 08:00–21:00；按课程需要扩展时间轴。 */}
       <ScrollView
         testID={testID ? `${testID}-axis` : undefined}
         contentInsetAdjustmentBehavior="never"
@@ -147,38 +192,39 @@ export function TimetableGrid({
         <View style={{ flexDirection: 'row', gap: theme.space('space_1') }}>
           {/* 时间刻度 */}
           <View style={{ width: theme.space('space_8') + theme.space('space_2') }}>
-            {Array.from({ length: TIMETABLE_AXIS_HOURS }, (_, index) => (
+            {Array.from({ length: axisHours }, (_, index) => (
               <View
                 key={index}
-                testID={testID ? `${testID}-hour-${TIMETABLE_AXIS_START_HOUR + index}` : undefined}
+                testID={testID ? `${testID}-hour-${axisStart + index}` : undefined}
                 style={{ height: hourHeight, paddingTop: theme.space('space_1') }}
               >
                 <Text role="caption" colorToken="text-muted" numberOfLines={1}>
-                  {pad2(TIMETABLE_AXIS_START_HOUR + index)}
+                  {pad2(axisStart + index)}
                 </Text>
               </View>
             ))}
             {/* 末端 21:00 刻度落在轴底 */}
-            <View testID={testID ? `${testID}-hour-${TIMETABLE_AXIS_END_HOUR}` : undefined}>
+            <View testID={testID ? `${testID}-hour-${axisEnd}` : undefined}>
               <Text role="caption" colorToken="text-muted" numberOfLines={1}>
-                {pad2(TIMETABLE_AXIS_END_HOUR)}
+                {pad2(axisEnd)}
               </Text>
             </View>
           </View>
 
           {/* 每天一列：背景是整点网格，课程卡绝对定位 */}
-          {visibleWeekdays.map((day) => (
+          {days.map((day) => (
             <View
               key={day}
               testID={testID ? `${testID}-day-${day}` : undefined}
               style={{
                 flex: 1,
-                height: axisHeight,
+                minWidth: dayMinWidth(day),
+                height: axisHeight + minCardHeight,
                 borderLeftWidth: theme.borderWidth('border_width_hairline'),
                 borderLeftColor: theme.color['border-subtle'].value,
               }}
             >
-              {Array.from({ length: TIMETABLE_AXIS_HOURS }, (_, index) => (
+              {Array.from({ length: axisHours }, (_, index) => (
                 <View
                   key={index}
                   style={{
@@ -191,15 +237,15 @@ export function TimetableGrid({
                 />
               ))}
 
-              {(cardsByDay.get(day) ?? []).map(({ meeting, accent, top, height }) => {
+              {(cardsByDay.get(day) ?? []).map(({ meeting, accent, top, height, lane, lanes, continuation }) => {
                 const name = meeting.courseName ?? meeting.courseCode;
                 const venue = meeting.venue ?? t('timetable.noVenue');
                 const start = formatClockTime(meeting.startTime);
                 const end = formatClockTime(meeting.endTime);
                 return (
                   <Pressable
-                    key={`${meeting.courseCode}-${meeting.startTime ?? ''}-${meeting.venue ?? ''}`}
-                    testID={testID ? `${testID}-card-${meeting.courseCode}` : undefined}
+                    key={`${meeting.courseCode}-${meeting.startTime ?? ''}-${meeting.venue ?? ''}-${continuation}`}
+                    testID={testID ? `${testID}-card-${meeting.courseCode}${continuation ? '-continuation' : ''}` : undefined}
                     onPress={
                       onPressMeeting === undefined ? undefined : () => onPressMeeting(meeting)
                     }
@@ -210,8 +256,8 @@ export function TimetableGrid({
                       .join('，')}
                     style={{
                       position: 'absolute',
-                      left: 0,
-                      right: 0,
+                      left: `${(lane / lanes) * 100}%`,
+                      width: `${100 / lanes}%`,
                       top: top + theme.space('space_1') / 2,
                       height: height - theme.space('space_1'),
                       borderRadius: theme.radius('radius_small'),
@@ -233,6 +279,8 @@ export function TimetableGrid({
             </View>
           ))}
         </View>
+      </ScrollView>
+      </View>
       </ScrollView>
     </View>
   );

@@ -31,8 +31,8 @@ router.post('/', authenticateToken, async (req, res) => {
     const validTargets = [
       'post', 'comment', 'product_comment', 'club_activity', 'club_post',
       'marketplace', 'errand', 'handbook_article', 'handbook_comment',
-      'course_review', 'trending_post', 'campus_post',
-      'trending_comment', 'campus_comment', 'club_comment', 'course_review_comment',
+      'trending_post', 'campus_post',
+      'trending_comment', 'campus_comment', 'club_comment',
       'confession', 'confession_comment',
     ];
     if (!validTargets.includes(target_type)) {
@@ -125,9 +125,6 @@ async function findReportedUser(targetType, targetId) {
     case 'club_comment':
       sql = 'SELECT user_id FROM club_comments WHERE id = ?';
       break;
-    case 'course_review_comment':
-      sql = 'SELECT user_id FROM course_review_comments WHERE id = ?';
-      break;
     case 'product_comment':
       sql = 'SELECT user_id FROM product_comments WHERE id = ?';
       break;
@@ -150,9 +147,6 @@ async function findReportedUser(targetType, targetId) {
       break;
     case 'handbook_comment':
       sql = 'SELECT user_id FROM handbook_comments WHERE id = ?';
-      break;
-    case 'course_review':
-      sql = 'SELECT created_by AS user_id FROM course_reviews WHERE id = ?';
       break;
     // M09 万能墙：匿名墙对用户匿名，但被举报时必须能追溯到真实作者，
     // 否则举报形同虚设（该 switch 的 default 会静默返回 null）。

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   CalendarDays,
+  CalendarRange,
   ChevronRight,
   Clock3,
   Gauge,
@@ -18,8 +19,9 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContextState';
 import { useLanguage } from '../context/LanguageContextState';
-import { getProfile } from '@shared/api/users';
+import { getMyPosts } from '@shared/api/users';
 import { getMyFavorites, getMyProductReviews } from '@shared/api/canteen';
+import { getMyCampusFavorites } from '@shared/api/campusFavorites';
 import { getScheduleWeek } from '@shared/api/schedule';
 import { resolveSemesterContext } from '@shared/config/semesters';
 import { getTodos } from '@shared/api/todos';
@@ -47,6 +49,7 @@ function MyZoneStrings(isZh) {
     schedule: isZh ? '课程表' : 'Schedule',
     diary: isZh ? '多年日记本' : 'Diary',
     todo: 'Todo',
+    studyCalendar: isZh ? '学习日历' : 'Calendar',
     more: isZh ? '更多' : 'More',
     aboutProfile: isZh ? '关于' : 'About',
     aboutDisclaimer: isZh ? '免责声明' : 'Disclaimer',
@@ -111,10 +114,6 @@ function MyZone() {
     if (!isLoggedIn) return goLogin();
     navigate('/myzone/profile');
   };
-  const goSpace = () => {
-    if (!isLoggedIn || !userId) return goLogin();
-    navigate(`/user/${userId}`);
-  };
   
 
   // 「当前/下一节课」必须按**本周**查，不能用写死的第 1 周
@@ -157,8 +156,8 @@ function MyZone() {
     queryKey: ['myzone', 'postCount', userId],
     enabled: isLoggedIn && !!userId,
     queryFn: async () => {
-      const data = await getProfile(userId, { page: 1, pageSize: 1 });
-      const cnt = data?.stats?.post_count;
+      const data = await getMyPosts({ page: 1, pageSize: 1 });
+      const cnt = data?.total;
       return Number.isFinite(Number(cnt)) ? Number(cnt) : Number(data?.post_count ?? 0);
     },
     staleTime: 5 * 60 * 1000,
@@ -198,16 +197,24 @@ function MyZone() {
     refetchOnMount: false,
   });
 
+  const campusFavoritesCountQuery = useQuery({
+    queryKey: ['myzone', 'favoritesCount', userId, 'campus'],
+    enabled: isLoggedIn && !!userId,
+    queryFn: async () => Number((await getMyCampusFavorites({ page: 1, pageSize: 1 })).total),
+    staleTime: 0,
+    retry: false,
+  });
+
   const stats = useMemo(() => {
     const posts = isLoggedIn ? (postsCountQuery.data ?? 0) : 0;
     const reviews = isLoggedIn ? (reviewsCountQuery.data ?? 0) : 0;
-    const favorites = isLoggedIn ? (favoritesCountQuery.data ?? 0) : 0;
+    const favorites = isLoggedIn ? (favoritesCountQuery.data ?? 0) + (campusFavoritesCountQuery.data ?? 0) : 0;
     return [
-      { key: 'posts', value: posts, label: t.statsPosts, to: isLoggedIn ? `/user/${userId}` : '/login' },
-      { key: 'reviews', value: reviews, label: t.statsReviews, to: isLoggedIn ? `/user/${userId}` : '/login' },
-      { key: 'favorites', value: favorites, label: t.statsFavorites, to: isLoggedIn ? `/user/${userId}` : '/login' },
+      { key: 'posts', value: posts, label: t.statsPosts, to: isLoggedIn ? '/myzone/posts' : '/login' },
+      { key: 'reviews', value: reviews, label: t.statsReviews, to: isLoggedIn ? '/myzone/reviews' : '/login' },
+      { key: 'favorites', value: favorites, label: t.statsFavorites, to: isLoggedIn ? '/myzone/favorites' : '/login' },
     ];
-  }, [favoritesCountQuery.data, isLoggedIn, postsCountQuery.data, reviewsCountQuery.data, t.statsFavorites, t.statsPosts, t.statsReviews, userId]);
+  }, [favoritesCountQuery.data, campusFavoritesCountQuery.data, isLoggedIn, postsCountQuery.data, reviewsCountQuery.data, t.statsFavorites, t.statsPosts, t.statsReviews]);
 
   const summarySection = (
     <motion.section
@@ -252,15 +259,6 @@ function MyZone() {
           <LevelProgressBar level={user?.level} levelProgress={user?.levelProgress} isZh={isZh} />
         </div>
 
-        <motion.button
-          type="button"
-          onClick={goSpace}
-          className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-3 py-2 text-[12px] font-medium text-slate-700 ring-1 ring-slate-200"
-          {...tap}
-        >
-          {isZh ? '空间' : 'Space'}
-          <ChevronRight className="h-4 w-4 text-slate-400" />
-        </motion.button>
       </div>
     </motion.section>
   );
@@ -318,6 +316,7 @@ function MyZone() {
         <UtilityTile to="/myzone/schedule" title={t.schedule} icon={<CalendarDays className="h-5 w-5" />} iconStyle={softIcon('rgba(34,197,94,0.12)', 'rgb(22,163,74)')} />
         <UtilityTile to="/myzone/diary" title={t.diary} icon={<NotebookText className="h-5 w-5" />} iconStyle={softIcon('rgba(168,85,247,0.12)', 'rgb(147,51,234)')} />
         <UtilityTile to="/myzone/todos" title={t.todo} icon={<Star className="h-5 w-5" />} iconStyle={softIcon('rgba(234,179,8,0.14)', 'rgb(202,138,4)')} />
+        <UtilityTile to="/myzone/calendar" title={t.studyCalendar} icon={<CalendarRange className="h-5 w-5" />} iconStyle={softIcon('rgba(14,165,233,0.12)', 'rgb(2,132,199)')} />
         {isLoggedIn && isMerchant ? (
           <UtilityTile to="/merchant/manage" title={t.storeManage} icon={<Store className="h-5 w-5" />} iconStyle={softIcon('rgba(99,102,241,0.12)', 'rgb(79,70,229)')} />
         ) : null}

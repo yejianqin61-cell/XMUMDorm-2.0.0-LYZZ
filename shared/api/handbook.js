@@ -92,15 +92,6 @@ export function getMySavedHandbookArticles(params = {}) {
   return get(`/api/handbook/me/saved?${sp.toString()}`);
 }
 
-export function getMyCourseReviews(params = {}) {
-  const { tags, page = 1, pageSize = 10 } = params;
-  const sp = new URLSearchParams();
-  sp.set('page', String(page));
-  sp.set('pageSize', String(pageSize));
-  if (tags && Array.isArray(tags) && tags.length > 0) sp.set('tags', tags.join(','));
-  return get(`/api/handbook/me/course-reviews?${sp.toString()}`);
-}
-
 export function listMyHandbookChecklists() {
   return get('/api/handbook/me/checklists');
 }
@@ -127,47 +118,5 @@ export function updateMyHandbookChecklistItem(checklistId, itemId, body) {
 
 export function deleteMyHandbookChecklistItem(checklistId, itemId) {
   return del(`/api/handbook/me/checklists/${checklistId}/items/${itemId}`);
-}
-
-export function listCourseReviews(params = {}) {
-  const { q, tags, page = 1, pageSize = 10 } = params;
-  const sp = new URLSearchParams();
-  sp.set('page', String(page));
-  sp.set('pageSize', String(pageSize));
-  if (q) sp.set('q', String(q));
-  if (tags && Array.isArray(tags) && tags.length > 0) sp.set('tags', tags.join(','));
-  return get(`/api/handbook/course-reviews?${sp.toString()}`);
-}
-
-export function getCourseReviewDetail(id) {
-  return get(`/api/handbook/course-reviews/${id}`);
-}
-
-export function rateCourseReview(id, rating) {
-  return post(`/api/handbook/course-reviews/${id}/rate`, { rating });
-}
-
-export function createCourseReview(body) {
-  return post('/api/handbook/course-reviews', body || {});
-}
-
-export function updateCourseReview(id, body) {
-  return patch(`/api/handbook/course-reviews/${id}`, body || {});
-}
-
-export function deleteCourseReview(id) {
-  return del(`/api/handbook/course-reviews/${id}`);
-}
-
-export function listCourseReviewComments(id) {
-  return get(`/api/handbook/course-reviews/${id}/comments`);
-}
-
-export function createCourseReviewComment(id, body) {
-  return post(`/api/handbook/course-reviews/${id}/comments`, body || {});
-}
-
-export function deleteCourseReviewComment(reviewId, commentId) {
-  return del(`/api/handbook/course-reviews/${reviewId}/comments/${commentId}`);
 }
 

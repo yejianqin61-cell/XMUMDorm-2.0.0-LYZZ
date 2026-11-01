@@ -212,3 +212,43 @@
     opacity: 1;
   }
 }
+
+/* 「今天还有 N 项待办」统计（学习日历同款口径：shared/utils/studyCalendar.js） */
+.todolist-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  margin: -6px 0 14px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  font-size: 14px;
+  color: var(--post-ios-label, #1d1d1f);
+}
+
+.todolist-summary-count strong {
+  color: var(--post-ios-system-blue, #007aff);
+  font-size: 18px;
+}
+
+.todolist-summary-tag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.todolist-summary-tag--danger {
+  background: #fdecec;
+  color: #b42318;
+}
+
+.todolist-summary-link {
+  margin-left: auto;
+  color: var(--post-ios-system-blue, #007aff);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}

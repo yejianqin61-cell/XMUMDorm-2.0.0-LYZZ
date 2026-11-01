@@ -1647,7 +1647,7 @@ router.get('/my-reviews', authenticateToken, async (req, res) => {
     const offset = (page - 1) * pageSize;
     const limitNum = Number(pageSize) + 1;
     const offsetNum = Number(offset);
-    if (!Number.isInteger(limitNum) || limitNum < 1 || !Number.isInteger(offsetNum) || offsetNum < 0) {
+    if (!Number.isInteger(limitNum) || limitNum < 1 || !Number.isSafeInteger(offsetNum) || offsetNum < 0) {
       return res.status(400).json({ status: -1, message: '分页参数无效' });
     }
     const [rows, totalRows] = await Promise.all([
@@ -1659,7 +1659,7 @@ router.get('/my-reviews', authenticateToken, async (req, res) => {
        INNER JOIN products p ON p.id = pc.product_id AND p.deleted_at IS NULL
        INNER JOIN shops s ON s.id = p.shop_id AND s.deleted_at IS NULL
        WHERE pc.user_id = ? AND pc.parent_id IS NULL AND pc.deleted_at IS NULL
-       ORDER BY pc.created_at DESC
+       ORDER BY pc.created_at DESC, pc.id DESC
        LIMIT ${limitNum} OFFSET ${offsetNum}`,
       [req.user.id]),
       query(
@@ -1776,12 +1776,13 @@ router.delete('/products/:productId/favorite', authenticateToken, async (req, re
 /** 我的收藏列表（用于个人主页收藏栏，缩略卡片：商品图+名称+店铺） */
 router.get('/my-favorites', authenticateToken, async (req, res) => {
   try {
+    res.set('Cache-Control', 'private, no-store');
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const pageSize = Math.min(50, Math.max(1, parseInt(req.query.pageSize, 10) || 20));
     const offset = (page - 1) * pageSize;
     const limitNum = Number(pageSize) + 1;
     const offsetNum = Number(offset);
-    if (!Number.isInteger(limitNum) || limitNum < 1 || offsetNum < 0) {
+    if (!Number.isInteger(limitNum) || limitNum < 1 || !Number.isSafeInteger(offsetNum) || offsetNum < 0) {
       return res.status(400).json({ status: -1, message: '分页参数无效' });
     }
     const [rows, totalRows] = await Promise.all([
@@ -1793,7 +1794,7 @@ router.get('/my-favorites', authenticateToken, async (req, res) => {
        INNER JOIN products p ON p.id = pf.product_id AND p.deleted_at IS NULL
        INNER JOIN shops s ON s.id = p.shop_id AND s.deleted_at IS NULL
        WHERE pf.user_id = ?
-       ORDER BY pf.created_at DESC
+       ORDER BY pf.created_at DESC, pf.product_id DESC
        LIMIT ${limitNum} OFFSET ${offsetNum}`,
       [req.user.id]),
       query(

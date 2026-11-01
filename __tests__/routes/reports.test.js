@@ -224,20 +224,5 @@ describe('Report Submission Routes', () => {
       expect(res.status).toBe(200);
     });
 
-    it('should submit report for course_review with created_by lookup', async () => {
-      query.mockImplementation((sql) => {
-        if (sql.includes('id FROM reports WHERE reporter_id')) return Promise.resolve([]);
-        if (sql.includes('INSERT INTO reports')) return Promise.resolve({ insertId: 7 });
-        if (sql.includes('COUNT(*) AS cnt')) return Promise.resolve([{ cnt: 1 }]);
-        if (sql.includes('FROM course_reviews WHERE id')) return Promise.resolve([{ user_id: 66 }]);
-        return Promise.resolve([]);
-      });
-
-      const res = await supertest(app)
-        .post('/api/reports')
-        .send({ target_type: 'course_review', target_id: 3, reason: 'other' });
-
-      expect(res.status).toBe(200);
-    });
   });
 });

@@ -22,10 +22,21 @@ import { Text } from './Text';
 
 export type ChipVariant = 'static' | 'selectable' | 'removable';
 
+/**
+ * 视觉档位：
+ * - `default`：按钮级（`label` 字阶 16sp + 48dp 命中区）；
+ * - `compact`：**正文附属标签**（树洞帖子的 tag）——字阶退到 `caption`（12sp，
+ *   约为正文 14sp 的 0.85 倍），内边距收到 4/12，胶囊高度 24dp。
+ *   ⛔ 不能靠调用方传 `style` 改字号（那样绕过了字阶令牌）。
+ */
+export type ChipSize = 'default' | 'compact';
+
 export type ChipProps = {
   /** 标签文案（≤6 汉字，组件定义 §5.4） */
   label: string;
   variant?: ChipVariant;
+  /** 视觉档位；`compact` 用于正文附属标签，不用于可点筛选项 */
+  size?: ChipSize;
   /** 仅 `selectable` 有意义 */
   selected?: boolean;
   onPress?: () => void;
@@ -41,6 +52,7 @@ export type ChipProps = {
 export function Chip({
   label,
   variant = 'static',
+  size = 'default',
   selected = false,
   onPress,
   onRemove,
@@ -54,15 +66,19 @@ export function Chip({
   const isInteractive = variant === 'selectable' && !disabled;
   const fillToken = selected && variant === 'selectable' ? 'action-primary' : 'bg-sunken';
   const textToken = selected && variant === 'selectable' ? 'text-on-fill' : 'text-secondary';
+  const compact = size === 'compact';
 
   const container: StyleProp<ViewStyle> = [
     {
       flexDirection: 'row',
       alignItems: 'center',
       gap: theme.space('space_1'),
+      // compact：8/16 → 4/12（纵向收到 space_1，横向保持 space_3）
       paddingHorizontal: theme.space('space_3'),
-      // 命中区下限（7.1）：视觉高度可以更小，但可点区域不得更小
-      minHeight: theme.touchTarget,
+      paddingVertical: compact ? theme.space('space_1') : 0,
+      // 命中区下限（7.1）：视觉高度可以更小，但**可点**区域不得更小；
+      // 静态标签不可点，compact 档用 24dp 的胶囊高度（正文 12sp + 上下 4dp）。
+      minHeight: compact && !isInteractive ? theme.space('space_6') : theme.touchTarget,
       borderRadius: theme.radius('radius_full'),
       backgroundColor: theme.color[fillToken].value,
       opacity: disabled ? 0.5 : 1,
@@ -71,8 +87,8 @@ export function Chip({
   ];
 
   const body = (
-    <View style={container}>
-      <Text role="label" colorToken={textToken} numberOfLines={1}>
+    <View testID={testID} style={container}>
+      <Text role={compact ? 'caption' : 'label'} colorToken={textToken} numberOfLines={1}>
         {label}
       </Text>
       {variant === 'removable' ? (
@@ -98,7 +114,8 @@ export function Chip({
     </View>
   );
 
-  if (!isInteractive) return <View testID={testID}>{body}</View>;
+  // 静态标签直接把 testID 落在**带样式的胶囊**上（不再套一层无样式空 View）
+  if (!isInteractive) return body;
 
   return (
     <Pressable
@@ -109,7 +126,7 @@ export function Chip({
       accessibilityLabel={label}
       style={container}
     >
-      <Text role="label" colorToken={textToken} numberOfLines={1}>
+      <Text role={compact ? 'caption' : 'label'} colorToken={textToken} numberOfLines={1}>
         {label}
       </Text>
     </Pressable>

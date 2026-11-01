@@ -1,0 +1,18 @@
+# Reference only: set these in the target's secret manager or private environment.
+# This file is NOT loaded by any tool and contains no real credentials.
+# Existing database.js prefers DATABASE_URL/MYSQL_URL/RAILWAY_MYSQL_URL over DB_*.
+# Choose one source; do not leave an old connection URL in the process environment.
+DB_HOST=REPLACE_WITH_TARGET_HOST
+DB_PORT=3306
+DB_NAME=REPLACE_WITH_EXISTING_DATABASE
+DB_USER=REPLACE_WITH_RUNTIME_USER
+DB_PASSWORD=REPLACE_PRIVATELY
+JWT_SECRET=REPLACE_WITH_PRIVATE_STRONG_SECRET
+PORT=4040
+NODE_ENV=production
+ENABLE_BACKGROUND_JOBS=0
+ENABLE_CAMPUS_NEWS_DELIVERY=1
+# STAGE2_LOCAL_ISOLATED must be absent in the target environment.
+# Frontend build: VITE_API_BASE_URL= (empty for same-origin /api).
+# Original object-storage/avatar settings are documented in services/objectStorage.js;
+# preserve target-specific existing secrets; they are not database migrations.

@@ -46,6 +46,8 @@ export type TimetableDays = Record<number, readonly TimetableMeeting[]>;
 export type TimetableWeek = {
   week: number;
   days: TimetableDays;
+  /** Sunday meetings from the preceding week, used only to display overnight continuation. */
+  previousSunday?: readonly TimetableMeeting[];
   /** 服务端算出的当前教学周（未开学/已结束时为 `null`） */
   currentWeek: number | null;
   totalWeeks: number;
@@ -233,7 +235,7 @@ export async function invalidateTimetable(): Promise<void> {
   }
 }
 
-function requestWeek(week: number, load: (week: number) => Promise<unknown>): Promise<TimetableWeek> {
+export function requestWeek(week: number, load: (week: number) => Promise<unknown>): Promise<TimetableWeek> {
   const identity = timetableIdentity();
   const version = revision;
   const key = `${identity.scope}:${identity.epoch}:${version}:${week}`;
@@ -241,7 +243,7 @@ function requestWeek(week: number, load: (week: number) => Promise<unknown>): Pr
   if (existing) return existing;
   const request = Promise.resolve().then(() => load(week)).then(async (raw) => {
     const data = normalizeTimetableWeek(raw);
-    if (data === null) throw { kind: 'unknown' };
+    if (data === null || data.week !== week) throw { kind: 'unknown' };
     const write = diskQueue.then(async () => {
       if (revision === version && timetableIdentity().epoch === identity.epoch) {
         try { await writeCachedWeek(week, data); } catch { /* disk failure must not hide remote data */ }
@@ -249,6 +251,7 @@ function requestWeek(week: number, load: (week: number) => Promise<unknown>): Pr
     });
     diskQueue = write.catch(() => undefined);
     await write;
+    if (revision !== version || timetableIdentity().epoch !== identity.epoch) throw { kind: 'unknown' };
     return data;
   }).finally(() => { pending.delete(key); });
   pending.set(key, request);

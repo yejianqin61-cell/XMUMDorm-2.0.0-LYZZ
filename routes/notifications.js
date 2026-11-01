@@ -7,6 +7,8 @@
 
 const express = require('express');
 const router = express.Router();
+const campusDelivery = require('../services/campusNewsNotifications');
+router.use((_req,res,next) => { res.setHeader('Cache-Control','private, no-store'); next(); });
 const { query } = require('../database');
 const authenticateToken = require('../middleware/auth');
 const { assetUrl } = require('../utils/assets');
@@ -41,7 +43,7 @@ const POSTS_TABLE_TYPES = new Set([
 ]);
 
 function getClearableTypes(types) {
-  return types.filter((type) => !ANNOUNCEMENT_TYPES.has(type));
+  return types.filter((type) => !ANNOUNCEMENT_TYPES.has(type) && type !== campusDelivery.TYPE);
 }
 
 function buildUnreadSummary(rows) {
@@ -73,10 +75,11 @@ function getPostTarget(type, postId, available) {
 }
 
 // 为通知附加帖子/发送者等摘要
-async function attachNotificationExtra(rows, viewerIsAdmin = false) {
+async function attachNotificationExtra(rows, viewerIsAdmin = false, viewerId) {
   if (!rows || rows.length === 0) return [];
   const list = [];
   for (const r of rows) {
+    if (r.type === campusDelivery.TYPE) { list.push(await campusDelivery.mailboxItem(query, r, viewerId)); continue; }
     let extra = null;
     if (r.extra) {
       try {
@@ -254,7 +257,7 @@ router.get('/', authenticateToken, async (req, res) => {
     );
     const [rows = [], unreadRows = []] = await Promise.all([rowsPromise, unreadRowsPromise]);
     const hasMore = rows.length > pageSize;
-    const list = await attachNotificationExtra(rows.slice(0, pageSize), req.user.role === 'admin');
+    const list = await attachNotificationExtra(rows.slice(0, pageSize), req.user.role === 'admin', req.user.id);
     res.status(200).json({
       status: 0,
       message: '获取成功',
@@ -315,7 +318,7 @@ router.delete('/clear', authenticateToken, async (req, res) => {
       const placeholders = types.map(() => '?').join(',');
       await query(`DELETE FROM notifications WHERE user_id = ? AND type IN (${placeholders})`, [req.user.id, ...types]);
     } else if (scope === 'social') {
-      const systemTypes = getModuleTypes('system');
+      const systemTypes = [...getModuleTypes('system'), campusDelivery.TYPE];
       const mktTypes = getModuleTypes('marketplace');
       const excludeTypes = [...systemTypes, ...mktTypes];
       const placeholders = excludeTypes.map(() => '?').join(',');
@@ -365,6 +368,14 @@ router.get('/unread-announcements', authenticateToken, async (req, res) => {
 // ============================================
 // 标记一条通知已读
 // ============================================
+router.get('/:id', authenticateToken, async (req,res) => {
+  if (!/^[1-9]\d*$/.test(req.params.id)) return res.status(400).json({status:-1,message:'通知ID无效'});
+  try {
+    const rows = await query('SELECT n.*,p.id AS resolved_post_id,p.title AS post_title,p.deleted_at AS post_deleted_at,p.hidden_by_admin AS post_hidden_by_admin FROM notifications n LEFT JOIN posts p ON p.id=n.post_id WHERE n.id=? AND n.user_id=?',[req.params.id,req.user.id]);
+    if (!rows.length) return res.status(404).json({status:-1,message:'通知不存在'});
+    res.json({status:0,data:(await attachNotificationExtra(rows,false,req.user.id))[0]});
+  } catch { res.status(503).json({status:-1,message:'通知暂时不可读取'}); }
+});
 router.patch('/:id/read', authenticateToken, async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);

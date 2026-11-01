@@ -1,5 +1,7 @@
 export type ReminderDomain = 'class' | 'moodle';
-export type ReminderTime = { id: string; fireAt: number };
+import type { ClassReminderTarget } from './plan';
+
+export type ReminderTime = { id: string; fireAt: number; target?: ClassReminderTarget };
 export type ReminderLabels = { title: string; body: string };
 export type ReminderDomainPlan = { plan: readonly ReminderTime[]; labels: ReminderLabels };
 export type OwnerReminderPlans = Record<ReminderDomain, ReminderDomainPlan>;
@@ -48,14 +50,15 @@ function isTagged(request: NativeReminderRequest, owner: string, domains: readon
     && domains.some((domain) => data.domain === domain);
 }
 
-type Candidate = { domain: ReminderDomain; id: string; time: number; labels: ReminderLabels };
+type Candidate = { domain: ReminderDomain; id: string; time: number; labels: ReminderLabels; target?: ClassReminderTarget };
 function candidatesFor(domain: ReminderDomain, input: ReminderDomainPlan): Candidate[] {
   const unique = new Map<string, Candidate>();
   for (const item of input.plan) {
     const time = item.fireAt;
     if (!item.id.trim() || !Number.isFinite(time)) continue;
     const prior = unique.get(item.id);
-    if (!prior || time < prior.time) unique.set(item.id, { domain, id: item.id, time, labels: { ...input.labels } });
+    if (!prior || time < prior.time) unique.set(item.id, { domain, id: item.id, time, labels: { ...input.labels },
+      target: domain === 'class' && item.target ? { ...item.target } : undefined });
   }
   return [...unique.values()];
 }
@@ -145,7 +148,8 @@ export function createReminderScheduler(options: {
           if (created.length >= available) break;
           if (item.time <= now().getTime()) continue;
           const notificationId = await port.scheduleNotificationAsync({
-            content: { ...item.labels, data: { dormReminder: NAMESPACE, owner, domain: item.domain } },
+            content: { ...item.labels, data: { dormReminder: NAMESPACE, owner, domain: item.domain,
+              ...(item.target ? { target: item.target } : {}) } },
             trigger: new Date(item.time),
           });
           created.push({ domain: item.domain, id: item.id, notificationId });

@@ -11,7 +11,7 @@
 
 import * as React from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
 
@@ -30,6 +30,7 @@ import { Text } from '@/components/ui/Text';
 import { useToast } from '@/components/ui/Toast';
 import { useTheme } from '@/design-system/theme';
 import { useI18n } from '@/i18n';
+import { useSession } from '@/features/auth/session';
 import type { AppError } from '@/i18n/errors';
 import { getPostDetail } from '../../../../shared/api/posts';
 import { deleteConfession, getConfession } from '../../../../shared/api/confessions';
@@ -38,10 +39,11 @@ import { QK } from '../../../../shared/query/queryKeys';
 import { formatPostTime } from '../../../../shared/utils/formatTime';
 import { asPost, asWall, errorFor, type Post } from './campusModel';
 import { TreeholeFeed } from './TreeholeFeed';
-import { WallFeed } from './WallFeed';
+import { WallFeed, type WallFeedSnapshot } from './WallFeed';
 import { TreeholePostDetail } from './TreeholePostDetail';
+import type { TreeholeImageSaveOptions } from './TreeholeImageSaveControls';
 import { toTreeholePostViewModel } from './treeholePostViewModel';
-import { WallTemplateContent } from './wallTemplates';
+import { WallTemplateBody } from './wallTemplates';
 import { useCampusActions } from './useCampusActions';
 import type { CampusReportReason } from './useCampusReport';
 
@@ -87,18 +89,28 @@ export type CampusDetailScreenProps = {
   kind?: CampusKind;
   /** 发布成功后进入详情：返回一律回广场（不得回到发布表单） */
   published?: boolean;
+  imageSave?: TreeholeImageSaveOptions;
 };
 
 export function CampusDetailScreen({
   postId,
   kind = 'confession',
   published = false,
+  imageSave,
 }: CampusDetailScreenProps): React.ReactElement {
   const { t, locale } = useI18n();
   const router = useRouter();
+  const { handleAuthFailure, status: sessionStatus, identifier, isSignedIn } = useSession();
+  const identity = JSON.stringify(kind === 'wall' ? [sessionStatus, identifier, isSignedIn] : []);
+  const scope = JSON.stringify([kind, postId, identity]);
+  const scopeRef = React.useRef(scope);
+  React.useLayoutEffect(() => { scopeRef.current = scope; }, [scope]);
+  const client = getQueryClient();
+  const detailKey = React.useMemo(() => QK.confessionDetail(Number(postId), identity), [postId, identity]);
   const theme = useTheme();
   const toast = useToast();
   const [post, setPost] = React.useState<Post | null>(null);
+  const [postIdentity, setPostIdentity] = React.useState<string | null>(null);
   const [error, setError] = React.useState<AppError | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [menuOpen, setMenuOpen] = React.useState(false);
@@ -106,16 +118,57 @@ export function CampusDetailScreen({
   const [reportReason, setReportReason] = React.useState<string | null>(null);
   const [reportDetail, setReportDetail] = React.useState('');
   const [deleteOpen, setDeleteOpen] = React.useState(false);
-  const [deleteError, setDeleteError] = React.useState(false);
+  const [deleteError, setDeleteError] = React.useState<'login' | 'denied' | 'retry' | null>(null);
+  const [deleteOperation, setDeleteOperation] = React.useState<{ identity: string; postId: string } | null>(null);
+  const deleting = deleteOperation?.identity === identity && deleteOperation.postId === postId;
+  const deleteLocked = React.useRef(false);
   const [deleteCommentId, setDeleteCommentId] = React.useState<string | null>(null);
   const scrollRef = React.useRef<ScrollView | null>(null);
   const generation = React.useRef(0);
+  const readPending = React.useRef<number | null>(null);
+  const loginRequired = React.useRef<string | null>(null);
+
+  const showUnavailable = React.useCallback(() => {
+    generation.current++;
+    readPending.current = null;
+    setPost(null);
+    setPostIdentity(null);
+    setError({ kind: 'content' });
+    setLoading(false);
+    setMenuOpen(false);
+    setDeleteOpen(false);
+    setDeleteError(null);
+  }, []);
+
+  React.useEffect(() => {
+    if (kind !== 'wall') return;
+    const key = JSON.stringify(detailKey);
+    return client.getQueryCache().subscribe((event) => {
+      if (
+        event.type === 'updated' && event.action.type === 'success' &&
+        JSON.stringify(event.query.queryKey) === key && event.query.state.data === null &&
+        scope === scopeRef.current
+      ) showUnavailable();
+    });
+  }, [client, detailKey, kind, scope, showUnavailable]);
 
   const load = React.useCallback(async () => {
+    // null 是成功删除后的详情失效结果；undefined 仍代表尚未确认，必须正常取数。
+    if (kind === 'wall' && client.getQueryData(detailKey) === null) {
+      showUnavailable();
+      return;
+    }
+    if (readPending.current !== null) return;
     const request = ++generation.current;
+    readPending.current = request;
+    const current = () => request === generation.current && scope === scopeRef.current;
     setPost(null);
+    setPostIdentity(null);
     setError(null);
     setLoading(true);
+    setMenuOpen(false);
+    setDeleteOpen(false);
+    setDeleteError(null);
     try {
       if (!/^[1-9]\d*$/.test(postId) || !Number.isSafeInteger(Number(postId))) throw { kind: 'content' };
       const row =
@@ -123,25 +176,65 @@ export function CampusDetailScreen({
           ? asWall(await getConfession(Number(postId)))
           : asPost(await getPostDetail(Number(postId)));
       if (row.id !== Number(postId)) throw { kind: 'content' };
-      if (request === generation.current) setPost(row);
+      if (current()) {
+        if (kind === 'wall' && client.getQueryData(detailKey) === null) {
+          showUnavailable();
+          return;
+        }
+        setPost(row);
+        setPostIdentity(identity);
+        loginRequired.current = null;
+      }
     } catch (failure) {
-      if (request === generation.current) setError(errorFor(failure));
+      if (!current()) return;
+      setError(errorFor(failure));
+      const status = (failure as { status?: unknown } | null)?.status;
+      if (kind === 'wall' && status === 401) {
+        loginRequired.current = postId;
+        setDeleteError('login');
+        setLoading(false);
+        await handleAuthFailure(failure).catch(() => undefined);
+      } else if (kind === 'wall' && status === 403) {
+        setDeleteError('denied');
+      }
     } finally {
-      if (request === generation.current) setLoading(false);
+      if (current()) {
+        readPending.current = null;
+        setLoading(false);
+      }
     }
-  }, [postId, kind]);
+  }, [postId, kind, identity, scope, handleAuthFailure, client, detailKey, showUnavailable]);
 
   React.useEffect(() => {
+    if (kind === 'wall') return;
     void load();
     return () => {
       generation.current++;
+      readPending.current = null;
     };
-  }, [load]);
+  }, [load, kind]);
+
+  useFocusEffect(React.useCallback(() => {
+    if (kind !== 'wall') return;
+    if (loginRequired.current === postId && !isSignedIn) {
+      // 取消登录仍可再次恢复；不带失效身份重读，也不保留请求中状态。
+      setLoading(false);
+      setDeleteError('login');
+    } else {
+      void load();
+    }
+    return () => {
+      generation.current++;
+      readPending.current = null;
+    };
+  }, [kind, postId, isSignedIn, load]));
 
   const actions = useCampusActions(post, kind);
 
   React.useEffect(() => {
     setMenuOpen(false);
+    setDeleteOpen(false);
+    setDeleteError(null);
     setReportOpen(false);
     setReportReason(null);
     setReportDetail('');
@@ -186,24 +279,83 @@ export function CampusDetailScreen({
   }, [kind, published, router]);
 
   const removeWallPost = React.useCallback(async (): Promise<void> => {
+    if (
+      deleteLocked.current || !isSignedIn || postIdentity !== identity || !post?.is_mine ||
+      client.getQueryData(detailKey) === null
+    ) return;
+    deleteLocked.current = true;
+    const operation = { identity, postId };
+    const request = generation.current;
+    const deletedId = Number(postId);
     setDeleteOpen(false);
-    setDeleteError(false);
+    setDeleteError(null);
+    setDeleteOperation(operation);
     try {
-      const acknowledgement = await deleteConfession(Number(postId));
+      const acknowledgement = await deleteConfession(deletedId);
       if (!acknowledgement || typeof acknowledgement !== 'object' || (acknowledgement as { status?: unknown }).status !== 0) {
         throw new Error('Invalid delete acknowledgement');
       }
-      const client = getQueryClient();
+      // 先记录导航资格；发布详情失效结果会使当前读取 generation 失效。
+      const shouldReturn = request === generation.current && scope === scopeRef.current;
       const snapshotKey = [...QK.confessionWindow('_guest'), 'wallReadSnapshot'];
-      const snapshot = client.getQueryData<{ rows?: { id: number }[] }>(snapshotKey);
-      if (snapshot && Array.isArray(snapshot.rows)) {
-        client.setQueryData(snapshotKey, { ...snapshot, rows: snapshot.rows.filter((row) => row.id !== Number(postId)) });
+      client.setQueryData<WallFeedSnapshot>(snapshotKey, (previous) => {
+        const snapshot = previous ?? { rows: [], cursor: null, hasMore: true, needsRefresh: true };
+        return {
+          ...snapshot,
+          rows: snapshot.rows.filter((row) => row.id !== deletedId),
+          deletedIds: [...new Set([...(snapshot.deletedIds ?? []), deletedId])],
+        };
+      });
+      // 成功事实按原账号/内容保存。订阅只更新匹配详情，不导航无关页或新账号。
+      client.setQueryData<null>(QK.confessionDetail(deletedId, identity), null);
+      if (shouldReturn) backToFeed();
+    } catch (failure) {
+      if (request !== generation.current || scope !== scopeRef.current) return;
+      // shared API 的 Error.status 是 HTTP 状态；403 也用于非作者，不能统一按登录过期处理。
+      const status = (failure as { status?: unknown } | null)?.status;
+      if (status === 401) {
+        loginRequired.current = postId;
+        setDeleteError('login');
+        // 即使凭据存储清理失败，页内登录恢复入口仍可用。
+        await handleAuthFailure(failure).catch(() => undefined);
+      } else if (status === 403) {
+        setDeleteError('denied');
+      } else if (status === 404) {
+        // 失败回执只切换详情失效态；不写成功删除标记，也不乐观删除列表。
+        setPost(null);
+        setError({ kind: 'content' });
+      } else {
+        setDeleteError('retry');
       }
-      backToFeed();
-    } catch {
-      setDeleteError(true);
+    } finally {
+      // 请求的锁随真实请求结束；聚焦切换只让结果失效，不能提前允许重复删除。
+      deleteLocked.current = false;
+      setDeleteOperation((current) => current === operation ? null : current);
     }
-  }, [backToFeed, postId]);
+  }, [backToFeed, handleAuthFailure, postId, identity, scope, isSignedIn, postIdentity, post?.is_mine, client, detailKey]);
+
+  const deleteNotice = deleteError ? (
+    <View style={{ paddingHorizontal: theme.space('space_4'), paddingTop: theme.space('space_2') }}>
+      <InlineNotice
+        testID="wall-delete-notice"
+        tone="danger"
+        message={t(
+          deleteError === 'login' ? 'auth.expired'
+            : deleteError === 'denied' ? 'screen.campus.write.denied'
+              : 'screen.campus.read.deleteFailed'
+        )}
+        actionLabel={t(
+          deleteError === 'login' ? 'action.login'
+            : deleteError === 'denied' ? 'screen.campus.read.backToList'
+              : 'action.retry'
+        )}
+        onAction={
+          deleteError === 'login' ? () => router.push('/login')
+            : deleteError === 'denied' ? backToFeed : () => setDeleteOpen(true)
+        }
+      />
+    </View>
+  ) : null;
 
   const headerOptions = React.useMemo(
     () => ({
@@ -333,12 +485,10 @@ export function CampusDetailScreen({
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={{ paddingBottom: theme.space('space_6') }}
           >
-            {deleteError ? (
-              <View style={{ paddingHorizontal: theme.space('space_4'), paddingTop: theme.space('space_2') }}>
-                <InlineNotice testID="wall-delete-notice" tone="danger" message={t('screen.campus.read.deleteFailed')} />
-              </View>
-            ) : null}
+            {deleting ? <LoadingState testID="wall-delete-pending" variant="spinner" /> : null}
+            {deleteNotice}
             <TreeholePostDetail
+              imageSave={imageSave}
               post={vm}
               timeLabel={timeLabel}
               liked={actions.interactions.liked}
@@ -349,7 +499,7 @@ export function CampusDetailScreen({
               anonymous={kind === 'wall'}
               wallContent={
                 kind === 'wall' ? (
-                  <WallTemplateContent templateKey={post?.template_key} content={vm.content} />
+                  <WallTemplateBody templateKey={post?.template_key} content={vm.content} />
                 ) : undefined
               }
               likeNotice={likeNotice}
@@ -418,9 +568,10 @@ export function CampusDetailScreen({
                 setReportOpen(true);
               }}
               deleteAction={
-                kind === 'wall' && post?.is_mine
+                kind === 'wall' && isSignedIn && postIdentity === identity && post?.is_mine
                   ? {
                       label: t('screen.campus.read.delete'),
+                      disabled: deleteOperation !== null || deleteError === 'login' || deleteError === 'denied',
                       onPress: () => {
                         setMenuOpen(false);
                         setDeleteOpen(true);
@@ -497,6 +648,8 @@ export function CampusDetailScreen({
           <View style={{ flex: 1, justifyContent: 'center' }}>
             <LoadingState testID="campus-detail-loading" />
           </View>
+        ) : state === 'error' && deleteNotice ? (
+          <View style={{ flex: 1, justifyContent: 'center' }}>{deleteNotice}</View>
         ) : state === 'error' ? (
           <View style={{ flex: 1, justifyContent: 'center' }}>
             <ErrorState
@@ -548,7 +701,7 @@ function DetailSheetHost({
   onCloseMenu: () => void;
   onReport: () => void;
   /** 万能墙作者本人的删除入口；不传（树洞/非作者）时菜单里不出现 */
-  deleteAction?: { label: string; onPress: () => void };
+  deleteAction?: { label: string; onPress: () => void; disabled?: boolean };
   reportOpen: boolean;
   reportReasons: readonly { value: string; label: string }[];
   reportReason: string | null;
@@ -571,7 +724,7 @@ function DetailSheetHost({
         visible={menuOpen}
         title={menuLabels.title}
         actions={[
-          ...(deleteAction ? [{ key: 'delete', label: deleteAction.label }] : []),
+          ...(deleteAction ? [{ key: 'delete', label: deleteAction.label, disabled: deleteAction.disabled }] : []),
           { key: 'report', label: menuLabels.report },
         ]}
         onSelect={(key) => {

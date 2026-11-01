@@ -1,10 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { Bookmark, GraduationCap } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContextState';
 import { useAuth } from '../../context/AuthContextState';
-import { getMyCourseReviews, getMySavedHandbookArticles } from '@shared/api/handbook';
+import { getMySavedHandbookArticles } from '@shared/api/handbook';
 import { flattenPages, nextPageParamFrom } from '@shared/utils/infiniteList';
 import { QK } from '@shared/query/queryKeys';
 import './Handbook.css';
@@ -15,9 +14,7 @@ function HandbookMe() {
   const { isLoggedIn, token } = useAuth();
   const tokenKey = token ? String(token).slice(0, 12) : 'anon';
 
-  const [tab, setTab] = useState('saved'); // saved | reviews
-
-  // 两个列表接口都支持 page/pageSize 并返回 hasMore，因此逐页累加；只取第一页会硬顶在 20 条。
+  // 收藏文章按页加载。
   const savedQuery = useInfiniteQuery({
     queryKey: QK.handbookMeSaved(tokenKey, 20),
     queryFn: async ({ pageParam }) => {
@@ -27,25 +24,11 @@ function HandbookMe() {
     initialPageParam: 1,
     getNextPageParam: nextPageParamFrom,
     placeholderData: (prev) => prev,
-    enabled: isLoggedIn && tab === 'saved',
-    staleTime: 15 * 1000,
-  });
-
-  const myReviewsQuery = useInfiniteQuery({
-    queryKey: QK.handbookMeCourseReviews(tokenKey, 20),
-    queryFn: async ({ pageParam }) => {
-      const data = await getMyCourseReviews({ page: pageParam, pageSize: 20 });
-      return { list: data?.list || [], hasMore: !!data?.hasMore, page: pageParam };
-    },
-    initialPageParam: 1,
-    getNextPageParam: nextPageParamFrom,
-    placeholderData: (prev) => prev,
-    enabled: isLoggedIn && tab === 'reviews',
+    enabled: isLoggedIn,
     staleTime: 15 * 1000,
   });
 
   const savedList = useMemo(() => flattenPages(savedQuery.data?.pages), [savedQuery.data]);
-  const myReviewsList = useMemo(() => flattenPages(myReviewsQuery.data?.pages), [myReviewsQuery.data]);
 
   return (
     <div className="handbook-page">
@@ -56,35 +39,15 @@ function HandbookMe() {
       </div>
 
       <div className="handbook-collections">
-        <div className="handbook-collections-title">{isZh ? '我的收藏' : 'My'}</div>
+        <div className="handbook-collections-title">{isZh ? '我的收藏' : 'Saved articles'}</div>
 
         {!isLoggedIn ? (
           <div className="handbook-empty" style={{ marginTop: 14 }}>
             <div className="handbook-empty-title">{isZh ? '需要登录' : 'Login required'}</div>
-            <div className="handbook-empty-sub">{isZh ? '登录后才可以查看收藏与自己的课程点评。' : 'Please login.'}</div>
+            <div className="handbook-empty-sub">{isZh ? '登录后才可以查看收藏。' : 'Please login.'}</div>
           </div>
         ) : (
           <>
-            <div className="handbook-tabs" style={{ marginTop: 10 }}>
-              <button
-                type="button"
-                className={`handbook-tab ${tab === 'saved' ? 'is-active' : ''}`}
-                onClick={() => setTab('saved')}
-              >
-                <Bookmark size={16} aria-hidden style={{ marginRight: 8, verticalAlign: '-3px' }} />
-                {isZh ? '我所收藏的文章' : 'Saved articles'}
-              </button>
-              <button
-                type="button"
-                className={`handbook-tab ${tab === 'reviews' ? 'is-active' : ''}`}
-                onClick={() => setTab('reviews')}
-              >
-                <GraduationCap size={16} aria-hidden style={{ marginRight: 8, verticalAlign: '-3px' }} />
-                {isZh ? '我发布过的课程点评' : 'My course reviews'}
-              </button>
-            </div>
-
-            {tab === 'saved' ? (
               <div className="handbook-mini-list" style={{ marginTop: 10 }}>
                 {savedList.map((a) => (
                   <Link key={a.id} to={`/about/freshman-guide/a/${a.id}`} className="handbook-mini-card">
@@ -106,38 +69,6 @@ function HandbookMe() {
                   </button>
                 ) : null}
               </div>
-            ) : (
-              <div className="handbook-mini-list" style={{ marginTop: 10 }}>
-                {myReviewsList.map((r) => (
-                  <Link key={r.id} to={`/about/freshman-guide/course-review/${r.id}`} className="handbook-mini-card">
-                    <div className="handbook-mini-score">
-                      {(r?.stats?.avgRating == null ? (isZh ? '暂无' : 'N/A') : Number(r.stats.avgRating).toFixed(2))}⭐
-                    </div>
-                    <div className="handbook-mini-title">{r.courseName}</div>
-                    {r.teacher ? <div className="handbook-mini-sub">{r.teacher}</div> : null}
-                    <div className="handbook-mini-sub">
-                      {isZh ? '评分' : 'Rating'}: {r.rating}
-                      {Number.isFinite(Number(r.difficulty)) && Number(r.difficulty) > 0 ? ` · ${isZh ? '难度' : 'Difficulty'}: ${r.difficulty}` : ''}
-                      {` · ${isZh ? '评分人数' : 'Votes'}: ${r?.stats?.ratingCount ?? 0}`}
-                    </div>
-                    {r.comment ? <div className="handbook-mini-sub" style={{ marginTop: 6 }}>{r.comment}</div> : null}
-                  </Link>
-                ))}
-                {!myReviewsQuery.isFetching && myReviewsList.length === 0 ? (
-                  <div className="handbook-mini-empty">{isZh ? '你还没有发布过课程点评' : 'No reviews yet'}</div>
-                ) : null}
-                {myReviewsQuery.hasNextPage ? (
-                  <button
-                    type="button"
-                    className="handbook-loadmore"
-                    onClick={() => myReviewsQuery.fetchNextPage()}
-                    disabled={myReviewsQuery.isFetchingNextPage}
-                  >
-                    {myReviewsQuery.isFetchingNextPage ? (isZh ? '加载中…' : 'Loading…') : (isZh ? '加载更多' : 'Load more')}
-                  </button>
-                ) : null}
-              </div>
-            )}
           </>
         )}
       </div>

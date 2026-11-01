@@ -7,8 +7,11 @@ const express = require('express');
 const router = express.Router();
 const path = require('path');
 const jwt = require('jsonwebtoken');
-const { query } = require('../database');
-const { checkSanction } = require('../middleware/checkSanction');
+const { query, pool } = require('../database');
+const { createCampusInteractions, replyInteractionError } = require('../services/campusInteractions');
+const { campusLikeStats } = require('../services/campusLikeStats');
+const { checkSanction, checkCampusSanction } = require('../middleware/checkSanction');
+const { rejectLegacyCampusImages } = require('../scripts/stage2-local/http-boundary.cjs');
 const sensitiveWordFilter = require('../middleware/sensitiveWordFilter');
 const { createNotification } = require('../services/notificationService');
 const authenticateToken = require('../middleware/auth');
@@ -60,6 +63,8 @@ function mapCommentAuthor(r) {
     avatar: assetUrl(r.avatar),
   };
 }
+
+const campusInteractions = createCampusInteractions({ pool, cleanText, mapAuthor: mapCommentAuthor });
 
 function nestCommentRows(rows) {
   const top = (rows || []).filter((r) => r.parent_id == null);
@@ -573,6 +578,12 @@ router.delete('/trending/:id', authenticateToken, async (req, res) => {
 // ============================================
 
 // ---------- 校园动态列表 ----------
+// Shared visibility boundary for campus detail, comments/replies and likes.
+// Legacy anonymous reads remain supported; new news requires a valid login.
+const { createVisibilityGate, handleError: campusNewsError } = require('./campusNews');
+router.use('/campus-posts/:id', createVisibilityGate({ query, authenticate: authenticateToken }));
+router.use('/campus-posts/:id', campusNewsError);
+
 router.get('/campus-feed', async (req, res) => {
   try {
     const tab = req.query.tab === 'college' ? 'college' : 'school';
@@ -589,7 +600,7 @@ router.get('/campus-feed', async (req, res) => {
       `SELECT COUNT(*) AS total
        FROM campus_posts cp
        JOIN organizations o ON cp.organization_id = o.id
-       WHERE cp.feed_tab = ? AND cp.deleted_at IS NULL AND cp.hidden_by_admin = 0 ${orgTypeCondition}`,
+       WHERE cp.source_kind = 'legacy' AND cp.lifecycle_status = 'published' AND cp.feed_tab = ? AND cp.deleted_at IS NULL AND cp.hidden_by_admin = 0 ${orgTypeCondition}`,
       [tab]
     );
     const total = (countRows && countRows[0]) ? countRows[0].total : 0;
@@ -601,7 +612,7 @@ router.get('/campus-feed', async (req, res) => {
        FROM campus_posts cp
        JOIN organizations o ON cp.organization_id = o.id
        JOIN users u ON cp.author_user_id = u.id
-       WHERE cp.feed_tab = ? AND cp.deleted_at IS NULL AND cp.hidden_by_admin = 0 ${orgTypeCondition}
+       WHERE cp.source_kind = 'legacy' AND cp.lifecycle_status = 'published' AND cp.feed_tab = ? AND cp.deleted_at IS NULL AND cp.hidden_by_admin = 0 ${orgTypeCondition}
        ORDER BY cp.created_at DESC
        LIMIT ${pageSize} OFFSET ${offset}`,
       [tab]
@@ -644,14 +655,17 @@ router.get('/campus-feed', async (req, res) => {
 });
 
 // ---------- 发校园帖（组织身份，支持图片） ----------
-router.post('/campus-posts', authenticateToken, checkSanction, sensitiveWordFilter, (req, res, next) => {
+router.post('/campus-posts', authenticateToken, checkCampusSanction, (req, res, next) => {
   postImagesUpload(req, res, (err) => {
     if (err) return res.status(400).json({ status: -1, message: err.message || '图片上传失败' });
     next();
   });
-}, async (req, res) => {
+}, rejectLegacyCampusImages, sensitiveWordFilter.strict, async (req, res) => {
   try {
     const organizationId = parseInt(req.body.organization_id, 10);
+    if (Object.keys(req.body).some(key => !['organization_id','feed_tab','title','content'].includes(key))) {
+      return res.status(400).json({ status: -1, message: '旧组织发布入口不接受来源、生命周期或管理字段' });
+    }
     const feedTab = req.body.feed_tab === 'college' ? 'college' : 'school';
     const title = cleanText(req.body.title);
     const content = cleanText(req.body.content);
@@ -679,7 +693,7 @@ router.post('/campus-posts', authenticateToken, checkSanction, sensitiveWordFilt
     }
 
     const result = await query(
-      'INSERT INTO campus_posts (organization_id, author_user_id, feed_tab, title, content) VALUES (?, ?, ?, ?, ?)',
+      "INSERT INTO campus_posts (organization_id, author_user_id, feed_tab, title, content, source_kind, lifecycle_status) VALUES (?, ?, ?, ?, ?, 'legacy', 'published')",
       [organizationId, req.user.id, feedTab, title, content]
     );
     const postId = result.insertId;
@@ -705,26 +719,23 @@ router.get('/campus-posts/:id', async (req, res) => {
     const viewer = parseOptionalUser(req);
     const viewerUid = viewer && viewer.id != null ? parseInt(viewer.id, 10) : 0;
     const rows = await query(
-      `SELECT cp.id, cp.title, cp.content, cp.feed_tab, cp.created_at,
+      `SELECT cp.id, cp.title, cp.content, cp.feed_tab, cp.created_at, cp.source_kind, cp.category,
               o.id AS org_id, o.name AS org_name, o.type AS org_type, o.avatar AS org_avatar,
               u.id AS author_id, u.username, u.nickname, u.avatar AS author_avatar
        FROM campus_posts cp
-       JOIN organizations o ON cp.organization_id = o.id
+       LEFT JOIN organizations o ON cp.organization_id = o.id
        JOIN users u ON cp.author_user_id = u.id
-       WHERE cp.id = ? AND cp.deleted_at IS NULL`,
+       WHERE cp.id = ? AND cp.deleted_at IS NULL AND cp.hidden_by_admin = 0 AND cp.lifecycle_status = 'published'`,
       [id]
     );
     if (!rows || rows.length === 0) return res.status(200).json({ status: -1, message: '帖子不存在' });
     const r = rows[0];
 
-    const [imgRows, likeRows, commentRows, userLikedRows] = await Promise.all([
-      query('SELECT file_path, sort_order FROM campus_post_images WHERE post_id = ? ORDER BY sort_order ASC', [id]),
-      query('SELECT COUNT(*) AS cnt FROM campus_post_likes WHERE post_id = ?', [id]),
-      query('SELECT COUNT(*) AS cnt FROM campus_post_comments WHERE post_id = ? AND deleted_at IS NULL', [id]),
-      viewerUid > 0
-        ? query('SELECT 1 AS v FROM campus_post_likes WHERE post_id = ? AND user_id = ? LIMIT 1', [id, viewerUid])
-        : Promise.resolve([]),
+    const [imgRows, interactionMap] = await Promise.all([
+      query('SELECT file_path, sort_order, 0 AS news_asset FROM campus_post_images WHERE post_id = ? UNION ALL SELECT a.object_key AS file_path, i.sort_order, 1 AS news_asset FROM campus_news_images i JOIN campus_news_assets a ON a.id=i.asset_id WHERE i.post_id=? ORDER BY sort_order ASC', [id, id]),
+      campusLikeStats(query, [id], viewerUid > 0 ? viewerUid : null),
     ]);
+    const interactions = interactionMap.get(String(id));
 
     res.status(200).json({
       status: 0, message: '获取成功',
@@ -733,11 +744,14 @@ router.get('/campus-posts/:id', async (req, res) => {
         title: r.title,
         content: r.content,
         feed_tab: r.feed_tab,
+        source_kind: r.source_kind,
+        category: r.category,
         created_at: r.created_at,
-        images: (imgRows || []).map((img) => ({ url: assetUrl(img.file_path), sort_order: img.sort_order })),
-        like_count: (likeRows && likeRows[0]) ? likeRows[0].cnt : 0,
-        comment_count: (commentRows && commentRows[0]) ? commentRows[0].cnt : 0,
-        user_liked: !!(userLikedRows && userLikedRows.length > 0),
+        images: (imgRows || []).map((img) => ({ url: img.news_asset ? require('../services/campusNews/assets').assetUrl(img.file_path, 'local', viewerUid) : assetUrl(img.file_path), sort_order: img.sort_order })),
+        like_count: interactions.like_count,
+        comment_count: interactions.comment_count,
+        user_liked: interactions.liked === true,
+        interactions,
         organization: { id: r.org_id, name: r.org_name, type: r.org_type, avatar: assetUrl(r.org_avatar) },
         author: {
           id: r.author_id,
@@ -758,129 +772,67 @@ router.get('/campus-posts/:id', async (req, res) => {
 });
 
 // ---------- 校园帖评论列表 ----------
-router.get('/campus-posts/:id/comments', async (req, res) => {
+const optionalCampusAuth = (req,res,next) => req.headers.authorization ? authenticateToken(req,res,next) : next();
+router.get('/campus-posts/:id/comments', optionalCampusAuth, async (req, res) => {
+  res.setHeader('Cache-Control', 'private, no-store');
   try {
-    const postId = parseInt(req.params.id, 10);
-    const rows = await query(
-      `SELECT c.id, c.post_id, c.user_id, c.parent_id, c.content, c.created_at,
-              u.username, u.nickname, u.avatar
-       FROM campus_post_comments c
-       LEFT JOIN users u ON c.user_id = u.id
-       WHERE c.post_id = ? AND c.deleted_at IS NULL
-       ORDER BY c.created_at ASC`,
-      [postId]
-    );
-    res.status(200).json({ status: 0, message: '获取成功', data: nestCommentRows(rows || []) });
-  } catch (e) {
-    if (e.code === 'ER_NO_SUCH_TABLE') {
-      return res.status(200).json({ status: 0, message: '获取成功', data: [] });
-    }
-    console.error('校园帖评论列表错误:', e);
-    res.status(500).json({ status: -1, message: '服务器错误' });
-  }
+    const data = await campusInteractions.comments(req.user?.id,req.params.id,{ threads:req.query.view==='threads',limit:req.query.limit,cursor:req.query.cursor });
+    res.json({status:0,data});
+  } catch (error) { replyInteractionError(error,res); }
+});
+router.get('/campus-posts/:id/comments/:rootId/replies',optionalCampusAuth,async(req,res)=>{
+  res.setHeader('Cache-Control','private, no-store');
+  try { res.json({status:0,data:await campusInteractions.comments(req.user?.id,req.params.id,{threads:true,rootId:req.params.rootId,limit:req.query.limit,cursor:req.query.cursor})}); }
+  catch(error){replyInteractionError(error,res);}
+});
+router.delete('/campus-posts/:id/comments/:commentId',authenticateToken,async(req,res)=>{
+  res.setHeader('Cache-Control','private, no-store');
+  try { res.json({status:0,data:await campusInteractions.deleteComment(req.user.id,req.params.id,req.params.commentId,req.body)}); }
+  catch(error){replyInteractionError(error,res);}
 });
 
-// ---------- 发表校园帖评论 ----------
-router.post('/campus-posts/:id/comments', authenticateToken, checkSanction, sensitiveWordFilter, async (req, res) => {
+// ---------- Existing campus writes: same-connection permission/visibility transaction ----------
+router.post('/campus-posts/:id/comments', authenticateToken, checkCampusSanction, sensitiveWordFilter.strict, async (req, res) => {
   try {
-    const postId = parseInt(req.params.id, 10);
-    const content = cleanText(req.body.content);
-    const parentId = req.body.parent_id ? parseInt(req.body.parent_id, 10) : null;
-    if (!content) return res.status(200).json({ status: -1, message: '内容不能为空' });
-
-    const posts = await query('SELECT id FROM campus_posts WHERE id = ? AND deleted_at IS NULL', [postId]);
-    if (!posts || posts.length === 0) return res.status(200).json({ status: -1, message: '帖子不存在' });
-
-    if (parentId) {
-      const parents = await query(
-        'SELECT id, parent_id FROM campus_post_comments WHERE id = ? AND post_id = ? AND deleted_at IS NULL',
-        [parentId, postId]
-      );
-      if (!parents || parents.length === 0) return res.status(200).json({ status: -1, message: '父评论不存在' });
-      if (parents[0].parent_id != null) {
-        return res.status(200).json({ status: -1, message: '仅支持二级评论' });
-      }
-    }
-
-    const result = await query(
-      'INSERT INTO campus_post_comments (post_id, user_id, parent_id, content) VALUES (?, ?, ?, ?)',
-      [postId, req.user.id, parentId, content]
-    );
-    const rows = await query(
-      `SELECT c.id, c.post_id, c.user_id, c.parent_id, c.content, c.created_at,
-              u.username, u.nickname, u.avatar
-       FROM campus_post_comments c
-       LEFT JOIN users u ON c.user_id = u.id
-       WHERE c.id = ?`,
-      [result.insertId]
-    );
-    const row = rows && rows[0];
-    const data = row
-      ? {
-          id: row.id,
-          post_id: row.post_id,
-          user_id: row.user_id,
-          parent_id: row.parent_id,
-          content: row.content,
-          created_at: row.created_at,
-          author: mapCommentAuthor(row),
-        }
-      : { id: result.insertId, content };
-
-    // 通知帖主
-    const [cpAuthor] = await query('SELECT author_user_id FROM campus_posts WHERE id = ?', [postId]);
-    if (cpAuthor && cpAuthor.author_user_id && cpAuthor.author_user_id !== req.user.id) {
-      createNotification({ userId: cpAuthor.author_user_id, type: 'campus_comment', fromUserId: req.user.id, postId, commentId: result.insertId, extra: { content: content.slice(0, 80) } }).catch(() => {});
-    }
-
+    res.setHeader('Cache-Control','private, no-store');
+    if (!req.headers['idempotency-key']) { res.setHeader('X-API-Deprecated','true');res.setHeader('X-API-Retry-Safe','false'); }
+    const data = await campusInteractions.comment(req.user.id, req.params.id, req.body, req.headers['idempotency-key']);
     res.status(200).json({ status: 0, message: '评论成功', data });
-  } catch (e) {
-    if (e.code === 'ER_NO_SUCH_TABLE') {
-      return res.status(503).json({ status: -1, message: '请先执行数据库迁移 054 Run migration 054' });
-    }
-    console.error('校园帖评论错误:', e);
-    res.status(500).json({ status: -1, message: '服务器错误' });
+  } catch (error) {
+    replyInteractionError(error, res);
   }
 });
 
-// ---------- 校园帖点赞/取消点赞 ----------
-router.post('/campus-posts/:id/like', authenticateToken, async (req, res) => {
+// Explicit state/count reads and idempotent writes. Legacy toggle stays separate below.
+router.get('/campus-posts/:id/interactions', (req, res, next) => req.headers.authorization ? authenticateToken(req, res, next) : next(), async (req, res) => {
+  res.setHeader('Cache-Control', 'private, no-store');
   try {
-    const postId = parseInt(req.params.id, 10);
-    const posts = await query('SELECT id FROM campus_posts WHERE id = ? AND deleted_at IS NULL', [postId]);
-    if (!posts || posts.length === 0) return res.status(200).json({ status: -1, message: '帖子不存在' });
-
-    const existing = await query(
-      'SELECT 1 FROM campus_post_likes WHERE post_id = ? AND user_id = ?',
-      [postId, req.user.id]
-    );
-    let liked;
-    if (existing && existing.length > 0) {
-      await query('DELETE FROM campus_post_likes WHERE post_id = ? AND user_id = ?', [postId, req.user.id]);
-      liked = false;
-    } else {
-      await query('INSERT INTO campus_post_likes (post_id, user_id) VALUES (?, ?)', [postId, req.user.id]);
-      liked = true;
-    }
-    // 通知帖主
-    if (liked) {
-      const [authorRow] = await query('SELECT author_user_id FROM campus_posts WHERE id = ?', [postId]);
-      if (authorRow && authorRow.author_user_id && authorRow.author_user_id !== req.user.id) {
-        createNotification({ userId: authorRow.author_user_id, type: 'campus_like', fromUserId: req.user.id, postId }).catch(() => {});
-      }
-    }
-    const [cntRow] = await query('SELECT COUNT(*) AS cnt FROM campus_post_likes WHERE post_id = ?', [postId]);
-    res.status(200).json({
-      status: 0,
-      message: liked ? '点赞成功' : '已取消点赞',
-      data: { liked, like_count: (cntRow && cntRow.cnt) || 0 },
-    });
-  } catch (e) {
-    if (e.code === 'ER_NO_SUCH_TABLE') {
-      return res.status(503).json({ status: -1, message: '请先执行数据库迁移 054 Run migration 054' });
-    }
-    console.error('校园帖点赞错误:', e);
-    res.status(500).json({ status: -1, message: '服务器错误' });
+    res.json({ status: 0, data: await campusInteractions.interactions(req.user?.id, req.params.id) });
+  } catch (error) { replyInteractionError(error, res); }
+});
+for (const [method, desired] of [['put', true], ['delete', false]]) {
+  router[method]('/campus-posts/:id/like', authenticateToken, async (req, res) => {
+    res.setHeader('Cache-Control', 'private, no-store');
+    try {
+      if (req.body && Object.keys(req.body).length) return res.status(400).json({ status: -1, message: '显式点赞接口不接受状态覆盖字段' });
+      const data = await campusInteractions.setLike(req.user.id, req.params.id, desired);
+      res.json({ status: 0, data });
+    } catch (error) { replyInteractionError(error, res); }
+  });
+}
+router.post('/campus-posts/:id/like', authenticateToken, async (req, res) => {
+  res.setHeader('X-API-Deprecated', 'true');
+  res.setHeader('X-API-Retry-Safe', 'false');
+  try {
+    // No receipt table has been approved. Never silently execute a keyed toggle twice.
+    const keys = Object.keys(req.body || {});
+    if (!keys.length && req.headers['idempotency-key']) return res.status(503).json({ status: -1, code: 'CAMPUS_TOGGLE_RECEIPTS_UNAVAILABLE', message: '旧带标识切换接口尚未接入，请改用 PUT/DELETE' });
+    if (keys.length && (keys.length !== 1 || keys[0] !== 'liked' || typeof req.body.liked !== 'boolean')) return res.status(400).json({ status: -1, message: '点赞参数无效' });
+    const data = keys.length ? await campusInteractions.setLike(req.user.id, req.params.id, req.body.liked)
+      : await campusInteractions.toggleLike(req.user.id, req.params.id, true);
+    res.status(200).json({ status: 0, message: data.liked ? '点赞成功' : '已取消点赞', data });
+  } catch (error) {
+    replyInteractionError(error, res);
   }
 });
 

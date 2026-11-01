@@ -10,7 +10,7 @@
 
 import * as React from 'react';
 import { PixelRatio } from 'react-native';
-import { fireEvent } from '@testing-library/react-native';
+import { fireEvent, within } from '@testing-library/react-native';
 
 import { TreeholePostRow } from '@/features/campus/TreeholePostRow';
 import { TreeholePostDetail } from '@/features/campus/TreeholePostDetail';
@@ -84,14 +84,12 @@ describe('P2X TreeholePreview（折叠判定）', () => {
 });
 
 describe('P2X TreeholePostRow', () => {
-  it('信息流只有标题：身份 + 标签（日期右边）+ 计数，⛔ 不展示正文', async () => {
+  it('信息流完整展示标题和正文，身份标签与计数保持', async () => {
     const view = await renderApp(row());
     expect(view.getByTestId('treehole-author-name')).toHaveTextContent('小蓝');
     expect(view.getByTestId('treehole-author-time')).toHaveTextContent('2 小时前');
     expect(view.getByText('晚自习搭子')).toBeTruthy();
-    // 2026-10-18 所有者裁决：正文只出现在详情页
-    expect(view.queryByTestId('treehole-content-7')).toBeNull();
-    expect(view.queryByText('今晚有人想去图书馆吗？')).toBeNull();
+    expect(view.getByTestId('treehole-content-7')).toHaveTextContent('今晚有人想去图书馆吗？');
     // 标签排在日期右边，不单独占一行
     expect(view.getByTestId('treehole-row-tags')).toHaveTextContent('求助');
     const tree = JSON.stringify(view.toJSON());
@@ -100,9 +98,28 @@ describe('P2X TreeholePostRow', () => {
     expect(view.getByTestId('campus-row-7-comment-count')).toHaveTextContent('3');
   });
 
-  it('没有标题的帖子用正文首行兜底，不留空白行', async () => {
-    const view = await renderApp(row({ post: { ...post, title: '', content: '只有正文的帖子' } }));
-    expect(view.getByText('只有正文的帖子')).toBeTruthy();
+  it('没有标题的多行正文只展示一次，不重复首行', async () => {
+    const view = await renderApp(row({ post: { ...post, title: '', content: '只有正文的帖子\n第二段尾句' } }));
+    expect(view.getAllByText('只有正文的帖子\n第二段尾句')).toHaveLength(1);
+    expect(view.queryByText('只有正文的帖子')).toBeNull();
+  });
+
+  it('搜索命中正文尾部，长文不截断且仍可进入详情', async () => {
+    const onOpen = jest.fn();
+    const content = '长文段落\n'.repeat(80) + '尾部自习';
+    const view = await renderApp(row({ post: { ...post, content }, query: '自习', onOpen }));
+    expect(view.getByTestId('treehole-content-7')).toHaveTextContent(/尾部\s*自习/);
+    expect(view.getByTestId('treehole-content-7').props.numberOfLines).toBeUndefined();
+    expect(view.getAllByTestId('campus-search-match').length).toBeGreaterThan(0);
+    await fireEvent.press(view.getByTestId('campus-row-7'));
+    expect(onOpen).toHaveBeenCalledTimes(1);
+  });
+
+  it('空正文不产生空文本块，图片和操作仍可用', async () => {
+    const view = await renderApp(row({ post: { ...post, content: '', mediaUrls: ['https://example.test/a.jpg'] } }));
+    expect(view.queryByTestId('treehole-content-7')).toBeNull();
+    expect(view.getByTestId('campus-row-7-media')).toBeTruthy();
+    expect(view.getByTestId('campus-row-7-like')).toBeTruthy();
   });
 
   it('内容区与动作区是兄弟节点：点内容进详情，点动作只触发动作', async () => {
@@ -124,6 +141,22 @@ describe('P2X TreeholePostRow', () => {
     expect(view.queryByTestId('treehole-media-preview')).toBeNull();
   });
 
+  it('图组距正文 12dp：内容列 4 + 媒体上边距 8', async () => {
+    const view = await renderApp(
+      row({ post: { ...post, mediaUrls: ['https://example.test/a.jpg'] } })
+    );
+    expect(view.getByTestId('campus-row-7-media')).toHaveStyle({ marginTop: 8 });
+  });
+
+  it('点图组仍进详情（2026-10-31：只去掉按压变灰，不减少交互）', async () => {
+    const onOpen = jest.fn();
+    const view = await renderApp(
+      row({ onOpen, post: { ...post, mediaUrls: ['https://example.test/a.jpg'] } })
+    );
+    await fireEvent.press(view.getByTestId('campus-row-7-media'));
+    expect(onOpen).toHaveBeenCalledTimes(1);
+  });
+
   it('正文在媒体之前：详情顺序 = 标题/正文 → 标签 → 媒体', async () => {
     const view = await renderApp(
       <TreeholePostDetail
@@ -142,6 +175,29 @@ describe('P2X TreeholePostRow', () => {
     expect(tree.indexOf('treehole-tags')).toBeLessThan(tree.indexOf('treehole-media-detail'));
   });
 
+  it('详情 tag 退为辅助信息：字号 = 正文 × 0.85（12sp），胶囊内边距收到 4/12', async () => {
+    const view = await renderApp(
+      <TreeholePostDetail
+        post={post}
+        timeLabel="2026-10-18 10:00"
+        liked={false}
+        likeCount={2}
+        commentCount={3}
+        onLike={() => undefined}
+        onComment={() => undefined}
+      />
+    );
+    const chip = view.getByTestId('treehole-tag-1');
+    expect(chip).toHaveStyle({
+      minHeight: 24,
+      paddingHorizontal: 12,
+      paddingVertical: 4,
+      borderRadius: 9999,
+    });
+    // 正文 body = 14sp → tag caption = 12sp（0.857×，落 0.85 档）；常规字重，不抢正文
+    expect(within(chip).getByText('求助')).toHaveStyle({ fontSize: 12, fontWeight: 'normal' });
+  });
+
   it('短正文直接完整显示，不给"阅读全文"', async () => {
     const view = await renderApp(
       <TreeholePostDetail
@@ -158,7 +214,7 @@ describe('P2X TreeholePostRow', () => {
     expect(view.getByTestId('treehole-post-content')).toHaveTextContent('短正文');
   });
 
-  it('长正文给"阅读全文"（与列表/搜索同一把尺子）', async () => {
+  it('长正文直接完整显示，无需展开', async () => {
     // RN 的 Jest 预设把字号缩放固定成 2，而 ≥2 的设计是"不截断"；这里显式回到 1 才测得到折叠
     const spy = jest.spyOn(PixelRatio, 'getFontScale').mockReturnValue(1);
     try {
@@ -173,7 +229,8 @@ describe('P2X TreeholePostRow', () => {
           onComment={() => undefined}
         />
       );
-      expect(view.getByTestId('treehole-detail-read-more')).toBeTruthy();
+      expect(view.queryByTestId('treehole-detail-read-more')).toBeNull();
+      expect(view.getByTestId('treehole-post-content').props.numberOfLines).toBeUndefined();
     } finally {
       spy.mockRestore();
     }

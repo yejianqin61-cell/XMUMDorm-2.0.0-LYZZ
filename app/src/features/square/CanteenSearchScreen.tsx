@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { EntityCard } from '@/components/ui/EntityCard';
 import { ListScreen, useListPagination } from '@/components/ui/ListScreen';
 import { Screen } from '@/components/ui/Screen';
+import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import { useMailboxBadge } from '@/features/mailbox/useUnread';
 import { SearchField } from '@/components/ui/SearchField';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
@@ -14,6 +15,7 @@ import { toResourceError } from './useCanteenResource';
 import { searchCanteen } from '../../../../shared/api/canteen';
 import { getUploadUrl } from '../../../../shared/api/config';
 import { mergeSearchRows, normalizeSearchPage, validateSearchQuery, type SearchRow, type SearchType } from './canteenSearch';
+import { CanteenMedia } from './CanteenMedia';
 
 export function CanteenSearchScreen(): React.ReactElement {
   const badge = useMailboxBadge();
@@ -40,8 +42,9 @@ export function CanteenSearchScreen(): React.ReactElement {
     if (issue) { generation.current += 1; loading.current = false; setRows([]); setProblem(issue); queryRef.current = ''; dispatch({ type: 'refresh:success', hasMore: false }); return; }
     query = query.trim();
     const request = ++generation.current;
+    const sameSearch = queryRef.current === query && typeRef.current === selected;
     queryRef.current = query; typeRef.current = selected; setProblem(null); loading.current = true;
-    if (mode === 'refresh') setRows([]);
+    if (mode === 'refresh' && !sameSearch) setRows([]);
     dispatch({ type: mode === 'refresh' ? 'refresh:start' : 'append:start' });
     try {
       const page = mode === 'refresh' ? 1 : pageRef.current + 1;
@@ -57,6 +60,14 @@ export function CanteenSearchScreen(): React.ReactElement {
       dispatch({ type: mode === 'refresh' ? 'refresh:failure' : 'append:failure', error: toResourceError(error) });
     } finally { if (generation.current === request) loading.current = false; }
   };
+  React.useEffect(() => {
+    if (typeof params.query !== 'string' || !params.query.trim()) return;
+    setInput(params.query);
+    setType('all');
+    void load(params.query, 'all', 'refresh');
+    // The route parameter is the submitted search; typing is handled separately.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.query]);
   const submit = () => void load(input, type, 'refresh');
   const edit = (next: string) => {
     generation.current += 1; loading.current = false; queryRef.current = ''; setInput(next); setRows([]);
@@ -68,11 +79,16 @@ export function CanteenSearchScreen(): React.ReactElement {
       <Button testID="canteen-search-submit" label={t('canteen.search.submit')} onPress={submit} />
       <SegmentedControl testID="canteen-search-type" value={type} options={[{ value: 'all', label: t('canteen.search.all') }, { value: 'products', label: t('canteen.search.products') }, { value: 'articles', label: t('canteen.search.articles') }]}
         onChange={(next) => { const selected = next as SearchType; setType(selected); if (queryRef.current) void load(queryRef.current, selected, 'refresh'); }} />
+      {rows.length > 0 && pagination.refresh === 'error' ? <OfflineBanner testID="canteen-search-stale" variant="stale"
+        message={t('canteen.cache.stale')} actionLabel={t('action.retry')}
+        onAction={() => void load(queryRef.current, typeRef.current, 'refresh')} /> : null}
       <ListScreen testID="canteen-search-list" data={rows} keyExtractor={(row) => `${row.kind}:${row.id}`} pagination={pagination}
         onRefresh={() => void load(queryRef.current || input, typeRef.current, 'refresh')} onEndReached={() => void load(queryRef.current, typeRef.current, 'append')}
         onRetryRefresh={() => void load(queryRef.current, typeRef.current, 'refresh')} onRetryAppend={() => void load(queryRef.current, typeRef.current, 'append')}
         labels={{ empty: { kind: 'noResult', title: t(problem === 'tooLong' ? 'canteen.search.tooLong' : problem === 'empty' ? 'canteen.search.enterQuery' : 'canteen.search.noResults'), description: t('canteen.search.emptyHelp'), actionLabel: t('canteen.search.submit'), onAction: submit }, retryLabel: t('action.retry'), endLabel: t('canteen.search.end') }}
-        renderItem={(row) => row.kind === 'product' ? <EntityCard testID={`search-product-${row.id}`} domain="food" title={row.title} subtitle={row.subtitle ?? undefined} mediaUri={row.cover ? getUploadUrl(row.cover) : null} score={row.score} onPress={() => router.push({ pathname: '/canteen/product/[id]', params: { id: String(row.id) } })} /> :
+        renderItem={(row) => row.kind === 'product' ? <EntityCard testID={`search-product-${row.id}`} domain="food" title={row.title} subtitle={row.subtitle ?? undefined} score={row.score}
+          badges={<CanteenMedia uri={row.cover} name={row.title} testID={`search-product-media-${row.id}`} style={{ width: '100%', height: undefined, aspectRatio: 16 / 9 }} />}
+          onPress={() => router.push({ pathname: '/canteen/product/[id]', params: { id: String(row.id) } })} /> :
           <EntityCard testID={`search-article-${row.id}`} domain="post" title={row.title} authorLabel={row.subtitle ?? t('canteen.anonymous')} mediaUri={row.cover ? getUploadUrl(row.cover) : null} onPress={() => router.push({ pathname: '/campus/[id]', params: { id: String(row.id) } })} />} />
     </View>
   </Screen>;
