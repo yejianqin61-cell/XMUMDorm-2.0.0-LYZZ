@@ -443,6 +443,20 @@
   border-top: 1px solid rgba(32, 48, 74, 0.08);
 }
 
+.site-web-shell__sidebar-group {
+  margin-top: 20px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(32, 48, 74, 0.08);
+}
+
+.site-web-shell__sidebar-group-title {
+  margin: 0 12px 6px;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-caption);
+  font-weight: 700;
+  line-height: 1.5;
+}
+
 .site-web-shell__nav-item--active .site-web-shell__nav-label {
   font-weight: 700;
 }

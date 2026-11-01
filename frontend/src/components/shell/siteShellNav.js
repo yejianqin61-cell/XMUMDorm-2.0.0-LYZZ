@@ -1,11 +1,12 @@
 import {
   BookOpen,
-  ClipboardCheck,
   Compass,
+  GraduationCap,
   HandHeart,
   Heart,
   HeartHandshake,
   MessageCircle,
+  ClipboardCheck,
   TreePine,
   ShoppingBag,
   UserRound,
@@ -21,13 +22,6 @@ export const SITE_PRIMARY_NAV_ITEMS = [
     to: '/agent',
     icon: MessageCircle,
     matchPrefixes: ['/agent'],
-  },
-  {
-    key: 'checkin',
-    labelZh: '签到',
-    labelEn: 'Check-in',
-    href: 'https://acad.xmu.edu.my/mobile',
-    icon: ClipboardCheck,
   },
   {
     key: 'confession',
@@ -121,6 +115,30 @@ export const SITE_PRIMARY_NAV_ITEMS = [
     to: '/myzone',
     icon: UserRound,
     matchPrefixes: ['/myzone'],
+  },
+];
+
+export const SITE_FRIENDLY_LINK_ITEMS = [
+  {
+    key: 'ac',
+    labelZh: 'AC 系统',
+    labelEn: 'AC System',
+    href: 'https://ac.xmu.edu.my/',
+    icon: GraduationCap,
+  },
+  {
+    key: 'moodle',
+    labelZh: 'Moodle',
+    labelEn: 'Moodle',
+    href: 'https://l.xmu.edu.my/',
+    icon: BookOpen,
+  },
+  {
+    key: 'checkin',
+    labelZh: '签到系统',
+    labelEn: 'Class Check-in',
+    href: 'https://acad.xmu.edu.my/mobile',
+    icon: ClipboardCheck,
   },
 ];
 
