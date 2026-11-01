@@ -1,4 +1,4 @@
-import { useState,  useRef, useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Heart, MessageCircle, MoreHorizontal, SendHorizonal, Smile } from 'lucide-react';
@@ -12,6 +12,35 @@ import LikeBurst from './LikeBurst';
 import { formatPostTime } from '@shared/utils/formatTime';
 import UserLevelBadge from './UserLevelBadge';
 import '../pages/PostDetail.css';
+
+const COMMENT_EMOJIS = [
+  { emoji: '😀', zh: '开心', en: 'Grinning' },
+  { emoji: '😄', zh: '大笑', en: 'Smiling' },
+  { emoji: '😂', zh: '笑哭', en: 'Laughing' },
+  { emoji: '🥰', zh: '喜欢', en: 'Love' },
+  { emoji: '😍', zh: '爱心眼', en: 'Heart eyes' },
+  { emoji: '🥹', zh: '感动', en: 'Touched' },
+  { emoji: '😭', zh: '哭泣', en: 'Crying' },
+  { emoji: '😡', zh: '生气', en: 'Angry' },
+  { emoji: '🤔', zh: '思考', en: 'Thinking' },
+  { emoji: '🥺', zh: '委屈', en: 'Pleading' },
+  { emoji: '😎', zh: '酷', en: 'Cool' },
+  { emoji: '🤗', zh: '拥抱', en: 'Hugging' },
+  { emoji: '👍', zh: '赞', en: 'Thumbs up' },
+  { emoji: '👎', zh: '踩', en: 'Thumbs down' },
+  { emoji: '👏', zh: '鼓掌', en: 'Clapping' },
+  { emoji: '🙌', zh: '欢呼', en: 'Celebration' },
+  { emoji: '🙏', zh: '谢谢', en: 'Thanks' },
+  { emoji: '💪', zh: '加油', en: 'Strong' },
+  { emoji: '❤️', zh: '爱心', en: 'Heart' },
+  { emoji: '💕', zh: '喜欢', en: 'Two hearts' },
+  { emoji: '🎉', zh: '庆祝', en: 'Party' },
+  { emoji: '✨', zh: '闪耀', en: 'Sparkles' },
+  { emoji: '🔥', zh: '火', en: 'Fire' },
+  { emoji: '☕', zh: '咖啡', en: 'Coffee' },
+  { emoji: '🍜', zh: '面', en: 'Noodles' },
+  { emoji: '🥤', zh: '饮料', en: 'Drink' },
+];
 
 function prefixAvatar(url) {
   return url && !url.startsWith('http') ? `${API_BASE_URL}${url}` : url;
@@ -60,13 +89,37 @@ export default function PostDetailShell({
   const isEn = lang === 'en';
   const likeBurstRef = useRef(null);
   const composerInputRef = useRef(null);
+  const composerRef = useRef(null);
+  const emojiButtonRef = useRef(null);
   const commentsRef = useRef(null);
   const [newComment, setNewComment] = useState('');
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const [replyingTo, setReplyingTo] = useState(null);
   const [imagePreview, setImagePreview] = useState({ open: false, index: 0 });
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [carouselDir, setCarouselDir] = useState(1);
   const [ownerMenuOpen, setOwnerMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!emojiPickerOpen) return undefined;
+
+    const handlePointerDown = (event) => {
+      if (!composerRef.current?.contains(event.target)) setEmojiPickerOpen(false);
+    };
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setEmojiPickerOpen(false);
+        emojiButtonRef.current?.focus();
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [emojiPickerOpen]);
 
   const postId = post?.id;
 
@@ -100,6 +153,22 @@ export default function PostDetailShell({
     await onSubmitComment({ content, parentId });
     setNewComment('');
     setReplyingTo(null);
+    setEmojiPickerOpen(false);
+  };
+
+  const insertEmoji = (emoji) => {
+    const input = composerInputRef.current;
+    const start = input?.selectionStart ?? newComment.length;
+    const end = input?.selectionEnd ?? newComment.length;
+    const nextComment = `${newComment.slice(0, start)}${emoji}${newComment.slice(end)}`;
+    if (nextComment.length > 500) return;
+
+    setNewComment(nextComment);
+    setEmojiPickerOpen(false);
+    requestAnimationFrame(() => {
+      input?.focus();
+      input?.setSelectionRange(start + emoji.length, start + emoji.length);
+    });
   };
 
   const startReply = (c) => setReplyingTo({ id: c.id, content: c.content });
@@ -408,9 +477,40 @@ export default function PostDetailShell({
       )}
 
       <form className="post-detail-bottom-bar" onSubmit={handleSubmitComment}>
-        <button type="button" className="post-detail-bottom-emoji" aria-label="emoji">
-          <Smile size={18} aria-hidden />
-        </button>
+        <div className="post-detail-bottom-composer" ref={composerRef}>
+          <button
+            ref={emojiButtonRef}
+            type="button"
+            className="post-detail-bottom-emoji"
+            aria-label={isEn ? 'Choose emoji' : '选择表情'}
+            aria-expanded={emojiPickerOpen}
+            aria-controls="post-comment-emoji-picker"
+            onClick={() => setEmojiPickerOpen((open) => !open)}
+          >
+            <Smile size={18} aria-hidden />
+          </button>
+          {emojiPickerOpen ? (
+            <div
+              id="post-comment-emoji-picker"
+              className="post-detail-emoji-picker"
+              role="group"
+              aria-label={isEn ? 'Comment emojis' : '评论表情'}
+            >
+              {COMMENT_EMOJIS.map(({ emoji, zh, en }) => (
+                <button
+                  key={emoji}
+                  type="button"
+                  className="post-detail-emoji-option"
+                  aria-label={isEn ? en : zh}
+                  title={isEn ? en : zh}
+                  onClick={() => insertEmoji(emoji)}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
         <input
           ref={composerInputRef}
           type="text"
