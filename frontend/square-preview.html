@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>校园快讯 · 本地界面预览</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module">
+      if (import.meta.env.DEV) import('/src/dev/SquareNewsPreview.jsx');
+      else document.getElementById('root').textContent = '仅用于本地开发预览';
+    </script>
+  </body>
+</html>

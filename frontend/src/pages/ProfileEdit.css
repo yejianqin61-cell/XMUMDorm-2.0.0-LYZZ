@@ -30,3 +30,7 @@
 .profile-edit-save { border: 1px solid #111827; background: #111827; color: #fff; }
 .profile-edit-save:disabled { opacity: 0.55; cursor: not-allowed; }
 @media (max-width: 640px) { .profile-edit-content { padding: 22px 16px 36px; } .profile-edit-grid { grid-template-columns: 1fr; } }
+
+.profile-edit-field select { width:100%; max-width:100%; box-sizing:border-box; padding:11px 12px; border:1px solid #d1d5db; border-radius:8px; background:#fff; color:#111827; font:inherit; font-size:14px; }
+.profile-edit-field small { display:block; margin-top:8px; color:#6b7280; font-size:12px; }
+.profile-edit-academic-hint { margin:0; color:#6b7280; font-size:13px; overflow-wrap:anywhere; }

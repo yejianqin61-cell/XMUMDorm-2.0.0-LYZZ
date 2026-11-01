@@ -18,8 +18,9 @@ const SquareTrendingDetail = lazy(() => import('../pages/SquareTrendingDetail'))
 const SquareTrendingPostNew = lazy(() => import('../pages/SquareTrendingPostNew'));
 const SquareTrendingPostDetail = lazy(() => import('../pages/SquareTrendingPostDetail'));
 const SquareCampusFeed = lazy(() => import('../pages/SquareCampusFeed'));
+const CampusNewsDetail = lazy(() => import('../features/campus-news/CampusNewsDetail'));
 const SquareCampusPostNew = lazy(() => import('../pages/SquareCampusPostNew'));
-const SquareCampusPostDetail = lazy(() => import('../pages/SquareCampusPostDetail'));
+const SquareCampusPostDetail = lazy(() => import('../features/campus-news/CampusNewsRoute'));
 const SquareOrgAdmin = lazy(() => import('../pages/SquareOrgAdmin'));
 const AboutAlgorithm = lazy(() => import('../pages/AboutAlgorithm'));
 const AboutLevelAlgorithm = lazy(() => import('../pages/AboutLevelAlgorithm'));
@@ -59,6 +60,7 @@ const Disclaimer = lazy(() => import('../pages/Disclaimer'));
 const UserZone = lazy(() => import('../pages/UserZone'));
 const MyPosts = lazy(() => import('../pages/MyPosts'));
 const MyReviews = lazy(() => import('../pages/MyReviews'));
+const MyFavorites = lazy(() => import('../pages/MyFavorites'));
 const ProfileEdit = lazy(() => import('../pages/ProfileEdit'));
 const Mailbox = lazy(() => import('../pages/Mailbox'));
 const CanteenArea = lazy(() => import('../pages/CanteenArea'));
@@ -140,6 +142,7 @@ export const layoutRoutes = (
     <Route path="about/trending/post/:id" element={renderLazyRoute(SquareTrendingPostDetail)} />
     <Route path="about/campus" element={renderLazyRoute(SquareCampusFeed)} />
     <Route path="about/campus/new" element={renderLazyRoute(SquareCampusPostNew)} />
+    <Route path="about/campus/preview/:previewId" element={renderLazyRoute(CampusNewsDetail)} />
     <Route path="about/campus/:id" element={renderLazyRoute(SquareCampusPostDetail)} />
     <Route path="about/admin/orgs" element={renderLazyRoute(SquareOrgAdmin)} />
     <Route path="about/freshman-guide" element={renderLazyRoute(SquareFreshmanGuide)} />
@@ -154,6 +157,7 @@ export const layoutRoutes = (
     <Route path="user/:id" element={renderLazyRoute(UserZone)} />
     <Route path="myzone/posts" element={renderLazyRoute(MyPosts)} />
     <Route path="myzone/reviews" element={renderLazyRoute(MyReviews)} />
+    <Route path="myzone/favorites" element={renderLazyRoute(MyFavorites)} />
     <Route path="myzone/profile" element={renderLazyRoute(ProfileEdit)} />
     <Route path="myzone/schedule" element={renderLazyRoute(Schedule)} />
     <Route path="agent" element={renderLazyRoute(AgentChat)} />

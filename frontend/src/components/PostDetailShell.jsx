@@ -32,6 +32,7 @@ export default function PostDetailShell({
   liked = false,
   likeCount = 0,
   onLike,
+  likePending = false,
   onSubmitComment,
   submitLoading = false,
   isLoggedIn = false,
@@ -52,6 +53,7 @@ export default function PostDetailShell({
   onDeletePost,
   deleteLoading = false,
   showCommentCountBtn = false,
+  commentsSlot = null,
 }) {
   const navigate = useNavigate();
   const { lang } = useLanguage();
@@ -270,6 +272,8 @@ export default function PostDetailShell({
             type="button"
             className={`post-detail-like-btn ${liked ? 'is-liked' : ''}`}
             onClick={handleLikeClick}
+            disabled={likePending}
+            aria-busy={likePending}
             aria-pressed={liked}
             whileTap={{ scale: 0.92 }}
             transition={{ type: 'spring', stiffness: 700, damping: 28 }}
@@ -295,7 +299,7 @@ export default function PostDetailShell({
 
       <LikeBurst ref={likeBurstRef} />
 
-      <section className="post-detail-comments" ref={commentsRef}>
+      {commentsSlot ?? <><section className="post-detail-comments" ref={commentsRef}>
         <h2 className="post-detail-comments-title">
           {isEn ? `Comments (${totalCommentCount})` : `评论 (${totalCommentCount})`}
         </h2>
@@ -428,6 +432,7 @@ export default function PostDetailShell({
           <SendHorizonal size={18} aria-hidden />
         </motion.button>
       </form>
+      </>}
     </div>
   );
 }

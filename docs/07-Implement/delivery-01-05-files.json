@@ -1,0 +1,662 @@
+{
+  "baseline_commit": "5ca6d29463dcd428ecda499137e4726872294e14",
+  "branch": "dev-gjl",
+  "scope": "01-05 complete existing implementation and delivery tooling",
+  "hash_policy": "SHA-256 after CRLF-to-LF normalization; manifest excludes itself; not a list of all existing baseline files",
+  "files": [
+    {
+      "path": "__tests__/routes/advertisementBanners.test.js",
+      "sha256_lf": "eab7f120023a0573b43819b20208e8db6d0a87d1a5d639a015c43ec2232e320d"
+    },
+    {
+      "path": "__tests__/routes/users.test.js",
+      "sha256_lf": "e2d27d21d0cb8a483d22febb8aa946e299fc0f79a86caccad2ba579c4fa7885a"
+    },
+    {
+      "path": "docs/07-Implement/README.md",
+      "sha256_lf": "c97eca2306982c789a1585cc76613d867fbe4f530f73ecf1c77a14151b04f943"
+    },
+    {
+      "path": "frontend/public/square/demo/innovation.svg",
+      "sha256_lf": "664f1fd203dc45f2802461d28de0e63eeea5c1d8394fead22ff53040da8985a6"
+    },
+    {
+      "path": "frontend/public/square/demo/lecture.svg",
+      "sha256_lf": "eaa20f1f3e6fd6a205c6ff4e804d7d5b415c2397359d5841e4d0c77aec050c0b"
+    },
+    {
+      "path": "frontend/public/square/demo/workshop.svg",
+      "sha256_lf": "805f16581269c87cc4bfc53197ebdc136bc8a59e71354ee440bee07b3e955422"
+    },
+    {
+      "path": "frontend/square-preview.html",
+      "sha256_lf": "9e10f8228aed23b1bae88bfc27820dec9fd4f76e2fb4c835b9c4edea1d9cb415"
+    },
+    {
+      "path": "frontend/src/App.jsx",
+      "sha256_lf": "d2492c0a76990642fc484bca1efe955a8ca1a6579e763f60b45bc252af9ee944"
+    },
+    {
+      "path": "frontend/src/components/Admin/AdminSidebar.jsx",
+      "sha256_lf": "58bc303c679671210a8132c69bc3090d46516a93e58d63b23fed6eb2a530cd99"
+    },
+    {
+      "path": "frontend/src/components/AuthGuard.jsx",
+      "sha256_lf": "0181ef1fab5629e7656144ffaf1b13d2dc193475e258d078e3b90f6eee4b1d4b"
+    },
+    {
+      "path": "frontend/src/components/PostDetailShell.jsx",
+      "sha256_lf": "0db09a1306d2abf15e1da9c38b9eef427fdde08308433ae2d16f4750956ea917"
+    },
+    {
+      "path": "frontend/src/dev/SquareNewsPreview.css",
+      "sha256_lf": "3d31f39ca43a130e7a045072f3781130d983f5fae3977ecf21680b550051292f"
+    },
+    {
+      "path": "frontend/src/dev/SquareNewsPreview.jsx",
+      "sha256_lf": "e478351d1059ab156f7ce17283e065278b8e0892f40dc1b6f03d45dd50c3f526"
+    },
+    {
+      "path": "frontend/src/dev/squareBannerPreview.js",
+      "sha256_lf": "b3ff67b37bc77299ad7364107e93ef0003f931a11c5bf53b2e92046907afe412"
+    },
+    {
+      "path": "frontend/src/dev/squareBannerPreview.test.js",
+      "sha256_lf": "1d8a3f03bfda4e67465305203a157ba784bedc6af89fa7a13231451ea5f06fba"
+    },
+    {
+      "path": "frontend/src/features/campus-news/CampusNews.css",
+      "sha256_lf": "f3dc111ae0101d6e19a31c36601ccb3815655b21c63d19c6ad11e925b9eee83e"
+    },
+    {
+      "path": "frontend/src/features/campus-news/CampusNewsCard.jsx",
+      "sha256_lf": "f99a0128aa8225e4d98d85da9e13452852f5077b4836bda3b17e713993c58323"
+    },
+    {
+      "path": "frontend/src/features/campus-news/CampusNewsDetail.jsx",
+      "sha256_lf": "d34a17b595efdcfdae395cabce5f133a7ef7385b707a380b42e06790608b3d78"
+    },
+    {
+      "path": "frontend/src/features/campus-news/CampusNewsFeed.jsx",
+      "sha256_lf": "c2ade5e017fc0310902b9eee40d8ed866ad303b3c185a0f59982d8c32181ff9f"
+    },
+    {
+      "path": "frontend/src/features/campus-news/CampusNewsMedia.jsx",
+      "sha256_lf": "a3b0f3342a3f0d014393128a447ab983b5db2ad345d3a95fc501b68359a393bd"
+    },
+    {
+      "path": "frontend/src/features/campus-news/CampusNewsModal.jsx",
+      "sha256_lf": "fd3f61b24b153df0e96a953109aa1d24df307876a890da75737b4a10dfdab6c7"
+    },
+    {
+      "path": "frontend/src/features/campus-news/README.md",
+      "sha256_lf": "e43f578de9df7c1656badc7aee0ed65a3da9ada67d7fc589706baa2339262c8a"
+    },
+    {
+      "path": "frontend/src/features/campus-news/campusNewsComments.js",
+      "sha256_lf": "1c3780a199f5643aaaf2203118dcc3ea74ed59c84e48ee5f1b2bfb390dec4601"
+    },
+    {
+      "path": "frontend/src/features/campus-news/campusNewsDemo.js",
+      "sha256_lf": "e77458ceda53951be3f405b4968e6996d2cfdd1c45d3499e48207ea023d690fc"
+    },
+    {
+      "path": "frontend/src/features/campus-news/campusNewsModel.js",
+      "sha256_lf": "5a34a4aad90a6a3cd655748767e5e2caac52e63c4dcae1c4924f065c94a226d2"
+    },
+    {
+      "path": "frontend/src/features/campus-news/campusNewsModel.test.js",
+      "sha256_lf": "7f905f6260155114c945a9e715f59726b0581d4413fdb79ebeafb00cbc70f80b"
+    },
+    {
+      "path": "frontend/src/features/campus-news/campusNewsRouting.test.js",
+      "sha256_lf": "758a002eb70cbad583d5221587cfbafcc2c556324f566378358c660aa0493ab4"
+    },
+    {
+      "path": "frontend/src/features/campus-news/campusNewsSession.js",
+      "sha256_lf": "7133178ca3725ef9aecc822a432eafe918fed07b20c830890e53ba538134f7f1"
+    },
+    {
+      "path": "frontend/src/pages/Login.jsx",
+      "sha256_lf": "43e4668079c615166d242d48afe2a9f29c430e5ed8722f37cbd689592e2e1983"
+    },
+    {
+      "path": "frontend/src/pages/Mailbox.jsx",
+      "sha256_lf": "3470703006b403d902ef3c3cf2f12f013807442373dc9d6b8a219f2fc227974e"
+    },
+    {
+      "path": "frontend/src/pages/MyPosts.jsx",
+      "sha256_lf": "9a3ada99921eddac79301a11c8c253b9481dc9b983ef55697a32fd1450917a7d"
+    },
+    {
+      "path": "frontend/src/pages/MyReviews.jsx",
+      "sha256_lf": "10d3015983a1d63b76d31b7335010bac258f6c50ca8ad4ff8ab25f39d43193d5"
+    },
+    {
+      "path": "frontend/src/pages/MyZone.jsx",
+      "sha256_lf": "c485b24eb7d41dba001ddd33de9fe62b30fc9bd5b516deca38b549d55aaa37bf"
+    },
+    {
+      "path": "frontend/src/pages/PostNew.css",
+      "sha256_lf": "82b01ae84d9b4b58b78d169b2325fd447b47d79e054d07dd79a6e16f4c2b42d1"
+    },
+    {
+      "path": "frontend/src/pages/PostNew.jsx",
+      "sha256_lf": "20585c780425107a1e8439ba59a2f68d8abfe94bf683e4b433a30b452c4eeb4f"
+    },
+    {
+      "path": "frontend/src/pages/ProfileEdit.css",
+      "sha256_lf": "8b9dea7143e15d8e8748125d1d7e56f524871a3fc4a35b1f9fd3611a6deea51c"
+    },
+    {
+      "path": "frontend/src/pages/ProfileEdit.jsx",
+      "sha256_lf": "9790f8e2c804f2fef44aa66f06ed9795f30d06e5cd5d8374120463e19560959f"
+    },
+    {
+      "path": "frontend/src/pages/SquareCampusPostDetail.jsx",
+      "sha256_lf": "f712e6542a0fe0ea876ccc8e5eb6254bbb5d2359b2744f4abb547d1401b1e6d9"
+    },
+    {
+      "path": "frontend/src/pages/SquareHome.jsx",
+      "sha256_lf": "2963f2bc727a41cedb909c3711f3ad083243ba530032d70aaeeecca36064a4f6"
+    },
+    {
+      "path": "frontend/src/routes/layoutRoutes.jsx",
+      "sha256_lf": "db284cffd778dc856845baeaf45fb9dbc0fa9b9bb0f8ec615f9ff83a4b7c9ba9"
+    },
+    {
+      "path": "frontend/vite.config.js",
+      "sha256_lf": "ffa7cc35ad084aee9618749d9a17aef8b7c56fe53c2c5f2a55c64d32f6bfb3a5"
+    },
+    {
+      "path": "middleware/checkSanction.js",
+      "sha256_lf": "6925271369c268d76cf96986ab11c85d04b52203edf8ff042526687d86acca52"
+    },
+    {
+      "path": "middleware/sensitiveWordFilter.js",
+      "sha256_lf": "84152e2af6ebd8022c400b9c702cf151edc6b37b7b486e00411eb6bee9a94a2b"
+    },
+    {
+      "path": "migrations/README.md",
+      "sha256_lf": "7075f3a109940fbc278cc91d2465cfc99bcbc94cda63274461d20bc4cc5b3aa7"
+    },
+    {
+      "path": "routes/canteen.js",
+      "sha256_lf": "cf66897d67323ec93f34b4a3ffb515d7449cd7105a1c07fbb3d0c3a039f901a2"
+    },
+    {
+      "path": "routes/notifications.js",
+      "sha256_lf": "a87d0c972e4ae5465838c68cca848e5d1d97b9090e0fc8703c7511e8df263618"
+    },
+    {
+      "path": "routes/square.js",
+      "sha256_lf": "8b3b6977170aa3225dd726812b059d85b5512d10b47543baed308b6c52c04db7"
+    },
+    {
+      "path": "routes/users.js",
+      "sha256_lf": "850be572490122d7cc50fc34737aff6393292de1efe53d78e6800c11340af75b"
+    },
+    {
+      "path": "server.js",
+      "sha256_lf": "2f42ceb5f0c9e7e9f49c3dc3da1600e2e2ed492121169d3d362b0f0a6cce2bb1"
+    },
+    {
+      "path": "services/notificationService.js",
+      "sha256_lf": "205ca217296e30187f699ea9fe6710d1bec8da4f29b5586ddaf67000f2700566"
+    },
+    {
+      "path": "shared/api/square.js",
+      "sha256_lf": "93ebf0cfb568ee7c1ba991af3435d86aaea46e9cbc448be83a974e2be4b8a6b4"
+    },
+    {
+      "path": "shared/api/users.js",
+      "sha256_lf": "25a2688a64748b03fce3d2b5f23c84d474a52a4dbb38bc7e8b768f5e5f0828cb"
+    },
+    {
+      "path": "docs/07-Implement/01-05交付与数据库迁移交接.md",
+      "sha256_lf": "f863690c0ad28e1902bae68598564d809e00c2a05d22687a8dea92b70153e505"
+    },
+    {
+      "path": "docs/07-Implement/stage2-batch01c.md",
+      "sha256_lf": "f93dd904c78606b50bcc98213230171328d25247ca3e5cd2763d0d06c12fd7c0"
+    },
+    {
+      "path": "docs/07-Implement/stage2-batch01e.md",
+      "sha256_lf": "2221f50ba9ecdb71a844d9afe5fa6116fcfc5cba99feac7cd9d52fac0f5dbc11"
+    },
+    {
+      "path": "docs/07-Implement/stage2-batch01f.md",
+      "sha256_lf": "aaef76e3163d15a621812bf28920c150f7114a04e76f60087f864a039cad481c"
+    },
+    {
+      "path": "docs/07-Implement/公网只读演示入口.md",
+      "sha256_lf": "3100d5b7317ef488a048b3bd31cd6473a5d7faf4929eb7a15a642b187e522f59"
+    },
+    {
+      "path": "docs/07-Implement/本地主线同步/2026-11-01同步与冲突处理.md",
+      "sha256_lf": "6d05aa9b9fa6b6a312914267be57803eed8faee9d304f1850defd1513e177e31"
+    },
+    {
+      "path": "frontend/src/components/MyContentPage.css",
+      "sha256_lf": "0abeb10eeb6328fcc089d76417c879b3860befe80bc0b58884a9182d4febb104"
+    },
+    {
+      "path": "frontend/src/components/MyContentPage.jsx",
+      "sha256_lf": "bf60385d8f9a159cceec6de193ad6b09baf7cf0f4b842dbe22dae0ecf128ae71"
+    },
+    {
+      "path": "frontend/src/features/admin-campus-news/CampusNewsAccess.jsx",
+      "sha256_lf": "73ced8293cb2a73e09820bb1a30746b4fbc27c3080c54ae0b522c3cb4530e488"
+    },
+    {
+      "path": "frontend/src/features/admin-campus-news/CampusNewsDetail.jsx",
+      "sha256_lf": "5fbf2dee1808375a71fc311f7d31e9b5fd6d343bc74211c60b33ac5a4c067c83"
+    },
+    {
+      "path": "frontend/src/features/admin-campus-news/CampusNewsEditor.jsx",
+      "sha256_lf": "3cf622d990d199f0a07200d574d683613cb96d3ffec6e160d179b30a38c883b9"
+    },
+    {
+      "path": "frontend/src/features/admin-campus-news/CampusNewsImages.jsx",
+      "sha256_lf": "7a3a7426462ce5fc8515005faeb653143d6d9d4848a5208b580b65564152ffc1"
+    },
+    {
+      "path": "frontend/src/features/admin-campus-news/CampusNewsList.jsx",
+      "sha256_lf": "49ad641e1a6dafc78a9d20d9c3d198b8b8fbde11f046a2bec3318a307007d558"
+    },
+    {
+      "path": "frontend/src/features/admin-campus-news/CampusNewsVersions.jsx",
+      "sha256_lf": "87e7cee1ae5f4ecee649fa19bc648c7e73854a73c7df811fbe3f31697eddf573"
+    },
+    {
+      "path": "frontend/src/features/admin-campus-news/README.md",
+      "sha256_lf": "1a54ea5a7911cbbbbd39612c594c977fc62e7e889c3fc568f2153ef44ffa8027"
+    },
+    {
+      "path": "frontend/src/features/admin-campus-news/adminCampusNews.css",
+      "sha256_lf": "8ef4d8a0e0548e7ce77454b7ae21e9380eea1066ddd82ac69c17489812f9b18a"
+    },
+    {
+      "path": "frontend/src/features/admin-campus-news/adminCampusNews.test.mjs",
+      "sha256_lf": "8ee40b096ebc1e025ef0703fb55d055156eabd322b7ada51d3ee5cf73a001a3a"
+    },
+    {
+      "path": "frontend/src/features/admin-campus-news/api.js",
+      "sha256_lf": "b65cf62fd74a1c43ccb085d64adbd6fbe1de3538a0518d032374c99b4be74034"
+    },
+    {
+      "path": "frontend/src/features/admin-campus-news/apiClient.js",
+      "sha256_lf": "de5b6a5b58d01c6e84e08c17466566fbf619c543dc545c048fbd371510844106"
+    },
+    {
+      "path": "frontend/src/features/admin-campus-news/components.jsx",
+      "sha256_lf": "db96925f463e29aeb6796e0dc1b58c6ec077d4ec54c01405e93b8fb2fe0ef563"
+    },
+    {
+      "path": "frontend/src/features/admin-campus-news/contracts.d.ts",
+      "sha256_lf": "650e57170c78a68f23aa4bcff958169a0df366076dfb350441bdb507d25765af"
+    },
+    {
+      "path": "frontend/src/features/admin-campus-news/model.js",
+      "sha256_lf": "0d5f0140f70e5614ef2f3ebc7632310c40df329c4fdafef0043d61a6588c459d"
+    },
+    {
+      "path": "frontend/src/features/campus-news/CampusComments.css",
+      "sha256_lf": "b678f7cddc62e66a5db52d27a86321ff43263d3a081446b3223863c6fda60077"
+    },
+    {
+      "path": "frontend/src/features/campus-news/CampusComments.jsx",
+      "sha256_lf": "448131fd0237942ea3c5804228b2f088ad0112abbc5a4f06587186b5019daa07"
+    },
+    {
+      "path": "frontend/src/features/campus-news/CampusFavoriteButton.jsx",
+      "sha256_lf": "2c157f1996dd0e499c3bd6b7726ba04c9d29041125f88e95151a65ea1af2cda8"
+    },
+    {
+      "path": "frontend/src/features/campus-news/CampusNewsRemote.jsx",
+      "sha256_lf": "3bd93a127381a1f3bff30074ee710cf58d7845bfe35b753724de89643badfee9"
+    },
+    {
+      "path": "frontend/src/features/campus-news/CampusNewsRoute.jsx",
+      "sha256_lf": "ff94988b26e0805c130e6ab69721fecfd3a7d8be69cf0b575bafbf9e19f5f256"
+    },
+    {
+      "path": "frontend/src/features/campus-news/CampusShareButton.jsx",
+      "sha256_lf": "ba20115c755ec8d71bdd50415c234156c9497f39f5e51660edfb526421c60b57"
+    },
+    {
+      "path": "frontend/src/features/campus-news/campusCommentDeletion.js",
+      "sha256_lf": "c16d32d154256f0162d4cb9189f46540c1e0022360388e671e3470d5d575105a"
+    },
+    {
+      "path": "frontend/src/features/campus-news/campusCommentDeletion.test.js",
+      "sha256_lf": "86c767a683355533b7c68c1811f348e1c5a86da44d80aca869c25288d8be02ad"
+    },
+    {
+      "path": "frontend/src/features/campus-news/campusCommentIntent.js",
+      "sha256_lf": "6b83772ae9b20a4a175510f14eb8bc8a3778543cc47148c0576388deb6fb597d"
+    },
+    {
+      "path": "frontend/src/features/campus-news/campusCommentIntent.test.js",
+      "sha256_lf": "7d1a1ec58a8895207a433a0891ad99b29de60a3fee3332ceb2460dc0576b6c8d"
+    },
+    {
+      "path": "frontend/src/features/campus-news/campusFavoriteCoordinator.js",
+      "sha256_lf": "8215f545cdf908aad72d4c418eefacf6dee2b85a812e7c7ccdf5b7e72e03e654"
+    },
+    {
+      "path": "frontend/src/features/campus-news/campusFavoriteCoordinator.test.js",
+      "sha256_lf": "0208233de15a2f94af2b36be7c85fa60baa532bdade6e1d9a3a7b4c41401a301"
+    },
+    {
+      "path": "frontend/src/features/campus-news/campusLikeCoordinator.js",
+      "sha256_lf": "9c975b305bcc8c111f0e724ec6a18748b7b51f434101c8ab9ff91b1e3394d75b"
+    },
+    {
+      "path": "frontend/src/features/campus-news/campusLikeCoordinator.test.js",
+      "sha256_lf": "82ba19cad3b9443c2cf88e387c25efbb2ae4f0154602691184c8b5e07e8a9676"
+    },
+    {
+      "path": "frontend/src/features/campus-news/campusNewsApi.js",
+      "sha256_lf": "29994b9c50f0d16c27f6d2dfb2692479f4d68f2d3ce987536dd950624a32ba41"
+    },
+    {
+      "path": "frontend/src/features/campus-news/campusNewsShare.js",
+      "sha256_lf": "36490f3c937571260b979b558dfb2d9287e4e074264a2c1fabd846e7bffd6884"
+    },
+    {
+      "path": "frontend/src/features/campus-news/campusNewsShare.test.js",
+      "sha256_lf": "3cd1a527aee8b8aeb8716722132fb6d5257ef7f2246c1de92768a84bb39bd45d"
+    },
+    {
+      "path": "frontend/src/features/campus-news/useCampusFavorite.js",
+      "sha256_lf": "f654dbf835265345af5cd33e782833f1816077ef9dc8909729b8eb71010363f7"
+    },
+    {
+      "path": "frontend/src/features/campus-news/useCampusLike.js",
+      "sha256_lf": "3874bdd7bb12de88536f65e221eff85307ca58e510e76b5a22c85fc3568a0b85"
+    },
+    {
+      "path": "frontend/src/pages/MyFavorites.jsx",
+      "sha256_lf": "c424877a831105ed4ad32cad60cfa72ec52553de52f2861178358d902fd473b9"
+    },
+    {
+      "path": "frontend/src/utils/loginReturn.js",
+      "sha256_lf": "2db29e62f1ac43bf3e7c364f64c7f0ce62493b8311e7d5642194953453f9b28d"
+    },
+    {
+      "path": "frontend/src/utils/loginReturn.test.js",
+      "sha256_lf": "735b0a963f77cb57407bee282a081561cac1da4ddd6b2f042877b98cbd27461e"
+    },
+    {
+      "path": "migrations/delivery-01-05/001_dependencies.sql",
+      "sha256_lf": "9a15cc79d1d085a83e0140ffe4a4d91ca205386d4224b8d16bd8ab7174f6330a"
+    },
+    {
+      "path": "migrations/delivery-01-05/002_news.sql",
+      "sha256_lf": "a5298eaf2ee78ae47aebb34409481e72593416978e5a01672a5fc6c9ff8d9241"
+    },
+    {
+      "path": "migrations/delivery-01-05/003_comments.sql",
+      "sha256_lf": "4c351926b3c5496d902d94e4d9bc17d1f8007a39d133eb6900a6b3c6f27d5421"
+    },
+    {
+      "path": "migrations/delivery-01-05/004_favorites.sql",
+      "sha256_lf": "c3154815eb66085262f952220731405a46ecc8e5e421e478fd683e66b82480f6"
+    },
+    {
+      "path": "migrations/delivery-01-05/005_academic_notifications.sql",
+      "sha256_lf": "04a6b6e64d49002555ef33c67458707e4e15f1c379759a3c0067ea28cd7ea524"
+    },
+    {
+      "path": "migrations/delivery-01-05/006_directory.sql",
+      "sha256_lf": "9b4db1751fe777c34c9f14680db23a1e9890c686fab938dc5958045cfa19f2ce"
+    },
+    {
+      "path": "migrations/delivery-01-05/schema-contract.json",
+      "sha256_lf": "39d8f7c0d9a2200ca6faadac2cf0e3d57d670b47c7f440e8ddc2b8bc9ce68161"
+    },
+    {
+      "path": "migrations/stage2/001_local_foundation.sql",
+      "sha256_lf": "c0f41ed4becac6c3f6afc253af5ab395a8dc1928ec6667c9b84f12cb3a7253ab"
+    },
+    {
+      "path": "migrations/stage2/002_campus_news.sql",
+      "sha256_lf": "539d8b412b917aac067face5d6131537335bb643bd07e5f5952bc20853d9b4e5"
+    },
+    {
+      "path": "migrations/stage2/003_campus_safety.sql",
+      "sha256_lf": "5dc9dbe260f8a4bc65e0e0d10995b5789575c8cdfa33880c18837d34d266029c"
+    },
+    {
+      "path": "routes/academicDirectory.js",
+      "sha256_lf": "eaa43269061ee31bf99f34ba666d8899725f671627f6912121b62faf0d9075c3"
+    },
+    {
+      "path": "routes/campusNews.js",
+      "sha256_lf": "86f945c8d185f5367f43f458e253131e27872d2b86d7965278ccdcb1aacb079b"
+    },
+    {
+      "path": "scripts/delivery-01-05/check-load.cjs",
+      "sha256_lf": "48012060c4421b71b35bfadc69f25a18e970ce236ebdc4b4c861c47efd369382"
+    },
+    {
+      "path": "scripts/delivery-01-05/compare-checks.cjs",
+      "sha256_lf": "49a8d8179e2c3944772ac0729a0a4e5ad75281ab1e8622bb27f57a541ed4f37c"
+    },
+    {
+      "path": "scripts/delivery-01-05/config.template.json",
+      "sha256_lf": "cc4bbbb3ceced133b7b2f166ddefcd1bc26f3baec4354708ac67aff1ee3dd354"
+    },
+    {
+      "path": "scripts/delivery-01-05/migrate.cjs",
+      "sha256_lf": "b3fbd64e9ba11172b3cb8a5e3ee12a052018747cd8ffb458f1490c36acb225f8"
+    },
+    {
+      "path": "scripts/delivery-01-05/runtime-config.template.txt",
+      "sha256_lf": "c9d2391973ca9db94fc65e6eac8fbf22e939c1e58a35360550bd8318a165b6f9"
+    },
+    {
+      "path": "scripts/delivery-01-05/schema.cjs",
+      "sha256_lf": "cf0f71f47aa6bcfba106829702feb4508becd646f9ab41bb2f878370c69a4dfc"
+    },
+    {
+      "path": "scripts/stage2-db/local-config.cjs",
+      "sha256_lf": "745e907af0887f76d4deefb325953d4993b8d874e604c63c6447a735f902b01d"
+    },
+    {
+      "path": "scripts/stage2-db/migrate.cjs",
+      "sha256_lf": "87efc60f5134c156a98506154ca0f8c8345fc88420fbd168b8fee6ca9a3e4ea8"
+    },
+    {
+      "path": "scripts/stage2-db/preflight.cjs",
+      "sha256_lf": "d461554d6ee06fcb9c4f90a47950461074205973bac30c8ece526f7abbf110ce"
+    },
+    {
+      "path": "scripts/stage2-db/schema.cjs",
+      "sha256_lf": "732891ffefd1038b212975ba86530f1537efb961f97040847dcd552f41f7af82"
+    },
+    {
+      "path": "scripts/stage2-local/README.md",
+      "sha256_lf": "ed41ad71b2b982d94b18d9084c94198d261b081e6afc4188c82cecc784327c17"
+    },
+    {
+      "path": "scripts/stage2-local/backend.cjs",
+      "sha256_lf": "c9e2e8a6ddaad7184306cbec2ba22cd30b1a724eae510eba24565087a64ff9de"
+    },
+    {
+      "path": "scripts/stage2-local/build-check-01f.mjs",
+      "sha256_lf": "63dffe9acb47b9270c649499d14b346abf6829d10c20ecba50f6ee38b64b2588"
+    },
+    {
+      "path": "scripts/stage2-local/build-public-demo.mjs",
+      "sha256_lf": "6b99a15bbbde518267bf94f7bb1d1e10ec120b55936c8d19682999e300680f6a"
+    },
+    {
+      "path": "scripts/stage2-local/campus-favorite-test.cjs",
+      "sha256_lf": "a49f2929ec92fc60c1d3329e56d5c0cf68bbb263c4fd6a3d7cc4a399aaf55947"
+    },
+    {
+      "path": "scripts/stage2-local/capacitor-browser.web.mjs",
+      "sha256_lf": "6d601a2453c4d95d5054bac5eaef4acaf83c9fe0a9fa986f18add549efa902e9"
+    },
+    {
+      "path": "scripts/stage2-local/config.template.json",
+      "sha256_lf": "e3c83b34b638b3371fa1dd19f0213070202bee875d351b41d2868da426e02bbc"
+    },
+    {
+      "path": "scripts/stage2-local/frontend.mjs",
+      "sha256_lf": "5b49284a2ff9f63400fb42088c84d300ab7bb736b429820e0e7f298a263c3058"
+    },
+    {
+      "path": "scripts/stage2-local/http-boundary.cjs",
+      "sha256_lf": "be7208a7b6540e1cbd078f0e3ce1392c096c0f3974866e298ef2690f24c710e7"
+    },
+    {
+      "path": "scripts/stage2-local/integration-01e.cjs",
+      "sha256_lf": "4a2524c200b90c91cd2ee4aeba8c54ef31a5ad0fcb618d281d38788e17473236"
+    },
+    {
+      "path": "scripts/stage2-local/integration-01f.cjs",
+      "sha256_lf": "7154fc2c09affbe10e99ba08e274633c70a4374c894c7f469946d450a5e7bfff"
+    },
+    {
+      "path": "scripts/stage2-local/integration-05b.cjs",
+      "sha256_lf": "f3ed8904433bb861ab3818c0c21cfae4e2fa8872842c50e050a7eb658d81ac86"
+    },
+    {
+      "path": "scripts/stage2-local/integration-05c.cjs",
+      "sha256_lf": "851c28d4d53253ae66abcfdafdf7ba2f78ad6c924bc94930af0eaec60dfba729"
+    },
+    {
+      "path": "scripts/stage2-local/launch.cjs",
+      "sha256_lf": "15c86bd19ec307d151d0b8ce4ecd1bc1a0c2a499de59ad119143e43a255e0835"
+    },
+    {
+      "path": "scripts/stage2-local/myzone-fixture-boundary.cjs",
+      "sha256_lf": "fc426f58a8996fea2c68006cd7a0412d754df615f566488659259f589e9d1daf"
+    },
+    {
+      "path": "scripts/stage2-local/myzone-read-test.cjs",
+      "sha256_lf": "6b57ab4424a1aa393d19cf6464109c49264f72c04153a5273d48383574fe924d"
+    },
+    {
+      "path": "scripts/stage2-local/network.cjs",
+      "sha256_lf": "39d1cb1fb86767d1339644f0bef0d0fc8d72007c65c37b8232dfa1b17ccee74b"
+    },
+    {
+      "path": "scripts/stage2-local/public-demo.cjs",
+      "sha256_lf": "485a31cbfcd1a1238ed97137bce73759efaf8562f3df2f26fed51846b945043f"
+    },
+    {
+      "path": "services/academicIdentity.js",
+      "sha256_lf": "0f8a3f7f0ff54bc96ee085b9d2441bb1a4e7af70889ddc012a0cf2c4df5a9cae"
+    },
+    {
+      "path": "services/campusComments.js",
+      "sha256_lf": "799aaf3a50e3623a5bf35c05e4bcd51ecd82fa957e8091ce294576e818836b0b"
+    },
+    {
+      "path": "services/campusFavorites.js",
+      "sha256_lf": "84406a04835da94b5c6f8ccc2f27d1d15915a48b0eb24176819b94f1e3f11777"
+    },
+    {
+      "path": "services/campusInteractions.js",
+      "sha256_lf": "5a312b8995fa6cf98c03637e36ff28eed8d09952c0405977441b3106803d9002"
+    },
+    {
+      "path": "services/campusLikeStats.js",
+      "sha256_lf": "8abd76753678bbbf24820022dc9369aebfcf11de7db93592cd880549ab4cc1a9"
+    },
+    {
+      "path": "services/campusNews/assets.js",
+      "sha256_lf": "8f4f2dade43f21d62c96c2c381fdf48af269b27d1492bb85d9f696c43249f476"
+    },
+    {
+      "path": "services/campusNews/collegeIdentity.js",
+      "sha256_lf": "caa3371920bff41e42733946764cff61927b0f205a50efc01b402d821ed8ea6c"
+    },
+    {
+      "path": "services/campusNews/domain.js",
+      "sha256_lf": "8a3ec471b49bf00207589eb921ce60640834430ee04deb78e9d2e0949146e5d1"
+    },
+    {
+      "path": "services/campusNews/index.js",
+      "sha256_lf": "3c965519f7efee81bb4ca7d0d8f861cee4f7cdf61e370b0964666328d275b74f"
+    },
+    {
+      "path": "services/campusNews/repository.js",
+      "sha256_lf": "9c99573562dad095db526f60860cf0437c9795df42f2b82e7e018ba6ae754741"
+    },
+    {
+      "path": "services/campusNews/service.js",
+      "sha256_lf": "943f2faaae761cd5dd99a911e10299ce62329e1de6d916e1398941c41bb6609d"
+    },
+    {
+      "path": "services/campusNewsNotifications.js",
+      "sha256_lf": "89ed947b6a36e127b0773f826aae7dc157aebecf6561158b6e4a5e5ffbf0245f"
+    },
+    {
+      "path": "services/myPosts.js",
+      "sha256_lf": "9e463bcd94f1d8f04f3cf5030e55e7c55b093db806bd02036c9852be2a8df4af"
+    },
+    {
+      "path": "shared/api/campusFavorites.js",
+      "sha256_lf": "b07313849e65eedc6d970782f460e8c3f61895374e35aa86cb96033c199a2bc9"
+    },
+    {
+      "path": "tests/academic-identity.test.cjs",
+      "sha256_lf": "9ff95e0f88be9c565b29b4182d02ba768f332bab88d9ef457ed98aa962e7b494"
+    },
+    {
+      "path": "tests/campus-comments.test.cjs",
+      "sha256_lf": "9200795c3fbd1990c42ecc4175d741f41e3240721226c1a4b99cd8b4d6163926"
+    },
+    {
+      "path": "tests/campus-favorites.test.cjs",
+      "sha256_lf": "e12fdc5cb14b29f16e6721c3a684910f9691272c4768b3075edc350981ab3370"
+    },
+    {
+      "path": "tests/campus-interactions.test.cjs",
+      "sha256_lf": "dd95b5d134ff7a571feac1ec133706b8a8203eb073f7907603f3d0ed858cfca3"
+    },
+    {
+      "path": "tests/campus-news-notifications.test.cjs",
+      "sha256_lf": "69f653c5e8de9cd0c746b4acfc5ff9e1d1d47baf222fa1a23ed6ce65d8d01217"
+    },
+    {
+      "path": "tests/campus-news-student.test.cjs",
+      "sha256_lf": "1caaf98aae3afe8463fba77ba8a38f8d3b8c639a9eaa31d66d21809248b58cc9"
+    },
+    {
+      "path": "tests/campus-news.test.cjs",
+      "sha256_lf": "e380cc9098e4afbaa9e5dcd06bb52a475299e2e57e97a865a77fc2a1b8ea05fd"
+    },
+    {
+      "path": "tests/campus-safety.test.cjs",
+      "sha256_lf": "462bfb4f658ab5b6e3b77a5cc7112551c279aaa78947a879b520b4deb3d85eb7"
+    },
+    {
+      "path": "tests/delivery-01-05-baseline.sql",
+      "sha256_lf": "4f4aff532ce1a8a81e7e2d0498d547543a430a12de10317d2b2a8d2f9c8bc24d"
+    },
+    {
+      "path": "tests/delivery-01-05.integration.cjs",
+      "sha256_lf": "d60561ffc5aed370d59f8efe0a82372fa7449de85bb47a83a022e132f3449b45"
+    },
+    {
+      "path": "tests/helpers/campusCommentMemory.cjs",
+      "sha256_lf": "c36dda66e4a2742bb5be3b42d108ce447e4e59a1abd3a9d397503245480a5f5c"
+    },
+    {
+      "path": "tests/stage2-migration.test.cjs",
+      "sha256_lf": "a20481475e578e6b977f9028f2d14a645729a6b5711b909bbe1193bc3419037c"
+    }
+  ],
+  "excluded_categories": [
+    "personal .codex skills",
+    "unrelated personal Word document",
+    ".local runtime credentials fixtures backups screenshots and MySQL files",
+    "ignored .env uploads node_modules and build products"
+  ]
+}

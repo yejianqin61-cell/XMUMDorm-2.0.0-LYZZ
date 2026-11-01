@@ -9,6 +9,7 @@ const { query } = require('../database');
  * 通知类型 → 模块映射
  */
 const MODULE_MAP = {
+  campus_news_publication: 'campus',
   treehole_like: 'treehole',
   treehole_comment: 'treehole',
   trending_like: 'trending',
@@ -40,6 +41,7 @@ const MODULE_MAP = {
  * 各模块包含的通知类型（供前端按模块筛选）
  */
 const MODULE_TYPES = {
+  campus: ['campus_news_publication'],
   treehole: ['treehole_like', 'treehole_comment', 'like', 'comment'],
   trending: ['trending_like', 'trending_comment', 'campus_like', 'campus_comment'],
   canteen: ['canteen_review', 'canteen_reply'],
@@ -62,7 +64,7 @@ const CATEGORY_TYPES = {
     ...MODULE_TYPES.marketplace,
     ...MODULE_TYPES.affairs,
   ],
-  system: [...MODULE_TYPES.system],
+  system: [...MODULE_TYPES.system, ...MODULE_TYPES.campus],
 };
 
 /**

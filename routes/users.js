@@ -8,7 +8,8 @@
 const express = require('express');
 const router = express.Router();
 const path = require('path');
-const { query } = require('../database');
+const { query, pool } = require('../database');
+const academicIdentity = require('../services/academicIdentity');
 const authenticateToken = require('../middleware/auth');
 const { avatarUpload } = require('../middleware/upload');
 const { assetUrl } = require('../utils/assets');
@@ -154,6 +155,7 @@ router.get('/me', authenticateToken, async (req, res) => {
       avatar: u.avatar ? assetUrl(u.avatar) : DEFAULT_AVATAR,
       weekly_comment_count: u.weekly_comment_count != null ? u.weekly_comment_count : 0,
       created_at: u.created_at,
+      ...(await academicIdentity.ownSelection(pool, req.user.id)),
       college: safeText(u.college),
       grade: safeText(u.grade),
       major: safeText(u.major),
@@ -222,6 +224,20 @@ router.get('/me/level', authenticateToken, async (req, res) => {
   } catch (e) {
     console.error('èŽ·å–ç­‰çº§é”™è¯¯:', e);
     res.status(500).json({ status: -1, message: 'æœåŠ¡å™¨é”™è¯¯ï¼Œè¯·ç¨åŽé‡è¯•' });
+  }
+});
+
+router.get('/me/posts', authenticateToken, async (req, res) => {
+  res.set('Cache-Control', 'private, no-store');
+  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+  const pageSize = Math.min(30, Math.max(1, parseInt(req.query.pageSize, 10) || 10));
+  if (!Number.isSafeInteger((page - 1) * pageSize)) return res.status(400).json({ status: -1, message: '分页参数无效' });
+  try {
+    const data = await require('../services/myPosts').getMyPosts(req.user.id, page, pageSize);
+    res.json({ status: 0, data });
+  } catch (error) {
+    console.error('获取我的帖子失败:', error);
+    res.status(500).json({ status: -1, message: '帖子加载失败，请重试' });
   }
 });
 
@@ -339,55 +355,11 @@ router.delete('/me', authenticateToken, async (req, res) => {
 
 router.patch('/me', authenticateToken, async (req, res) => {
   try {
-    const rawName = (req.body && (req.body.nickname ?? req.body.username)) || '';
-    const nickname = String(rawName).trim();
-    if (!nickname) {
-      return res.status(400).json({ status: -1, message: 'æ˜µç§°ä¸èƒ½ä¸ºç©º' });
-    }
-    const lower = nickname.toLowerCase();
-    if (lower === 'admin' || lower === 'xmumdorm_official') {
-      return res.status(400).json({ status: -1, message: 'è¯¥æ˜µç§°ä¸ºå®˜æ–¹ä¿ç•™åç§°ï¼Œæ— æ³•ä½¿ç”¨' });
-    }
-
-    const college = safeText(req.body?.college);
-    const grade = safeText(req.body?.grade);
-    const major = safeText(req.body?.major);
-    const showCollege = rowTruthyLike(req.body?.show_college == null ? 1 : req.body.show_college) ? 1 : 0;
-    const showGrade = rowTruthyLike(req.body?.show_grade == null ? 1 : req.body.show_grade) ? 1 : 0;
-    const showMajor = rowTruthyLike(req.body?.show_major == null ? 0 : req.body.show_major) ? 1 : 0;
-
-    try {
-      await query(
-        `UPDATE users
-            SET nickname = ?, college = ?, grade = ?, major = ?, show_college = ?, show_grade = ?, show_major = ?
-          WHERE id = ?`,
-        [nickname, college, grade, major, showCollege, showGrade, showMajor, req.user.id]
-      );
-    } catch (e) {
-      if (e && e.code === 'ER_BAD_FIELD_ERROR') {
-        await query('UPDATE users SET nickname = ? WHERE id = ?', [nickname, req.user.id]);
-      } else {
-        throw e;
-      }
-    }
-
+    const data = await academicIdentity.saveProfile(pool, req.user.id, req.body || {});
     simpleCache.delete(`users:me:v1:${req.user.id}`);
-    res.status(200).json({
-      status: 0,
-      message: 'èµ„æ–™å·²æ›´æ–°',
-      data: {
-        nickname,
-        college,
-        grade,
-        major,
-        show_college: !!showCollege,
-        show_grade: !!showGrade,
-        show_major: !!showMajor,
-      },
-    });
+    res.json({ status: 0, message: '资料已更新', data });
   } catch (e) {
-    console.error('æ›´æ–°èµ„æ–™é”™è¯¯:', e);
-    res.status(500).json({ status: -1, message: 'æœåŠ¡å™¨é”™è¯¯ï¼Œè¯·ç¨åŽé‡è¯•' });
+    res.status(e.status || 503).json({ status: -1, code: e.code || 'PROFILE_SAVE_FAILED', message: e.status ? e.message : '资料保存失败，请重试' });
   }
 });
 

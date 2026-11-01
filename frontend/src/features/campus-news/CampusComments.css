@@ -1,0 +1,20 @@
+.campus-live-comments { min-width: 0; padding: 20px 0; overflow-wrap: anywhere; }
+.campus-live-comments h2 { font-size: 18px; margin: 0 0 12px; }
+.campus-live-comments ul { list-style: none; padding: 0; margin: 0; }
+.campus-comment-thread { border-bottom: 1px solid #e6e9ef; padding: 14px 0; }
+.campus-thread-row { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; }
+.campus-thread-row > img { border-radius: 50%; flex: none; object-fit: cover; }
+.campus-thread-row > div { flex: 1; min-width: 0; }
+.campus-thread-row header { display: flex; flex-wrap: wrap; gap: 6px 12px; }
+.campus-thread-row time, .campus-reply-target { color: #69778a; font-size: 12px; }
+.campus-thread-row p { white-space: pre-wrap; overflow-wrap: anywhere; margin: 8px 0; }
+.campus-thread-replies { margin-left: 24px; padding-left: 12px; border-left: 2px solid #edf0f5; }
+.campus-live-comments button { cursor: pointer; padding: 6px 10px; border: 1px solid #d7deea; border-radius: 6px; background: #f8faff; color: #34378c; }
+.campus-live-comments button:disabled { opacity: .5; cursor: not-allowed; }
+.campus-comment-tools { display: flex; gap: 8px; }
+.campus-live-comments form { margin-top: 18px; }
+.campus-live-comments textarea { display: block; box-sizing: border-box; width: 100%; max-width: 100%; padding: 12px; border: 1px solid #d7deea; border-radius: 8px; margin: 8px 0; font: inherit; resize: vertical; }
+.campus-live-comments [role=alert] { color: #a52b40; }
+.campus-delete-confirm { padding: 12px; margin: 12px 0; border: 1px solid #d7deea; border-radius: 8px; background: #f8faff; }
+.campus-delete-confirm button + button { margin-left: 8px; }
+@media(max-width:600px) { .campus-thread-replies { margin-left: 12px; padding-left: 8px; } }

@@ -80,10 +80,10 @@ async function checkMute(req, res, next) {
 /**
  * 同时检查封禁和禁言（用于发帖/评论等创作操作）
  */
-async function checkSanction(req, res, next) {
+async function checkSanctionWithPolicy(req, res, next, failClosed) {
   try {
     const userId = req.user?.id || req.user?.userId;
-    if (!userId) return next();
+    if (!userId) return failClosed ? res.status(401).json({ status: -1, message: '请先登录' }) : next();
 
     const now = new Date();
     const rows = await query(
@@ -94,6 +94,8 @@ async function checkSanction(req, res, next) {
       [userId, now]
     );
 
+    if (!Array.isArray(rows)) throw new TypeError('Invalid sanctions query result');
+    if (failClosed && rows.some(row => !row || !['ban', 'mute'].includes(row.type))) throw new TypeError('Invalid campus sanction row');
     for (const s of rows) {
       if (s.type === 'ban') {
         const msg = s.ends_at
@@ -112,8 +114,12 @@ async function checkSanction(req, res, next) {
     next();
   } catch (err) {
     console.error('[checkSanction]', err.message || err);
+    if (failClosed) return res.status(503).json({ status: -1, message: '制裁校验暂不可用，本次校园写入已拒绝', code: 'CAMPUS_SAFETY_UNAVAILABLE' });
     next();
   }
 }
 
-module.exports = { checkBan, checkMute, checkSanction };
+// Keep the existing policy of unrelated consumers; campus paths opt in explicitly.
+function checkSanction(req, res, next) { return checkSanctionWithPolicy(req, res, next, false); }
+function checkCampusSanction(req, res, next) { return checkSanctionWithPolicy(req, res, next, true); }
+module.exports = { checkBan, checkMute, checkSanction, checkCampusSanction };

@@ -27,6 +27,11 @@ import SystemConfig from './pages/Admin/SystemConfig';
 import SensitiveWordsManage from './pages/Admin/SensitiveWordsManage';
 import ContentList from './pages/Admin/ContentList';
 import ContentDetail from './pages/Admin/ContentDetail';
+import CampusNewsAccess from './features/admin-campus-news/CampusNewsAccess';
+import CampusNewsList from './features/admin-campus-news/CampusNewsList';
+import CampusNewsEditor from './features/admin-campus-news/CampusNewsEditor';
+import CampusNewsDetail from './features/admin-campus-news/CampusNewsDetail';
+import CampusNewsVersions from './features/admin-campus-news/CampusNewsVersions';
 import { layoutRoutes } from './routes/layoutRoutes';
 import './App.css';
 import './styles/states.css';
@@ -112,6 +117,13 @@ function MainApp() {
                   <Route path="reports" element={<ReportList />} />
                   <Route path="reports/:id" element={<ReportDetail />} />
                   <Route path="announcements" element={<AnnouncementManage />} />
+                  <Route path="campus-news" element={<CampusNewsAccess />}>
+                    <Route index element={<CampusNewsList />} />
+                    <Route path="new" element={<CampusNewsEditor />} />
+                    <Route path=":id/edit" element={<CampusNewsEditor />} />
+                    <Route path=":id/versions" element={<CampusNewsVersions />} />
+                    <Route path=":id" element={<CampusNewsDetail />} />
+                  </Route>
                   <Route path="logs" element={<AuditLogList />} />
                   <Route path="config" element={<SystemConfig />} />
                   <Route path="sensitive-words" element={<SensitiveWordsManage />} />
