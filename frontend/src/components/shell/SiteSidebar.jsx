@@ -28,6 +28,7 @@ export default function SiteSidebar({ children = null, className = '' }) {
                 <ShellNavItem
                   key={item.key}
                   to={item.to}
+                  href={item.href}
                   label={item.label}
                   Icon={item.icon}
                   active={isSiteNavActive(location.pathname, item)}

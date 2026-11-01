@@ -1,5 +1,6 @@
 import {
   BookOpen,
+  ClipboardCheck,
   Compass,
   HandHeart,
   Heart,
@@ -20,6 +21,13 @@ export const SITE_PRIMARY_NAV_ITEMS = [
     to: '/agent',
     icon: MessageCircle,
     matchPrefixes: ['/agent'],
+  },
+  {
+    key: 'checkin',
+    labelZh: '签到',
+    labelEn: 'Check-in',
+    href: 'https://acad.xmu.edu.my/mobile',
+    icon: ClipboardCheck,
   },
   {
     key: 'confession',
