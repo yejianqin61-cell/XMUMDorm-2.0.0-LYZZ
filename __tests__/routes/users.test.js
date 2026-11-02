@@ -243,7 +243,7 @@ describe('Users Routes', () => {
 
       expect(res.status).toBe(200);
       expect(res.headers['cache-control']).toBe('private, no-store');
-      expect(simpleCache.get).toHaveBeenCalledWith('user_profile_v6:12:viewer:12:p:1:s:10');
+      expect(simpleCache.get).toHaveBeenCalledWith('user_profile_v8:12:viewer:12:p:1:s:10');
       expect(query).not.toHaveBeenCalled();
       expect(res.body.data).toEqual(cached);
     });
