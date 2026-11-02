@@ -28,8 +28,6 @@ export const en: Record<MessageKey, string> = {
   'screen.campus.read.anonymous': 'Anonymous',
   'wall.feed.sampleNotice': 'Sample content · stage 1 visual review only',
   'wall.feed.emptyReal': 'No real posts yet',
-  'wall.sample.tag': 'Sample',
-  'wall.kind.recruit': 'Recruit',
   'wall.action.save': 'Save',
   'wall.recruit.people': 'Spots',
   'wall.recruit.time': 'Time',

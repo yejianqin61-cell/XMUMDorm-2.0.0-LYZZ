@@ -94,12 +94,14 @@ describe('P2X Treehole 视觉层契约（令牌组件层）', () => {
     expect(wallRow).toContain('wallPostFromRow');
     expect(wallRow.includes('TreeholePostRow')).toBe(false);
     expect(wall.includes('TreeholePostRow')).toBe(false);
-    // 匿名标识与两卡共用外壳在卡片层（外壳只有一份）
+    // 两卡共用外壳只有一份；首页不重复匿名行（匿名是社区属性，不是每张卡的头像位）
     const card = read('src', 'features', 'campus', 'WallPostCard.tsx');
-    expect(card).toContain("t('screen.campus.read.anonymous')");
     expect(card).toContain('WallCardShell');
     expect(card).toContain('WallFreePostBody');
     expect(card).toContain('WallRecruitPostBody');
+    const shell = read('src', 'features', 'campus', 'WallCardShell.tsx');
+    expect(shell).toContain('wall-row-time-');
+    expect(shell.includes('screen.campus.read.anonymous')).toBe(false);
     const screens = read('src', 'features', 'campus', 'CampusScreens.tsx');
     expect(screens).toContain('WallFreePostText');
     expect(screens).toContain('anonymous={kind === \'wall\'}');

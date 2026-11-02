@@ -29,8 +29,6 @@ export const zh = {
   'screen.campus.read.anonymous': '匿名',
   'wall.feed.sampleNotice': '示例内容 · 仅用于阶段 1 视觉验收，不代表真实投稿',
   'wall.feed.emptyReal': '还没有真实投稿',
-  'wall.sample.tag': '示例',
-  'wall.kind.recruit': '招募',
   'wall.action.save': '收藏',
   'wall.recruit.people': '人数',
   'wall.recruit.time': '时间',

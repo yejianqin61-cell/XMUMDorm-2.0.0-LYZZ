@@ -436,7 +436,8 @@ describe('万能墙列表 / 详情', () => {
     const view = await renderApp(<WallFeed />);
     await waitFor(() => expect(view.getByText('墙首篇')).toBeTruthy());
     expect(view.queryByText('泄漏作者')).toBeNull();
-    expect(within(view.getByTestId('campus-row-40')).getByText('匿名')).toBeTruthy();
+    // 首页卡片不再显示「匿名 · 时间」行（匿名是社区属性，不逐卡重复）
+    expect(view.queryByText('匿名')).toBeNull();
     await act(async () => mockListProps.onEndReached());
     await waitFor(() => expect(view.getByText('墙次篇')).toBeTruthy());
     expect(wall.mock.calls.map((call) => call[0])).toEqual([

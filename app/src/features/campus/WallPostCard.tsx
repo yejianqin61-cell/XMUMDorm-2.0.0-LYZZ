@@ -27,17 +27,13 @@ export function WallPostCard({
 }): React.ReactElement {
   const { t, locale } = useI18n();
   const timeLabel = post.createdAt ? formatPostTime(post.createdAt, { locale }) : '';
-  const typeLabel = post.kind === 'recruit' ? t('wall.kind.recruit') : undefined;
   const summary =
     post.kind === 'recruit' ? (post.recruit?.title ?? '') : post.content;
 
   return (
     <WallCardShell
       cardId={post.id}
-      anonymousLabel={t('screen.campus.read.anonymous')}
       timeLabel={timeLabel}
-      typeLabel={typeLabel}
-      sampleLabel={post.sample === true ? t('wall.sample.tag') : undefined}
       likeCount={post.likeCount}
       commentCount={post.commentCount}
       actionLabels={{
@@ -45,7 +41,7 @@ export function WallPostCard({
         comment: t('screen.campus.read.commentA11y', { count: post.commentCount }),
         save: t('wall.action.save'),
       }}
-      accessibilityLabel={[timeLabel, summary].filter(Boolean).join('，')}
+      accessibilityLabel={[timeLabel, summary].filter(Boolean).join(' · ')}
       {...(onOpen === undefined ? {} : { onPress: onOpen })}
     >
       {post.kind === 'recruit' && post.recruit ? (
