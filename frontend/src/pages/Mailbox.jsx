@@ -237,7 +237,7 @@ function Mailbox() {
       <RouteTransition className="mailbox-page">
         <EmptyState
           title="请先登录"
-          description="登录后查看信箱。Please log in to view mailbox."
+          description="登录后查看消息。Please log in to view mailbox."
           actionLabel="去登录"
           actionTo="/login"
           icon="✉"
@@ -257,7 +257,7 @@ function Mailbox() {
   if (error) {
     return (
       <RouteTransition className="mailbox-page">
-        <ErrorState title="信箱加载失败" description={error} onActionClick={() => window.location.reload()} />
+        <ErrorState title="消息加载失败" description={error} onActionClick={() => window.location.reload()} />
       </RouteTransition>
     );
   }
@@ -269,7 +269,7 @@ function Mailbox() {
           <p className="mailbox-hero__eyebrow">{isZh ? '我的工作台消息' : 'Workbench Mailbox'}</p>
           {readError && <p role="alert">{readError}</p>}
           <h1 className="mailbox-hero__title">
-            {isZh ? '信箱' : 'Mailbox'}
+            {isZh ? '消息' : 'Mailbox'}
           </h1>
         </div>
         <div className="mailbox-hero__stats" aria-label={isZh ? '未读概览' : 'Unread summary'}>
