@@ -237,7 +237,7 @@ function Mailbox() {
       <RouteTransition className="mailbox-page">
         <EmptyState
           title="请先登录"
-          description="登录后查看消息。Please log in to view mailbox."
+          description="登录后查看消息。Please log in to view messages."
           actionLabel="去登录"
           actionTo="/login"
           icon="✉"
@@ -266,10 +266,10 @@ function Mailbox() {
     <RouteTransition className="mailbox-page">
       <section className="mailbox-hero">
         <div className="mailbox-hero__copy">
-          <p className="mailbox-hero__eyebrow">{isZh ? '我的工作台消息' : 'Workbench Mailbox'}</p>
+          <p className="mailbox-hero__eyebrow">{isZh ? '我的工作台消息' : 'Workbench Messages'}</p>
           {readError && <p role="alert">{readError}</p>}
           <h1 className="mailbox-hero__title">
-            {isZh ? '消息' : 'Mailbox'}
+            {isZh ? '消息' : 'Messages'}
           </h1>
         </div>
         <div className="mailbox-hero__stats" aria-label={isZh ? '未读概览' : 'Unread summary'}>
