@@ -1,0 +1,92 @@
+.friendly-links-page {
+  width: min(100%, 820px);
+  margin: 0 auto;
+  padding: clamp(24px, 5vw, 48px);
+}
+
+.friendly-links-page__header {
+  margin-bottom: 28px;
+}
+
+.friendly-links-page__eyebrow {
+  margin: 0 0 8px;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-caption);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.friendly-links-page__header h1 {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: clamp(28px, 4vw, 36px);
+  line-height: 1.2;
+}
+
+.friendly-links-page__header > p:last-child {
+  margin: 12px 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body-md);
+}
+
+.friendly-links-page__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+  gap: 14px;
+}
+
+.friendly-links-page__card {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid rgba(32, 48, 74, 0.1);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-surface);
+  box-shadow: var(--shadow-card);
+  color: inherit;
+  text-decoration: none;
+  transition: transform var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard);
+}
+
+.friendly-links-page__card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(32, 48, 74, 0.24);
+}
+
+.friendly-links-page__icon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  place-items: center;
+  border-radius: 13px;
+  background: rgba(32, 48, 74, 0.07);
+  color: var(--color-text-primary);
+}
+
+.friendly-links-page__copy {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.friendly-links-page__copy strong {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-body-md);
+}
+
+.friendly-links-page__copy > span {
+  overflow: hidden;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-caption);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.friendly-links-page__external {
+  flex-shrink: 0;
+  margin-left: auto;
+  color: var(--color-text-tertiary);
+}

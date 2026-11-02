@@ -1,10 +1,12 @@
 import {
+  Building2,
   BookOpen,
   Compass,
   GraduationCap,
   HandHeart,
   Heart,
   HeartHandshake,
+  Link2,
   MessageCircle,
   ClipboardCheck,
   TreePine,
@@ -109,6 +111,14 @@ export const SITE_PRIMARY_NAV_ITEMS = [
     matchPrefixes: ['/about/join-us'],
   },
   {
+    key: 'friendly-links',
+    labelZh: '友情链接',
+    labelEn: 'Useful links',
+    to: '/about/links',
+    icon: Link2,
+    matchPrefixes: ['/about/links'],
+  },
+  {
     key: 'myzone',
     labelZh: '我的',
     labelEn: 'My Zone',
@@ -119,6 +129,13 @@ export const SITE_PRIMARY_NAV_ITEMS = [
 ];
 
 export const SITE_FRIENDLY_LINK_ITEMS = [
+  {
+    key: 'eservices',
+    labelZh: 'eServices',
+    labelEn: 'eServices',
+    href: 'https://eservices.xmu.edu.my/',
+    icon: Building2,
+  },
   {
     key: 'ac',
     labelZh: 'AC 系统',
