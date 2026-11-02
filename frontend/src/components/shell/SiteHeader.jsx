@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Languages, Mail, PenLine, Shield } from 'lucide-react';
+import { Bell, Languages, PenLine, Shield } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContextState';
 import { useAuth } from '../../context/AuthContextState';
 
@@ -43,10 +43,10 @@ export default function SiteHeader({ children = null, className = '' }) {
                 type="button"
                 className="site-web-shell__header-action"
                 onClick={() => navigate('/mailbox')}
-                title={isZh ? '信箱' : 'Mailbox'}
+                title={isZh ? '消息' : 'Mailbox'}
               >
-                <Mail size={20} strokeWidth={2} aria-hidden="true" />
-                <span className="site-web-shell__header-action-label">{isZh ? '信箱' : 'Mailbox'}</span>
+                <Bell size={20} strokeWidth={2} aria-hidden="true" />
+                <span className="site-web-shell__header-action-label">{isZh ? '消息' : 'Mailbox'}</span>
               </button>
               {isAdmin ? (
                 <Link to="/myzone/admin" className="site-web-shell__header-action" title={isZh ? '管理后台' : 'Admin'}>

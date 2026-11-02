@@ -39,7 +39,7 @@ function renderDesktopRootRoute(pathname) {
   return RootComponent ? <RootComponent /> : null;
 }
 
-/** 整体布局：顶栏（标题+信箱）+ 内容区 + 底部 Tab；Tab 仅能通过底部点击切换；主 Tab 间切换带过渡动画 + 公告弹窗 */
+/** 整体布局：顶栏（标题+消息）+ 内容区 + 底部 Tab；Tab 仅能通过底部点击切换；主 Tab 间切换带过渡动画 + 公告弹窗 */
 function Layout({ mode = 'mobile' }) {
   const location = useLocation();
   const navigate = useNavigate();
