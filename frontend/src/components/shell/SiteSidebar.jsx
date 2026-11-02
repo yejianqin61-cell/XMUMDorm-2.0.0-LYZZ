@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContextState';
 import { useAuth } from '../../context/AuthContextState';
-import { Shield } from 'lucide-react';
+import { ChevronDown, Shield } from 'lucide-react';
 import ShellNavItem from './ShellNavItem';
 import { SITE_FRIENDLY_LINK_ITEMS, SITE_PRIMARY_NAV_ITEMS, isSiteNavActive } from './siteShellNav';
 
@@ -13,6 +14,7 @@ export default function SiteSidebar({ children = null, className = '' }) {
   const location = useLocation();
   const { isZh } = useLanguage();
   const { isAdmin } = useAuth();
+  const [friendlyLinksOpen, setFriendlyLinksOpen] = useState(false);
   const primaryItems = SITE_PRIMARY_NAV_ITEMS.map((item) => ({
     ...item,
     label: isZh ? item.labelZh : item.labelEn,
@@ -40,11 +42,24 @@ export default function SiteSidebar({ children = null, className = '' }) {
               ))}
             </nav>
             <section className="site-web-shell__sidebar-group" aria-labelledby="site-friendly-links-title">
-              <h2 className="site-web-shell__sidebar-group-title" id="site-friendly-links-title">
-                {isZh ? '友情链接' : 'Useful links'}
-              </h2>
-              <nav aria-label={isZh ? '校方系统链接' : 'University system links'}>
-                <div className="site-web-shell__nav">
+              <button
+                className="site-web-shell__nav-item site-web-shell__sidebar-group-toggle"
+                id="site-friendly-links-title"
+                type="button"
+                aria-expanded={friendlyLinksOpen}
+                aria-controls="site-friendly-links-list"
+                onClick={() => setFriendlyLinksOpen((open) => !open)}
+              >
+                <span className="site-web-shell__nav-label">{isZh ? '友情链接' : 'Useful links'}</span>
+                <ChevronDown
+                  className="site-web-shell__sidebar-group-chevron"
+                  size={18}
+                  aria-hidden="true"
+                />
+              </button>
+              {friendlyLinksOpen ? (
+                <nav id="site-friendly-links-list" aria-label={isZh ? '校方系统链接' : 'University system links'}>
+                  <div className="site-web-shell__nav site-web-shell__sidebar-group-links">
                   {friendlyLinks.map((item) => (
                     <ShellNavItem
                       key={item.key}
@@ -53,8 +68,9 @@ export default function SiteSidebar({ children = null, className = '' }) {
                       Icon={item.icon}
                     />
                   ))}
-                </div>
-              </nav>
+                  </div>
+                </nav>
+              ) : null}
             </section>
             {isAdmin ? (
               <div className="site-web-shell__sidebar-admin">
