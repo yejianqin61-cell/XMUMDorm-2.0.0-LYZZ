@@ -136,7 +136,7 @@ describe('Users Routes', () => {
 
       expect(res.status).toBe(200);
       expect(simpleCache.getOrSet).toHaveBeenCalledWith(
-        'users:me:v1:5',
+        'users:me:v2:5',
         expect.any(Number),
         expect.any(Function)
       );
@@ -201,7 +201,7 @@ describe('Users Routes', () => {
       expect(connection.commit).toHaveBeenCalledTimes(1);
       expect(connection.rollback).not.toHaveBeenCalled();
       expect(connection.release).toHaveBeenCalledTimes(1);
-      expect(simpleCache.delete).toHaveBeenCalledWith('users:me:v1:5');
+      expect(simpleCache.delete).toHaveBeenCalledWith('users:me:v2:5');
       expect(res.body.data).toEqual({
         nickname: 'New Name',
         college: 'Business',
