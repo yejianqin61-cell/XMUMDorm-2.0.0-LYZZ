@@ -5,6 +5,7 @@ import {
   HandHeart,
   Heart,
   HeartHandshake,
+  Link2,
   MessageCircle,
   ClipboardCheck,
   TreePine,
@@ -107,6 +108,14 @@ export const SITE_PRIMARY_NAV_ITEMS = [
     to: '/about/join-us',
     icon: HeartHandshake,
     matchPrefixes: ['/about/join-us'],
+  },
+  {
+    key: 'friendly-links',
+    labelZh: '友情链接',
+    labelEn: 'Useful links',
+    to: '/about/links',
+    icon: Link2,
+    matchPrefixes: ['/about/links'],
   },
   {
     key: 'myzone',

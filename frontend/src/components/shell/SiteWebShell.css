@@ -457,29 +457,6 @@
   line-height: 1.5;
 }
 
-.site-web-shell__sidebar-group-toggle {
-  width: 100%;
-  border: 0;
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-}
-
-.site-web-shell__sidebar-group-chevron {
-  flex-shrink: 0;
-  margin-left: auto;
-  transition: transform var(--motion-fast) var(--ease-standard);
-}
-
-.site-web-shell__sidebar-group-toggle[aria-expanded='true'] .site-web-shell__sidebar-group-chevron {
-  transform: rotate(180deg);
-}
-
-.site-web-shell__sidebar-group-links .site-web-shell__nav-item {
-  min-height: 42px;
-  padding-left: 24px;
-}
-
 .site-web-shell__nav-item--active .site-web-shell__nav-label {
   font-weight: 700;
 }
