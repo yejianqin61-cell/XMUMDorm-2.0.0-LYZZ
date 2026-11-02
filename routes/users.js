@@ -258,7 +258,7 @@ router.get('/:id/profile', async (req, res) => {
 
     const viewer = parseOptionalUser(req);
     const viewerId = parsePositiveInteger(viewer?.id) || 0;
-    const cacheKey = `user_profile_v6:${userId}:viewer:${viewerId || 0}:p:${page}:s:${pageSize}`;
+    const cacheKey = `user_profile_v7:${userId}:viewer:${viewerId || 0}:p:${page}:s:${pageSize}`;
     const cached = simpleCache.get(cacheKey);
     if (cached) {
       return res.status(200).json({ status: 0, message: 'èŽ·å–æˆåŠŸ', data: cached });
@@ -286,8 +286,11 @@ router.get('/:id/profile', async (req, res) => {
         `SELECT
           (SELECT COUNT(*) FROM posts p WHERE p.user_id = ? AND p.deleted_at IS NULL AND p.hidden_by_admin = 0 AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)) AS post_count,
           (SELECT COUNT(*) FROM post_likes pl INNER JOIN posts p ON pl.post_id = p.id WHERE p.user_id = ? AND p.deleted_at IS NULL AND p.hidden_by_admin = 0 AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)) AS like_received_count,
-          (SELECT COUNT(*) FROM comments c INNER JOIN posts p ON c.post_id = p.id WHERE p.user_id = ? AND p.deleted_at IS NULL AND p.hidden_by_admin = 0 AND c.deleted_at IS NULL AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)) AS comment_received_count`,
-        [userId, userId, userId]
+          (SELECT COUNT(*) FROM comments c INNER JOIN posts p ON c.post_id = p.id WHERE p.user_id = ? AND p.deleted_at IS NULL AND p.hidden_by_admin = 0 AND c.deleted_at IS NULL AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)) AS comment_received_count,
+          (SELECT COUNT(*) FROM user_follows uf INNER JOIN users follower ON follower.id = uf.follower_id AND follower.status <> 'deactivated' WHERE uf.following_id = ?) AS follower_count,
+          (SELECT COUNT(*) FROM user_follows uf INNER JOIN users followed ON followed.id = uf.following_id AND followed.status <> 'deactivated' WHERE uf.follower_id = ?) AS following_count,
+          EXISTS(SELECT 1 FROM user_follows uf WHERE uf.follower_id = ? AND uf.following_id = ?) AS viewer_is_following`,
+        [userId, userId, userId, userId, userId, viewerId, userId]
       ),
     ]);
     if (!u) {
@@ -325,7 +328,10 @@ router.get('/:id/profile', async (req, res) => {
         post_count: Number((statsRow && statsRow.post_count) || 0),
         comment_received_count: Number((statsRow && statsRow.comment_received_count) || 0),
         like_received_count: Number((statsRow && statsRow.like_received_count) || 0),
+        follower_count: Number((statsRow && statsRow.follower_count) || 0),
+        following_count: Number((statsRow && statsRow.following_count) || 0),
       },
+      viewer: { is_following: rowTruthyLike(statsRow?.viewer_is_following) },
       page,
       pageSize,
       hasMore: offset + postList.length < Number((statsRow && statsRow.post_count) || 0),
@@ -335,6 +341,107 @@ router.get('/:id/profile', async (req, res) => {
   } catch (e) {
     console.error('ä¸ªäººç©ºé—´é”™è¯¯:', e);
     res.status(500).json({ status: -1, message: 'æœåŠ¡å™¨é”™è¯¯ï¼Œè¯·ç¨åŽé‡è¯•' });
+  }
+});
+
+async function getUserRelationList(userId, relation, page, pageSize) {
+  const isFollowers = relation === 'followers';
+  const relatedUserColumn = isFollowers ? 'uf.follower_id' : 'uf.following_id';
+  const targetColumn = isFollowers ? 'uf.following_id' : 'uf.follower_id';
+  const offset = (page - 1) * pageSize;
+  const [countRows, rows] = await Promise.all([
+    query(
+      `SELECT COUNT(*) AS total
+         FROM user_follows uf
+         INNER JOIN users u ON u.id = ${relatedUserColumn}
+        WHERE ${targetColumn} = ? AND u.status <> 'deactivated'`,
+      [userId]
+    ),
+    query(
+      `SELECT u.id, u.username, u.nickname, u.avatar, uf.created_at
+         FROM user_follows uf
+         INNER JOIN users u ON u.id = ${relatedUserColumn}
+        WHERE ${targetColumn} = ? AND u.status <> 'deactivated'
+        ORDER BY uf.created_at DESC, u.id DESC
+        LIMIT ? OFFSET ?`,
+      [userId, pageSize, offset]
+    ),
+  ]);
+  const total = Number(countRows?.[0]?.total) || 0;
+  return {
+    users: (rows || []).map((row) => ({
+      id: row.id,
+      username: row.username,
+      nickname: row.nickname,
+      avatar: row.avatar ? assetUrl(row.avatar) : DEFAULT_AVATAR,
+      created_at: row.created_at,
+    })),
+    page,
+    pageSize,
+    total,
+    hasMore: offset + (rows?.length || 0) < total,
+  };
+}
+
+async function handleUserRelationList(req, res, relation) {
+  const userId = parsePositiveInteger(req.params.id);
+  if (!userId) return res.status(400).json({ status: -1, message: '无效的用户 ID' });
+  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+  const pageSize = Math.min(50, Math.max(1, parseInt(req.query.pageSize, 10) || 30));
+  if (!Number.isSafeInteger((page - 1) * pageSize)) {
+    return res.status(400).json({ status: -1, message: '分页参数无效' });
+  }
+  try {
+    const exists = await query('SELECT id FROM users WHERE id = ? LIMIT 1', [userId]);
+    if (!exists?.length) return res.status(404).json({ status: -1, message: '用户不存在' });
+    const data = await getUserRelationList(userId, relation, page, pageSize);
+    return res.json({ status: 0, data });
+  } catch (error) {
+    console.error('获取用户关系列表失败:', error);
+    return res.status(500).json({ status: -1, message: '列表暂时无法加载' });
+  }
+}
+
+router.get('/:id/followers', (req, res) => handleUserRelationList(req, res, 'followers'));
+router.get('/:id/following', (req, res) => handleUserRelationList(req, res, 'following'));
+
+router.post('/:id/follow', authenticateToken, async (req, res) => {
+  const targetId = parsePositiveInteger(req.params.id);
+  if (!targetId) return res.status(400).json({ status: -1, message: '无效的用户 ID' });
+  if (targetId === Number(req.user.id)) return res.status(400).json({ status: -1, message: '不能关注自己' });
+  try {
+    const target = await query("SELECT id FROM users WHERE id = ? AND status <> 'deactivated' LIMIT 1", [targetId]);
+    if (!target?.length) return res.status(404).json({ status: -1, message: '用户不存在' });
+    await query('INSERT IGNORE INTO user_follows (follower_id, following_id) VALUES (?, ?)', [req.user.id, targetId]);
+    const counts = await query(
+      `SELECT COUNT(*) AS total FROM user_follows uf
+        INNER JOIN users follower ON follower.id = uf.follower_id AND follower.status <> 'deactivated'
+       WHERE uf.following_id = ?`,
+      [targetId]
+    );
+    return res.json({ status: 0, data: { following: true, follower_count: Number(counts?.[0]?.total) || 0 } });
+  } catch (error) {
+    console.error('关注用户失败:', error);
+    return res.status(500).json({ status: -1, message: '操作失败，请稍后重试' });
+  }
+});
+
+router.delete('/:id/follow', authenticateToken, async (req, res) => {
+  const targetId = parsePositiveInteger(req.params.id);
+  if (!targetId) return res.status(400).json({ status: -1, message: '无效的用户 ID' });
+  if (targetId === Number(req.user.id)) return res.status(400).json({ status: -1, message: '操作无效' });
+  try {
+    await query('DELETE FROM user_follows WHERE follower_id = ? AND following_id = ?', [req.user.id, targetId]);
+    const counts = await query(
+      `SELECT COUNT(*) AS total FROM user_follows uf
+        INNER JOIN users follower ON follower.id = uf.follower_id AND follower.status <> 'deactivated'
+       WHERE uf.following_id = ?`,
+      [targetId]
+    );
+    return res.json({ status: 0, data: { following: false, follower_count: Number(counts?.[0]?.total) || 0 } });
+  } catch (error) {
+    console.error('取消关注失败:', error);
+    return res.status(500).json({ status: -1, message: '操作失败，请稍后重试' });
   }
 });
 

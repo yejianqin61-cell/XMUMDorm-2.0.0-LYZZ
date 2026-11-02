@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Heart, MessageCircle, Star } from 'lucide-react';
-import { getProfile } from '@shared/api/users';
+import { followUser, getProfile, getUserRelations, unfollowUser } from '@shared/api/users';
 import { getMyProductReviews, getMyFavorites } from '@shared/api/canteen';
 import { API_BASE_URL, productImageUrl } from '@shared/api/config';
 import { formatRatingLabel } from '@shared/constants/rating';
@@ -10,6 +10,7 @@ import { getApiErrorMessage } from '@shared/utils/apiError';
 import { appendUniquePosts, parsePositiveUserId } from '@shared/utils/profilePage';
 import { useAuth } from '../context/AuthContextState';
 import { useLanguage } from '../context/LanguageContextState';
+import { Toast } from '../context/toast';
 import EmptyState from '../components/ui/EmptyState';
 import ErrorState from '../components/ui/ErrorState';
 import PageSkeleton from '../components/ui/PageSkeleton';
@@ -32,6 +33,17 @@ function UserZoneStrings(isZh) {
     userNotFound: isZh ? '用户不存在' : 'User not found',
     backHome: isZh ? '返回首页' : 'Home',
     postsStat: isZh ? '帖子' : 'Posts',
+    followers: isZh ? '粉丝' : 'Followers',
+    following: isZh ? '关注' : 'Following',
+    follow: isZh ? '关注' : 'Follow',
+    followed: isZh ? '已关注' : 'Following',
+    followSuccess: isZh ? '已关注' : 'Followed',
+    unfollowSuccess: isZh ? '已取消关注' : 'Unfollowed',
+    followError: isZh ? '操作失败，请稍后重试' : 'Could not update follow status',
+    loginToFollow: isZh ? '请先登录再关注' : 'Log in to follow this user',
+    close: isZh ? '关闭' : 'Close',
+    noRelations: isZh ? '这里还没有用户' : 'No users to show yet',
+    loadRelationsError: isZh ? '列表加载失败' : 'Could not load this list',
     tabPosts: isZh ? '帖子' : 'Posts',
     tabReviews: isZh ? '点评' : 'Reviews',
     tabFavorites: isZh ? '收藏' : 'Favorites',
@@ -131,6 +143,16 @@ function UserZone() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [profileReloadKey, setProfileReloadKey] = useState(0);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followPending, setFollowPending] = useState(false);
+  const [relationDialog, setRelationDialog] = useState(null);
+  const [relationUsers, setRelationUsers] = useState([]);
+  const [relationPage, setRelationPage] = useState(1);
+  const [relationHasMore, setRelationHasMore] = useState(false);
+  const [relationLoading, setRelationLoading] = useState(false);
+  const [relationError, setRelationError] = useState(null);
 
   const [activeTab, setActiveTab] = useState(TAB_POSTS);
   const [reviews, setReviews] = useState([]);
@@ -181,6 +203,9 @@ function UserZone() {
     setPostsHasMore(false);
     setPostsLoadingMore(false);
     setPostsLoadMoreError(null);
+    setFollowerCount(0);
+    setFollowingCount(0);
+    setIsFollowing(false);
     getProfile(userId, { page: 1, pageSize: PROFILE_PAGE_SIZE })
       .then((profileData) => {
         if (cancelled) return;
@@ -200,6 +225,9 @@ function UserZone() {
         setPosts(postList);
         const cnt = profileData?.stats?.post_count;
         setPostCount(Number.isFinite(Number(cnt)) ? Number(cnt) : postList.length);
+        setFollowerCount(Number(profileData?.stats?.follower_count) || 0);
+        setFollowingCount(Number(profileData?.stats?.following_count) || 0);
+        setIsFollowing(Boolean(profileData?.viewer?.is_following));
         setPostPage(Number(profileData?.page) || 1);
         setPostsHasMore(Boolean(profileData?.hasMore));
       })
@@ -238,6 +266,43 @@ function UserZone() {
     }
   };
 
+  const handleToggleFollow = async () => {
+    if (!isLoggedIn) {
+      Toast.info(t.loginToFollow);
+      navigate('/login', { state: { from: { pathname: `/user/${userId}` } } });
+      return;
+    }
+    if (followPending || isOwnProfile) return;
+    setFollowPending(true);
+    try {
+      const result = isFollowing ? await unfollowUser(userId) : await followUser(userId);
+      setIsFollowing(Boolean(result?.following));
+      setFollowerCount(Number(result?.follower_count) || 0);
+      Toast.success(result?.following ? t.followSuccess : t.unfollowSuccess);
+    } catch (followError) {
+      Toast.error(getApiErrorMessage(followError) || t.followError);
+    } finally {
+      setFollowPending(false);
+    }
+  };
+
+  const openRelations = async (relation, page = 1, append = false) => {
+    setRelationDialog(relation);
+    setRelationLoading(true);
+    setRelationError(null);
+    if (!append) setRelationUsers([]);
+    try {
+      const result = await getUserRelations(userId, relation, { page, pageSize: 30 });
+      setRelationUsers((current) => (append ? [...current, ...(result?.users || [])] : (result?.users || [])));
+      setRelationPage(Number(result?.page) || page);
+      setRelationHasMore(Boolean(result?.hasMore));
+    } catch (relationsError) {
+      setRelationError(getApiErrorMessage(relationsError) || t.loadRelationsError);
+    } finally {
+      setRelationLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!isOwnProfile || activeTab !== TAB_REVIEWS || reviewsLoaded) return;
     let cancelled = false;
@@ -268,6 +333,15 @@ function UserZone() {
   useEffect(() => {
     setReviewsLoaded(false);
   }, [userId]);
+
+  useEffect(() => {
+    if (!relationDialog) return undefined;
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') setRelationDialog(null);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [relationDialog]);
 
   const loadMoreReviews = async () => {
     if (reviewsLoadingMore || !reviewsHasMore) return;
@@ -367,8 +441,6 @@ function UserZone() {
 
   const avatarBg = profileUser?.avatar ? prefixAvatar(profileUser.avatar) : '';
   const displayName = profileUser?.nickname ?? profileUser?.username ?? (isZh ? '未设置' : 'Not set');
-  const reviewsCount = reviews.length;
-  const favoritesCount = favorites.length;
   const locale = isZh ? 'zh-CN' : 'en-US';
   const identityChips = [
     campusIdentity?.college ? { key: 'college', label: isZh ? '学院' : 'College', value: campusIdentity.college } : null,
@@ -394,15 +466,13 @@ function UserZone() {
             <div className="absolute inset-0 backdrop-blur-[8px]" aria-hidden />
 
             <div className="relative px-5 pb-5 pt-20">
-              <div className="flex items-end justify-between gap-4">
+              <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="min-w-0">
-                  <div className="flex items-baseline gap-4">
-                    <div className="truncate text-[20px] font-semibold tracking-tight text-white">{displayName}</div>
-                    <div className="flex items-center gap-4 text-white/90">
-                      <StatMini value={postCount} label={t.tabPosts} />
-                      <StatMini value={showTabs ? reviewsCount : 0} label={t.tabReviews} dim={!showTabs} />
-                      <StatMini value={showTabs ? favoritesCount : 0} label={t.tabFavorites} dim={!showTabs} />
-                    </div>
+                  <div className="truncate text-[20px] font-semibold tracking-tight text-white">{displayName}</div>
+                  <div className="mt-4 flex flex-wrap items-center gap-5 text-white/90">
+                    <StatMini value={postCount} label={t.tabPosts} />
+                    <StatMini value={followerCount} label={t.followers} onClick={() => openRelations('followers')} />
+                    <StatMini value={followingCount} label={t.following} onClick={() => openRelations('following')} />
                   </div>
                 </div>
                 {isOwnProfile && (
@@ -412,6 +482,21 @@ function UserZone() {
                     className="rounded-full bg-white/12 px-4 py-2 text-[12px] font-semibold text-white ring-1 ring-white/15"
                   >
                     {t.logOut}
+                  </button>
+                )}
+                {!isOwnProfile && (
+                  <button
+                    type="button"
+                    onClick={handleToggleFollow}
+                    disabled={followPending}
+                    aria-pressed={isFollowing}
+                    className={`rounded-full px-5 py-2 text-[12px] font-semibold ring-1 transition disabled:opacity-60 ${
+                      isFollowing
+                        ? 'bg-white/12 text-white ring-white/20 hover:bg-white/20'
+                        : 'bg-white text-slate-900 ring-white hover:bg-white/90'
+                    }`}
+                  >
+                    {followPending ? '…' : isFollowing ? t.followed : t.follow}
                   </button>
                 )}
               </div>
@@ -579,16 +664,107 @@ function UserZone() {
           </div>
         </motion.div>
       </div>
+      {relationDialog ? (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <button
+            type="button"
+            className="absolute inset-0 bg-slate-950/45"
+            aria-label={t.close}
+            onClick={() => setRelationDialog(null)}
+          />
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="user-relations-title"
+            className="relative flex max-h-[min(80vh,640px)] w-full max-w-md flex-col overflow-hidden rounded-3xl bg-white shadow-2xl"
+          >
+            <header className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+              <h2 id="user-relations-title" className="text-[16px] font-semibold text-slate-900">
+                {relationDialog === 'followers' ? t.followers : t.following}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setRelationDialog(null)}
+                className="rounded-full px-3 py-1.5 text-[12px] font-semibold text-slate-500 hover:bg-slate-100"
+              >
+                {t.close}
+              </button>
+            </header>
+            <div className="overflow-y-auto p-3">
+              {relationUsers.map((relationUser) => (
+                <Link
+                  key={relationUser.id}
+                  to={`/user/${relationUser.id}`}
+                  onClick={() => setRelationDialog(null)}
+                  className="flex items-center gap-3 rounded-2xl px-3 py-2.5 hover:bg-slate-50"
+                >
+                  <img
+                    src={prefixAvatar(relationUser.avatar)}
+                    alt=""
+                    className="h-10 w-10 rounded-full bg-slate-100 object-cover"
+                  />
+                  <span className="min-w-0">
+                    <span className="block truncate text-[14px] font-semibold text-slate-900">
+                      {relationUser.nickname || relationUser.username || (isZh ? '未设置' : 'Unnamed user')}
+                    </span>
+                    {relationUser.nickname && relationUser.username ? (
+                      <span className="block truncate text-[12px] text-slate-400">@{relationUser.username}</span>
+                    ) : null}
+                  </span>
+                </Link>
+              ))}
+              {relationLoading && relationUsers.length === 0 ? (
+                <p className="px-3 py-8 text-center text-[13px] text-slate-500">{t.loading}</p>
+              ) : null}
+              {!relationLoading && !relationError && relationUsers.length === 0 ? (
+                <p className="px-3 py-8 text-center text-[13px] text-slate-500">{t.noRelations}</p>
+              ) : null}
+              {relationError ? (
+                <div className="px-3 py-5 text-center">
+                  <p role="alert" className="text-[13px] text-rose-600">{relationError}</p>
+                  <button
+                    type="button"
+                    onClick={() => openRelations(relationDialog)}
+                    className="mt-3 rounded-full bg-slate-900 px-4 py-2 text-[12px] font-semibold text-white"
+                  >
+                    {t.retry}
+                  </button>
+                </div>
+              ) : null}
+            </div>
+            {relationHasMore ? (
+              <footer className="border-t border-slate-100 p-3 text-center">
+                <button
+                  type="button"
+                  disabled={relationLoading}
+                  onClick={() => openRelations(relationDialog, relationPage + 1, true)}
+                  className="rounded-full bg-slate-100 px-5 py-2 text-[12px] font-semibold text-slate-700 disabled:opacity-50"
+                >
+                  {relationLoading ? t.loadingMore : t.loadMore}
+                </button>
+              </footer>
+            ) : null}
+          </section>
+        </div>
+      ) : null}
     </RouteTransition>
   );
 }
 
-function StatMini({ value, label, dim = false }) {
-  return (
-    <div className={`flex flex-col leading-none ${dim ? 'opacity-70' : ''}`}>
+function StatMini({ value, label, dim = false, onClick }) {
+  const className = `flex flex-col items-start leading-none ${dim ? 'opacity-70' : ''} ${onClick ? 'rounded-lg text-left hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white' : ''}`;
+  const content = (
+    <>
       <div className="text-[14px] font-semibold tabular-nums">{Number(value) || 0}</div>
       <div className="mt-1 text-[11px] font-medium text-white/70">{label}</div>
-    </div>
+    </>
+  );
+  return onClick ? (
+    <button type="button" onClick={onClick} className={className} aria-label={`${Number(value) || 0} ${label}`}>
+      {content}
+    </button>
+  ) : (
+    <div className={className}>{content}</div>
   );
 }
 
