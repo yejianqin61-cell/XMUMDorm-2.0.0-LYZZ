@@ -1,0 +1,58 @@
+/**
+ * WallPostCard —— 万能墙信息流的**一张帖子**（两种类型共用）
+ *
+ * 组装顺序：共用外壳（`WallCardShell`）+ 按类型选择的内部内容：
+ *   · 自由帖 → `WallFreePostBody`
+ *   · 招募帖 → `WallRecruitPostBody`
+ *
+ * ⛔ 阶段 1 不接互动：点赞 / 评论 / 收藏只有计数，没有点击行为；
+ * ⛔ 示例帖不绑定 `onPress`，避免跳到并不存在的详情。
+ */
+
+import * as React from 'react';
+
+import { useI18n } from '@/i18n';
+import { formatPostTime } from '../../../../shared/utils/formatTime';
+import { WallCardShell } from './WallCardShell';
+import { WallFreePostBody } from './WallFreePostBody';
+import { WallRecruitPostBody } from './WallRecruitPostBody';
+import type { WallPost } from './wallPost';
+
+export function WallPostCard({
+  post,
+  onOpen,
+}: {
+  post: WallPost;
+  onOpen?: () => void;
+}): React.ReactElement {
+  const { t, locale } = useI18n();
+  const timeLabel = post.createdAt ? formatPostTime(post.createdAt, { locale }) : '';
+  const typeLabel = post.kind === 'recruit' ? t('wall.kind.recruit') : undefined;
+  const summary =
+    post.kind === 'recruit' ? (post.recruit?.title ?? '') : post.content;
+
+  return (
+    <WallCardShell
+      cardId={post.id}
+      anonymousLabel={t('screen.campus.read.anonymous')}
+      timeLabel={timeLabel}
+      typeLabel={typeLabel}
+      sampleLabel={post.sample === true ? t('wall.sample.tag') : undefined}
+      likeCount={post.likeCount}
+      commentCount={post.commentCount}
+      actionLabels={{
+        like: t('screen.campus.read.likeA11y', { count: post.likeCount }),
+        comment: t('screen.campus.read.commentA11y', { count: post.commentCount }),
+        save: t('wall.action.save'),
+      }}
+      accessibilityLabel={[timeLabel, summary].filter(Boolean).join('，')}
+      {...(onOpen === undefined ? {} : { onPress: onOpen })}
+    >
+      {post.kind === 'recruit' && post.recruit ? (
+        <WallRecruitPostBody recruit={post.recruit} />
+      ) : (
+        <WallFreePostBody content={post.content} />
+      )}
+    </WallCardShell>
+  );
+}

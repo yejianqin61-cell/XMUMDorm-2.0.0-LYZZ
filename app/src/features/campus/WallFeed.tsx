@@ -2,7 +2,10 @@
  * WallFeed —— 万能墙模块（广场首页第 2 页）
  *
  * 与树洞的边界（宪法 4.1.1）：**只允许在导航层合并**，数据层/信息流层不得混排。
- * 因此这里完全不使用树洞的实名帖子组件：匿名投影 + 六种版式标题，都走 `WallTemplate*`。
+ * 因此这里完全不使用树洞的实名帖子组件：匿名投影 + 两卡（自由帖 / 招募帖）共用外壳。
+ *
+ * 阶段 1（2026-11-02 所有者）：旧六卡统一并入自由帖呈现；信息流是**单列纵向混排**，
+ * 顶部一段静态示例帖（明确标注「示例」）用于实机验收信息密度，真实投稿仍走后端窗口游标。
  *
  * 分页是**服务端窗口游标**（`cursor`/`older`），不是页码 —— 与树洞的 `page` 分页分开维护。
  */
@@ -20,6 +23,7 @@ import { getQueryClient } from '@/shared/queryClient';
 import { QK } from '../../../../shared/query/queryKeys';
 import { getConfessionWindow } from '../../../../shared/api/confessions';
 import { WallPostRow } from './WallPostRow';
+import { WallSampleBand } from './WallSampleBand';
 import { asWall, errorFor, type Post } from './campusModel';
 
 /** 万能墙一屏一篇的窗口大小（后端 limit 1–10） */
@@ -224,22 +228,29 @@ function WallFeedSession({ testID, identity }: { testID: string; identity: strin
       onEndReached={append}
       onRetryRefresh={refresh}
       onRetryAppend={append}
-      listHeader={pagination.errorScope === 'refresh' && rows.length > 0 ? (
-        <View style={{ paddingHorizontal: theme.space('space_4'), paddingVertical: theme.space('space_2') }}>
-          <InlineNotice
-            tone="warning"
-            message={t('screen.campus.read.refreshFailed')}
-            actionLabel={t('action.retry')}
-            onAction={refresh}
-          />
+      listHeader={(
+        <View>
+          {pagination.errorScope === 'refresh' && rows.length > 0 ? (
+            <View style={{ paddingHorizontal: theme.space('space_4'), paddingVertical: theme.space('space_2') }}>
+              <InlineNotice
+                tone="warning"
+                message={t('screen.campus.read.refreshFailed')}
+                actionLabel={t('action.retry')}
+                onAction={refresh}
+              />
+            </View>
+          ) : null}
+          {/* 阶段 1：示例帖固定在真实列表之上，带说明条与逐卡「示例」标签（不发请求、不写库） */}
+          <WallSampleBand />
         </View>
-      ) : undefined}
+      )}
       labels={{
         retryLabel: t('action.retry'),
         endLabel: t('screen.campus.read.listEnd'),
         empty: {
           kind: 'firstRun',
-          title: t('screen.campus.read.empty'),
+          // 示例帖在头部常驻：空态说的是"没有真实投稿"，⛔ 不让样板看起来像真实内容
+          title: t('wall.feed.emptyReal'),
           actionLabel: t('action.refresh'),
           onAction: refresh,
         },

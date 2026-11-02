@@ -257,6 +257,8 @@ describe('P0-03 双语词条层与错误文案', () => {
         'mailbox.',
         // 我的 / 仪表盘（P2C-03 起由甲引入）
         'me.',
+        // 万能墙两卡信息流（阶段 1，2026-11-02 由丙引入）：示例标识、类型标签、招募结构化字段
+        'wall.',
       ];
       const stray = Object.keys(zh).filter((k) => !knownPrefixes.some((p) => k.startsWith(p)));
       expect(stray).toEqual([]);

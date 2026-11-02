@@ -82,10 +82,13 @@ describe('P2X 按压态：信息流 / 缩略图 / 详情轮播 / 全屏看图器
 
   it('万能墙整条卡片同样不做按压变灰，点击仍进详情', () => {
     const row = read('src', 'features', 'campus', 'WallPostRow.tsx');
-    const tags = openingTags(row, 'Pressable');
+    // 阶段 1：可点外壳收口到共用卡片壳（两卡共用一份按压规则）
+    expect(row).toContain('WallPostCard');
+    const shell = read('src', 'features', 'campus', 'WallCardShell.tsx');
+    const tags = openingTags(shell, 'Pressable');
     expect(tags).toHaveLength(1);
     expect(tags[0]).toContain('feedback="none"');
-    expect(tags[0]).toContain('onPress={onOpen}');
+    expect(tags[0]).toContain('onPress={onPress}');
   });
 
   it('详情轮播与全屏看图器的图区不做按压变灰：点图放大 / 读屏翻页都保留', () => {

@@ -27,16 +27,21 @@ import { buildDescriptor } from './resolveDescriptor';
 /**
  * 已交付的描述符（id → 描述符）。
  * ⛔ 域文件不许 import 本文件（会成环）；依赖方向只能是 本文件 → 域文件。
+ *
+ * 2026-11-02 阶段 1：万能墙发布**暂时撤下** —— 旧六卡发布选择必须移除，
+ * 而自由帖（阶段 2）与招募帖（阶段 5）的真实发布尚未实现。
+ * 因此 `wall` 进入缺口账本，发布中心仍可见该入口，点进去是「暂未开放」业务空态
+ * （⛔ 不再让用户走到一个会写出旧模板数据的表单）。
  */
 export const PUBLISH_DESCRIPTORS: Partial<Record<PublishId, PublishFormDescriptor>> = Object.fromEntries(
-  (['clubActivity', 'clubPost', 'confession', 'errand', 'marketplace', 'wall'] as const).map(id => [id, buildDescriptor(id, key => zh[key])])
+  (['clubActivity', 'clubPost', 'confession', 'errand', 'marketplace'] as const).map(id => [id, buildDescriptor(id, key => zh[key])])
 );
 
 /**
  * **缺口账本**：已就绪但还没交描述符的发布类型。
  * ⚠️ 交一份就删一行；⛔ 不许"先删了等以后补"。
  */
-export const KNOWN_MISSING_DESCRIPTORS: readonly PublishId[] = [];
+export const KNOWN_MISSING_DESCRIPTORS: readonly PublishId[] = ['wall'];
 
 export function getPublishDescriptor(id: PublishId): PublishFormDescriptor | undefined {
   return PUBLISH_DESCRIPTORS[id];

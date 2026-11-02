@@ -43,7 +43,7 @@ import { WallFeed, type WallFeedSnapshot } from './WallFeed';
 import { TreeholePostDetail } from './TreeholePostDetail';
 import type { TreeholeImageSaveOptions } from './TreeholeImageSaveControls';
 import { toTreeholePostViewModel } from './treeholePostViewModel';
-import { WallTemplateBody } from './wallTemplates';
+import { WallFreePostText } from './WallFreePostBody';
 import { useCampusActions } from './useCampusActions';
 import type { CampusReportReason } from './useCampusReport';
 
@@ -498,9 +498,7 @@ export function CampusDetailScreen({
               onComment={() => scrollRef.current?.scrollToEnd({ animated: true })}
               anonymous={kind === 'wall'}
               wallContent={
-                kind === 'wall' ? (
-                  <WallTemplateBody templateKey={post?.template_key} content={vm.content} />
-                ) : undefined
+                kind === 'wall' ? <WallFreePostText content={vm.content} /> : undefined
               }
               likeNotice={likeNotice}
             />
@@ -797,5 +795,4 @@ function HeaderIconButton({
 
 export { WallFeed } from './WallFeed';
 export { TreeholeFeed } from './TreeholeFeed';
-export { wallTemplateLabel } from './wallTemplates';
 export type { Post } from './campusModel';

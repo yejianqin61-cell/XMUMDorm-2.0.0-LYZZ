@@ -87,13 +87,21 @@ describe('P2X Treehole 视觉层契约（令牌组件层）', () => {
   it('万能墙继续走匿名投影与独立列表，不接实名帖子部件', () => {
     const wall = read('src', 'features', 'campus', 'WallFeed.tsx');
     expect(wall).toContain('WallPostRow');
+    expect(wall).toContain('WallSampleBand');
+    // 阶段 1：旧六卡版式组件已移除，真实行经适配层映射成自由帖卡片
     const wallRow = read('src', 'features', 'campus', 'WallPostRow.tsx');
-    expect(wallRow).toContain('WallTemplateBody');
-    expect(wallRow).toContain("t('screen.campus.read.anonymous')");
+    expect(wallRow).toContain('WallPostCard');
+    expect(wallRow).toContain('wallPostFromRow');
     expect(wallRow.includes('TreeholePostRow')).toBe(false);
     expect(wall.includes('TreeholePostRow')).toBe(false);
+    // 匿名标识与两卡共用外壳在卡片层（外壳只有一份）
+    const card = read('src', 'features', 'campus', 'WallPostCard.tsx');
+    expect(card).toContain("t('screen.campus.read.anonymous')");
+    expect(card).toContain('WallCardShell');
+    expect(card).toContain('WallFreePostBody');
+    expect(card).toContain('WallRecruitPostBody');
     const screens = read('src', 'features', 'campus', 'CampusScreens.tsx');
-    expect(screens).toContain('WallTemplateBody');
+    expect(screens).toContain('WallFreePostText');
     expect(screens).toContain('anonymous={kind === \'wall\'}');
   });
 

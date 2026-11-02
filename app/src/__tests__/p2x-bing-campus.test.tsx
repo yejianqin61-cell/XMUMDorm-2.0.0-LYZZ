@@ -13,7 +13,6 @@ import { act, fireEvent, waitFor, within } from '@testing-library/react-native';
 
 import { Button } from '@/components/ui/Button';
 import { CampusDetailScreen, TreeholeFeed, WallFeed } from '@/features/campus/CampusScreens';
-import { WallTemplateContent } from '@/features/campus/wallTemplates';
 import { getQueryClient } from '@/shared/queryClient';
 import { secondaryTabStore } from '@/features/navigation/secondaryTabs';
 import { QK } from '../../../shared/query/queryKeys';
@@ -396,7 +395,7 @@ describe('树洞搜索（就地展开）', () => {
 });
 
 describe('万能墙列表 / 详情', () => {
-  it('公告从列表进入详情保留同一类型、完整长文及公开时间', async () => {
+  it('历史公告并入自由帖：列表与详情都只呈现匿名正文、完整长文及公开时间', async () => {
     const content = `图书馆闭馆通知\n${'请提前办理借还手续。'.repeat(22)}`.slice(0, 200);
     const row = {
       id: 40, content, template_key: 'announcement', created_at: '2026-10-29T12:00:00Z',
@@ -411,13 +410,15 @@ describe('万能墙列表 / 详情', () => {
     const view = await renderApp(<ReadingPath />);
     await waitFor(() => expect(view.getByText(content)).toBeTruthy());
     expect(view.getByText(content).props.numberOfLines).toBeUndefined();
-    expect(view.getByText('公告卡')).toBeTruthy();
+    // 旧六卡版式名不再出现在任何位置（所有者 2026-11-02：旧卡并入自由帖呈现）
+    expect(view.queryByText('公告卡')).toBeNull();
+    expect(within(view.getByTestId('campus-row-40')).getByTestId('wall-free-body')).toBeTruthy();
     expect(view.getByTestId('wall-row-time-40')).toBeTruthy();
     await fireEvent.press(view.getByTestId('campus-row-40'));
     expect(routerMock.push).toHaveBeenCalledWith('/campus/wall/40');
     await fireEvent.press(view.getByText('查看详情'));
     await waitFor(() => expect(view.getAllByText(content)).toHaveLength(2));
-    expect(view.getAllByText('公告卡')).toHaveLength(2);
+    expect(view.queryByText('公告卡')).toBeNull();
     expect(view.queryByText('不应公开的名字')).toBeNull();
     expect(view.queryByText('不应公开的标题')).toBeNull();
     expect(view.queryByTestId('treehole-author-avatar')).toBeNull();
@@ -435,7 +436,7 @@ describe('万能墙列表 / 详情', () => {
     const view = await renderApp(<WallFeed />);
     await waitFor(() => expect(view.getByText('墙首篇')).toBeTruthy());
     expect(view.queryByText('泄漏作者')).toBeNull();
-    expect(view.getByText('匿名')).toBeTruthy();
+    expect(within(view.getByTestId('campus-row-40')).getByText('匿名')).toBeTruthy();
     await act(async () => mockListProps.onEndReached());
     await waitFor(() => expect(view.getByText('墙次篇')).toBeTruthy());
     expect(wall.mock.calls.map((call) => call[0])).toEqual([
@@ -454,10 +455,11 @@ describe('万能墙列表 / 详情', () => {
     expect(wall).toHaveBeenCalledTimes(1);
   });
 
-  it('英语界面按服务端模板键标明版式', async () => {
-    wall.mockResolvedValue({ items: [{ id: 40, content: '海报', template_key: 'bigtype' }], has_older: false, oldest_cursor: 40 });
+  it('英语界面不再按服务端模板键显示版式名，只呈现正文', async () => {
+    wall.mockResolvedValue({ items: [{ id: 40, content: 'Poster text', template_key: 'bigtype' }], has_older: false, oldest_cursor: 40 });
     const view = await renderApp(<WallFeed />, { locale: 'en' });
-    await waitFor(() => expect(view.getByText('Poster')).toBeTruthy());
+    await waitFor(() => expect(view.getByText('Poster text')).toBeTruthy());
+    expect(view.queryByText('Poster')).toBeNull();
   });
 
   it('万能墙详情只投影匿名作者，不渲染标题与作者身份', async () => {
@@ -1483,7 +1485,8 @@ describe('列表状态闭环 L-1 墙失败反馈', () => {
     await waitFor(() => expect(view.getByTestId('wall-feed-error')).toBeTruthy());
     await act(async () => mockListProps.onRetryRefresh?.());
     await waitFor(() => expect(view.getByTestId('wall-feed-empty')).toBeTruthy());
-    expect(view.getByText('还没有帖子')).toBeTruthy();
+    // 头部常驻示例帖，空态只说明"真实投稿"为空
+    expect(view.getByText('还没有真实投稿')).toBeTruthy();
   });
 
   it('首次加载使用公共加载态，重复刷新不发送第二个请求', async () => {
@@ -1817,21 +1820,6 @@ describe('列表状态返工 LS-1 GC与自动重读', () => {
     await act(async () => finishOld(batch(kind, 39, '自动旧响应', false)));
     expect(view.queryByText('自动旧响应')).toBeNull();
     expect(view.getByText('用户刷新内容')).toBeTruthy();
-  });
-});
-
-describe('万能墙清单模板图标化', () => {
-  it('checklist 每行渲染方框图标，不再出现文字符号', async () => {
-    const view = await renderApp(<WallTemplateContent templateKey="checklist" content={'买水\n买咖啡'} />);
-    expect(view.queryByText(/□/)).toBeNull();
-    // 装饰图标对读屏隐藏（宪法 16.5-4），查询需显式包含隐藏元素
-    expect(view.getByTestId('wall-checklist-icon-0', { includeHiddenElements: true })).toBeTruthy();
-    expect(view.getByTestId('wall-checklist-icon-1', { includeHiddenElements: true })).toBeTruthy();
-  });
-
-  it('note 模板保留排版圆点', async () => {
-    const view = await renderApp(<WallTemplateContent templateKey="note" content={'一行\n两行'} />);
-    expect(view.getAllByText(/• /)).toHaveLength(2);
   });
 });
 
