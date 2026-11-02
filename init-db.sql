@@ -18,6 +18,7 @@ USE jack_campus;
 CREATE TABLE IF NOT EXISTS users (
   id INT AUTO_INCREMENT PRIMARY KEY COMMENT '用户ID，自增主键',
   student_id VARCHAR(50) NULL UNIQUE COMMENT '学号，唯一标识（非商家必填，商家可为空）',
+  dorm_id VARCHAR(21) NOT NULL COMMENT 'DORM 系统独立编号',
   username VARCHAR(100) NOT NULL COMMENT '用户名',
   email VARCHAR(255) NULL UNIQUE COMMENT '邮箱（非商家必填，格式：xxx@xmu.edu.my）',
   password_hash VARCHAR(255) NOT NULL COMMENT '加密后的密码',
@@ -29,6 +30,7 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   
   INDEX idx_student_id (student_id),
+  UNIQUE INDEX uq_users_dorm_id (dorm_id),
   INDEX idx_username (username),
   INDEX idx_email (email),
   INDEX idx_role (role)

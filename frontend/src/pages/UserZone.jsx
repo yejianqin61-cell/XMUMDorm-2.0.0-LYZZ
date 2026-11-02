@@ -33,7 +33,7 @@ function UserZoneStrings(isZh) {
     userNotFound: isZh ? '用户不存在' : 'User not found',
     backHome: isZh ? '返回首页' : 'Home',
     postsStat: isZh ? '帖子' : 'Posts',
-    dormIdUnavailable: isZh ? '未绑定' : 'Not set',
+    dormIdUnavailable: isZh ? '编号暂不可用' : 'ID unavailable',
     followers: isZh ? '粉丝' : 'Followers',
     following: isZh ? '关注' : 'Following',
     follow: isZh ? '关注' : 'Follow',

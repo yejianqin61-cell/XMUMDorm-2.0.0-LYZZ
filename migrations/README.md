@@ -157,3 +157,6 @@ node scripts/createAdmin.js
 
 `078_user_follows.sql`：创建用户关注关系表，供主页展示关注/粉丝数量与名单。
 部署用户关注功能前，先确认目标数据库并执行 `node scripts/apply-sql-file.js migrations/078_user_follows.sql`；也可使用 `node scripts/run-incremental-migrations.js` 执行增量迁移。
+
+`079_dorm_ids.sql`：为所有账号分配独立且唯一的 DORM ID，并要求后续新账号写入该编号。
+部署前确认目标数据库并执行 `node scripts/apply-sql-file.js migrations/079_dorm_ids.sql`；也可使用 `node scripts/run-incremental-migrations.js` 执行增量迁移。

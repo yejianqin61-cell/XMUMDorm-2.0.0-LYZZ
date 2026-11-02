@@ -46,14 +46,6 @@ function safeText(value) {
   return text || null;
 }
 
-function maskStudentId(value) {
-  const characters = Array.from(String(value == null ? '' : value).trim());
-  if (characters.length === 0) return null;
-  if (characters.length <= 2) return '*'.repeat(characters.length);
-  const visible = characters.length >= 7 ? 2 : 1;
-  return `${characters.slice(0, visible).join('')}${'*'.repeat(characters.length - visible * 2)}${characters.slice(-visible).join('')}`;
-}
-
 function parsePositiveInteger(value) {
   const text = String(value == null ? '' : value);
   if (!/^[1-9]\d*$/.test(text)) return null;
@@ -87,7 +79,7 @@ function formatPublicProfileUser(user, campusIdentity) {
     username: user.username,
     nickname: user.nickname,
     avatar: user.avatar ? assetUrl(user.avatar) : DEFAULT_AVATAR,
-    dorm_id: maskStudentId(user.student_id),
+    dorm_id: user.dorm_id,
     campus_identity: campusIdentity,
     ...formatAuthorLevel(user),
     levelProgress: getExpProgress(user.exp != null ? user.exp : 0),
@@ -97,7 +89,7 @@ function formatPublicProfileUser(user, campusIdentity) {
 async function getUserBaseRow(userId) {
   try {
     const rows = await query(
-      `SELECT id, username, student_id, email, avatar, nickname, role, level, exp, badge, weekly_comment_count, created_at,
+      `SELECT id, username, student_id, dorm_id, email, avatar, nickname, role, level, exp, badge, weekly_comment_count, created_at,
               college, grade, major, show_college, show_grade, show_major
          FROM users
         WHERE id = ?`,
@@ -109,7 +101,7 @@ async function getUserBaseRow(userId) {
       let rows;
       try {
         rows = await query(
-          `SELECT id, username, student_id, email, avatar, nickname, role, level, exp, badge, weekly_comment_count, created_at,
+          `SELECT id, username, student_id, dorm_id, email, avatar, nickname, role, level, exp, badge, weekly_comment_count, created_at,
                   college
              FROM users
             WHERE id = ?`,
@@ -118,7 +110,7 @@ async function getUserBaseRow(userId) {
       } catch (inner) {
         if (inner && inner.code === 'ER_BAD_FIELD_ERROR') {
           rows = await query(
-            'SELECT id, username, student_id, email, avatar, nickname, role, level, exp, badge, weekly_comment_count, created_at FROM users WHERE id = ?',
+            'SELECT id, username, student_id, dorm_id, email, avatar, nickname, role, level, exp, badge, weekly_comment_count, created_at FROM users WHERE id = ?',
             [userId]
           );
         } else {
@@ -143,7 +135,7 @@ async function getUserBaseRow(userId) {
 router.get('/me', authenticateToken, async (req, res) => {
   try {
     const ttlMs = Number(process.env.CACHE_USER_ME_TTL_MS || 15 * 1000);
-    const cacheKey = `users:me:v1:${req.user.id}`;
+    const cacheKey = `users:me:v2:${req.user.id}`;
     const rows = await simpleCache.getOrSet(cacheKey, ttlMs, async () => {
       const row = await getUserBaseRow(req.user.id);
       return row ? [row] : [];
@@ -156,6 +148,7 @@ router.get('/me', authenticateToken, async (req, res) => {
     const campusIdentity = normalizeCampusIdentity(u);
     const data = {
       id: u.id,
+      dorm_id: u.dorm_id,
       student_id: u.student_id,
       username: u.username,
       email: u.email,
@@ -267,7 +260,7 @@ router.get('/:id/profile', async (req, res) => {
 
     const viewer = parseOptionalUser(req);
     const viewerId = parsePositiveInteger(viewer?.id) || 0;
-    const cacheKey = `user_profile_v7:${userId}:viewer:${viewerId || 0}:p:${page}:s:${pageSize}`;
+    const cacheKey = `user_profile_v8:${userId}:viewer:${viewerId || 0}:p:${page}:s:${pageSize}`;
     const cached = simpleCache.get(cacheKey);
     if (cached) {
       return res.status(200).json({ status: 0, message: 'èŽ·å–æˆåŠŸ', data: cached });
@@ -461,7 +454,7 @@ router.delete('/me', authenticateToken, async (req, res) => {
       return res.status(400).json({ status: -1, message: '账号已注销或不存在' });
     }
 
-    simpleCache.delete(`users:me:v1:${req.user.id}`);
+    simpleCache.delete(`users:me:v2:${req.user.id}`);
     res.status(200).json({ status: 0, message: '账号已注销' });
   } catch (e) {
     console.error('注销账号错误:', e);
@@ -472,7 +465,7 @@ router.delete('/me', authenticateToken, async (req, res) => {
 router.patch('/me', authenticateToken, async (req, res) => {
   try {
     const data = await academicIdentity.saveProfile(pool, req.user.id, req.body || {});
-    simpleCache.delete(`users:me:v1:${req.user.id}`);
+    simpleCache.delete(`users:me:v2:${req.user.id}`);
     res.json({ status: 0, message: '资料已更新', data });
   } catch (e) {
     res.status(e.status || 503).json({ status: -1, code: e.code || 'PROFILE_SAVE_FAILED', message: e.status ? e.message : '资料保存失败，请重试' });
@@ -500,7 +493,7 @@ router.patch('/me/avatar', authenticateToken, (req, res, next) => {
     const prepared = await prepareImageUpload({ key: `avatars/user_${req.user.id}_${ts}${safeExt}`, body: req.file.buffer, mimetype: req.file.mimetype });
     await uploadBuffer(prepared);
     await query('UPDATE users SET avatar = ? WHERE id = ?', [prepared.key, req.user.id]);
-    simpleCache.delete(`users:me:v1:${req.user.id}`);
+    simpleCache.delete(`users:me:v2:${req.user.id}`);
     res.status(200).json({
       status: 0,
       message: 'å¤´åƒæ›´æ–°æˆåŠŸ',

@@ -256,6 +256,11 @@ function MyZone() {
           <p className="mt-1 text-[13px] leading-relaxed text-slate-400">
             {isLoggedIn ? t.bioLoggedIn : t.bioLoggedOut}
           </p>
+          {isLoggedIn && user?.dorm_id ? (
+            <p className="mt-2 text-[11px] font-semibold tracking-wide text-slate-500">
+              DORM ID · {user.dorm_id}
+            </p>
+          ) : null}
           {isLoggedIn && userId ? (
             <Link
               to={`/user/${userId}`}
