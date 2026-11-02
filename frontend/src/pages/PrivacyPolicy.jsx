@@ -17,7 +17,7 @@ const CONTENT = {
       {
         title: '我们收集的信息',
         bullets: [
-          '账号信息：学号、邮箱地址、用户名，用于登录和身份验证。',
+          '账号信息：学号、邮箱地址、用户名，用于登录和身份验证。公开主页会以脱敏形式展示学号（DORM ID）。',
           '个人资料：昵称、头像（你主动上传时）。',
           '发布内容：帖子、评论、菜品点评、图片等你在平台创建的内容。',
           '设备信息：推送通知令牌（如你启用了通知），用于发送你关注内容的更新。',
@@ -81,7 +81,7 @@ const CONTENT = {
       {
         title: 'Information We Collect',
         bullets: [
-          'Account information: student ID, email address, and username for login and identity verification.',
+          'Account information: student ID, email address, and username for login and identity verification. Public profiles display a masked student ID (DORM ID).',
           'Profile information: nickname and avatar when you choose to upload one.',
           'User content: posts, comments, food reviews, images, and other content you create on the platform.',
           'Device information: push notification tokens if you enable notifications, so we can send relevant updates.',

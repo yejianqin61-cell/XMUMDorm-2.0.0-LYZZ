@@ -46,6 +46,14 @@ function safeText(value) {
   return text || null;
 }
 
+function maskStudentId(value) {
+  const characters = Array.from(String(value == null ? '' : value).trim());
+  if (characters.length === 0) return null;
+  if (characters.length <= 2) return '*'.repeat(characters.length);
+  const visible = characters.length >= 7 ? 2 : 1;
+  return `${characters.slice(0, visible).join('')}${'*'.repeat(characters.length - visible * 2)}${characters.slice(-visible).join('')}`;
+}
+
 function parsePositiveInteger(value) {
   const text = String(value == null ? '' : value);
   if (!/^[1-9]\d*$/.test(text)) return null;
@@ -79,6 +87,7 @@ function formatPublicProfileUser(user, campusIdentity) {
     username: user.username,
     nickname: user.nickname,
     avatar: user.avatar ? assetUrl(user.avatar) : DEFAULT_AVATAR,
+    dorm_id: maskStudentId(user.student_id),
     campus_identity: campusIdentity,
     ...formatAuthorLevel(user),
     levelProgress: getExpProgress(user.exp != null ? user.exp : 0),

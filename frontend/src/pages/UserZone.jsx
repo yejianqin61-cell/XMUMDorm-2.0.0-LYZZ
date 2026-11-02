@@ -33,6 +33,7 @@ function UserZoneStrings(isZh) {
     userNotFound: isZh ? '用户不存在' : 'User not found',
     backHome: isZh ? '返回首页' : 'Home',
     postsStat: isZh ? '帖子' : 'Posts',
+    dormIdUnavailable: isZh ? '未绑定' : 'Not set',
     followers: isZh ? '粉丝' : 'Followers',
     following: isZh ? '关注' : 'Following',
     follow: isZh ? '关注' : 'Follow',
@@ -469,6 +470,9 @@ function UserZone() {
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="min-w-0">
                   <div className="truncate text-[20px] font-semibold tracking-tight text-white">{displayName}</div>
+                  <div className="mt-1 text-[11px] font-medium tracking-wide text-white/75">
+                    DORM ID · {profileUser?.dorm_id || t.dormIdUnavailable}
+                  </div>
                   <div className="mt-4 flex flex-wrap items-center gap-5 text-white/90">
                     <StatMini value={postCount} label={t.tabPosts} />
                     <StatMini value={followerCount} label={t.followers} onClick={() => openRelations('followers')} />
