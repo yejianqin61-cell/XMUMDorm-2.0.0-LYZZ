@@ -1,5 +1,23 @@
 # Development workflow
 
-- Before starting work in this repository, run `git fetch origin` and review the current branch and working tree. Make all development changes on `dev-me` and commit completed changes there.
-- Before any push, run `git fetch origin` again. Reconcile `dev-me` with `origin/dev-me`, resolve any conflicts, and verify the working tree before pushing.
-- Do not push unless the user asks for a push.
+- **只在本仓库的本地 `dev-gjl` 分支工作**：不切换到其它分支，也不基于远端分支开工。（早前“只在 `main` 工作”“在 `dev-me` 开发”的口径均已作废。）
+- **用户没有说话时，禁止一切远端写操作与自动同步**：不 `push`、不与任何远端仓库的分支同步、不自动 `fetch` / `pull` / `remote update`。
+- **只有用户明确说明要同步或推送时，才与远端交互**；动手前先复述目标分支与范围，得到确认再执行。同步后在本地核对改动与冲突，再继续开工。
+- **推送前再次确认用户意图**，并在工作区状态、验证结果都清楚之后再执行；用户没要求就不推送。
+- **保留他人改动和未跟踪文件**；不得为了同步或交接收尾做全量暂存、清理、重置或自动推送。
+- 本纪律优先于任何“保持分支最新”“先拉取再开工”的通用习惯或文档建议。
+
+## 项目额度与交接约定
+
+2026-10-30 用户已要求关闭额度监控，定时任务已删除。不再主动轮询额度，也不再自动触发低额度收尾。下述交接材料保留供用户日后明确要求交接时使用。
+
+- 具体流程见 `docs/agent-handoff/README.md`；跨聊天状态见 `docs/agent-handoff/MONITOR-STATE.md`。
+- 不因历史监控计划自行恢复检查、唤醒其他聊天或请求收尾；重新启用须有用户的新指令。
+- 用户明确要求交接时，完成当前最小可交付小阶段及必要验证并填写交接单，不硬性截断。若余量不足以完成小阶段，先保存现场并如实记录中断点。
+- 保留他人改动和未跟踪文件。不得为了交接全量暂存、清理、重置或自动推送。提交仍遵守原任务授权与模块规则。
+- 本文件不改变 `app/AGENTS.md` 等子目录规则或既有单写者分工。正常额度下继续用户已授权的工作。
+
+## 技能使用范围（用户 2026-10-30 指令）
+
+- **本项目允许使用 `easy-workflow` 技能集**（`yejianqin61-cell/easy-workflow`，已装于 `.codex/skills/`）：`easy-plan`、`easy-task-act`、`easy-registry`、`easy-summary`、`easy-audit`、`easy-diagram`、`easy-report`。按任务需要调用，不因“能用”就全量套用；版本与用法口径见 `docs/app_stage2/team/README.md`。
+- **其他项目默认不用**：用户未在那个项目里明确说明时，不要调用上述 `easy-*` skill。
