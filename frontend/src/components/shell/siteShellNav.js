@@ -1,4 +1,5 @@
 import {
+  Building2,
   BookOpen,
   Compass,
   GraduationCap,
@@ -128,6 +129,13 @@ export const SITE_PRIMARY_NAV_ITEMS = [
 ];
 
 export const SITE_FRIENDLY_LINK_ITEMS = [
+  {
+    key: 'eservices',
+    labelZh: 'eServices',
+    labelEn: 'eServices',
+    href: 'https://eservices.xmu.edu.my/',
+    icon: Building2,
+  },
   {
     key: 'ac',
     labelZh: 'AC 系统',
