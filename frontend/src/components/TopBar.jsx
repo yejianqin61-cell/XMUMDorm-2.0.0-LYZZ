@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContextState';
 
-/** 微信风格顶部栏：标题居中，可选左侧返回、右侧语言切换+信箱 */
+/** 微信风格顶部栏：标题居中，可选左侧返回、右侧语言切换+消息 */
 function TopBar({ title, showBack }) {
   const navigate = useNavigate();
   const { lang, setLang } = useLanguage();
@@ -48,7 +48,7 @@ function TopBar({ title, showBack }) {
           type="button"
           className="top-bar-mailbox"
           onClick={() => navigate('/mailbox')}
-          aria-label="信箱 Mailbox"
+          aria-label="消息 Messages"
         >
           <MailboxIcon />
         </button>
