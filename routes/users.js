@@ -86,6 +86,39 @@ function formatPublicProfileUser(user, campusIdentity) {
   };
 }
 
+async function getPublicProfileStats(userId, viewerId) {
+  try {
+    return await query(
+      `SELECT
+        (SELECT COUNT(*) FROM posts p WHERE p.user_id = ? AND p.deleted_at IS NULL AND p.hidden_by_admin = 0 AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)) AS post_count,
+        (SELECT COUNT(*) FROM post_likes pl INNER JOIN posts p ON pl.post_id = p.id WHERE p.user_id = ? AND p.deleted_at IS NULL AND p.hidden_by_admin = 0 AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)) AS like_received_count,
+        (SELECT COUNT(*) FROM comments c INNER JOIN posts p ON c.post_id = p.id WHERE p.user_id = ? AND p.deleted_at IS NULL AND p.hidden_by_admin = 0 AND c.deleted_at IS NULL AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)) AS comment_received_count,
+        (SELECT COUNT(*) FROM user_follows uf INNER JOIN users follower ON follower.id = uf.follower_id AND follower.status <> 'deactivated' WHERE uf.following_id = ?) AS follower_count,
+        (SELECT COUNT(*) FROM user_follows uf INNER JOIN users followed ON followed.id = uf.following_id AND followed.status <> 'deactivated' WHERE uf.follower_id = ?) AS following_count,
+        EXISTS(SELECT 1 FROM user_follows uf WHERE uf.follower_id = ? AND uf.following_id = ?) AS viewer_is_following`,
+      [userId, userId, userId, userId, userId, viewerId, userId]
+    );
+  } catch (error) {
+    const missingFollowsTable = error?.code === 'ER_NO_SUCH_TABLE' && /user_follows/i.test(error.message || '');
+    if (!missingFollowsTable) throw error;
+
+    console.warn('user_follows 表尚未迁移，公开主页暂不显示关注数据');
+    const rows = await query(
+      `SELECT
+        (SELECT COUNT(*) FROM posts p WHERE p.user_id = ? AND p.deleted_at IS NULL AND p.hidden_by_admin = 0 AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)) AS post_count,
+        (SELECT COUNT(*) FROM post_likes pl INNER JOIN posts p ON pl.post_id = p.id WHERE p.user_id = ? AND p.deleted_at IS NULL AND p.hidden_by_admin = 0 AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)) AS like_received_count,
+        (SELECT COUNT(*) FROM comments c INNER JOIN posts p ON c.post_id = p.id WHERE p.user_id = ? AND p.deleted_at IS NULL AND p.hidden_by_admin = 0 AND c.deleted_at IS NULL AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)) AS comment_received_count`,
+      [userId, userId, userId]
+    );
+    return (rows || []).map((row) => ({
+      ...row,
+      follower_count: 0,
+      following_count: 0,
+      viewer_is_following: 0,
+    }));
+  }
+}
+
 async function getUserBaseRow(userId) {
   try {
     const rows = await query(
@@ -110,7 +143,7 @@ async function getUserBaseRow(userId) {
       } catch (inner) {
         if (inner && inner.code === 'ER_BAD_FIELD_ERROR') {
           rows = await query(
-            'SELECT id, username, student_id, dorm_id, email, avatar, nickname, role, level, exp, badge, weekly_comment_count, created_at FROM users WHERE id = ?',
+            'SELECT id, username, student_id, email, avatar, nickname, role, level, exp, badge, weekly_comment_count, created_at FROM users WHERE id = ?',
             [userId]
           );
         } else {
@@ -120,6 +153,7 @@ async function getUserBaseRow(userId) {
       const row = rows?.[0] || null;
       return row ? {
         ...row,
+        dorm_id: row.dorm_id || null,
         college: row.college || null,
         grade: null,
         major: null,
@@ -284,16 +318,7 @@ router.get('/:id/profile', async (req, res) => {
           ORDER BY post_page.created_at DESC, pi.sort_order`,
         [userId]
       ),
-      query(
-        `SELECT
-          (SELECT COUNT(*) FROM posts p WHERE p.user_id = ? AND p.deleted_at IS NULL AND p.hidden_by_admin = 0 AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)) AS post_count,
-          (SELECT COUNT(*) FROM post_likes pl INNER JOIN posts p ON pl.post_id = p.id WHERE p.user_id = ? AND p.deleted_at IS NULL AND p.hidden_by_admin = 0 AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)) AS like_received_count,
-          (SELECT COUNT(*) FROM comments c INNER JOIN posts p ON c.post_id = p.id WHERE p.user_id = ? AND p.deleted_at IS NULL AND p.hidden_by_admin = 0 AND c.deleted_at IS NULL AND NOT EXISTS (SELECT 1 FROM advertisement_posts ap WHERE ap.post_id = p.id)) AS comment_received_count,
-          (SELECT COUNT(*) FROM user_follows uf INNER JOIN users follower ON follower.id = uf.follower_id AND follower.status <> 'deactivated' WHERE uf.following_id = ?) AS follower_count,
-          (SELECT COUNT(*) FROM user_follows uf INNER JOIN users followed ON followed.id = uf.following_id AND followed.status <> 'deactivated' WHERE uf.follower_id = ?) AS following_count,
-          EXISTS(SELECT 1 FROM user_follows uf WHERE uf.follower_id = ? AND uf.following_id = ?) AS viewer_is_following`,
-        [userId, userId, userId, userId, userId, viewerId, userId]
-      ),
+      getPublicProfileStats(userId, viewerId),
     ]);
     if (!u) {
       return res.status(404).json({ status: -1, message: 'ç”¨æˆ·ä¸å­˜åœ¨' });
