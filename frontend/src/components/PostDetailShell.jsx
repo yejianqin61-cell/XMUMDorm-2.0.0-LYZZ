@@ -245,7 +245,14 @@ export default function PostDetailShell({
             )}
           </button>
           <div className="post-detail-author-info">
-            <span className="post-detail-username">{displayName}</span>
+            <button
+              type="button"
+              className="post-detail-username"
+              onClick={() => author.id && navigate(`/user/${author.id}`)}
+              aria-label={isEn ? `View ${displayName}'s profile` : `查看 ${displayName} 的主页`}
+            >
+              {displayName}
+            </button>
             {author.level ? (
               <UserLevelBadge level={author.level} badgeEmoji={author.badgeEmoji} size="sm" isZh={!isEn} />
             ) : null}

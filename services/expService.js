@@ -18,7 +18,7 @@ async function execConn(conn, sql, params = []) {
 }
 
 function invalidateUserMeCache(userId) {
-  simpleCache.delete(`users:me:v1:${userId}`);
+  simpleCache.delete(`users:me:v2:${userId}`);
 }
 
 function buildPublicResult(row, delta, levelUp, previousLevel, messages = []) {

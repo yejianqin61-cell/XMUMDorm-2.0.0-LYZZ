@@ -14,6 +14,7 @@
 require('dotenv').config();
 const bcrypt = require('bcryptjs');
 const { query, pool } = require('../database');
+const createDormId = require('../utils/dormId');
 
 async function main() {
   const username = 'admin';
@@ -29,15 +30,17 @@ async function main() {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
+    const dormId = createDormId();
     const result = await query(
-      'INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)',
-      [username, passwordHash, 'admin']
+      'INSERT INTO users (username, dorm_id, password_hash, role) VALUES (?, ?, ?, ?)',
+      [username, dormId, passwordHash, 'admin']
     );
 
     console.log('✅ 管理员账号已创建：');
     console.log(`  username: ${username}`);
     console.log(`  password: ${password}`);
     console.log(`  id: ${result.insertId}`);
+    console.log(`  DORM ID: ${dormId}`);
   } catch (err) {
     console.error('❌ 创建管理员账号失败:', err.message || err);
   } finally {

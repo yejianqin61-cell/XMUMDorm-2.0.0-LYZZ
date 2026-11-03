@@ -28,6 +28,7 @@ const { logAudit } = require('../services/auditLog');
 const { sendVerificationEmail } = require('../services/email');
 const { grantExp } = require('../services/expService');
 const { attachExp } = require('../utils/expResponse');
+const createDormId = require('../utils/dormId');
 
 // 从环境变量获取 JWT 密钥
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
@@ -368,9 +369,10 @@ router.post('/register', async (req, res) => {
 
       // 3.8 保存用户信息到数据库（非商家）
       // 修改时间: 2025-01-26
+      const dormId = createDormId();
       const result = await query(
-        'INSERT INTO users (username, email, password_hash, role, email_verified) VALUES (?, ?, ?, ?, ?)',
-        [username, email, password_hash, 'student', 1]
+        'INSERT INTO users (username, email, dorm_id, password_hash, role, email_verified) VALUES (?, ?, ?, ?, ?, ?)',
+        [username, email, dormId, password_hash, 'student', 1]
       );
 
       // 3.8.1 标记验证码已使用
@@ -394,6 +396,7 @@ router.post('/register', async (req, res) => {
         token: token,
         data: {
           id: result.insertId,
+          dorm_id: dormId,
           username: username,
           email: email,
           role: 'student'
@@ -449,9 +452,10 @@ router.post('/register', async (req, res) => {
 
       // 3.6 保存用户信息到数据库（商家）
       // 修改时间: 2025-01-26
+      const dormId = createDormId();
       const result = await query(
-        'INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)',
-        [username, password_hash, 'merchant']
+        'INSERT INTO users (username, dorm_id, password_hash, role) VALUES (?, ?, ?, ?)',
+        [username, dormId, password_hash, 'merchant']
       );
 
       //========= 3.7 生成 JWT 令牌==============
@@ -472,6 +476,7 @@ router.post('/register', async (req, res) => {
         token: token,
         data: {
           id: result.insertId,
+          dorm_id: dormId,
           username: username,
           role: 'merchant'
         }
@@ -535,12 +540,12 @@ router.post('/login', async (req, res) => {
     let users;
     if (hasEmail) {
       users = await query(
-        'SELECT id, student_id, username, email, password_hash, role, status FROM users WHERE email = ?',
+        'SELECT id, dorm_id, student_id, username, email, password_hash, role, status FROM users WHERE email = ?',
         [String(email).trim()]
       );
     } else {
       users = await query(
-        'SELECT id, student_id, username, email, password_hash, role, status FROM users WHERE username = ?',
+        'SELECT id, dorm_id, student_id, username, email, password_hash, role, status FROM users WHERE username = ?',
         [String(username).trim()]
       );
     }
@@ -609,6 +614,7 @@ router.post('/login', async (req, res) => {
       token: token,
       data: {
         id: user.id,
+        dorm_id: user.dorm_id,
         student_id: user.student_id,
         username: user.username,
         email: user.email,

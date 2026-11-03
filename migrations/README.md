@@ -154,3 +154,9 @@ node scripts/createAdmin.js
 `076_post_attribution.sql`：树洞原创/转载声明及简单来源，旧帖保留 NULL，不回填原创。
 核实目标库与备份后，使用 `node scripts/apply-sql-file.js migrations/076_post_attribution.sql` 执行单个迁移。
 先迁移，再部署接口和网站；本功能无需重跑其他历史迁移或 init-db.sql。
+
+`078_user_follows.sql`：创建用户关注关系表，供主页展示关注/粉丝数量与名单。
+部署用户关注功能前，先确认目标数据库并执行 `node scripts/apply-sql-file.js migrations/078_user_follows.sql`；也可使用 `node scripts/run-incremental-migrations.js` 执行增量迁移。
+
+`079_dorm_ids.sql`：为所有账号分配独立且唯一的 DORM ID，并要求后续新账号写入该编号。
+部署前确认目标数据库并执行 `node scripts/apply-sql-file.js migrations/079_dorm_ids.sql`；也可使用 `node scripts/run-incremental-migrations.js` 执行增量迁移。

@@ -34,7 +34,7 @@ export const TITLE_BY_PATH_EN = {
   '/eat': 'Canteen',
   '/about': 'Square',
   '/myzone': 'My Zone',
-  '/mailbox': 'Mailbox',
+  '/mailbox': 'Messages',
   '/post/new': 'Post',
   '/myzone/posts': 'My Posts',
   '/myzone/reviews': 'My Reviews',
@@ -87,7 +87,7 @@ export function resolvePageTitle(pathname, isZh) {
     return isZh ? '食堂' : 'Canteen';
   }
   if (pathname.startsWith('/mailbox')) {
-    return isZh ? '消息' : 'Mailbox';
+    return isZh ? '消息' : 'Messages';
   }
   if (pathname === '/post/new') {
     return isZh ? '发布帖子' : 'Post';

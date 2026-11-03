@@ -24,6 +24,7 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 const bcrypt = require('bcryptjs');
 const { query, pool } = require('../database');
+const createDormId = require('../utils/dormId');
 
 const ALLOWED_ROLES = ['student', 'merchant', 'admin'];
 
@@ -53,9 +54,10 @@ async function addOrUpdateUser(email, username, password, role = 'admin') {
   }
 
   const emailVerified = email ? 1 : 0;
+  const dormId = createDormId();
   await query(
-    'INSERT INTO users (username, email, password_hash, role, email_verified) VALUES (?, ?, ?, ?, ?)',
-    [username, email || null, passwordHash, role, emailVerified]
+    'INSERT INTO users (username, email, dorm_id, password_hash, role, email_verified) VALUES (?, ?, ?, ?, ?, ?)',
+    [username, email || null, dormId, passwordHash, role, emailVerified]
   );
   console.log(`✅ 已新建账号：${username}${email ? ' / ' + email : ''}，角色：${role}`);
 }

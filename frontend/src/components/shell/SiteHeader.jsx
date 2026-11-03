@@ -43,10 +43,10 @@ export default function SiteHeader({ children = null, className = '' }) {
                 type="button"
                 className="site-web-shell__header-action"
                 onClick={() => navigate('/mailbox')}
-                title={isZh ? '消息' : 'Mailbox'}
+                title={isZh ? '消息' : 'Messages'}
               >
                 <Bell size={20} strokeWidth={2} aria-hidden="true" />
-                <span className="site-web-shell__header-action-label">{isZh ? '消息' : 'Mailbox'}</span>
+                <span className="site-web-shell__header-action-label">{isZh ? '消息' : 'Messages'}</span>
               </button>
               {isAdmin ? (
                 <Link to="/myzone/admin" className="site-web-shell__header-action" title={isZh ? '管理后台' : 'Admin'}>

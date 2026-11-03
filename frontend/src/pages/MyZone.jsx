@@ -256,6 +256,20 @@ function MyZone() {
           <p className="mt-1 text-[13px] leading-relaxed text-slate-400">
             {isLoggedIn ? t.bioLoggedIn : t.bioLoggedOut}
           </p>
+          {isLoggedIn && user?.dorm_id ? (
+            <p className="mt-2 text-[11px] font-semibold tracking-wide text-slate-500">
+              DORM ID · {user.dorm_id}
+            </p>
+          ) : null}
+          {isLoggedIn && userId ? (
+            <Link
+              to={`/user/${userId}`}
+              className="mt-2 inline-flex items-center gap-1 text-[12px] font-semibold text-emerald-700 hover:text-emerald-800"
+            >
+              {isZh ? '查看公开主页' : 'View public profile'}
+              <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </Link>
+          ) : null}
           <LevelProgressBar level={user?.level} levelProgress={user?.levelProgress} isZh={isZh} />
         </div>
 
