@@ -11,6 +11,7 @@
  */
 
 import type { Post } from './campusModel';
+import type { WallPosterTemplateId } from './wallPosterTemplates';
 
 export type WallPostKind = 'free' | 'recruit';
 
@@ -34,6 +35,11 @@ export type WallPost = {
   kind: WallPostKind;
   /** 自由帖正文；招募帖留空 */
   content: string;
+  /**
+   * 阶段 2：自由帖已确认的文字海报模板（阶段 2-B 起随帖子持久化）。
+   * 缺省表示"还没有选过"——信息流按正文特征**确定性**推荐，不会每次随机。
+   */
+  posterTemplateId?: WallPosterTemplateId;
   /** ISO 时间；缺失时卡片只显示「匿名」 */
   createdAt?: string;
   likeCount: number;

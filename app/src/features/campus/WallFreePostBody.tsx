@@ -1,49 +1,55 @@
 /**
- * WallFreePostBody —— 自由帖的**阶段 1 文字区**（临时样板）
+ * WallFreePostBody —— 自由帖正文区（阶段 2 起是**文字海报**的薄封装）
  *
- * 只做一件事：把正文放进**固定的浅色文字容器**里，保证不同长度都能整段阅读。
- * ⛔ 阶段 1 不做五种海报模板、不做自动排版、不按字数切换字号（那是阶段 2 的《文字海报自动排版 V1》）。
- * ⛔ 不截断：没有 `numberOfLines`，长文与中英混排都完整展示。
+ * 版式、颜色、字阶、回退全部在 `WallPosterBody` / `wallPosterTemplates` / `wallPosterLayout`：
+ *   · 信息流：`WallFreePostBody`（卡片内）
+ *   · 详情：`WallFreePostText`（页面正文，复用同一个渲染组件）
+ *   · 发布预览（阶段 2-B）：直接复用 `WallPosterBody`
  *
- * 与外壳的边界（阶段 1 收尾检查）：
- *   · 浅蓝内框**只属于本文件**，⛔ 没有写进 `WallCardShell`，所以它不会被所有帖子强制套用；
- *   · 阶段 2 要换背景 / 居中 / 不同高度的海报，只替换本文件的渲染，外壳与底部互动栏不动；
- *   · 需要让内容与白色外壳"融成一层"时，本文件直接返回正文 `Text`（去掉 `Surface`）即可，
- *     不必改外壳，也不存在"双层背景"的结构性依赖。
+ * 本文件**故意保持薄**：外壳（`WallCardShell`）只认这两个入口，换模板不用动外壳。
  */
 
 import * as React from 'react';
-import { View } from 'react-native';
 
-import { Surface } from '@/components/ui/Surface';
-import { Text } from '@/components/ui/Text';
-import { useTheme } from '@/design-system/theme';
+import { WallPosterBody } from './WallPosterBody';
+import type { WallPosterTemplateId } from './wallPosterTemplates';
 
-export function WallFreePostBody({ content }: { content: string }): React.ReactElement {
-  const theme = useTheme();
+export type WallFreePostBodyProps = {
+  content: string;
+  /** 已保存 / 已选定的模板；缺省按文字特征确定性推荐 */
+  templateId?: WallPosterTemplateId;
+  /** 预览"全部模板"时关掉实测回退，如实展示所选模板（默认开） */
+  allowFallback?: boolean;
+};
+
+/** 信息流卡片内的自由帖正文 */
+export function WallFreePostBody({
+  content,
+  templateId,
+  allowFallback = true,
+}: WallFreePostBodyProps): React.ReactElement {
   return (
-    <Surface
+    <WallPosterBody
+      content={content}
+      {...(templateId === undefined ? {} : { templateId })}
+      allowFallback={allowFallback}
       testID="wall-free-body"
-      variant="brandSoft"
-      rounded="radius_medium"
-      padding="space_4"
-      style={{ minHeight: theme.space('space_12'), justifyContent: 'center' }}
-    >
-      <Text testID="wall-free-text" role="body" colorToken="text-primary">
-        {content}
-      </Text>
-    </Surface>
+    />
   );
 }
 
-/** 详情页复用的自由帖正文（页面级正文，不套卡片容器） */
-export function WallFreePostText({ content }: { content: string }): React.ReactElement {
-  const theme = useTheme();
+/**
+ * 详情页正文（页面级，不放在卡片里）。
+ *
+ * 与信息流**同一个渲染组件**：详情不是另一套版式，只是宽度 / 上下文不同；
+ * 超长内容在详情里同样完整渲染（模板回退只换版式，⛔ 不截断原文）。
+ */
+export function WallFreePostText({ content, templateId }: WallFreePostBodyProps): React.ReactElement {
   return (
-    <View testID="wall-free-text" style={{ gap: theme.space('space_2') }}>
-      <Text role="body" colorToken="text-primary">
-        {content}
-      </Text>
-    </View>
+    <WallPosterBody
+      content={content}
+      {...(templateId === undefined ? {} : { templateId })}
+      testID="wall-free-text-block"
+    />
   );
 }

@@ -54,6 +54,14 @@ export type TextProps = {
   accessibilityRole?: RNTextProps['accessibilityRole'];
   /** 内容变化时的读屏播报级别（计数器 / 位置指示这类会变的文字） */
   accessibilityLiveRegion?: RNTextProps['accessibilityLiveRegion'];
+  /**
+   * 原生排版结果（行数 / 每行宽高）。
+   *
+   * 给自由帖的文字海报用：模板是否能安全容纳正文**不能靠字符数猜**，
+   * 必须在真实排版后按行数复核（阶段 2 §8.4）。这是 `Text` 向外暴露的
+   * **只读测量通道**，⛔ 不用它改字号或截断（那会绕开字阶令牌）。
+   */
+  onTextLayout?: RNTextProps['onTextLayout'];
 };
 
 export function Text({
@@ -68,6 +76,7 @@ export function Text({
   testID,
   accessibilityRole = 'text',
   accessibilityLiveRegion,
+  onTextLayout,
 }: TextProps): React.ReactElement {
   const theme = useTheme();
   const token: ColorToken | undefined = theme.color[colorToken];
@@ -91,6 +100,7 @@ export function Text({
       // 2.5-7：显式开启（RN 默认就是 true，写出来是为了"这是我们的决定"）
       allowFontScaling
       maxFontSizeMultiplier={scaleCap}
+      onTextLayout={onTextLayout}
       style={[
         {
           color: token?.value,

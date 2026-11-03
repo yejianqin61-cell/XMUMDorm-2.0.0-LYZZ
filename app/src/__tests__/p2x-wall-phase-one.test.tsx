@@ -51,7 +51,7 @@ beforeEach(() => {
 });
 
 describe('阶段 1 · 两卡混排信息流', () => {
-  it('6 条示例帖同屏，自由帖与招募帖交替出现且逐卡标注「示例」', async () => {
+  it('8 条示例帖同屏，自由帖与招募帖交替出现且逐卡标注「示例」', async () => {
     wall.mockResolvedValue(emptyWindow);
     const view = await renderApp(<WallFeed />);
 
@@ -66,9 +66,15 @@ describe('阶段 1 · 两卡混排信息流', () => {
     expect(view.queryByText('匿名')).toBeNull();
     expect(view.queryByTestId('wall-sample-tag-900001')).toBeNull();
     expect(view.queryByTestId('wall-type-900002')).toBeNull();
-    // 同一列里两种内部内容都在：4 条自由帖 + 2 条招募帖
-    expect(view.getAllByTestId('wall-free-body')).toHaveLength(4);
+    // 同一列里两种内部内容都在：6 条自由帖 + 2 条招募帖
+    expect(view.getAllByTestId('wall-free-body')).toHaveLength(6);
     expect(view.getAllByTestId('wall-recruit-body')).toHaveLength(2);
+    // 阶段 2 节点 A：五种文字海报模板都在信息流里出现（D 深蓝只出现一次）
+    expect(view.getAllByTestId('wall-poster-blueCenter')).toHaveLength(1);
+    expect(view.getAllByTestId('wall-poster-minimalLeft')).toHaveLength(1);
+    expect(view.getAllByTestId('wall-poster-warmPaper')).toHaveLength(1);
+    expect(view.getAllByTestId('wall-poster-deepBlue')).toHaveLength(1);
+    expect(view.getAllByTestId('wall-poster-plainEssay')).toHaveLength(2);
   });
 
   it('自由帖正文完整可读：长文、换行与中英混排都不截断', async () => {

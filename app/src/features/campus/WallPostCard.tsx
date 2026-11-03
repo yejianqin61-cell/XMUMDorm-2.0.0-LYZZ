@@ -21,9 +21,12 @@ import type { WallPost } from './wallPost';
 export function WallPostCard({
   post,
   onOpen,
+  allowFallback = true,
 }: {
   post: WallPost;
   onOpen?: () => void;
+  /** 预览"全部模板"时关掉实测回退（默认开） */
+  allowFallback?: boolean;
 }): React.ReactElement {
   const { t, locale } = useI18n();
   const timeLabel = post.createdAt ? formatPostTime(post.createdAt, { locale }) : '';
@@ -47,7 +50,13 @@ export function WallPostCard({
       {post.kind === 'recruit' && post.recruit ? (
         <WallRecruitPostBody recruit={post.recruit} />
       ) : (
-        <WallFreePostBody content={post.content} />
+        <WallFreePostBody
+          content={post.content}
+          allowFallback={allowFallback}
+          {...(post.posterTemplateId === undefined
+            ? {}
+            : { templateId: post.posterTemplateId })}
+        />
       )}
     </WallCardShell>
   );
