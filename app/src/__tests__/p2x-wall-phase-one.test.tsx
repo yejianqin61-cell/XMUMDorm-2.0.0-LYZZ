@@ -11,6 +11,7 @@
 import * as React from 'react';
 import { fireEvent, waitFor, within } from '@testing-library/react-native';
 
+import { WallSampleBand } from '@/features/campus/WallSampleBand';
 import { WallFeed } from '@/features/campus/WallFeed';
 import { WALL_SAMPLE_POSTS } from '@/features/campus/wallSamplePosts';
 import { wallPostFromRow } from '@/features/campus/wallPost';
@@ -51,9 +52,9 @@ beforeEach(() => {
 });
 
 describe('阶段 1 · 两卡混排信息流', () => {
-  it('8 条示例帖同屏，自由帖与招募帖交替出现且逐卡标注「示例」', async () => {
+  it('8 条示例帖共用信息流，两类卡片混排且顶部标注「示例」', async () => {
     wall.mockResolvedValue(emptyWindow);
-    const view = await renderApp(<WallFeed />);
+    const view = await renderApp(<WallSampleBand />, { scheme: 'light' });
 
     await waitFor(() => expect(view.getByTestId('wall-sample-band')).toBeTruthy());
     expect(view.getByTestId('wall-sample-notice')).toBeTruthy();
@@ -69,28 +70,25 @@ describe('阶段 1 · 两卡混排信息流', () => {
     // 同一列里两种内部内容都在：6 条自由帖 + 2 条招募帖
     expect(view.getAllByTestId('wall-free-body')).toHaveLength(6);
     expect(view.getAllByTestId('wall-recruit-body')).toHaveLength(2);
-    // 阶段 2 节点 A：五种文字海报模板都在信息流里出现（D 深蓝只出现一次）
-    expect(view.getAllByTestId('wall-poster-blueCenter')).toHaveLength(1);
-    expect(view.getAllByTestId('wall-poster-minimalLeft')).toHaveLength(1);
-    expect(view.getAllByTestId('wall-poster-warmPaper')).toHaveLength(1);
-    expect(view.getAllByTestId('wall-poster-deepBlue')).toHaveLength(1);
-    expect(view.getAllByTestId('wall-poster-plainEssay')).toHaveLength(2);
+    expect(view.getByTestId('wall-surface-900001')).toHaveStyle({ backgroundColor: '#E8F0F6' });
+    expect(view.getByTestId('wall-surface-900002')).toHaveStyle({ backgroundColor: '#F3EDE0' });
+    expect(view.getByTestId('wall-surface-900003')).toHaveStyle({ backgroundColor: '#E9F0E9' });
   });
 
-  it('自由帖正文完整可读：长文、换行与中英混排都不截断', async () => {
+  it('长文只在信息流中折叠，保留数据原文和中英混排', async () => {
     wall.mockResolvedValue(emptyWindow);
-    const view = await renderApp(<WallFeed />);
+    const view = await renderApp(<WallSampleBand />);
 
     const long = WALL_SAMPLE_POSTS.find((post) => post.id === 900004);
     expect(long).toBeDefined();
     await waitFor(() => expect(view.getByText(long!.content)).toBeTruthy());
-    expect(view.getByText(long!.content).props.numberOfLines).toBeUndefined();
+    expect(view.getByText(long!.content).props.numberOfLines).toBe(5);
     expect(view.getByText(/Any update would be great/)).toBeTruthy();
   });
 
   it('招募帖内部是结构化信息：标题、描述、人数、时间、地点与状态', async () => {
     wall.mockResolvedValue(emptyWindow);
-    const view = await renderApp(<WallFeed />);
+    const view = await renderApp(<WallSampleBand />);
     await waitFor(() => expect(view.getByTestId('wall-card-900005')).toBeTruthy());
 
     const card = within(view.getByTestId('wall-card-900005'));
@@ -109,7 +107,7 @@ describe('阶段 1 · 两卡混排信息流', () => {
 
   it('公共操作区只是静态计数，不是未实现的可点按钮', async () => {
     wall.mockResolvedValue(emptyWindow);
-    const view = await renderApp(<WallFeed />);
+    const view = await renderApp(<WallSampleBand />);
     await waitFor(() => expect(view.getByTestId('wall-row-900001-like')).toBeTruthy());
 
     const like = view.getByTestId('wall-row-900001-like');
@@ -159,20 +157,21 @@ describe('阶段 1 · 匿名与真实行', () => {
     expect(mockPush).toHaveBeenCalledWith('/campus/wall/40');
   });
 
-  it('示例内容不依赖后端：读取失败时示例流仍在，错误态可重试', async () => {
+  it('正式流读取失败时显示错误态且没有重复发布入口', async () => {
     wall.mockRejectedValue(new TypeError('offline'));
     const view = await renderApp(<WallFeed />);
 
     await waitFor(() => expect(view.getByTestId('wall-feed-error')).toBeTruthy());
-    expect(view.getByTestId('wall-card-900001')).toBeTruthy();
-    expect(view.getByTestId('wall-card-900006')).toBeTruthy();
+    expect(view.queryByTestId('wall-sample-band')).toBeNull();
+    expect(view.queryByText('发布自由帖')).toBeNull();
+    expect(mockPush).not.toHaveBeenCalled();
   });
 });
 
 describe('阶段 1 · 双语与投影', () => {
   it('英文界面复用同一外壳，首页同样不出现匿名行与类型标签', async () => {
     wall.mockResolvedValue(emptyWindow);
-    const view = await renderApp(<WallFeed />, { locale: 'en' });
+    const view = await renderApp(<WallSampleBand />, { locale: 'en' });
 
     await waitFor(() => expect(view.getByTestId('wall-sample-notice')).toBeTruthy());
     expect(view.getByTestId('wall-sample-notice')).toHaveTextContent(/Sample content/);

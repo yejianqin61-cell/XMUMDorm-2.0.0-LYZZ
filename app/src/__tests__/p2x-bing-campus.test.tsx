@@ -409,7 +409,7 @@ describe('万能墙列表 / 详情', () => {
     }
     const view = await renderApp(<ReadingPath />);
     await waitFor(() => expect(view.getByText(content)).toBeTruthy());
-    expect(view.getByText(content).props.numberOfLines).toBeUndefined();
+    expect(view.getByText(content).props.numberOfLines).toBe(5);
     // 旧六卡版式名不再出现在任何位置（所有者 2026-11-02：旧卡并入自由帖呈现）
     expect(view.queryByText('公告卡')).toBeNull();
     expect(within(view.getByTestId('campus-row-40')).getByTestId('wall-free-body')).toBeTruthy();
@@ -417,7 +417,9 @@ describe('万能墙列表 / 详情', () => {
     await fireEvent.press(view.getByTestId('campus-row-40'));
     expect(routerMock.push).toHaveBeenCalledWith('/campus/wall/40');
     await fireEvent.press(view.getByText('查看详情'));
-    await waitFor(() => expect(view.getAllByText(content)).toHaveLength(2));
+    const fullText = await view.findByTestId('wall-free-text-block-content');
+    expect(fullText.props.children).toBe(content);
+    expect(fullText.props.numberOfLines).toBeUndefined();
     expect(view.queryByText('公告卡')).toBeNull();
     expect(view.queryByText('不应公开的名字')).toBeNull();
     expect(view.queryByText('不应公开的标题')).toBeNull();

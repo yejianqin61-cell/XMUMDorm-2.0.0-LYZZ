@@ -16,26 +16,33 @@ import { formatPostTime } from '../../../../shared/utils/formatTime';
 import { WallCardShell } from './WallCardShell';
 import { WallFreePostBody } from './WallFreePostBody';
 import { WallRecruitPostBody } from './WallRecruitPostBody';
+import { wallPosterStyle } from './wallPosterLayout';
+import { useTheme } from '@/design-system/theme';
+import { wallPalette } from './wallPosterTemplates';
 import type { WallPost } from './wallPost';
 
 export function WallPostCard({
   post,
   onOpen,
-  allowFallback = true,
+  full = false,
 }: {
   post: WallPost;
   onOpen?: () => void;
-  /** 预览"全部模板"时关掉实测回退（默认开） */
-  allowFallback?: boolean;
+  full?: boolean;
 }): React.ReactElement {
   const { t, locale } = useI18n();
+  const { scheme } = useTheme();
   const timeLabel = post.createdAt ? formatPostTime(post.createdAt, { locale }) : '';
+  const posterStyle = wallPosterStyle(post.id, post.posterStyle, post.posterTemplateId);
+  const palette = wallPalette(post.kind === 'recruit' ? 'oat' : posterStyle.colorId, scheme);
   const summary =
     post.kind === 'recruit' ? (post.recruit?.title ?? '') : post.content;
 
   return (
     <WallCardShell
       cardId={post.id}
+      background={palette.background}
+      muted={palette.muted}
       timeLabel={timeLabel}
       likeCount={post.likeCount}
       commentCount={post.commentCount}
@@ -52,10 +59,8 @@ export function WallPostCard({
       ) : (
         <WallFreePostBody
           content={post.content}
-          allowFallback={allowFallback}
-          {...(post.posterTemplateId === undefined
-            ? {}
-            : { templateId: post.posterTemplateId })}
+          posterStyle={posterStyle}
+          full={full}
         />
       )}
     </WallCardShell>

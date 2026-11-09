@@ -48,6 +48,32 @@ export function readTokenSync(): string | null {
   return memoryToken;
 }
 
+// Read only the backend's numeric id claim for cache partitioning. This is not
+// authentication or permission checking. Credentials never enter a disk key.
+export function tokenAccountId(value: string | null): string | null {
+  if (value === null) return null;
+  try {
+    const payload = value.split('.')[1];
+    if (!payload || payload.length > 8192) return null;
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+    let buffer = 0;
+    let bits = 0;
+    let decoded = '';
+    for (const char of payload.replace(/-/g, '+').replace(/_/g, '/').replace(/=+$/, '')) {
+      const digit = alphabet.indexOf(char);
+      if (digit < 0) return null;
+      buffer = (buffer << 6) | digit;
+      bits += 6;
+      if (bits >= 8) {
+        bits -= 8;
+        decoded += String.fromCharCode((buffer >> bits) & 255);
+      }
+    }
+    const { id } = JSON.parse(decoded) as { id?: unknown };
+    return typeof id === 'number' && Number.isSafeInteger(id) && id > 0 ? String(id) : null;
+  } catch { return null; }
+}
+
 /**
  * 冷启动水合：把 SecureStore 里的令牌灌进内存镜像。
  * ⛔ 失败一律当作"没有令牌"（SecureStore 在 Web/无原生环境下不可用）——**不抛**，

@@ -277,13 +277,13 @@ describe('Confession Wall Routes (M09)', () => {
   // GET /api/confessions/meta
   // ==========================================================
   describe('GET /api/confessions/meta', () => {
-    it('返回总篇数', async () => {
+    it('返回总篇数和自由帖样式协议版本', async () => {
       query.mockResolvedValueOnce([{ total: 42 }]);
 
       const res = await request().get('/api/confessions/meta');
 
       expect(res.status).toBe(200);
-      expect(res.body.data.total).toBe(42);
+      expect(res.body.data).toMatchObject({ total: 42, poster_style_version: 2 });
     });
 
     it('数据库错误返回 500', async () => {

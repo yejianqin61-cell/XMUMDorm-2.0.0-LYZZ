@@ -7,10 +7,11 @@
  * 注意：所有响应都是**匿名**的，后端不会下发 user_id / username / nickname / avatar，
  * 前端也不应尝试推断作者身份。
  */
-import { get, post, del } from './request';
+import { get, post, patch, del } from './request';
 
 /** 窗口大小的服务端钳制范围（与 routes/confessions.js 保持一致） */
 export const CONFESSION_WINDOW_LIMIT = 5;
+const WALL_REQUEST = { timeoutMs: 15000 };
 
 /**
  * 翻页窗口（游标分页）。
@@ -26,30 +27,35 @@ export function getConfessionWindow({ cursor = null, direction = 'older', limit 
   if (cursor != null) params.set('cursor', String(cursor));
   params.set('direction', direction);
   params.set('limit', String(limit));
-  return get(`/api/confessions/window?${params.toString()}`);
+  return get(`/api/confessions/window?${params.toString()}`, WALL_REQUEST);
 }
 
 /** 总篇数（供「第 n 篇 / 共 m 篇」） */
 export function getConfessionMeta() {
-  return get('/api/confessions/meta');
+  return get('/api/confessions/meta', WALL_REQUEST);
 }
 
 /** 单篇详情 */
 export function getConfession(id) {
-  return get(`/api/confessions/${id}`);
+  return get(`/api/confessions/${id}`, WALL_REQUEST);
 }
 
 /**
  * 投稿
- * @param {{content: string, template_key: string}} body
+ * @param {{content: string, template_key: string} | {content: string, poster_style: {version: number, layoutId: string, colorId: string}, publish_key: string}} body
  */
 export function createConfession(body) {
-  return post('/api/confessions', body);
+  return post('/api/confessions', body, WALL_REQUEST);
+}
+
+/** 保存作者修改，revision 用于拒绝覆盖较新的版本。 */
+export function updateConfession(id, body) {
+  return patch(`/api/confessions/${id}`, body, WALL_REQUEST);
 }
 
 /** 删除自己的投稿（后端同时允许 admin） */
 export function deleteConfession(id) {
-  return del(`/api/confessions/${id}`);
+  return del(`/api/confessions/${id}`, WALL_REQUEST);
 }
 
 /** 点赞 / 取消点赞（切换语义），返回 { confession_id, liked, like_count } */

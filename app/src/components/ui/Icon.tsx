@@ -73,6 +73,7 @@ export type IconProps = {
   source: IconComponent;
   size?: IconSizeTier;
   tint?: IconTint;
+  colorOverride?: string;
   /** 传 → 进无障碍树并读这个标签；不传 → **隐藏出无障碍树**（16.5-4） */
   label?: string;
   testID?: string;
@@ -82,11 +83,12 @@ export function Icon({
   source: IconSource,
   size = 'default',
   tint = 'primary',
+  colorOverride,
   label,
   testID,
 }: IconProps): React.ReactElement {
   const theme = useTheme();
-  const color = theme.color[TINT_TOKEN[tint]].value;
+  const color = colorOverride ?? theme.color[TINT_TOKEN[tint]].value;
   const px = theme.iconSize(ICON_SIZE_TIER[size]);
   const decorative = label === undefined;
 

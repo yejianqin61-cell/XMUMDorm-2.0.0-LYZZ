@@ -1,253 +1,232 @@
-/**
- * WallPosterLab —— 文字海报的**实机视觉实验页**（阶段 2 · 节点 A）
- *
- * 为什么存在：五种模板的差异（底色 / 字号 / 对齐 / 留白 / 卡片高度）只能在真机上判断，
- * 静态截图说明不了"连续信息流里好不好看"。本页把同一段文字放进不同模板反复看：
- *
- *   1. 样本切换（超短 / 短 / 中 / 长 / 英文 / 中英 / 多段 / Emoji）；
- *   2. 「自动推荐」给出 2–3 个有效候选，可点选切换；
- *   3. 「换一批」优先换掉当前候选，而不是原样重摇；
- *   4. 「全部模板」逐张展示 A–E，并标出该长度下是否推荐。
- *
- * 边界：
- *   · 只读静态样本，⛔ 不联网、不写库、不接发布流程（那是节点 B）；
- *   · 用**与信息流相同的卡壳 + 同一个 `WallPosterBody`**，⛔ 不复制一套预览样式；
- *   · 入口挂在万能墙示例条上（同样在节点 B 随示例流一起删除）。
- */
-
 import * as React from 'react';
-import { ScrollView, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ScrollView, View, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import ArrowLeft from 'lucide-react-native/icons/arrow-left';
 
+import ChevronDown from 'lucide-react-native/icons/chevron-down';
+import ChevronUp from 'lucide-react-native/icons/chevron-up';
+import { Icon } from '@/components/ui/Icon';
+import { Pressable } from '@/components/ui/Pressable';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
-import { Divider } from '@/components/ui/Divider';
 import { IconButton } from '@/components/ui/IconButton';
 import { Screen } from '@/components/ui/Screen';
+import { TextArea } from '@/components/ui/TextArea';
 import { Text } from '@/components/ui/Text';
 import { useTheme } from '@/design-system/theme';
 import { useI18n } from '@/i18n';
 import { WallPostCard } from './WallPostCard';
+import { WallPosterBody } from './WallPosterBody';
 import {
-  generateWallPosterCandidates,
-  rankWallPosterTemplates,
-  wallPosterSeed,
-  type WallPosterCandidate,
+  canTryWallLayout, generateWallPosterCandidates, isWallPosterStyle, wallPosterKey, wallPosterSeed,
 } from './wallPosterLayout';
 import {
-  WALL_POSTER_TEMPLATE_LIST,
-  wallPosterTemplate,
-  type WallPosterTemplateId,
+  wallPalette, WALL_COLORS, WALL_COLOR_IDS, WALL_LAYOUTS, WALL_LAYOUT_IDS, type WallLayoutId, type WallPosterStyle,
 } from './wallPosterTemplates';
-import {
-  WALL_POSTER_LAB_CASES,
-  wallPosterLabCase,
-  type WallPosterLabCaseKey,
-} from './wallPosterLabCases';
-import type { WallPost } from './wallPost';
-
-const DEFAULT_CASE: WallPosterLabCaseKey = 'shortZh';
-/** 示例帖 id 取 990000+ 保留段：与真实 id（自增）和阶段 1 示例（900000）都不冲突 */
-const LAB_POST_ID_BASE = 990000;
-
-type LabState = {
-  caseKey: WallPosterLabCaseKey;
-  batch: readonly WallPosterCandidate[];
-  selected: WallPosterTemplateId;
-  round: number;
-};
-
-function buildLabState(
-  caseKey: WallPosterLabCaseKey,
-  round: number,
-  exclude: readonly WallPosterTemplateId[]
-): LabState {
-  const content = wallPosterLabCase(caseKey).content;
-  const batch = generateWallPosterCandidates(content, {
-    seed: (wallPosterSeed(content) + round * 7919) >>> 0,
-    exclude,
-  });
-  return {
-    caseKey,
-    batch,
-    selected: batch[0]?.templateId ?? 'plainEssay',
-    round,
-  };
-}
-
-/** 预览用帖子：只负责把正文 + 模板塞进与信息流相同的外壳 */
-function labPost(content: string, templateId: WallPosterTemplateId, slot: number): WallPost {
-  return {
-    id: LAB_POST_ID_BASE + slot,
-    kind: 'free',
-    content,
-    posterTemplateId: templateId,
-    likeCount: 0,
-    commentCount: 0,
-  };
-}
+import { WALL_POSTER_LAB_CASES, wallPosterLabCase, type WallPosterLabCaseKey } from './wallPosterLabCases';
 
 export function WallPosterLab(): React.ReactElement {
   const { t } = useI18n();
   const theme = useTheme();
   const router = useRouter();
-  const [state, setState] = React.useState<LabState>(() => buildLabState(DEFAULT_CASE, 0, []));
-
-  const content = wallPosterLabCase(state.caseKey).content;
-  const evaluations = React.useMemo(
-    () => new Map(rankWallPosterTemplates(content).map((item) => [item.templateId, item])),
-    [content]
-  );
-
-  // 实验页可能由深链直接打开：没有返回栈时回万能墙，⛔ 不留空白页
-  const back = React.useCallback(() => {
-    if (router.canGoBack()) router.back();
-    else router.replace('/?tab=wall' as never);
-  }, [router]);
+  const [sample, setSample] = React.useState<WallPosterLabCaseKey>('shortZh');
+  const [draft, setDraft] = React.useState('');
+  const hasDraft = draft.trim().length > 0;
+  const content = hasDraft ? draft : wallPosterLabCase(sample).content;
+  const identity = hasDraft ? 'draft' : sample;
 
   return (
-    <Screen
-      testID="wall-poster-lab"
-      scroll
-      header={
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: theme.space('space_2'),
-            paddingHorizontal: theme.space('space_2'),
-            paddingBottom: theme.space('space_2'),
-          }}
-        >
-          <IconButton
-            testID="wall-poster-lab-back"
-            Icon={ArrowLeft}
-            accessibilityLabel={t('action.back')}
-            onPress={back}
-          />
-          <Text role="headline" emphasis="strong">
-            {t('wall.poster.lab.title')}
-          </Text>
-        </View>
-      }
-    >
-      <View
-        style={{
-          paddingTop: theme.space('space_2'),
-          paddingBottom: theme.space('space_12'),
-          gap: theme.space('space_3'),
-        }}
-      >
-        {/*
-          * 卡片**不额外加水平内边距**：`WallPostCard` 自己带 16 卡片外边距，
-          * 与信息流等宽，预览的换行位置才和首页一致。
-          */}
-        <View style={{ paddingHorizontal: theme.space('space_4'), gap: theme.space('space_3') }}>
-          <Text role="caption" colorToken="text-muted">
-            {t('wall.poster.lab.sample')}
-          </Text>
-
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: theme.space('space_2') }}
-          >
+    <Screen testID="wall-poster-lab" scroll header={
+      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: theme.space('space_2') }}>
+        <IconButton testID="wall-poster-lab-back" Icon={ArrowLeft} accessibilityLabel={t('action.back')}
+          onPress={() => router.canGoBack() ? router.back() : router.replace('/?tab=wall' as never)} />
+        <Text role="headline" emphasis="strong">{t('wall.poster.lab.title')}</Text>
+      </View>
+    }>
+      <View style={{ paddingVertical: theme.space('space_3'), gap: theme.space('space_3') }}>
+        <View style={{ paddingHorizontal: theme.space('space_4'), gap: theme.space('space_2') }}>
+          <Text role="caption" colorToken="text-muted">{t('wall.poster.lab.sample')}</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: theme.space('space_2') }}>
             {WALL_POSTER_LAB_CASES.map((item) => (
-              <Chip
-                key={item.key}
-                testID={`wall-poster-case-${item.key}`}
-                variant="selectable"
-                selected={state.caseKey === item.key}
-                label={t(item.labelKey)}
-                onPress={() => setState(buildLabState(item.key, 0, []))}
-              />
+              <Chip key={item.key} testID={`wall-poster-case-${item.key}`} variant="selectable"
+                selected={!hasDraft && sample === item.key} label={t(item.labelKey)}
+                onPress={() => { setSample(item.key); setDraft(''); }} />
             ))}
           </ScrollView>
-
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: theme.space('space_2'),
-            }}
-          >
-            <Text role="label" emphasis="strong">
-              {t('wall.poster.lab.candidates')}
-            </Text>
-            <Button
-              testID="wall-poster-reroll"
-              variant="secondary"
-              size="small"
-              label={t('wall.poster.lab.reroll')}
-              onPress={() =>
-                setState((current) =>
-                  buildLabState(
-                    current.caseKey,
-                    current.round + 1,
-                    current.batch.map((item) => item.templateId)
-                  )
-                )
-              }
-            />
-          </View>
-
-          <View
-            style={{
-              flexDirection: 'row',
-              flexWrap: 'wrap',
-              gap: theme.space('space_2'),
-            }}
-          >
-            {state.batch.map((candidate) => (
-              <Chip
-                key={candidate.templateId}
-                testID={`wall-poster-candidate-${candidate.templateId}`}
-                variant="selectable"
-                selected={state.selected === candidate.templateId}
-                label={t(wallPosterTemplate(candidate.templateId).nameKey)}
-                onPress={() =>
-                  setState((current) => ({ ...current, selected: candidate.templateId }))
-                }
-              />
-            ))}
-          </View>
+          <TextArea value={draft} onChangeText={setDraft} testID="wall-poster-draft"
+            label={t('wall.poster.lab.input')} />
         </View>
-
-        <WallPostCard post={labPost(content, state.selected, 1)} allowFallback={false} />
-
-        <View style={{ paddingHorizontal: theme.space('space_4') }}>
-          <Divider />
-        </View>
-
-        <Text role="label" emphasis="strong" style={{ paddingHorizontal: theme.space('space_4') }}>
-          {t('wall.poster.lab.all')}
-        </Text>
-
-        {WALL_POSTER_TEMPLATE_LIST.map((template, index) => {
-          const evaluation = evaluations.get(template.id);
-          return (
-            <View key={template.id} style={{ gap: theme.space('space_1') }}>
-              <WallPostCard
-                post={labPost(content, template.id, index + 10)}
-                allowFallback={false}
-              />
-              <Text
-                role="caption"
-                colorToken="text-muted"
-                style={{ paddingHorizontal: theme.space('space_4') }}
-              >
-                {`${t(template.nameKey)} · ${
-                  evaluation?.eligible
-                    ? t('wall.poster.lab.fit')
-                    : t('wall.poster.lab.unfit')
-                }`}
-              </Text>
-            </View>
-          );
-        })}
+        <PosterChoices key={identity} identity={identity} content={content} />
       </View>
     </Screen>
+  );
+}
+
+type LayoutFit = {
+  measurementKey: string;
+  results: Partial<Record<WallLayoutId, boolean>>;
+};
+
+export function PosterChoices({ identity, content, production }: {
+  identity: string;
+  content: string;
+  production?: {
+    selection?: WallPosterStyle;
+    onSelection: (style: WallPosterStyle) => void;
+    originalContent?: string;
+    locked: boolean;
+    action: (style: WallPosterStyle, measuring: boolean) => React.ReactNode;
+  };
+}): React.ReactElement {
+  const { t } = useI18n();
+  const theme = useTheme();
+  const { width, fontScale } = useWindowDimensions();
+  const measurementKey = JSON.stringify([content, width, fontScale]);
+  const seed = wallPosterSeed(identity);
+  const storageKey = `wall-preview-v2:${identity}`;
+  const [confirmed, setConfirmed] = React.useState<WallPosterStyle>();
+  const [selection, setSelection] = React.useState<WallPosterStyle>();
+  const [manualOpen, setManualOpen] = React.useState(false);
+  const [seen, setSeen] = React.useState<string[]>([]);
+  const [fit, setFit] = React.useState<LayoutFit>();
+  const results = fit?.measurementKey === measurementKey ? fit.results : {};
+  const [saveFailed, setSaveFailed] = React.useState(false);
+  const [saving, setSaving] = React.useState(false);
+  const edited = React.useRef(false);
+  const previewOnly = !production;
+  React.useEffect(() => {
+    if (!previewOnly) return;
+    let active = true;
+    void AsyncStorage.getItem(storageKey).then((value) => {
+      if (!active || !value) return;
+      const stored: unknown = JSON.parse(value);
+      if (isWallPosterStyle(stored)) {
+        setConfirmed(stored);
+        if (!edited.current) setSelection(stored);
+      }
+    }).catch(() => {});
+    return () => { active = false; };
+  }, [previewOnly, storageKey]);
+
+  const probes = WALL_LAYOUT_IDS.filter((id) => id !== 'natural' && canTryWallLayout(content, id));
+  const preferred = results.emphasis && seed % 5 === 0 ? 'emphasis'
+    : results.emphasis && results.quote && seed % 5 === 1 ? 'quote' : 'natural';
+  const layouts = [preferred, ...WALL_LAYOUT_IDS.filter((id) =>
+    id !== preferred && (id === 'natural' || results[id])
+  )] satisfies WallLayoutId[];
+  const measuring = probes.some((id) => results[id] === undefined);
+  const batch = generateWallPosterCandidates(layouts, seed, seen);
+  // Measurements filter new candidates. A user's saved layout can wrap further.
+  const preferredSelection = production?.selection ?? selection;
+  const needsFallback = Boolean(production && preferredSelection && !production.locked && !measuring &&
+    content !== production.originalContent && !layouts.includes(preferredSelection.layoutId));
+  const selected = preferredSelection
+    ? (needsFallback ? { ...preferredSelection, layoutId: 'natural' as const } : preferredSelection)
+    : batch[0];
+  const availableLayouts = layouts.includes(selected.layoutId) ? layouts : [...layouts, selected.layoutId];
+  const confirmedCurrent = confirmed && wallPosterKey(confirmed) === wallPosterKey(selected);
+  const select = (style: WallPosterStyle) => {
+    edited.current = true;
+    if (production) production.onSelection(style);
+    else setSelection(style);
+    setSaveFailed(false);
+  };
+
+  const shuffle = () => {
+    const history = [...seen, ...batch.map(wallPosterKey), wallPosterKey(selected)];
+    const exhausted = new Set(history).size >= layouts.length * WALL_COLOR_IDS.length;
+    const nextSeen = exhausted ? [...batch.map(wallPosterKey), wallPosterKey(selected)] : history;
+    setSeen(nextSeen);
+    select(generateWallPosterCandidates(layouts, seed, nextSeen)[0]);
+  };
+
+  return (
+    <>
+      <View pointerEvents="none" aria-hidden
+        style={{ position: 'absolute', opacity: 0, start: theme.space('space_8'), end: theme.space('space_8') }}>
+        {probes.map((layoutId) => (
+          <WallPosterBody key={`${measurementKey}:${layoutId}`} content={content} probe
+            posterStyle={{ ...selected, layoutId }}
+            onFit={(fits) => setFit((current) => {
+              const previous = current?.measurementKey === measurementKey ? current.results : {};
+              if (previous[layoutId] === fits) return current;
+              return { measurementKey, results: { ...previous, [layoutId]: fits } };
+            })} />
+        ))}
+      </View>
+
+      <WallPostCard post={{ id: 990001, kind: 'free', content, posterStyle: selected, likeCount: 0, commentCount: 0 }} />
+
+      <View style={{ paddingHorizontal: theme.space('space_4'), gap: theme.space('space_2') }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Text role="label" emphasis="strong">{t('wall.poster.lab.candidates')}</Text>
+          <Button testID="wall-poster-reroll" variant="secondary" size="small"
+            disabled={measuring || production?.locked} label={t('wall.poster.lab.reroll')} onPress={shuffle} />
+        </View>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: theme.space('space_2') }}>
+          {batch.map((candidate) => (
+            <Chip key={wallPosterKey(candidate)} testID={`wall-poster-candidate-${wallPosterKey(candidate)}`}
+              variant="selectable" disabled={production?.locked} selected={wallPosterKey(candidate) === wallPosterKey(selected)}
+              label={`${t(WALL_LAYOUTS[candidate.layoutId].name)} · ${t(WALL_COLORS[candidate.colorId].name)}`}
+              onPress={() => select(candidate)} />
+          ))}
+        </View>
+        {production ? (
+          <Pressable testID="wall-poster-adjust" accessibilityRole="button"
+            accessibilityLabel={t(manualOpen ? 'wall.write.collapseStyle' : 'wall.write.adjustStyle')}
+            accessibilityState={{ expanded: manualOpen }}
+            onPress={() => setManualOpen((open) => !open)}
+            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Text role="label">{t(manualOpen ? 'wall.write.collapseStyle' : 'wall.write.adjustStyle')}</Text>
+            <Icon source={manualOpen ? ChevronUp : ChevronDown} size="body" tint="secondary" />
+          </Pressable>
+        ) : null}
+        {!production || manualOpen ? (
+          <View testID="wall-poster-manual-options" style={{ gap: theme.space('space_2') }}>
+            <Text role="label">{t('wall.poster.lab.layout')}</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: theme.space('space_2') }}>
+              {availableLayouts.map((layoutId) => (
+                <Chip key={layoutId} testID={`wall-poster-layout-${layoutId}`} variant="selectable"
+                  disabled={production?.locked} selected={selected.layoutId === layoutId} label={t(WALL_LAYOUTS[layoutId].name)}
+                  onPress={() => select({ ...selected, layoutId })} />
+              ))}
+            </View>
+            <Text role="label">{t('wall.poster.lab.color')}</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: theme.space('space_2') }}>
+              {WALL_COLOR_IDS.map((colorId) => {
+                const palette = wallPalette(colorId, theme.scheme);
+                return (
+                  <Chip key={colorId} testID={`wall-poster-color-${colorId}`} variant="selectable"
+                    disabled={production?.locked} selected={selected.colorId === colorId} label={t(WALL_COLORS[colorId].name)}
+                    swatch={{ fill: palette.background, border: palette.accent }}
+                    onPress={() => select({ ...selected, colorId })} />
+                );
+              })}
+            </View>
+          </View>
+        ) : null}
+        {needsFallback ? <Text role="caption">{t('wall.write.layoutFallback')}</Text> : null}
+        {production ? production.action(selected, measuring) : <>
+        <Button testID="wall-poster-confirm" size="small" disabled={measuring || saving || Boolean(confirmedCurrent)}
+          label={t(confirmedCurrent ? 'wall.poster.lab.saved' : 'wall.poster.lab.confirm')}
+          onPress={async () => {
+            edited.current = true;
+            setSaving(true);
+            setSaveFailed(false);
+            try {
+              await AsyncStorage.setItem(storageKey, JSON.stringify(selected));
+              setConfirmed(selected);
+            } catch {
+              setSaveFailed(true);
+            } finally {
+              setSaving(false);
+            }
+          }} />
+        {saveFailed ? <Text role="caption">{t('wall.poster.lab.saveFailed')}</Text> : null}
+        </>}
+      </View>
+    </>
   );
 }

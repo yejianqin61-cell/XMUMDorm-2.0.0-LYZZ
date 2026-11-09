@@ -11,7 +11,7 @@
  */
 
 import type { Post } from './campusModel';
-import type { WallPosterTemplateId } from './wallPosterTemplates';
+import type { WallPosterStyle, WallPosterTemplateId } from './wallPosterTemplates';
 
 export type WallPostKind = 'free' | 'recruit';
 
@@ -39,6 +39,7 @@ export type WallPost = {
    * 阶段 2：自由帖已确认的文字海报模板（阶段 2-B 起随帖子持久化）。
    * 缺省表示"还没有选过"——信息流按正文特征**确定性**推荐，不会每次随机。
    */
+  posterStyle?: WallPosterStyle;
   posterTemplateId?: WallPosterTemplateId;
   /** ISO 时间；缺失时卡片只显示「匿名」 */
   createdAt?: string;
@@ -61,6 +62,7 @@ export function wallPostFromRow(row: Post): WallPost {
     id: row.id,
     kind: 'free',
     content: row.content,
+    ...(row.poster_style ? { posterStyle: row.poster_style } : {}),
     ...(row.created_at === undefined ? {} : { createdAt: row.created_at }),
     likeCount: typeof row.like_count === 'number' && row.like_count > 0 ? row.like_count : 0,
     commentCount: typeof row.comment_count === 'number' && row.comment_count > 0 ? row.comment_count : 0,

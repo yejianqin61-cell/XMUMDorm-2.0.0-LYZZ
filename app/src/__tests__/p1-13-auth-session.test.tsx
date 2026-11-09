@@ -249,7 +249,7 @@ describe('TC-P1-13-6A · 集成：水合 / 登录 / 失效 / 登出', () => {
   });
 
   it('登录失败（后端 200 + 无 token）→ 保持 signedOut，⛔ 不写令牌', async () => {
-    loginApi.mockResolvedValue({ success: false, message: '密码错误' });
+    loginApi.mockResolvedValue({ success: false, httpStatus: 401, message: '密码错误' });
     const view = await renderApp(
       <SessionProvider>
         <Probe />
@@ -407,8 +407,20 @@ describe('TC-P1-13-7A · 登录页（最小链路）', () => {
     expect(router.replace).toHaveBeenCalled();
   });
 
+  it('登录 HTTP 500 显示服务异常并记录状态，不提示密码错误', async () => {
+    loginApi.mockResolvedValue({ success: false, httpStatus: 500, message: '服务器错误' });
+    const view = await renderApp(<SessionProvider><LoginScreen /></SessionProvider>);
+    const user = require('@testing-library/react-native').userEvent.setup();
+    await user.type(view.getByTestId('login-identifier'), 'a@b.c');
+    await user.type(view.getByTestId('login-password'), 'pw');
+    await user.press(view.getByTestId('login-submit'));
+    expect(await view.findByText('The server could not complete your sign-in request')).toBeTruthy();
+    expect(view.queryByText('must satisfy: match')).toBeNull();
+    expect(readTokenSync()).toBeNull();
+  });
+
   it('提交失败 → 摘要区出现三段文案（走 `toErrorCopy`，⛔ 页面不写文案）', async () => {
-    loginApi.mockResolvedValue({ success: false, message: '密码错误' });
+    loginApi.mockResolvedValue({ success: false, httpStatus: 401, message: '密码错误' });
     const view = await renderApp(
       <SessionProvider>
         <LoginScreen />

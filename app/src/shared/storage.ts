@@ -12,6 +12,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const STORAGE_NAMESPACE = 'xmumdorm';
+export const WALL_DRAFT_PREFIX = 'draft:wall-write-v1:';
 
 /**
  * 凭据 key 的判定：按**分隔符切分的整段**匹配，避免误伤
@@ -48,12 +49,16 @@ export async function setItem(key: string, value: unknown): Promise<void> {
 /** 读不到 / 读坏了都返回 `fallback`（默认 `null`），⛔ 不抛 */
 export async function getItem<T>(key: string, fallback: T | null = null): Promise<T | null> {
   try {
-    const raw = await AsyncStorage.getItem(namespacedKey(key));
-    if (raw === null) return fallback;
-    return JSON.parse(raw) as T;
+    return await readItem<T>(key, fallback);
   } catch {
     return fallback;
   }
+}
+
+/** 读取失败时由调用方决定是否继续。 */
+export async function readItem<T>(key: string, fallback: T | null = null): Promise<T | null> {
+  const raw = await AsyncStorage.getItem(namespacedKey(key));
+  return raw === null ? fallback : JSON.parse(raw) as T;
 }
 
 export async function removeItem(key: string): Promise<void> {
@@ -74,8 +79,11 @@ export async function getAllNamespacedKeys(): Promise<string[]> {
  * 清掉本 App 的**全部**落盘（登出时调用）。
  * ⛔ 不需要"顺便清凭据"：凭据本来就不在这里（护栏保证）。
  */
-export async function clearNamespace(): Promise<void> {
-  const keys = await getAllNamespacedKeys();
+export async function clearNamespace({ preserveWallDrafts = false } = {}): Promise<void> {
+  const allKeys = await getAllNamespacedKeys();
+  const keys = preserveWallDrafts
+    ? allKeys.filter((key) => !key.startsWith(namespacedKey(WALL_DRAFT_PREFIX)))
+    : allKeys;
   if (keys.length > 0) {
     await AsyncStorage.multiRemove(keys);
   }

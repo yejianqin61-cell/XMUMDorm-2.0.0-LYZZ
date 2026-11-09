@@ -40,12 +40,33 @@ export function getToken() {
  * @param {Object} [options]
  * @param {string} [options.method='GET']
  * @param {Object|FormData} [options.body] - 对象会 JSON 序列化并设 Content-Type；FormData 不设 Content-Type
+ * @param {number} [options.timeoutMs] - 请求超时（含响应正文）
  * @param {Object} [options.headers] - 额外请求头
  * @param {string|null} [options.token] - 覆盖默认 token，传 null 表示不带 Authorization
  * @param {boolean} [options.skipAuth] - 为 true 时不带 Authorization（如登录/注册）
  * @returns {Promise<any>} 后端 data 字段（即业务数据）；若后端无 data 则返回解析后的整 body
  */
 export async function request(path, options = {}) {
+  if (!options.timeoutMs) return requestJson(path, options);
+
+  const controller = new AbortController();
+  let timer;
+  try {
+    return await Promise.race([
+      requestJson(path, options, controller.signal),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => {
+          reject(Object.assign(new Error('Request timed out'), { kind: 'timeout' }));
+          controller.abort();
+        }, options.timeoutMs);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function requestJson(path, options, signal) {
   const {
     method = 'GET',
     body,
@@ -67,6 +88,7 @@ export async function request(path, options = {}) {
   const fetchOptions = {
     method,
     headers,
+    ...(signal ? { signal } : {}),
   };
   if (body != null) {
     fetchOptions.body = body instanceof FormData ? body : JSON.stringify(body);

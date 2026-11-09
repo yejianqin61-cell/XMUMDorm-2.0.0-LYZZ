@@ -39,7 +39,7 @@ import { QK } from '../../../../shared/query/queryKeys';
 import { formatPostTime } from '../../../../shared/utils/formatTime';
 import { asPost, asWall, errorFor, type Post } from './campusModel';
 import { TreeholeFeed } from './TreeholeFeed';
-import { WallFeed, type WallFeedSnapshot } from './WallFeed';
+import { WallFeed, WALL_SNAPSHOT_KEY, type WallFeedSnapshot } from './WallFeed';
 import { TreeholePostDetail } from './TreeholePostDetail';
 import type { TreeholeImageSaveOptions } from './TreeholeImageSaveControls';
 import { toTreeholePostViewModel } from './treeholePostViewModel';
@@ -297,7 +297,7 @@ export function CampusDetailScreen({
       }
       // 先记录导航资格；发布详情失效结果会使当前读取 generation 失效。
       const shouldReturn = request === generation.current && scope === scopeRef.current;
-      const snapshotKey = [...QK.confessionWindow('_guest'), 'wallReadSnapshot'];
+      const snapshotKey = WALL_SNAPSHOT_KEY;
       client.setQueryData<WallFeedSnapshot>(snapshotKey, (previous) => {
         const snapshot = previous ?? { rows: [], cursor: null, hasMore: true, needsRefresh: true };
         return {
@@ -498,7 +498,7 @@ export function CampusDetailScreen({
               onComment={() => scrollRef.current?.scrollToEnd({ animated: true })}
               anonymous={kind === 'wall'}
               wallContent={
-                kind === 'wall' ? <WallFreePostText content={vm.content} /> : undefined
+                kind === 'wall' ? <WallFreePostText content={vm.content} id={vm.id} savedStyle={post?.poster_style} /> : undefined
               }
               likeNotice={likeNotice}
             />
@@ -565,6 +565,15 @@ export function CampusDetailScreen({
                 setMenuOpen(false);
                 setReportOpen(true);
               }}
+              onEdit={
+                kind === 'wall' && isSignedIn && postIdentity === identity && post?.is_mine
+                  ? () => {
+                    setMenuOpen(false);
+                    router.push({ pathname: '/publish/[type]', params: { type: 'wall', edit: String(post.id) } });
+                  }
+                  : undefined
+              }
+              editLabel={t('wall.write.edit')}
               deleteAction={
                 kind === 'wall' && isSignedIn && postIdentity === identity && post?.is_mine
                   ? {
@@ -681,6 +690,8 @@ function DetailSheetHost({
   onCloseMenu,
   onReport,
   deleteAction,
+  onEdit,
+  editLabel,
   reportOpen,
   reportReasons,
   reportReason,
@@ -699,6 +710,8 @@ function DetailSheetHost({
   onCloseMenu: () => void;
   onReport: () => void;
   /** 万能墙作者本人的删除入口；不传（树洞/非作者）时菜单里不出现 */
+  onEdit?: () => void;
+  editLabel: string;
   deleteAction?: { label: string; onPress: () => void; disabled?: boolean };
   reportOpen: boolean;
   reportReasons: readonly { value: string; label: string }[];
@@ -722,10 +735,12 @@ function DetailSheetHost({
         visible={menuOpen}
         title={menuLabels.title}
         actions={[
+          ...(onEdit ? [{ key: 'edit', label: editLabel }] : []),
           ...(deleteAction ? [{ key: 'delete', label: deleteAction.label, disabled: deleteAction.disabled }] : []),
           { key: 'report', label: menuLabels.report },
         ]}
         onSelect={(key) => {
+          if (key === 'edit') onEdit?.();
           if (key === 'delete') deleteAction?.onPress();
           if (key === 'report') onReport();
         }}

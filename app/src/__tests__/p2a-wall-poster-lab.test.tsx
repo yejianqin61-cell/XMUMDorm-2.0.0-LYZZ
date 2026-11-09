@@ -1,71 +1,63 @@
-/**
- * 阶段 2 · 文字海报实验页（节点 A 的实机预览入口）
- *
- * 守住：样本可切换、候选可切换、「换一批」真的换、长文只给有效模板且"全部模板"
- * 如实标出不适合的模板（⛔ 不把五种模板都说成推荐）。
- */
-
 import * as React from 'react';
-import { fireEvent, waitFor, type RenderResult } from '@testing-library/react-native';
+import { fireEvent, waitFor } from '@testing-library/react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { WallPosterLab } from '@/features/campus/WallPosterLab';
-import {
-  WALL_POSTER_TEMPLATE_LIST,
-  type WallPosterTemplateId,
-} from '@/features/campus/wallPosterTemplates';
 import { WALL_POSTER_LAB_CASES } from '@/features/campus/wallPosterLabCases';
 import { renderApp } from './helpers/renderApp';
 
 jest.mock('expo-router', () => ({
-  useRouter: () => ({
-    push: jest.fn(),
-    back: jest.fn(),
-    replace: jest.fn(),
-    canGoBack: () => true,
-    setParams: jest.fn(),
-  }),
+  useRouter: () => ({ back: jest.fn(), replace: jest.fn(), canGoBack: () => true }),
 }));
 
-function candidateIds(view: RenderResult): WallPosterTemplateId[] {
-  return WALL_POSTER_TEMPLATE_LIST.map((template) => template.id).filter(
-    (id) => view.queryByTestId(`wall-poster-candidate-${id}`) !== null
-  );
-}
+it('多段正文仅推荐自然布局，换一批提供新配色并可保存', async () => {
+  const view = await renderApp(<WallPosterLab />);
+  for (const item of WALL_POSTER_LAB_CASES) {
+    expect(view.getByTestId(`wall-poster-case-${item.key}`)).toBeTruthy();
+  }
+  await fireEvent.press(view.getByTestId('wall-poster-case-paragraphs'));
+  expect(view.queryByTestId('wall-poster-layout-quote')).toBeNull();
+  expect(view.queryByTestId('wall-poster-layout-emphasis')).toBeNull();
+  const first = view.getAllByTestId(/^wall-poster-candidate-natural:/).map((chip) => chip.props.testID);
+  await fireEvent.press(view.getByTestId('wall-poster-reroll'));
+  const second = view.getAllByTestId(/^wall-poster-candidate-natural:/).map((chip) => chip.props.testID);
+  expect(second).toHaveLength(3);
+  for (const id of second) expect(first).not.toContain(id);
 
-describe('阶段 2 · 文字海报实验页', () => {
-  it('样本齐全，默认展示短中文的候选与预览卡', async () => {
-    const view = await renderApp(<WallPosterLab />);
+  await fireEvent.press(view.getByTestId('wall-poster-color-teal'));
+  await fireEvent.press(view.getByTestId('wall-poster-confirm'));
+  await waitFor(() => expect(AsyncStorage.setItem).toHaveBeenCalledWith(
+    expect.stringMatching(/^wall-preview-v2:/),
+    JSON.stringify({ version: 2, layoutId: 'natural', colorId: 'teal' }),
+  ));
+});
 
-    await waitFor(() => expect(view.getByTestId('wall-poster-lab')).toBeTruthy());
-    for (const item of WALL_POSTER_LAB_CASES) {
-      expect(view.getByTestId(`wall-poster-case-${item.key}`)).toBeTruthy();
-    }
-    expect(candidateIds(view)).toHaveLength(3);
-    // 预览卡与"全部模板"都在：整页同时存在多个 wall-free-body
-    expect(view.getAllByTestId('wall-free-body').length).toBeGreaterThanOrEqual(6);
-  });
+it('修改同一段预览文字时保留手动选择的底色', async () => {
+  const view = await renderApp(<WallPosterLab />);
+  const input = view.getByTestId('wall-poster-draft');
+  await fireEvent.changeText(input, '晚安。');
+  await fireEvent.press(view.getByTestId('wall-poster-color-khaki'));
+  await fireEvent.changeText(input, '晚安。明天见。');
+  expect(view.getByTestId('wall-surface-990001')).toHaveStyle({ backgroundColor: '#38352C' });
+  expect(view.queryByTestId('wall-font-compare')).toBeNull();
+});
 
-  it('「换一批」优先给出不同候选组合', async () => {
-    const view = await renderApp(<WallPosterLab />);
-    await waitFor(() => expect(view.getByTestId('wall-poster-reroll')).toBeTruthy());
 
-    const before = candidateIds(view);
-    fireEvent.press(view.getByTestId('wall-poster-reroll'));
-
-    await waitFor(() => expect(candidateIds(view)).not.toEqual(before));
-    expect(candidateIds(view)).toHaveLength(3);
-  });
-
-  it('切到长中文：只留下能容纳长文的模板，全部模板里标出"不推荐"', async () => {
-    const view = await renderApp(<WallPosterLab />);
-    await waitFor(() => expect(view.getByTestId('wall-poster-case-longZh')).toBeTruthy());
-
-    fireEvent.press(view.getByTestId('wall-poster-case-longZh'));
-
-    await waitFor(() => expect(candidateIds(view).sort()).toEqual(['minimalLeft', 'plainEssay']));
-    expect(view.queryByTestId('wall-poster-candidate-blueCenter')).toBeNull();
-    // 全部模板仍然逐张展示，并如实标注不适合（蓝色居中 + 长文）
-    expect(view.getByText('蓝色居中 · 不推荐')).toBeTruthy();
-    expect(view.getByText('简洁随笔 · 适用')).toBeTruthy();
-  });
+it('已保存的短句布局在字体或内容需要更多行时继续生效', async () => {
+  jest.mocked(AsyncStorage.getItem).mockResolvedValueOnce(JSON.stringify({
+    version: 2, layoutId: 'emphasis', colorId: 'mist',
+  }));
+  const view = await renderApp(<WallPosterLab />);
+  await waitFor(() => expect(view.getByTestId('wall-free-body-content')).toHaveStyle({
+    fontSize: 19, textAlign: 'center',
+  }));
+  const input = view.getByTestId('wall-poster-draft');
+  jest.mocked(AsyncStorage.getItem).mockResolvedValueOnce(JSON.stringify({
+    version: 2, layoutId: 'emphasis', colorId: 'mist',
+  }));
+  await fireEvent.changeText(input, '保留先前选中的短句布局。'.repeat(15));
+  await waitFor(() => expect(view.getByTestId('wall-free-body-content')).toHaveStyle({
+    fontSize: 19, textAlign: 'center',
+  }));
+  expect(view.getByTestId('wall-surface-990001')).toHaveStyle({ backgroundColor: '#263647' });
 });

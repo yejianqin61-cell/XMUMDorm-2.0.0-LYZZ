@@ -10,6 +10,7 @@
  *   3. 路由注册顺序：/window 与 /meta 必须在 /:id 之前，否则会被 /:id 吞掉。
  */
 const express = require('express');
+const posterContract = require('../shared/constants/wallPosterContract.json');
 const router = express.Router();
 const { query } = require('../database');
 const { checkSanction } = require('../middleware/checkSanction');
@@ -67,6 +68,9 @@ function projectConfession(row, viewerId) {
   return {
     id: Number(row.id),
     template_key: normalizeTemplateKey(row.template_key),
+    poster_style: normalizePosterStyle(row.poster_style),
+    revision: Number(row.revision) || 0,
+    updated_at: row.updated_at,
     content: String(row.content == null ? '' : row.content),
     author: {
       display_name: ANONYMOUS_LABEL.zh,
@@ -107,7 +111,7 @@ function projectComment(row, viewerId) {
 
 /** 帖子对外查询的公共 SELECT 片段（单篇用，window 里有批量版本） */
 const SINGLE_SELECT = `
-  SELECT c.id, c.template_key, c.content, c.created_at,
+  SELECT c.id, c.template_key, c.content, c.created_at, c.updated_at, c.poster_style, c.revision,
          (SELECT COUNT(*) FROM confession_likes l WHERE l.confession_id = c.id) AS like_count,
          (SELECT COUNT(*) FROM confession_comments cc WHERE cc.confession_id = c.id AND cc.deleted_at IS NULL) AS comment_count
   FROM confessions c
@@ -186,7 +190,7 @@ async function hydrateConfessions(ids, viewerId) {
   if (!Array.isArray(ids) || ids.length === 0) return [];
   const placeholders = ids.map(() => '?').join(',');
   const rows = await query(
-    `SELECT id, template_key, content, created_at
+    `SELECT id, template_key, content, created_at, updated_at, poster_style, revision
        FROM confessions
       WHERE id IN (${placeholders}) AND deleted_at IS NULL AND hidden_by_admin = 0`,
     ids
@@ -312,18 +316,83 @@ router.get('/window', async (req, res) => {
 router.get('/meta', async (_req, res) => {
   try {
     const total = await fetchTotal();
-    res.status(200).json({ status: 0, message: '获取成功', data: { total } });
+    res.status(200).json({ status: 0, message: '获取成功', data: { total, poster_style_version: posterContract.version } });
   } catch (e) {
     console.error('万能墙 meta 获取错误:', e);
     res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
   }
 });
 
+function normalizePosterStyle(value) {
+  if (typeof value === 'string') {
+    try { value = JSON.parse(value); } catch { return null; }
+  }
+  if (!value || value.version !== posterContract.version ||
+      !posterContract.layouts.includes(value.layoutId) || !posterContract.colors.includes(value.colorId)) {
+    return null;
+  }
+  return { version: value.version, layoutId: value.layoutId, colorId: value.colorId };
+}
+
+function validatePoster(body, res) {
+  const style = typeof body?.poster_style === 'object' ? normalizePosterStyle(body.poster_style) : null;
+  if (!style) {
+    res.status(400).json({ status: -1, message: '无效的版式或颜色' });
+    return null;
+  }
+  const content = body.content;
+  if (typeof content !== 'string' || !content.trim() || content.length > posterContract.maxLength) {
+    res.status(400).json({ status: -1, message: `正文须为 1 至 ${posterContract.maxLength} 字且不能全为空白` });
+    return null;
+  }
+  return { content, style };
+}
+
+// A retry can only resolve the authenticated author's original publication.
+async function replayPublication(req, res, next) {
+  const key = req.body?.publish_key;
+  if (key === undefined && req.body?.poster_style === undefined) return next();
+  if (typeof key !== 'string' || !/^[A-Za-z0-9_-]{16,64}$/.test(key)) {
+    return res.status(400).json({ status: -1, message: '发布凭据无效' });
+  }
+  const poster = validatePoster(req.body, res);
+  if (!poster) return;
+  res.locals.wallPoster = poster;
+  try {
+    const rows = await query(`${SINGLE_SELECT} WHERE c.user_id = ? AND c.publish_key = ?
+      AND c.deleted_at IS NULL AND c.hidden_by_admin = 0`, [req.user.id, key]);
+    if (!rows[0]) return next();
+    const viewer = await fetchViewerState([rows[0].id], req.user.id);
+    return res.json({ status: 0, message: '发布成功！', data: projectConfession({
+      ...rows[0], viewer_is_author: 1, liked: viewer.liked.has(Number(rows[0].id)) ? 1 : 0,
+    }, req.user.id) });
+  } catch (error) {
+    console.error('万能墙投稿重试错误:', error);
+    return res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+}
+
 // ============================================
 // POST / — 投稿（先发后审）
 // ============================================
-router.post('/', authenticateToken, requireCurrentTerms, checkSanction, sensitiveWordFilter, async (req, res) => {
+router.post('/', authenticateToken, replayPublication, requireCurrentTerms, checkSanction, sensitiveWordFilter, async (req, res) => {
   try {
+    const poster = res.locals.wallPoster;
+    if (poster) {
+      const result = await query(
+        `INSERT INTO confessions (user_id, template_key, content, poster_style, publish_key)
+         VALUES (?, 'letter', ?, ?, ?)
+         ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)`,
+        [req.user.id, poster.content, JSON.stringify(poster.style), req.body.publish_key]
+      );
+      simpleCache.delete('confessions:total:v1');
+      const rows = await query(`${SINGLE_SELECT} WHERE c.id = ? AND c.deleted_at IS NULL AND c.hidden_by_admin = 0`,
+        [result.insertId]);
+      if (!rows[0]) return res.status(410).json({ status: -1, message: '原投稿已不可见' });
+      return res.json({ status: 0, message: '发布成功！',
+        data: projectConfession({ ...rows[0], viewer_is_author: 1 }, req.user.id) });
+    }
+
     const rawTemplateKey = req.body && req.body.template_key;
     const safeContent = cleanText(req.body && req.body.content);
 
@@ -420,6 +489,37 @@ router.get('/:id', async (req, res) => {
   } catch (e) {
     console.error('万能墙详情错误:', e);
     res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
+  }
+});
+
+router.patch('/:id', authenticateToken, requireCurrentTerms, checkSanction, sensitiveWordFilter, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const revision = req.body?.revision;
+    if (!Number.isSafeInteger(id) || id <= 0 || !Number.isSafeInteger(revision) || revision < 0) {
+      return res.status(400).json({ status: -1, message: '帖子 ID 或版本无效' });
+    }
+    const poster = validatePoster(req.body, res);
+    if (!poster) return;
+
+    const rows = await query(
+      'SELECT user_id FROM confessions WHERE id = ? AND deleted_at IS NULL AND hidden_by_admin = 0', [id]
+    );
+    if (!rows[0]) return res.status(404).json({ status: -1, message: '帖子不存在或已删除' });
+    if (Number(rows[0].user_id) !== Number(req.user.id)) {
+      return res.status(403).json({ status: -1, message: '只能编辑自己的帖子', code: 'CONFESSION_NOT_AUTHOR' });
+    }
+
+    const result = await query(
+      `UPDATE confessions SET content = ?, poster_style = ?, revision = revision + 1
+       WHERE id = ? AND user_id = ? AND revision = ? AND deleted_at IS NULL AND hidden_by_admin = 0`,
+      [poster.content, JSON.stringify(poster.style), id, req.user.id, revision]
+    );
+    if (!result.affectedRows) return res.status(409).json({ status: -1, message: '帖子已更新或不可用，请重新加载' });
+    return res.json({ status: 0, message: '保存成功', data: { id, revision: revision + 1 } });
+  } catch (error) {
+    console.error('万能墙编辑错误:', error);
+    return res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });
   }
 });
 

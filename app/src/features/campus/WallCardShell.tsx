@@ -16,7 +16,7 @@
  *   3. 互动区仍是**静态计数**（阶段 1 未开放点赞/评论/收藏），⛔ 不把图标做成可点按钮。
  *
  * ⛔ 内容区由调用方给（`WallFreePostBody` / `WallRecruitPostBody`），外壳不关心内部版式，
- *    阶段 2 换海报模板、阶段 5 换招募字段顺序都不必动本文件。
+ *    整卡颜色由调用方传入，互动区与正文共享底色。
  */
 
 import * as React from 'react';
@@ -33,6 +33,8 @@ import { useTheme } from '@/design-system/theme';
 
 export type WallCardShellProps = {
   cardId: number;
+  background: string;
+  muted: string;
   /** 首页展示用的相对时间；空串表示未知，右侧留空 */
   timeLabel: string;
   likeCount: number;
@@ -47,6 +49,8 @@ export type WallCardShellProps = {
 
 export function WallCardShell({
   cardId,
+  background,
+  muted,
   timeLabel,
   likeCount,
   commentCount,
@@ -64,7 +68,7 @@ export function WallCardShell({
       {/*
         * 底部元信息栏：左＝互动计数，右＝发布时间。
         * 用 flex 而不是定宽：左侧按内容不收缩，右侧允许收缩成一行，
-        * 窄屏 / 大字号时两者在垂直中线上各让一步，⛔ 不重叠、⛔ 不换行挤压内容。
+        * 窄屏 / 大字号时两者在垂直中线上各让一步，⛔ 不重叠、⛔ 必要时互动项换行。
         */}
       <View style={{ flexDirection: 'row', alignItems: 'center', columnGap: theme.space('space_3') }}>
         <View
@@ -72,22 +76,25 @@ export function WallCardShell({
             flexDirection: 'row',
             alignItems: 'center',
             gap: theme.space('space_4'),
-            flexShrink: 0,
+            flexShrink: 1,
+            flexWrap: 'wrap',
           }}
         >
           <WallActionStat
+            muted={muted}
             source={Heart}
             count={likeCount}
             label={actionLabels.like}
             testID={`wall-row-${cardId}-like`}
           />
           <WallActionStat
+            muted={muted}
             source={MessageCircle}
             count={commentCount}
             label={actionLabels.comment}
             testID={`wall-row-${cardId}-comment`}
           />
-          <WallActionStat source={Bookmark} label={actionLabels.save} testID={`wall-row-${cardId}-save`} />
+          <WallActionStat muted={muted} source={Bookmark} label={actionLabels.save} testID={`wall-row-${cardId}-save`} />
         </View>
 
         <View style={{ flex: 1, minWidth: 0 }} />
@@ -98,7 +105,7 @@ export function WallCardShell({
             role="caption"
             colorToken="text-muted"
             numberOfLines={1}
-            style={{ flexShrink: 1, textAlign: 'right' }}
+            style={{ flexShrink: 1, textAlign: 'right', color: muted }}
           >
             {timeLabel}
           </Text>
@@ -110,9 +117,9 @@ export function WallCardShell({
   return (
     <View
       testID={`wall-card-${cardId}`}
-      style={{ paddingHorizontal: theme.space('space_4'), paddingVertical: theme.space('space_2') }}
+      style={{ paddingHorizontal: theme.space('space_4'), paddingVertical: theme.space('space_1') }}
     >
-      <Surface variant="surface" rounded="radius_large" bordered="subtle">
+      <Surface testID={`wall-surface-${cardId}`} rounded="radius_large" style={{ backgroundColor: background }}>
         {onPress === undefined ? (
           content
         ) : (
@@ -136,11 +143,13 @@ export function WallCardShell({
 /** 静态互动计数：无 onPress、无 button 角色 —— 读屏只播报"事实" */
 function WallActionStat({
   source,
+  muted,
   count,
   label,
   testID,
 }: {
   source: IconComponent;
+  muted: string;
   count?: number;
   label: string;
   testID: string;
@@ -153,9 +162,9 @@ function WallActionStat({
       accessibilityLabel={label}
       style={{ flexDirection: 'row', alignItems: 'center', gap: theme.space('space_1') }}
     >
-      <Icon source={source} size="body" tint="secondary" />
+      <Icon source={source} size="body" colorOverride={muted} />
       {count === undefined ? null : (
-        <Text role="caption" colorToken="text-muted">
+        <Text role="caption" style={{ color: muted }}>
           {String(count)}
         </Text>
       )}

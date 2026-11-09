@@ -1,0 +1,6 @@
+{
+  "version": 2,
+  "layouts": ["natural", "emphasis", "quote"],
+  "colors": ["mist", "slate", "oat", "khaki", "sage", "teal"],
+  "maxLength": 1000
+}

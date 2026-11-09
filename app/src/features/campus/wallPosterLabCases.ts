@@ -1,18 +1,12 @@
-/**
- * 文字海报预览（节点 A）的**固定样本**：七种文字形状 + 一个超短句。
- *
- * 样本只服务于"模板能不能装下这种文字"的视觉判断：
- *   · 中文短 / 中 / 长、纯英文、中英混排、多段落、Emoji；
- *   · 超短句用来检查 A / D 的留白是否过头（卡片高度不能为了一句话而虚高）。
- *
- * ⛔ 不联网、不写库；阶段 2-B 的发布预览会用用户真实输入替换这些样本。
- */
+/** 排版预览样例，覆盖中英文、不同长度、换行与 Emoji。 */
 
 import type { MessageKey } from '@/i18n';
 
 export type WallPosterLabCaseKey =
   | 'micro'
   | 'shortZh'
+  | 'canteen'
+  | 'haze'
   | 'mediumZh'
   | 'longZh'
   | 'english'
@@ -38,16 +32,26 @@ export const WALL_POSTER_LAB_CASES: readonly WallPosterLabCase[] = [
     content: '有没有人知道学校哪里最适合自习？',
   },
   {
+    key: 'canteen',
+    labelKey: 'wall.poster.case.canteen',
+    content: '今天食堂的饭是不是涨价了？',
+  },
+  {
+    key: 'haze',
+    labelKey: 'wall.poster.case.haze',
+    content: '我从没见过这么大的雾霾啊啊啊啊',
+  },
+  {
     key: 'mediumZh',
     labelKey: 'wall.poster.case.mediumZh',
     content:
-      '想问问大家，期末周的打印店一般要排多久队？昨天下午在 B1 打印课程报告，等了差不多四十分钟。',
+      '想问问大家，期末周的打印店一般要排多久队？昨天下午在 B1 打印课程报告，等了差不多四十分钟。早上八点会快一点吗？还是图书馆楼下那家更快？',
   },
   {
     key: 'longZh',
     labelKey: 'wall.poster.case.longZh',
     content:
-      '最近在整理这学期的时间表，发现真正完整空出来的晚上其实没有几个。白天上课、下午社团、晚上赶作业，周末还要补实验报告。\n\n很想问问大家是怎么安排休息的？我现在基本靠周日睡到中午补回来，但周一又会特别困。有没有更稳定的办法？',
+      '最近在整理这学期的时间表，发现真正完整空出来的晚上其实没有几个。白天上课、下午社团、晚上赶作业，周末还要补实验报告。\n\n很想问问大家是怎么安排休息的？我现在基本靠周日睡到中午补回来，但周一又会特别困。有没有更稳定的办法？也想听听每天通勤的同学是怎么安排复习和休息的。',
   },
   {
     key: 'english',
@@ -57,7 +61,7 @@ export const WALL_POSTER_LAB_CASES: readonly WallPosterLabCase[] = [
   {
     key: 'mixed',
     labelKey: 'wall.poster.case.mixed',
-    content: 'A3 的通宵自习室这周还开吗？Any update would be great — 想提前安排复习时间。',
+    content: 'A3 的通宵自习室这周还开吗？听说 Final 周会延长开放时间。',
   },
   {
     key: 'paragraphs',
@@ -68,7 +72,7 @@ export const WALL_POSTER_LAB_CASES: readonly WallPosterLabCase[] = [
   {
     key: 'emoji',
     labelKey: 'wall.poster.case.emoji',
-    content: '今天的海南鸡饭也太好吃了吧 🍗🍚 明天还想再去一次！',
+    content: '今天的海南鸡饭也太好吃了吧 🍗🍚\nTomorrow 12:30 再去一次！B1 的 A/C 也终于修好啦。',
   },
 ];
 

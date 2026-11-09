@@ -132,7 +132,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
 
   const markExpired = React.useCallback(async () => {
     await clearToken();
-    await clearNamespace();
+    // 投稿凭据与草稿按账户隔离，续登后仍可核对超时的同一次发布。
+    await clearNamespace({ preserveWallDrafts: true });
     // 设计文档承诺：过期立即清 Moodle 内存与磁盘快照（审计 D-3）
     clearMoodleCache();
     getQueryClient().clear();
@@ -154,14 +155,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
       try {
         const result = await loginApi(identifier, password);
         if (!result.success || !result.token) {
-          // 后端把"凭据不对"放在 200 + message 里（`requestRaw` 不抛）→ 按凭据错误处理
-          return {
-            ok: false,
-            failure: 'badCredentials',
-            error: authFailureToAppError('badCredentials'),
-          };
+          const failure = classifyAuthFailure({ status: result.httpStatus }, 'login');
+          console.warn('[auth/login] rejected', { status: result.httpStatus, failure });
+          return { ok: false, failure, error: authFailureToAppError(failure) };
         }
-        await clearNamespace();
+        await clearNamespace({ preserveWallDrafts: true });
         // 换账号：旧账号的 Moodle 快照不得进入新会话（审计 D-3）
         clearMoodleCache();
         await saveToken(result.token);
@@ -169,7 +167,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
         return { ok: true };
       } catch (error) {
         const failure = classifyAuthFailure(error, 'login');
-        return { ok: false, failure, error: authFailureToAppError(failure) };
+        const status = (error as { status?: number })?.status;
+        console.warn('[auth/login] request failed', { status, failure });
+        return {
+          ok: false,
+          failure,
+          error: error instanceof TypeError ? { kind: 'unreachable' } : authFailureToAppError(failure),
+        };
       }
     },
     []
@@ -193,7 +197,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
             error: authFailureToAppError('badCredentials'),
           };
         }
-        await clearNamespace();
+        await clearNamespace({ preserveWallDrafts: true });
         // 注册成功等同换账号，同样清旧 Moodle 快照（审计 D-3）
         clearMoodleCache();
         await saveToken(result.token);
