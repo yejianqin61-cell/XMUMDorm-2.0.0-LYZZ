@@ -18,6 +18,7 @@ function useAuthor(post, isZh) {
     const a = post.author;
     const avatar = a.avatar ? (a.avatar.startsWith('http') ? a.avatar : `${API_BASE_URL}${a.avatar}`) : null;
     return {
+      id: a.id,
       username: a.nickname ?? a.username ?? (isZh ? '匿名' : 'Anonymous'),
       avatar,
       level: a.level,
@@ -63,6 +64,10 @@ function PostCard({ post, variant = 'list' }) {
   const { id, title, content, like_count, comment_count, likeCount, commentCount } = post;
   const isZh = lang !== 'en';
   const author = useAuthor(post, isZh);
+  const AuthorWrapper = author.id ? Link : 'div';
+  const authorProfileProps = author.id
+    ? { to: `/user/${author.id}`, 'aria-label': isZh ? `查看 ${author.username} 的主页` : `View ${author.username}'s profile` }
+    : {};
   const initialLike = like_count ?? likeCount ?? 0;
   const commentNum = comment_count ?? commentCount ?? 0;
   const preview = (content || '').length > 50 ? (content || '').slice(0, 50) + '…' : (content || '');
@@ -191,7 +196,7 @@ function PostCard({ post, variant = 'list' }) {
           )}
         </Link>
         <div className="post-card-footer" aria-label={isZh ? '作者与点赞' : 'Author and likes'}>
-          <div className="post-card-footer-author">
+          <AuthorWrapper className={`post-card-footer-author${author.id ? ' post-card-footer-author-link' : ''}`} {...authorProfileProps}>
             <div className="post-card-avatar-wrap">
               {author.avatar ? (
                 <img src={author.avatar} alt="" className="post-card-avatar" />
@@ -203,7 +208,7 @@ function PostCard({ post, variant = 'list' }) {
             {author.level ? (
               <UserLevelBadge level={author.level} badgeEmoji={author.badgeEmoji} size="sm" isZh={isZh} />
             ) : null}
-          </div>
+          </AuthorWrapper>
           <button
             type="button"
             className={`post-card-like-btn ${liked ? 'post-card-like-btn--active' : ''}`}

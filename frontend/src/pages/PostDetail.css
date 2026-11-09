@@ -159,10 +159,15 @@
 }
 
 .post-detail-username {
+  padding: 0;
+  border: 0;
+  background: transparent;
   font-size: 14px;
   font-weight: 600;
   letter-spacing: -0.02em;
   color: var(--post-ios-label, rgba(0, 0, 0, 0.88));
+  text-align: left;
+  cursor: pointer;
 }
 
 .post-detail-content {

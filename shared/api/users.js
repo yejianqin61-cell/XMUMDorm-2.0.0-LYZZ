@@ -30,6 +30,21 @@ export function getProfile(userId, options = {}) {
   return get(`/api/users/${userId}/profile?${params.toString()}`);
 }
 
+export function followUser(userId) {
+  return post(`/api/users/${userId}/follow`);
+}
+
+export function unfollowUser(userId) {
+  return del(`/api/users/${userId}/follow`);
+}
+
+export function getUserRelations(userId, relation, options = {}) {
+  const { page = 1, pageSize = 30 } = options;
+  const type = relation === 'following' ? 'following' : 'followers';
+  const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+  return get(`/api/users/${userId}/${type}?${params.toString()}`);
+}
+
 /**
  * 更新当前用户资料
  * @param {{ nickname?: string, username?: string, college?: string, grade?: string, major?: string, show_college?: boolean, show_grade?: boolean, show_major?: boolean, collegeId?: string|null, programmeId?: string|null }} body

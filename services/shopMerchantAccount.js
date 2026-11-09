@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const { pool } = require('../database');
 const s = require('./shop');
+const createDormId = require('../utils/dormId');
 
 // Serialize account-name checks without changing the legacy users table schema.
 module.exports = async function createMerchantAccount(actorId, body) {
@@ -26,7 +27,7 @@ module.exports = async function createMerchantAccount(actorId, body) {
     const [stores] = await conn.execute('SELECT id FROM shop_merchants WHERE slug=?',[slug]);
     if (names.length) s.fail('商家用户名已存在。如需使用当前账号开店，请选择创建我的店铺 / Username already taken',409);
     if (stores.length) s.fail('店铺网址名称已被使用，请更换 / Store URL name already taken',409);
-    const [user] = await conn.execute("INSERT INTO users (username,nickname,password_hash,role,status,email_verified) VALUES (?,?,?,'merchant','active',1)",[username,nameZh,hash]);
+    const [user] = await conn.execute("INSERT INTO users (username,nickname,dorm_id,password_hash,role,status,email_verified) VALUES (?,?,?,?,'merchant','active',1)",[username,nameZh,createDormId(),hash]);
     const [store] = await conn.execute('INSERT INTO shop_merchants (slug,name_zh,name_en) VALUES (?,?,?)',[slug,nameZh,nameEn]);
     await conn.execute('INSERT INTO shop_merchant_members (merchant_id,user_id) VALUES (?,?)',[store.insertId,user.insertId]);
     await conn.execute('INSERT INTO shop_settings (id,delivery_notice_zh,delivery_notice_en,payment_zh,payment_en) VALUES (?,?,?,?,?)',[store.insertId,'','','','']);
