@@ -19,6 +19,7 @@ const { simpleCache } = require('../utils/simpleCache');
 const { getUserLevelSummary, formatAuthorLevel } = require('../services/expService');
 const { getExpProgress } = require('../constants/levelThresholds');
 const { CURRENT_TERMS_VERSION, getCurrentTermsStatus } = require('../services/termsAcceptance');
+const { inlineLimit, inlineOffset } = require('../utils/sqlLimit');
 
 const DEFAULT_AVATAR = '/uploads/default-avatar.png';
 
@@ -365,8 +366,8 @@ async function getUserRelationList(userId, relation, page, pageSize) {
          INNER JOIN users u ON u.id = ${relatedUserColumn}
         WHERE ${targetColumn} = ? AND u.status <> 'deactivated'
         ORDER BY uf.created_at DESC, u.id DESC
-        LIMIT ? OFFSET ?`,
-      [userId, pageSize, offset]
+        LIMIT ${inlineLimit(pageSize, { max: 50 })} OFFSET ${inlineOffset(offset)}`,
+      [userId]
     ),
   ]);
   const total = Number(countRows?.[0]?.total) || 0;
