@@ -1,5 +1,6 @@
 -- description: Add wall post favorites, comment likes, and author-featured comments for stage 3 discussions.
--- depends: 078_confession_poster_style
+-- depends: 080_confession_poster_style
+-- note: renumbered from 079 after origin/main added 078_user_follows and 079_dorm_ids.
 -- reversible: drop confession_favorites and confession_comment_likes; drop confession_comments.featured_at.
 -- Additive only: no table is dropped and no historical column or row is rewritten.
 -- The user_id columns are used only for deduplication, permission checks and admin traceability;

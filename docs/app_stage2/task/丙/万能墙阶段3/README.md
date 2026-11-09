@@ -2,7 +2,7 @@
 
 2026-11-09｜所有者任务书《XMUMDorm 万能墙第三阶段》｜本地分支 `dev-gjl`
 基线：阶段 2 本地 checkpoint `feeb3f42`（未 push；`origin/dev-gjl` 仍为 `630c7774`）
-阶段 3 本地提交：`80432873`（未 push）
+阶段 3 本地提交：`80432873`（未 push）；已按所有者指令本地合并 `origin/main`（merge `4452e1c4`），墙体迁移因编号冲突重编号为 **080 / 081**。
 
 ## 1. 范围
 
@@ -25,7 +25,9 @@
 
 ## 3. 数据与接口增量（additive）
 
-迁移 `migrations/079_confession_interactions.sql`（依赖 078，可重复执行）：
+迁移 `migrations/081_confession_interactions.sql`（依赖 080，可重复执行）。
+
+> 编号说明：`origin/main` 已使用 `078_user_follows.sql`、`079_dorm_ids.sql`，墙体阶段 2/3 的迁移已由 078/079 重编号为 **080/081**；旧文档里的 078/079 指的是这两个墙体迁移。
 
 - `confession_favorites (user_id, confession_id, created_at)`，主键 `(user_id, confession_id)`；
 - `confession_comment_likes (user_id, comment_id, created_at)`，主键 `(user_id, comment_id)`；
@@ -55,7 +57,7 @@ API（Web 旧字段与默认顺序保持不变）：
 
 ## 5. 改动落点
 
-后端：`routes/confessions.js`、`shared/utils/nestComments.js`、`shared/api/confessions.js`、`migrations/079_confession_interactions.sql`。
+后端：`routes/confessions.js`、`shared/utils/nestComments.js`、`shared/api/confessions.js`、`migrations/081_confession_interactions.sql`。
 
 App：
 
@@ -67,15 +69,15 @@ App：
 
 ## 5.1 交接文件
 
-交给后端同事的完整说明见：[后端交接-万能墙阶段1至3-2026-11-09.md](后端交接-万能墙阶段1至3-2026-11-09.md)。其中包含 078/079 执行顺序、API 契约、smoke 清单和回执模板。
+交给后端同事的完整说明见：[后端交接-万能墙阶段1至3-2026-11-09.md](后端交接-万能墙阶段1至3-2026-11-09.md)。其中包含 080/081 执行顺序、API 契约、smoke 清单和回执模板。
 
 ## 6. 部署顺序（重要）
 
-已登录用户的 `GET /window`、`GET /:id` 会读取 `confession_favorites`。因此**必须先对目标库执行 078、079，再部署带本轮代码的服务端**；否则旧库上登录读详情/信息流会 500。未登录读取不受新表影响。
+已登录用户的 `GET /window`、`GET /:id` 会读取 `confession_favorites`。因此**必须先对目标库执行 080、081，再部署带本轮代码的服务端**；否则旧库上登录读详情/信息流会 500。未登录读取不受新表影响。
 
 ## 7. 明确未验收
 
-- 078 / 079 未在主库或生产库执行；本轮只在一次性本地 MySQL（127.0.0.1:33479）验证。
+- 080 / 081 未在主库或生产库执行；本轮只在一次性本地 MySQL（127.0.0.1:33479）验证。
 - 未部署 Railway、未 push / merge / 建 PR。
 - 本地 arm64 Release APK 已生成（debug 测试签名，`XMUMDorm-wall-p3-20261109-arm64.apk`），并已于 2026-11-09 20:36 通过 `adb install -r` 覆盖安装到所有者手机（数据保留）；但当时手机锁屏，未完成目视 UI 验收。
 - x86_64 模拟器联调包因 Gradle lint-vital 过慢中止，模拟器 UI 未验。
