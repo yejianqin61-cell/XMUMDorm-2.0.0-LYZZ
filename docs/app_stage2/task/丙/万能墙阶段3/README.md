@@ -1,8 +1,8 @@
 # 万能墙阶段 3 · 自由帖讨论系统与共用互动
 
 2026-11-09｜所有者任务书《XMUMDorm 万能墙第三阶段》｜本地分支 `dev-gjl`
-基线：阶段 2 本地 checkpoint `feeb3f42`（未 push；`origin/dev-gjl` 仍为 `630c7774`）
-阶段 3 本地提交：`80432873`（未 push）；已按所有者指令本地合并 `origin/main`（merge `4452e1c4`），墙体迁移因编号冲突重编号为 **080 / 081**。
+基线：阶段 2 本地 checkpoint `feeb3f42`；`origin/dev-gjl` 已推进到 `b573c1f5`（未 push main）。
+阶段 3 代码提交：`80432873`；已合并 `origin/main`（merge `4452e1c4`），墙体迁移重编号为 **080 / 081**；六色盘令牌化 `b573c1f5`，已 push 到 `origin/dev-gjl`。
 
 ## 1. 范围
 
@@ -80,7 +80,7 @@ App：
 ## 7. 明确未验收
 
 - 080 / 081 未在主库或生产库执行；本轮只在一次性本地 MySQL（127.0.0.1:33479）验证。
-- 未部署 Railway、未 push / merge / 建 PR。
+- 未部署 Railway；未合并到 `main`、未建 PR；`dev-gjl` 已 push 到 `origin`（`b573c1f5`）。
 - 本地 arm64 Release APK 已生成（debug 测试签名，`XMUMDorm-wall-p3-20261109-arm64.apk`），并已于 2026-11-09 20:36 通过 `adb install -r` 覆盖安装到所有者手机（数据保留）；但当时手机锁屏，未完成目视 UI 验收。
 - x86_64 模拟器联调包因 Gradle lint-vital 过慢中止，模拟器 UI 未验。
 - 真实设备上的输入法、分享面板、返回手势仍需机主解锁后确认。
