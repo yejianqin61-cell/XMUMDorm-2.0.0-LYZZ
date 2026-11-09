@@ -34,8 +34,9 @@ import { useTheme } from '@/design-system/theme';
 
 export type WallCardShellProps = {
   cardId: number;
-  background: string;
-  muted: string;
+  /** 底色/次级文字令牌名（不是 hex）；组件内用 theme.color[...] 解析 */
+  backgroundToken: string;
+  mutedToken: string;
   /** 首页展示用的相对时间；空串表示未知，右侧留空 */
   timeLabel: string;
   likeCount: number;
@@ -56,8 +57,8 @@ export type WallCardShellProps = {
 
 export function WallCardShell({
   cardId,
-  background,
-  muted,
+  backgroundToken,
+  mutedToken,
   timeLabel,
   likeCount,
   commentCount,
@@ -72,6 +73,7 @@ export function WallCardShell({
   children,
 }: WallCardShellProps): React.ReactElement {
   const theme = useTheme();
+  const muted = theme.color[mutedToken].value;
 
   const content = (
     <View style={{ padding: theme.space('space_4'), gap: theme.space('space_3') }}>
@@ -141,7 +143,11 @@ export function WallCardShell({
       testID={`wall-card-${cardId}`}
       style={{ paddingHorizontal: theme.space('space_4'), paddingVertical: theme.space('space_1') }}
     >
-      <Surface testID={`wall-surface-${cardId}`} rounded="radius_large" style={{ backgroundColor: background }}>
+      <Surface
+        testID={`wall-surface-${cardId}`}
+        rounded="radius_large"
+        style={{ backgroundColor: theme.color[backgroundToken].value }}
+      >
         {onPress === undefined ? (
           content
         ) : (

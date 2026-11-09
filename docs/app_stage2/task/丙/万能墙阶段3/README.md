@@ -59,6 +59,8 @@ API（Web 旧字段与默认顺序保持不变）：
 
 后端：`routes/confessions.js`、`shared/utils/nestComments.js`、`shared/api/confessions.js`、`migrations/081_confession_interactions.sql`。
 
+设计令牌：`tokens/design-tokens.css`（新增 28 个墙内容色令牌）+ 生成物；六色盘已从 hex 迁到令牌，色值逐项不变，`p0-02` / `p1-04` 设计扫描已通过。
+
 App：
 
 - `app/src/features/campus/WallCardShell.tsx`、`WallPostCard.tsx`、`WallPostRow.tsx`、`WallFeed.tsx`、`wallPost.ts`、`campusModel.ts`、`CampusScreens.tsx`、`useCampusActions.tsx`、`useCampusReport.ts`、`TreeholePostParts.tsx`、`TreeholePostDetail.tsx`；

@@ -35,6 +35,32 @@ describe('万能墙样式', () => {
     expect(canTryWallLayout('学校哪里最适合自习？', 'emphasis')).toBe(true);
   });
 
+  it('令牌化前后六色盘逐项一致（视觉不变）', () => {
+    // 令牌化前 WALL_COLORS 的六组值；令牌化后只换存放位置，不改色。
+    const legacy = {
+      light: {
+        mist: ['#E8F0F6', '#A9BDCC'], slate: ['#E4EBF2', '#A7B7C8'],
+        oat: ['#F3EDE0', '#CBB990'], khaki: ['#EEE8DA', '#C5B38D'],
+        sage: ['#E9F0E9', '#A8BDA7'], teal: ['#E3EEEB', '#A0BAB4'],
+      },
+      dark: {
+        mist: ['#263647', '#7394AE'], slate: ['#293B47', '#819CAC'],
+        oat: ['#3B352C', '#AA966C'], khaki: ['#38352C', '#A69A77'],
+        sage: ['#2C3C37', '#829C88'], teal: ['#293A39', '#749D96'],
+      },
+    } as const;
+    for (const scheme of ['light', 'dark'] as const) {
+      for (const id of WALL_COLOR_IDS) {
+        const palette = wallPalette(id, scheme);
+        const actual = [palette.background, palette.accent].map((value) => value.toLowerCase());
+        const expected = legacy[scheme][id].map((value) => value.toLowerCase());
+        expect(actual).toEqual(expected);
+        expect(palette.ink.toLowerCase()).toBe(scheme === 'dark' ? '#e8ebee' : '#25323d');
+        expect(palette.muted.toLowerCase()).toBe(scheme === 'dark' ? '#bbc7ce' : '#4a5966');
+      }
+    }
+  });
+
   it('六种底色上的正文和互动文字均满足 AA 对比度', () => {
     const luminance = (hex: string) => {
       const [r, g, b] = [1, 3, 5].map((index) => {

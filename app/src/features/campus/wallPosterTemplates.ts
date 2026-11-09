@@ -1,24 +1,54 @@
 import type { MessageKey } from '@/i18n';
+import { colorsFor, type DarkColorTokenName } from '@/design-system/tokens';
 
+/**
+ * 万能墙六色盘。颜色值**只**落在 `tokens/design-tokens.css` 的
+ * `--color-wall-*-bg / --color-wall-*-accent` 与 `--color-wall-ink / -muted`，
+ * 这里只保留语义名与令牌名；⛔ 不写 hex。
+ */
 export const WALL_COLORS = {
-  mist: { background: '#E8F0F6', accent: '#A9BDCC', darkBackground: '#263647', darkAccent: '#7394AE', name: 'wall.poster.color.mist' },
-  slate: { background: '#E4EBF2', accent: '#A7B7C8', darkBackground: '#293B47', darkAccent: '#819CAC', name: 'wall.poster.color.slate' },
-  oat: { background: '#F3EDE0', accent: '#CBB990', darkBackground: '#3B352C', darkAccent: '#AA966C', name: 'wall.poster.color.oat' },
-  khaki: { background: '#EEE8DA', accent: '#C5B38D', darkBackground: '#38352C', darkAccent: '#A69A77', name: 'wall.poster.color.khaki' },
-  sage: { background: '#E9F0E9', accent: '#A8BDA7', darkBackground: '#2C3C37', darkAccent: '#829C88', name: 'wall.poster.color.sage' },
-  teal: { background: '#E3EEEB', accent: '#A0BAB4', darkBackground: '#293A39', darkAccent: '#749D96', name: 'wall.poster.color.teal' },
-} as const satisfies Record<string, { background: string; accent: string; darkBackground: string; darkAccent: string; name: MessageKey }>;
+  mist: { name: 'wall.poster.color.mist' },
+  slate: { name: 'wall.poster.color.slate' },
+  oat: { name: 'wall.poster.color.oat' },
+  khaki: { name: 'wall.poster.color.khaki' },
+  sage: { name: 'wall.poster.color.sage' },
+  teal: { name: 'wall.poster.color.teal' },
+} as const satisfies Record<string, { name: MessageKey }>;
 
 export type WallColorId = keyof typeof WALL_COLORS;
 export const WALL_COLOR_IDS = Object.keys(WALL_COLORS) as WallColorId[];
-export const WALL_INK = '#25323D';
-export const WALL_MUTED_INK = '#4A5966';
 
+export type WallPaletteTokens = {
+  background: DarkColorTokenName;
+  accent: DarkColorTokenName;
+  ink: DarkColorTokenName;
+  muted: DarkColorTokenName;
+};
+
+/** 六色盘 → 语义令牌名（组件持 `useTheme()` 时用这一份直接取 `theme.color[...]`）。 */
+export function wallPaletteTokens(colorId: WallColorId): WallPaletteTokens {
+  return {
+    background: `wall-${colorId}-bg` as DarkColorTokenName,
+    accent: `wall-${colorId}-accent` as DarkColorTokenName,
+    ink: 'wall-ink',
+    muted: 'wall-muted',
+  };
+}
+
+/**
+ * 六色盘 → 当前主题的色值。
+ * 仅给测试、预览页等非渲染路径复用；渲染层必须直接 `theme.color[...]`，
+ * 否则会踩 `p1-04-atoms` 的“底色只能来自令牌”约定。
+ */
 export function wallPalette(colorId: WallColorId, scheme: 'light' | 'dark') {
-  const color = WALL_COLORS[colorId];
-  return scheme === 'dark'
-    ? { background: color.darkBackground, accent: color.darkAccent, ink: '#E8EBEE', muted: '#BBC7CE' }
-    : { background: color.background, accent: color.accent, ink: WALL_INK, muted: WALL_MUTED_INK };
+  const tokens = wallPaletteTokens(colorId);
+  const colors = colorsFor(scheme);
+  return {
+    background: colors[tokens.background].value,
+    accent: colors[tokens.accent].value,
+    ink: colors[tokens.ink].value,
+    muted: colors[tokens.muted].value,
+  };
 }
 
 // Every density is chosen from one measurement at 16sp. The displayed text

@@ -17,8 +17,7 @@ import { WallCardShell } from './WallCardShell';
 import { WallFreePostBody } from './WallFreePostBody';
 import { WallRecruitPostBody } from './WallRecruitPostBody';
 import { wallPosterStyle } from './wallPosterLayout';
-import { useTheme } from '@/design-system/theme';
-import { wallPalette } from './wallPosterTemplates';
+import { wallPaletteTokens } from './wallPosterTemplates';
 import type { WallPost } from './wallPost';
 
 export function WallPostCard({
@@ -37,18 +36,17 @@ export function WallPostCard({
   full?: boolean;
 }): React.ReactElement {
   const { t, locale } = useI18n();
-  const { scheme } = useTheme();
   const timeLabel = post.createdAt ? formatPostTime(post.createdAt, { locale }) : '';
   const posterStyle = wallPosterStyle(post.id, post.posterStyle, post.posterTemplateId);
-  const palette = wallPalette(post.kind === 'recruit' ? 'oat' : posterStyle.colorId, scheme);
+  const palette = wallPaletteTokens(post.kind === 'recruit' ? 'oat' : posterStyle.colorId);
   const summary =
     post.kind === 'recruit' ? (post.recruit?.title ?? '') : post.content;
 
   return (
     <WallCardShell
       cardId={post.id}
-      background={palette.background}
-      muted={palette.muted}
+      backgroundToken={palette.background}
+      mutedToken={palette.muted}
       timeLabel={timeLabel}
       likeCount={post.likeCount}
       commentCount={post.commentCount}

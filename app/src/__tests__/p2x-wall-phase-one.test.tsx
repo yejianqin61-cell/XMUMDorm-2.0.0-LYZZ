@@ -70,9 +70,9 @@ describe('阶段 1 · 两卡混排信息流', () => {
     // 同一列里两种内部内容都在：6 条自由帖 + 2 条招募帖
     expect(view.getAllByTestId('wall-free-body')).toHaveLength(6);
     expect(view.getAllByTestId('wall-recruit-body')).toHaveLength(2);
-    expect(view.getByTestId('wall-surface-900001')).toHaveStyle({ backgroundColor: '#E8F0F6' });
-    expect(view.getByTestId('wall-surface-900002')).toHaveStyle({ backgroundColor: '#F3EDE0' });
-    expect(view.getByTestId('wall-surface-900003')).toHaveStyle({ backgroundColor: '#E9F0E9' });
+    expect(view.getByTestId('wall-surface-900001')).toHaveStyle({ backgroundColor: '#e8f0f6' });
+    expect(view.getByTestId('wall-surface-900002')).toHaveStyle({ backgroundColor: '#f3ede0' });
+    expect(view.getByTestId('wall-surface-900003')).toHaveStyle({ backgroundColor: '#e9f0e9' });
   });
 
   it('长文只在信息流中折叠，保留数据原文和中英混排', async () => {

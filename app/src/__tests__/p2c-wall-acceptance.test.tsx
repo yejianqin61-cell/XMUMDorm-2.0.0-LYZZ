@@ -134,7 +134,7 @@ it('重新挂载恢复草稿，切换账户不会读到上一个账户的输入'
   await waitFor(() => expect(JSON.parse([...draftDisk.values()][0]).style.colorId).toBe('teal'));
   await fireEvent.press(view.getByTestId('reopen'));
   expect((await view.findByTestId('wall-write-content')).props.value).toBe(text);
-  expect(view.getByTestId('wall-surface-990001')).toHaveStyle({ backgroundColor: '#293A39' });
+  expect(view.getByTestId('wall-surface-990001')).toHaveStyle({ backgroundColor: '#293a39' });
   await fireEvent.press(view.getByTestId('other-owner'));
   expect((await view.findByTestId('wall-write-content')).props.value).toBe('');
   await fireEvent.press(view.getByTestId('other-owner'));

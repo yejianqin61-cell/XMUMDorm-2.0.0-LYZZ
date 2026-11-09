@@ -3,7 +3,7 @@ import { Platform, Text, View, useWindowDimensions, type TextProps } from 'react
 
 import { isLongWallText } from './wallPosterLayout';
 import { useTheme } from '@/design-system/theme';
-import { wallNaturalMetrics, wallPalette, WALL_LAYOUTS, type WallPosterStyle } from './wallPosterTemplates';
+import { wallNaturalMetrics, wallPaletteTokens, WALL_LAYOUTS, type WallPosterStyle } from './wallPosterTemplates';
 
 export function WallPosterBody({
   content,
@@ -47,8 +47,8 @@ function WallPosterText({
   const [lines, setLines] = React.useState<readonly number[]>([]);
   const [width, setWidth] = React.useState(0);
   const [naturalLines, setNaturalLines] = React.useState(0);
-  const { scheme } = useTheme();
-  const palette = wallPalette(posterStyle.colorId, scheme);
+  const theme = useTheme();
+  const palette = wallPaletteTokens(posterStyle.colorId);
   const layoutId = posterStyle.layoutId;
   const layout = WALL_LAYOUTS[layoutId];
   const { maxLines } = layout;
@@ -94,7 +94,7 @@ function WallPosterText({
         <View
           style={{
             position: 'absolute', top: layout.top + 3, bottom: layout.bottom + 3, start: 0,
-            width: 2, borderRadius: 1, backgroundColor: palette.accent,
+            width: 2, borderRadius: 1, backgroundColor: theme.color[palette.accent].value,
           }}
         />
       ) : null}
@@ -103,7 +103,7 @@ function WallPosterText({
         onTextLayout={probe ? measure : undefined}
         numberOfLines={full || probe ? undefined : 5}
         style={{
-          color: palette.ink,
+          color: theme.color[palette.ink].value,
           fontSize: metrics.size,
           lineHeight: metrics.lineHeight,
           ...(layoutId === 'emphasis' ? { fontWeight: '600' } : {}),

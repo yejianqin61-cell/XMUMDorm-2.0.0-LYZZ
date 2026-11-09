@@ -20,17 +20,17 @@ import { Badge } from '@/components/ui/Badge';
 import { Text } from '@/components/ui/Text';
 import { useTheme } from '@/design-system/theme';
 import { useI18n } from '@/i18n';
-import { wallPalette } from './wallPosterTemplates';
+import { wallPaletteTokens } from './wallPosterTemplates';
 import type { WallRecruit } from './wallPost';
 
 export function WallRecruitPostBody({ recruit }: { recruit: WallRecruit }): React.ReactElement {
   const { t } = useI18n();
   const theme = useTheme();
-  const palette = wallPalette('oat', theme.scheme);
+  const palette = wallPaletteTokens('oat');
   const open = recruit.status === 'open';
   const nightBadge = open
-    ? { fill: '#31463B', ink: '#C4E5D0' }
-    : { fill: '#494238', ink: '#E6DED3' };
+    ? { fill: 'wall-recruit-open-bg', ink: 'wall-recruit-open-ink' }
+    : { fill: 'wall-recruit-full-bg', ink: 'wall-recruit-full-ink' };
   const statusLabel = t(open ? 'wall.recruit.open' : 'wall.recruit.full');
 
   return (
@@ -40,7 +40,7 @@ export function WallRecruitPostBody({ recruit }: { recruit: WallRecruit }): Reac
           testID="wall-recruit-title"
           role="label"
           emphasis="strong"
-          style={{ color: palette.ink }}
+          style={{ color: theme.color[palette.ink].value }}
           numberOfLines={2}
         >
           {recruit.title}
@@ -48,7 +48,7 @@ export function WallRecruitPostBody({ recruit }: { recruit: WallRecruit }): Reac
         <Text
           testID="wall-recruit-description"
           role="body"
-          style={{ color: palette.muted }}
+          style={{ color: theme.color[palette.muted].value }}
           numberOfLines={2}
         >
           {recruit.description}
@@ -73,7 +73,7 @@ export function WallRecruitPostBody({ recruit }: { recruit: WallRecruit }): Reac
       </View>
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.space('space_2') }}>
-        <Text role="caption" style={{ color: palette.muted }}>
+        <Text role="caption" style={{ color: theme.color[palette.muted].value }}>
           {t('wall.recruit.status')}
         </Text>
         <Badge
@@ -81,8 +81,12 @@ export function WallRecruitPostBody({ recruit }: { recruit: WallRecruit }): Reac
           text={statusLabel}
           tone={open ? 'success' : 'neutral'}
           {...(theme.scheme === 'dark' ? {
-            style: { backgroundColor: nightBadge.fill, borderRightWidth: 0, borderBottomWidth: 0 },
-            labelStyle: { color: nightBadge.ink },
+            style: {
+              backgroundColor: theme.color[nightBadge.fill].value,
+              borderRightWidth: 0,
+              borderBottomWidth: 0,
+            },
+            labelStyle: { color: theme.color[nightBadge.ink].value },
           } : {})}
         />
       </View>
@@ -101,13 +105,13 @@ function RecruitField({
   testID?: string;
 }): React.ReactElement {
   const theme = useTheme();
-  const palette = wallPalette('oat', theme.scheme);
+  const palette = wallPaletteTokens('oat');
   return (
     <View testID={testID} style={{ gap: theme.space('space_1') }}>
-      <Text role="caption" style={{ color: palette.muted }}>
+      <Text role="caption" style={{ color: theme.color[palette.muted].value }}>
         {label}
       </Text>
-      <Text role="body" emphasis="strong" style={{ color: palette.ink }}>
+      <Text role="body" emphasis="strong" style={{ color: theme.color[palette.ink].value }}>
         {value}
       </Text>
     </View>

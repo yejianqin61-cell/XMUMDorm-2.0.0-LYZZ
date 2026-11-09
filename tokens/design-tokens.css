@@ -203,6 +203,26 @@
   --color-bg-warning-soft:#2e2118;   /* [usage=surface] 警告浅底【提案】*/
   --color-bg-danger-soft: #2d1d22;   /* [usage=surface] 危险浅底【提案】*/
 
+  /* ---- 2.1' 万能墙内容色（wall content）—— 六色盘，只用于墙卡片/详情，不作状态语义 ---- */
+  --color-wall-mist-bg:       #263647; /* [usage=surface] 雾蓝底 */
+  --color-wall-mist-accent:   #7394AE; /* [usage=fill] 雾蓝强调 */
+  --color-wall-slate-bg:      #293B47; /* [usage=surface] 灰蓝底 */
+  --color-wall-slate-accent:  #819CAC; /* [usage=fill] 灰蓝强调 */
+  --color-wall-oat-bg:        #3B352C; /* [usage=surface] 燕麦黄底 */
+  --color-wall-oat-accent:    #AA966C; /* [usage=fill] 燕麦黄强调 */
+  --color-wall-khaki-bg:      #38352C; /* [usage=surface] 浅卡其底 */
+  --color-wall-khaki-accent:  #A69A77; /* [usage=fill] 浅卡其强调 */
+  --color-wall-sage-bg:       #2C3C37; /* [usage=surface] 鼠尾草绿底 */
+  --color-wall-sage-accent:   #829C88; /* [usage=fill] 鼠尾草绿强调 */
+  --color-wall-teal-bg:       #293A39; /* [usage=surface] 浅青绿底 */
+  --color-wall-teal-accent:   #749D96; /* [usage=fill] 浅青绿强调 */
+  --color-wall-ink:           #E8EBEE; /* [usage=text] 墙内容主文字（6 底色上实测见 p2a 对比度用例）*/
+  --color-wall-muted:         #BBC7CE; /* [usage=text] 墙内容次级文字 */
+  --color-wall-recruit-open-bg:  #31463B; /* [usage=surface] 招募中徽标底 */
+  --color-wall-recruit-open-ink: #C4E5D0; /* [usage=text] 招募中徽标字 */
+  --color-wall-recruit-full-bg:  #494238; /* [usage=surface] 已满徽标底 */
+  --color-wall-recruit-full-ink: #E6DED3; /* [usage=text] 已满徽标字 */
+
   /* ---- 2.2 文字（text）--------------------------------------------------- */
   --color-text-primary:   #f2f4f9;   /* [usage=text][textSafe] 标题与正文（canvas 16.73 / surface 15.14）*/
   --color-text-secondary: #aab2c5;   /* [usage=text][textSafe] 次要信息（surface 7.84）*/
@@ -281,6 +301,26 @@
   --color-bg-success-soft:#eff8f4;   /* [usage=surface]【提案】近白微染：见「已知冲突 C2」*/
   --color-bg-warning-soft:#fdf6ee;   /* [usage=surface]【提案】同上 */
   --color-bg-danger-soft: #fdf2f2;   /* [usage=surface]【提案】同上 */
+
+  /* ---- 2.1' 万能墙内容色（wall content）—— 与暗色同名、不同取值 ---- */
+  --color-wall-mist-bg:       #E8F0F6; /* [usage=surface] 雾蓝底 */
+  --color-wall-mist-accent:   #A9BDCC; /* [usage=fill] 雾蓝强调 */
+  --color-wall-slate-bg:      #E4EBF2; /* [usage=surface] 灰蓝底 */
+  --color-wall-slate-accent:  #A7B7C8; /* [usage=fill] 灰蓝强调 */
+  --color-wall-oat-bg:        #F3EDE0; /* [usage=surface] 燕麦黄底 */
+  --color-wall-oat-accent:    #CBB990; /* [usage=fill] 燕麦黄强调 */
+  --color-wall-khaki-bg:      #EEE8DA; /* [usage=surface] 浅卡其底 */
+  --color-wall-khaki-accent:  #C5B38D; /* [usage=fill] 浅卡其强调 */
+  --color-wall-sage-bg:       #E9F0E9; /* [usage=surface] 鼠尾草绿底 */
+  --color-wall-sage-accent:   #A8BDA7; /* [usage=fill] 鼠尾草绿强调 */
+  --color-wall-teal-bg:       #E3EEEB; /* [usage=surface] 浅青绿底 */
+  --color-wall-teal-accent:   #A0BAB4; /* [usage=fill] 浅青绿强调 */
+  --color-wall-ink:           #25323D; /* [usage=text] 墙内容主文字 */
+  --color-wall-muted:         #4A5966; /* [usage=text] 墙内容次级文字 */
+  --color-wall-recruit-open-bg:  #eff8f4; /* [usage=surface] 招募中徽标底（亮色走 Badge 语义，保留同名令牌）*/
+  --color-wall-recruit-open-ink: #277e5a; /* [usage=text] 招募中徽标字 */
+  --color-wall-recruit-full-bg:  #f4f5f8; /* [usage=surface] 已满徽标底 */
+  --color-wall-recruit-full-ink: #4a5163; /* [usage=text] 已满徽标字 */
 
   /* ---- 2.2 文字 ---------------------------------------------------------- */
   --color-text-primary:   #1b1f2c;   /* [usage=text][textSafe] 标题与正文（on 白 16.42）*/

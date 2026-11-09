@@ -38,7 +38,7 @@ it('修改同一段预览文字时保留手动选择的底色', async () => {
   await fireEvent.changeText(input, '晚安。');
   await fireEvent.press(view.getByTestId('wall-poster-color-khaki'));
   await fireEvent.changeText(input, '晚安。明天见。');
-  expect(view.getByTestId('wall-surface-990001')).toHaveStyle({ backgroundColor: '#38352C' });
+  expect(view.getByTestId('wall-surface-990001')).toHaveStyle({ backgroundColor: '#38352c' });
   expect(view.queryByTestId('wall-font-compare')).toBeNull();
 });
 

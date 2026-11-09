@@ -351,8 +351,8 @@ describe('P3 · 删除评论与信息流互动', () => {
     const view = await renderApp(
       <WallCardShell
         cardId={7}
-        background="#ffffff"
-        muted="#666666"
+        backgroundToken="bg-surface"
+        mutedToken="text-muted"
         timeLabel="2 小时前"
         likeCount={3}
         commentCount={2}
@@ -408,8 +408,8 @@ describe('P3 · 删除评论与信息流互动', () => {
     const view = await renderApp(
       <WallCardShell
         cardId={8}
-        background="#ffffff"
-        muted="#666666"
+        backgroundToken="bg-surface"
+        mutedToken="text-muted"
         timeLabel=""
         likeCount={1}
         commentCount={0}

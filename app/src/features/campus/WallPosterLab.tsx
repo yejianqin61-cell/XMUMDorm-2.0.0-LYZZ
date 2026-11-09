@@ -22,7 +22,7 @@ import {
   canTryWallLayout, generateWallPosterCandidates, isWallPosterStyle, wallPosterKey, wallPosterSeed,
 } from './wallPosterLayout';
 import {
-  wallPalette, WALL_COLORS, WALL_COLOR_IDS, WALL_LAYOUTS, WALL_LAYOUT_IDS, type WallLayoutId, type WallPosterStyle,
+  wallPaletteTokens, WALL_COLORS, WALL_COLOR_IDS, WALL_LAYOUTS, WALL_LAYOUT_IDS, type WallLayoutId, type WallPosterStyle,
 } from './wallPosterTemplates';
 import { WALL_POSTER_LAB_CASES, wallPosterLabCase, type WallPosterLabCaseKey } from './wallPosterLabCases';
 
@@ -196,7 +196,7 @@ export function PosterChoices({ identity, content, production }: {
             <Text role="label">{t('wall.poster.lab.color')}</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: theme.space('space_2') }}>
               {WALL_COLOR_IDS.map((colorId) => {
-                const palette = wallPalette(colorId, theme.scheme);
+                const palette = wallPaletteTokens(colorId);
                 return (
                   <Chip key={colorId} testID={`wall-poster-color-${colorId}`} variant="selectable"
                     disabled={production?.locked} selected={selected.colorId === colorId} label={t(WALL_COLORS[colorId].name)}

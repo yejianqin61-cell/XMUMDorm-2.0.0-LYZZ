@@ -112,6 +112,6 @@ it('guides an empty draft and preserves a selected color while options are folde
   await fireEvent.changeText(input, content + '补充');
   await fireEvent.press(view.getByTestId('wall-poster-adjust'));
   expect(view.getByTestId('wall-poster-color-khaki').props.accessibilityState.selected).toBe(true);
-  expect(view.getByTestId('wall-surface-990001')).toHaveStyle({ backgroundColor: '#38352C' });
+  expect(view.getByTestId('wall-surface-990001')).toHaveStyle({ backgroundColor: '#38352c' });
   expect(create).not.toHaveBeenCalled();
 });

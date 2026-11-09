@@ -24,7 +24,7 @@ it('整卡底色覆盖正文与互动区，并以设备默认字体原样渲染�
   expect(style.fontFamily).toBeUndefined();
   expect(text.props.numberOfLines).toBe(5);
   expect(text.props.onTextLayout).toBeUndefined();
-  expect(StyleSheet.flatten(within(card).getByTestId('wall-surface-41').props.style).backgroundColor).toBe(WALL_COLORS.mist.background);
+  expect(StyleSheet.flatten(within(card).getByTestId('wall-surface-41').props.style).backgroundColor).toBe(wallPalette('mist', 'light').background);
   expect(StyleSheet.flatten(view.getByTestId('wall-free-body').props.style).backgroundColor).toBeUndefined();
   expect(within(card).getByTestId('wall-row-41-like')).toBeTruthy();
 });
