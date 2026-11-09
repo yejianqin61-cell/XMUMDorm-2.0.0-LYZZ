@@ -50,6 +50,11 @@ function TabBar() {
     return () => window.removeEventListener('keydown', closeOnEscape);
   }, [moreOpen]);
 
+  useEffect(() => {
+    document.body.classList.toggle('mobile-more-open', moreOpen);
+    return () => document.body.classList.remove('mobile-more-open');
+  }, [moreOpen]);
+
   return (
     <nav
       className="tab-bar"
