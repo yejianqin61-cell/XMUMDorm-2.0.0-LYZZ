@@ -1,6 +1,10 @@
-import { getTabIndex,  TAB_ROOT_PATHS } from './tabRoutes';
-import { NavLink, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { getTabIndex } from './tabRoutes';
+import { Link, NavLink, useLocation } from 'react-router-dom';
+import { Bell, Languages, Menu, PenLine, Shield, X } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContextState';
+import { useAuth } from '../context/AuthContextState';
+import { SITE_PRIMARY_NAV_ITEMS, isSiteNavActive } from './shell/siteShellNav';
 
 /** 底部 Tab：根据语言显示纯中文或纯英文 */
 const TABS = [
@@ -21,11 +25,30 @@ const TABS = [
 
 /** 微信风格底部 Tab：四栏，图标+文字，选中绿色；支持左右滑动切换（全屏滑动在 Layout 上） */
 function TabBar() {
-  const { lang } = useLanguage();
+  const { lang, setLang } = useLanguage();
+  const { isAdmin } = useAuth();
   const isZh = lang !== 'en';
   const location = useLocation();
+  const [moreOpenPath, setMoreOpenPath] = useState(null);
+  const moreOpen = moreOpenPath === location.pathname;
   const activeIndex = getTabIndex(location.pathname);
-  const tabCount = TABS.length;
+  const primarySectionActive = SITE_PRIMARY_NAV_ITEMS.some((item) => (
+    ['square', 'treehole', 'canteen', 'myzone'].includes(item.key)
+    && isSiteNavActive(location.pathname, item)
+  ));
+  const moreActive = !primarySectionActive && (
+    SITE_PRIMARY_NAV_ITEMS.some((item) => isSiteNavActive(location.pathname, item))
+    || ['/publish', '/mailbox'].includes(location.pathname)
+  );
+
+  useEffect(() => {
+    if (!moreOpen) return undefined;
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') setMoreOpenPath(null);
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [moreOpen]);
 
   return (
     <nav
@@ -38,8 +61,8 @@ function TabBar() {
           className="tab-indicator"
           aria-hidden="true"
           style={{
-            width: `${100 / tabCount}%`,
-            transform: `translateX(${activeIndex * 100}%)`,
+            width: '20%',
+            transform: `translateX(${(moreActive ? 4 : activeIndex) * 100}%)`,
           }}
         >
           <div className="tab-indicator-pill" />
@@ -59,7 +82,71 @@ function TabBar() {
             )}
           </NavLink>
         ))}
+        <button
+          type="button"
+          className={`tab-item tab-item-more ${moreOpen || moreActive ? 'active' : ''}`}
+          aria-expanded={moreOpen}
+          aria-controls="mobile-more-menu"
+          aria-label={isZh ? '更多导航' : 'More navigation'}
+          onClick={() => setMoreOpenPath(moreOpen ? null : location.pathname)}
+        >
+          <span className="tab-icon">{moreOpen ? <X size={24} /> : <Menu size={24} />}</span>
+          <span className="tab-label">{isZh ? '更多' : 'More'}</span>
+        </button>
       </div>
+      {moreOpen ? (
+        <>
+          <button
+            type="button"
+            className="mobile-more-backdrop"
+            aria-label={isZh ? '关闭导航菜单' : 'Close navigation menu'}
+            onClick={() => setMoreOpenPath(null)}
+          />
+          <section
+            id="mobile-more-menu"
+            className="mobile-more-menu"
+            role="dialog"
+            aria-modal="true"
+            aria-label={isZh ? '全部功能' : 'All features'}
+          >
+            <div className="mobile-more-menu__heading">{isZh ? '全部功能' : 'All features'}</div>
+            <div className="mobile-more-menu__grid">
+              {SITE_PRIMARY_NAV_ITEMS.map((item) => {
+                const Icon = item.icon;
+                const active = isSiteNavActive(location.pathname, item);
+                return (
+                  <Link
+                    key={item.key}
+                    to={item.to}
+                    className={`mobile-more-menu__item${active ? ' mobile-more-menu__item--active' : ''}`}
+                    aria-current={active ? 'page' : undefined}
+                    onClick={() => setMoreOpenPath(null)}
+                  >
+                    <Icon size={21} strokeWidth={2} aria-hidden="true" />
+                    <span>{isZh ? item.labelZh : item.labelEn}</span>
+                  </Link>
+                );
+              })}
+            </div>
+            <div className="mobile-more-menu__actions">
+              <Link to="/publish" onClick={() => setMoreOpenPath(null)}>
+                <PenLine size={19} aria-hidden="true" />{isZh ? '发布中心' : 'Publish'}
+              </Link>
+              <Link to="/mailbox" onClick={() => setMoreOpenPath(null)}>
+                <Bell size={19} aria-hidden="true" />{isZh ? '消息' : 'Messages'}
+              </Link>
+              {isAdmin ? (
+                <Link to="/myzone/admin" onClick={() => setMoreOpenPath(null)}>
+                  <Shield size={19} aria-hidden="true" />{isZh ? '管理员后台' : 'Admin Panel'}
+                </Link>
+              ) : null}
+              <button type="button" onClick={() => setLang(isZh ? 'en' : 'zh')}>
+                <Languages size={19} aria-hidden="true" />{isZh ? '切换为英文' : 'Switch to Chinese'}
+              </button>
+            </div>
+          </section>
+        </>
+      ) : null}
     </nav>
   );
 }
