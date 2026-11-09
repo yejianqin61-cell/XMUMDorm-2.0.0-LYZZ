@@ -66,6 +66,26 @@ describe('Report Submission Routes', () => {
       expect(res.body.data.id).toBe(1);
     });
 
+    it('should submit a report for a wall comment', async () => {
+      query.mockImplementation((sql) => {
+        if (sql.includes('id FROM reports WHERE reporter_id')) return Promise.resolve([]);
+        if (sql.includes('INSERT INTO reports')) return Promise.resolve({ insertId: 7 });
+        if (sql.includes('COUNT(*) AS cnt FROM reports WHERE target')) return Promise.resolve([{ cnt: 1 }]);
+        if (sql.includes('FROM confession_comments WHERE id')) return Promise.resolve([{ user_id: 77 }]);
+        return Promise.resolve([]);
+      });
+
+      const res = await supertest(app)
+        .post('/api/reports')
+        .send({ target_type: 'confession_comment', target_id: 501, reason: 'abuse', detail: '人身攻击' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.status).toBe(0);
+      expect(res.body.data.id).toBe(7);
+      const reported = query.mock.calls.find(([sql]) => sql.includes('FROM confession_comments WHERE id'));
+      expect(reported[1]).toEqual([501]);
+    });
+
     it('should prevent duplicate reports', async () => {
       query.mockImplementation((sql) => {
         if (sql.includes('id FROM reports WHERE reporter_id')) {

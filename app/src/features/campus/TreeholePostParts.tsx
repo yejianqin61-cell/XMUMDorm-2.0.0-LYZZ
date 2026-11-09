@@ -12,6 +12,7 @@ import * as React from 'react';
 import { View } from 'react-native';
 import MessageCircle from 'lucide-react-native/icons/message-circle';
 import ThumbsUp from 'lucide-react-native/icons/thumbs-up';
+import Bookmark from 'lucide-react-native/icons/bookmark';
 
 import { Avatar } from '@/components/ui/Avatar';
 import { Chip } from '@/components/ui/Chip';
@@ -147,6 +148,9 @@ export function TreeholeActionBar({
   commentCount,
   onLike,
   onComment,
+  favorited = false,
+  onFavorite,
+  favoriteLabel,
   testIDPrefix,
   likeNotice,
   timeLabel,
@@ -156,6 +160,10 @@ export function TreeholeActionBar({
   commentCount: number | null;
   onLike?: () => void;
   onComment?: () => void;
+  /** 阶段 3：收藏（目前只有万能墙传；树洞不传就没有这个入口） */
+  favorited?: boolean;
+  onFavorite?: () => void;
+  favoriteLabel?: string;
   testIDPrefix?: string;
   likeNotice?: React.ReactNode;
   /** 详情：绝对时间放动作行右端（作者行只留身份，避免昵称 + 等级 + 长时间挤成一行） */
@@ -201,6 +209,19 @@ export function TreeholeActionBar({
             {likeCount === null ? '—' : String(likeCount)}
           </Text>
         </Pressable>
+
+        {onFavorite === undefined ? null : (
+          <Pressable
+            testID={`${prefix}-favorite`}
+            onPress={onFavorite}
+            accessibilityRole="button"
+            accessibilityLabel={favoriteLabel}
+            accessibilityState={{ selected: favorited }}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: theme.space('space_1') }}
+          >
+            <Icon source={Bookmark} size="inline" tint={favorited ? 'brand' : 'secondary'} />
+          </Pressable>
+        )}
 
         {timeLabel === undefined ? null : (
           <>

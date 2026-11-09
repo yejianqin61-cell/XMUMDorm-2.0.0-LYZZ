@@ -4,7 +4,7 @@ import {classifyAuthFailure,isSessionInvalid} from '@/features/auth/authFailure'
 
 export type ReportReason='spam'|'fraud'|'abuse'|'nsfw'|'trolling'|'privacy'|'illegal_trade'|'other';
 export type ReportState='idle'|'sending'|'success'|'failed'|'login'|'denied'|'invalid';
-export type ReportTargetType='confession'|'post'|'marketplace'|'errand';
+export type ReportTargetType='confession'|'confession_comment'|'post'|'marketplace'|'errand';
 const reasons:readonly ReportReason[]=['spam','fraud','abuse','nsfw','trolling','privacy','illegal_trade','other'];
 
 /** One client state machine for the server's single report contract. The controlled panel keeps its own draft. */

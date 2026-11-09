@@ -12,7 +12,10 @@ const labels: AddDishLabels = { titleKey: 'canteen.menuTitle', categoryKey: 'can
   tooManyImagesKey: 'canteen.review.tooManyImages', submitKey: 'action.save', failedKey: 'canteen.review.failed', serverRuleKey: 'canteen.review.serverRule' };
 jest.mock('expo-router', () => ({ useNavigation: () => ({ dispatch: jest.fn() }), useRouter: () => ({ push: jest.fn(), replace: jest.fn(), canGoBack: () => false, back: jest.fn() }) }));
 jest.mock('expo-router/react-navigation', () => ({ usePreventRemove: jest.fn() }));
-jest.mock('@/features/auth/tokenStore', () => ({ readTokenSync: () => mockTokenState.value }));
+jest.mock('@/features/auth/tokenStore', () => ({
+  readTokenSync: () => mockTokenState.value,
+  tokenAccountId: () => 'dish-test-owner',
+}));
 jest.mock('@/features/auth/session', () => ({ useSession: () => ({ status: 'signedIn', handleAuthFailure: async () => ({ kind: 'unknown' }) }) }));
 jest.mock('@/features/mailbox/useUnread', () => ({ useMailboxBadge: () => ({}) }));
 jest.mock('../../../shared/api/canteen', () => ({ createProduct: jest.fn(), getShop: jest.fn() }));

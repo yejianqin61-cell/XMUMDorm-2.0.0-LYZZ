@@ -5,6 +5,26 @@ import type { Post } from './campusModel';
 import { WallPostCard } from './WallPostCard';
 import { wallPostFromRow } from './wallPost';
 
-export function WallPostRow({ post, onOpen }: { post: Post; onOpen: () => void }): React.ReactElement {
-  return <WallPostCard post={wallPostFromRow(post)} onOpen={onOpen} />;
+export function WallPostRow({
+  post,
+  onOpen,
+  onLike,
+  onFavorite,
+  onComment,
+}: {
+  post: Post;
+  onOpen: () => void;
+  onLike?: () => void;
+  onFavorite?: () => void;
+  onComment?: () => void;
+}): React.ReactElement {
+  return (
+    <WallPostCard
+      post={wallPostFromRow(post)}
+      onOpen={onOpen}
+      {...(onLike === undefined ? {} : { onLike })}
+      {...(onFavorite === undefined ? {} : { onFavorite })}
+      {...(onComment === undefined ? {} : { onComment })}
+    />
+  );
 }

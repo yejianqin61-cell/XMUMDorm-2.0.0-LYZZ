@@ -30,6 +30,10 @@ export type TreeholePostDetailProps = {
   commentCount: number | null;
   onLike: () => void;
   onComment: () => void;
+  /** 万能墙：收藏（树洞不传） */
+  favorited?: boolean;
+  onFavorite?: () => void;
+  favoriteLabel?: string;
   /** 万能墙：匿名投影，丢弃标题/媒体/标签 */
   anonymous?: boolean;
   /** 万能墙正文（六种版式模板）；给了它就替代纯文本正文 */
@@ -47,6 +51,9 @@ export function TreeholePostDetail({
   commentCount,
   onLike,
   onComment,
+  favorited = false,
+  onFavorite,
+  favoriteLabel,
   anonymous = false,
   wallContent,
   likeNotice,
@@ -99,6 +106,9 @@ export function TreeholePostDetail({
           commentCount={commentCount}
           onLike={onLike}
           onComment={onComment}
+          favorited={favorited}
+          {...(onFavorite === undefined ? {} : { onFavorite })}
+          favoriteLabel={favoriteLabel}
           likeNotice={likeNotice}
           timeLabel={timeLabel}
         />

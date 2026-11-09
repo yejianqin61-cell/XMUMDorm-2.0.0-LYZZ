@@ -186,6 +186,8 @@ describe('阶段 1 · 双语与投影', () => {
       content: '旧清单内容',
       likeCount: 0,
       commentCount: 0,
+      liked: false,
+      favorited: false,
     });
     expect(
       wallPostFromRow({
@@ -195,6 +197,8 @@ describe('阶段 1 · 双语与投影', () => {
         created_at: '2026-10-29T12:00:00Z',
         like_count: 5,
         comment_count: 3,
+        liked: true,
+        favorited: true,
       })
     ).toEqual({
       id: 8,
@@ -203,6 +207,8 @@ describe('阶段 1 · 双语与投影', () => {
       createdAt: '2026-10-29T12:00:00Z',
       likeCount: 5,
       commentCount: 3,
+      liked: true,
+      favorited: true,
     });
   });
 });

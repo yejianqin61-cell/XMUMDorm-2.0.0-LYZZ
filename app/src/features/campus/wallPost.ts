@@ -45,6 +45,9 @@ export type WallPost = {
   createdAt?: string;
   likeCount: number;
   commentCount: number;
+  /** 阶段 3：当前账号是否已赞 / 已收藏（列表互动的初始态） */
+  liked?: boolean;
+  favorited?: boolean;
   /** 招募帖才有 */
   recruit?: WallRecruit;
   /** 阶段 1 的静态样板，界面上必须显式标注「示例」 */
@@ -66,5 +69,7 @@ export function wallPostFromRow(row: Post): WallPost {
     ...(row.created_at === undefined ? {} : { createdAt: row.created_at }),
     likeCount: typeof row.like_count === 'number' && row.like_count > 0 ? row.like_count : 0,
     commentCount: typeof row.comment_count === 'number' && row.comment_count > 0 ? row.comment_count : 0,
+    liked: row.liked === true,
+    favorited: row.favorited === true,
   };
 }

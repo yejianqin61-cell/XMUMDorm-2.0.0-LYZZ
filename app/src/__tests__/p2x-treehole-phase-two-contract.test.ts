@@ -87,7 +87,8 @@ describe('P2X Treehole 视觉层契约（令牌组件层）', () => {
   it('万能墙继续走匿名投影与独立列表，不接实名帖子部件', () => {
     const wall = read('src', 'features', 'campus', 'WallFeed.tsx');
     expect(wall).toContain('WallPostRow');
-    expect(wall).toContain('WallSampleBand');
+    // 阶段 2 起信息流只渲染真实投稿，示例带不再挂在 WallFeed（预览页仍保留）
+    expect(wall.includes('WallSampleBand')).toBe(false);
     // 阶段 1：旧六卡版式组件已移除，真实行经适配层映射成自由帖卡片
     const wallRow = read('src', 'features', 'campus', 'WallPostRow.tsx');
     expect(wallRow).toContain('WallPostCard');

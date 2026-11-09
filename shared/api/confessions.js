@@ -63,9 +63,28 @@ export function toggleConfessionLike(id) {
   return post(`/api/confessions/${id}/like`, {});
 }
 
-/** 评论列表（一级 + replies） */
-export function getConfessionComments(id) {
-  return get(`/api/confessions/${id}/comments`);
+/** 收藏 / 取消收藏（切换语义），返回 { confession_id, favorited } */
+export function toggleConfessionFavorite(id) {
+  return post(`/api/confessions/${id}/favorite`, {});
+}
+
+/**
+ * 评论列表（一级 + 扁平 replies）。
+ * 不传 sort 时保留旧顺序（created_at ASC，Web 口径）；App 显式传 latest/hot。
+ */
+export function getConfessionComments(id, { sort } = {}) {
+  const query = sort === 'latest' || sort === 'hot' ? `?sort=${sort}` : '';
+  return get(`/api/confessions/${id}/comments${query}`);
+}
+
+/** 评论点赞 / 取消（切换语义），返回 { comment_id, liked, like_count } */
+export function toggleConfessionCommentLike(id, commentId) {
+  return post(`/api/confessions/${id}/comments/${commentId}/like`, {});
+}
+
+/** 楼主精选 / 取消（仅帖子作者；每帖最多 3 条），返回 { comment_id, featured, featured_at } */
+export function featureConfessionComment(id, commentId, featured) {
+  return patch(`/api/confessions/${id}/comments/${commentId}/feature`, { featured });
 }
 
 /**

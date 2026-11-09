@@ -4,6 +4,7 @@ export type CampusReportReason=ReportReason;
 export type CampusReportState=ReportState;
 
 /** Campus names remain at the feature boundary; all targets share one server-report state machine. */
-export function useCampusReport(target:{id:number;kind:'confession'|'wall'}|null,signedIn:boolean,onAuthFailure:(error:unknown)=>Promise<unknown>){
- return useReport(target?{id:target.id,type:target.kind==='wall'?'confession':'post'}:null,signedIn,onAuthFailure);
+export function useCampusReport(target:{id:number;kind:'confession'|'wall'|'comment'}|null,signedIn:boolean,onAuthFailure:(error:unknown)=>Promise<unknown>){
+ const type=target===null?null:target.kind==='wall'?'confession':target.kind==='comment'?'confession_comment':'post';
+ return useReport(target&&type?{id:target.id,type}:null,signedIn,onAuthFailure);
 }

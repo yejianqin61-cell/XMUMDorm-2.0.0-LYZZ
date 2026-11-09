@@ -676,8 +676,9 @@ describe('树洞详情互动 / 评论', () => {
     await waitFor(() => expect(view.getByText('匿名回复')).toBeTruthy());
     expect(view.queryByText('秘密姓名')).toBeNull();
     expect(view.queryByText('回复姓名')).toBeNull();
-    await fireEvent.press(view.getByText('回复'));
-    expect(view.getByText('正在回复某条评论')).toBeTruthy();
+    // 阶段 3：万能墙可以回复任意评论，根评论与回复各有一个“回复”入口
+    await fireEvent.press(view.getAllByText('回复')[0]);
+    expect(view.getByText('回复 匿名')).toBeTruthy();
     await fireEvent.changeText(view.getByLabelText('写评论'), '字'.repeat(501));
     await fireEvent.press(view.getByTestId('campus-composer-send'));
     expect(createConfessionComment).not.toHaveBeenCalled();

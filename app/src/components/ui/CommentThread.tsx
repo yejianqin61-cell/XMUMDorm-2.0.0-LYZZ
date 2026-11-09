@@ -2,7 +2,8 @@
  * CommentThread（D01）—— 评论列表（组件定义 §2.6）
  *
  * 三条硬约束，全部落成**可测的纯函数**：
- *   1. **仅二级**：不能回复回复 → `canReplyTo(depth)`（`depth === 0` 才可）
+ *   1. **视觉最多两层**：默认只有一级可回复；万能墙用 `allowNestedReply` 允许
+ *      「回复一条回复」，但仍归到同一条一级评论下、不新增缩进（`rootId` 决定归属）
  *   2. **组内展开**：默认只显示前 N 条回复 + "展开其余"，`visibleReplies(...)` 决定
  *   3. **分页**：本组件只管已加载的评论；页脚状态交给 `T05 ListFooter`（页面传 `footer`）
  *      —— ⛔ 不在这里另写一套分页状态机（§2.4：分页状态机只有 `K05`/`T05` 两处）
@@ -20,11 +21,24 @@ import { Text } from './Text';
 
 export type CommentNode = {
   id: string;
-  /** 一级评论为 `null` */
+  /** 直接父评论；一级评论为 `null`（多级数据下可能指向一条回复） */
   parentId: string | null;
-  /** 后端给的层级：0 一级 / 1 回复（**只有这两级**） */
+  /** 后端给的层级：0 一级 / 1 回复（**视觉只有这两级**） */
   depth: 0 | 1;
+  /** 阶段 3：这条回复最终归属的一级评论（用于多级压平，不加缩进） */
+  rootId?: string | null;
   author: CommentAuthor;
+  /** 匿名编号等展示文案（「匿名03」），不含真实身份 */
+  authorLabel?: string;
+  /** 楼主 / 我 / 精选（轻量文字标识） */
+  isAuthor?: boolean;
+  isMine?: boolean;
+  featured?: boolean;
+  /** 被回复评论的 id 与摘要（目标已删除时摘要为空） */
+  replyToId?: string | null;
+  replyToExcerpt?: string | null;
+  /** 当前查看者能否精选这条评论（仅楼主 + 一级评论） */
+  canFeature?: boolean;
   content: string;
   createdAtLabel: string;
   canDelete?: boolean;
@@ -50,13 +64,16 @@ export function groupComments(nodes: readonly CommentNode[]): readonly CommentGr
   const orphans: CommentNode[] = [];
 
   for (const node of nodes) {
-    if (node.depth === 0 || node.parentId === null) {
+    if (node.depth === 0 || (node.parentId === null && node.rootId == null)) {
       roots.push(node);
       continue;
     }
-    const bucket = repliesByParent.get(node.parentId);
+    // 多级回复按 rootId 归到一级评论；旧数据没有 rootId 时退回直接父评论
+    const anchor = node.rootId ?? node.parentId;
+    if (anchor === null) continue;
+    const bucket = repliesByParent.get(anchor);
     if (bucket) bucket.push(node);
-    else repliesByParent.set(node.parentId, [node]);
+    else repliesByParent.set(anchor, [node]);
   }
 
   const groups: CommentGroup[] = roots.map((root) => ({
@@ -66,7 +83,8 @@ export function groupComments(nodes: readonly CommentNode[]): readonly CommentGr
 
   const rootIds = new Set(roots.map((root) => root.id));
   for (const node of nodes) {
-    if (node.depth === 1 && node.parentId !== null && !rootIds.has(node.parentId)) {
+    const anchor = node.rootId ?? node.parentId;
+    if (node.depth === 1 && anchor !== null && !rootIds.has(anchor)) {
       orphans.push(node);
     }
   }
@@ -100,6 +118,18 @@ export type CommentThreadLabels = CommentItemProps['labels'] & {
   moreReplies: (count: number) => string;
   /** "收起" */
   collapse: string;
+  /** 阶段 3 可选：轻量标识与操作文案 */
+  authorBadge?: string;
+  mineBadge?: string;
+  featuredBadge?: string;
+  feature?: string;
+  unfeature?: string;
+  reportComment?: string;
+  replyToDeleted?: string;
+  /** 格式化「回复 匿名03」；不给就不显示引用行 */
+  replyTo?: (name: string) => string;
+  /** 引用摘要前的标点（中文全角 / 英文半角） */
+  replyToSeparator?: string;
 };
 
 export type CommentThreadProps = {
@@ -107,8 +137,14 @@ export type CommentThreadProps = {
   labels: CommentThreadLabels;
   onToggleLike?: (id: string) => void;
   onDelete?: (id: string) => void;
-  /** 传了才有回复入口；回复的回复由 `canReplyTo` 挡住 */
+  /** 传了才有回复入口；默认只有一级可回复 */
   onReply?: (id: string) => void;
+  /** 万能墙：允许回复一条回复（视觉仍压平在一级评论下） */
+  allowNestedReply?: boolean;
+  /** 楼主精选（页面负责权限；这里只负责入口） */
+  onToggleFeature?: (id: string) => void;
+  /** 评论举报 */
+  onReportComment?: (id: string) => void;
   /** 页脚（`T05 ListFooter` 或"没有更多"）——分页状态机不在这里 */
   footer?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
@@ -121,6 +157,9 @@ export function CommentThread({
   onToggleLike,
   onDelete,
   onReply,
+  allowNestedReply = false,
+  onToggleFeature,
+  onReportComment,
   footer,
   style,
   testID,
@@ -128,10 +167,50 @@ export function CommentThread({
   const theme = useTheme();
   const [expanded, setExpanded] = React.useState<ReadonlySet<string>>(new Set());
   const groups = groupComments(nodes);
+  const nodeById = new Map(nodes.map((node) => [node.id, node]));
 
   /** ⛔ 回复入口**由 `canReplyTo` 决定**，不是靠"回复那里忘了传 onReply" —— 规则要能被改一处 */
   const replyHandlerFor = (node: CommentNode): (() => void) | undefined =>
-    onReply !== undefined && canReplyTo(node.depth) ? () => onReply(node.id) : undefined;
+    onReply !== undefined && (canReplyTo(node.depth) || (allowNestedReply && node.depth === 1))
+      ? () => onReply(node.id)
+      : undefined;
+
+  /** 「回复 匿名03」：目标已不在已加载列表里时给「回复已删除评论」，不暴露已删除正文 */
+  const replyLabelFor = (node: CommentNode): string | undefined => {
+    if (node.replyToId == null) return undefined;
+    const target = nodeById.get(node.replyToId);
+    if (!target) return labels.replyToDeleted;
+    const name =
+      target.authorLabel ?? (target.author.kind === 'named' ? target.author.name : labels.anonymous);
+    return labels.replyTo ? labels.replyTo(name) : undefined;
+  };
+
+  const itemProps = (node: CommentNode) => ({
+    author: node.author,
+    authorLabel: node.authorLabel,
+    content: node.content,
+    createdAtLabel: node.createdAtLabel,
+    canDelete: node.canDelete,
+    liked: node.liked,
+    likeCount: node.likeCount,
+    onToggleLike: onToggleLike ? () => onToggleLike(node.id) : undefined,
+    onDelete: onDelete ? () => onDelete(node.id) : undefined,
+    onReply: replyHandlerFor(node),
+    allowReply: allowNestedReply,
+    authorBadge: node.isAuthor ? labels.authorBadge : undefined,
+    mineBadge: node.isMine ? labels.mineBadge : undefined,
+    featured: node.featured === true,
+    featuredBadge: labels.featuredBadge,
+    replyToLabel: replyLabelFor(node),
+    replyToExcerpt: node.replyToExcerpt,
+    replyToSeparator: labels.replyToSeparator,
+    canFeature: node.canFeature === true && onToggleFeature !== undefined,
+    onToggleFeature: onToggleFeature ? () => onToggleFeature(node.id) : undefined,
+    featureLabel: node.featured ? labels.unfeature : labels.feature,
+    onReport: onReportComment ? () => onReportComment(node.id) : undefined,
+    reportLabel: labels.reportComment,
+    labels,
+  });
 
   const toggle = (id: string): void => {
     setExpanded((prev) => {
@@ -152,39 +231,36 @@ export function CommentThread({
           <View key={group.root.id} style={{ gap: theme.space('space_1') }}>
             <CommentItem
               testID={testID ? `${testID}-${group.root.id}` : undefined}
-              author={group.root.author}
-              content={group.root.content}
-              createdAtLabel={group.root.createdAtLabel}
               depth={0}
-              canDelete={group.root.canDelete}
-              liked={group.root.liked}
-              likeCount={group.root.likeCount}
-              onToggleLike={onToggleLike ? () => onToggleLike(group.root.id) : undefined}
-              onDelete={onDelete ? () => onDelete(group.root.id) : undefined}
-              // 仅二级：只有一级评论才拿到回复入口（判断走纯函数）
-              onReply={replyHandlerFor(group.root)}
-              labels={labels}
+              {...itemProps(group.root)}
             />
 
-            {/* 回复缩进一层（⛔ 只有一层缩进，不存在第三层） */}
+            {/*
+              * 回复区（⛔ 只有一层视觉层级，不存在第三层）：
+              * 万能墙用低对比度容器 + 小缩进；其它评论区保持原来的纯缩进。
+              */}
             {shown.length > 0 ? (
-              <View style={{ paddingLeft: theme.space('space_8'), gap: theme.space('space_1') }}>
+              <View
+                testID={testID ? `${testID}-${group.root.id}-replies` : undefined}
+                style={[
+                  { gap: theme.space('space_1') },
+                  allowNestedReply
+                    ? {
+                        marginLeft: theme.space('space_2'),
+                        paddingHorizontal: theme.space('space_3'),
+                        paddingVertical: theme.space('space_2'),
+                        borderRadius: theme.radius('radius_medium'),
+                        backgroundColor: theme.color['bg-sunken'].value,
+                      }
+                    : { paddingLeft: theme.space('space_8') },
+                ]}
+              >
                 {shown.map((reply) => (
                   <CommentItem
                     key={reply.id}
                     testID={testID ? `${testID}-${reply.id}` : undefined}
-                    author={reply.author}
-                    content={reply.content}
-                    createdAtLabel={reply.createdAtLabel}
                     depth={1}
-                    canDelete={reply.canDelete}
-                    liked={reply.liked}
-                    likeCount={reply.likeCount}
-                    onToggleLike={onToggleLike ? () => onToggleLike(reply.id) : undefined}
-                    onDelete={onDelete ? () => onDelete(reply.id) : undefined}
-                    // 回复的回复：`canReplyTo(1)` 为 false → 这里天然没有入口
-                    onReply={replyHandlerFor(reply)}
-                    labels={labels}
+                    {...itemProps(reply)}
                   />
                 ))}
               </View>
@@ -197,7 +273,10 @@ export function CommentThread({
                 accessibilityLabel={
                   hiddenCount > 0 ? labels.moreReplies(hiddenCount) : labels.collapse
                 }
-                style={{ paddingLeft: theme.space('space_8'), minHeight: theme.touchTarget }}
+                style={{
+                  paddingLeft: allowNestedReply ? theme.space('space_3') : theme.space('space_8'),
+                  minHeight: theme.touchTarget,
+                }}
               >
                 <Text role="caption" colorToken="text-brand">
                   {hiddenCount > 0 ? labels.moreReplies(hiddenCount) : labels.collapse}

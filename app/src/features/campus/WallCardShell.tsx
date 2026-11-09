@@ -13,7 +13,8 @@
  *      只是不作为公开展示字段；这里没有头像 / 昵称 / 匿名行。
  *   2. **发布时间属于卡片元信息**，统一放底部互动栏右侧；⛔ 不画进文字海报内部，
  *      ⛔ 不做海报水印。
- *   3. 互动区仍是**静态计数**（阶段 1 未开放点赞/评论/收藏），⛔ 不把图标做成可点按钮。
+ *   3. 互动区默认是**静态计数**；阶段 3 起调用方传 `onLike` / `onFavorite` / `onComment`
+ *      才变成可点按钮（点赞/收藏有选中态）。没有处理函数时保持纯展示，⛔ 不伪造可点。
  *
  * ⛔ 内容区由调用方给（`WallFreePostBody` / `WallRecruitPostBody`），外壳不关心内部版式，
  *    整卡颜色由调用方传入，互动区与正文共享底色。
@@ -39,6 +40,12 @@ export type WallCardShellProps = {
   timeLabel: string;
   likeCount: number;
   commentCount: number;
+  /** 阶段 3 互动：不传处理函数则保持静态计数 */
+  liked?: boolean;
+  favorited?: boolean;
+  onLike?: () => void;
+  onFavorite?: () => void;
+  onComment?: () => void;
   actionLabels: { like: string; comment: string; save: string };
   /** 读屏整卡摘要；给了 `onPress` 时这条摘要就是按钮标签 */
   accessibilityLabel: string;
@@ -54,6 +61,11 @@ export function WallCardShell({
   timeLabel,
   likeCount,
   commentCount,
+  liked = false,
+  favorited = false,
+  onLike,
+  onFavorite,
+  onComment,
   actionLabels,
   accessibilityLabel,
   onPress,
@@ -86,6 +98,8 @@ export function WallCardShell({
             count={likeCount}
             label={actionLabels.like}
             testID={`wall-row-${cardId}-like`}
+            onPress={onLike}
+            selected={liked}
           />
           <WallActionStat
             muted={muted}
@@ -93,8 +107,16 @@ export function WallCardShell({
             count={commentCount}
             label={actionLabels.comment}
             testID={`wall-row-${cardId}-comment`}
+            onPress={onComment}
           />
-          <WallActionStat muted={muted} source={Bookmark} label={actionLabels.save} testID={`wall-row-${cardId}-save`} />
+          <WallActionStat
+            muted={muted}
+            source={Bookmark}
+            label={actionLabels.save}
+            testID={`wall-row-${cardId}-save`}
+            onPress={onFavorite}
+            selected={favorited}
+          />
         </View>
 
         <View style={{ flex: 1, minWidth: 0 }} />
@@ -140,34 +162,70 @@ export function WallCardShell({
   );
 }
 
-/** 静态互动计数：无 onPress、无 button 角色 —— 读屏只播报"事实" */
+/**
+ * 互动计数：有 `onPress` 才是按钮并带选中态；
+ * 没有处理函数时保持静态展示（读屏只播报"事实"，⛔ 不谎报可点）。
+ */
 function WallActionStat({
   source,
   muted,
   count,
   label,
   testID,
+  onPress,
+  selected,
 }: {
   source: IconComponent;
   muted: string;
   count?: number;
   label: string;
   testID: string;
+  onPress?: () => void;
+  selected?: boolean;
 }): React.ReactElement {
   const theme = useTheme();
-  return (
-    <View
-      testID={testID}
-      accessible
-      accessibilityLabel={label}
-      style={{ flexDirection: 'row', alignItems: 'center', gap: theme.space('space_1') }}
-    >
-      <Icon source={source} size="body" colorOverride={muted} />
+  const content = (
+    <>
+      <Icon
+        source={source}
+        size="body"
+        {...(onPress === undefined
+          ? { colorOverride: muted }
+          : { tint: selected ? 'brand' : 'secondary' })}
+      />
       {count === undefined ? null : (
-        <Text role="caption" style={{ color: muted }}>
+        <Text role="caption" style={{ color: selected ? theme.color['text-brand'].value : muted }}>
           {String(count)}
         </Text>
       )}
-    </View>
+    </>
+  );
+  // ⛔ 不靠 minHeight 撑高：那会把卡片底部互动栏整体变高；
+  //    可点范围用 hitSlop 扩展，视觉尺寸与阶段 1/2 保持一致。
+  const style = {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: theme.space('space_1'),
+  };
+
+  if (onPress === undefined) {
+    return (
+      <View testID={testID} accessible accessibilityLabel={label} style={style}>
+        {content}
+      </View>
+    );
+  }
+  return (
+    <Pressable
+      testID={testID}
+      onPress={onPress}
+      hitSlop={theme.space('space_2')}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ selected: selected === true }}
+      style={style}
+    >
+      {content}
+    </Pressable>
   );
 }

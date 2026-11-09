@@ -86,9 +86,13 @@ describe('P2X 按压态：信息流 / 缩略图 / 详情轮播 / 全屏看图器
     expect(row).toContain('WallPostCard');
     const shell = read('src', 'features', 'campus', 'WallCardShell.tsx');
     const tags = openingTags(shell, 'Pressable');
-    expect(tags).toHaveLength(1);
-    expect(tags[0]).toContain('feedback="none"');
-    expect(tags[0]).toContain('onPress={onPress}');
+    // 阶段 3：点赞/收藏/评论也各自是可点按钮；整卡点击区只有那一个
+    const cardTags = tags.filter((tag) => tag.includes('feedback="none"'));
+    expect(cardTags).toHaveLength(1);
+    expect(cardTags[0]).toContain('onPress={onPress}');
+    for (const tag of tags.filter((tag) => !tag.includes('feedback="none"'))) {
+      expect(tag).toContain('hitSlop=');
+    }
   });
 
   it('详情轮播与全屏看图器的图区不做按压变灰：点图放大 / 读屏翻页都保留', () => {
