@@ -11,7 +11,7 @@
  */
 
 import * as React from 'react';
-import { View, type StyleProp, type ViewStyle } from 'react-native';
+import { View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 
 import { useTheme } from '@/design-system/theme';
 import type { DarkColorTokenName } from '@/design-system/tokens';
@@ -50,6 +50,7 @@ export type BadgeProps = {
   /** 数字上限（默认 99） */
   max?: number;
   style?: StyleProp<ViewStyle>;
+  labelStyle?: StyleProp<TextStyle>;
   testID?: string;
 };
 
@@ -64,6 +65,7 @@ export function Badge({
   tone = 'danger',
   max = 99,
   style,
+  labelStyle,
   testID,
 }: BadgeProps): React.ReactElement | null {
   const theme = useTheme();
@@ -93,7 +95,7 @@ export function Badge({
         style,
       ]}
     >
-      <Text role="caption" emphasis="strong" colorToken={spec.onFill} numberOfLines={1}>
+      <Text role="caption" emphasis="strong" colorToken={spec.onFill} style={labelStyle} numberOfLines={1}>
         {label}
       </Text>
     </View>

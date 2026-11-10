@@ -13,7 +13,11 @@ const mockNavigate = jest.fn();
 const mockReply = jest.fn();
 jest.mock('expo-router', () => ({ useNavigation: () => ({ dispatch: jest.fn() }), useRouter: () => ({ push: jest.fn(), replace: mockNavigate, back: jest.fn(), canGoBack: () => false }) }));
 jest.mock('expo-router/react-navigation', () => ({ usePreventRemove: jest.fn() }));
-jest.mock('@/features/auth/tokenStore', () => ({ readTokenSync: () => mockTokenState.value }));
+jest.mock('@/features/auth/tokenStore', () => ({
+  readTokenSync: () => mockTokenState.value,
+  // 阶段 2 checkpoint 起 cacheIdentity 还需要账号作用域；测试用固定值即可
+  tokenAccountId: () => 'review-test-owner',
+}));
 jest.mock('@/features/auth/session', () => ({ useSession: () => ({ status: 'signedIn', handleAuthFailure: async () => ({ kind: 'unknown' }) }) }));
 jest.mock('@/features/mailbox/useUnread', () => ({ useMailboxBadge: () => ({}) }));
 jest.mock('@/features/square/pickReviewImage', () => ({ pickReviewImage: jest.fn() }));

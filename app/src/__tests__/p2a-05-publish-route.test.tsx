@@ -132,6 +132,26 @@ describe('P2A-05 发布表单路由接线与端到端', () => {
     });
   });
 
+  it('发布中心的万能墙入口先选择自由帖，再进入现有编辑表单', async () => {
+    routerState.params = { type: 'wall' };
+    const view = await renderApp(withProviders(<PublishRoute />));
+    expect(view.queryByTestId('wall-write-screen')).toBeNull();
+    expect(view.getByTestId('publish-wall-recruit')).toBeDisabled();
+    expect(view.getByText('暂未开放')).toBeTruthy();
+    await userEvent.setup().press(view.getByTestId('publish-wall-free'));
+    expect(routerState.pushed).toEqual([{
+      pathname: '/publish/[type]',
+      params: { type: 'wall', postKind: 'free' },
+    }]);
+  });
+
+  it('选择自由帖后使用节点 B 的编辑表单', async () => {
+    routerState.params = { type: 'wall', postKind: 'free' };
+    const view = await renderApp(withProviders(<PublishRoute />));
+    expect(view.getByTestId('wall-write-screen')).toBeTruthy();
+    expect(view.queryByTestId('wall-post-kind-picker')).toBeNull();
+  });
+
   describe('TC-P2A-05-2A / 3A · 已注册但描述符未交 → 业务空态，且不发请求', () => {
     it('渲染"暂未开放"空态 + 可返回；⛔ 一个真源请求都不发', async () => {
       descriptors.getPublishDescriptor.mockReturnValue(undefined);

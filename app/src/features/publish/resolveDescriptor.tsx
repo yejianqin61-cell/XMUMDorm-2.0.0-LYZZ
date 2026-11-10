@@ -4,7 +4,6 @@ import { PublishMedia } from './PublishMedia';
 import type { FormFieldDescriptor, FormOption } from '@/components/ui/FormField';
 import { useI18n, type Translate } from '@/i18n';
 import { createPostPublishDescriptor } from '@/features/campus/postPublishFields';
-import { createWallPublishDescriptor } from '@/features/campus/publishFields';
 import { createMarketplacePublishDescriptor } from '@/features/marketplace/publishFields';
 import { createErrandPublishDescriptor } from '@/features/errand/publishFields';
 import { createClubActivityPublishDescriptor, createClubPostPublishDescriptor } from '@/features/clubs/publishFields';
@@ -26,7 +25,7 @@ export function buildDescriptor(
   renderTags?: NonNullable<FormFieldDescriptor['render']>
 ): PublishFormDescriptor | undefined {
   switch (id) {
-    case 'wall': return createWallPublishDescriptor(t);
+    // 万能墙：阶段 1 撤下旧六卡表单（自由帖阶段 2 / 招募帖阶段 5 再接回来）
     case 'errand': return createErrandPublishDescriptor(t);
     case 'marketplace': return createMarketplacePublishDescriptor(t, { categories: options, renderMedia: mediaRender(4,false) });
     case 'confession': return createPostPublishDescriptor(t, { tags: options, renderMedia: mediaRender(3,true), renderTags });

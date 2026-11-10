@@ -34,6 +34,8 @@ export type ChipSize = 'default' | 'compact';
 export type ChipProps = {
   /** 标签文案（≤6 汉字，组件定义 §5.4） */
   label: string;
+  /** 颜色样例：值必须是**语义令牌名**（不是 hex）；组件内用 theme.color[...] 解析 */
+  swatch?: { fill: string; border: string };
   variant?: ChipVariant;
   /** 视觉档位；`compact` 用于正文附属标签，不用于可点筛选项 */
   size?: ChipSize;
@@ -51,6 +53,7 @@ export type ChipProps = {
 
 export function Chip({
   label,
+  swatch,
   variant = 'static',
   size = 'default',
   selected = false,
@@ -86,11 +89,24 @@ export function Chip({
     style,
   ];
 
-  const body = (
-    <View testID={testID} style={container}>
+  const labelContent = (
+    <>
+      {swatch ? (
+        <View aria-hidden style={{
+          width: 14, height: 14, borderRadius: 7, borderWidth: 1,
+          backgroundColor: theme.color[swatch.fill].value,
+          borderColor: theme.color[swatch.border].value,
+        }} />
+      ) : null}
       <Text role={compact ? 'caption' : 'label'} colorToken={textToken} numberOfLines={1}>
         {label}
       </Text>
+    </>
+  );
+
+  const body = (
+    <View testID={testID} style={container}>
+      {labelContent}
       {variant === 'removable' ? (
         <Pressable
           testID={testID ? `${testID}-remove` : undefined}
@@ -126,9 +142,7 @@ export function Chip({
       accessibilityLabel={label}
       style={container}
     >
-      <Text role={compact ? 'caption' : 'label'} colorToken={textToken} numberOfLines={1}>
-        {label}
-      </Text>
+      {labelContent}
     </Pressable>
   );
 }

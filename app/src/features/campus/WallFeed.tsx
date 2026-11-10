@@ -2,7 +2,10 @@
  * WallFeed —— 万能墙模块（广场首页第 2 页）
  *
  * 与树洞的边界（宪法 4.1.1）：**只允许在导航层合并**，数据层/信息流层不得混排。
- * 因此这里完全不使用树洞的实名帖子组件：匿名投影 + 六种版式标题，都走 `WallTemplate*`。
+ * 因此这里完全不使用树洞的实名帖子组件：匿名投影 + 两卡（自由帖 / 招募帖）共用外壳。
+ *
+ * 阶段 1（2026-11-02 所有者）：旧六卡统一并入自由帖呈现；信息流是**单列纵向混排**，
+ * 真实投稿走后端窗口游标，混排样板在开发预览页。
  *
  * 分页是**服务端窗口游标**（`cursor`/`older`），不是页码 —— 与树洞的 `page` 分页分开维护。
  */
@@ -13,19 +16,24 @@ import { useRouter } from 'expo-router';
 
 import { InlineNotice } from '@/components/ui/InlineNotice';
 import { ListScreen, useListPagination } from '@/components/ui/ListScreen';
+import { useToast } from '@/components/ui/Toast';
 import { useTheme } from '@/design-system/theme';
 import { useSession } from '@/features/auth/session';
 import { useI18n } from '@/i18n';
 import { getQueryClient } from '@/shared/queryClient';
 import { QK } from '../../../../shared/query/queryKeys';
-import { getConfessionWindow } from '../../../../shared/api/confessions';
+import {
+  getConfessionWindow,
+  toggleConfessionFavorite,
+  toggleConfessionLike,
+} from '../../../../shared/api/confessions';
 import { WallPostRow } from './WallPostRow';
 import { asWall, errorFor, type Post } from './campusModel';
 
 /** 万能墙一屏一篇的窗口大小（后端 limit 1–10） */
 export const WALL_WINDOW_LIMIT = 5;
 // 与详情删除回执保持同一入口；模块常量避免把不可变key交给组件内手工memo。
-const WALL_SNAPSHOT_KEY = [...QK.confessionWindow('_guest'), 'wallReadSnapshot'];
+export const WALL_SNAPSHOT_KEY = [...QK.confessionWindow('_guest'), 'wallReadSnapshot'];
 
 export type WallFeedSnapshot = {
   /** 固定删除回执入口不变；只有当前身份可以恢复带互动/本人标记的行。 */
@@ -45,12 +53,28 @@ export type WallFeedSnapshot = {
 export function WallFeed({ testID = 'wall-feed' }: { testID?: string }): React.ReactElement {
   const session = useSession();
   const identity = JSON.stringify([session.status, session.identifier, session.isSignedIn]);
-  return <WallFeedSession key={identity} testID={testID} identity={identity} />;
+  return (
+    <WallFeedSession
+      key={identity}
+      testID={testID}
+      identity={identity}
+      isSignedIn={session.isSignedIn}
+    />
+  );
 }
 
-function WallFeedSession({ testID, identity }: { testID: string; identity: string }): React.ReactElement {
+function WallFeedSession({
+  testID,
+  identity,
+  isSignedIn,
+}: {
+  testID: string;
+  identity: string;
+  isSignedIn: boolean;
+}): React.ReactElement {
   const { t } = useI18n();
   const theme = useTheme();
+  const toast = useToast();
   const router = useRouter();
   const client = getQueryClient();
   const key = WALL_SNAPSHOT_KEY;
@@ -208,6 +232,71 @@ function WallFeedSession({ testID, identity }: { testID: string; identity: strin
     });
   }, [client, key, load, identity]);
 
+  /** 只改当前身份快照里的一行；详情页回写也走同一个键。 */
+  const patchRow = React.useCallback(
+    (id: number, patch: Partial<Post>) => {
+      const next = {
+        ...snapshot.current,
+        rows: snapshot.current.rows.map((row) => (row.id === id ? { ...row, ...patch } : row)),
+      };
+      snapshot.current = next;
+      client.setQueryData(key, next);
+      setRows(next.rows);
+    },
+    [client, key]
+  );
+
+  const pendingInteraction = React.useRef(new Set<number>());
+
+  /**
+   * 信息流点赞 / 收藏：先乐观改这一行，失败回滚并提示。
+   * 未登录时只引导去登录，不发请求（权限最终仍由后端校验）。
+   */
+  const toggleInteraction = async (id: number, kind: 'like' | 'favorite'): Promise<void> => {
+    if (!isSignedIn) {
+      router.push('/login' as never);
+      return;
+    }
+    if (pendingInteraction.current.has(id)) return;
+    const row = snapshot.current.rows.find((item) => item.id === id);
+    if (!row) return;
+    pendingInteraction.current.add(id);
+    const before = { liked: row.liked, favorited: row.favorited, like_count: row.like_count };
+    try {
+      if (kind === 'like') {
+        patchRow(id, {
+          liked: row.liked !== true,
+          like_count: Math.max(0, (row.like_count ?? 0) + (row.liked === true ? -1 : 1)),
+        });
+        const data = await toggleConfessionLike(id);
+        if (data?.confession_id !== id || typeof data?.liked !== 'boolean') {
+          throw new Error('Invalid like response');
+        }
+        patchRow(id, {
+          liked: data.liked,
+          ...(typeof data.like_count === 'number' ? { like_count: Math.max(0, data.like_count) } : {}),
+        });
+      } else {
+        patchRow(id, { favorited: row.favorited !== true });
+        const data = await toggleConfessionFavorite(id);
+        if (data?.confession_id !== id || typeof data?.favorited !== 'boolean') {
+          throw new Error('Invalid favorite response');
+        }
+        patchRow(id, { favorited: data.favorited });
+      }
+    } catch {
+      patchRow(id, before);
+      toast.show({
+        message: t(
+          kind === 'like' ? 'screen.campus.write.likeFailed' : 'wall.feed.favoriteFailed'
+        ),
+        tone: 'danger',
+      });
+    } finally {
+      pendingInteraction.current.delete(id);
+    }
+  };
+
   const refresh = () => void load('refresh');
   const append = () => void load('append');
 
@@ -224,22 +313,27 @@ function WallFeedSession({ testID, identity }: { testID: string; identity: strin
       onEndReached={append}
       onRetryRefresh={refresh}
       onRetryAppend={append}
-      listHeader={pagination.errorScope === 'refresh' && rows.length > 0 ? (
-        <View style={{ paddingHorizontal: theme.space('space_4'), paddingVertical: theme.space('space_2') }}>
-          <InlineNotice
-            tone="warning"
-            message={t('screen.campus.read.refreshFailed')}
-            actionLabel={t('action.retry')}
-            onAction={refresh}
-          />
+      scrollFallback
+      listHeader={(
+        <View>
+          {pagination.errorScope === 'refresh' && rows.length > 0 ? (
+            <View style={{ paddingHorizontal: theme.space('space_4'), paddingVertical: theme.space('space_2') }}>
+              <InlineNotice
+                tone="warning"
+                message={t('screen.campus.read.refreshFailed')}
+                actionLabel={t('action.retry')}
+                onAction={refresh}
+              />
+            </View>
+          ) : null}
         </View>
-      ) : undefined}
+      )}
       labels={{
         retryLabel: t('action.retry'),
         endLabel: t('screen.campus.read.listEnd'),
         empty: {
           kind: 'firstRun',
-          title: t('screen.campus.read.empty'),
+          title: t('wall.feed.emptyReal'),
           actionLabel: t('action.refresh'),
           onAction: refresh,
         },
@@ -248,6 +342,9 @@ function WallFeedSession({ testID, identity }: { testID: string; identity: strin
         <WallPostRow
           post={row}
           onOpen={() => router.push(`/campus/wall/${row.id}` as never)}
+          onLike={() => void toggleInteraction(row.id, 'like')}
+          onFavorite={() => void toggleInteraction(row.id, 'favorite')}
+          onComment={() => router.push(`/campus/wall/${row.id}` as never)}
         />
       )}
     />

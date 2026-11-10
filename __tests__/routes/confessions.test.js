@@ -277,13 +277,13 @@ describe('Confession Wall Routes (M09)', () => {
   // GET /api/confessions/meta
   // ==========================================================
   describe('GET /api/confessions/meta', () => {
-    it('返回总篇数', async () => {
+    it('返回总篇数和自由帖样式协议版本', async () => {
       query.mockResolvedValueOnce([{ total: 42 }]);
 
       const res = await request().get('/api/confessions/meta');
 
       expect(res.status).toBe(200);
-      expect(res.body.data.total).toBe(42);
+      expect(res.body.data).toMatchObject({ total: 42, poster_style_version: 2 });
     });
 
     it('数据库错误返回 500', async () => {
@@ -738,17 +738,21 @@ describe('Confession Wall Routes (M09)', () => {
       expect(res.body.data.parent_id).toBe(501);
     });
 
-    it('回复一条回复返回 400（仅支持二级）', async () => {
+    it('允许回复一条回复：保留父子关系，展示层再压平', async () => {
       query
-        .mockResolvedValueOnce([{ id: 101 }])
-        .mockResolvedValueOnce([{ id: 502, parent_id: 501 }]); // 父评论本身就是回复
+        .mockResolvedValueOnce([{ id: 101, user_id: 42 }]) // 帖子存在
+        .mockResolvedValueOnce([{ id: 502, parent_id: 501, content: '二级' }]) // 父评论本身是回复
+        .mockResolvedValueOnce({ insertId: 503 })
+        .mockResolvedValueOnce([{ ...RAW_COMMENT, id: 503, parent_id: 502 }])
+        .mockResolvedValueOnce([{ user_id: 42, first_id: 501 }, { user_id: 9, first_id: 502 }]); // 匿名编号
 
       const res = await request()
         .post('/api/confessions/101/comments')
         .send({ content: '三级', parent_id: 502 });
 
-      expect(res.status).toBe(400);
-      expect(res.body.message).toContain('仅支持二级评论');
+      expect(res.status).toBe(200);
+      expect(res.body.data.parent_id).toBe(502);
+      expect(res.body.data.reply_to_id).toBe(502);
     });
 
     it('parent_id 指向其他帖子的评论返回 400', async () => {
@@ -770,6 +774,16 @@ describe('Confession Wall Routes (M09)', () => {
       expect(res.status).toBe(400);
       expect(res.body.message).toContain('评论内容不能为空');
       expect(query).not.toHaveBeenCalled();
+    });
+
+    it('评论恰好 500 字通过', async () => {
+      mockCommentSuccess();
+
+      const res = await request()
+        .post('/api/confessions/101/comments')
+        .send({ content: 'x'.repeat(500) });
+
+      expect(res.status).toBe(200);
     });
 
     it('评论超过 500 字返回 400', async () => {
@@ -825,6 +839,7 @@ describe('Confession Wall Routes (M09)', () => {
     it('作者本人删除评论成功并记录审计日志', async () => {
       query
         .mockResolvedValueOnce([{ id: 501, user_id: 9 }])
+        .mockResolvedValueOnce([{ id: 501, parent_id: null }]) // 存活评论（求后代）
         .mockResolvedValueOnce({ affectedRows: 1 });
 
       const res = await request().delete('/api/confessions/101/comments/501');
@@ -870,6 +885,337 @@ describe('Confession Wall Routes (M09)', () => {
       const res = await request().delete('/api/confessions/101/comments/501');
 
       expect(res.status).toBe(500);
+    });
+  });
+
+  // ==========================================================
+  // POST /api/confessions/:id/favorite
+  // ==========================================================
+  describe('POST /api/confessions/:id/favorite', () => {
+    it('首次收藏返回 favorited=true', async () => {
+      query
+        .mockResolvedValueOnce([{ id: 101 }]) // 帖子存在
+        .mockResolvedValueOnce([]) // 未收藏
+        .mockResolvedValueOnce({ affectedRows: 1 }); // INSERT
+
+      const res = await request().post('/api/confessions/101/favorite');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data).toEqual({ confession_id: 101, favorited: true });
+    });
+
+    it('再次收藏为取消，返回 favorited=false', async () => {
+      query
+        .mockResolvedValueOnce([{ id: 101 }])
+        .mockResolvedValueOnce([{ user_id: 9 }])
+        .mockResolvedValueOnce({ affectedRows: 1 });
+
+      const res = await request().post('/api/confessions/101/favorite');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.favorited).toBe(false);
+    });
+
+    it('帖子不存在返回 404', async () => {
+      query.mockResolvedValueOnce([]);
+
+      const res = await request().post('/api/confessions/999/favorite');
+
+      expect(res.status).toBe(404);
+    });
+
+    it('未提供令牌返回 401', async () => {
+      const res = await supertest(realAuthApp()).post('/api/confessions/101/favorite');
+
+      expect(res.status).toBe(401);
+      expect(query).not.toHaveBeenCalled();
+    });
+
+    it('数据库错误返回 500', async () => {
+      query.mockRejectedValueOnce(new Error('db down'));
+
+      const res = await request().post('/api/confessions/101/favorite');
+
+      expect(res.status).toBe(500);
+    });
+  });
+
+  // ==========================================================
+  // GET /api/confessions/:id/comments?sort=
+  // ==========================================================
+  describe('GET /api/confessions/:id/comments 排序与多级关系', () => {
+    const ROOT_OLD = {
+      id: 501, parent_id: null, content: '旧的一级', user_id: 77,
+      created_at: '2026-02-14T11:00:00.000Z', featured_at: null,
+    };
+    const ROOT_HOT = {
+      id: 502, parent_id: null, content: '热的一级', user_id: 88,
+      created_at: '2026-02-14T12:00:00.000Z', featured_at: null,
+    };
+    const ROOT_NEW = {
+      id: 503, parent_id: null, content: '最新的一级', user_id: 99,
+      created_at: '2026-02-14T13:00:00.000Z', featured_at: null,
+    };
+    const REPLY = {
+      id: 504, parent_id: 502, content: '回复热评', user_id: 77,
+      created_at: '2026-02-14T14:00:00.000Z', featured_at: null,
+    };
+    const DEEP = {
+      id: 505, parent_id: 504, content: '回复的回复', user_id: 88,
+      created_at: '2026-02-14T15:00:00.000Z', featured_at: null,
+    };
+
+    function mockComments(rows, { authorId = 42, numbers = [], counts = [] } = {}) {
+      query
+        .mockResolvedValueOnce([{ id: 101, user_id: authorId }]) // 帖子（含作者，用于编号/楼主）
+        .mockResolvedValueOnce(rows)
+        .mockResolvedValueOnce(numbers)
+        .mockResolvedValueOnce(counts);
+    }
+
+    it('默认保持 created_at ASC（Web 旧口径）', async () => {
+      mockComments([ROOT_OLD, ROOT_HOT, ROOT_NEW], {
+        numbers: [{ user_id: 77, first_id: 501 }, { user_id: 88, first_id: 502 }, { user_id: 99, first_id: 503 }],
+      });
+
+      const res = await request().get('/api/confessions/101/comments');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.map((row) => row.id)).toEqual([501, 502, 503]);
+    });
+
+    it('sort=latest 时一级评论最新优先', async () => {
+      mockComments([ROOT_OLD, ROOT_HOT, ROOT_NEW]);
+
+      const res = await request().get('/api/confessions/101/comments?sort=latest');
+
+      expect(res.body.data.map((row) => row.id)).toEqual([503, 502, 501]);
+    });
+
+    it('sort=hot 时按点赞 + 回复综合排序', async () => {
+      mockComments([ROOT_OLD, ROOT_HOT, ROOT_NEW], {
+        counts: [{ comment_id: 502, cnt: 5 }, { comment_id: 503, cnt: 1 }],
+      });
+
+      const res = await request().get('/api/confessions/101/comments?sort=hot');
+
+      // 502: 5*2+1=11，501: 0*2+1=1，503: 1*2+0=2
+      expect(res.body.data.map((row) => row.id)).toEqual([502, 503, 501]);
+    });
+
+    it('未知 sort 回落默认顺序，不报错', async () => {
+      mockComments([ROOT_OLD, ROOT_HOT]);
+
+      const res = await request().get('/api/confessions/101/comments?sort=unknown');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.map((row) => row.id)).toEqual([501, 502]);
+    });
+
+    it('多级回复压平到根评论 replies，并保留 reply_to_id 与引用摘要', async () => {
+      mockComments([ROOT_HOT, REPLY, DEEP]);
+
+      const res = await request().get('/api/confessions/101/comments');
+
+      expect(res.body.data).toHaveLength(1);
+      const replies = res.body.data[0].replies;
+      expect(replies.map((row) => row.id)).toEqual([504, 505]);
+      expect(replies[0].reply_to_id).toBe(502);
+      expect(replies[0].reply_to_excerpt).toBe('热的一级');
+      expect(replies[1].reply_to_id).toBe(504);
+      expect(replies[1].reply_to_excerpt).toBe('回复热评');
+      expect(replies[1].parent_id).toBe(504);
+    });
+
+    it('精选评论置顶并带 featured 标记', async () => {
+      mockComments([ROOT_OLD, { ...ROOT_NEW, featured_at: '2026-02-15T00:00:00.000Z' }]);
+
+      const res = await request().get('/api/confessions/101/comments');
+
+      expect(res.body.data.map((row) => row.id)).toEqual([503, 501]);
+      expect(res.body.data[0].featured).toBe(true);
+      expect(res.body.data[1].featured).toBe(false);
+    });
+
+    it('按帖内首次参与顺序给出匿名编号，楼主固定 1', async () => {
+      mockComments([ROOT_HOT, ROOT_OLD, { ...ROOT_NEW, user_id: 42 }], {
+        numbers: [
+          { user_id: 88, first_id: 502 },
+          { user_id: 77, first_id: 501 },
+          { user_id: 42, first_id: 503 },
+        ],
+      });
+
+      const res = await request().get('/api/confessions/101/comments');
+
+      const byId = new Map(res.body.data.map((row) => [row.id, row]));
+      expect(byId.get(502).anonymous_no).toBe(2);
+      expect(byId.get(501).anonymous_no).toBe(3);
+      expect(byId.get(503).anonymous_no).toBe(1);
+      expect(byId.get(503).is_author).toBe(true);
+      expect(byId.get(502).is_author).toBe(false);
+    });
+  });
+
+  // ==========================================================
+  // POST /api/confessions/:id/comments/:commentId/like
+  // ==========================================================
+  describe('POST /api/confessions/:id/comments/:commentId/like', () => {
+    it('首次点赞返回 liked=true 与最新计数', async () => {
+      query
+        .mockResolvedValueOnce([{ id: 501 }]) // 评论存在
+        .mockResolvedValueOnce([]) // 未点赞
+        .mockResolvedValueOnce({ affectedRows: 1 })
+        .mockResolvedValueOnce([{ cnt: 4 }]);
+
+      const res = await request().post('/api/confessions/101/comments/501/like');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data).toMatchObject({ comment_id: 501, liked: true, like_count: 4 });
+    });
+
+    it('再次点赞为取消', async () => {
+      query
+        .mockResolvedValueOnce([{ id: 501 }])
+        .mockResolvedValueOnce([{ user_id: 9 }])
+        .mockResolvedValueOnce({ affectedRows: 1 })
+        .mockResolvedValueOnce([{ cnt: 2 }]);
+
+      const res = await request().post('/api/confessions/101/comments/501/like');
+
+      expect(res.body.data).toMatchObject({ liked: false, like_count: 2 });
+    });
+
+    it('评论不存在于该帖时返回 404', async () => {
+      query.mockResolvedValueOnce([]);
+
+      const res = await request().post('/api/confessions/101/comments/999/like');
+
+      expect(res.status).toBe(404);
+    });
+
+    it('未提供令牌返回 401', async () => {
+      const res = await supertest(realAuthApp()).post('/api/confessions/101/comments/501/like');
+
+      expect(res.status).toBe(401);
+      expect(query).not.toHaveBeenCalled();
+    });
+  });
+
+  // ==========================================================
+  // PATCH /api/confessions/:id/comments/:commentId/feature
+  // ==========================================================
+  describe('PATCH /api/confessions/:id/comments/:commentId/feature', () => {
+    it('楼主精选一级评论成功', async () => {
+      query
+        .mockResolvedValueOnce([{ id: 101, user_id: 9 }]) // 帖子（作者=9）
+        .mockResolvedValueOnce([{ id: 501, parent_id: null, featured_at: null }])
+        .mockResolvedValueOnce([{ cnt: 0 }])
+        .mockResolvedValueOnce({ affectedRows: 1 })
+        .mockResolvedValueOnce([{ featured_at: '2026-02-15T00:00:00.000Z' }]);
+
+      const res = await request()
+        .patch('/api/confessions/101/comments/501/feature')
+        .send({ featured: true });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.featured).toBe(true);
+      expect(res.body.data.comment_id).toBe(501);
+    });
+
+    it('取消精选成功', async () => {
+      query
+        .mockResolvedValueOnce([{ id: 101, user_id: 9 }])
+        .mockResolvedValueOnce([{ id: 501, parent_id: null, featured_at: '2026-02-15T00:00:00.000Z' }])
+        .mockResolvedValueOnce({ affectedRows: 1 })
+        .mockResolvedValueOnce([{ featured_at: null }]);
+
+      const res = await request()
+        .patch('/api/confessions/101/comments/501/feature')
+        .send({ featured: false });
+
+      expect(res.body.data.featured).toBe(false);
+    });
+
+    it('非楼主返回 403（即使作者校验只在前端隐藏按钮）', async () => {
+      query
+        .mockResolvedValueOnce([{ id: 101, user_id: 42 }])
+        .mockResolvedValueOnce([{ id: 501, parent_id: null, featured_at: null }]);
+
+      const res = await request()
+        .patch('/api/confessions/101/comments/501/feature')
+        .send({ featured: true });
+
+      expect(res.status).toBe(403);
+      expect(res.body.message).toContain('楼主');
+    });
+
+    it('超过 3 条返回 409', async () => {
+      query
+        .mockResolvedValueOnce([{ id: 101, user_id: 9 }])
+        .mockResolvedValueOnce([{ id: 501, parent_id: null, featured_at: null }])
+        .mockResolvedValueOnce([{ cnt: 3 }]);
+
+      const res = await request()
+        .patch('/api/confessions/101/comments/501/feature')
+        .send({ featured: true });
+
+      expect(res.status).toBe(409);
+      expect(res.body.code).toBe('CONFESSION_FEATURE_LIMIT');
+    });
+
+    it('只允许精选一级评论', async () => {
+      query
+        .mockResolvedValueOnce([{ id: 101, user_id: 9 }])
+        .mockResolvedValueOnce([{ id: 501, parent_id: 500, featured_at: null }]);
+
+      const res = await request()
+        .patch('/api/confessions/101/comments/501/feature')
+        .send({ featured: true });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('featuring 字段不是布尔时返回 400', async () => {
+      const res = await request()
+        .patch('/api/confessions/101/comments/501/feature')
+        .send({ featured: 'yes' });
+
+      expect(res.status).toBe(400);
+      expect(query).not.toHaveBeenCalled();
+    });
+
+    it('未提供令牌返回 401', async () => {
+      const res = await supertest(realAuthApp())
+        .patch('/api/confessions/101/comments/501/feature')
+        .send({ featured: true });
+
+      expect(res.status).toBe(401);
+    });
+  });
+
+  // ==========================================================
+  // DELETE 评论 — 带回复时级联隐藏
+  // ==========================================================
+  describe('DELETE /api/confessions/:id/comments/:commentId 级联', () => {
+    it('删除带回复的评论时，下级回复一起不可见', async () => {
+      query
+        .mockResolvedValueOnce([{ id: 501, user_id: 9 }])
+        .mockResolvedValueOnce([
+          { id: 501, parent_id: null },
+          { id: 502, parent_id: 501 },
+          { id: 503, parent_id: 502 },
+          { id: 504, parent_id: null },
+        ])
+        .mockResolvedValueOnce({ affectedRows: 3 });
+
+      const res = await request().delete('/api/confessions/101/comments/501');
+
+      expect(res.status).toBe(200);
+      const update = query.mock.calls[2];
+      expect(String(update[0])).toContain('UPDATE confession_comments');
+      expect(update[1]).toEqual([501, 502, 503]);
+      expect(logAudit.mock.calls[0][0].meta.removedCount).toBe(3);
     });
   });
 

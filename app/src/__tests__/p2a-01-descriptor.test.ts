@@ -46,7 +46,7 @@ function validDescriptor(): PublishFormDescriptor {
 
 describe('P2A-01 发布描述符契约与缺口账本', () => {
   describe('TC-P2A-01-1A · 缺口账本与发布注册表一致', () => {
-    it('注册表里 6 条 ready 都有描述符（不多不少）', () => {
+    it('万能墙发布在阶段 1 撤下后，就绪类型只剩 5 个且账本记着 wall', () => {
       expect(readyPublishIds().slice().sort()).toEqual([
         'clubActivity',
         'clubPost',
@@ -55,16 +55,17 @@ describe('P2A-01 发布描述符契约与缺口账本', () => {
         'marketplace',
         'wall',
       ]);
-      expect(missingDescriptorIds()).toEqual([]);
+      // 阶段 1（2026-11-02）：旧六卡表单撤下，自由帖/招募帖的真实发布还没做
+      expect(missingDescriptorIds()).toEqual(['wall']);
     });
 
     it('账本与实现一致（断言不抛）', () => {
       expect(() => assertDescriptorLedger()).not.toThrow();
     });
 
-    it('六类已交付描述符已注册，缺口账本清空', () => {
-      expect(Object.keys(PUBLISH_DESCRIPTORS).sort()).toEqual(['clubActivity', 'clubPost', 'confession', 'errand', 'marketplace', 'wall']);
-      expect(KNOWN_MISSING_DESCRIPTORS).toEqual([]);
+    it('已交付的 5 类描述符不含万能墙，缺口账本写明 wall', () => {
+      expect(Object.keys(PUBLISH_DESCRIPTORS).sort()).toEqual(['clubActivity', 'clubPost', 'confession', 'errand', 'marketplace']);
+      expect(KNOWN_MISSING_DESCRIPTORS).toEqual(['wall']);
       expect(publish_missingEqualsLedger()).toBe(true);
     });
   });

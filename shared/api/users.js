@@ -11,8 +11,8 @@ export function getMyPosts({ page = 1, pageSize = 10 } = {}) {
   return get(`/api/users/me/posts?${new URLSearchParams({ page: String(page), pageSize: String(pageSize) })}`);
 }
 
-export function getMyTermsStatus() {
-  return get('/api/users/me/terms');
+export function getMyTermsStatus(options = {}) {
+  return get('/api/users/me/terms', options);
 }
 
 export function acceptCurrentTerms(version) {

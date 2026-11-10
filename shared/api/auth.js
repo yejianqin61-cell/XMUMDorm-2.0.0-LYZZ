@@ -17,7 +17,7 @@ function messageFromRaw(data) {
  * 登录
  * @param {string} studentIdOrEmail - 邮箱或商家用户名（与登录页一致）
  * @param {string} password
- * @returns {Promise<{ success: boolean, message?: string, token?: string, data?: object }>}
+ * @returns {Promise<{ success: boolean, message?: string, token?: string, data?: object, httpStatus?: number }>}
  */
 export async function login(studentIdOrEmail, password) {
   const s = typeof studentIdOrEmail === 'string' ? studentIdOrEmail.trim() : '';
@@ -31,7 +31,7 @@ export async function login(studentIdOrEmail, password) {
   if (data.status === 0 && data.token) {
     return { success: true, token: data.token, data: data.data };
   }
-  return { success: false, message: messageFromRaw(data) };
+  return { success: false, message: messageFromRaw(data), httpStatus: data.__httpStatus };
 }
 
 /**

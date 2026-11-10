@@ -16,6 +16,7 @@ import * as React from 'react';
 import { View, type StyleProp, type ViewStyle } from 'react-native';
 import WifiOff from 'lucide-react-native/icons/wifi-off';
 import CloudOff from 'lucide-react-native/icons/cloud-off';
+import ServerOff from 'lucide-react-native/icons/server-off';
 import Clock from 'lucide-react-native/icons/clock';
 import CircleAlert from 'lucide-react-native/icons/circle-alert';
 import Lock from 'lucide-react-native/icons/lock';
@@ -39,6 +40,7 @@ export const ERROR_ICON: Record<AppErrorKind, IconComponent> = {
   terms: Lock,
   content: FileX,
   conflict: RefreshCw,
+  service: ServerOff,
   unknown: CircleAlert,
 };
 

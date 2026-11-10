@@ -27,6 +27,8 @@ export type AuthFailureKind =
   | 'sanctioned'
   /** 登录时的凭据错误（登录接口的 401） */
   | 'badCredentials'
+  | 'accountUnavailable'
+  | 'serviceUnavailable'
   /** 与鉴权无关的失败 */
   | 'other';
 
@@ -48,9 +50,14 @@ export function classifyAuthFailure(error: unknown, phase: AuthPhase = 'request'
   const { status, body } = asThrown(error);
   if (typeof status !== 'number') return 'other';
 
-  if (status === 401) {
-    return phase === 'login' ? 'badCredentials' : 'noToken';
+  if (phase === 'login') {
+    if (status === 401) return 'badCredentials';
+    if (status === 403) return 'accountUnavailable';
+    if (status >= 500) return 'serviceUnavailable';
+    return 'other';
   }
+
+  if (status === 401) return 'noToken';
 
   if (status === 403) {
     // ⚠️ **顺序要紧**：先看处罚标记，再当成"令牌过期"
@@ -85,6 +92,10 @@ export function authFailureToAppError(
       return { kind: 'permission', target: options.fieldLabel };
     case 'sanctioned':
       return { kind: 'permission', params: { role: 'sanctioned' } };
+    case 'accountUnavailable':
+      return { kind: 'permission', params: { role: 'active' } };
+    case 'serviceUnavailable':
+      return { kind: 'service' };
     case 'badCredentials':
       return { kind: 'validation', target: options.fieldLabel, params: { rule: 'match' } };
     case 'other':

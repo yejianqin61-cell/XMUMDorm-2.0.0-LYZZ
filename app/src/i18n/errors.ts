@@ -23,6 +23,7 @@ export type AppErrorKind =
   | 'terms'
   | 'content'
   | 'conflict'
+  | 'service'
   | 'unknown';
 
 /** 业务侧抛出的结构化错误（⛔ 不携带技术细节到 UI） */
@@ -96,6 +97,11 @@ const COPY_KEY: Record<AppErrorKind, { perceive: MessageKey; understand: Message
     understand: 'error.conflict.understand',
     fix: 'error.conflict.fix',
   },
+  service: {
+    perceive: 'error.service.perceive',
+    understand: 'error.service.understand',
+    fix: 'error.service.fix',
+  },
   unknown: {
     perceive: 'error.unknown.perceive',
     understand: 'error.unknown.understand',
@@ -112,6 +118,7 @@ const ACTION_KIND: Record<AppErrorKind, ErrorCopy['actionKind']> = {
   terms: 'reopen',
   content: 'edit',
   conflict: 'refresh',
+  service: 'retry',
   unknown: 'reopen',
 };
 

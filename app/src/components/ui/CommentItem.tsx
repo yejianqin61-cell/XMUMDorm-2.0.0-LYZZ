@@ -7,8 +7,9 @@
  *   页面**想渲染身份也拿不到数据**（⛔ 不是靠"记得别传"）。
  *   与 `K13 AuthorRow` / `K14 AnonAuthorLabel` 的分工一致（§2.3 已声明不得互换）。
  *
- * ⛔ 层次只有两级（深度由 `D01` 保证）：`depth === 1` 的评论**没有回复按钮**
- *   （§2.6：仅二级，不能回复回复）。本组件把这条写成"传了 `onReply` 才渲染回复入口"。
+ * 层次展示只有两级（深度由 `D01` 保证）。阶段 3 起万能墙允许**回复一条回复**，
+ * 但视觉上不再增加缩进：`allowReply` 打开后 `depth === 1` 也有回复入口，
+ * 由「回复 匿名XX」的引用行表达对话关系。其它评论区（社团等）默认仍只有一级可回复。
  */
 
 import * as React from 'react';
@@ -56,8 +57,28 @@ export type CommentItemProps = {
   likeCount?: number;
   onToggleLike?: () => void;
   onDelete?: () => void;
-  /** ⛔ `depth === 1` 时页面**不应**传它；传了本组件也会忽略（见下） */
   onReply?: () => void;
+  /** 阶段 3：允许回复一条回复（视觉仍只有两层缩进） */
+  allowReply?: boolean;
+  /** 匿名编号等**不含身份**的显示文案覆盖（万能墙用「匿名03」） */
+  authorLabel?: string;
+  /** 轻量文字标识：楼主 / 我 / 精选 */
+  authorBadge?: string;
+  mineBadge?: string;
+  featuredBadge?: string;
+  /** 这条评论被楼主精选 */
+  featured?: boolean;
+  /** 回复目标（已格式化，例如「回复 匿名03」；目标已删除时是「回复已删除评论」） */
+  replyToLabel?: string;
+  replyToExcerpt?: string | null;
+  /** 引用摘要之前的标点（中文全角 / 英文半角由页面给） */
+  replyToSeparator?: string;
+  /** 楼主精选：只对帖子作者显示 */
+  canFeature?: boolean;
+  onToggleFeature?: () => void;
+  featureLabel?: string;
+  onReport?: () => void;
+  reportLabel?: string;
   labels: {
     anonymous: string;
     deleteLabel: string;
@@ -79,14 +100,29 @@ export function CommentItem({
   onToggleLike,
   onDelete,
   onReply,
+  allowReply = false,
+  authorLabel,
+  authorBadge,
+  mineBadge,
+  featuredBadge,
+  featured = false,
+  replyToLabel,
+  replyToExcerpt,
+  replyToSeparator = '：',
+  canFeature = false,
+  onToggleFeature,
+  featureLabel,
+  onReport,
+  reportLabel,
   labels,
   style,
   testID,
 }: CommentItemProps): React.ReactElement {
   const theme = useTheme();
   const isNamed = author.kind === 'named';
-  // 仅二级：**回复的回复**在类型与渲染两处都被挡住
-  const replyable = depth === 0 && onReply !== undefined;
+  // 默认只有一级可回复；万能墙传 allowReply 后二级回复也可以继续回复
+  const replyable = onReply !== undefined && (depth === 0 || allowReply);
+  const displayLabel = authorLabel ?? commentAuthorLabel(author, labels.anonymous);
 
   return (
     <View
@@ -111,8 +147,15 @@ export function CommentItem({
       ) : null}
 
       <View style={{ flex: 1, gap: theme.space('space_1') }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.space('space_2') }}>
-          {/* 作者名（实名可点进主页；匿名只给"匿名"这一句） */}
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: theme.space('space_2'),
+          }}
+        >
+          {/* 作者名（实名可点进主页；匿名只给"匿名"或「匿名03」这一句） */}
           {isNamed && author.onPressAuthor ? (
             <Pressable onPress={author.onPressAuthor} accessibilityLabel={author.name}>
               <Text role="label" emphasis="strong" colorToken="text-primary">
@@ -122,12 +165,29 @@ export function CommentItem({
           ) : (
             <Text
               role="label"
-              emphasis={isNamed ? 'strong' : 'regular'}
-              colorToken={isNamed ? 'text-primary' : 'text-muted'}
+              // 匿名编号略高于正文字重、但不用鲜艳颜色（阶段 3 视觉口径）
+              emphasis="strong"
+              colorToken={isNamed ? 'text-primary' : 'text-secondary'}
             >
-              {commentAuthorLabel(author, labels.anonymous)}
+              {displayLabel}
             </Text>
           )}
+          {/* 楼主 / 我 / 精选：轻量文字标识，不做彩色大徽章 */}
+          {authorBadge ? (
+            <Text role="caption" colorToken="text-brand" testID={testID ? `${testID}-author` : undefined}>
+              {authorBadge}
+            </Text>
+          ) : null}
+          {mineBadge ? (
+            <Text role="caption" colorToken="text-secondary" testID={testID ? `${testID}-mine` : undefined}>
+              {mineBadge}
+            </Text>
+          ) : null}
+          {featured && featuredBadge ? (
+            <Text role="caption" colorToken="text-brand" testID={testID ? `${testID}-featured` : undefined}>
+              {featuredBadge}
+            </Text>
+          ) : null}
           {isNamed && author.levelLabel ? (
             <Text role="caption" colorToken="text-brand">
               {author.levelLabel}
@@ -138,11 +198,29 @@ export function CommentItem({
           </Text>
         </View>
 
+        {replyToLabel ? (
+          <Text
+            role="caption"
+            colorToken="text-muted"
+            numberOfLines={1}
+            testID={testID ? `${testID}-reply-to` : undefined}
+          >
+            {replyToExcerpt ? `${replyToLabel}${replyToSeparator}${replyToExcerpt}` : replyToLabel}
+          </Text>
+        ) : null}
+
         <Text role="body" colorToken="text-primary">
           {content}
         </Text>
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.space('space_4') }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: theme.space('space_4'),
+          }}
+        >
           {onToggleLike ? (
             <Pressable
               onPress={onToggleLike}
@@ -167,6 +245,33 @@ export function CommentItem({
               <Icon source={CornerDownRight} size="inline" tint="secondary" />
               <Text role="caption" colorToken="text-secondary">
                 {labels.replyLabel}
+              </Text>
+            </Pressable>
+          ) : null}
+
+          {canFeature && onToggleFeature ? (
+            <Pressable
+              testID={testID ? `${testID}-feature` : undefined}
+              onPress={onToggleFeature}
+              accessibilityRole="button"
+              accessibilityLabel={featureLabel}
+              accessibilityState={{ selected: featured }}
+            >
+              <Text role="caption" colorToken={featured ? 'text-brand' : 'text-secondary'}>
+                {featureLabel}
+              </Text>
+            </Pressable>
+          ) : null}
+
+          {onReport ? (
+            <Pressable
+              testID={testID ? `${testID}-report` : undefined}
+              onPress={onReport}
+              accessibilityRole="button"
+              accessibilityLabel={reportLabel}
+            >
+              <Text role="caption" colorToken="text-secondary">
+                {reportLabel}
               </Text>
             </Pressable>
           ) : null}

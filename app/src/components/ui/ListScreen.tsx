@@ -16,7 +16,7 @@
  */
 
 import * as React from 'react';
-import { View, type StyleProp, type ViewStyle } from 'react-native';
+import { ScrollView, View, type StyleProp, type ViewStyle } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 
 import { useTheme } from '@/design-system/theme';
@@ -292,6 +292,8 @@ export type ListScreenProps<T> = {
    *    所以新槽位换一个**不会与它混淆**的名字。
    */
   listHeader?: React.ReactNode;
+  /** 让首屏加载、空态和错误态中的长内容保持可滚动。 */
+  scrollFallback?: boolean;
   /**
    * 行间分隔（`A05 Divider` 这类组件）。列表产物**不替使用方决定是否有分隔线**
    * （与 `K06 ListItem` 同口径：组件内部写死下边框会让"最后一行为什么有线"不可控）。
@@ -327,6 +329,7 @@ export function ListScreen<T>({
   tabs,
   filterChips,
   listHeader,
+  scrollFallback = false,
   itemSeparator,
   numColumns = 1,
   restoredScrollOffset = 0,
@@ -365,48 +368,49 @@ export function ListScreen<T>({
     listRef.current?.scrollToOffset?.({ offset: 0, animated: true });
   }, [scrollToTopSignal]);
 
+  const fallback = (content: React.ReactNode) => (
+    <View testID={testID} style={[{ flex: 1, minHeight: 0 }, style]}>
+      {tabs}
+      {filterChips}
+      {scrollFallback ? (
+        <ScrollView testID={testID ? `${testID}-static-scroll` : undefined}>
+          {listHeader}
+          {content}
+        </ScrollView>
+      ) : (
+        <>
+          {listHeader}
+          {content}
+        </>
+      )}
+    </View>
+  );
+
   if (screenState === 'loading') {
-    return (
-      <View testID={testID} style={[{ flex: 1, minHeight: 0 }, style]}>
-        {tabs}
-        {filterChips}
-        {listHeader}
-        <LoadingState variant="skeleton" rows={skeletonRows} testID={testID ? `${testID}-loading` : undefined} />
-      </View>
+    return fallback(
+      <LoadingState variant="skeleton" rows={skeletonRows} testID={testID ? `${testID}-loading` : undefined} />
     );
   }
 
   if (screenState === 'error') {
-    return (
-      <View testID={testID} style={[{ flex: 1, minHeight: 0 }, style]}>
-        {tabs}
-        {filterChips}
-        {listHeader}
-        <ErrorState
-          error={pagination.error ?? { kind: 'unknown' }}
-          onAction={onRetryRefresh ?? onRefresh}
-          testID={testID ? `${testID}-error` : undefined}
-        />
-      </View>
+    return fallback(
+      <ErrorState
+        error={pagination.error ?? { kind: 'unknown' }}
+        onAction={onRetryRefresh ?? onRefresh}
+        testID={testID ? `${testID}-error` : undefined}
+      />
     );
   }
 
   if (screenState === 'empty') {
-    return (
-      <View testID={testID} style={[{ flex: 1, minHeight: 0 }, style]}>
-        {tabs}
-        {filterChips}
-        {/* 空态也保留 `listHeader`：例如店里没上架菜品时，店头信息与分类仍应可见 */}
-        {listHeader}
-        <EmptyState
-          kind={labels.empty.kind}
-          title={labels.empty.title}
-          description={labels.empty.description}
-          actionLabel={labels.empty.actionLabel}
-          onAction={labels.empty.onAction}
-          testID={testID ? `${testID}-empty` : undefined}
-        />
-      </View>
+    return fallback(
+      <EmptyState
+        kind={labels.empty.kind}
+        title={labels.empty.title}
+        actionLabel={labels.empty.actionLabel}
+        onAction={labels.empty.onAction}
+        testID={testID ? `${testID}-empty` : undefined}
+      />
     );
   }
 

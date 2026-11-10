@@ -10,7 +10,7 @@
  */
 
 import * as React from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, Share, View } from 'react-native';
 import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
@@ -39,15 +39,20 @@ import { QK } from '../../../../shared/query/queryKeys';
 import { formatPostTime } from '../../../../shared/utils/formatTime';
 import { asPost, asWall, errorFor, type Post } from './campusModel';
 import { TreeholeFeed } from './TreeholeFeed';
-import { WallFeed, type WallFeedSnapshot } from './WallFeed';
+import { WallFeed, WALL_SNAPSHOT_KEY, type WallFeedSnapshot } from './WallFeed';
 import { TreeholePostDetail } from './TreeholePostDetail';
 import type { TreeholeImageSaveOptions } from './TreeholeImageSaveControls';
 import { toTreeholePostViewModel } from './treeholePostViewModel';
-import { WallTemplateBody } from './wallTemplates';
+import { WallFreePostText } from './WallFreePostBody';
 import { useCampusActions } from './useCampusActions';
 import type { CampusReportReason } from './useCampusReport';
 
 export type CampusKind = 'confession' | 'wall';
+
+/** 万能墙分享深链（所有者 2026-11-09 确认：xmumdorm://campus/wall/:id） */
+export function wallShareLink(id: number): string {
+  return `xmumdorm://campus/wall/${id}`;
+}
 
 /** 广场首页的模块入口：树洞 / 万能墙互斥（宪法 4.1.1） */
 export function CampusFeed({ kind }: { kind: CampusKind }): React.ReactElement {
@@ -123,6 +128,8 @@ export function CampusDetailScreen({
   const deleting = deleteOperation?.identity === identity && deleteOperation.postId === postId;
   const deleteLocked = React.useRef(false);
   const [deleteCommentId, setDeleteCommentId] = React.useState<string | null>(null);
+  const [commentReportReason, setCommentReportReason] = React.useState<string | null>(null);
+  const [commentReportDetail, setCommentReportDetail] = React.useState('');
   const scrollRef = React.useRef<ScrollView | null>(null);
   const generation = React.useRef(0);
   const readPending = React.useRef<number | null>(null);
@@ -231,6 +238,41 @@ export function CampusDetailScreen({
 
   const actions = useCampusActions(post, kind);
 
+  /**
+   * 详情里的点赞 / 收藏 / 评论数回写信息流快照：
+   * 返回列表时不应看到旧计数；快照键与删除回执共用同一个。
+   */
+  React.useEffect(() => {
+    if (kind !== 'wall' || post === null || postIdentity !== identity) return;
+    const target = post.id;
+    const { liked, favorited, likeCount, commentCount } = actions.interactions;
+    client.setQueryData<WallFeedSnapshot>(WALL_SNAPSHOT_KEY, (previous) => {
+      if (!previous) return previous;
+      const rows = previous.rows.map((row) =>
+        row.id === target
+          ? {
+              ...row,
+              liked,
+              favorited,
+              ...(likeCount === null ? {} : { like_count: likeCount }),
+              ...(commentCount === null ? {} : { comment_count: commentCount }),
+            }
+          : row
+      );
+      return { ...previous, rows };
+    });
+  }, [
+    kind,
+    post,
+    postIdentity,
+    identity,
+    client,
+    actions.interactions.liked,
+    actions.interactions.favorited,
+    actions.interactions.likeCount,
+    actions.interactions.commentCount,
+  ]);
+
   React.useEffect(() => {
     setMenuOpen(false);
     setDeleteOpen(false);
@@ -246,6 +288,32 @@ export function CampusDetailScreen({
     // 回执统一走全局 Toast（旧实现树洞用 HeroUI Toast、万能墙用自有 Toast，两套视觉）
     toast.show({ message: t('screen.campus.report.success'), tone: 'success' });
   }, [actions.report.state, toast, t]);
+
+  const commentReportHandled = React.useRef(false);
+  React.useEffect(() => {
+    if (actions.comments.report.state !== 'success') {
+      commentReportHandled.current = false;
+      return;
+    }
+    if (commentReportHandled.current) return;
+    commentReportHandled.current = true;
+    actions.comments.report.close();
+    setCommentReportReason(null);
+    setCommentReportDetail('');
+    toast.show({ message: t('screen.campus.report.success'), tone: 'success' });
+  }, [actions.comments.report.state, actions.comments.report.close, t, toast]);
+
+  /** 分享只带深链与一句邀请，不泄露匿名墙的任何身份字段 */
+  const shareWallPost = React.useCallback(async (): Promise<void> => {
+    if (post === null) return;
+    const link = wallShareLink(post.id);
+    try {
+      // iOS 用 url 字段带链接（Android 只看 message）
+      await Share.share({ message: t('wall.share.message', { link }), url: link });
+    } catch {
+      toast.show({ message: t('wall.share.failed'), tone: 'danger' });
+    }
+  }, [post, t, toast]);
 
   const reportReasons = REPORT_REASONS.map((value) => ({
     value,
@@ -297,7 +365,7 @@ export function CampusDetailScreen({
       }
       // 先记录导航资格；发布详情失效结果会使当前读取 generation 失效。
       const shouldReturn = request === generation.current && scope === scopeRef.current;
-      const snapshotKey = [...QK.confessionWindow('_guest'), 'wallReadSnapshot'];
+      const snapshotKey = WALL_SNAPSHOT_KEY;
       client.setQueryData<WallFeedSnapshot>(snapshotKey, (previous) => {
         const snapshot = previous ?? { rows: [], cursor: null, hasMore: true, needsRefresh: true };
         return {
@@ -417,7 +485,9 @@ export function CampusDetailScreen({
         message={t(
           actions.likeNotice === 'denied'
             ? 'screen.campus.write.denied'
-            : 'screen.campus.write.likeFailed'
+            : actions.likeNotice === 'favoriteFailed'
+              ? 'wall.feed.favoriteFailed'
+              : 'screen.campus.write.likeFailed'
         )}
       />
     );
@@ -496,11 +566,13 @@ export function CampusDetailScreen({
               commentCount={actions.interactions.commentCount}
               onLike={actions.onToggleLike}
               onComment={() => scrollRef.current?.scrollToEnd({ animated: true })}
+              favorited={actions.interactions.favorited}
+              {...(kind === 'wall'
+                ? { onFavorite: actions.onToggleFavorite, favoriteLabel: t('screen.campus.read.favorite') }
+                : {})}
               anonymous={kind === 'wall'}
               wallContent={
-                kind === 'wall' ? (
-                  <WallTemplateBody templateKey={post?.template_key} content={vm.content} />
-                ) : undefined
+                kind === 'wall' ? <WallFreePostText content={vm.content} id={vm.id} savedStyle={post?.poster_style} /> : undefined
               }
               likeNotice={likeNotice}
             />
@@ -512,19 +584,66 @@ export function CampusDetailScreen({
                 paddingHorizontal: theme.space('space_4'),
                 paddingTop: theme.space('space_3'),
                 paddingBottom: theme.space('space_2'),
+                gap: theme.space('space_2'),
               }}
             >
-              <Text role="label" emphasis="strong" colorToken="text-primary">
-                {t('screen.campus.read.commentsCount', { count: commentCount })}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.space('space_3') }}>
+                <Text role="label" emphasis="strong" colorToken="text-primary">
+                  {t('screen.campus.read.commentsCount', { count: commentCount })}
+                </Text>
+                <View style={{ flex: 1 }} />
+                {kind === 'wall' ? (
+                  <View
+                    testID="campus-comments-sort"
+                    accessibilityLabel={t('screen.campus.read.sortLabel')}
+                    style={{ flexDirection: 'row', gap: theme.space('space_3') }}
+                  >
+                    {(['hot', 'latest'] as const).map((value) => {
+                      const selected = actions.comments.sort === value;
+                      return (
+                        <Pressable
+                          key={value}
+                          testID={`campus-comments-sort-${value}`}
+                          onPress={() => actions.comments.setSort(value)}
+                          accessibilityRole="button"
+                          accessibilityLabel={t(
+                            value === 'hot' ? 'screen.campus.read.sortHot' : 'screen.campus.read.sortLatest'
+                          )}
+                          accessibilityState={{ selected }}
+                          style={{ minHeight: theme.touchTarget, justifyContent: 'center' }}
+                        >
+                          <Text role="caption" colorToken={selected ? 'text-brand' : 'text-secondary'}>
+                            {t(
+                              value === 'hot' ? 'screen.campus.read.sortHot' : 'screen.campus.read.sortLatest'
+                            )}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                ) : null}
+              </View>
               {actions.comments.deleteFailed ? (
                 <InlineNotice
                   testID="campus-comment-delete-notice"
                   tone="danger"
                   message={t('screen.campus.read.deleteCommentFailed')}
-                  style={{ marginTop: theme.space('space_2') }}
                 />
               ) : null}
+              {actions.comments.notice === null ? null : (
+                <InlineNotice
+                  testID="campus-comment-action-notice"
+                  tone={actions.comments.notice === 'featureLimit' ? 'warning' : 'danger'}
+                  message={t(
+                    actions.comments.notice === 'likeFailed'
+                      ? 'screen.campus.read.commentLikeFailed'
+                      : actions.comments.notice === 'featureLimit'
+                        ? 'screen.campus.read.featureLimit'
+                        : 'screen.campus.read.featureFailed',
+                    actions.comments.notice === 'featureLimit' ? { count: 3 } : undefined
+                  )}
+                />
+              )}
             </View>
 
             <View style={{ paddingHorizontal: theme.space('space_4') }}>
@@ -547,7 +666,19 @@ export function CampusDetailScreen({
                   testID="campus-detail-comments"
                   nodes={actions.comments.nodes}
                   onReply={actions.comments.onReply}
+                  allowNestedReply={kind === 'wall'}
                   onDelete={kind === 'wall' ? (id: string) => setDeleteCommentId(id) : undefined}
+                  {...(kind === 'wall'
+                    ? {
+                        onToggleLike: actions.comments.onToggleLike,
+                        onToggleFeature: actions.comments.onToggleFeature,
+                        onReportComment: (id: string) => {
+                          setCommentReportReason(null);
+                          setCommentReportDetail('');
+                          actions.comments.report.open(id);
+                        },
+                      }
+                    : {})}
                   labels={{
                     anonymous: t('screen.campus.read.anonymous'),
                     deleteLabel: t('screen.campus.read.delete'),
@@ -555,6 +686,15 @@ export function CampusDetailScreen({
                     likeLabel: t('screen.campus.read.like'),
                     moreReplies: (count: number) => String(count),
                     collapse: t('screen.campus.read.collapse'),
+                    authorBadge: t('screen.campus.read.authorBadge'),
+                    mineBadge: t('screen.campus.read.mineBadge'),
+                    featuredBadge: t('screen.campus.read.featuredBadge'),
+                    feature: t('screen.campus.read.feature'),
+                    unfeature: t('screen.campus.read.unfeature'),
+                    reportComment: t('screen.campus.read.reportComment'),
+                    replyToDeleted: t('screen.campus.read.replyToDeleted'),
+                    replyTo: (name: string) => t('screen.campus.read.replyToAnonymous', { name }),
+                    replyToSeparator: t('screen.campus.read.replySeparator'),
                   }}
                 />
               )}
@@ -567,6 +707,26 @@ export function CampusDetailScreen({
                 setMenuOpen(false);
                 setReportOpen(true);
               }}
+              onEdit={
+                kind === 'wall' && isSignedIn && postIdentity === identity && post?.is_mine
+                  ? () => {
+                    setMenuOpen(false);
+                    router.push({ pathname: '/publish/[type]', params: { type: 'wall', edit: String(post.id) } });
+                  }
+                  : undefined
+              }
+              editLabel={t('wall.write.edit')}
+              shareAction={
+                kind === 'wall' && post !== null
+                  ? {
+                      label: t('wall.action.share'),
+                      onPress: () => {
+                        setMenuOpen(false);
+                        void shareWallPost();
+                      },
+                    }
+                  : undefined
+              }
               deleteAction={
                 kind === 'wall' && isSignedIn && postIdentity === identity && post?.is_mine
                   ? {
@@ -628,6 +788,54 @@ export function CampusDetailScreen({
               onCancel={() => setDeleteOpen(false)}
               onConfirm={() => { void removeWallPost(); }}
             />
+            <ReportSheet
+              visible={actions.comments.report.targetId !== null}
+              reasons={reportReasons}
+              reason={commentReportReason}
+              detail={commentReportDetail}
+              onReason={setCommentReportReason}
+              onDetail={setCommentReportDetail}
+              onSubmit={() => {
+                if (commentReportReason) {
+                  void actions.comments.report.submit(
+                    commentReportReason as CampusReportReason,
+                    commentReportDetail
+                  );
+                }
+              }}
+              onCancel={() => actions.comments.report.close()}
+              busy={actions.comments.report.state === 'sending'}
+              message={
+                ['failed', 'denied', 'invalid', 'login'].includes(actions.comments.report.state)
+                  ? t(
+                      actions.comments.report.state === 'login'
+                        ? 'screen.campus.write.login'
+                        : actions.comments.report.state === 'denied'
+                          ? 'screen.campus.write.denied'
+                          : 'screen.campus.report.failed'
+                    )
+                  : undefined
+              }
+              action={
+                actions.comments.report.state === 'login'
+                  ? {
+                      label: t('screen.campus.write.login'),
+                      onPress: () => {
+                        actions.comments.report.close();
+                        router.push('/login');
+                      },
+                    }
+                  : undefined
+              }
+              labels={{
+                title: t('screen.campus.read.reportComment'),
+                reason: t('screen.campus.report.reason'),
+                detail: t('screen.campus.report.detail'),
+                submit: t('screen.campus.read.report'),
+                cancel: t('action.cancel'),
+              }}
+              maxDetailLength={1000}
+            />
             <AlertDialog
               testID="wall-comment-delete-dialog"
               visible={deleteCommentId !== null}
@@ -683,6 +891,9 @@ function DetailSheetHost({
   onCloseMenu,
   onReport,
   deleteAction,
+  onEdit,
+  editLabel,
+  shareAction,
   reportOpen,
   reportReasons,
   reportReason,
@@ -701,7 +912,11 @@ function DetailSheetHost({
   onCloseMenu: () => void;
   onReport: () => void;
   /** 万能墙作者本人的删除入口；不传（树洞/非作者）时菜单里不出现 */
+  onEdit?: () => void;
+  editLabel: string;
   deleteAction?: { label: string; onPress: () => void; disabled?: boolean };
+  /** 万能墙：分享深链（树洞不传） */
+  shareAction?: { label: string; onPress: () => void };
   reportOpen: boolean;
   reportReasons: readonly { value: string; label: string }[];
   reportReason: string | null;
@@ -724,11 +939,15 @@ function DetailSheetHost({
         visible={menuOpen}
         title={menuLabels.title}
         actions={[
+          ...(onEdit ? [{ key: 'edit', label: editLabel }] : []),
           ...(deleteAction ? [{ key: 'delete', label: deleteAction.label, disabled: deleteAction.disabled }] : []),
+          ...(shareAction ? [{ key: 'share', label: shareAction.label }] : []),
           { key: 'report', label: menuLabels.report },
         ]}
         onSelect={(key) => {
+          if (key === 'edit') onEdit?.();
           if (key === 'delete') deleteAction?.onPress();
+          if (key === 'share') shareAction?.onPress();
           if (key === 'report') onReport();
         }}
         onCancel={onCloseMenu}
@@ -797,5 +1016,4 @@ function HeaderIconButton({
 
 export { WallFeed } from './WallFeed';
 export { TreeholeFeed } from './TreeholeFeed';
-export { wallTemplateLabel } from './wallTemplates';
 export type { Post } from './campusModel';

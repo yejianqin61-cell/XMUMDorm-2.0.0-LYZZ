@@ -5,12 +5,15 @@
  * ⛔ 不把后端的 snake_case 直接交给组件；⛔ 不显示被隐藏/删除的帖子。
  */
 
+import { isWallPosterStyle } from './wallPosterLayout';
+import type { WallPosterStyle } from './wallPosterTemplates';
 import type { AppError } from '@/i18n/errors';
 
 export type Post = {
   id: number;
   liked?: boolean;
   user_liked?: boolean;
+  favorited?: boolean;
   like_count?: number;
   comment_count?: number;
   /** 万能墙专属：这条投稿是不是当前登录用户发的（后端 viewer_is_author，匿名域唯一身份信号） */
@@ -19,6 +22,8 @@ export type Post = {
   content: string;
   created_at?: string;
   template_key?: string;
+  poster_style?: WallPosterStyle;
+  revision?: number;
   author?: {
     id?: number;
     avatar?: string;
@@ -63,9 +68,12 @@ export function asWall(value: unknown): Post {
     id: row.id,
     content: row.content,
     template_key: row.template_key,
+    ...(isWallPosterStyle(row.poster_style) ? { poster_style: row.poster_style } : {}),
+    revision: Number.isSafeInteger(row.revision) && (row.revision ?? -1) >= 0 ? row.revision : 0,
     created_at: row.created_at,
     liked: row.liked,
     like_count: row.like_count,
+    favorited: row.favorited === true ? true : undefined,
     comment_count: row.comment_count,
     is_mine: (value as { viewer_is_author?: unknown } | null)?.viewer_is_author === true ? true : undefined,
   };

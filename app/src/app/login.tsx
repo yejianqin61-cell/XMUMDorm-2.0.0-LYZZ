@@ -68,7 +68,7 @@ function LoginContent(): React.ReactElement {
       else router.replace('/(tabs)');
       return;
     }
-    setError(result.error);
+    setError({ ...result.error, target: t('auth.login') });
   };
 
   return (

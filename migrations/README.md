@@ -160,3 +160,10 @@ node scripts/createAdmin.js
 
 `079_dorm_ids.sql`：为所有账号分配独立且唯一的 DORM ID，并要求后续新账号写入该编号。
 部署前确认目标数据库并执行 `node scripts/apply-sql-file.js migrations/079_dorm_ids.sql`；也可使用 `node scripts/run-incremental-migrations.js` 执行增量迁移。
+
+`080_confession_poster_style.sql`：万能墙阶段 2，为 `confessions` 增加 `poster_style`、`publish_key`、`revision` 与作者发布唯一键。
+**该文件原编号为 078**；`origin/main` 已先行占用 078（用户关注）与 079（DORM ID），合并后重编号为 080。它**不是幂等迁移**，执行前先用 `information_schema` 检查三列与唯一键；只缺一部分时不要直接重跑。
+`081_confession_interactions.sql`：万能墙阶段 3，新增 `confession_favorites`、`confession_comment_likes` 与 `confession_comments.featured_at`。
+**该文件原编号为 079**，合并后重编号为 081；依赖 080，可重复执行。
+部署万能墙后端前，先确认目标库是否已上过 main 的 078/079：没有则按 **078 → 079** 补齐，再执行 **080 → 081**；已有则只执行 080/081。若目标库已有 078/079 的其他含义，不要再创建同名墙体迁移。
+（本分支已合并 main 的用户关注/DORM ID 代码；旧库缺少 `user_follows` / `users.dorm_id` 时，整包部署前必须补 078/079。）
