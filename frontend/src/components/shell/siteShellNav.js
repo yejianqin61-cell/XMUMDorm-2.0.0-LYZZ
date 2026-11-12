@@ -6,6 +6,7 @@ import {
   HandHeart,
   Heart,
   HeartHandshake,
+  Languages,
   Link2,
   MessageCircle,
   ClipboardCheck,
@@ -93,6 +94,14 @@ export const SITE_PRIMARY_NAV_ITEMS = [
     to: '/about/freshman-guide',
     icon: BookOpen,
     matchPrefixes: ['/about/freshman-guide'],
+  },
+  {
+    key: 'malay',
+    labelZh: '马来语',
+    labelEn: 'Malay',
+    to: '/malay',
+    icon: Languages,
+    matchPrefixes: ['/malay'],
   },
   {
     key: 'errands',
