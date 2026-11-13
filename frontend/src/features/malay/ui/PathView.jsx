@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { UNITS } from '../data/course.js';
 import { uLabel, uDesc } from '../engine/merge.js';
 import { allLessons, buildLessons, currentLesson, isUnlocked } from '../engine/questions.js';
@@ -51,22 +52,23 @@ export default function PathView({ state, isEn, t, onStartLesson, onLocked }) {
             </div>
             <div className="malay-path">
               {unitLessons.map((lesson, li) => {
-                if (li > 0) return <span key={`sp-${lesson.id}`} className="malay-path-spacer" aria-hidden="true" />;
                 const unlocked = isUnlocked(lesson.id, done);
                 const isDone = !!done[lesson.id];
                 const isCurrent = lesson.id === cur.id;
                 const mark = isDone ? '✓' : (unlocked ? '★' : '🔒');
                 return (
-                  <button
-                    key={lesson.id}
-                    type="button"
-                    title={lessonTitle(lesson, isEn, t)}
-                    onClick={() => (unlocked ? onStartLesson(lesson.id) : onLocked())}
-                    className={`malay-node ${isDone ? 'is-done' : ''} ${unlocked ? '' : 'is-locked'} ${isCurrent ? 'is-current' : ''}`}
-                  >
-                    <span aria-hidden="true">{mark}</span>
-                    <small>{lesson.title}</small>
-                  </button>
+                  <Fragment key={lesson.id}>
+                    {li > 0 ? <span className="malay-path-spacer" aria-hidden="true" /> : null}
+                    <button
+                      type="button"
+                      title={lessonTitle(lesson, isEn, t)}
+                      onClick={() => (unlocked ? onStartLesson(lesson.id) : onLocked())}
+                      className={`malay-node ${isDone ? 'is-done' : ''} ${unlocked ? '' : 'is-locked'} ${isCurrent ? 'is-current' : ''}`}
+                    >
+                      <span aria-hidden="true">{mark}</span>
+                      <small>{lesson.title}</small>
+                    </button>
+                  </Fragment>
                 );
               })}
             </div>
