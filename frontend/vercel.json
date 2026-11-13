@@ -1,10 +1,10 @@
 {
-  "rewrites": [
+  "routes": [
     {
-      "source": "/api/:path*",
-      "destination": "https://xmumdorm-200-lyzz-production.up.railway.app/api/:path*"
+      "src": "/api/(.*)",
+      "dest": "https://xmumdorm-200-lyzz-production.up.railway.app/api/$1"
     },
-    { "source": "/(.*)", "destination": "/" }
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
-
