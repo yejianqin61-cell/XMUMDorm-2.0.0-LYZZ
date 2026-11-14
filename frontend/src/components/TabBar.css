@@ -23,7 +23,7 @@
   position: relative;
   height: 100%;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   align-items: stretch;
   gap: 0;
   border-radius: 18px;
@@ -58,6 +58,10 @@
 }
 
 .tab-item {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -101,4 +105,100 @@
   max-width: 100%;
   padding: 0 2px;
   letter-spacing: -0.01em;
+}
+
+.mobile-more-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  border: 0;
+  background: rgba(15, 23, 42, 0.22);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-more-menu {
+  position: fixed;
+  z-index: 1;
+  left: 50%;
+  bottom: calc(var(--tabbar-height, 76px) + 22px + var(--safe-bottom));
+  transform: translateX(-50%);
+  width: min(430px, calc(100vw - 24px));
+  max-height: min(72svh, 620px);
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 20px 60px rgba(2, 6, 23, 0.24);
+  color: #1e293b;
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
+}
+
+.mobile-more-menu__heading {
+  margin: 0 2px 14px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.mobile-more-menu__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.mobile-more-menu__item {
+  display: flex;
+  min-height: 72px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 4px;
+  border-radius: 14px;
+  color: #475569;
+  font-size: 12px;
+  line-height: 1.25;
+  text-align: center;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-more-menu__item--active {
+  background: rgba(0, 91, 172, 0.1);
+  color: #005bac;
+  font-weight: 700;
+}
+
+.mobile-more-menu__actions {
+  display: grid;
+  gap: 4px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.mobile-more-menu__actions a,
+.mobile-more-menu__actions button {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 12px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #334155;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.mobile-more-menu__actions a:active,
+.mobile-more-menu__actions button:active,
+.mobile-more-menu__item:active {
+  background: rgba(15, 23, 42, 0.07);
 }

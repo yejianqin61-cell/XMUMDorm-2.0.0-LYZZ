@@ -14,6 +14,11 @@
   pointer-events: none;
 }
 
+/* 移动端打开“更多”导航时暂时收起桌宠，避免遮挡功能入口。 */
+body.mobile-more-open .pet-overlay {
+  visibility: hidden;
+}
+
 .pet-box {
   position: absolute;
   pointer-events: none; /* 指针只认命中层（pet-hit）：身体区域才可点/拖 */
