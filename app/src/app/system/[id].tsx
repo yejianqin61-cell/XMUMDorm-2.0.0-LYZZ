@@ -59,6 +59,8 @@ export default function SchoolSystemScreen(): React.ReactElement {
 
   /** `null` = 还没读过；`rows` 为空 = 这一页没有表 */
   const [schedule, setSchedule] = React.useState<{ rowCount: number; text: string } | null>(null);
+  /** 自动读表在**每一页**都会跑（含登录页、错误页）→「没读到」只在用户亲手点了读表时才说，⛔ 不对自动读表报空 */
+  const manualRead = React.useRef(false);
 
   // 降级为系统浏览器：副作用放 effect 里，⛔ 不在渲染期调 Linking
   React.useEffect(() => {
@@ -149,7 +151,7 @@ export default function SchoolSystemScreen(): React.ReactElement {
               label={t('tools.readSchedule')}
               variant="link"
               size="small"
-              onPress={() => webRef.current?.readSchedule()}
+              onPress={() => { manualRead.current = true; webRef.current?.readSchedule(); }}
             />
           ) : null}
           <IconButton
@@ -208,6 +210,9 @@ export default function SchoolSystemScreen(): React.ReactElement {
           }}
           onScheduleMessage={(raw) => {
             const extracted = extractScheduleFromMessage(raw);
+            const found = !!extracted && extracted.rows.length > 1;
+            if (!found && !manualRead.current) return;
+            manualRead.current = false;
             // 行 → 制表符文本（给 `T-03` 的预览接口用；⛔ 不在本页解析课程）
             setSchedule(
               extracted && extracted.rows.length > 1

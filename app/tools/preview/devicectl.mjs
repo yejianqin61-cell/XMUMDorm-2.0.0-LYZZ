@@ -147,6 +147,24 @@ function fileHash(f) {
     return null;
   }
 }
+/**
+ * 原生配置指纹：app.json + plugins/**（含证书等资源）+ package-lock。
+ * ⚠️ `expo run:android` 在 android/ 已存在时**不会**重跑 prebuild → 改了 config plugin 不生效。
+ *    所以指纹变了就先 `expo prebuild --platform android`（非 clean，幂等）。
+ */
+function nativeConfigHash(dir) {
+  const h = crypto.createHash('sha1');
+  const walk = (p) => {
+    if (!fs.existsSync(p)) return;
+    if (fs.statSync(p).isDirectory()) {
+      for (const name of fs.readdirSync(p).sort()) walk(path.join(p, name));
+    } else {
+      h.update(path.relative(dir, p).replaceAll('\\', '/')).update(fs.readFileSync(p));
+    }
+  };
+  for (const f of ['app.json', 'package-lock.json', 'plugins']) walk(path.join(dir, f));
+  return h.digest('hex');
+}
 function syncMirror(dest) {
   fs.mkdirSync(dest, { recursive: true });
   console.log(`… 同步源文件到短路径镜像 ${dest}`);
@@ -392,6 +410,15 @@ commands.build = (argv) => {
   requireDevice();
   const cwd = buildDir();
   if (cwd !== APP_DIR) syncMirror(cwd);
+  const nativeHash = nativeConfigHash(cwd);
+  const nativeMarker = path.join(cwd, '.preview-native-hash');
+  const hadNative = fs.existsSync(nativeMarker) ? fs.readFileSync(nativeMarker, 'utf8').trim() : null;
+  if (fs.existsSync(path.join(cwd, 'android')) && (flags.prebuild || hadNative !== nativeHash)) {
+    console.log('… app.json / plugins 有变化，先 expo prebuild --platform android');
+    const pre = spawnSync('npx expo prebuild --platform android --no-install', {
+      cwd, shell: true, stdio: 'inherit', env: { ...process.env, CI: '1' } });
+    if (pre.status !== 0) die('expo prebuild 失败');
+  }
   console.log(`… expo run:android（目录 ${cwd}；日志同时写到 .preview/build.log）`);
   const logFile = path.join(STATE_DIR, 'build.log');
   const log = fs.createWriteStream(logFile);
@@ -407,6 +434,7 @@ commands.build = (argv) => {
     child.on('close', (code) => {
       log.end();
       if (code !== 0) die(`构建失败（退出码 ${code}），完整日志：${logFile}`);
+      fs.writeFileSync(nativeMarker, nativeHash);
       console.log('✓ debug 原生壳已安装。下一步：devicectl metro && devicectl restart');
       resolve();
     });
@@ -448,12 +476,16 @@ commands.metro = async (argv) => {
   const log = fs.openSync(path.join(STATE_DIR, 'metro.log'), 'w');
   const args = ['expo', 'start', '--port', String(METRO_PORT)];
   if (flags.clear) args.push('--clear');
+  // ⛔ 不能带 CI=1：Expo 在 CI 模式下关闭文件监听（日志 "reloads are disabled"），
+  //    改代码不会热更新，看到的永远是 Metro 启动那一刻的代码。stdin 已是 ignore，不会卡在交互提示上。
+  const env = { ...process.env, EXPO_PUBLIC_API_BASE_URL: api.url, BROWSER: 'none' };
+  delete env.CI;
   const child = spawnNpx(args, {
     cwd: APP_DIR,
     detached: !IS_WIN,
     windowsHide: true,
     stdio: ['ignore', log, log],
-    env: { ...process.env, CI: '1', EXPO_PUBLIC_API_BASE_URL: api.url, BROWSER: 'none' },
+    env,
   });
   child.unref();
   writeState('metro.pid', child.pid);

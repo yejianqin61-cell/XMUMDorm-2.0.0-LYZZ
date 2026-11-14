@@ -28,7 +28,8 @@
         }
       ],
       "@react-native-community/datetimepicker",
-      "expo-sharing"
+      "expo-sharing",
+      "./plugins/withSchoolNetworkSecurity"
     ],
     "ios": {
       "supportsTablet": true,

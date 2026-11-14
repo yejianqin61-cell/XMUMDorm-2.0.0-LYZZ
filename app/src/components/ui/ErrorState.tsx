@@ -22,6 +22,7 @@ import CircleAlert from 'lucide-react-native/icons/circle-alert';
 import Lock from 'lucide-react-native/icons/lock';
 import FileX from 'lucide-react-native/icons/file-x';
 import RefreshCw from 'lucide-react-native/icons/refresh-cw';
+import ShieldAlert from 'lucide-react-native/icons/shield-alert';
 
 import { useTheme } from '@/design-system/theme';
 import { toErrorCopy, type AppError, type AppErrorKind } from '@/i18n/errors';
@@ -35,6 +36,7 @@ export const ERROR_ICON: Record<AppErrorKind, IconComponent> = {
   offline: WifiOff,
   unreachable: CloudOff,
   timeout: Clock,
+  certificate: ShieldAlert,
   validation: CircleAlert,
   permission: Lock,
   terms: Lock,
