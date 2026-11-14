@@ -46,3 +46,6 @@ yarn-error.*
 *.aab
 /google-services.json
 /GoogleService-Info.plist
+
+# 本机预览产物（tools/preview/devicectl.mjs）
+/.preview
