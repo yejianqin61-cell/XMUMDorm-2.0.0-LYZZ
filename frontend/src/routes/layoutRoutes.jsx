@@ -82,6 +82,7 @@ const MerchantShopEdit = lazy(() => import('../pages/MerchantShopEdit'));
 const Rankings = lazy(() => import('../pages/Rankings'));
 const ConfessionWall = lazy(() => import('../pages/ConfessionWall'));
 const ConfessionCompose = lazy(() => import('../pages/ConfessionCompose'));
+const MalayPage = lazy(() => import('../features/malay/MalayPage'));
 
 const Shop = lazy(() => import('../pages/Shop/Shop'));
 
@@ -188,6 +189,8 @@ export const layoutRoutes = (
     <Route path="merchant/shop/edit/:shopId" element={renderLazyRoute(MerchantShopEdit)} />
     <Route path="merchant/food/new" element={renderLazyRoute(FoodCreate)} />
     <Route path="merchant/food/:id" element={renderLazyRoute(MerchantFoodDetail)} />
+    {/* 马来语学习模块 */}
+    <Route path="malay" element={renderLazyRoute(MalayPage)} />
     {/* M09 万能墙 */}
     <Route path="confession" element={renderLazyRoute(ConfessionWall)} />
     <Route path="confession/new" element={renderLazyRoute(ConfessionCompose)} />
