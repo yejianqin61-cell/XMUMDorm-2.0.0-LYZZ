@@ -9,5 +9,6 @@
 | [DormMap/](DormMap/) | 校园 2D/3D 导览、地图活动与地点内容治理策划 |
 | [presentation/](presentation/) | 项目介绍与展示材料 |
 | [Moodle浏览器扩展/](Moodle浏览器扩展/Moodle浏览器扩展需求.md) | 电脑浏览器扩展读取 Moodle DDL，只存本机，交给 Web 学习日历显示（草案，待裁决） |
+| [AI翻译/](AI翻译/帖子评论点评AI翻译需求.md) | 帖子、评论、食堂点评按读者界面语言 AI 翻译（Web + App） |
 
 | [校园商城/](校园商城/商城需求与架构.md) | 本地订水与杂货商城需求、存储与权限 |

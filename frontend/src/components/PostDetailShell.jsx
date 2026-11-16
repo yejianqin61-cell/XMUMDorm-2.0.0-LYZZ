@@ -11,6 +11,7 @@ import { StackedCardCarousel } from './StackedCardCarousel';
 import LikeBurst from './LikeBurst';
 import { formatPostTime } from '@shared/utils/formatTime';
 import UserLevelBadge from './UserLevelBadge';
+import TranslateToggle from './TranslateToggle';
 import '../pages/PostDetail.css';
 
 const COMMENT_EMOJIS = [
@@ -83,6 +84,8 @@ export default function PostDetailShell({
   deleteLoading = false,
   showCommentCountBtn = false,
   commentsSlot = null,
+  /** 例如 { post: 'post', comment: 'comment' }：传了才显示 AI 翻译按钮，值是 /api/translate 的 kind */
+  translateKinds = null,
 }) {
   const navigate = useNavigate();
   const { lang } = useLanguage();
@@ -310,6 +313,9 @@ export default function PostDetailShell({
 
         {title ? <h1 className="post-detail-heading">{title}</h1> : null}
         <p className="post-detail-content">{post.content}</p>
+        {translateKinds?.post ? (
+          <TranslateToggle kind={translateKinds.post} id={post.id} text={post.content} isLoggedIn={isLoggedIn} />
+        ) : null}
 
         {imageUrls.length === 1 && (
           <button
@@ -424,6 +430,9 @@ export default function PostDetailShell({
                     )}
                   </div>
                   <p className="post-detail-thread-text">{c.content}</p>
+                  {translateKinds?.comment ? (
+                    <TranslateToggle kind={translateKinds.comment} id={c.id} text={c.content} isLoggedIn={isLoggedIn} />
+                  ) : null}
                 </div>
               </div>
               {c.replies && c.replies.length > 0 && (
@@ -461,6 +470,9 @@ export default function PostDetailShell({
                           )}
                         </div>
                         <p className="post-detail-thread-text">{r.content}</p>
+                        {translateKinds?.comment ? (
+                          <TranslateToggle kind={translateKinds.comment} id={r.id} text={r.content} isLoggedIn={isLoggedIn} />
+                        ) : null}
                       </div>
                     </li>
                   ))}

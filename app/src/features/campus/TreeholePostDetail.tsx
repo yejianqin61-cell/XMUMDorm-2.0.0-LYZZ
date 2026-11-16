@@ -39,6 +39,8 @@ export type TreeholePostDetailProps = {
   /** 万能墙正文（六种版式模板）；给了它就替代纯文本正文 */
   wallContent?: React.ReactNode;
   likeNotice?: React.ReactNode;
+  /** 正文下方的附加内容（例如 AI 翻译）；由页面组合 */
+  contentAccessory?: React.ReactNode;
   testID?: string;
   imageSave?: TreeholeImageSaveOptions;
 };
@@ -57,6 +59,7 @@ export function TreeholePostDetail({
   anonymous = false,
   wallContent,
   likeNotice,
+  contentAccessory,
   testID = 'treehole-post-detail',
   imageSave,
 }: TreeholePostDetailProps): React.ReactElement {
@@ -91,6 +94,8 @@ export function TreeholePostDetail({
           {post.content}
         </Text>
       ) : null)}
+
+      {contentAccessory ?? null}
 
       {anonymous ? null : <TreeholeTagList tags={post.tags} />}
 

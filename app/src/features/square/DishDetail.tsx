@@ -241,7 +241,7 @@ export function DishDetail(): React.ReactElement {
                 {t('canteen.noComments')}
               </Text>
             ) : (
-              <DishCommentThread comments={comments} onReply={(parentId) => {
+              <DishCommentThread comments={comments} isSignedIn={session.status === 'signedIn'} onReply={(parentId) => {
                 if (session.status !== 'signedIn') { router.push('/login'); return; }
                 if (comments.some((comment) => comment.id === parentId && comment.parentId === null)) setReply({ productId, parentId, owner });
               }} />

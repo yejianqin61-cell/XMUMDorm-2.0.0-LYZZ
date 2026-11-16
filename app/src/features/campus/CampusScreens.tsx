@@ -41,6 +41,7 @@ import { asPost, asWall, errorFor, type Post } from './campusModel';
 import { TreeholeFeed } from './TreeholeFeed';
 import { WallFeed, WALL_SNAPSHOT_KEY, type WallFeedSnapshot } from './WallFeed';
 import { TreeholePostDetail } from './TreeholePostDetail';
+import { TranslateToggle } from '../translate/TranslateToggle';
 import type { TreeholeImageSaveOptions } from './TreeholeImageSaveControls';
 import { toTreeholePostViewModel } from './treeholePostViewModel';
 import { WallFreePostText } from './WallFreePostBody';
@@ -575,6 +576,9 @@ export function CampusDetailScreen({
                 kind === 'wall' ? <WallFreePostText content={vm.content} id={vm.id} savedStyle={post?.poster_style} /> : undefined
               }
               likeNotice={likeNotice}
+              contentAccessory={
+                kind === 'wall' ? undefined : <TranslateToggle kind="post" id={vm.id} text={vm.content} isSignedIn={isSignedIn} testID="campus-detail-translate" />
+              }
             />
 
             <Divider />
@@ -667,6 +671,13 @@ export function CampusDetailScreen({
                   nodes={actions.comments.nodes}
                   onReply={actions.comments.onReply}
                   allowNestedReply={kind === 'wall'}
+                  renderContentAccessory={
+                    kind === 'wall'
+                      ? undefined
+                      : (node) => (
+                          <TranslateToggle kind="comment" id={Number(node.id)} text={node.content} isSignedIn={isSignedIn} testID={`campus-detail-translate-${node.id}`} />
+                        )
+                  }
                   onDelete={kind === 'wall' ? (id: string) => setDeleteCommentId(id) : undefined}
                   {...(kind === 'wall'
                     ? {

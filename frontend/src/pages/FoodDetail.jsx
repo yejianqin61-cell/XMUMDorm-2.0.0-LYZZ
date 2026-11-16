@@ -13,6 +13,7 @@ import PageHeader from '../components/templates/PageHeader';
 import SectionHeader from '../components/templates/SectionHeader';
 import DetailPageLayout from '../components/templates/DetailPageLayout';
 import { useAuth } from '../context/AuthContextState';
+import TranslateToggle from '../components/TranslateToggle';
 import { Toast } from '../context/toast';
 import {
   getProduct,
@@ -436,6 +437,7 @@ export default function FoodDetail() {
                       <span className="food-detail-review-rating">{formatRatingLabel(review.rating)}</span>
                     </div>
                     <p className="food-detail-review-content">{review.content}</p>
+                    <TranslateToggle kind="review" id={review.id} text={review.content} isLoggedIn={isLoggedIn} />
                     {review.images && review.images.length > 0 ? (
                       <div className="food-detail-review-images">
                         {review.images.map((url, index) => (
@@ -483,6 +485,7 @@ export default function FoodDetail() {
                             <p className="food-detail-reply-content">
                               <span className="food-detail-reply-user">{reply.userName}</span>：{reply.content}
                             </p>
+                            <TranslateToggle kind="review" id={reply.id} text={reply.content} isLoggedIn={isLoggedIn} />
                             {reply.userId === user?.id || isAdmin ? (
                               <button
                                 type="button"

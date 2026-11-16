@@ -79,6 +79,8 @@ export type CommentItemProps = {
   featureLabel?: string;
   onReport?: () => void;
   reportLabel?: string;
+  /** 正文下方的附加内容（例如 AI 翻译）；由页面组合，本组件不关心它是什么 */
+  contentAccessory?: React.ReactNode;
   labels: {
     anonymous: string;
     deleteLabel: string;
@@ -114,6 +116,7 @@ export function CommentItem({
   featureLabel,
   onReport,
   reportLabel,
+  contentAccessory,
   labels,
   style,
   testID,
@@ -212,6 +215,8 @@ export function CommentItem({
         <Text role="body" colorToken="text-primary">
           {content}
         </Text>
+
+        {contentAccessory ?? null}
 
         <View
           style={{
