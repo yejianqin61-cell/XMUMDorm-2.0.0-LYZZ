@@ -212,6 +212,7 @@
 .study-calendar__dot--overdue { background: var(--color-danger); }
 .study-calendar__dot--holiday { background: var(--color-success); }
 .study-calendar__dot--class { background: var(--color-text-tertiary); }
+.study-calendar__dot--moodle { background: var(--accent-treehole); }
 
 .study-calendar__grid {
   display: grid;
@@ -563,4 +564,54 @@
   .study-calendar__summary-link {
     margin-left: 0;
   }
+}
+
+/* Moodle 截止（来自本机浏览器扩展） */
+.study-calendar__chip--moodle {
+  background: var(--color-bg-brand-soft);
+  color: var(--color-brand-text);
+  border-left: 3px solid var(--accent-treehole);
+}
+
+.study-calendar__chip--moodle.study-calendar__chip--overdue,
+.study-calendar__chip--moodle.study-calendar__chip--today {
+  background: var(--color-bg-danger-soft);
+  color: var(--study-calendar-danger-text);
+}
+
+.study-calendar__tag--moodle {
+  border-color: var(--accent-treehole);
+  color: var(--color-brand-text);
+}
+
+.study-calendar__hint {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--color-bg-brand-soft);
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.study-calendar__moodle a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.study-calendar__moodle a:hover strong {
+  text-decoration: underline;
+}
+
+.study-calendar__moodle-mark {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-treehole);
+  color: var(--color-text-on-brand);
+  font-size: 12px;
+  font-weight: 800;
 }
