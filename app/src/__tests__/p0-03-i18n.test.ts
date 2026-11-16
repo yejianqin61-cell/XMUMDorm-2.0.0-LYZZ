@@ -259,6 +259,8 @@ describe('P0-03 双语词条层与错误文案', () => {
         'me.',
         // 万能墙两卡信息流（阶段 1，2026-11-02 由丙引入）：示例标识、类型标签、招募结构化字段
         'wall.',
+        // 帖子 / 评论 / 点评 AI 翻译（2026-11-16 由 wx 引入，任务管理表 #17）
+        'translate.',
       ];
       const stray = Object.keys(zh).filter((k) => !knownPrefixes.some((p) => k.startsWith(p)));
       expect(stray).toEqual([]);

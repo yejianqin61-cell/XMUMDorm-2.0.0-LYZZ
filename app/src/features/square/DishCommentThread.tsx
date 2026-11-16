@@ -10,9 +10,10 @@ import { useTheme } from '@/design-system/theme';
 import { useI18n } from '@/i18n';
 import { getUploadUrl } from '../../../../shared/api/config';
 import { ratingTierLabelKey, type CanteenComment } from './canteen';
+import { TranslateToggle } from '../translate/TranslateToggle';
 
 /** Domain composition adds rating and media around the shared thread primitives. */
-export function DishCommentThread({ comments, onReply }: { comments: readonly CanteenComment[]; onReply?: (id: number) => void }): React.ReactElement {
+export function DishCommentThread({ comments, onReply, isSignedIn = false }: { comments: readonly CanteenComment[]; onReply?: (id: number) => void; isSignedIn?: boolean }): React.ReactElement {
   const { t } = useI18n();
   const theme = useTheme();
   const [expanded, setExpanded] = React.useState<ReadonlySet<string>>(new Set());
@@ -29,6 +30,7 @@ export function DishCommentThread({ comments, onReply }: { comments: readonly Ca
     return <Surface key={node.id} testID={`dish-comment-${node.id}`} rounded="radius_medium" bordered="subtle" padding="space_3">
       {tier ? <View style={{ flexDirection: 'row' }}><Surface testID={`dish-comment-${node.id}-tier`} rounded="radius_small" bordered="subtle" padding="space_1"><Text role="caption" colorToken="text-secondary">{t(tier)}</Text></Surface></View> : null}
       <CommentItem author={node.author} content={node.content} createdAtLabel={node.createdAtLabel} depth={depth} labels={labels}
+        contentAccessory={<TranslateToggle kind="review" id={comment.id} text={comment.content} isSignedIn={isSignedIn} testID={`dish-comment-${node.id}-translate`} />}
         onReply={onReply && canReplyTo(depth) ? () => onReply(comment.id) : undefined} />
       {comment.images.length > 0 ? <MediaGrid testID={`dish-comment-${node.id}-images`} uris={comment.images.map(getUploadUrl)} alt={comment.images.map(() => comment.content)} /> : null}
     </Surface>;
