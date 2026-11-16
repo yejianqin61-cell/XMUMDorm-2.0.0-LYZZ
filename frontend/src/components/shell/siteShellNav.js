@@ -12,6 +12,7 @@ import {
   ClipboardCheck,
   TreePine,
   ShoppingBag,
+  Smile,
   UserRound,
   UsersRound,
   UtensilsCrossed,
@@ -110,6 +111,14 @@ export const SITE_PRIMARY_NAV_ITEMS = [
     to: '/about/errands',
     icon: HandHeart,
     matchPrefixes: ['/about/errands'],
+  },
+  {
+    key: 'date',
+    labelZh: '交友',
+    labelEn: 'Meet',
+    to: '/about/date',
+    icon: Smile,
+    matchPrefixes: ['/about/date'],
   },
   {
     key: 'join-us',

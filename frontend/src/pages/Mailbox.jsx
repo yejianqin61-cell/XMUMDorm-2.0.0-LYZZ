@@ -62,6 +62,11 @@ function buildMarketplaceText({ isZh, names, othersCount, contentTitle }) {
   return isZh ? `${prefix} 在二手市场就 ${titlePart} 发来新消息。` : `${prefix} sent a new message about ${titlePart}.`;
 }
 
+function buildDateMatchText({ isZh, names }) {
+  const who = names[0] || (isZh ? '有人' : 'Someone');
+  return isZh ? `你和 ${who} 在交友里互相打了招呼，现在可以看到对方的联系方式。` : `You and ${who} said hi to each other. You can now see each other's contact.`;
+}
+
 function buildAggregateText({ isZh, names, othersCount, likeCount, commentCount, isPost, contentTitle }) {
   const a = names[0] || (isZh ? '有人' : 'Someone');
   const b = names[1] || '';
@@ -346,7 +351,8 @@ function Mailbox() {
               const linkTo = g.content_path || '#';
               const isAnnouncement = (g.target && g.target.type === 'announcement') || g.latest?.type === 'announcement' || g.latest?.type === 'system_announcement';
               const isCampus = g.latest?.type === 'campus_news_publication';
-              const aggregateText = isCampus ? (g.target?.available ? (isZh ? '校园快讯 · 学院通知' : 'Campus news · College update') : (isZh ? '该校园快讯暂不可查看' : 'This campus news is unavailable')) : g.isAffair
+              const isDateMatch = g.latest?.type === 'date_match';
+              const aggregateText = isDateMatch ? buildDateMatchText({ isZh, names: g.names }) : isCampus ? (g.target?.available ? (isZh ? '校园快讯 · 学院通知' : 'Campus news · College update') : (isZh ? '该校园快讯暂不可查看' : 'This campus news is unavailable')) : g.isAffair
                 ? buildAffairsText({ isZh, latest: g.latest })
                 : g.category === 'transaction'
                   ? buildMarketplaceText({ isZh, names: g.names, othersCount: g.othersCount, contentTitle: title })

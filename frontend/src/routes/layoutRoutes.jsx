@@ -26,6 +26,7 @@ const AboutAlgorithm = lazy(() => import('../pages/AboutAlgorithm'));
 const AboutLevelAlgorithm = lazy(() => import('../pages/AboutLevelAlgorithm'));
 const AboutProfile = lazy(() => import('../pages/AboutProfile'));
 const JoinUs = lazy(() => import('../pages/JoinUs'));
+const DatePage = lazy(() => import('../pages/DatePage'));
 const FriendlyLinks = lazy(() => import('../pages/FriendlyLinks'));
 const SquareClub = lazy(() => import('../pages/SquareClub'));
 const SquareSecondHand = lazy(() => import('../pages/SquareSecondHand'));
@@ -154,6 +155,7 @@ export const layoutRoutes = (
     <Route path="about/errands" element={renderLazyRoute(SquareErrands)} />
     <Route path="about/errands/new" element={renderLazyRoute(PublishErrand)} />
     <Route path="about/errands/:id" element={renderLazyRoute(ErrandDetail)} />
+    <Route path="about/date" element={renderLazyRoute(DatePage)} />
     <Route path="about/join-us" element={renderLazyRoute(JoinUs)} />
     <Route path="about/links" element={renderLazyRoute(FriendlyLinks)} />
     <Route path="myzone" element={<MyZone />} />
