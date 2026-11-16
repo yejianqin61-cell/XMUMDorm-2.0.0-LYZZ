@@ -87,6 +87,19 @@ describe('DDL 判定与投影', () => {
   });
 });
 
+describe('课程显示名（按校方真实课程名的写法）', () => {
+  it.each([
+    [{ name: '(2026-09)-DATA STRUCTURES(EEE211)', shortName: 'EEE211*_2' }, 'EEE211'],
+    [{ name: 'EEE 202 Engineers and Society 2026/09 Dr X', shortName: 'Enginers and Society' }, 'EEE202'],
+    [{ name: 'COM210 and COM211 Engineering Mathematics (III) 2026/09 Y', shortName: 'EMath' }, 'COM210'],
+    [{ name: 'EEE203 Instrumentation 2026/09 Z', shortName: 'EEE2032609Z' }, 'EEE203'],
+    [{ name: 'Library Orientation for New Students', shortName: 'LIB' }, 'Library Orientation for New Students'],
+    [{ name: 'A very long course title without any recognisable course code at all', shortName: null }, 'A very long course title without any re…'],
+  ])('%o → %s', (course, label) => {
+    expect(core.courseLabel(course)).toBe(label);
+  });
+});
+
 describe('页面信息', () => {
   const fakeDoc = (map) => ({ querySelector: (sel) => (map[sel] ? { getAttribute: () => map[sel] } : null) });
   it('登录态与用户 id', () => {

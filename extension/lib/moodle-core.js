@@ -185,10 +185,25 @@
     return result;
   }
 
+  /**
+   * 课程在日历上的显示名。校方课程的 shortname 是老师随手填的（"EEE211*_2"、"EMath"、"EEE2032609Lian"），
+   * 全名里几乎都有课程代码（"(2026-09)-DATA STRUCTURES(EEE211)"、"EEE 202 Engineers and Society …"），
+   * 所以优先从全名里取「3 个大写字母 + 3 位数字」，取不到再用全名截断。（2026-11-16 用真实账号核对过）
+   */
+  function courseLabel(course) {
+    var sources = [course.name, course.shortName];
+    for (var i = 0; i < sources.length; i += 1) {
+      var match = typeof sources[i] === 'string' ? /\b([A-Z]{3})\s?(\d{3})\b/.exec(sources[i]) : null;
+      if (match) return match[1] + match[2];
+    }
+    var name = course.name || course.shortName || '';
+    return name.length > 40 ? name.slice(0, 39) + '…' : name;
+  }
+
   /** 交给 Web 的投影：只有标题、课程名、截止时间、链接、是否已完成 */
   function projectDeadlines(buckets, courses, now) {
     var names = {};
-    for (var i = 0; i < courses.length; i += 1) names[courses[i].id] = courses[i].shortName || courses[i].name;
+    for (var i = 0; i < courses.length; i += 1) names[courses[i].id] = courseLabel(courses[i]);
     var oldest = now - KEEP_PAST_DAYS * 86400000;
     var rows = buckets.past.filter(function (d) { return d.dueAt >= oldest; }).concat(buckets.valid);
     return rows.map(function (d) {
@@ -279,6 +294,7 @@
     isDeadlineEvent: isDeadlineEvent,
     partitionDeadlines: partitionDeadlines,
     projectDeadlines: projectDeadlines,
+    courseLabel: courseLabel,
     inspectIdentity: inspectIdentity,
     readSesskey: readSesskey,
     classifyAjaxError: classifyAjaxError,
