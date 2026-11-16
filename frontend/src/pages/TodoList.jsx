@@ -17,6 +17,7 @@ import { readPersistedTodos, writePersistedTodos } from '../utils/todoPersist';
 import { Link } from 'react-router-dom';
 import { summarizeTodos } from '@shared/utils/studyCalendar';
 import { useAllTodos } from '../hooks/useAllTodos';
+import MailToTodos from '../components/MailToTodos';
 import './TodoList.css';
 
 const PRIORITY_LABELS = { 0: '无', 1: '低', 2: '中', 3: '高' };
@@ -245,6 +246,8 @@ export default function TodoList() {
             ))}
           </div>
         </div>
+
+        {!showForm && <MailToTodos isZh={isZh} isLoggedIn={isLoggedIn} />}
 
         {!showForm && (
           <button
