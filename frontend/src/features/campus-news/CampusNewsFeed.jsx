@@ -25,7 +25,7 @@ export default function CampusNewsFeed({ posts, hasMore = false }) {
       </header>
       {posts.length ? posts.map((post) => <FeedItem key={post.id} post={post} />)
         : <p className="campus-news-empty">{en ? 'No campus news yet.' : '暂时没有校园快讯。'}</p>}
-      {!hasMore && <footer className="campus-news-end">{en ? 'No more campus news' : '暂时没有更多快讯'}</footer>}
+      {!hasMore && posts.length > 0 && <footer className="campus-news-end">{en ? 'No more campus news' : '暂时没有更多快讯'}</footer>}
     </section>
   );
 }
