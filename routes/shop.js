@@ -272,7 +272,7 @@ router.put('/admin/settings', wrap(async (req, res) => {
   // Legacy field retained in storage, but new orders accept all student-entered addresses.
   const safeZones = [];
   if(!Array.isArray(methods)||methods.length>8) s.fail('配置无效 / Invalid settings');
-  const safeMethods=methods.map(m=>({id:m.id?s.text(m.id,40):require('crypto').randomUUID(),name_zh:s.text(m.name_zh,120),name_en:s.text(m.name_en,120),qr_url:m.qr_url?s.text(m.qr_url,500):'',payment_url:m.payment_url?s.text(m.payment_url,1000):''}));
+  const safeMethods=methods.map(m=>({id:m.id?s.text(m.id,40):require('crypto').randomUUID(),name_zh:s.text(m.name_zh,120),name_en:s.text(m.name_en,120),qr_url:m.qr_url?s.text(m.qr_url,500):'',...(m.payment_url?{payment_url:s.text(m.payment_url,1000)}:{})}));
   for(const m of safeMethods) if(!m.name_zh||!m.name_en||(!m.qr_url&&!m.payment_url)) s.fail('请填写中英文名称，并提供二维码或支付链接 / Enter both names and provide a QR image or payment link');
   for(const m of safeMethods) if(m.qr_url&&!/^\/(?!\/)[\w/.-]+$/.test(m.qr_url)&&!/^https:\/\//.test(m.qr_url)) s.fail('二维码地址无效 / Invalid QR URL');
   for(const m of safeMethods) if(m.payment_url){let url;try{url=new URL(m.payment_url);}catch{}if(!url||url.protocol!=='https:'||url.username||url.password)s.fail('支付链接必须是有效的 HTTPS 地址 / Payment link must be a valid HTTPS URL');}

@@ -33,13 +33,17 @@ function paymentMethods(value) {
     try { methods = JSON.parse(methods); } catch { return []; }
   }
   if (!Array.isArray(methods)) return [];
-  return methods.filter(method => method && typeof method === 'object' && !Array.isArray(method)).map(method => ({
-    id: optionalText(String(method.id || ''), 40),
-    name_zh: optionalText(method.name_zh, 120),
-    name_en: optionalText(method.name_en, 120),
-    qr_url: optionalText(method.qr_url, 500),
-    payment_url: optionalText(method.payment_url, 1000),
-  })).filter(method => {
+  return methods.filter(method => method && typeof method === 'object' && !Array.isArray(method)).map(method => {
+    const normalized = {
+      id: optionalText(String(method.id || ''), 40),
+      name_zh: optionalText(method.name_zh, 120),
+      name_en: optionalText(method.name_en, 120),
+      qr_url: optionalText(method.qr_url, 500),
+    };
+    const paymentUrl = optionalText(method.payment_url, 1000);
+    if (paymentUrl) normalized.payment_url = paymentUrl;
+    return normalized;
+  }).filter(method => {
     const validQr = method.qr_url && (/^\/(?!\/)[\w/.-]+$/.test(method.qr_url) || /^https:\/\//.test(method.qr_url));
     let validPaymentUrl = false;
     try { const url = new URL(method.payment_url); validPaymentUrl = url.protocol === 'https:' && !url.username && !url.password; } catch {}
