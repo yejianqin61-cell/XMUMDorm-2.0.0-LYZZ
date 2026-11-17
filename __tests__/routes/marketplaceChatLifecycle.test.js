@@ -120,8 +120,10 @@ describe('marketplace chat lifecycle for an on-sale item', () => {
     query
       .mockResolvedValueOnce([{ id: 11, seller_user_id: 7, buyer_user_id: 9 }])
       .mockResolvedValueOnce({ affectedRows: 1 })
+      .mockResolvedValueOnce({ affectedRows: 2 })
       .mockResolvedValueOnce([{ id: 11, seller_user_id: 7, buyer_user_id: 9 }])
-      .mockResolvedValueOnce({ affectedRows: 1 });
+      .mockResolvedValueOnce({ affectedRows: 1 })
+      .mockResolvedValueOnce({ affectedRows: 0 });
 
     const first = await supertest(app()).post('/api/marketplace/chat/threads/11/read').set('x-test-user-id', '9');
     const second = await supertest(app()).post('/api/marketplace/chat/threads/11/read').set('x-test-user-id', '9');
@@ -129,7 +131,7 @@ describe('marketplace chat lifecycle for an on-sale item', () => {
     expect(first.status).toBe(200);
     expect(second.status).toBe(200);
     expect(query.mock.calls[1][0]).toContain('buyer_last_read_at');
-    expect(query.mock.calls[3][0]).toContain('buyer_last_read_at');
+    expect(query.mock.calls[4][0]).toContain('buyer_last_read_at');
   });
 
   it('rejects an unrelated user before writing a read boundary', async () => {

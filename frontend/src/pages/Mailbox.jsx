@@ -1,11 +1,13 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContextState';
 import { useLanguage } from '../context/LanguageContextState';
 import EmptyState from '../components/ui/EmptyState';
 import ErrorState from '../components/ui/ErrorState';
 import PageSkeleton from '../components/ui/PageSkeleton';
 import RouteTransition from '../components/ui/RouteTransition';
+import MailboxChats from '../components/MailboxChats';
 import {
   clearNotifications,
   clearNotificationsByCategory,
@@ -13,7 +15,9 @@ import {
   getUnreadSummary,
   markNotificationRead,
 } from '@shared/api/notifications';
+import { listMyChatThreads } from '@shared/api/marketplace';
 import { getApiErrorMessage } from '@shared/utils/apiError';
+import { sumUnread } from '@shared/utils/marketplaceChat';
 import './Mailbox.css';
 
 function formatTime(createdAt) {
@@ -100,10 +104,29 @@ function Mailbox() {
   const [retry, setRetry] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
   const activeRequest = useRef(null);
-  const [tab, setTab] = useState('all');
+  const [searchParams] = useSearchParams();
+  const [tab, setTab] = useState(() => (searchParams.get('tab') === 'chats' ? 'chats' : 'all'));
+  const isChats = tab === 'chats';
+
+  // 「私信」Tab：二手市场里的全部对话；Tab 角标和列表共用这一份数据
+  const chatsQuery = useInfiniteQuery({
+    enabled: !!isLoggedIn,
+    queryKey: ['marketplace', 'chat', 'myThreads', token || ''],
+    queryFn: ({ pageParam }) => listMyChatThreads({ limit: 50, cursor: pageParam || undefined }),
+    initialPageParam: null,
+    getNextPageParam: (last) => (last?.hasMore && last?.nextCursor ? last.nextCursor : undefined),
+    staleTime: 5 * 1000,
+    refetchInterval: 20 * 1000,
+  });
+  const chatThreads = useMemo(
+    () => (chatsQuery.data?.pages || []).flatMap((page) => page?.list || []),
+    [chatsQuery.data],
+  );
+  const chatUnread = sumUnread(chatThreads);
 
   const CATEGORY_TABS = [
     { key: 'all', label: '全部', labelEn: 'All' },
+    { key: 'chats', label: '私信', labelEn: 'Chats' },
     { key: 'interaction', label: '互动', labelEn: 'Interaction' },
     { key: 'transaction', label: '交易', labelEn: 'Transaction' },
     { key: 'system', label: '系统', labelEn: 'System' },
@@ -132,10 +155,11 @@ function Mailbox() {
     const opts = { page, pageSize: 50 };
     if (tab !== 'all') opts.category = tab;
 
-    Promise.all([getNotifications(opts), getUnreadSummary()])
+    // 私信 Tab 的列表走 chatsQuery，这里只刷新未读汇总
+    Promise.all([tab === 'chats' ? Promise.resolve(null) : getNotifications(opts), getUnreadSummary()])
       .then(([res, summary]) => {
         if (cancelled) return;
-        setData(previous => ({
+        if (res) setData(previous => ({
           list: page === 1 ? (res?.list ?? []) : [...new Map([...previous.list, ...(res?.list ?? [])].map(item => [item.id, item])).values()],
           hasMore: !!res?.hasMore,
         }));
@@ -292,7 +316,7 @@ function Mailbox() {
         <div className="mailbox-topbar">
           <div className="mailbox-tabs" role="tablist" aria-label="notification tabs">
             {CATEGORY_TABS.map((mt) => {
-              const count = mt.key === 'all' ? totalUnread : (unreadCounts[mt.key] || 0);
+              const count = mt.key === 'all' ? totalUnread : mt.key === 'chats' ? chatUnread : (unreadCounts[mt.key] || 0);
               return (
                 <button
                   key={mt.key}
@@ -308,7 +332,7 @@ function Mailbox() {
               );
             })}
           </div>
-          <button
+          {!isChats && <button
             type="button"
             className="mailbox-clear-btn"
             onClick={async () => {
@@ -333,10 +357,12 @@ function Mailbox() {
             }}
           >
             {isZh ? '清空' : 'Clear'}
-          </button>
+          </button>}
         </div>
 
-        {groups.length === 0 ? (
+        {isChats ? (
+          <MailboxChats query={chatsQuery} threads={chatThreads} isZh={isZh} />
+        ) : groups.length === 0 ? (
           <EmptyState title="暂无通知" description="No notifications yet." icon="✉" />
         ) : (
           <ul className="social-stream">
@@ -406,8 +432,8 @@ function Mailbox() {
             })}
           </ul>
         )}
-        {moreError && <p role="alert">{moreError}</p>}
-        {data.hasMore && <button type="button" className="mailbox-clear" disabled={loadingMore} onClick={() => {
+        {!isChats && moreError && <p role="alert">{moreError}</p>}
+        {!isChats && data.hasMore && <button type="button" className="mailbox-clear" disabled={loadingMore} onClick={() => {
           setLoadingMore(true);
           if (moreError) setRetry(value => value + 1);
           else setPage(value => value + 1);
