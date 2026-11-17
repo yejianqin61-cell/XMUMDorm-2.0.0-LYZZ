@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "厦马小筑 · Moodle 截止日期",
+  "short_name": "Dorm Moodle",
+  "version": "0.1.0",
+  "description": "把你在 Moodle 上的作业和测验截止时间显示到厦马小筑的学习日历。数据只存在本机浏览器，不上传任何服务器。",
+  "permissions": ["storage"],
+  "host_permissions": ["https://l.xmu.edu.my/*"],
+  "action": {
+    "default_title": "厦马小筑 · Moodle 截止日期",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://l.xmu.edu.my/*"],
+      "js": ["lib/moodle-core.js", "moodle-sync.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://www.xmumdorm.com/*",
+        "https://xmumdorm.com/*",
+        "http://localhost:5173/*",
+        "http://127.0.0.1:5173/*"
+      ],
+      "js": ["dorm-bridge.js"],
+      "run_at": "document_start"
+    }
+  ]
+}

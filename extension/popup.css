@@ -1,0 +1,63 @@
+/* 扩展弹窗独立于网站，不能引用 frontend 的 tokens.css；色值取自 tokens.css 同名变量 */
+:root {
+  --text-primary: #20304a;
+  --text-tertiary: #6f8097;
+  --brand: #4da7ff;
+  --brand-text: #236db5;
+  --danger: #f36d6d;
+  --success-text: #247d5c;
+  --border: #d9e4f0;
+}
+
+body {
+  width: 300px;
+  margin: 0;
+  padding: 16px;
+  font: 14px/1.5 "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  color: var(--text-primary);
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.status {
+  margin: 0 0 4px;
+  font-weight: 700;
+}
+
+.status.ok { color: var(--success-text); }
+.status.warn { color: var(--danger); }
+
+.muted {
+  margin: 0 0 12px;
+  color: var(--text-tertiary);
+}
+
+.small { font-size: 12px; }
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+button {
+  font: inherit;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+button.primary {
+  border-color: transparent;
+  background: var(--brand);
+  color: #fff;
+  font-weight: 700;
+}
+
+button:disabled { opacity: 0.6; cursor: default; }
