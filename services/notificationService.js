@@ -23,6 +23,7 @@ const MODULE_MAP = {
   club_follow: 'club',
   club_like: 'club',
   club_comment: 'club',
+  date_match: 'date',
   activity_register_success: 'affairs',
   activity_start_reminder: 'affairs',
   activity_deadline_reminder: 'affairs',
@@ -47,6 +48,7 @@ const MODULE_TYPES = {
   canteen: ['canteen_review', 'canteen_reply'],
   marketplace: ['marketplace_want', 'marketplace_chat', 'marketplace'],
   club: ['club_follow', 'club_like', 'club_comment'],
+  date: ['date_match'],
   affairs: ['activity_register_success', 'activity_start_reminder', 'activity_deadline_reminder'],
   system: ['system_announcement', 'system_ban', 'announcement'],
 };
@@ -57,6 +59,7 @@ const CATEGORY_TYPES = {
     ...MODULE_TYPES.trending,
     ...MODULE_TYPES.canteen,
     ...MODULE_TYPES.club,
+    ...MODULE_TYPES.date,
     'handbook_comment',
     'course_review_comment',
   ],
