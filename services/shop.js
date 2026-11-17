@@ -38,8 +38,14 @@ function paymentMethods(value) {
     name_zh: optionalText(method.name_zh, 120),
     name_en: optionalText(method.name_en, 120),
     qr_url: optionalText(method.qr_url, 500),
-  })).filter(method => method.id && method.name_zh && method.name_en && method.qr_url
-    && (/^\/(?!\/)[\w/.-]+$/.test(method.qr_url) || /^https:\/\//.test(method.qr_url)));
+    payment_url: optionalText(method.payment_url, 1000),
+  })).filter(method => {
+    const validQr = method.qr_url && (/^\/(?!\/)[\w/.-]+$/.test(method.qr_url) || /^https:\/\//.test(method.qr_url));
+    let validPaymentUrl = false;
+    try { const url = new URL(method.payment_url); validPaymentUrl = url.protocol === 'https:' && !url.username && !url.password; } catch {}
+    return method.id && method.name_zh && method.name_en && (validQr || validPaymentUrl)
+      && (!method.payment_url || validPaymentUrl);
+  });
 }
 function address(body) {
   return { contact_name: text(body.contact_name, 100), contact: text(body.contact, 120),
