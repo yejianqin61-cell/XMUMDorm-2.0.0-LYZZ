@@ -1,4 +1,5 @@
 import {
+  Award,
   Building2,
   BookOpen,
   Compass,
@@ -119,6 +120,12 @@ export const SITE_PRIMARY_NAV_ITEMS = [
     to: '/about/date',
     icon: Smile,
     matchPrefixes: ['/about/date'],
+    key: 'contribute',
+    labelZh: '贡献站',
+    labelEn: 'Contribute',
+    to: '/about/contribute',
+    icon: Award,
+    matchPrefixes: ['/about/contribute'],
   },
   {
     key: 'join-us',
