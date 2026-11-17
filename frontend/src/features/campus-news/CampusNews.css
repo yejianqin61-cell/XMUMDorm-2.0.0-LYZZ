@@ -150,3 +150,19 @@
 .campus-news-filters button[aria-pressed=true] { background: #34378c; color: white; border-color: #34378c; }
 .campus-news-filters button:disabled, .campus-news-actions button:disabled { opacity: .55; cursor: not-allowed; }
 .campus-news-empty a { text-decoration: underline; }
+
+/* 广场 UI 优化（任务管理表「web:广场页面的UI优化」）：筛选合成一行、翻页居中、切换时不闪 */
+.campus-news-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; }
+.campus-news-toolbar .campus-news-filters { flex: 1 1 auto; min-width: 0; }
+.campus-news-related { flex: 0 0 auto; padding: 8px 14px; border: 1px dashed #c9cfe0; border-radius: 20px; background: transparent; color: #4b5563; font: inherit; cursor: pointer; }
+.campus-news-related[aria-pressed=true] { border-style: solid; border-color: #34378c; background: #eef0fb; color: #34378c; font-weight: 600; }
+.campus-news-pager { justify-content: center; }
+.campus-news-pager span { color: var(--news-muted); font-size: 13px; }
+.campus-news-updating { opacity: .55; transition: opacity .15s ease; pointer-events: none; }
+.campus-news-action-error { display: flex; align-items: center; gap: 8px; margin: 4px 0 0; color: var(--news-muted); font-size: 12px; }
+.campus-news-action-error button { padding: 2px 10px; border: 1px solid #dfe3ed; border-radius: 12px; background: white; font: inherit; cursor: pointer; }
+@media (max-width: 560px) {
+  .campus-news-toolbar { align-items: flex-start; }
+  .campus-news-toolbar .campus-news-filters { padding-bottom: 0; }
+  .campus-news-related { margin-bottom: 8px; }
+}

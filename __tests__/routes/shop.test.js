@@ -19,6 +19,10 @@ const app = express();app.use(express.json());app.use('/api/shop',require('../..
 const token = (role='student') => jwt.sign({id:1,role},process.env.JWT_SECRET);
 const authed = (method,path,role='student') => request(app)[method]('/api/shop'+path).set('Authorization',`Bearer ${token(role)}`);
 const product={category:'water',name_zh:'演示',name_en:'Demo',spec_zh:'1瓶',spec_en:'1 bottle',description_zh:'演示商品',description_en:'Demo only',image_url:'/shop-demo/water.svg',price_cents:100,stock:3,sold_out:false,is_demo:true};
+test('payment method normalization preserves legacy shape and carries redirect URLs',()=>{
+  expect(service.paymentMethods([{id:'qr',name_zh:'微信支付',name_en:'WeChat Pay',qr_url:'/qr.png'}])).toEqual([{id:'qr',name_zh:'微信支付',name_en:'WeChat Pay',qr_url:'/qr.png'}]);
+  expect(service.paymentMethods([{id:'link',name_zh:'微信支付',name_en:'WeChat Pay',qr_url:'',payment_url:'https://pay.example.test/checkout'}])).toEqual([{id:'link',name_zh:'微信支付',name_en:'WeChat Pay',qr_url:'',payment_url:'https://pay.example.test/checkout'}]);
+});
 beforeEach(()=>{jest.clearAllMocks();accountQuery.mockReset().mockResolvedValue([{status:'active'}]);query.mockImplementation(async sql => {
   if(sql.includes('FROM shop_merchants'))return [{id:1,slug:'water-home',enabled:1}];
   if(sql.includes('user_sanctions'))return [];
@@ -216,6 +220,15 @@ describe('store deletion permissions and simplified payment methods',()=>{
     expect(res.status).toBe(200);
     const [sql,params]=execute.mock.calls[0];expect(sql).toContain('payment_methods');
     const methods=JSON.parse(params[1]);expect(methods[0]).toMatchObject({name_zh:'电子钱包',name_en:'E-wallet',qr_url:'/api/shop/assets/payment/1/code.png'});expect(methods[0].id).toBeTruthy();expect(methods[0]).not.toHaveProperty('note_zh');expect(Object.keys(methods[0]).sort()).toEqual(['id','name_en','name_zh','qr_url']);
+  });
+  test('payment methods may use an HTTPS redirect instead of a QR image',async()=>{
+    memberAccess('merchant');const execute=jest.fn().mockResolvedValue([{}]);
+    pool.getConnection.mockResolvedValue({beginTransaction:jest.fn(),commit:jest.fn(),rollback:jest.fn(),release:jest.fn(),execute});
+    const res=await authed('put','/admin/settings','merchant').send({payment_methods:[{name_zh:'微信支付',name_en:'WeChat Pay',payment_url:'https://pay.example.test/checkout'}]});
+    expect(res.status).toBe(200);
+    const methods=JSON.parse(execute.mock.calls[0][1][1]);
+    expect(methods[0]).toMatchObject({name_zh:'微信支付',name_en:'WeChat Pay',qr_url:'',payment_url:'https://pay.example.test/checkout'});
+    expect(methods[0].id).toBeTruthy();
   });
   test('payment methods reject missing bilingual names or QR before writing',async()=>{
     memberAccess('merchant');
