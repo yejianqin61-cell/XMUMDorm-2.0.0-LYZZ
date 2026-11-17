@@ -87,7 +87,10 @@ function AnimLayer({ layer, onReady, onError }) {
  */
 export default function PetCard({ cfg, pet, lang = 'zh', anchorEl = null, onHide }) {
   const physics = cfg.physics || DEFAULT_PHYSICS;
-  const size = pet.size;
+  const [viewportWidth, setViewportWidth] = useState(() => (
+    typeof window === 'undefined' ? 1024 : window.innerWidth
+  ));
+  const size = pet.size * (viewportWidth < 768 ? 0.78 : 1);
   const h = size * PET_BOX_ASPECT;
   const halfW = size / 2;
   const halfH = h / 2;
@@ -612,6 +615,7 @@ export default function PetCard({ cfg, pet, lang = 'zh', anchorEl = null, onHide
     applyTransform();
     startChain();
     const onResize = () => {
+      setViewportWidth(window.innerWidth);
       // 锚定挂载跟随锚槽走（认证页布局变化）；自由挂载只夹回视口
       if (anchorEl && anchorEl.current) {
         boxPxRef.current = initialPos();
@@ -635,6 +639,15 @@ export default function PetCard({ cfg, pet, lang = 'zh', anchorEl = null, onHide
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // 视口跨过移动端断点时尺寸会变化；按新尺寸重新钳位，保持宠物在屏幕内。
+  useEffect(() => {
+    if (!rootRef.current) return;
+    boxPxRef.current = anchorEl && anchorEl.current
+      ? initialPos()
+      : clampToThrowBounds(boxPxRef.current, boundsNow());
+    applyPos();
+  }, [anchorEl, applyPos, boundsNow, initialPos, size]);
 
   const isEn = lang === 'en';
   const displayName = isEn ? (pet.nameEn || 'Cornie') : pet.name;
