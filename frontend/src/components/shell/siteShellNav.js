@@ -1,4 +1,5 @@
 import {
+  Award,
   Building2,
   BookOpen,
   Compass,
@@ -110,6 +111,14 @@ export const SITE_PRIMARY_NAV_ITEMS = [
     to: '/about/errands',
     icon: HandHeart,
     matchPrefixes: ['/about/errands'],
+  },
+  {
+    key: 'contribute',
+    labelZh: '贡献站',
+    labelEn: 'Contribute',
+    to: '/about/contribute',
+    icon: Award,
+    matchPrefixes: ['/about/contribute'],
   },
   {
     key: 'join-us',
