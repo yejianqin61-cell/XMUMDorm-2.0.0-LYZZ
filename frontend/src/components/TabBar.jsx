@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getTabIndex } from './tabRoutes';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { Bell, Languages, Menu, PenLine, Shield, X } from 'lucide-react';
+import { Bell, Languages, Menu, PenLine, Shield, ShoppingBag, X } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContextState';
 import { useAuth } from '../context/AuthContextState';
 import { SITE_PRIMARY_NAV_ITEMS, isSiteNavActive } from './shell/siteShellNav';
@@ -12,6 +12,7 @@ const TABS = [
   { path: '/', iconKey: 'TreeHole', labelZh: '树洞', labelEn: 'TreeHole' },
   { path: '/eat', iconKey: 'Eat', labelZh: '食堂', labelEn: 'Eat' },
   { path: '/myzone', iconKey: 'My Zone', labelZh: '我的', labelEn: 'My Zone' },
+  { path: '/shop', iconKey: 'Shop', labelZh: '商城', labelEn: 'Shop' },
 ];
 
 /** 根据当前路径得到对应的 Tab 下标（供 Layout 全屏滑动切换复用） */
@@ -23,7 +24,7 @@ const TABS = [
 /** 根据 pathname 得到所属 Tab 的根路径 */
 
 
-/** 微信风格底部 Tab：四栏，图标+文字，选中绿色；支持左右滑动切换（全屏滑动在 Layout 上） */
+/** 微信风格底部 Tab：四个主 Tab、商城入口和更多菜单；支持左右滑动切换（全屏滑动在 Layout 上） */
 function TabBar() {
   const { lang, setLang } = useLanguage();
   const { isAdmin } = useAuth();
@@ -33,7 +34,7 @@ function TabBar() {
   const moreOpen = moreOpenPath === location.pathname;
   const activeIndex = getTabIndex(location.pathname);
   const primarySectionActive = SITE_PRIMARY_NAV_ITEMS.some((item) => (
-    ['square', 'treehole', 'canteen', 'myzone'].includes(item.key)
+    ['square', 'treehole', 'canteen', 'myzone', 'shop'].includes(item.key)
     && isSiteNavActive(location.pathname, item)
   ));
   const moreActive = !primarySectionActive && (
@@ -66,8 +67,8 @@ function TabBar() {
           className="tab-indicator"
           aria-hidden="true"
           style={{
-            width: '20%',
-            transform: `translateX(${(moreActive ? 4 : activeIndex) * 100}%)`,
+            width: `${100 / (TABS.length + 1)}%`,
+            transform: `translateX(${(moreActive ? TABS.length : activeIndex) * 100}%)`,
           }}
         >
           <div className="tab-indicator-pill" />
@@ -158,6 +159,7 @@ function TabBar() {
 
 function getIcon(label, filled) {
   const size = 24;
+  if (label === 'Shop') return <ShoppingBag size={size} strokeWidth={filled ? 2.6 : 2} />;
   const common = { width: size, height: size, viewBox: '0 0 24 24' };
   if (filled) {
     switch (label) {

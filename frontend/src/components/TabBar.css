@@ -23,7 +23,7 @@
   position: relative;
   height: 100%;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   align-items: stretch;
   gap: 0;
   border-radius: 18px;
