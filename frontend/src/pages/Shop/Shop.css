@@ -93,3 +93,7 @@
   .shop-grid { grid-template-columns:minmax(0,1fr); }
   .shop-product-image img { height:180px; }
 }
+
+@media (max-width: 767px) {
+  body:has(.shop-page) .pet-overlay { display:none; }
+}
