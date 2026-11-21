@@ -20,10 +20,13 @@
  */
 
 import * as React from 'react';
-import { View } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
 import WebView, { type WebViewMessageEvent, type WebViewNavigation } from 'react-native-webview';
 import { useTheme } from '@/design-system/theme';
+import { useI18n } from '@/i18n';
 import { useScreenInsets } from '@/components/ui/Screen';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { classifyWebViewError } from './webViewError';
 import { buildInsetBootstrapScript, buildScheduleScrapeScript, buildSessionProbeScript,
   parseWebViewMessage } from './injectedScripts';
 import type { SchoolSystem } from './schoolSystems';
@@ -72,6 +75,7 @@ export const SchoolSystemWebView = React.forwardRef<SchoolSystemWebViewHandle, S
     const { system, scrapeSchedule = false, preserveSnapshotOnClose = false, testID } = props;
     const callbacks = React.useRef(props); callbacks.current = props;
     const theme = useTheme();
+    const { t } = useI18n();
     const { insets } = useScreenInsets();
     const webRef = React.useRef<WebView>(null);
     const currentUrl = React.useRef<string | null>(null);
@@ -255,6 +259,19 @@ export const SchoolSystemWebView = React.forwardRef<SchoolSystemWebViewHandle, S
       }
     }, [system.id, preserveSnapshotOnClose, cancelMoodleReads, invalidateMoodleData, probeScript, probeIdentity]);
 
+    // 替代库自带的技术性错误页（宪法 10.4）；证书错的出路是系统浏览器（它有自己的根库），其余重试
+    const renderError = React.useCallback((domain: string | undefined, code: number, description: string) => {
+      const kind = classifyWebViewError({ domain, code, description });
+      // 库把错误视图排在原生 WebView 之后（同一容器），⛔ 不能用 flex:1 —— 会和底下 Chromium 的错误页平分高度
+      return <View style={[StyleSheet.absoluteFill, { justifyContent: 'center', backgroundColor: theme.color['bg-canvas'].value }]}>
+        <ErrorState testID={`school-system-error-${kind}`} error={{ kind, target: t(system.titleKey) }}
+          onAction={() => {
+            if (kind === 'certificate') void Linking.openURL(system.startUrl);
+            else webRef.current?.reload();
+          }} />
+      </View>;
+    }, [theme, t, system.titleKey, system.startUrl]);
+
     return <View testID={testID} style={{ flex: 1, backgroundColor: theme.color['bg-canvas'].value }}>
       <WebView ref={webRef} source={{ uri: system.startUrl }} style={{ flex: 1, backgroundColor: 'transparent' }}
         sharedCookiesEnabled cacheEnabled thirdPartyCookiesEnabled domStorageEnabled javaScriptEnabled
@@ -268,6 +285,7 @@ export const SchoolSystemWebView = React.forwardRef<SchoolSystemWebViewHandle, S
         }} onError={() => {
           if (system.id === 'moodle') callbacks.current.onMoodleLoadFailureChange?.(true);
         }} onLoadEnd={handleLoadEnd} onNavigationStateChange={handleNavigation}
+        renderError={renderError}
         allowsBackForwardNavigationGestures={false} />
     </View>;
   });
