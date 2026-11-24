@@ -409,7 +409,7 @@ function TreeholeFeedData({
       itemSeparator={Divider}
       labels={{
         retryLabel: t('action.retry'),
-        endLabel: t('screen.campus.read.listEnd'),
+        endLabel: t('screen.list.end'),
         empty: {
           kind: query.length > 0 ? 'noResult' : 'firstRun',
           title: t(query ? 'screen.campus.search.empty' : 'screen.campus.read.empty'),

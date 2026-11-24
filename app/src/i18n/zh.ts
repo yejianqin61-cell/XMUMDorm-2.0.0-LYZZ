@@ -434,6 +434,7 @@ export const zh = {
   'screen.campus': '校园里',
   'screen.me': '我的',
   // ── 广场品牌头与模块入口（2026-10-18 所有者裁决）──────────────────
+  'screen.list.end': '到底了',
   'square.brand': 'XMUM Dorm',
   'square.brand.emblem': '厦门大学校徽',
   'square.module.schedule': '课表',

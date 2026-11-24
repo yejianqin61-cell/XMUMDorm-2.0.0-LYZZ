@@ -240,7 +240,7 @@ export function MailboxScreen(): React.ReactElement {
             },
             errorActionLabel: t('action.retry'),
             retryLabel: t('action.retry'),
-            endLabel: t('mailbox.conversations.end'),
+            endLabel: t('screen.list.end'),
           }}
           renderItem={(row) => {
             const openable = canOpenNotification(row);

@@ -99,7 +99,7 @@ function MarketFeed({filters,header}:{filters:Filters;header:React.ReactNode}):R
   {rows.length>0&&pagination.errorScope==='refresh'?<Button testID="market-refresh-retry" label={t('screen.market.refreshFailed')} onPress={refresh}/>:null}
   <ListScreen key={revision} testID="market-list" data={rows} keyExtractor={r=>String(r.id)} numColumns={2} pagination={pagination} listHeader={header} restoredScrollOffset={revision===0?initial.current?.scrollOffset??0:0} onScrollOffset={onScroll} scrollToTopSignal={scrollTopSignal}
    onRefresh={refresh} onEndReached={append} onRetryRefresh={refresh} onRetryAppend={append}
-   labels={{retryLabel:t('action.retry'),endLabel:t('screen.market.end'),empty:{kind:'noResult',title:t('screen.market.empty'),actionLabel:t('action.retry'),onAction:refresh}}}
+   labels={{retryLabel:t('action.retry'),endLabel: t('screen.list.end'),empty:{kind:'noResult',title:t('screen.market.empty'),actionLabel:t('action.retry'),onAction:refresh}}}
    renderItem={(r,index)=><View testID={`market-cell-${r.id}`} style={{marginBottom:theme.space('space_3'),paddingLeft:index%2===0?theme.space('space_4'):theme.space('space_2'),paddingRight:index%2===0?theme.space('space_2'):theme.space('space_4')}}>
     <GridCard testID={`market-row-${r.id}`} title={r.title} mediaUri={r.cover} meta={categoryLabel(r.category)} highlight={`RM ${r.price.toFixed(2)}`}
      badge={r.status==='sold'?<Badge text={t('screen.market.sold')} tone="neutral"/>:undefined}

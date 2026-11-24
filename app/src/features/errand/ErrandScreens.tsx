@@ -97,7 +97,7 @@ function ErrandFeed({filters,header}:{filters:Filters;header:React.ReactNode}):R
   {rows.length>0&&pagination.errorScope==='refresh'?<Button testID="errand-refresh-retry" label={t('screen.errand.refreshFailed')} onPress={refresh}/>:null}
   <ListScreen key={revision} testID="errand-list" data={rows} keyExtractor={r=>String(r.id)} pagination={pagination} listHeader={header} restoredScrollOffset={revision===0?initial.current?.scrollOffset??0:0} onScrollOffset={onScroll} scrollToTopSignal={scrollTopSignal}
    onRefresh={refresh} onEndReached={append} onRetryRefresh={refresh} onRetryAppend={append}
-   labels={{retryLabel:t('action.retry'),endLabel:t('screen.errand.end'),empty:{kind:'noResult',title:t('screen.errand.empty'),actionLabel:t('action.retry'),onAction:refresh}}}
+   labels={{retryLabel:t('action.retry'),endLabel: t('screen.list.end'),empty:{kind:'noResult',title:t('screen.errand.empty'),actionLabel:t('action.retry'),onAction:refresh}}}
    renderItem={r=>{const typeKey=typeKeys[r.type as keyof typeof typeKeys]??typeKeys.all;const deadline=formatErrandDeadline(r.deadline,locale);return <View style={{marginBottom:theme.space('space_3'),paddingHorizontal:theme.space('space_4')}}><EntityCard domain="errand" testID={`errand-row-${r.id}`} title={r.title} subtitle={[r.location,deadline].filter(Boolean).join(' · ')||undefined} badges={<Badge text={t(typeKey)} tone={r.type==='urgent'?'warning':'neutral'}/>} metrics={[`RM ${r.reward.toFixed(2)}`,t(statusKeys[r.status as 'open'|'taken'|'done'])]} style={{alignSelf:'stretch'}} onPress={()=>router.push(`/errand/${r.id}` as never)}/></View>;}}/>
   <FloatingBackToTop visible={offset>480} onPress={()=>setScrollTopSignal(value=>value+1)} label={t('action.backToTop')} testID="errand-back-to-top"/>
  </View>;

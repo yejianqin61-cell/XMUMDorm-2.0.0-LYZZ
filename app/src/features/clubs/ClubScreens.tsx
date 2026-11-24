@@ -196,7 +196,7 @@ export function ClubDiscoveryScreen({ embedded = false }: { embedded?: boolean }
         onRetryAppend={() => void load('append')}
         labels={{
           retryLabel: t('action.retry'),
-          endLabel: t('clubs.end'),
+          endLabel: t('screen.list.end'),
           empty: { kind: 'noResult', title: t('clubs.empty'), actionLabel: t('action.refresh'), onAction: () => void load('refresh') },
         }}
         renderItem={(club) => (

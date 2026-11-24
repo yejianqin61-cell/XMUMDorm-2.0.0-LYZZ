@@ -85,7 +85,7 @@ export function CanteenSearchScreen(): React.ReactElement {
       <ListScreen testID="canteen-search-list" data={rows} keyExtractor={(row) => `${row.kind}:${row.id}`} pagination={pagination}
         onRefresh={() => void load(queryRef.current || input, typeRef.current, 'refresh')} onEndReached={() => void load(queryRef.current, typeRef.current, 'append')}
         onRetryRefresh={() => void load(queryRef.current, typeRef.current, 'refresh')} onRetryAppend={() => void load(queryRef.current, typeRef.current, 'append')}
-        labels={{ empty: { kind: 'noResult', title: t(problem === 'tooLong' ? 'canteen.search.tooLong' : problem === 'empty' ? 'canteen.search.enterQuery' : 'canteen.search.noResults'), description: t('canteen.search.emptyHelp'), actionLabel: t('canteen.search.submit'), onAction: submit }, retryLabel: t('action.retry'), endLabel: t('canteen.search.end') }}
+        labels={{ empty: { kind: 'noResult', title: t(problem === 'tooLong' ? 'canteen.search.tooLong' : problem === 'empty' ? 'canteen.search.enterQuery' : 'canteen.search.noResults'), description: t('canteen.search.emptyHelp'), actionLabel: t('canteen.search.submit'), onAction: submit }, retryLabel: t('action.retry'), endLabel: t('screen.list.end') }}
         renderItem={(row) => row.kind === 'product' ? <EntityCard testID={`search-product-${row.id}`} domain="food" title={row.title} subtitle={row.subtitle ?? undefined} score={row.score}
           badges={<CanteenMedia uri={row.cover} name={row.title} testID={`search-product-media-${row.id}`} style={{ width: '100%', height: undefined, aspectRatio: 16 / 9 }} />}
           onPress={() => router.push({ pathname: '/canteen/product/[id]', params: { id: String(row.id) } })} /> :

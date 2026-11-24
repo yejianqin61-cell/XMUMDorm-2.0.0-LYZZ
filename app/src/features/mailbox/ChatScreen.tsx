@@ -230,7 +230,7 @@ export function ChatScreen(): React.ReactElement {
             },
             errorActionLabel: t('action.retry'),
             retryLabel: t('action.retry'),
-            endLabel: t('mailbox.conversations.end'),
+            endLabel: t('screen.list.end'),
           }}
           renderItem={(message) => (
             <ChatBubble

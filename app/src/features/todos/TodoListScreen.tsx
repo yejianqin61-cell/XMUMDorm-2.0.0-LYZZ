@@ -93,7 +93,7 @@ export function TodoListScreen(): React.ReactElement {
         {writeError ? <ErrorState testID="todos-write-error" error={writeError} onAction={() => { if (retryWrite.current) void mutate(retryWrite.current); }} /> : null}
         <ListScreen testID="todos-list" data={visible} keyExtractor={(row) => String(row.id)} pagination={pagination}
           onRefresh={() => void load('refresh')} onEndReached={() => void load('append')} onRetryRefresh={() => void load('refresh')} onRetryAppend={() => void load('append')}
-          labels={{ empty: { kind: 'firstRun', title: t('tools.todos.empty'), description: t('tools.todos.emptyHelp'), actionLabel: t('tools.todos.create'), onAction: () => router.push('/tools/todos/new') }, retryLabel: t('action.retry'), endLabel: t('tools.todos.end') }}
+          labels={{ empty: { kind: 'firstRun', title: t('tools.todos.empty'), description: t('tools.todos.emptyHelp'), actionLabel: t('tools.todos.create'), onAction: () => router.push('/tools/todos/new') }, retryLabel: t('action.retry'), endLabel: t('screen.list.end') }}
           renderItem={(row) => <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.space('space_1') }}>
             <View style={{ flex: 1 }}><ListItem testID={`todo-toggle-${row.id}`} title={row.title} subtitle={[t(TODO_PRIORITY_KEYS[row.priority]), row.dueDate, row.dueTime].filter(Boolean).join(' · ')} variant="select" selected={row.completed} disabled={busy} onToggleSelect={() => void mutate(() => toggleTodo(row.id))} /></View>
             <IconButton testID={`todo-edit-${row.id}`} Icon={Pencil} accessibilityLabel={t('tools.todos.edit')} disabled={busy} onPress={() => router.push({ pathname: '/tools/todos/[id]', params: { id: String(row.id) } })} />

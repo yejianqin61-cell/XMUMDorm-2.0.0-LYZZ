@@ -427,6 +427,7 @@ export const en: Record<MessageKey, string> = {
   'screen.campus': 'Campus',
   'screen.me': 'Me',
   // Square brand header and module entries (owner ruling, 2026-10-18)
+  'screen.list.end': 'End of list',
   'square.brand': 'XMUM Dorm',
   'square.brand.emblem': 'Xiamen University emblem',
   'square.module.schedule': 'Schedule',

@@ -47,7 +47,7 @@ export function FoodArticleFeed({ header }: { header?: React.ReactNode }): React
   const list = <ListScreen<FoodArticle> testID="food-articles" data={rows} keyExtractor={(row) => String(row.id)} pagination={pagination}
       listHeader={header} onRefresh={() => void load('refresh')} onEndReached={() => void load('append')}
       onRetryRefresh={() => void load('refresh')} onRetryAppend={() => void load('append')}
-      labels={{ empty: { kind: 'noResult', title: t('screen.campus.read.empty'), actionLabel: t('action.refresh'), onAction: () => void load('refresh') }, retryLabel: t('action.retry'), endLabel: t('mailbox.conversations.end') }}
+      labels={{ empty: { kind: 'noResult', title: t('screen.campus.read.empty'), actionLabel: t('action.refresh'), onAction: () => void load('refresh') }, retryLabel: t('action.retry'), endLabel: t('screen.list.end') }}
       renderItem={(row) => <EntityCard testID={`food-article-${row.id}`} domain="post" title={row.title} authorLabel={row.author ?? t('canteen.anonymous')}
         mediaUri={row.cover ? getUploadUrl(row.cover) : null} onPress={() => router.push({ pathname: '/campus/[id]', params: { id: String(row.id) } })} />}
     />;

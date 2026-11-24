@@ -139,7 +139,7 @@ export function GuidesListScreen({ embedded = false }: { embedded?: boolean } = 
    restoredScrollOffset={revision === 0 && initial.current ? restoredScrollOffset : 0}
    onScrollOffset={persistScrollOffset}
    onRefresh={refresh} onEndReached={append} onRetryRefresh={refresh} onRetryAppend={append}
-   labels={{ retryLabel: t('action.retry'), endLabel: t('square.guides.end'),
+   labels={{ retryLabel: t('action.retry'), endLabel: t('screen.list.end'),
     empty: { kind: 'noResult', title: t('square.guides.empty'), actionLabel: t('action.retry'), onAction: refresh } }}
    renderItem={row => <ListItem testID={`guide-row-${row.id}`} title={row.title} subtitle={row.summary}
     onPress={() => router.push(`/guides/${row.id}` as never)} />} />
