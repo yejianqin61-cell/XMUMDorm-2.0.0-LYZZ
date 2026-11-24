@@ -14,6 +14,7 @@ import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import { QuickActionGrid } from '@/components/ui/QuickActionGrid';
 import { Screen } from '@/components/ui/Screen';
 import { SectionHeader } from '@/components/ui/SectionHeader';
+import { Pressable } from '@/components/ui/Pressable';
 import { Surface } from '@/components/ui/Surface';
 import { Text } from '@/components/ui/Text';
 import { useSession } from '@/features/auth/session';
@@ -124,10 +125,24 @@ export function ToolsDashboardContent({ onRequestError }: { onRequestError?: (er
         courses.slice(0, 3).map((course, index) => <ListItem key={`${course.courseCode}:${index}`} title={course.courseName ?? course.courseCode} subtitle={t('tools.dashboard.courseLine', { start: formatClockTime(course.startTime), end: formatClockTime(course.endTime), venue: course.venue ?? t('tools.dashboard.noVenue') })} onPress={() => router.push('/tools/timetable')} />)}
       <ListItem testID="tools-timetable" title={t('tools.timetable')} onPress={() => router.push('/tools/timetable')} />
     </Surface>
-    <Surface testID="tools-holidays" rounded="radius_large" padding="space_4" style={{ gap: theme.space('space_2') }}>
-      <SectionHeader title={t('tools.dashboard.holiday')} />
-      <ListItem testID="tools-holiday-open" title={holiday ? t('tools.dashboard.holidayLine', { name: { zh: holiday.nameZh, en: holiday.nameEn }[locale], start: holiday.start, end: holiday.end }) : t('tools.dashboard.noHoliday')} onPress={() => setHolidaysOpen(true)} />
-    </Surface>
+    <Pressable
+      testID="tools-holidays"
+      accessibilityLabel={holiday ? t('tools.dashboard.holidayLine', { name: { zh: holiday.nameZh, en: holiday.nameEn }[locale], start: holiday.start, end: holiday.end }) : t('tools.dashboard.noHoliday')}
+      contentAlign="stretch"
+      onPress={() => setHolidaysOpen(true)}
+      style={{ backgroundColor: theme.color['action-accent'].value, borderColor: theme.color['border-strong'].value, borderWidth: theme.borderWidth('border_width_brutal'), borderRadius: theme.radius('radius_large'), padding: theme.space('space_4') }}
+    >
+      <View testID="tools-holiday-open" style={{ flexDirection: 'row', alignItems: 'center', gap: theme.space('space_4') }}>
+        {holiday ? <View style={{ alignItems: 'center', minWidth: theme.space('space_12') }}>
+          <Text role="display" emphasis="strong" colorToken="text-on-accent">{String(Math.max(0, Math.round((Date.parse(`${holiday.start}T00:00:00Z`) - Date.parse(`${day}T00:00:00Z`)) / 86_400_000)))}</Text>
+          <Text role="caption" emphasis="strong" colorToken="text-on-accent">{t('tools.dashboard.holidayDays')}</Text>
+        </View> : null}
+        <View style={{ flex: 1 }}>
+          <Text role="body" emphasis="strong" colorToken="text-on-accent" numberOfLines={2}>{holiday ? { zh: holiday.nameZh, en: holiday.nameEn }[locale] : t('tools.dashboard.noHoliday')}</Text>
+          {holiday ? <Text role="caption" colorToken="text-on-accent">{holiday.start === holiday.end ? holiday.start : `${holiday.start} – ${holiday.end}`}</Text> : null}
+        </View>
+      </View>
+    </Pressable>
     <Surface testID="tools-today-todos" rounded="radius_large" padding="space_4" style={{ gap: theme.space('space_2') }}>
       <SectionHeader title={t('tools.dashboard.todos')} {...(session.isSignedIn ? { variant: 'withAction' as const, actionLabel: t('tools.todos.create'), onActionPress: () => router.push('/tools/todos/new') } : {})} />
       {todos.loading ? <LoadingState testID="tools-todos-loading" /> : todos.error?.kind === 'signin' ? <ListItem testID="tools-todos-signin" title={t('error.signin.perceive')} subtitle={t('error.signin.understand')} onPress={() => router.push('/login')} /> : todos.error ? <ErrorState testID="tools-todos-error" error={todos.error} onAction={todos.reload} /> : todos.data ? <>

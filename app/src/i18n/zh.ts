@@ -662,6 +662,7 @@ export const zh = {
   'tools.dashboard.current': '当前课程：{name}',
   'tools.dashboard.next': '下一节课：{name}',
   'tools.dashboard.holiday': '最近放假日',
+  'tools.dashboard.holidayDays': '天后',
   'tools.dashboard.holidayLine': '{name} · {start} 至 {end}',
   'tools.dashboard.noHoliday': '本地日历暂无后续放假日',
   'tools.dashboard.todos': '今日待办',

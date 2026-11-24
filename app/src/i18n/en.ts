@@ -654,6 +654,7 @@ export const en: Record<MessageKey, string> = {
   'tools.dashboard.current': 'Current class: {name}',
   'tools.dashboard.next': 'Next class: {name}',
   'tools.dashboard.holiday': 'Upcoming holiday',
+  'tools.dashboard.holidayDays': 'days',
   'tools.dashboard.holidayLine': '{name} · {start} to {end}',
   'tools.dashboard.noHoliday': 'No upcoming holidays in the local calendar',
   'tools.dashboard.todos': 'Today’s todos',
