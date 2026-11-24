@@ -164,9 +164,9 @@ describe('TC-P1-13-4A · 哪些失败算"会话不能用了"', () => {
     expect(isSessionInvalid('other')).toBe(false);
   });
 
-  it('映射到统一错误模型：会话类走 `permission`，凭据错走 `validation`', () => {
-    expect(authFailureToAppError('noToken').kind).toBe('permission');
-    expect(authFailureToAppError('expiredToken').kind).toBe('permission');
+  it('映射到统一错误模型：未登录走 `signin`，无权限走 `permission`，凭据错走 `validation`', () => {
+    expect(authFailureToAppError('noToken').kind).toBe('signin');
+    expect(authFailureToAppError('expiredToken').kind).toBe('signin');
     expect(authFailureToAppError('sanctioned').kind).toBe('permission');
     // 凭据错是"这一项填错了"，不是权限问题（否则文案会变成"切换账号"）
     expect(authFailureToAppError('badCredentials').kind).toBe('validation');

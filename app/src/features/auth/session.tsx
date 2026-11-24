@@ -66,7 +66,8 @@ export function sessionReducer(state: SessionState, action: SessionAction): Sess
     case 'login:success':
       return { status: 'signedIn', identifier: action.identifier };
     case 'session:expired':
-      return { status: 'expired', identifier: null };
+      // 只有「已登录」的会话才会过期；游客收到 401 只是游客
+      return state.status === 'signedIn' ? { status: 'expired', identifier: null } : state;
     case 'logout':
       return { status: 'signedOut', identifier: null };
     default:
@@ -130,7 +131,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
     };
   }, []);
 
+  const statusRef = React.useRef(state.status);
+  statusRef.current = state.status;
+
   const markExpired = React.useCallback(async () => {
+    // 游客/水合中收到 401：没有会话可过期，什么都不动
+    if (statusRef.current !== 'signedIn') return;
     await clearToken();
     // 投稿凭据与草稿按账户隔离，续登后仍可核对超时的同一次发布。
     await clearNamespace({ preserveWallDrafts: true });

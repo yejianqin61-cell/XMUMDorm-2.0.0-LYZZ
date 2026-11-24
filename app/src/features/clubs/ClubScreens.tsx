@@ -36,10 +36,11 @@ function asPositiveId(value: string): number | null {
   return /^[1-9]\d*$/.test(value) && Number.isSafeInteger(Number(value)) ? Number(value) : null;
 }
 
-function appError(error: unknown): { kind: 'content' | 'permission' | 'unreachable' | 'unknown' } {
+function appError(error: unknown): { kind: 'content' | 'permission' | 'signin' | 'unreachable' | 'unknown' } {
   const status = (error as { status?: unknown } | null)?.status;
   if (status === 404) return { kind: 'content' };
-  if (status === 401 || status === 403) return { kind: 'permission' };
+  if (status === 401) return { kind: 'signin' };
+  if (status === 403) return { kind: 'permission' };
   return { kind: error instanceof TypeError ? 'unreachable' : 'unknown' };
 }
 
@@ -221,7 +222,7 @@ export function ClubProfileScreen({ clubId }: { clubId: string }): React.ReactEl
   const id = asPositiveId(clubId);
   const [profile, setProfile] = React.useState<ClubProfile | null>(null);
   const [loading, setLoading] = React.useState(id !== null);
-  const [error, setError] = React.useState<{ kind: 'content' | 'permission' | 'unreachable' | 'unknown' } | null>(id === null ? { kind: 'content' } : null);
+  const [error, setError] = React.useState<{ kind: 'content' | 'permission' | 'signin' | 'unreachable' | 'unknown' } | null>(id === null ? { kind: 'content' } : null);
   const follow = useClubFollow({
     clubId: id ?? 0,
     following: profile?.basicInfo.viewer.following ?? false,

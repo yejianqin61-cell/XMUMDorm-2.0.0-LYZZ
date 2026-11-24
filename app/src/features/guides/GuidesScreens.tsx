@@ -29,9 +29,10 @@ function asArticle(value: unknown): Article {
 function errorFor(error: unknown): AppError {
  if (error && typeof error === 'object') {
   const e = error as { kind?: AppError['kind']; status?: number; name?: string };
-  if (e.kind && ['offline','unreachable','timeout','validation','permission','content','conflict','unknown'].includes(e.kind)) return { kind: e.kind };
+  if (e.kind && ['offline','unreachable','timeout','validation','permission','signin','content','conflict','unknown'].includes(e.kind)) return { kind: e.kind };
   if (e.status === 404) return { kind: 'content' };
-  if (e.status === 401 || e.status === 403) return { kind: 'permission' };
+  if (e.status === 401) return { kind: 'signin' };
+  if (e.status === 403) return { kind: 'permission' };
   if (e.name === 'AbortError') return { kind: 'timeout' };
   if (error instanceof TypeError) return { kind: 'unreachable' };
  }
