@@ -78,7 +78,8 @@ export function QuickActionGrid({
           accessibilityLabel={action.label}
           accessibilityState={{ disabled: action.disabled === true }}
           style={{
-            flexBasis: `${100 / columns}%`,
+            // 扣掉列间 gap 的占位，否则 3 列 = 3×33.3% + 2 个 gap > 100% 会折成 2+1
+            flexBasis: `${columns === 1 ? 100 : 100 / columns - 3}%`,
             flexGrow: 1,
             // 网格项：图标 + 标题纵排；`list` 时横排（行式入口）
             flexDirection: variant === 'list' ? 'row' : 'column',

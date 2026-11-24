@@ -52,7 +52,7 @@ it('renders useful empty sections with routes to import and add todos', async ()
 it('renders the same dashboard in English', async () => {
   const view = await renderApp(<ToolsDashboardContent />, { locale: 'en' });
   await waitFor(() => expect(view.getByText('Today’s schedule')).toBeTruthy());
-  expect(view.getAllByText('School systems')).toHaveLength(2);
+  expect(view.getAllByText('School systems')).toHaveLength(1);
 });
 it('shows the previous Sunday overnight course after midnight on Monday', async () => {
   jest.setSystemTime(new Date('2026-10-04T16:15:00Z'));

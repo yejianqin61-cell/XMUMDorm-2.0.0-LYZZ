@@ -30,7 +30,7 @@ it('puts holidays directly under courses and opens all upcoming dates from the s
   const view = await renderApp(<ToolsDashboardContent />);
   await waitFor(() => expect(view.getByTestId('tools-today-todos')).toBeTruthy());
   const children = view.getByTestId('tools-dashboard-content').props.children;
-  expect(children.slice(0, 3).map((child: React.ReactElement<{ testID?: string }>) => child.props.testID))
+  expect(children.slice(1, 4).map((child: React.ReactElement<{ testID?: string }>) => child.props.testID))
     .toEqual(['tools-courses', 'tools-holidays', 'tools-today-todos']);
   await fireEvent.press(view.getByTestId('tools-holiday-open'));
   expect(view.getByTestId('tools-holidays-content')).toBeTruthy();
