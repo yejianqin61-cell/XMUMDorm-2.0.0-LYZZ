@@ -12,7 +12,7 @@ import { getUploadUrl } from '../../../../shared/api/config';
 import { Badge, type BadgeTone } from '@/components/ui/Badge';
 import { ratingTierLabelKey, type CanteenComment } from './canteen';
 
-/** 五个评级档位用不同颜色的小标签（#175）：夯爆了黄、顶级绿、人上人蓝、NPC 灰、拉完了红 */
+/** 五个评级档位用不同颜色的小标签：夯爆了黄、顶级绿、人上人蓝、NPC 灰、拉完了红 */
 const TIER_TONE: Record<string, BadgeTone> = { 夯爆了: 'accent', 顶级: 'success', 人上人: 'brand', NPC: 'neutral', 拉完了: 'danger' };
 
 /** Domain composition adds rating and media around the shared thread primitives. */
