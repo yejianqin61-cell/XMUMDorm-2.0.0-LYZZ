@@ -517,7 +517,7 @@ export function Form({
   const leaveGuard = useFormLeaveGuard({ dirty: form.shouldConfirmLeave, busy, discardDraft: form.discardDraft });
 
   return (
-    <Screen bottomMode="own" testID={testID} titleKey={titleKey} unreadCount={unreadCount} onMailboxPress={onMailboxPress}>
+    <Screen topMode="topbar" bottomMode="own" testID={testID} titleKey={titleKey} unreadCount={unreadCount} onMailboxPress={onMailboxPress}>
       {guardNavigation ? <FormNavigationGuard prevent={leaveGuard.prevent} onBlocked={leaveGuard.requestLeave} /> : null}
       <ScrollView
         // ⛔ 提交中**不得**整屏变灰（§3.2.5-④）：表单保持可用，只有主按钮 loading

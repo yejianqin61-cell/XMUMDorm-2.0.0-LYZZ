@@ -244,6 +244,7 @@ export function DetailScreen({
           testID={testID ? `${testID}-back` : undefined}
           onPress={onBack}
           accessibilityLabel={labels.back}
+          style={{ minWidth: theme.touchTarget, minHeight: theme.touchTarget, alignItems: 'center', justifyContent: 'center' }}
         >
           <Icon source={ChevronLeft} size="body" tint="primary" />
         </Pressable>
@@ -254,10 +255,14 @@ export function DetailScreen({
     </View>
   );
 
+  // 顶栏必须交给 Screen 的 header / headerOverlay 槽：只有走槽才会让出状态栏（宪法 17.2-1）
+  const headerSlot =
+    topMode === 'topbar' ? { header } : topMode === 'overlay' ? { headerOverlay: header } : {};
+
   if (state !== 'content') {
     return (
-      <Screen topMode={topMode} testID={testID} style={style}>
-        {header}
+      <Screen topMode={topMode} {...headerSlot} testID={testID} style={style}>
+        {topMode === 'topbar' || topMode === 'overlay' ? null : header}
         {state === 'loading' ? (
           <LoadingState testID={testID ? `${testID}-loading` : undefined} />
         ) : state === 'error' ? (
@@ -281,8 +286,8 @@ export function DetailScreen({
   }
 
   return (
-    <Screen topMode={topMode} testID={testID} style={style}>
-      {header}
+    <Screen topMode={topMode} {...headerSlot} testID={testID} style={style}>
+      {topMode === 'topbar' || topMode === 'overlay' ? null : header}
       <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ paddingBottom: theme.space('space_8') }}>
         {hero}
         <View style={{ padding: theme.space('space_4'), gap: theme.space('space_3') }}>
