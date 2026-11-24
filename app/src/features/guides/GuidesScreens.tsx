@@ -191,7 +191,7 @@ export function GuideDetailScreen({ articleId }: { articleId: string }): React.R
  const back = () => router.canGoBack() ? router.back() : router.replace('/guides' as never);
  return <DetailScreen testID="guide-detail" title={article?.title ?? t('square.guides.title')}
   author={article?.authorInfo ? { kind: 'named', name: article.authorInfo.nickname || article.authorInfo.username || t('square.guides.author') } : { kind: 'anonymous' }}
-  interactions={actions.interactions} onToggleLike={actions.onToggleLike} comments={article ? actions.comments : undefined} onBack={back} onRetry={() => error?.kind === 'unknown' || error?.kind === 'content' ? back() : void load()} error={error}
+  interactions={actions.interactions} footer={article ? actions.footer : undefined} onToggleLike={actions.onToggleLike} comments={article ? actions.comments : undefined} onBack={back} onRetry={() => error?.kind === 'unknown' || error?.kind === 'content' ? back() : void load()} error={error}
   state={loading ? 'loading' : error ? 'error' : article ? 'content' : 'empty'}
   body={<View>
    {linkIssue ? <View>

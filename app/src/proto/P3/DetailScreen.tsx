@@ -153,6 +153,8 @@ export type DetailScreenProps = {
   /** 评论区（可不给：如"跑腿详情永不出现输入框"那类页面） */
   comments?: DetailComments;
   labels: DetailLabels;
+  /** 粘性底栏（评论输入条等）：给了它就由 Screen 统一处理键盘与安全区 */
+  footer?: React.ReactNode;
   /** 顶栏插槽（README §5-2：两种口径都能接） */
   topBar?: React.ReactNode;
   topMode?: 'topbar' | 'overlay' | 'none';
@@ -183,6 +185,7 @@ export function DetailScreen({
   comments,
   labels,
   topBar,
+  footer,
   topMode = 'topbar',
   state = 'content',
   error = null,
@@ -286,7 +289,7 @@ export function DetailScreen({
   }
 
   return (
-    <Screen topMode={topMode} {...headerSlot} testID={testID} style={style}>
+    <Screen topMode={topMode} {...headerSlot} footer={footer} testID={testID} style={style}>
       {topMode === 'topbar' || topMode === 'overlay' ? null : header}
       <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ paddingBottom: theme.space('space_8') }}>
         {hero}

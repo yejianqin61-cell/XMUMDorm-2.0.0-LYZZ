@@ -79,11 +79,13 @@ export function useGuideActions(article: GuideArticle | null) {
   {notice === 'login' ? <Button label={t('screen.campus.write.login')} onPress={() => router.push('/login' as never)} /> : null}
   {notice === 'likeFailed' ? <Text role="body">{t('screen.campus.write.likeFailed')}</Text> : null}
   {notice === 'sendFailed' ? <Text role="body">{t('screen.campus.write.sendFailed')}</Text> : null}
+</>;
+ const footer = <>
   <CommentComposer testID="guide-composer" value={draft} onChangeText={setDraft} placeholder={t('screen.campus.write.placeholder')}
    sendLabel={t('screen.campus.write.send')} onSend={() => void send()} sending={sending} disabled={pagination.append === 'loading'} maxLength={800}
    replyContext={reply ? { kind: 'named', label: t('screen.campus.write.namedReply', { name: reply.author.kind === 'named' ? reply.author.name : '—' }), cancelLabel: t('action.cancel'), onCancel: () => setReply(null) } : undefined} />
  </>;
- return { body, interactions: { liked, likeCount, commentCount }, onToggleLike: () => void toggleLike(), comments: {
+ return { body, footer, interactions: { liked, likeCount, commentCount }, onToggleLike: () => void toggleLike(), comments: {
   nodes, pagination, onLoadMore: () => undefined, onRetry: () => void loadComments(), title: t('screen.campus.read.comments'),
   onReply: (id: string) => { const node = nodes.find(item => item.id === id && item.depth === 0); if (node) setReply(node); },
  } };
