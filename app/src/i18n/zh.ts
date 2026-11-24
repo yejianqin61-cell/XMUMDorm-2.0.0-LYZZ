@@ -724,6 +724,7 @@ export const zh = {
   'clubs.follow': '关注',
   'clubs.unfollow': '取消关注',
   'clubs.followers': '{n} 人关注',
+  'clubs.followers.one': '{n} 人关注',
   'clubs.members': '{n} 名成员',
   'clubs.manage': '管理社团',
   'clubs.unavailable': '社团不存在',

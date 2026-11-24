@@ -106,7 +106,7 @@ export function RankingRow({
 
       {leading}
       <View style={{ flex: 1, gap: theme.space('space_1') }}>
-        <Text role="body" colorToken="text-primary" numberOfLines={1}>
+        <Text role="body" colorToken="text-primary" numberOfLines={2}>
           {title}
         </Text>
         {subtitle ? (

@@ -431,8 +431,8 @@ export const en: Record<MessageKey, string> = {
   'square.brand': 'XMUM Dorm',
   'square.brand.emblem': 'Xiamen University emblem',
   'square.module.schedule': 'Schedule',
-  'square.module.guides': 'Campus guide',
-  'square.module.market': 'Marketplace',
+  'square.module.guides': 'Guides',
+  'square.module.market': 'Market',
   'square.module.clubs': 'Clubs',
   // Square "Today" tab (2026-10-18)
   'square.today.courses': 'Today classes',
@@ -716,6 +716,7 @@ export const en: Record<MessageKey, string> = {
   'clubs.follow': 'Follow',
   'clubs.unfollow': 'Unfollow',
   'clubs.followers': '{n} followers',
+  'clubs.followers.one': '{n} follower',
   'clubs.members': '{n} members',
   'clubs.manage': 'Manage club',
   'clubs.unavailable': 'Club unavailable',

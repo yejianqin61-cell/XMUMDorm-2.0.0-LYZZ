@@ -206,7 +206,7 @@ export function ClubDiscoveryScreen({ embedded = false }: { embedded?: boolean }
           <ListItem
             testID={`club-list-row-${club.id}`}
             title={club.name}
-            subtitle={t('clubs.followers', { n: club.followers })}
+            subtitle={t(club.followers === 1 ? 'clubs.followers.one' : 'clubs.followers', { n: club.followers })}
             variant="nav"
             onPress={() => router.push(`/clubs/${club.id}` as never)}
           />
@@ -274,7 +274,7 @@ export function ClubProfileScreen({ clubId }: { clubId: string }): React.ReactEl
       <View style={{ gap: theme.space('space_3') }}>
         <Text role="title" emphasis="strong">{basicInfo.name}</Text>
         <Text role="body">{basicInfo.description}</Text>
-        <Text testID="club-profile-followers" role="body">{t('clubs.followers', { n: follow.followers })}</Text>
+        <Text testID="club-profile-followers" role="body">{t(follow.followers === 1 ? 'clubs.followers.one' : 'clubs.followers', { n: follow.followers })}</Text>
         <Button
           testID="club-profile-follow"
           label={t(follow.following ? 'clubs.unfollow' : 'clubs.follow')}
@@ -317,7 +317,7 @@ export function MyClubsScreen(): React.ReactElement {
     <Screen titleKey="clubs.my" showMailbox={false} testID="my-clubs-screen">
       {rows === null && error === null ? <LoadingState /> : error ? <ErrorState error={error} onAction={() => void load()} /> : displayRows.length === 0 ? <EmptyState kind="noResult" title={t('clubs.myEmpty')} actionLabel={t('action.refresh')} onAction={() => void load()} /> : (
         <View style={{ gap: theme.space('space_2') }}>
-          {displayRows.map((club) => <Button key={club.id} testID={`my-club-row-${club.id}`} label={`${club.name} · ${t('clubs.followers', { n: club.followers })}`} variant="secondary" fullWidth onPress={() => router.push(`/clubs/${club.id}` as never)} />)}
+          {displayRows.map((club) => <Button key={club.id} testID={`my-club-row-${club.id}`} label={`${club.name} · ${t(club.followers === 1 ? 'clubs.followers.one' : 'clubs.followers', { n: club.followers })}`} variant="secondary" fullWidth onPress={() => router.push(`/clubs/${club.id}` as never)} />)}
         </View>
       )}
     </Screen>

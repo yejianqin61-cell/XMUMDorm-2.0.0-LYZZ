@@ -213,25 +213,20 @@ describe('树洞列表', () => {
     expect(view.getByTestId('treehole-media-feed')).toBeTruthy();
   });
 
-  it('标签筛选是下拉列表：选中写回 store，「全部」回到无筛选', async () => {
+  it('标签筛选是横滑标签条：选中写回 store，「全部」回到无筛选', async () => {
     tags.mockResolvedValue([{ id: 7, name_zh: '组队自习', name_en: 'Study group' }]);
     list.mockResolvedValue({ list: [{ id: 7, content: '找自习搭子' }], hasMore: false });
     const view = await renderApp(<TreeholeFeed />);
-    const trigger = await waitFor(() => view.getByTestId('campus-tag-filter'));
-    // 折叠态只有一行：当前值 = 全部（不再是摊开的一排圆角 Tab）
-    expect(within(trigger).getByText(/全部|All/)).toBeTruthy();
+    const strip = await waitFor(() => view.getByTestId('campus-tag-filter'));
+    expect(within(strip).getByText(/全部|All/)).toBeTruthy();
 
-    await fireEvent.press(trigger);
-    // 2026-10-18 实测缺陷：字段名错位曾让每个选项都是空字符串
-    const option = await waitFor(() => view.getByLabelText(/组队自习|Study group/));
-    await fireEvent.press(option);
+    await fireEvent.press(await waitFor(() => view.getByTestId('campus-tag-filter-chip-7')));
     await waitFor(() =>
       expect(list).toHaveBeenLastCalledWith({ page: 1, pageSize: 10, tagId: 7 })
     );
     expect(secondaryTabStore.get('square', 'confession').filters).toEqual({ tag: '7' });
 
-    await fireEvent.press(view.getByTestId('campus-tag-filter'));
-    await fireEvent.press(await waitFor(() => view.getByLabelText(/^全部$|^All$/)));
+    await fireEvent.press(await waitFor(() => view.getByTestId('campus-tag-filter-chip-all')));
     await waitFor(() => expect(secondaryTabStore.get('square', 'confession').filters).toEqual({}));
   });
 
@@ -1585,8 +1580,7 @@ describe('列表状态闭环 L-2 返回与分页', () => {
     const view = await renderApp(<RoundTrip><TreeholeFeed /></RoundTrip>);
     await waitFor(() => expect(view.getByText('全部内容')).toBeTruthy());
     await act(async () => mockListProps.onScrollOffset?.(180));
-    await fireEvent.press(view.getByTestId('campus-tag-filter'));
-    await fireEvent.press(await waitFor(() => view.getByLabelText('组队自习')));
+    await fireEvent.press(await waitFor(() => view.getByTestId('campus-tag-filter-chip-7')));
     await waitFor(() => expect(view.getByText('筛选第1篇')).toBeTruthy());
     expect(mockListProps.restoredScrollOffset).toBe(0);
     await act(async () => mockListProps.onEndReached());
@@ -1599,8 +1593,7 @@ describe('列表状态闭环 L-2 返回与分页', () => {
     expect(mockListProps.restoredScrollOffset).toBe(540);
     expect(secondaryTabStore.get('square', 'confession').filters).toEqual({ tag: '7' });
     expect(list).toHaveBeenCalledTimes(requests);
-    await fireEvent.press(view.getByTestId('campus-tag-filter'));
-    await fireEvent.press(await waitFor(() => view.getByLabelText('全部')));
+    await fireEvent.press(await waitFor(() => view.getByTestId('campus-tag-filter-chip-all')));
     expect(view.getByText('全部内容')).toBeTruthy();
     expect(mockListProps.restoredScrollOffset).toBe(180);
   });

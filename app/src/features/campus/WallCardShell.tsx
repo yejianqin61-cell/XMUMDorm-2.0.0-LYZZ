@@ -129,7 +129,7 @@ export function WallCardShell({
             role="caption"
             colorToken="text-muted"
             numberOfLines={1}
-            style={{ flexShrink: 1, textAlign: 'right', color: muted }}
+            style={{ flexShrink: 0, textAlign: 'right', color: muted }}
           >
             {timeLabel}
           </Text>
