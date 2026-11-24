@@ -22,10 +22,20 @@ export const PROTECTED_ROUTE_PREFIXES: readonly string[] = [
   '/publish-center',
 ];
 
+const PUBLIC_ME_PATHS: readonly string[] = [
+  '/me',
+  '/me/settings',
+  '/me/legal',
+  '/me/legal/terms',
+  '/me/legal/privacy',
+];
+
 /** 这个路径需要身份吗？ */
 export function routeRequiresAuth(pathname: string): boolean {
   // 登录页上的两份静态法务文档必须匿名可读；其余 /me 路径仍受保护。
-  if (pathname === '/me/legal/terms' || pathname === '/me/legal/privacy') return false;
+  // 「我的」是游客也要能进的一级 Tab：游客看到的是登录入口 + 设置 + 关于（不再先白屏再跳登录）。
+  // 其余 /me/* 子路径（资料编辑、私信）仍要身份。
+  if (PUBLIC_ME_PATHS.includes(pathname)) return false;
   return PROTECTED_ROUTE_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
   );

@@ -462,6 +462,7 @@ export const en: Record<MessageKey, string> = {
   'me.entries.title': 'More',
   'me.entry.settings': 'Settings',
   'me.entry.about': 'About & legal',
+  'me.guest.title': 'Sign in to manage yours',
   'me.content.title': 'My content',
   'me.content.posts': 'Treehole',
   'me.content.marketplace': 'Second-hand',

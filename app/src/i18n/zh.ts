@@ -469,6 +469,7 @@ export const zh = {
   'me.entries.title': '更多',
   'me.entry.settings': '设置',
   'me.entry.about': '关于与法律',
+  'me.guest.title': '登录后管理你的内容',
   'me.content.title': '我的内容',
   'me.content.posts': '树洞',
   'me.content.marketplace': '二手',

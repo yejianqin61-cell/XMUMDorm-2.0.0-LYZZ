@@ -48,6 +48,7 @@ jest.mock('expo-router', () => ({
  * 替身只替换"那个原生容器"：children 照常渲染，被测的**是我们接的线**
  * （点 Tab 是否调用了翻页、翻页回调是否回写了选中态）。
  */
+jest.mock('@/features/auth/session', () => ({ useSession: () => ({ isSignedIn: true, status: 'signedIn' }) }));
 jest.mock('react-native-pager-view', () => {
   const React = require('react');
   const { View } = require('react-native');

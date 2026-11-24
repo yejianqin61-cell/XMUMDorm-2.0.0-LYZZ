@@ -4,6 +4,7 @@ import { fireEvent, waitFor } from '@testing-library/react-native';
 import { renderApp } from './helpers/renderApp';
 import { MeScreen } from '@/features/me/MeScreen';
 
+jest.mock('@/features/auth/session', () => ({ useSession: () => ({ isSignedIn: true, status: 'signedIn' }) }));
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn(), canGoBack: () => true }),
 }));

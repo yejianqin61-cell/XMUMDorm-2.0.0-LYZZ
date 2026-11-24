@@ -23,7 +23,10 @@ import Pencil from 'lucide-react-native/icons/pencil';
 import Settings from 'lucide-react-native/icons/settings';
 
 import { Avatar } from '@/components/ui/Avatar';
+import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { ListItem } from '@/components/ui/ListItem';
+import { useSession } from '@/features/auth/session';
 import { ExpBar } from '@/components/ui/ExpBar';
 import { InlineNotice } from '@/components/ui/InlineNotice';
 import { IconButton } from '@/components/ui/IconButton';
@@ -54,7 +57,40 @@ const EMPTY_PROFILE: MeProfile = {
   major: null,
 };
 
+/** 「我的」：游客看登录入口 + 设置 + 关于；已登录看仪表盘。两者各自持有 hooks，避免条件调用。 */
 export function MeScreen(): React.ReactElement {
+  const { isSignedIn } = useSession();
+  return isSignedIn ? <MemberMeScreen /> : <GuestMeScreen />;
+}
+
+function GuestMeScreen(): React.ReactElement {
+  const { t } = useI18n();
+  const theme = useTheme();
+  const router = useRouter();
+  return (
+    <Screen testID="screen-me" titleKey="screen.me" bottomMode="tabbar" tabBarHeight={TAB_BAR_CLEARANCE}>
+      <View testID="me-guest" style={{ flex: 1, padding: theme.space('space_4'), gap: theme.space('space_4') }}>
+        <Card variant="outlined" padding="space_4">
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.space('space_3') }}>
+            <Avatar size="space_12" />
+            <Text role="headline" emphasis="strong" colorToken="text-primary" style={{ flex: 1 }}>
+              {t('me.guest.title')}
+            </Text>
+          </View>
+          <View style={{ marginTop: theme.space('space_4') }}>
+            <Button testID="me-guest-login" label={t('auth.login')} variant="primary" onPress={() => router.push('/login')} />
+          </View>
+        </Card>
+        <View>
+          <ListItem testID="me-guest-settings" title={t('me.entry.settings')} variant="nav" onPress={() => router.push('/me/settings')} />
+          <ListItem testID="me-guest-about" title={t('me.entry.about')} variant="nav" onPress={() => router.push('/me/legal')} />
+        </View>
+      </View>
+    </Screen>
+  );
+}
+
+function MemberMeScreen(): React.ReactElement {
   const { t } = useI18n();
   const theme = useTheme();
   const router = useRouter();

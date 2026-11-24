@@ -8,6 +8,9 @@
 module.exports = function (api) {
   api.cache(true);
   return {
-    presets: ['babel-preset-expo'],
+    // worklets 插件由我们自己挂：babel-preset-expo 不允许传选项，而我们的内联样式里大量 `token.value`
+    // （设计令牌取值）会被它误报为「shared value 的 .value」，每次冷启动 ~30 条，淹没真告警。
+    presets: [['babel-preset-expo', { worklets: false, reanimated: false }]],
+    plugins: [['react-native-worklets/plugin', { disableInlineStylesWarning: true }]],
   };
 };
