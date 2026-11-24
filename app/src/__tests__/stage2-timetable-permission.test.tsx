@@ -29,35 +29,27 @@ beforeEach(() => {
   refresh.mockResolvedValue({ status: 'scheduled', scheduled: [], deferred: 0 });
 });
 
-it('explains class notifications and requests permission on first timetable entry', async () => {
-  let finish!: (value: string) => void;
-  permissions.request.mockImplementation(() => new Promise((resolve) => { finish = resolve; }));
+it('explains class notifications but does not prompt on entry (R4-27)', async () => {
   const view = await renderApp(<SessionProvider><TimetableScreen renderGrid={() => null} /></SessionProvider>);
   expect(view.getByTestId('timetable-reminder-explanation')).toBeTruthy();
+  await waitFor(() => expect(permissions.read).toHaveBeenCalled());
+  await waitFor(() => expect(view.getByTestId('timetable-reminder-request')).toBeTruthy());
+  expect(permissions.request).not.toHaveBeenCalled();
+});
+
+it('requests permission only when the user taps the enable button, and records it', async () => {
+  const view = await renderApp(<SessionProvider><TimetableScreen renderGrid={() => null} /></SessionProvider>);
+  await fireEvent.press(await waitFor(() => view.getByTestId('timetable-reminder-request')));
   await waitFor(() => expect(permissions.request).toHaveBeenCalledTimes(1));
-  expect(storage.setItem).not.toHaveBeenCalledWith('@dorm:timetable-notification-requested', '1');
-  finish('granted');
   await waitFor(() => expect(storage.setItem).toHaveBeenCalledWith('@dorm:timetable-notification-requested', '1'));
 });
 
 it('does not record a failed permission request as completed', async () => {
   permissions.request.mockRejectedValueOnce(new Error('notification service unavailable'));
   const view = await renderApp(<SessionProvider><TimetableScreen renderGrid={() => null} /></SessionProvider>);
+  await fireEvent.press(await waitFor(() => view.getByTestId('timetable-reminder-request')));
   await waitFor(() => expect(view.getByText('当前预览暂不支持通知')).toBeTruthy());
   expect(storage.setItem).not.toHaveBeenCalledWith('@dorm:timetable-notification-requested', '1');
-  await view.unmount();
-});
-
-it('shares a pending first permission request between timetable instances', async () => {
-  let finish!: (value: string) => void;
-  permissions.request.mockImplementation(() => new Promise((resolve) => { finish = resolve; }));
-  const view = await renderApp(<SessionProvider>
-    <TimetableScreen renderGrid={() => null} /><TimetableScreen renderGrid={() => null} />
-  </SessionProvider>);
-  await waitFor(() => expect(storage.getItem).toHaveBeenCalledWith('@dorm:timetable-notification-requested'));
-  await waitFor(() => expect(permissions.request).toHaveBeenCalledTimes(1));
-  finish('granted');
-  await waitFor(() => expect(storage.setItem).toHaveBeenCalledWith('@dorm:timetable-notification-requested', '1'));
   await view.unmount();
 });
 

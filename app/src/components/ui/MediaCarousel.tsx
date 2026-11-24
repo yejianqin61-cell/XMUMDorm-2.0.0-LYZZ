@@ -6,16 +6,16 @@ import {Text} from './Text';
 
 /** Horizontal media reader for a real multi-image consumer; a single image stays visually simple. */
 export function MediaCarousel({uris,alt,pageLabel,testID}:{uris:readonly string[];alt?:readonly string[];pageLabel:(index:number,total:number)=>string;testID?:string}):React.ReactElement {
- const theme=useTheme();const [page,setPage]=React.useState(0);
+ const theme=useTheme();const [page,setPage]=React.useState(0);const [boxWidth,setBoxWidth]=React.useState(0);
  const onScroll=(event:{nativeEvent:{contentOffset:{x:number};layoutMeasurement:{width:number}}})=>{
   const width=event.nativeEvent.layoutMeasurement.width;
   if(width>0)setPage(Math.max(0,Math.min(uris.length-1,Math.round(event.nativeEvent.contentOffset.x/width))));
  };
  if(uris.length===0)return <View testID={testID}/>;
  if(uris.length===1){const label=alt?.[0];return <View testID={testID}><Image testID={testID?`${testID}-image-0`:undefined} source={{uri:uris[0]}} accessible={!!label} accessibilityLabel={label} accessibilityElementsHidden={!label} importantForAccessibility={label?undefined:'no-hide-descendants'} contentFit="cover" style={{width:'100%',aspectRatio:16/9,borderRadius:theme.radius('radius_small')}}/></View>;}
- return <View testID={testID} style={{gap:theme.space('space_1')}}>
+ return <View testID={testID} style={{gap:theme.space('space_1')}} onLayout={e=>setBoxWidth(e.nativeEvent.layout.width)}>
   <ScrollView testID={testID?`${testID}-scroll`:undefined} horizontal pagingEnabled onScroll={onScroll} scrollEventThrottle={16} showsHorizontalScrollIndicator={false} nestedScrollEnabled>
-   {uris.map((uri,index)=>{const label=alt?.[index];return <View key={`${uri}-${index}`} style={{width:300,aspectRatio:16/9}}><Image testID={testID?`${testID}-image-${index}`:undefined} source={{uri}} accessible={!!label} accessibilityLabel={label} accessibilityElementsHidden={!label} importantForAccessibility={label?undefined:'no-hide-descendants'} contentFit="cover" style={{width:'100%',height:'100%',borderRadius:theme.radius('radius_small')}}/></View>;})}
+   {uris.map((uri,index)=>{const label=alt?.[index];return <View key={`${uri}-${index}`} style={{width:boxWidth>0?boxWidth:300,aspectRatio:16/9}}><Image testID={testID?`${testID}-image-${index}`:undefined} source={{uri}} accessible={!!label} accessibilityLabel={label} accessibilityElementsHidden={!label} importantForAccessibility={label?undefined:'no-hide-descendants'} contentFit="cover" style={{width:'100%',height:'100%',borderRadius:theme.radius('radius_small')}}/></View>;})}
   </ScrollView>
   <View accessibilityLiveRegion="polite"><Text testID={testID?`${testID}-position`:undefined} role="caption">{pageLabel(page+1,uris.length)}</Text></View>
  </View>;

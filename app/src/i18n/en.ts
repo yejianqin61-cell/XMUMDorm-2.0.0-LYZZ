@@ -314,6 +314,7 @@ export const en: Record<MessageKey, string> = {
   'timetable.weekLabel': 'W{n}',
   'timetable.prevWeek': 'Previous week',
   'timetable.nextWeek': 'Next week',
+  'timetable.reminder.enable': 'Turn on alerts',
   'timetable.stale': 'Showing the last synced timetable',
   'timetable.empty': 'No classes this week',
   'timetable.noVenue': 'Venue TBD',

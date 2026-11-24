@@ -10,7 +10,9 @@ import {Badge} from '@/components/ui/Badge';
 import {SearchField} from '@/components/ui/SearchField';
 import {Button} from '@/components/ui/Button';
 import {Text} from '@/components/ui/Text';
-import {MediaGrid} from '@/components/ui/MediaGrid';
+import {Avatar} from '@/components/ui/Avatar';
+import {Surface} from '@/components/ui/Surface';
+import {MediaCarousel} from '@/components/ui/MediaCarousel';
 import {ReportSheet} from '@/components/ui/ReportSheet';
 import {useToast} from '@/components/ui/Toast';
 import {DetailScreen} from '@/proto/P3';
@@ -111,7 +113,7 @@ function MarketFeed({filters,header}:{filters:Filters;header:React.ReactNode}):R
 type Detail=ReturnType<typeof readMarketDetail>;
 function safeCount(value:unknown):number|null{return typeof value==='number'&&Number.isSafeInteger(value)&&value>=0?value:null;}
 export function MarketDetailScreen({published=false,itemId}:{published?:boolean;itemId:string}):React.ReactElement {
- const {t}=useI18n();const router=useRouter();const session=useSession();const toast=useToast();const [item,setItem]=React.useState<Detail|null>(null),[count,setCount]=React.useState<number|null>(null);
+ const {t}=useI18n();const theme=useTheme();const router=useRouter();const session=useSession();const toast=useToast();const [item,setItem]=React.useState<Detail|null>(null),[count,setCount]=React.useState<number|null>(null);
  const [loading,setLoading]=React.useState(true),[error,setError]=React.useState<AppError|null>(null),[busy,setBusy]=React.useState(false),[notice,setNotice]=React.useState<'login'|'denied'|'failed'|null>(null);
  const [reportOpen,setReportOpen]=React.useState(false),[reportReason,setReportReason]=React.useState<string|null>(null),[reportDetail,setReportDetail]=React.useState('');
  const epoch=React.useRef(0),lock=React.useRef(false),uncertain=React.useRef(false);
@@ -140,8 +142,9 @@ export function MarketDetailScreen({published=false,itemId}:{published?:boolean;
   labels={{title:t('screen.campus.read.report'),reason:t('screen.campus.report.reason'),detail:t('screen.campus.report.detail'),submit:t('screen.campus.read.report'),cancel:t('action.cancel')}}/>;
  return <DetailScreen testID="market-detail" title={item?.title??t('screen.market.detail')} author={{kind:'named',name:item?.sellerName??t('screen.market.seller')}} onReport={item&&report.state!=='success'?()=>setReportOpen(true):undefined} interactions={{}} onBack={back} onRetry={()=>void load()} state={loading?'loading':error?.kind==='content'?'empty':error?'error':item?'content':'empty'} error={error}
   empty={{kind:'noResult',title:t('screen.market.unavailable'),actionLabel:t('screen.market.back'),onAction:back}}
-  hero={item&&item.images.length?<MediaGrid testID="market-media" variant="hero" uris={item.images} alt={item.images.map(()=>item.title)}/>:undefined}
+  hero={item&&item.images.length?<MediaCarousel testID="market-media" uris={item.images} alt={item.images.map(()=>item.title)} pageLabel={(i,n)=>`${i} / ${n}`}/>:undefined}
   body={item?<><View testID="market-detail-summary"><Text role="headline" emphasis="strong">{`RM ${item.price.toFixed(2)}`}</Text><Text role="label" colorToken="text-secondary">{t(item.status==='sold'?'screen.market.sold':'screen.market.on_sale')}</Text></View><Text role="body">{item.description}</Text>
+   <Surface testID="market-seller-card" rounded="radius_large" padding="space_3"><View style={{flexDirection:'row',alignItems:'center',gap:theme.space('space_3')}}><Avatar size="space_8"/><View style={{flex:1}}><Text role="label" emphasis="strong">{item.sellerName??'—'}</Text></View></View></Surface>
    <View testID="market-transaction-actions"><Button testID="market-want" disabled={busy} label={`${t(item.want?'screen.market.wanted':'screen.market.want')} · ${count??'—'}`} onPress={()=>void toggle()}/>
    {notice==='login'?<Button label={t('screen.market.login')} onPress={()=>router.push('/login')}/>:notice?<Text role="body">{t(notice==='denied'?'screen.market.denied':'screen.market.failed')}</Text>:null}</View>{reportPanel}</>:null}
   labels={{back:t('action.back'),like:t('screen.campus.read.like'),favorite:t('action.save'),comment:t('screen.campus.read.comments'),report:t('screen.campus.read.report'),countPlaceholder:'—',anonymous:t('screen.campus.read.anonymous'),comments:{anonymous:t('screen.campus.read.anonymous'),deleteLabel:t('screen.campus.read.delete'),replyLabel:t('screen.campus.read.reply'),likeLabel:t('screen.campus.read.like'),moreReplies:n=>String(n),collapse:t('screen.campus.read.collapse')},commentsEnd:t('screen.campus.read.end'),commentsRetry:t('action.retry')}}/>;

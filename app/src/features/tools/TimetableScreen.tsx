@@ -140,13 +140,8 @@ function OwnedTimetableScreen({ renderGrid, legacyControls }: { renderGrid: (pro
     mounted.current = true;
     const update = async (firstEntry: boolean) => {
       try {
-        let status = await notificationPermission.read();
-        if (firstEntry && status === 'undetermined') {
-          const asked = await AsyncStorage.getItem('@dorm:timetable-notification-requested');
-          if (!asked && active) {
-            status = await requestFirstTimetablePermission();
-          }
-        }
+        // 进课表页不再立刻弹系统授权（没有上下文）：只读状态，由页内「开启上课提醒」按钮在用户主动时才请求
+        const status = await notificationPermission.read();
         if (!active) return;
         setPermission(status);
         if (status === 'granted') await refreshRef.current();
@@ -208,7 +203,7 @@ function OwnedTimetableScreen({ renderGrid, legacyControls }: { renderGrid: (pro
           {t('me.settings.notifications.description')}
         </Text>
         {permission === 'undetermined' ? <Button testID="timetable-reminder-request" variant="secondary"
-          label={t('action.retry')} onPress={() => { void retryPermission(); }} /> : null}
+          label={t('timetable.reminder.enable')} onPress={() => { void retryPermission(); }} /> : null}
         {permission === 'denied' || permission === 'undetermined' ?
           <Button testID="timetable-reminder-settings" variant="secondary"
             label={t('me.settings.notifications.openSettings')}

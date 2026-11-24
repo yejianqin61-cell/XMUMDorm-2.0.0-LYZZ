@@ -320,6 +320,7 @@ export const zh = {
   'timetable.weekLabel': '第 {n} 周',
   'timetable.prevWeek': '上一周',
   'timetable.nextWeek': '下一周',
+  'timetable.reminder.enable': '开启上课提醒',
   'timetable.stale': '显示的是上次同步的课表',
   'timetable.empty': '这一周还没有课',
   'timetable.noVenue': '地点待定',
