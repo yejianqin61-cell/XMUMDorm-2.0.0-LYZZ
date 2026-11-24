@@ -27,7 +27,7 @@ export const BRAND_EMBLEM_SIZE = 48;
 
 export function SquareBrandHeader(): React.ReactElement {
   const theme = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const source = theme.scheme === 'dark' ? EMBLEM_DARK : EMBLEM_LIGHT;
 
   return (
@@ -48,9 +48,15 @@ export function SquareBrandHeader(): React.ReactElement {
         contentFit="contain"
         accessibilityLabel={t('square.brand.emblem')}
       />
-      <Text role="headline" emphasis="strong" colorToken="text-primary">
-        {t('square.brand')}
-      </Text>
+      <View style={{ flex: 1 }}>
+        <Text role="headline" emphasis="strong" colorToken="text-primary">
+          {t('square.brand')}
+        </Text>
+        {/* 原型：品牌名下一行日期（让首屏有"今天"的锚点） */}
+        <Text testID="square-brand-date" role="caption" colorToken="text-secondary">
+          {new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : 'en-GB', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'Asia/Kuala_Lumpur' }).format(new Date())}
+        </Text>
+      </View>
     </View>
   );
 }

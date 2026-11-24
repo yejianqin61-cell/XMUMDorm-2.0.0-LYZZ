@@ -51,7 +51,7 @@ export function MarketListScreen({ embedded = false }: { embedded?: boolean } = 
   </View>
   {/* 分类 / 状态：下划线式筛选（⛔ 不用圆角按钮冒充 Tab，也不再加分区标题） */}
   <UnderlineFilter testID="market-category" options={categories} selectedKey={filters.category??'all'} onSelect={key=>select({...filters,category:key==='all'?undefined:key})}/>
-  <UnderlineFilter testID="market-status" options={['all','on_sale','sold'].map(key=>({key,labelKey:statusKeys[key as keyof typeof statusKeys]}))} selectedKey={filters.status??'all'} onSelect={status=>select({...filters,status:status==='all'?undefined:status})}/>
+  <UnderlineFilter tone="light" testID="market-status" options={['all','on_sale','sold'].map(key=>({key,labelKey:statusKeys[key as keyof typeof statusKeys]}))} selectedKey={filters.status??'all'} onSelect={status=>select({...filters,status:status==='all'?undefined:status})}/>
   {hasAppliedFilters?<View style={{paddingHorizontal:theme.space('space_4')}}><Button testID="market-filter-clear" label={t('action.clear')} variant="link" size="small" onPress={clearFilters}/></View>:null}
  </View>;
  return <FeatureScreen embedded={embedded} titleKey="screen.market.title" showMailbox={false} testID="market-screen">

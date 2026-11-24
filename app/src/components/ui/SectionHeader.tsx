@@ -57,15 +57,14 @@ export function SectionHeader({
           justifyContent: 'space-between',
           gap: theme.space('space_3'),
           paddingHorizontal: theme.space('space_4'),
+          // 第四轮视觉基线：分组靠间距与字重，不靠横线（原型 `.bucket` 小节标题）
+          paddingTop: theme.space('space_4'),
           paddingBottom: theme.space('space_1'),
-          // NB 白名单用法：2px 硬描边（⛔ 不是阴影）
-          borderBottomWidth: theme.borderWidth('border_width_brutal'),
-          borderBottomColor: theme.color['border-strong'].value,
         },
         style,
       ]}
     >
-      <Text role="headline" emphasis="strong" colorToken="text-primary" numberOfLines={numberOfLines}>
+      <Text role="label" emphasis="strong" colorToken="text-secondary" numberOfLines={numberOfLines}>
         {title}
       </Text>
       {variant === 'withAction' && actionLabel ? (

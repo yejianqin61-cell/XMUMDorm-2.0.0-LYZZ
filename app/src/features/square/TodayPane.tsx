@@ -19,6 +19,7 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { ListItem } from '@/components/ui/ListItem';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { SectionHeader } from '@/components/ui/SectionHeader';
+import { Surface } from '@/components/ui/Surface';
 import { Text } from '@/components/ui/Text';
 import { useTheme } from '@/design-system/theme';
 import { useI18n, type Translate } from '@/i18n';
@@ -82,7 +83,7 @@ export function TodayPane(): React.ReactElement {
         gap: theme.space('space_6'),
       }}
     >
-      <View testID="today-courses" style={{ gap: theme.space('space_2') }}>
+      <Surface testID="today-courses" rounded="radius_large" padding="space_4" style={{ gap: theme.space('space_2') }}>
         <SectionHeader title={t('square.today.courses')} />
         {loadingCourses ? (
           <LoadingState testID="today-courses-loading" />
@@ -112,9 +113,9 @@ export function TodayPane(): React.ReactElement {
             />
           ))
         )}
-      </View>
+      </Surface>
 
-      <View testID="today-deadlines" style={{ gap: theme.space('space_2') }}>
+      <Surface testID="today-deadlines" rounded="radius_large" padding="space_4" style={{ gap: theme.space('space_2') }}>
         <SectionHeader title={t('square.today.deadlines')} />
         {!agenda.synced ? (
           <ListItem
@@ -141,7 +142,7 @@ export function TodayPane(): React.ReactElement {
             );
           })
         )}
-      </View>
+      </Surface>
     </ScrollView>
   );
 }

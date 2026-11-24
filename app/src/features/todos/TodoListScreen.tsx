@@ -11,7 +11,7 @@ import { ListItem } from '@/components/ui/ListItem';
 import { ListScreen, useListPagination } from '@/components/ui/ListScreen';
 import { Screen } from '@/components/ui/Screen';
 import { useMailboxBadge } from '@/features/mailbox/useUnread';
-import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { UnderlineFilter } from '@/components/ui/UnderlineFilter';
 import { useTheme } from '@/design-system/theme';
 import { useI18n } from '@/i18n';
 import type { AppError } from '@/i18n/errors';
@@ -87,8 +87,8 @@ export function TodoListScreen(): React.ReactElement {
     <Screen titleKey="tools.todos.title" testID="screen-todos" bottomMode="own" {...badge}>
       <View style={{ flex: 1, padding: theme.space('space_4'), gap: theme.space('space_3') }}>
         <Button testID="todos-create" label={t('tools.todos.create')} onPress={() => router.push('/tools/todos/new')} />
-        <SegmentedControl testID="todos-filter" value={filter} onChange={setFilter} options={[
-          { value: 'all', label: t('tools.todos.all') }, ...[3, 2, 1, 0].map((priority) => ({ value: String(priority), label: t(TODO_PRIORITY_KEYS[priority]) })),
+        <UnderlineFilter testID="todos-filter" selectedKey={filter} onSelect={setFilter} options={[
+          { key: 'all', labelKey: 'tools.todos.all' }, ...[3, 2, 1, 0].map((priority) => ({ key: String(priority), labelKey: TODO_PRIORITY_KEYS[priority] })),
         ]} />
         {writeError ? <ErrorState testID="todos-write-error" error={writeError} onAction={() => { if (retryWrite.current) void mutate(retryWrite.current); }} /> : null}
         <ListScreen testID="todos-list" data={visible} keyExtractor={(row) => String(row.id)} pagination={pagination}

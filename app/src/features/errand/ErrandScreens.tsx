@@ -49,7 +49,7 @@ const noticeKeys={failed:'screen.errand.failed',login:'screen.errand.login',deni
  const header=<View testID="errand-filters" style={{paddingTop:theme.space('space_2'),gap:theme.space('space_2')}}>
   {/* 类型 / 状态：下划线式筛选（⛔ 不用圆角按钮冒充 Tab，也不加分区标题） */}
   <UnderlineFilter testID="errand-type" options={(['all','delivery','purchase','urgent'] as const).map(key=>({key,labelKey:typeKeys[key]}))} selectedKey={filters.type??'all'} onSelect={type=>select({...filters,type:type==='all'?undefined:type})}/>
-  <UnderlineFilter testID="errand-status" options={(['all','open','taken','done'] as const).map(key=>({key,labelKey:statusKeys[key]}))} selectedKey={filters.status??'all'} onSelect={status=>select({...filters,status:status==='all'?undefined:status})}/>
+  <UnderlineFilter tone="light" testID="errand-status" options={(['all','open','taken','done'] as const).map(key=>({key,labelKey:statusKeys[key]}))} selectedKey={filters.status??'all'} onSelect={status=>select({...filters,status:status==='all'?undefined:status})}/>
   {hasFilters?<View style={{flexDirection:'row',gap:theme.space('space_3'),paddingHorizontal:theme.space('space_4')}}>
    {filters.type?<Button testID="errand-type-clear" label={t('action.clear')} variant="link" size="small" onPress={clearType}/>:null}
    {filters.status?<Button testID="errand-status-clear" label={t('action.clear')} variant="link" size="small" onPress={clearStatus}/>:null}

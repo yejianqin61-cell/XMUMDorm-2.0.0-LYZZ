@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { AlertDialog } from '@/components/ui/AlertDialog';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
-import { FilterChips } from '@/components/ui/FilterChips';
+import { UnderlineFilter } from '@/components/ui/UnderlineFilter';
 import { InlineNotice } from '@/components/ui/InlineNotice';
 import { Input } from '@/components/ui/Input';
 import { ListScreen, useListPagination } from '@/components/ui/ListScreen';
@@ -179,13 +179,11 @@ export function ClubDiscoveryScreen({ embedded = false }: { embedded?: boolean }
         onSubmit={submitQuery}
         placeholder={t('clubs.search.placeholder')}
       />
-      <FilterChips
+      <UnderlineFilter
         testID="club-filter"
-        itemTestIDPrefix="club-filter-chip"
-        options={CLUB_CATEGORIES.map((key) => ({ key, labelKey: CATEGORY_LABELS[key] }))}
-        selected={category ? [category] : []}
-        onToggle={toggleCategory}
-        onClear={() => toggleCategory(category ?? '')}
+        options={[{ key: 'all', labelKey: 'action.all' }, ...CLUB_CATEGORIES.map((key) => ({ key, labelKey: CATEGORY_LABELS[key] }))]}
+        selectedKey={category ?? 'all'}
+        onSelect={(key) => { if (key !== (category ?? 'all')) toggleCategory(key); }}
       />
       <ListScreen
         testID="club-list"
