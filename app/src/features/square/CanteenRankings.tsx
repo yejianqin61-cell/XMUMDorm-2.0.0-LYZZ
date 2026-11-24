@@ -41,7 +41,7 @@ export function CanteenRankings({ tabs }: { tabs: readonly RankingTab[] }): Reac
           <Text role="caption" colorToken="text-secondary">{row.count === null ? t('canteen.valueNone') : t('canteen.reviewCount', { n: row.count })}</Text>
         </View> :
         <RankingRow key={row.id} testID={`canteen-ranking-${row.kind}-${row.id}`} rank={row.rank} title={row.name} leading={<CanteenMedia uri={row.image} name={row.name} />} subtitle={row.subtitle ?? undefined}
-          metric={row.score === null ? row.count === null ? t('canteen.scoreNone') : t('canteen.reviewCount', { n: row.count }) : t('canteen.score', { score: row.score })}
+          metric={row.score === null ? row.count === null ? t('canteen.scoreNone') : t('canteen.reviewCount', { n: row.count }) : `${t('canteen.score', { score: row.score })}${row.count === null ? '' : ` · ${t('canteen.reviewCount', { n: row.count })}`}`}
           onPress={() => router.push(row.kind === 'product' ? { pathname: '/canteen/product/[id]', params: { id: String(row.id) } } : { pathname: '/canteen/shop/[id]', params: { id: String(row.id) } })} />)}
   </View>;
 }

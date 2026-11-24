@@ -11,6 +11,7 @@ import { UnderlineFilter } from '@/components/ui/UnderlineFilter';
 import { InlineNotice } from '@/components/ui/InlineNotice';
 import { Input } from '@/components/ui/Input';
 import { ListScreen, useListPagination } from '@/components/ui/ListScreen';
+import { Avatar } from '@/components/ui/Avatar';
 import { ListItem } from '@/components/ui/ListItem';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { MediaGrid } from '@/components/ui/MediaGrid';
@@ -206,7 +207,9 @@ export function ClubDiscoveryScreen({ embedded = false }: { embedded?: boolean }
           <ListItem
             testID={`club-list-row-${club.id}`}
             title={club.name}
-            subtitle={t(club.followers === 1 ? 'clubs.followers.one' : 'clubs.followers', { n: club.followers })}
+            subtitle={club.description.trim() || undefined}
+            meta={t(club.followers === 1 ? 'clubs.followers.one' : 'clubs.followers', { n: club.followers })}
+            leading={<Avatar size="space_8" uri={club.avatar ?? undefined} />}
             variant="nav"
             onPress={() => router.push(`/clubs/${club.id}` as never)}
           />
