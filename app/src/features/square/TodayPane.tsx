@@ -25,6 +25,8 @@ import { useTheme } from '@/design-system/theme';
 import { useI18n, type Translate } from '@/i18n';
 import { formatClockTime } from '@/features/me/dashboard';
 import type { TimetableMeeting } from '@/features/tools/timetable';
+import { SquareModuleEntries } from './SquareModuleEntries';
+import { AgentEntry } from './AgentEntry';
 import { agendaCourses, deadlineWhen } from './todayAgenda';
 import { useMoodleAgenda } from './useMoodleAgenda';
 import { useTodayTimetable } from './useTodayTimetable';
@@ -87,6 +89,14 @@ export function TodayPane(): React.ReactElement {
         <SectionHeader title={t('square.today.courses')} />
         {loadingCourses ? (
           <LoadingState testID="today-courses-loading" />
+        ) : timetable.error?.kind === 'signin' && timetable.week === null ? (
+          // 游客：一行入口，别让一整屏中间只剩「去登录」
+          <ListItem
+            testID="today-courses-signin"
+            title={t('error.signin.perceive')}
+            subtitle={t('error.signin.understand')}
+            onPress={() => router.push('/login')}
+          />
         ) : timetable.error !== null && timetable.week === null ? (
           <ErrorState
             testID="today-courses-error"
@@ -143,6 +153,9 @@ export function TodayPane(): React.ReactElement {
           })
         )}
       </Surface>
+      {/* 常用入口（原型：时间轴之下的一排小卡，不再常驻在所有 Tab 上方） */}
+      <SquareModuleEntries />
+      <AgentEntry />
     </ScrollView>
   );
 }

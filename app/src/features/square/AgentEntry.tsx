@@ -14,9 +14,7 @@ export function AgentEntry(): React.ReactElement {
   const { t } = useI18n();
   const router = useRouter();
   return <Pressable testID="square-agent-entry" accessibilityLabel={t('screen.agent.title')} onPress={() => router.push('/agent')}
-    contentAlign="stretch" style={{ marginHorizontal: theme.space('space_4'), marginVertical: theme.space('space_2'),
-      paddingHorizontal: theme.space('space_3'), paddingVertical: theme.space('space_2'), borderRadius: theme.radius('radius_medium'),
-      borderWidth: theme.borderWidth('border_width_hairline'), borderColor: theme.color['border-subtle'].value,
+    contentAlign="stretch" style={{ paddingHorizontal: theme.space('space_3'), paddingVertical: theme.space('space_3'), borderRadius: theme.radius('radius_large'),
       backgroundColor: theme.color['bg-surface'].value }}>
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.space('space_3') }}>
       <Icon source={MessageCircle} size="body" tint="brand" />
