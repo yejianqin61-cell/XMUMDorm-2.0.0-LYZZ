@@ -13,7 +13,7 @@ import { useMailboxBadge, type MailboxBadge } from '@/features/mailbox/useUnread
 import { timetableIdentity } from '@/features/tools/cacheIdentity';
 import { useI18n } from '@/i18n';
 import type { AppError } from '@/i18n/errors';
-import { createTodo, updateTodo } from '../../../../shared/api/todos';
+import { createTodo, updateTodo } from './todoApi';
 import { findTodo, notifyTodosChanged, todoPayload, validateTodoDate, validateTodoTime, TODO_PRIORITY_KEYS, toTodoError, type Todo } from './todos';
 
 function TodoEditor({ todo, badge }: { todo: Todo | null; badge: MailboxBadge }): React.ReactElement {

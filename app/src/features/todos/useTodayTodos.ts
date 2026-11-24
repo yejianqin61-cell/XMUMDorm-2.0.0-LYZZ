@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { getTodayTodos } from '../../../../shared/api/todos';
+import { getTodayTodos } from './todoApi';
 import { timetableIdentity } from '@/features/tools/cacheIdentity';
 import { toToolsError } from '@/features/tools/requestError';
 import type { AppError } from '@/i18n/errors';

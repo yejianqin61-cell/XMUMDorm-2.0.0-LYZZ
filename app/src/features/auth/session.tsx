@@ -35,6 +35,9 @@ import {
 } from './authFailure';
 import { clearToken, hydrateToken, readTokenSync, saveToken } from './tokenStore';
 import { clearMoodleCache } from '@/features/tools/moodle/cache';
+import { setGuestMode } from '@/features/todos/guestMode';
+import { syncLocalTodosToAccount } from '@/features/todos/localTodos';
+import { createRemoteTodo } from '@/features/todos/todoApi';
 import type { AppError } from '@/i18n/errors';
 
 /* ────────────────────────── 状态机（纯函数） ────────────────────────── */
@@ -133,6 +136,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
 
   const statusRef = React.useRef(state.status);
   statusRef.current = state.status;
+  // 待办层要在 hook 之外知道「已确认未登录」→ 走本地存储（游客也能建待办）
+  React.useEffect(() => { setGuestMode(state.status === 'signedOut'); }, [state.status]);
 
   const markExpired = React.useCallback(async () => {
     // 游客/水合中收到 401：没有会话可过期，什么都不动
@@ -169,6 +174,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
         // 换账号：旧账号的 Moodle 快照不得进入新会话（审计 D-3）
         clearMoodleCache();
         await saveToken(result.token);
+        // 游客期间建的待办补到账号（失败的留在本地，下次再试）
+        void syncLocalTodosToAccount(createRemoteTodo).catch(() => undefined);
         dispatch({ type: 'login:success', identifier });
         return { ok: true };
       } catch (error) {
@@ -207,6 +214,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
         // 注册成功等同换账号，同样清旧 Moodle 快照（审计 D-3）
         clearMoodleCache();
         await saveToken(result.token);
+        void syncLocalTodosToAccount(createRemoteTodo).catch(() => undefined);
         dispatch({ type: 'login:success', identifier: body.username });
         return { ok: true };
       } catch (error) {

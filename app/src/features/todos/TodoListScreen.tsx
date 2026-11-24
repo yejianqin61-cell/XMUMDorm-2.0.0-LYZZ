@@ -17,7 +17,7 @@ import { useI18n } from '@/i18n';
 import type { AppError } from '@/i18n/errors';
 import { useSession } from '@/features/auth/session';
 import { timetableIdentity } from '@/features/tools/cacheIdentity';
-import { getTodos, toggleTodo, deleteTodo } from '../../../../shared/api/todos';
+import { getTodos, toggleTodo, deleteTodo } from './todoApi';
 import { normalizeTodos, mergeTodos, notifyTodosChanged, TODO_PRIORITY_KEYS, toTodoError, type Todo } from './todos';
 
 export function TodoListScreen(): React.ReactElement {

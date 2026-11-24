@@ -1,5 +1,5 @@
 import { parseYmd } from '../../../../shared/config/semesters';
-import { getTodos } from '../../../../shared/api/todos';
+import { getTodos } from './todoApi';
 import type { FormValues } from '@/components/ui/FormField';
 import type { MessageKey } from '@/i18n/zh';
 import type { AppError } from '@/i18n/errors';

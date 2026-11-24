@@ -144,7 +144,7 @@ export function ToolsDashboardContent({ onRequestError }: { onRequestError?: (er
       </View>
     </Pressable>
     <Surface testID="tools-today-todos" rounded="radius_large" padding="space_4" style={{ gap: theme.space('space_2') }}>
-      <SectionHeader title={t('tools.dashboard.todos')} {...(session.isSignedIn ? { variant: 'withAction' as const, actionLabel: t('tools.todos.create'), onActionPress: () => router.push('/tools/todos/new') } : {})} />
+      <SectionHeader title={t('tools.dashboard.todos')} variant="withAction" actionLabel={t('tools.todos.create')} onActionPress={() => router.push('/tools/todos/new')} />
       {todos.loading ? <LoadingState testID="tools-todos-loading" /> : todos.error?.kind === 'signin' ? <ListItem testID="tools-todos-signin" title={t('error.signin.perceive')} subtitle={t('error.signin.understand')} onPress={() => router.push('/login')} /> : todos.error ? <ErrorState testID="tools-todos-error" error={todos.error} onAction={todos.reload} /> : todos.data ? <>
         <Text role="caption">{t('tools.dashboard.todoCount', { total: todos.data.total, completed: todos.data.completed })}</Text>
         {todos.data.top.length ? todos.data.top.map((todo) => <ListItem key={todo.id} title={todo.title} onPress={() => router.push({ pathname: '/tools/todos/[id]', params: { id: String(todo.id) } })} />) : <Text role="body" colorToken="text-secondary">{t('tools.dashboard.noTodos')}</Text>}
