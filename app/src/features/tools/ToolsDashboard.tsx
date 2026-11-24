@@ -22,6 +22,8 @@ import { useMailboxBadge } from '@/features/mailbox/useUnread';
 import { timetableIdentity } from './cacheIdentity';
 import { meetingsOf, formatClockTime } from '@/features/me/dashboard';
 import { useTodayTodos } from '@/features/todos/useTodayTodos';
+import { toggleTodo } from '@/features/todos/todoApi';
+import { notifyTodosChanged } from '@/features/todos/todos';
 import { useTheme } from '@/design-system/theme';
 import { useI18n } from '@/i18n';
 import type { AppError } from '@/i18n/errors';
@@ -147,7 +149,8 @@ export function ToolsDashboardContent({ onRequestError }: { onRequestError?: (er
       <SectionHeader title={t('tools.dashboard.todos')} variant="withAction" actionLabel={t('tools.todos.create')} onActionPress={() => router.push('/tools/todos/new')} />
       {todos.loading ? <LoadingState testID="tools-todos-loading" /> : todos.error?.kind === 'signin' ? <ListItem testID="tools-todos-signin" title={t('error.signin.perceive')} subtitle={t('error.signin.understand')} onPress={() => router.push('/login')} /> : todos.error ? <ErrorState testID="tools-todos-error" error={todos.error} onAction={todos.reload} /> : todos.data ? <>
         <Text role="caption">{t('tools.dashboard.todoCount', { total: todos.data.total, completed: todos.data.completed })}</Text>
-        {todos.data.top.length ? todos.data.top.map((todo) => <ListItem key={todo.id} title={todo.title} onPress={() => router.push({ pathname: '/tools/todos/[id]', params: { id: String(todo.id) } })} />) : <Text role="body" colorToken="text-secondary">{t('tools.dashboard.noTodos')}</Text>}
+        {todos.data.top.length ? todos.data.top.map((todo) => <ListItem key={todo.id} testID={`tools-todo-${todo.id}`} title={todo.title} variant="select" selected={false}
+          onToggleSelect={() => { void toggleTodo(todo.id).then(() => notifyTodosChanged()).catch((error) => { void handleError(error); }); }} />) : <Text role="body" colorToken="text-secondary">{t('tools.dashboard.noTodos')}</Text>}
       </> : null}
       <ListItem testID="tools-todos" title={t('tools.todos.title')} onPress={() => router.push('/tools/todos')} />
     </Surface>
