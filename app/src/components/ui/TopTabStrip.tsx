@@ -78,7 +78,7 @@ export function TopTabStrip({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: theme.space('space_2') }}
       >
-        {tabs.map((tab, index) => {
+        {tabs.filter((tab, i, all) => all.findIndex((x) => x.key === tab.key) === i).map((tab, index) => {
           const selected = tab.key === selectedKey;
           const label = tab.labelKey === undefined ? tab.label : t(tab.labelKey);
           return (

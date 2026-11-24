@@ -852,6 +852,12 @@ commands.smoke = async () => {
     .split(/\r?\n/)
     .filter((l) => l.trim() && !l.startsWith('-----'));
   if (crash.length) failures.push(`日志中有 ${crash.length} 行错误（最后 10 行）：\n    ${crash.slice(-10).join('\n    ')}`);
+  // 门槛：整趟冒烟 ReactNativeJS 0 error / 0 warning（Reanimated「reduced motion」是模拟器设置，不算）
+  const warns = adb(['logcat', '-d', 'ReactNativeJS:W', '*:S'], { allowFail: true })
+    .stdout.toString()
+    .split(/\r?\n/)
+    .filter((l) => l.trim() && !l.startsWith('-----') && !/Reduced motion setting/i.test(l));
+  if (warns.length) failures.push(`日志中有 ${warns.length} 行 JS 警告（最后 5 行）：\n    ${warns.slice(-5).map((l) => l.slice(0, 200)).join('\n    ')}`);
   if (failures.length) {
     console.log(`\n✗ 冒烟失败：\n- ${failures.join('\n- ')}`);
     process.exit(1);

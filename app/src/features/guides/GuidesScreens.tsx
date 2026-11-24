@@ -127,7 +127,8 @@ export function GuidesListScreen({ embedded = false }: { embedded?: boolean } = 
  React.useEffect(()=>{if(selectedTab!=='all'&&!tabs.some(tab=>tab.slug===selectedTab))setSelectedTab('all');},[selectedTab,tabs]);
  const navigationTabs=React.useMemo<SecondaryTabDefinition[]>(()=>tabs.length===0?[]:[
   {key:'all',labelKey:'square.guides.all' as MessageKey},
-  ...tabs.map(tab=>({key:tab.slug,label:locale==='zh'?(tab.nameZh||tab.nameEn):(tab.nameEn||tab.nameZh)})),
+  // 后端 tabs 里自带 slug=all 的「全部」，与我们前置的 all 重复会让 React key 冲突
+  ...tabs.filter(tab=>tab.slug!=='all').map(tab=>({key:tab.slug,label:locale==='zh'?(tab.nameZh||tab.nameEn):(tab.nameEn||tab.nameZh)})),
  ],[tabs,locale]);
  return <FeatureScreen embedded={embedded} titleKey="square.guides.title" showMailbox={false} testID="guides-screen">
   <TopTabStrip testID="guides-tabs" tabs={navigationTabs} selectedKey={selectedTab} onSelect={setSelectedTab}/>

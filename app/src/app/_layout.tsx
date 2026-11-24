@@ -21,6 +21,7 @@ import * as Localization from 'expo-localization';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { HeroUINativeProvider } from 'heroui-native';
+import { configureReanimatedLogger } from 'react-native-reanimated';
 
 import '../../global.css';
 
@@ -39,6 +40,12 @@ import { ReminderRuntimeHost } from '@/features/tools/reminders/ReminderRuntimeH
  * 放在模块顶层（而不是某个 effect 里）：路由模块可能在任何组件挂载前就发出请求。
  */
 configureAppApi();
+
+/**
+ * heroui-native 在内部样式里读 shared value 的 `.value`，触发 reanimated 的 strict 告警
+ * （每次冷启动 ~30 条，淹没真正的警告）。我们自己的代码不读 `.value`，关掉 strict 只影响这一类提示。
+ */
+configureReanimatedLogger({ strict: false });
 
 /**
  * P1-02：数据层与连通性。
