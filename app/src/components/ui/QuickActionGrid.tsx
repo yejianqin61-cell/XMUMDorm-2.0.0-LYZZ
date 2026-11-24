@@ -39,6 +39,8 @@ export function quickActionColumns(count: number, variant: QuickActionVariant): 
   if (count <= 0) return 0;
   if (count <= 3) return count;
   if (count === 4) return 2;
+  // 5、6 个按 3 列排（4 列会留下一个孤零零的尾项，如食堂的 5 个区域）
+  if (count <= 6) return 3;
   return 4;
 }
 

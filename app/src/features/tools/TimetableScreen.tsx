@@ -198,7 +198,8 @@ function OwnedTimetableScreen({ renderGrid, legacyControls }: { renderGrid: (pro
   const closeSheet = React.useCallback(() => setSelected(null), []);
   return <Screen titleKey="tools.timetable" bottomMode="own" testID="screen-phase3-timetable" {...badge}>
     <View style={{ flex: 1, padding: theme.space('space_4'), gap: theme.space('space_3') }}>
-      {permission !== 'granted' ? <View style={{ gap: theme.space('space_1') }}>
+      {/* 游客看到的是「去登录」：此时再铺一段提醒说明 + 两个大按钮只会更乱 */}
+      {permission !== 'granted' && !(timetable.error?.kind === 'signin' && !shown) ? <View style={{ gap: theme.space('space_1') }}>
         <Text testID="timetable-reminder-explanation" role="body" colorToken="text-secondary">
           {t('me.settings.notifications.description')}
         </Text>
