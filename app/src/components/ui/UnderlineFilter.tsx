@@ -19,7 +19,7 @@ export function UnderlineFilter({options, selectedKey, onSelect, testID, tone = 
   const theme = useTheme();
   const {t} = useI18n();
   if (options.length === 0) return null;
-  return <ScrollView testID={testID} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{paddingHorizontal: theme.space('space_4')}}>
+  return <ScrollView testID={testID} horizontal style={{flexGrow: 0}} showsHorizontalScrollIndicator={false} contentContainerStyle={{paddingHorizontal: theme.space('space_4')}}>
     {options.map((option) => {
       const selected = option.key === selectedKey;
       return <Pressable key={option.key} testID={testID ? `${testID}-${option.key}` : undefined} accessibilityRole="button" accessibilityState={{selected}}

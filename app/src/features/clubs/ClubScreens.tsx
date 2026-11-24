@@ -106,6 +106,7 @@ const CATEGORY_LABELS: Record<ClubCategory, MessageKey> = {
 export function ClubDiscoveryScreen({ embedded = false }: { embedded?: boolean } = {}): React.ReactElement {
   const router = useRouter();
   const { t } = useI18n();
+  const theme = useTheme();
   const { pagination, dispatch } = useListPagination({ initial: { hasMore: true } });
   const [rows, setRows] = React.useState<readonly ClubSummary[]>([]);
   const page = React.useRef(0);
@@ -172,13 +173,15 @@ export function ClubDiscoveryScreen({ embedded = false }: { embedded?: boolean }
 
   return (
     <FeatureScreen embedded={embedded} titleKey="clubs.title" showMailbox={false} testID="clubs-screen">
-      <SearchField
-        testID="club-search"
-        value={queryInput}
-        onChangeText={changeQueryInput}
-        onSubmit={submitQuery}
-        placeholder={t('clubs.search.placeholder')}
-      />
+      <View style={{ paddingHorizontal: theme.space('space_4'), paddingTop: theme.space('space_2') }}>
+        <SearchField
+          testID="club-search"
+          value={queryInput}
+          onChangeText={changeQueryInput}
+          onSubmit={submitQuery}
+          placeholder={t('clubs.search.placeholder')}
+        />
+      </View>
       <UnderlineFilter
         testID="club-filter"
         options={[{ key: 'all', labelKey: 'action.all' }, ...CLUB_CATEGORIES.map((key) => ({ key, labelKey: CATEGORY_LABELS[key] }))]}
@@ -200,11 +203,11 @@ export function ClubDiscoveryScreen({ embedded = false }: { embedded?: boolean }
           empty: { kind: 'noResult', title: t('clubs.empty'), actionLabel: t('action.refresh'), onAction: () => void load('refresh') },
         }}
         renderItem={(club) => (
-          <Button
+          <ListItem
             testID={`club-list-row-${club.id}`}
-            label={`${club.name} · ${t('clubs.followers', { n: club.followers })}`}
-            variant="secondary"
-            fullWidth
+            title={club.name}
+            subtitle={t('clubs.followers', { n: club.followers })}
+            variant="nav"
             onPress={() => router.push(`/clubs/${club.id}` as never)}
           />
         )}
