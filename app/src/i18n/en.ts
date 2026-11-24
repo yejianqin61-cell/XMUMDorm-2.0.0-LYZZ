@@ -439,6 +439,8 @@ export const en: Record<MessageKey, string> = {
   'square.module.clubs': 'Clubs',
   // Square "Today" tab (2026-10-18)
   'square.today.ongoing': 'Now',
+  'square.today.title': 'Today',
+  'square.today.fullTimetable': 'Timetable',
   'square.today.courses': 'Today classes',
   'square.today.noCourses': 'No classes today',
   'square.today.deadlines': 'Moodle due',

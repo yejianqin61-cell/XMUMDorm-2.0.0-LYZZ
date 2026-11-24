@@ -21,6 +21,7 @@ import { LoadingState } from '@/components/ui/LoadingState';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Surface } from '@/components/ui/Surface';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { clockMinutes } from '@/features/tools/timetableView';
 import { schoolClockMinutes } from '@/features/tools/todaySummary';
 import { Text } from '@/components/ui/Text';
@@ -88,7 +89,12 @@ export function TodayPane(): React.ReactElement {
         gap: theme.space('space_6'),
       }}
     >
-      <Surface testID="today-courses" rounded="radius_large" padding="space_4" style={{ gap: theme.space('space_2') }}>
+      <Surface testID="today-timeline" rounded="radius_large" padding="space_4" style={{ gap: theme.space('space_3') }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Badge text={t('square.today.title')} tone="neutral" />
+        <Button testID="today-full-timetable" label={t('square.today.fullTimetable')} variant="link" size="small" onPress={() => router.push('/tools/timetable')} />
+      </View>
+      <View testID="today-courses" style={{ gap: theme.space('space_2') }}>
         <SectionHeader title={t('square.today.courses')} />
         {loadingCourses ? (
           <LoadingState testID="today-courses-loading" />
@@ -138,16 +144,16 @@ export function TodayPane(): React.ReactElement {
                 end: formatClockTime(course.endTime),
                 venue: course.venue ?? t('tools.dashboard.noVenue'),
               })}
-              meta={formatClockTime(course.startTime)}
+              leading={<Text role="label" emphasis="strong" colorToken="text-primary">{formatClockTime(course.startTime)}</Text>}
               onPress={() => router.push('/tools/timetable')}
             />
             </View>
             );
           })
         )}
-      </Surface>
+      </View>
 
-      <Surface testID="today-deadlines" rounded="radius_large" padding="space_4" style={{ gap: theme.space('space_2') }}>
+      <View testID="today-deadlines" style={{ gap: theme.space('space_2') }}>
         <SectionHeader title={t('square.today.deadlines')} />
         {!agenda.synced ? (
           <ListItem
@@ -169,11 +175,13 @@ export function TodayPane(): React.ReactElement {
                 testID={`today-deadline-${index}`}
                 title={line.title}
                 subtitle={line.subtitle}
+                leading={<Text role="label" emphasis="strong" colorToken="text-primary">{deadlineWhen(now.getTime(), deadline.dueAt)?.clock ?? ''}</Text>}
                 onPress={() => router.push('/system/moodle')}
               />
             );
           })
         )}
+      </View>
       </Surface>
       {/* 常用入口（原型：时间轴之下的一排小卡，不再常驻在所有 Tab 上方） */}
       <SquareModuleEntries />

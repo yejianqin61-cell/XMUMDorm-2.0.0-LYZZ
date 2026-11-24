@@ -447,6 +447,8 @@ export const zh = {
   // ── 广场「今日」tab（2026-10-18）────────────────────────────────────
   'square.today.courses': '今日课表',
   'square.today.ongoing': '进行中',
+  'square.today.title': '今天',
+  'square.today.fullTimetable': '完整课表',
   'square.today.noCourses': '今天没有课',
   'square.today.deadlines': 'Moodle 待交',
   'square.today.noDeadlines': '暂时没有待交作业',
