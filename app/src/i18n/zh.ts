@@ -367,6 +367,8 @@ export const zh = {
   'auth.forgotPassword': '忘记密码？',
   'auth.legalIntro': '登录前可查阅',
   // ── 注册与找回密码（A-03/A-04；P2C2-02 起）──────────────────────────
+  'auth.register.step1': '第 1 步 · 验证邮箱',
+  'auth.register.step2': '第 2 步 · 设置账号',
   'auth.register': '注册',
   'auth.toRegister': '注册新账号',
   'auth.email': '校内邮箱',
@@ -443,6 +445,7 @@ export const zh = {
   'square.module.clubs': '社团',
   // ── 广场「今日」tab（2026-10-18）────────────────────────────────────
   'square.today.courses': '今日课表',
+  'square.today.ongoing': '进行中',
   'square.today.noCourses': '今天没有课',
   'square.today.deadlines': 'Moodle 待交',
   'square.today.noDeadlines': '暂时没有待交作业',
@@ -622,7 +625,7 @@ export const zh = {
   'tools.todos.edit': '编辑待办',
   'tools.todos.delete': '删除待办',
   'tools.todos.all': '全部',
-  'tools.todos.priority.0': '普通',
+  'tools.todos.priority.0': '无',
   'tools.todos.priority.1': '低',
   'tools.todos.priority.2': '中',
   'tools.todos.priority.3': '高',

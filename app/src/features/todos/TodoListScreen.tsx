@@ -88,7 +88,7 @@ export function TodoListScreen(): React.ReactElement {
       <View style={{ flex: 1, padding: theme.space('space_4'), gap: theme.space('space_3') }}>
         <Button testID="todos-create" label={t('tools.todos.create')} onPress={() => router.push('/tools/todos/new')} />
         <UnderlineFilter testID="todos-filter" selectedKey={filter} onSelect={setFilter} options={[
-          { key: 'all', labelKey: 'tools.todos.all' }, ...[3, 2, 1, 0].map((priority) => ({ key: String(priority), labelKey: TODO_PRIORITY_KEYS[priority] })),
+          { key: 'all', labelKey: 'tools.todos.all' }, ...[3, 2, 1].map((priority) => ({ key: String(priority), labelKey: TODO_PRIORITY_KEYS[priority] })),
         ]} />
         {writeError ? <ErrorState testID="todos-write-error" error={writeError} onAction={() => { if (retryWrite.current) void mutate(retryWrite.current); }} /> : null}
         <ListScreen testID="todos-list" data={visible} keyExtractor={(row) => String(row.id)} pagination={pagination}

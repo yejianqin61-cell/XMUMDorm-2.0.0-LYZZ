@@ -20,6 +20,9 @@ import { ListItem } from '@/components/ui/ListItem';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Surface } from '@/components/ui/Surface';
+import { Badge } from '@/components/ui/Badge';
+import { clockMinutes } from '@/features/tools/timetableView';
+import { schoolClockMinutes } from '@/features/tools/todaySummary';
 import { Text } from '@/components/ui/Text';
 import { useTheme } from '@/design-system/theme';
 import { useI18n, type Translate } from '@/i18n';
@@ -108,9 +111,26 @@ export function TodayPane(): React.ReactElement {
             {t('square.today.noCourses')}
           </Text>
         ) : (
-          courses.map((course, index) => (
-            <ListItem
+          courses.map((course, index) => {
+            const start = clockMinutes(course.startTime);
+            const end = clockMinutes(course.endTime);
+            const nowMin = schoolClockMinutes(now);
+            const ongoing = start !== null && end !== null && start <= nowMin && nowMin < end;
+            return (
+            <View
               key={`${course.courseCode}:${course.startTime ?? ''}:${index}`}
+              style={ongoing ? {
+                borderRadius: theme.radius('radius_medium'),
+                borderWidth: theme.borderWidth('border_width_brutal'),
+                borderColor: theme.color['action-accent'].value,
+              } : undefined}
+            >
+              {ongoing ? (
+                <View testID={`today-course-${index}-ongoing`} style={{ paddingHorizontal: theme.space('space_4'), paddingTop: theme.space('space_2'), alignItems: 'flex-start' }}>
+                  <Badge text={t('square.today.ongoing')} tone="accent" />
+                </View>
+              ) : null}
+            <ListItem
               testID={`today-course-${index}`}
               title={course.courseName ?? course.courseCode}
               subtitle={t('tools.dashboard.courseLine', {
@@ -121,7 +141,9 @@ export function TodayPane(): React.ReactElement {
               meta={formatClockTime(course.startTime)}
               onPress={() => router.push('/tools/timetable')}
             />
-          ))
+            </View>
+            );
+          })
         )}
       </Surface>
 

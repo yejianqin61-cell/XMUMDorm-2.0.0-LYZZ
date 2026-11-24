@@ -15,7 +15,7 @@ jest.mock('expo-router', () => ({
 }));
 jest.mock('expo-router/react-navigation', () => ({ usePreventRemove: jest.fn() }));
 jest.mock('@/features/auth/session', () => ({ useSession: () => ({
-  status: 'signedIn', handleAuthFailure: async (error: unknown) => error ?? { kind: 'unknown' },
+  status: 'signedIn', isSignedIn: true, handleAuthFailure: async (error: unknown) => error ?? { kind: 'unknown' },
 }) }));
 jest.mock('../../../shared/api/schedule', () => ({ getScheduleWeek: jest.fn(async (week: number) => ({ week, currentWeek: week, totalWeeks: 14, days: {} })) }));
 jest.mock('../../../shared/api/todos', () => ({ getTodayTodos: jest.fn(), createTodo: jest.fn() }));

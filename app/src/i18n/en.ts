@@ -361,6 +361,8 @@ export const en: Record<MessageKey, string> = {
   'auth.privacy': 'Privacy',
   'auth.legalIntro': 'Before you sign in',
   // Sign up & password reset (A-03/A-04; from P2C2-02)
+  'auth.register.step1': 'Step 1 · Verify email',
+  'auth.register.step2': 'Step 2 · Set up account',
   'auth.register': 'Sign up',
   'auth.toRegister': 'Create account',
   'auth.email': 'Campus email',
@@ -435,6 +437,7 @@ export const en: Record<MessageKey, string> = {
   'square.module.market': 'Market',
   'square.module.clubs': 'Clubs',
   // Square "Today" tab (2026-10-18)
+  'square.today.ongoing': 'Now',
   'square.today.courses': 'Today classes',
   'square.today.noCourses': 'No classes today',
   'square.today.deadlines': 'Moodle due',
@@ -614,7 +617,7 @@ export const en: Record<MessageKey, string> = {
   'tools.todos.edit': 'Edit todo',
   'tools.todos.delete': 'Delete todo',
   'tools.todos.all': 'All',
-  'tools.todos.priority.0': 'Normal',
+  'tools.todos.priority.0': 'None',
   'tools.todos.priority.1': 'Low',
   'tools.todos.priority.2': 'Medium',
   'tools.todos.priority.3': 'High',
