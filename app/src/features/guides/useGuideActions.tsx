@@ -52,7 +52,7 @@ export function useGuideActions(article: GuideArticle | null) {
  }, [article, dispatch]);
  React.useEffect(() => {
   ++epoch.current; busy.current = { read: false, like: false, send: false }; setNodes([]); setDraft(''); setReply(null); setSending(false); setNotice(null);
-  setLiked(article?.viewer?.liked === true || article?.liked === true); setLikeCount(asCount(article?.likes_count)); setCommentCount(asCount(article?.comment_count));
+  setLiked(article?.viewer?.liked === true || article?.liked === true); setLikeCount(asCount(article?.likes_count ?? (article as { stats?: { likes?: unknown } } | null | undefined)?.stats?.likes)); setCommentCount(asCount(article?.comment_count ?? (article as { stats?: { comments?: unknown } } | null | undefined)?.stats?.comments ?? 0));
   dispatch({ type: 'append:success', hasMore: false }); void loadComments();
   return () => { ++epoch.current; };
  }, [article, dispatch, loadComments]);
