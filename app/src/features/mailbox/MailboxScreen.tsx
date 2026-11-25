@@ -53,22 +53,29 @@ type StringHref = Extract<Href, string>;
 
 /**
  * 通知目标 → App 内路由。
- * 社团路由已注册后，只映射拥有稳定 App 路由的三种服务端目标。
- * 其余 `target.path` 仍是 Web 路径，不能直接推给 Expo Router。
+ * 按服务端 `target.type` 映射到**有稳定 App 路由**的目标；没有对应页面的类型返回 `null`（不可点）。
+ * `target.path` 是 Web 路径，⛔ 不能直接推给 Expo Router。
  */
+/** 服务端目标类型 → App 路由前缀（后面接目标 id） */
+const NOTIFICATION_ROUTE_PREFIX: Readonly<Record<string, string>> = {
+  club: '/clubs',
+  club_activity: '/clubs/activity',
+  club_post: '/clubs/post',
+  post: '/campus',
+  announcement: '/campus',
+  confession: '/campus/wall',
+  marketplace_item: '/market',
+  marketplace_thread: '/me/chat',
+  product: '/canteen/product',
+  shop: '/canteen/shop',
+  handbook_article: '/guides',
+};
+
 export function resolveNotificationRoute(row: NotificationRow): StringHref | null {
   const { target } = row;
   if (!target.available || !Number.isSafeInteger(target.id) || target.id <= 0) return null;
-  switch (target.type) {
-    case 'club':
-      return `/clubs/${target.id}` as StringHref;
-    case 'club_activity':
-      return `/clubs/activity/${target.id}` as StringHref;
-    case 'club_post':
-      return `/clubs/post/${target.id}` as StringHref;
-    default:
-      return null;
-  }
+  const prefix = NOTIFICATION_ROUTE_PREFIX[target.type];
+  return prefix ? (`${prefix}/${target.id}` as StringHref) : null;
 }
 
 export function MailboxScreen(): React.ReactElement {
@@ -131,9 +138,11 @@ export function MailboxScreen(): React.ReactElement {
         await markNotificationsReadBatch([row.id]);
       } finally {
         refreshUnread();
+        // 分类 Tab 上的未读数来自列表接口：读掉一条后重新拉，否则一直停在旧数字
+        void load('refresh', category);
       }
     },
-    [refreshUnread]
+    [refreshUnread, load, category]
   );
 
   const onPressRow = React.useCallback(
