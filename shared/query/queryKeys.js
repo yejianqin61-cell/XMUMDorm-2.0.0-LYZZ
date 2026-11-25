@@ -26,6 +26,8 @@ export const QK = {
   handbookMeChecklists: (tokenKey) => ['handbook', 'me', 'checklists', tokenKey],
 
   rankingsAll: () => ['rankings', 'all'],
+  contributeLeaderboard: (range) => ['contribute', 'leaderboard', range],
+  contributeMe: (tokenKey) => ['contribute', 'me', tokenKey],
   scheduleWeek: (week) => ['schedule', 'week', week],
 
   canteenShop: (shopId) => ['canteen', 'shop', shopId],

@@ -115,6 +115,7 @@ describe('P0-03 双语词条层与错误文案', () => {
       'offline',
       'unreachable',
       'timeout',
+      'certificate',
       'validation',
       'permission',
       'content',
@@ -122,7 +123,7 @@ describe('P0-03 双语词条层与错误文案', () => {
       'unknown',
     ];
     const ZH_VERB = /^(打开|连上|稍后|修改|切换|刷新|返回|重试)/;
-    const EN_VERB = /^(Turn|Join|Retry|Edit|Switch|Refresh|Go)/;
+    const EN_VERB = /^(Turn|Join|Retry|Edit|Switch|Refresh|Go|Open)/;
 
     it.each(KINDS)('%s：三要素齐全且 fix 动词开头', (kind) => {
       const copy = toErrorCopy({ kind, target: '二手标题' }, (k, p) => translate('zh', k, p));

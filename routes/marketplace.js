@@ -1044,9 +1044,15 @@ router.get('/chat/threads/:threadId/messages', authenticateToken, async (req, re
 
     const thRows = await query(
       `SELECT t.id, t.item_id, t.seller_user_id, t.buyer_user_id, t.seller_last_read_at, t.buyer_last_read_at,
-        i.title AS item_title
+        i.title AS item_title, i.price AS item_price, i.status AS item_status, i.deleted_at AS item_deleted_at,
+        (SELECT ii.file_path FROM marketplace_item_images ii
+          WHERE ii.item_id = i.id ORDER BY ii.sort_order ASC, ii.id ASC LIMIT 1) AS item_cover_path,
+        su.username AS seller_username, su.nickname AS seller_nickname, su.avatar AS seller_avatar,
+        bu.username AS buyer_username, bu.nickname AS buyer_nickname, bu.avatar AS buyer_avatar
        FROM marketplace_chat_threads t
        JOIN marketplace_items i ON i.id = t.item_id
+       LEFT JOIN users su ON su.id = t.seller_user_id
+       LEFT JOIN users bu ON bu.id = t.buyer_user_id
        WHERE t.id = ? LIMIT 1`,
       [threadId]
     );
@@ -1085,6 +1091,17 @@ router.get('/chat/threads/:threadId/messages', authenticateToken, async (req, re
       created_at: r.created_at,
     }));
 
+    // 聊天页顶部要显示"在和谁聊、聊的是哪件商品"，以及对方读到哪里（显示"已读"）
+    const viewerIsSeller = Number(req.user.id) === Number(t.seller_user_id);
+    const viewerIsBuyer = Number(req.user.id) === Number(t.buyer_user_id);
+    const peerSide = viewerIsSeller ? 'buyer' : 'seller';
+    const peerId = peerSide === 'buyer' ? t.buyer_user_id : t.seller_user_id;
+    const peerUser = {
+      nickname: t[`${peerSide}_nickname`],
+      username: t[`${peerSide}_username`],
+    };
+    const peerAvatar = t[`${peerSide}_avatar`];
+
     res.status(200).json({
       status: 0,
       message: 'ok',
@@ -1097,6 +1114,21 @@ router.get('/chat/threads/:threadId/messages', authenticateToken, async (req, re
           buyer_user_id: t.buyer_user_id,
           seller_last_read_at: t.seller_last_read_at,
           buyer_last_read_at: t.buyer_last_read_at,
+          role: viewerIsSeller ? 'seller' : viewerIsBuyer ? 'buyer' : null,
+          peer: {
+            id: peerId,
+            name: formatUserDisplayName(peerUser) || (peerSide === 'buyer' ? 'Buyer' : 'Seller'),
+            avatar: peerAvatar ? assetUrl(peerAvatar) : null,
+          },
+          peer_last_read_at: (peerSide === 'buyer' ? t.buyer_last_read_at : t.seller_last_read_at) || null,
+          item: {
+            id: t.item_id,
+            title: t.item_title || null,
+            price: t.item_price == null ? null : Number(t.item_price),
+            status: t.item_status || null,
+            cover: t.item_cover_path ? assetUrl(t.item_cover_path) : null,
+            available: !t.item_deleted_at,
+          },
         },
         list,
         hasMore,
@@ -1168,7 +1200,21 @@ router.post('/chat/threads/:threadId/read', authenticateToken, async (req, res) 
     } else {
       await query('UPDATE marketplace_chat_threads SET buyer_last_read_at = CURRENT_TIMESTAMP WHERE id = ?', [threadId]);
     }
-    res.status(200).json({ status: 0, message: 'ok', data: { thread_id: threadId } });
+    // 信箱联动：读了这个对话，信箱里这条对话的私信通知也算读了（只动自己的通知）。
+    // 尽力而为：失败不影响已读边界，信箱里点一下仍可手动消掉。
+    let notificationsRead = 0;
+    try {
+      const r = await query(
+        `UPDATE notifications SET is_read = 1
+          WHERE user_id = ? AND type = 'marketplace_chat' AND is_read = 0
+            AND JSON_EXTRACT(extra, '$.targetId') = ?`,
+        [req.user.id, threadId]
+      );
+      notificationsRead = Number((r && r.affectedRows) || 0);
+    } catch (err) {
+      console.warn('[marketplace chat read] notifications not updated:', err && (err.code || err.message || err));
+    }
+    res.status(200).json({ status: 0, message: 'ok', data: { thread_id: threadId, notifications_read: notificationsRead } });
   } catch (e) {
     console.error('marketplace chat read error:', e);
     res.status(500).json({ status: -1, message: '服务器错误，请稍后重试' });

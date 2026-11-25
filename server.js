@@ -191,6 +191,8 @@ app.use('/internal/campus-agent/personal', agentPersonalRoutes);
 app.use('/api/preview', previewRoutes);
 app.use('/api/shop', require('./routes/shop'));
 app.use('/api/translate', require('./routes/translate'));
+app.use('/api/date', require('./routes/date'));
+app.use('/api/contribute', require('./routes/contribute'));
 
 // ============================================
 // 错误处理中间件

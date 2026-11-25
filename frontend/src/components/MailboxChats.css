@@ -1,0 +1,133 @@
+.mbx-chats {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-4);
+}
+
+.mbx-chat {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-6);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-surface-strong);
+  border: 1px solid var(--color-border-soft);
+  box-shadow: var(--shadow-soft);
+  color: inherit;
+  text-decoration: none;
+}
+
+.mbx-chat:hover {
+  border-color: var(--color-border-focus);
+}
+
+.mbx-chat.is-unread {
+  border-color: var(--color-brand-primary);
+}
+
+.mbx-chat-avatar {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  background: var(--color-bg-surface-soft);
+}
+
+.mbx-chat-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.mbx-chat-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.mbx-chat-top,
+.mbx-chat-bottom,
+.mbx-chat-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.mbx-chat-top,
+.mbx-chat-bottom {
+  justify-content: space-between;
+}
+
+.mbx-chat-name {
+  font-weight: 700;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mbx-chat-time {
+  flex: none;
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+}
+
+.mbx-chat-role {
+  flex: none;
+  font-size: 11px;
+  padding: 1px var(--space-4);
+  border-radius: var(--radius-pill);
+}
+
+.mbx-chat-role.is-seller {
+  background: var(--color-bg-success-soft);
+  color: var(--color-success-text);
+}
+
+.mbx-chat-role.is-buyer {
+  background: var(--color-bg-brand-soft);
+  color: var(--color-brand-text);
+}
+
+.mbx-chat-item-title,
+.mbx-chat-preview {
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.mbx-chat-item-title {
+  color: var(--color-text-secondary);
+}
+
+.mbx-chat-preview {
+  color: var(--color-text-tertiary);
+}
+
+.mbx-chat.is-unread .mbx-chat-preview {
+  color: var(--color-text-primary);
+}
+
+.mbx-chat-badge {
+  flex: none;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--color-text-on-brand);
+  background: var(--color-danger);
+}

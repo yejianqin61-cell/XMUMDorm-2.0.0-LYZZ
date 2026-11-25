@@ -18,6 +18,8 @@ export type AppErrorKind =
   | 'offline'
   | 'unreachable'
   | 'timeout'
+  /** 对方证书不被本机信任（过期 / 链不全 / 系统根库太旧）—— 用户能做的是换浏览器，不是重试 */
+  | 'certificate'
   | 'validation'
   | 'permission'
   | 'terms'
@@ -51,7 +53,7 @@ export type ErrorCopy = {
   understand: string;
   fix: string;
   /** 主行动的类型（⛔ 一个错误只给一个主行动） */
-  actionKind: 'retry' | 'edit' | 'refresh' | 'reopen' | 'switchAccount';
+  actionKind: 'retry' | 'edit' | 'refresh' | 'reopen' | 'switchAccount' | 'openExternal';
 };
 
 export type Translate = (key: MessageKey, params?: Record<string, string | number>) => string;
@@ -71,6 +73,11 @@ const COPY_KEY: Record<AppErrorKind, { perceive: MessageKey; understand: Message
     perceive: 'error.net.timeout.perceive',
     understand: 'error.net.timeout.understand',
     fix: 'error.net.timeout.fix',
+  },
+  certificate: {
+    perceive: 'error.net.certificate.perceive',
+    understand: 'error.net.certificate.understand',
+    fix: 'error.net.certificate.fix',
   },
   validation: {
     perceive: 'error.validation.perceive',
@@ -113,6 +120,7 @@ const ACTION_KIND: Record<AppErrorKind, ErrorCopy['actionKind']> = {
   offline: 'retry',
   unreachable: 'retry',
   timeout: 'retry',
+  certificate: 'openExternal',
   validation: 'edit',
   permission: 'switchAccount',
   terms: 'reopen',
