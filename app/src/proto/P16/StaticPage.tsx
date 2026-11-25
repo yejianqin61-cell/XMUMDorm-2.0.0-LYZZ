@@ -211,6 +211,8 @@ export type StaticPageProps = {
   /** 顶栏右侧插槽（与 `P3` 同规：C-06 待定，骨架不预占） */
   topBar?: React.ReactNode;
   topMode?: 'topbar' | 'overlay' | 'none';
+  /** 粘性底栏（如条款页的「同意」） */
+  footer?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   testID?: string;
 };
@@ -226,6 +228,7 @@ export function StaticPage({
   showToc = false,
   topBar,
   topMode = 'topbar',
+  footer,
   style,
   testID,
 }: StaticPageProps): React.ReactElement {
@@ -237,7 +240,7 @@ export function StaticPage({
   });
 
   return (
-    <Screen topMode={topMode} testID={testID} style={style}>
+    <Screen topMode={topMode} footer={footer} testID={testID} style={style}>
       <View
         style={{
           flexDirection: 'row',

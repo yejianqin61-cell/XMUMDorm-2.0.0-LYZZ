@@ -20,6 +20,7 @@ import { useTheme } from '@/design-system/theme';
 import { useI18n } from '@/i18n';
 import { StaticPage, useStaticDoc } from '@/proto/P16';
 import { LEGAL_DOCS, legalDocText, type LegalDocId } from './legal';
+import { useTermsAcceptBar } from './TermsAcceptBar';
 
 /** `M-18`：关于与法律（入口聚合） */
 export function LegalHubScreen(): React.ReactElement {
@@ -51,6 +52,7 @@ export type LegalDocScreenProps = { docId: LegalDocId };
 export function LegalDocScreen({ docId }: LegalDocScreenProps): React.ReactElement {
   const { t, locale } = useI18n();
   const doc = LEGAL_DOCS.find((item) => item.id === docId);
+  const acceptBar = useTermsAcceptBar(docId === 'terms');
 
   const state = useStaticDoc({
     docId: `legal:${docId}`,
@@ -62,6 +64,7 @@ export function LegalDocScreen({ docId }: LegalDocScreenProps): React.ReactEleme
 
   return (
     <StaticPage
+      footer={acceptBar ?? undefined}
       testID={`screen-legal-${docId}`}
       title={doc ? t(doc.titleKey) : ''}
       state={state}
