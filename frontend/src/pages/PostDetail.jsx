@@ -36,6 +36,8 @@ function mapCommentTree(c) {
   };
 }
 
+const POST_TRANSLATE_KINDS = { post: 'post', comment: 'comment' };
+
 export default function PostDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -384,6 +386,7 @@ export default function PostDetail() {
       tags={detailTags}
       reportTargetType={isAuthor ? null : 'post'}
       commentReportType="comment"
+      translateKinds={POST_TRANSLATE_KINDS}
       isAuthor={isAuthor}
       onDeletePost={handleDeletePost}
       deleteLoading={deleteLoading}

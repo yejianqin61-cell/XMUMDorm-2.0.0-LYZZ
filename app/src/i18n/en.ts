@@ -901,4 +901,9 @@ export const en: Record<MessageKey, string> = {
   'screen.agent.suggest.schedule': 'What time are my classes tomorrow?',
   'screen.agent.suggest.todo': 'What’s still on my to-do list?',
   'screen.agent.suggest.food': 'Where can I eat near campus?',
+
+  'translate.action': 'Translate',
+  'translate.hide': 'Hide translation',
+  'translate.byAi': 'Translated by AI',
+  'translate.failed': 'Translation failed. Hide and try again.',
 };

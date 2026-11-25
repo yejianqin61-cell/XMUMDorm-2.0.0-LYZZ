@@ -145,6 +145,8 @@ export type CommentThreadProps = {
   onToggleFeature?: (id: string) => void;
   /** 评论举报 */
   onReportComment?: (id: string) => void;
+  /** 每条评论正文下方的附加内容（例如 AI 翻译）；不传就没有 */
+  renderContentAccessory?: (node: CommentNode) => React.ReactNode;
   /** 页脚（`T05 ListFooter` 或"没有更多"）——分页状态机不在这里 */
   footer?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
@@ -160,6 +162,7 @@ export function CommentThread({
   allowNestedReply = false,
   onToggleFeature,
   onReportComment,
+  renderContentAccessory,
   footer,
   style,
   testID,
@@ -209,6 +212,7 @@ export function CommentThread({
     featureLabel: node.featured ? labels.unfeature : labels.feature,
     onReport: onReportComment ? () => onReportComment(node.id) : undefined,
     reportLabel: labels.reportComment,
+    contentAccessory: renderContentAccessory ? renderContentAccessory(node) : undefined,
     labels,
   });
 

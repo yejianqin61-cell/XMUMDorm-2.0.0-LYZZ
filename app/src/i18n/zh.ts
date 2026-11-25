@@ -909,6 +909,12 @@ export const zh = {
   'screen.agent.suggest.schedule': '我明天几点上课？',
   'screen.agent.suggest.todo': '还有哪些待办没做完？',
   'screen.agent.suggest.food': '学校附近有什么好吃的？',
+
+  // 帖子 / 评论 / 点评 AI 翻译
+  'translate.action': '翻译',
+  'translate.hide': '收起译文',
+  'translate.byAi': 'AI 翻译',
+  'translate.failed': '翻译失败，点收起后重试',
 } as const;
 
 /** 词条 key 的联合类型 —— `t()` 只接受它，**缺词条是编译期错误** */

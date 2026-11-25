@@ -88,4 +88,8 @@ export const QK = {
   confessionDetail: (id, tokenKey) => ['confessions', 'detail', id, tokenKey ?? '_guest'],
   confessionComments: (id) => ['confessions', 'comments', id],
 
+  // 帖子 / 评论 / 点评 AI 翻译：同一条内容同一目标语言只请求一次
+  translateConfig: () => ['translate', 'config'],
+  translation: (kind, id, target) => ['translate', kind, id, target],
+
 };
