@@ -397,6 +397,8 @@ export const en: Record<MessageKey, string> = {
   'canteen.title': 'Canteen',
   'canteen.regions': 'Browse by area',
   'canteen.noRegions': 'No areas open yet',
+  'canteen.pick.open': 'View dish',
+  'canteen.pick.again': 'Pick again',
   'canteen.pick': 'Pick for me',
   'canteen.pickEmpty': 'Nothing to recommend yet',
   'canteen.pickFailed': 'No luck this time — try later',
@@ -439,6 +441,7 @@ export const en: Record<MessageKey, string> = {
   'square.module.clubs': 'Clubs',
   // Square "Today" tab (2026-10-18)
   'square.today.ongoing': 'Now',
+  'square.today.checkin': 'Check in',
   'square.today.title': 'Today',
   'square.today.hot': 'Trending',
   'square.today.hotMore': 'Treehole',

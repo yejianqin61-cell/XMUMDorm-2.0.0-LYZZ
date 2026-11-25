@@ -259,13 +259,16 @@ describe('TC-P1-17-3A · S-07 食堂首页', () => {
     await waitFor(() => expect(view.getByTestId('canteen-empty')).toBeTruthy());
   });
 
-  it('「今天吃什么」抽到菜 → 跳详情', async () => {
+  it('「今天吃什么」抽到菜 → 先亮结果卡，点「就吃这个」才跳详情', async () => {
     api.getRegions.mockResolvedValue([]);
     api.pickRandomMeal.mockResolvedValue({ id: 7, name: '麻辣香锅' });
     const view = await renderApp(withProviders(<CanteenHome />));
     await waitFor(() => expect(view.getByTestId('canteen-pick')).toBeTruthy());
     const user = require('@testing-library/react-native').userEvent.setup();
     await user.press(view.getByTestId('canteen-pick'));
+    await waitFor(() => expect(view.getByText('麻辣香锅')).toBeTruthy());
+    expect(routerState.pushed).toHaveLength(0);
+    await user.press(view.getByTestId('canteen-picked-open'));
     await waitFor(() =>
       expect(routerState.pushed).toContainEqual({
         pathname: '/canteen/product/[id]',

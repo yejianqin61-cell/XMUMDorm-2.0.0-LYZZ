@@ -148,6 +148,12 @@ export function TodayPane(): React.ReactElement {
               leading={<Text role="label" emphasis="strong" colorToken="text-primary">{formatClockTime(course.startTime)}</Text>}
               onPress={() => router.push('/tools/timetable')}
             />
+              {ongoing ? (
+                // 原型 Main：正在上的课直接给「去签到」
+                <View style={{ paddingHorizontal: theme.space('space_4'), paddingBottom: theme.space('space_3'), alignItems: 'flex-start' }}>
+                  <Button testID={`today-course-${index}-checkin`} label={t('square.today.checkin')} variant="primary" size="small" onPress={() => router.push('/system/checkin')} />
+                </View>
+              ) : null}
             </View>
             );
           })

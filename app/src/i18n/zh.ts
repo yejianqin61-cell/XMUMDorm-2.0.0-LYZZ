@@ -404,6 +404,8 @@ export const zh = {
   'canteen.title': '食堂',
   'canteen.regions': '按区域逛',
   'canteen.noRegions': '暂时没有开放的区域',
+  'canteen.pick.open': '就吃这个',
+  'canteen.pick.again': '换一个',
   'canteen.pick': '今天吃什么',
   'canteen.pickEmpty': '还没有可以推荐的菜',
   'canteen.pickFailed': '这次没抽到，稍后再试',
@@ -447,6 +449,7 @@ export const zh = {
   // ── 广场「今日」tab（2026-10-18）────────────────────────────────────
   'square.today.courses': '今日课表',
   'square.today.ongoing': '进行中',
+  'square.today.checkin': '去签到',
   'square.today.title': '今天',
   'square.today.hot': '校园在热议',
   'square.today.hotMore': '去树洞',

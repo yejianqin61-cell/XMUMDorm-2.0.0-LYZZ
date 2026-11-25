@@ -50,5 +50,6 @@ it('keeps search text on submit and removes unrelated service entries', async ()
   expect(view.queryByTestId('square-services')).toBeNull();
   await waitFor(() => expect(view.getByTestId('canteen-regions-1')).toBeTruthy());
   await fireEvent.press(view.getByTestId('canteen-pick'));
+  await fireEvent.press(await waitFor(() => view.getByTestId('canteen-picked-open')));
   await waitFor(() => expect(mockTargets).toContainEqual({ pathname: '/canteen/product/[id]', params: { id: '7' } }));
 });
