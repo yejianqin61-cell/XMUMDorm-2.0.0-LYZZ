@@ -10,6 +10,7 @@
     "check:routes-cjs": "node scripts/check-commonjs-routes.js",
     "check:server-load": "node scripts/check-server-load.js",
     "import-products": "node scripts/bulk-import-products.js",
+    "extension:sync-core": "node scripts/sync-extension-core.js",
     "migrate:all": "node scripts/run-migrations-all.js",
     "migrate:admin": "node scripts/apply-sql-file.js migrations/056_admin_system.sql && node scripts/apply-sql-file.js migrations/057_user_status.sql",
     "migrate:ads": "node scripts/run-migration-062-063-advertisements.js",

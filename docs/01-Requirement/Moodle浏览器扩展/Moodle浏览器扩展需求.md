@@ -149,3 +149,4 @@ App 能读 Moodle，是因为它在内嵌 WebView 里让学生亲自登录，再
 - 学习日历：[任务卡](../../05-Tasks/学习日历/Task-学习日历-合并月历与今日待办.md)、[实现记录](../../07-Implement/学习日历与今日待办实现记录.md)
 - App Moodle 实现：`app/src/features/tools/moodle/`
 - 校方系统内嵌裁决：[TO-CONFIRM D-08](../../app/TO-CONFIRM.md)
+- P0 实现（按 §八 提出人建议的选项先做，待裁决）：[实现记录](../../07-Implement/Moodle浏览器扩展/Moodle浏览器扩展实现记录.md)、代码在 `extension/`

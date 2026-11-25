@@ -22,6 +22,8 @@ import {
   todoState,
 } from '@shared/utils/studyCalendar';
 import { useAllTodos } from '../hooks/useAllTodos';
+import { useMoodleDeadlines } from '../hooks/useMoodleDeadlines';
+import { groupMoodleByDate, moodleDueTime, moodleState, summarizeMoodle } from '@shared/utils/moodleBridge';
 import './StudyCalendar.css';
 
 const MAX_CHIPS_PER_DAY = 3;
@@ -34,6 +36,24 @@ function formatDayHeading(ymd, isZh) {
   const [y, m, d] = ymd.split('-').map(Number);
   const weekday = new Date(y, m - 1, d).getDay() || 7;
   return isZh ? `${m}月${d}日 ${WEEKDAYS_ZH[weekday - 1]}` : `${WEEKDAYS_EN[weekday - 1]}, ${MONTHS_EN[m - 1].slice(0, 3)} ${d}`;
+}
+
+/** 手机 / 平板浏览器装不了扩展，不提示安装 */
+function isTouchDevice() {
+  try {
+    return typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
+  } catch {
+    return false;
+  }
+}
+
+function moodleProblemText(moodle, isZh) {
+  const expired = moodle.status === 'expired';
+  if (!isZh) return `Moodle sync did not succeed (${expired ? 'session expired, log in to Moodle again' : 'see the extension popup'}).`;
+  const when = moodle.syncedAt
+    ? `，下面是 ${new Date(moodle.syncedAt).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })} 同步的数据`
+    : '';
+  return `Moodle 同步没有成功（${expired ? '登录已过期，请重新登录 Moodle' : '原因见扩展弹窗'}）${when}。`;
 }
 
 function stateLabel(state, isZh) {
@@ -83,8 +103,22 @@ export default function StudyCalendar() {
   });
   const scheduleFailed = scheduleQueries.some((q) => q.isError);
 
-  const summary = useMemo(() => summarizeTodos(todos, todayYmd), [todos, todayYmd]);
+  const todoSummary = useMemo(() => summarizeTodos(todos, todayYmd), [todos, todayYmd]);
   const todosByDate = useMemo(() => groupTodosByDate(todos), [todos]);
+
+  // Moodle 截止来自本机浏览器扩展（数据不经过厦马小筑服务器）；没装扩展时 installed=false
+  const moodleQuery = useMoodleDeadlines(isLoggedIn);
+  const moodle = moodleQuery.data;
+  const moodleItems = useMemo(() => moodle?.items || [], [moodle]);
+  const moodleByDate = useMemo(() => groupMoodleByDate(moodleItems), [moodleItems]);
+  const moodleSummary = useMemo(() => summarizeMoodle(moodleItems, todayYmd), [moodleItems, todayYmd]);
+  const summary = {
+    ...todoSummary,
+    open: todoSummary.open + moodleSummary.open,
+    overdue: todoSummary.overdue + moodleSummary.overdue,
+    dueToday: todoSummary.dueToday + moodleSummary.dueToday,
+    dueSoon: todoSummary.dueSoon + moodleSummary.dueSoon,
+  };
 
   const invalidateTodos = () => queryClient.invalidateQueries({ queryKey: ['todos'] });
   const toggleMutation = useMutation({
@@ -137,6 +171,7 @@ export default function StudyCalendar() {
   const selectedHolidays = holidaysOn(selected);
   const selectedClasses = classesOn(selected, weekData);
   const selectedTodos = todosByDate.get(selected) || [];
+  const selectedMoodle = moodleByDate.get(selected) || [];
 
   return (
     <div className="study-calendar">
@@ -164,11 +199,22 @@ export default function StudyCalendar() {
             {summary.dueToday ? <span className="study-calendar__tag study-calendar__tag--today">{isZh ? `${summary.dueToday} 项今天截止` : `${summary.dueToday} due today`}</span> : null}
             {summary.dueSoon ? <span className="study-calendar__tag study-calendar__tag--soon">{isZh ? `${summary.dueSoon} 项 3 天内截止` : `${summary.dueSoon} due in 3 days`}</span> : null}
             {summary.undated ? <span className="study-calendar__tag">{isZh ? `${summary.undated} 项无截止日期` : `${summary.undated} without date`}</span> : null}
+            {moodleSummary.open ? <span className="study-calendar__tag study-calendar__tag--moodle">{isZh ? `其中 Moodle ${moodleSummary.open} 项` : `${moodleSummary.open} from Moodle`}</span> : null}
           </div>
           <Link to="/myzone/todos" className="study-calendar__summary-link">{isZh ? '管理待办' : 'Manage to-dos'} <ChevronRight size={15} /></Link>
         </section>
 
         {todosQuery.isError ? <p className="study-calendar__notice">{isZh ? '待办加载失败，请刷新页面重试。' : 'Could not load to-dos. Refresh to try again.'}</p> : null}
+        {moodle?.installed && moodle.status !== 'ok' && moodle.status !== 'empty' ? (
+          <p className="study-calendar__notice">{moodleProblemText(moodle, isZh)}</p>
+        ) : null}
+        {moodle && !moodle.installed && !isTouchDevice() ? (
+          <p className="study-calendar__hint">
+            {isZh
+              ? '想在这里看到 Moodle 作业截止时间？在电脑上安装「厦马小筑 · Moodle 截止日期」浏览器扩展即可，数据只存在你的浏览器里。'
+              : 'Want Moodle deadlines here? Install the "Dorm Moodle" browser extension on your computer. Data stays in your browser.'}
+          </p>
+        ) : null}
         {scheduleFailed ? <p className="study-calendar__notice">{isZh ? '部分周的课表加载失败，日历里可能缺少课程。' : 'Some weeks of your timetable failed to load.'}</p> : null}
 
         <div className="study-calendar__layout">
@@ -186,6 +232,7 @@ export default function StudyCalendar() {
               <span><i className="study-calendar__dot study-calendar__dot--overdue" />{isZh ? '逾期/今天' : 'Overdue/today'}</span>
               <span><i className="study-calendar__dot study-calendar__dot--holiday" />{isZh ? '假期' : 'Holiday'}</span>
               <span><i className="study-calendar__dot study-calendar__dot--class" />{isZh ? '有课' : 'Classes'}</span>
+              {moodle?.installed ? <span><i className="study-calendar__dot study-calendar__dot--moodle" />Moodle</span> : null}
             </div>
 
             <div className="study-calendar__grid" role="grid" aria-label={isZh ? '月历' : 'Month'}>
@@ -194,6 +241,7 @@ export default function StudyCalendar() {
               ))}
               {cells.map((cell) => {
                 const dayTodos = todosByDate.get(cell.ymd) || [];
+                const dayMoodle = moodleByDate.get(cell.ymd) || [];
                 const dayHolidays = holidaysOn(cell.ymd);
                 const dayClasses = classesOn(cell.ymd, weekData);
                 const week = cell.weekday === 1 ? teachingWeekOf(cell.ymd) : null;
@@ -211,7 +259,7 @@ export default function StudyCalendar() {
                     role="gridcell"
                     className={className}
                     aria-selected={cell.ymd === selected}
-                    aria-label={`${formatDayHeading(cell.ymd, isZh)}${dayTodos.length ? (isZh ? `，${dayTodos.length} 项待办` : `, ${dayTodos.length} to-dos`) : ''}`}
+                    aria-label={`${formatDayHeading(cell.ymd, isZh)}${dayTodos.length ? (isZh ? `，${dayTodos.length} 项待办` : `, ${dayTodos.length} to-dos`) : ''}${dayMoodle.length ? (isZh ? `，${dayMoodle.length} 项 Moodle 截止` : `, ${dayMoodle.length} Moodle deadlines`) : ''}`}
                     onClick={() => selectDay(cell)}
                   >
                     <span className="study-calendar__day-head">
@@ -224,7 +272,12 @@ export default function StudyCalendar() {
                     {dayClasses.length ? (
                       <span className="study-calendar__chip study-calendar__chip--class">{isZh ? `${dayClasses.length} 节课` : `${dayClasses.length} class${dayClasses.length > 1 ? 'es' : ''}`}</span>
                     ) : null}
-                    {dayTodos.slice(0, MAX_CHIPS_PER_DAY).map((todo) => {
+                    {dayMoodle.slice(0, MAX_CHIPS_PER_DAY).map((item) => (
+                      <span key={item.id} className={`study-calendar__chip study-calendar__chip--moodle study-calendar__chip--${moodleState(item, todayYmd)}`}>
+                        {item.title}
+                      </span>
+                    ))}
+                    {dayTodos.slice(0, Math.max(0, MAX_CHIPS_PER_DAY - dayMoodle.length)).map((todo) => {
                       const state = todoState(todo, todayYmd);
                       return (
                         <span key={todo.id} className={`study-calendar__chip study-calendar__chip--todo study-calendar__chip--${state}`}>
@@ -232,8 +285,8 @@ export default function StudyCalendar() {
                         </span>
                       );
                     })}
-                    {dayTodos.length > MAX_CHIPS_PER_DAY ? (
-                      <span className="study-calendar__more">{isZh ? `还有 ${dayTodos.length - MAX_CHIPS_PER_DAY} 项` : `+${dayTodos.length - MAX_CHIPS_PER_DAY} more`}</span>
+                    {dayTodos.length + dayMoodle.length > MAX_CHIPS_PER_DAY ? (
+                      <span className="study-calendar__more">{isZh ? `还有 ${dayTodos.length + dayMoodle.length - MAX_CHIPS_PER_DAY} 项` : `+${dayTodos.length + dayMoodle.length - MAX_CHIPS_PER_DAY} more`}</span>
                     ) : null}
                   </button>
                 );
@@ -272,6 +325,32 @@ export default function StudyCalendar() {
                 {selectedWeek ? (isZh ? '这天没有课' : 'No classes') : (isZh ? '只显示本学期教学周的课程' : 'Classes show only in teaching weeks')}
               </p>
             )}
+
+            {moodle?.installed ? (
+              <>
+                <h4>{isZh ? 'Moodle 截止' : 'Moodle deadlines'}</h4>
+                {selectedMoodle.length ? (
+                  <ul className="study-calendar__list">
+                    {selectedMoodle.map((item) => {
+                      const state = moodleState(item, todayYmd);
+                      return (
+                        <li key={item.id} className={`study-calendar__todo study-calendar__moodle study-calendar__todo--${state}`}>
+                          <span className="study-calendar__moodle-mark" aria-hidden="true">M</span>
+                          <div>
+                            {item.url
+                              ? <a href={item.url} target="_blank" rel="noopener noreferrer"><strong>{item.title}</strong></a>
+                              : <strong>{item.title}</strong>}
+                            <span>{[moodleDueTime(item.dueAt), item.courseName, stateLabel(state, isZh)].filter(Boolean).join(' · ')}</span>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : (
+                  <p className="study-calendar__empty">{isZh ? '这天没有 Moodle 截止' : 'No Moodle deadlines'}</p>
+                )}
+              </>
+            ) : null}
 
             <h4>{isZh ? '待办' : 'To-dos'}</h4>
             {selectedTodos.length ? (

@@ -8,7 +8,8 @@
  * - 假期只来自 `shared/config/holidays.js`，多天假期按 [start, end] 闭区间逐日展开；
  * - 课表数据形状即 `GET /api/schedule/week` 的 `data.days`（键为 1–7，周一 = 1）。
  *
- * Moodle DDL 不在此列：Web 端拿不到 Moodle 数据（校方 Moodle 只在 App 内经 WebView 同步）。
+ * Moodle DDL 不在此列：网页本身拿不到 Moodle 数据；装了浏览器扩展（extension/）时，
+ * 由 `moodleBridge.js` 从本机扩展取来，学习日历页再合并显示。
  */
 
 import { SEMESTERS, findSemesterContaining, ymdToDayNumber, dayNumberToYmd, parseYmd } from '../config/semesters.js';
