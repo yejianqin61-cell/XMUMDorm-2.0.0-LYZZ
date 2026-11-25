@@ -25,6 +25,7 @@ import * as React from 'react';
 import { ScrollView, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { useTheme } from '@/design-system/theme';
+import { tapFeedback } from '@/shared/haptics';
 import type { AppError } from '@/i18n/errors';
 import { Button } from '@/components/ui/Button';
 import { CommentItem, commentAuthorLabel, type CommentAuthor } from '@/components/ui/CommentItem';
@@ -210,7 +211,7 @@ export function DetailScreen({
     <Pressable
       key={kind}
       testID={testID ? `${testID}-${kind}` : undefined}
-      onPress={onPress}
+      onPress={onPress === undefined ? undefined : () => { if (kind === 'like' || kind === 'favorite') tapFeedback(); onPress(); }}
       disabled={onPress === undefined}
       accessibilityRole="button"
       // 播报里带上计数（读屏用户要能知道"现在几个赞"）

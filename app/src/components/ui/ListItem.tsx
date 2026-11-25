@@ -17,6 +17,7 @@ import { View, type StyleProp, type ViewStyle } from 'react-native';
 import ChevronRight from 'lucide-react-native/icons/chevron-right';
 
 import { useTheme } from '@/design-system/theme';
+import { tapFeedback } from '@/shared/haptics';
 import { Checkbox } from './Checkbox';
 import { Icon } from './Icon';
 import { Pressable } from './Pressable';
@@ -76,10 +77,12 @@ export function ListItem({
   const handlePress = (): void => {
     if (disabled) return;
     if (isToggle) {
+      tapFeedback('select');
       toggle?.onValueChange(!(toggle?.value === true));
       return;
     }
     if (isSelect) {
+      tapFeedback('select');
       onToggleSelect?.();
       return;
     }

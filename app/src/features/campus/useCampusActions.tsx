@@ -4,6 +4,7 @@ import type { CommentNode } from '@/components/ui/CommentThread';
 import { useListPagination } from '@/components/ui/ListScreen';
 import type { CommentReplyContext } from '@/components/ui/CommentComposer';
 import { useSession } from '@/features/auth/session';
+import { tapFeedback } from '@/shared/haptics';
 import { classifyAuthFailure, isSessionInvalid } from '@/features/auth/authFailure';
 import { useI18n } from '@/i18n';
 import type { Translate } from '@/i18n';
@@ -236,6 +237,7 @@ export function useCampusLike(post: CampusInteractionPost | null, kind: CampusKi
         throw new Error('Invalid like response');
       }
       setLiked(data.liked);
+      if (data.liked) tapFeedback();
       // 树洞响应不带计数：保持上一次的服务端计数，⛔ 不发明新数字
       if (count(data.like_count) !== null) setLikeCount(data.like_count);
       else if (kind === 'confession') {
@@ -265,6 +267,7 @@ export function useCampusLike(post: CampusInteractionPost | null, kind: CampusKi
         throw new Error('Invalid favorite response');
       }
       setFavorited(data.favorited);
+      if (data.favorited) tapFeedback();
     } catch (error) {
       await fail(error, request, 'favoriteFailed');
     } finally {

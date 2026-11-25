@@ -145,6 +145,14 @@ Lint：标准 Expo flat config。当前未启用 React Compiler，refs／set-sta
 
 **判定**：①许可证全部可接受；②但 `heroui-native` + `uniwind` 的**基座判定不及格**（宪法 9.11：UI kit 不作基座、样式引擎不作基座），这正是 2026-10-18 把树洞视觉层移回**自有令牌组件层**的依据之一；③`expo-blur` 已无消费者。**处置**：登记移除待办（TODO TD-74/TD-75），⛔ 不在本轮直接删包（删除会动 Metro/Babel/Jest/原生构建链，需单独一轮 + 重建验证）。
 
+## 5.2 第四轮新增（R4-11 触感反馈，2026-11-25 所有者批准）
+
+| 包 | 版本 | 许可证 | 含原生代码 | OTA 影响 | 该版本发布时间 | 是否强加视觉身份 |
+|---|---|---|---|---|---|---|
+| `expo-haptics` | 57.0.3 | MIT | **有**（android/ ios/） | 有（需新原生构建） | 2026-09-11T11:31:48Z | 否 |
+
+用法约束：只经 `app/src/shared/haptics.ts` 调用（延迟 `require` + 兜底，旧原生包静默不震）。版本取自 SDK 57 的 `bundledNativeModules.json`。
+
 ---
 
 ## 6. 变更记录

@@ -8,6 +8,7 @@ import { Animated, View } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { Text } from '@/components/ui/Text';
 import { useTheme } from '@/design-system/theme';
+import { tapFeedback } from '@/shared/haptics';
 import { useI18n } from '@/i18n';
 
 export type PickedMeal = { id: number; name: string; shop: string };
@@ -16,6 +17,9 @@ export function PickResultCard({ meal, busy, onOpen, onAgain }: { meal: PickedMe
   const theme = useTheme();
   const { t } = useI18n();
   const scale = React.useRef(new Animated.Value(theme.reduceMotion ? 1 : 0.8)).current;
+
+  // 抽到结果时震一下（与动画无关，「减弱动态效果」下照常）
+  React.useEffect(() => { tapFeedback('success'); }, [meal.id]);
 
   React.useEffect(() => {
     if (theme.reduceMotion) return;

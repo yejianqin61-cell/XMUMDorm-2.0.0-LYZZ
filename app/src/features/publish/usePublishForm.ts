@@ -27,6 +27,7 @@ import { useRouter } from 'expo-router';
 
 import { useI18n } from '@/i18n';
 import { useToast } from '@/components/ui/Toast';
+import { tapFeedback } from '@/shared/haptics';
 import { useForm, type FormLabels, type FormSectionDescriptor, type PostSubmitPlan, type SubmitSemantic, type UseFormReturn } from '@/components/ui/Form';
 import type { AppError } from '@/i18n/errors';
 import { resolveSubmitGate, type SubmitGate } from './complianceGate';
@@ -115,6 +116,7 @@ export function usePublishFormCore(
   const onSettled = React.useCallback(
     (plan: PostSubmitPlan) => {
       if (plan.navigate === 'stay') return;
+      tapFeedback('success');
       const destination = resolvePublishDestination(descriptor, resultRef.current);
       if (plan.navigate === 'replace' && destination) {
         // 创建后表单必须从栈中移除。详情改为回执动作显式打开，
