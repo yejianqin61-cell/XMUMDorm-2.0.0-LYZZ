@@ -58,6 +58,9 @@ export function deadlineLine(
   };
 }
 
+/** 签到入口的时间窗：开课时刻前后各这么多分钟 */
+const CHECKIN_WINDOW_MIN = 15;
+
 export function TodayPane(): React.ReactElement {
   const theme = useTheme();
   const { t } = useI18n();
@@ -77,6 +80,29 @@ export function TodayPane(): React.ReactElement {
   );
 
   const loadingCourses = timetable.loading && timetable.week === null;
+
+  // 原型 Main 的时间轴：**今天截止**的作业按时间插进课程之间；其余仍列在下方「Moodle 待交」
+  const indexed = (agenda.synced ? agenda.deadlines : []).map((deadline, index) => ({ deadline, index }));
+  const dueToday = indexed.filter((d) => deadlineWhen(now.getTime(), d.deadline.dueAt)?.kind === 'today');
+  const dueLater = indexed.filter((d) => !dueToday.includes(d));
+  const timeline = [
+    ...courses.map((course, index) => ({ kind: 'course' as const, at: clockMinutes(course.startTime) ?? 0, course, index })),
+    ...dueToday.map(({ deadline, index }) => ({ kind: 'deadline' as const, at: clockMinutes(deadlineWhen(now.getTime(), deadline.dueAt)?.clock) ?? 0, deadline, index })),
+  ].sort((a, b) => a.at - b.at);
+
+  const deadlineRow = ({ deadline, index }: (typeof indexed)[number]) => {
+    const line = deadlineLine(t, deadline, now.getTime());
+    return (
+      <ListItem
+        key={deadline.key}
+        testID={`today-deadline-${index}`}
+        title={line.title}
+        subtitle={line.subtitle}
+        leading={<Text role="label" emphasis="strong" colorToken="text-primary">{deadlineWhen(now.getTime(), deadline.dueAt)?.clock ?? ''}</Text>}
+        onPress={() => router.push('/system/moodle')}
+      />
+    );
+  };
 
   return (
     <ScrollView
@@ -113,12 +139,14 @@ export function TodayPane(): React.ReactElement {
             error={timetable.error}
             onAction={timetable.reload}
           />
-        ) : courses.length === 0 ? (
+        ) : timeline.length === 0 ? (
           <Text role="body" colorToken="text-secondary" style={{ paddingHorizontal: theme.space('space_4') }}>
             {t('square.today.noCourses')}
           </Text>
         ) : (
-          courses.map((course, index) => {
+          timeline.map((entry) => {
+            if (entry.kind === 'deadline') return deadlineRow(entry);
+            const { course, index } = entry;
             const start = clockMinutes(course.startTime);
             const end = clockMinutes(course.endTime);
             const nowMin = schoolClockMinutes(now);
@@ -148,8 +176,8 @@ export function TodayPane(): React.ReactElement {
               leading={<Text role="label" emphasis="strong" colorToken="text-primary">{formatClockTime(course.startTime)}</Text>}
               onPress={() => router.push('/tools/timetable')}
             />
-              {ongoing ? (
-                // 原型 Main：正在上的课直接给「去签到」
+              {start !== null && Math.abs(nowMin - start) <= CHECKIN_WINDOW_MIN ? (
+                // 开课前后 15 分钟给「去签到」直达签到系统（⛔ 不自动签到）
                 <View style={{ paddingHorizontal: theme.space('space_4'), paddingBottom: theme.space('space_3'), alignItems: 'flex-start' }}>
                   <Button testID={`today-course-${index}-checkin`} label={t('square.today.checkin')} variant="primary" size="small" onPress={() => router.push('/system/checkin')} />
                 </View>
@@ -160,6 +188,7 @@ export function TodayPane(): React.ReactElement {
         )}
       </View>
 
+      {agenda.synced && dueLater.length === 0 && dueToday.length > 0 ? null : (
       <View testID="today-deadlines" style={{ gap: theme.space('space_2') }}>
         <SectionHeader title={t('square.today.deadlines')} />
         {!agenda.synced ? (
@@ -169,26 +198,15 @@ export function TodayPane(): React.ReactElement {
             subtitle={t('square.today.moodleSync')}
             onPress={() => router.push('/system/moodle')}
           />
-        ) : agenda.deadlines.length === 0 ? (
+        ) : dueLater.length === 0 ? (
           <Text role="body" colorToken="text-secondary" style={{ paddingHorizontal: theme.space('space_4') }}>
             {t('square.today.noDeadlines')}
           </Text>
         ) : (
-          agenda.deadlines.map((deadline, index) => {
-            const line = deadlineLine(t, deadline, now.getTime());
-            return (
-              <ListItem
-                key={deadline.key}
-                testID={`today-deadline-${index}`}
-                title={line.title}
-                subtitle={line.subtitle}
-                leading={<Text role="label" emphasis="strong" colorToken="text-primary">{deadlineWhen(now.getTime(), deadline.dueAt)?.clock ?? ''}</Text>}
-                onPress={() => router.push('/system/moodle')}
-              />
-            );
-          })
+          dueLater.map(deadlineRow)
         )}
       </View>
+      )}
       </Surface>
       {/* 常用入口（原型：时间轴之下的一排小卡，不再常驻在所有 Tab 上方） */}
       <SquareModuleEntries />
