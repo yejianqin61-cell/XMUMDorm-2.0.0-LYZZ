@@ -120,6 +120,8 @@ export const SITE_PRIMARY_NAV_ITEMS = [
     to: '/about/date',
     icon: Smile,
     matchPrefixes: ['/about/date'],
+  },
+  {
     key: 'contribute',
     labelZh: '贡献站',
     labelEn: 'Contribute',
