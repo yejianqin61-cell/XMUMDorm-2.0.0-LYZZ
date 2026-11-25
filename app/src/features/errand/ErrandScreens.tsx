@@ -25,7 +25,7 @@ import {useReport,type ReportReason} from '@/features/reports/useReport';
 import {listErrands,getErrandDetail,takeErrand,doneErrand,deleteErrand} from '../../../../shared/api/errands';
 import {getMe} from '../../../../shared/api/users';
 import {AlertDialog} from '@/components/ui/AlertDialog';
-import {formatErrandDeadline,readErrandPage,readErrandDetail,type ErrandItem} from './model';
+import {errandTimeLeft,formatErrandDeadline,readErrandPage,readErrandDetail,type ErrandItem} from './model';
 type Filters={type?:string;status?:string};
 type Snapshot={rows:readonly ErrandItem[];page:number;hasMore:boolean;scrollOffset:number};
 function errorFor(error:unknown):AppError {
@@ -38,7 +38,8 @@ function errorFor(error:unknown):AppError {
 const typeKeys={all:'screen.errand.all',delivery:'screen.errand.delivery',purchase:'screen.errand.purchase',urgent:'screen.errand.urgent'} as const;
 const statusKeys={all:'screen.errand.all',open:'screen.errand.open',taken:'screen.errand.taken',done:'screen.errand.done'} as const;
 const noticeKeys={failed:'screen.errand.failed',login:'screen.errand.login',denied:'screen.errand.denied',conflict:'screen.errand.conflict'} as const;
- export function ErrandListScreen({ embedded = false }: { embedded?: boolean } = {}):React.ReactElement {
+ const leftKeys={overdue:'screen.errand.left.overdue',days:'screen.errand.left.days',hours:'screen.errand.left.hours',minutes:'screen.errand.left.minutes'} as const;
+export function ErrandListScreen({ embedded = false }: { embedded?: boolean } = {}):React.ReactElement {
  const {t}=useI18n();const client=getQueryClient();const theme=useTheme();
  const [filters,setFilters]=React.useState<Filters>(()=>client.getQueryData<Filters>(['bing-errand','selected'])??{});
  const select=(next:Filters)=>{client.setQueryData(['bing-errand','selected'],next);setFilters(next);};
@@ -99,7 +100,7 @@ function ErrandFeed({filters,header}:{filters:Filters;header:React.ReactNode}):R
   <ListScreen key={revision} testID="errand-list" data={[...rows].sort((a,b)=>Number(b.type==='urgent')-Number(a.type==='urgent'))} keyExtractor={r=>String(r.id)} pagination={pagination} listHeader={header} restoredScrollOffset={revision===0?initial.current?.scrollOffset??0:0} onScrollOffset={onScroll} scrollToTopSignal={scrollTopSignal}
    onRefresh={refresh} onEndReached={append} onRetryRefresh={refresh} onRetryAppend={append}
    labels={{retryLabel:t('action.retry'),endLabel: t('screen.list.end'),empty:{kind:'noResult',title:t('screen.errand.empty'),actionLabel:t('action.retry'),onAction:refresh}}}
-   renderItem={r=>{const typeKey=typeKeys[r.type as keyof typeof typeKeys]??typeKeys.all;const deadline=formatErrandDeadline(r.deadline,locale);return <View style={{marginBottom:theme.space('space_3'),paddingHorizontal:theme.space('space_4')}}><EntityCard domain="errand" testID={`errand-row-${r.id}`} title={r.title} subtitle={[r.location,deadline].filter(Boolean).join(' · ')||undefined} badges={<><Badge text={t(typeKey)} tone={r.type==='urgent'?'warning':'neutral'}/><Badge text={t(statusKeys[r.status as 'open'|'taken'|'done'])} tone={r.status==='open'?'success':r.status==='taken'?'brand':'neutral'}/></>} metrics={[`RM ${r.reward.toFixed(2)}`]} style={{alignSelf:'stretch'}} onPress={()=>router.push(`/errand/${r.id}` as never)}/></View>;}}/>
+   renderItem={r=>{const typeKey=typeKeys[r.type as keyof typeof typeKeys]??typeKeys.all;const left=r.status==='open'?errandTimeLeft(r.deadline,Date.now()):null;const deadline=formatErrandDeadline(r.deadline,locale);return <View style={{marginBottom:theme.space('space_3'),paddingHorizontal:theme.space('space_4')}}><EntityCard domain="errand" testID={`errand-row-${r.id}`} title={r.title} subtitle={[r.location,deadline].filter(Boolean).join(' · ')||undefined} badges={<><Badge text={t(typeKey)} tone={r.type==='urgent'?'warning':'neutral'}/><Badge text={t(statusKeys[r.status as 'open'|'taken'|'done'])} tone={r.status==='open'?'success':r.status==='taken'?'brand':'neutral'}/>{left?<Badge text={t(leftKeys[left.unit],{n:left.n})} tone={left.unit==='overdue'?'neutral':'warning'}/>:null}</>} metrics={[`RM ${r.reward.toFixed(2)}`]} style={{alignSelf:'stretch'}} onPress={()=>router.push(`/errand/${r.id}` as never)}/></View>;}}/>
   <FloatingBackToTop visible={offset>480} onPress={()=>setScrollTopSignal(value=>value+1)} label={t('action.backToTop')} testID="errand-back-to-top"/>
  </View>;
 }
