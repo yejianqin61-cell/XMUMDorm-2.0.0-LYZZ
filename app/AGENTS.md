@@ -39,3 +39,19 @@ Docs: https://docs.expo.dev/eas/index.md
 - If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
 - Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
 - Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md
+
+## Local preview & self-test (this repo)
+
+You can SEE and DRIVE the app on a local Android emulator — do it before declaring UI work done.
+
+```bash
+node tools/preview/devicectl.mjs doctor          # what is missing
+node tools/preview/devicectl.mjs up --api prod   # emulator + Metro + app (browse-only against prod)
+node tools/preview/devicectl.mjs smoke           # tabs screenshots + red-screen / JS error check
+node tools/preview/devicectl.mjs shot <name>     # prints a PNG path → open it with the Read tool
+node tools/preview/devicectl.mjs ui              # elements + tap coordinates; then `tap <text>` / `tap --desc <label>`
+```
+
+- JS/TSX changes hot-reload; only `app.json` / plugins / native deps need `devicectl build` again.
+- Backend: `devicectl backend start --prod-db` + `devicectl metro --api local` runs this worktree's backend against the PRODUCTION database. Live data ⇒ browse only; `tap` blocks write buttons unless `--allow-write` (only when the owner explicitly asked). Log in only via `devicectl login` with the dedicated test account in `app/.preview/test-account.json`, never a real person's account.
+- Full manual: `docs/app/test/本机预览与自测.md` · skill: `.claude/skills/app-preview/`.

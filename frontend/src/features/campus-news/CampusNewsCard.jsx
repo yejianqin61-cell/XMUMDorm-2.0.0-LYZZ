@@ -35,12 +35,12 @@ export function CampusNewsActions({ post, liked, favorited, onLike, onFavorite, 
   const { lang } = useLanguage();
   const en = lang === 'en';
   const realLike = useCampusLike(post);
-  if (post.real) return <><div className="campus-news-actions" aria-label="校园互动">
-    <button type="button" disabled={!realLike.canLike} aria-busy={realLike.pending} aria-pressed={realLike.liked === true} aria-label="点赞" className={realLike.liked ? 'is-liked' : ''} onClick={realLike.onLike} title="登录后可点赞；提交期间请稍候"><Heart size={19} fill={realLike.liked ? 'currentColor' : 'none'} /><span>{realLike.likeCount ?? '—'}</span></button>
-    <button type="button" onClick={onComment} title="查看评论"><MessageCircle size={19} /><span>{realLike.commentCount ?? '—'}</span></button>
+  if (post.real) return <><div className="campus-news-actions" aria-label={en ? 'Interactions' : '校园互动'}>
+    <button type="button" disabled={!realLike.canLike} aria-busy={realLike.pending} aria-pressed={realLike.liked === true} aria-label={en ? 'Like' : '点赞'} className={realLike.liked ? 'is-liked' : ''} onClick={realLike.onLike} title={en ? 'Log in to like' : '登录后可点赞；提交期间请稍候'}><Heart size={19} fill={realLike.liked ? 'currentColor' : 'none'} /><span>{realLike.likeCount ?? '—'}</span></button>
+    <button type="button" onClick={onComment} aria-label={en ? 'Comments' : '查看评论'} title={en ? 'Comments' : '查看评论'}><MessageCircle size={19} /><span>{realLike.commentCount ?? '—'}</span></button>
     <CampusFavoriteButton postId={post.id} />
     <CampusShareButton postId={post.id} />
-  </div>{realLike.error && <p role="alert">{realLike.error}<button type="button" onClick={() => realLike.retry()}>重试</button></p>}</>;
+  </div>{realLike.error && <p role="alert" className="campus-news-action-error">{realLike.error}<button type="button" onClick={() => realLike.retry()}>{en ? 'Retry' : '重试'}</button></p>}</>;
   return (
     <div className="campus-news-actions" aria-label={en ? 'Demo interactions' : '演示互动'}>
       <button type="button" className={liked ? 'is-liked' : ''} aria-pressed={liked} aria-label={en ? 'Like (temporary demo)' : '点赞（临时演示）'} onClick={onLike}>

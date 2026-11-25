@@ -921,4 +921,208 @@
   max-width: 58vw;
 }
 
+/* ---------- 私聊页改版（任务管理表 #8）：对方信息、商品卡片、日期分隔、已读、发送中/失败 ---------- */
+.mp-chat-peer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-width: 0;
+  flex: 1;
+  justify-content: center;
+}
 
+.mp-chat-peer-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.mp-chat-peer-name {
+  font-size: 17px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mp-chat-peer-role {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+}
+
+.mp-chat-all {
+  color: var(--color-brand-text);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.mp-chat-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  margin: var(--space-6) var(--space-6) 0;
+  padding: var(--space-4) var(--space-6);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-surface-strong);
+  border: 1px solid var(--color-border-soft);
+  color: inherit;
+  text-decoration: none;
+}
+
+a.mp-chat-item:hover {
+  border-color: var(--color-border-focus);
+}
+
+.mp-chat-item.is-gone {
+  opacity: 0.7;
+}
+
+.mp-chat-item-cover {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+  background: var(--color-bg-surface-soft);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mp-chat-item-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.mp-chat-item-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.mp-chat-item-title {
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mp-chat-item-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  font-size: 12px;
+}
+
+.mp-chat-item-price {
+  font-weight: 800;
+  color: var(--color-marketplace-text);
+}
+
+.mp-chat-item-status {
+  padding: 1px var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-success-soft);
+  color: var(--color-success-text);
+}
+
+.mp-chat-item-status.is-reserved {
+  background: var(--color-bg-warning-soft);
+  color: var(--color-warning-text);
+}
+
+.mp-chat-item-status.is-sold,
+.mp-chat-item-status.is-gone {
+  background: var(--color-border-soft);
+  color: var(--color-text-tertiary);
+}
+
+.mp-chat-list.mp-chat-list-full {
+  height: min(60vh, 560px);
+  max-height: none;
+  align-content: start;
+}
+
+.mp-chat-older,
+.mp-chat-day,
+.mp-chat-hint {
+  text-align: center;
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+}
+
+.mp-chat-day {
+  margin: var(--space-2) 0;
+}
+
+.mp-chat-older-btn,
+.mp-chat-linkbtn {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0 var(--space-2);
+  font: inherit;
+  color: var(--color-brand-text);
+  cursor: pointer;
+}
+
+.mp-chat-older-btn:disabled {
+  color: var(--color-text-tertiary);
+  cursor: default;
+}
+
+.mp-chat-bubble.is-sending {
+  opacity: 0.65;
+}
+
+.mp-chat-bubble.is-failed {
+  border-color: var(--color-danger);
+  background: var(--color-bg-danger-soft);
+}
+
+.mp-chat-failed {
+  color: var(--color-danger);
+}
+
+.mp-chat-read {
+  color: var(--color-text-tertiary);
+}
+
+.mp-chat-inputwrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+}
+
+.mp-chat-textarea {
+  flex: 1;
+  min-width: 0;
+  resize: none;
+  min-height: 42px;
+  max-height: 120px;
+  field-sizing: content;
+  font: inherit;
+  line-height: 1.45;
+}
+
+.mp-chat-counter {
+  position: absolute;
+  right: var(--space-4);
+  bottom: var(--space-2);
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+}
+
+@media (max-width: 560px) {
+  .mp-chat-all {
+    padding: 10px 8px;
+  }
+
+  .mp-chat-list.mp-chat-list-full {
+    height: calc(100vh - 300px);
+    min-height: 260px;
+  }
+}

@@ -1,6 +1,7 @@
 
 export function getTabIndex(pathname) {
   if (pathname.startsWith('/myzone')) return 3;
+  if (pathname.startsWith('/shop')) return 4;
   if (pathname.startsWith('/eat')) return 2;
   if (pathname === '/' || pathname.startsWith('/post') || pathname.startsWith('/treehole')) return 1;
   if (pathname.startsWith('/about')) return 0;
