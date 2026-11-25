@@ -18,6 +18,9 @@ import type { AppError } from '@/i18n/errors';
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }));
 jest.mock('@/features/square/useTodayTimetable', () => ({ useTodayTimetable: () => mockTimetable }));
 jest.mock('@/features/square/useMoodleAgenda', () => ({ useMoodleAgenda: () => mockAgenda }));
+jest.mock('@/features/todos/useTodayTodos', () => ({ useTodayTodos: () => ({ data: mockTodos, loading: false, error: null, reload: jest.fn() }) }));
+jest.mock('@/features/todos/todoApi', () => ({ toggleTodo: jest.fn(async () => ({})) }));
+let mockTodos: { top: readonly { id: number; title: string }[] } | null = null;
 
 const mockPush = jest.fn();
 
@@ -59,6 +62,7 @@ function deadline(title: string, dueAt: number): AgendaDeadline {
 beforeEach(() => {
   mockTimetable = { week: weekWith([]), source: 'remote', loading: false, error: null, reload: jest.fn() };
   mockAgenda = { synced: true, deadlines: [] };
+  mockTodos = null;
 });
 
 describe('P3A6 今日 pane', () => {
@@ -122,6 +126,14 @@ describe('P3A6 今日 pane', () => {
     } finally {
       jest.useRealTimers();
     }
+  });
+
+  it('今日待办并入时间轴，点勾调用完成接口', async () => {
+    mockTodos = { top: [{ id: 5, title: '取快递' }] };
+    const view = await renderApp(<TodayPane />);
+    expect(view.getByTestId('today-todos')).toBeTruthy();
+    await fireEvent.press(view.getByTestId('today-todo-5'));
+    expect(jest.requireMock('@/features/todos/todoApi').toggleTodo).toHaveBeenCalledWith(5);
   });
 
   it('课表首次加载：显示 LoadingState，不显示空态', async () => {

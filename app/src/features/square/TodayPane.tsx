@@ -35,6 +35,9 @@ import { HotPostCard } from './HotPostCard';
 import { agendaCourses, deadlineWhen } from './todayAgenda';
 import { useMoodleAgenda } from './useMoodleAgenda';
 import { useTodayTimetable } from './useTodayTimetable';
+import { useTodayTodos } from '@/features/todos/useTodayTodos';
+import { toggleTodo } from '@/features/todos/todoApi';
+import { notifyTodosChanged } from '@/features/todos/todos';
 
 /** 截止时间的单行文案（课程名 · 今天/明天/日期 + 时钟） */
 export function deadlineLine(
@@ -80,6 +83,8 @@ export function TodayPane(): React.ReactElement {
   );
 
   const loadingCourses = timetable.loading && timetable.week === null;
+  // 今日待办并入时间轴末尾（游客读本机待办）；取不到就不画，⛔ 不给首页多一个错误态
+  const todos = useTodayTodos();
 
   // 原型 Main 的时间轴：**今天截止**的作业按时间插进课程之间；其余仍列在下方「Moodle 待交」
   const indexed = (agenda.synced ? agenda.deadlines : []).map((deadline, index) => ({ deadline, index }));
@@ -207,6 +212,15 @@ export function TodayPane(): React.ReactElement {
         )}
       </View>
       )}
+      {todos.data && todos.data.top.length > 0 ? (
+        <View testID="today-todos" style={{ gap: theme.space('space_2') }}>
+          <SectionHeader title={t('tools.dashboard.todos')} />
+          {todos.data.top.map((todo) => (
+            <ListItem key={todo.id} testID={`today-todo-${todo.id}`} title={todo.title} variant="select" selected={false}
+              onToggleSelect={() => { void toggleTodo(todo.id).then(() => notifyTodosChanged()).catch(() => todos.reload()); }} />
+          ))}
+        </View>
+      ) : null}
       </Surface>
       {/* 常用入口（原型：时间轴之下的一排小卡，不再常驻在所有 Tab 上方） */}
       <SquareModuleEntries />
