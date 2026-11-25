@@ -283,11 +283,9 @@ describe('TC-P1-11-8A · 互动条渲染与回调', () => {
     expect(onReport).toHaveBeenCalledTimes(1);
   });
 
-  it('没给回调的动作是 disabled（⛔ 不给"看起来能点但没反应"的按钮）', async () => {
+  it('没给回调也没给计数的动作不渲染（⛔ 不给"看起来能点但没反应"的按钮）', async () => {
     const view = await renderDetail();
-    expect(view.getByTestId('detail-report').props.accessibilityState).toMatchObject({
-      disabled: true,
-    });
+    expect(view.queryByTestId('detail-report')).toBeNull();
   });
 });
 

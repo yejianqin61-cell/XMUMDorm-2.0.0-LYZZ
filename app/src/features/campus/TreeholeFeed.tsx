@@ -5,7 +5,7 @@
  * - **搜索就地展开**：顶部一个搜索框外观，点开在本页展开输入（⛔ 不再跳独立搜索页）；
  * - **壳收敛为一份**：`/campus` 独立页已改为重定向，树洞只有这里一个壳；
  * - 标签筛选进**列表头部**（随内容滚走），不再是常驻占 40dp 的独立条；
- * - 帖子之间只留细分隔线（`Divider`），不套卡片。
+ * - 帖子是一张张 surface 圆角卡，卡之间只留间距、不画分割线（第四轮视觉基线）。
  *
  * 数据与状态：分页状态机仍用 `K05 useListPagination`（⛔ 页面不自写分页状态）；
  * 滚动位置/筛选仍写 `SecondaryTabStore`（切模块回来位置还在）。
@@ -15,7 +15,7 @@ import * as React from 'react';
 import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { Divider } from '@/components/ui/Divider';
+import { Surface } from '@/components/ui/Surface';
 import { InlineNotice } from '@/components/ui/InlineNotice';
 import { ListScreen, useListPagination } from '@/components/ui/ListScreen';
 import { Text } from '@/components/ui/Text';
@@ -406,7 +406,7 @@ function TreeholeFeedData({
       onRetryRefresh={refresh}
       onRetryAppend={append}
       listHeader={listHeader}
-      itemSeparator={Divider}
+      itemSeparator={TreeholeGap}
       labels={{
         retryLabel: t('action.retry'),
         endLabel: t('screen.list.end'),
@@ -418,15 +418,25 @@ function TreeholeFeedData({
         },
       }}
       renderItem={(row) => (
-        <TreeholeFeedRow
-          row={row}
-          query={query || undefined}
-          onOpen={() => router.push(`/campus/${row.id}` as never)}
-          timeLabel={row.created_at ? formatPostTime(row.created_at, { locale }) : ''}
-        />
+        <View style={{ paddingHorizontal: theme.space('space_4') }}>
+          <Surface rounded="radius_large">
+            <TreeholeFeedRow
+              row={row}
+              query={query || undefined}
+              onOpen={() => router.push(`/campus/${row.id}` as never)}
+              timeLabel={row.created_at ? formatPostTime(row.created_at, { locale }) : ''}
+            />
+          </Surface>
+        </View>
       )}
     />
   );
+}
+
+/** 帖子卡之间只留间距（视觉基线：不画分割线） */
+function TreeholeGap(): React.ReactElement {
+  const theme = useTheme();
+  return <View style={{ height: theme.space('space_3') }} />;
 }
 
 /** 一行 = 帖子呈现 + 该行的点赞状态（列表行不加载评论） */

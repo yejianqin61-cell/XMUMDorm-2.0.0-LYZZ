@@ -66,7 +66,8 @@ export function TreeholeAuthorLine({
         role="body"
         colorToken="text-secondary"
         numberOfLines={1}
-        style={{ flexShrink: 1 }}
+        // 名字先保住（卡片里标签一多就被挤成「A…」），让标签去收缩
+        style={{ flexShrink: 0, maxWidth: '40%' }}
       >
         {shownName}
       </Text>

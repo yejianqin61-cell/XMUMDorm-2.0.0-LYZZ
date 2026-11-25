@@ -48,8 +48,6 @@ export function TopBar({
       style={{
         paddingTop: headerPaddingTop,
         backgroundColor: theme.color['bg-canvas']['value'],
-        borderBottomWidth: theme.borderWidth('border_width_hairline'),
-        borderBottomColor: theme.color['border-subtle']['value'],
       }}
     >
       <View

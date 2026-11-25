@@ -262,6 +262,12 @@ export function DetailScreen({
   const headerSlot =
     topMode === 'topbar' ? { header } : topMode === 'overlay' ? { headerOverlay: header } : {};
 
+  const live = {
+    like: onToggleLike !== undefined || interactions.likeCount !== undefined,
+    favorite: onToggleFavorite !== undefined || interactions.favoriteCount !== undefined,
+    comment: interactions.commentCount !== undefined,
+  };
+
   if (state !== 'content') {
     return (
       <Screen topMode={topMode} {...headerSlot} testID={testID} style={style}>
@@ -333,26 +339,27 @@ export function DetailScreen({
           {body}
 
           {/* 互动条 */}
-          {!hideActions ? <View
+          {/* 视觉基线：分组靠表面色不靠横线；既没回调也没计数的动作不画（原先是一排点不动的灰按钮） */}
+          {!hideActions && (live.like || live.favorite || live.comment || onReport !== undefined) ? <View
             style={{
               flexDirection: 'row',
               alignItems: 'center',
-              borderTopWidth: theme.borderWidth('border_width_hairline'),
-              borderBottomWidth: theme.borderWidth('border_width_hairline'),
-              borderColor: theme.color['border-subtle'].value,
+              borderRadius: theme.radius('radius_large'),
+              backgroundColor: theme.color['bg-surface'].value,
+              paddingHorizontal: theme.space('space_1'),
             }}
           >
-            {action('like', labels.like, onToggleLike, interactions.liked === true, interactions.likeCount)}
-            {action(
+            {live.like ? action('like', labels.like, onToggleLike, interactions.liked === true, interactions.likeCount) : null}
+            {live.favorite ? action(
               'favorite',
               labels.favorite,
               onToggleFavorite,
               interactions.favorited === true,
               interactions.favoriteCount
-            )}
-            {action('comment', labels.comment, undefined, false, interactions.commentCount)}
+            ) : null}
+            {live.comment ? action('comment', labels.comment, undefined, false, interactions.commentCount) : null}
             <View style={{ flex: 1 }} />
-            {action('report', labels.report, onReport, false)}
+            {onReport !== undefined ? action('report', labels.report, onReport, false) : null}
           </View> : null}
         </View>
 

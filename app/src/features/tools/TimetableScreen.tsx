@@ -203,10 +203,10 @@ function OwnedTimetableScreen({ renderGrid, legacyControls }: { renderGrid: (pro
         <Text testID="timetable-reminder-explanation" role="body" colorToken="text-secondary">
           {t('me.settings.notifications.description')}
         </Text>
-        {permission === 'undetermined' ? <Button testID="timetable-reminder-request" variant="secondary"
+        {permission === 'undetermined' ? <Button testID="timetable-reminder-request" variant="secondary" size="small"
           label={t('timetable.reminder.enable')} onPress={() => { void retryPermission(); }} /> : null}
         {permission === 'denied' || permission === 'undetermined' ?
-          <Button testID="timetable-reminder-settings" variant="secondary"
+          <Button testID="timetable-reminder-settings" variant="ghost" size="small"
             label={t('me.settings.notifications.openSettings')}
             onPress={() => { void notificationPermission.openSettings(); }} /> : null}
         {permission === 'unavailable' ? <Text role="body">{t('me.settings.notifications.unavailable')}</Text> : null}

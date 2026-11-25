@@ -48,7 +48,8 @@ describe('P2X Treehole 视觉层契约（令牌组件层）', () => {
     const filter = read('src', 'features', 'campus', 'TreeholeTagFilter.tsx');
     expect(feed).toContain('TreeholeTagFilter');
     expect(feed).toContain('listHeader=');
-    expect(feed).toContain('itemSeparator={Divider}');
+    // 第四轮视觉基线（所有者确认）：帖子卡之间靠间距分组，不画分割线
+    expect(feed).toContain('itemSeparator={TreeholeGap}');
     // 第四轮原型（Treehole）与 R4-14：整行下拉要点三下才换一个标签 → 横滑标签条
     expect(filter).toContain('FilterChips');
     expect(filter.includes('ui/Select')).toBe(false);

@@ -204,7 +204,7 @@ export function EntityCard({
           ) : null}
         </View>
       </Pressable>
-      {isPost && postActions ? <View style={{ flexDirection: 'row', borderTopWidth: theme.borderWidth('border_width_hairline'), borderColor: theme.color['border-subtle'].value, paddingHorizontal: theme.space('space_3'), gap: theme.space('space_3') }}>{postActions}</View> : null}
+      {isPost && postActions ? <View style={{ flexDirection: 'row', paddingHorizontal: theme.space('space_3'), gap: theme.space('space_3') }}>{postActions}</View> : null}
     </Surface>
   );
 }

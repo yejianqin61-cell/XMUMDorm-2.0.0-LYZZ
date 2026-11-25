@@ -602,7 +602,7 @@ export const en: Record<MessageKey, string> = {
   'error.service.perceive': 'Sign-in service error',
   'error.service.understand': 'The server could not complete your sign-in request',
   'error.service.fix': 'Try signing in again later',
-  'error.unknown.perceive': '{action} did not finish',
+  'error.unknown.perceive': 'That did not finish',
   'error.unknown.understand': 'An unexpected error happened and we logged it',
   'error.unknown.fix': 'Go back, then retry',
 

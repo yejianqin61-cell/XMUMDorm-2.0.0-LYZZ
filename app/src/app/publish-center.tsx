@@ -11,7 +11,6 @@ import * as React from 'react';
 import { Pressable, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import X from 'lucide-react-native/icons/x';
-import ChevronRight from 'lucide-react-native/icons/chevron-right';
 
 import { Screen } from '@/components/ui/Screen';
 import { Text } from '@/components/ui/Text';
@@ -69,7 +68,8 @@ export default function PublishCenterScreen(): React.ReactElement {
         </View>
       }
     >
-      <View style={{ paddingTop: theme.space('space_2') }}>
+      {/* 原型 Publish：两列入口卡（仍 100% 由注册表驱动） */}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: theme.space('space_3'), padding: theme.space('space_4') }}>
         {entries.map((entry) => {
           const Icon = getPublishIcon(entry.icon);
           return (
@@ -81,25 +81,25 @@ export default function PublishCenterScreen(): React.ReactElement {
               accessibilityRole="button"
               accessibilityLabel={t(entry.titleKey)}
               style={{
+                flexBasis: '45%',
+                flexGrow: 1,
                 minHeight: theme.touchTarget,
                 flexDirection: 'row',
                 alignItems: 'center',
-                paddingLeft: theme.space('space_4'),
-                paddingRight: theme.space('space_2'),
+                gap: theme.space('space_3'),
+                padding: theme.space('space_4'),
+                borderRadius: theme.radius('radius_large'),
+                backgroundColor: theme.color['bg-surface'].value,
               }}
             >
               {Icon ? (
-                <View style={{ width: theme.space('space_6'), alignItems: 'center' }}>
-                  <Icon size={theme.space('space_6')} color={theme.color['icon-primary'].value} />
+                <View style={{ padding: theme.space('space_2'), borderRadius: theme.radius('radius_medium'), backgroundColor: theme.color['bg-sunken'].value }}>
+                  <Icon size={theme.space('space_6')} color={theme.color['icon-brand'].value} />
                 </View>
               ) : null}
-              <Text role="body" colorToken="text-primary" style={{ flex: 1, marginLeft: theme.space('space_3') }}>
+              <Text role="body" emphasis="strong" colorToken="text-primary" style={{ flex: 1 }} numberOfLines={2}>
                 {t(entry.titleKey)}
               </Text>
-              <ChevronRight
-                size={theme.space('space_6')}
-                color={theme.color['icon-secondary'].value}
-              />
             </Pressable>
           );
         })}

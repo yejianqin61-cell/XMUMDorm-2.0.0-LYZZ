@@ -610,7 +610,7 @@ export const zh = {
   'error.service.perceive': '登录服务异常',
   'error.service.understand': '服务器未能处理本次登录请求',
   'error.service.fix': '等登录服务恢复后再试',
-  'error.unknown.perceive': '{action}没完成',
+  'error.unknown.perceive': '这一步没有完成',
   'error.unknown.understand': '发生了一个我们没预料到的错误，已经记下',
   'error.unknown.fix': '返回上一页后重试',
 

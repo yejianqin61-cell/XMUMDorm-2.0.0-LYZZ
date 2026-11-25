@@ -114,7 +114,7 @@ export function ToolsDashboardContent({ onRequestError }: { onRequestError?: (er
       <ListItem testID="tools-school-sessions" title={t('tools.systems.title')} onPress={() => router.push('/tools/school-systems')} />
       <ListItem testID="tools-schedule-import" title={t('import.title')} onPress={() => router.push('/tools/schedule-import')} />
     </View>
-    <Surface testID="tools-courses" rounded="radius_large" padding="space_4" style={{ gap: theme.space('space_2') }}>
+    <Surface testID="tools-courses" rounded="radius_large" style={{ gap: theme.space('space_2'), paddingVertical: theme.space('space_3') }}>
       <SectionHeader title={t('tools.dashboard.schedule')} />
       {current ? <Text role="caption" testID="tools-current-course">{t('tools.dashboard.current', { name: current.courseName ?? current.courseCode })}</Text> : null}
       {next ? <Text role="caption" testID="tools-next-course">{t('tools.dashboard.next', { name: next.courseName ?? next.courseCode })}</Text> : null}
@@ -123,7 +123,7 @@ export function ToolsDashboardContent({ onRequestError }: { onRequestError?: (er
       })}</Text> : null}
       {futureError ? <ErrorState testID="tools-next-error" error={{ kind: 'unknown' }} onAction={() => setFutureRetry((value) => value + 1)} /> : null}
       {timetable.source === 'cache' ? <OfflineBanner testID="tools-courses-stale" variant="stale" message={t('timetable.stale')} actionLabel={t('action.refresh')} onAction={timetable.reload} /> : null}
-      {timetable.loading && !timetable.week ? <LoadingState testID="tools-courses-loading" /> : timetable.error?.kind === 'signin' && !timetable.week ? <ListItem testID="tools-courses-signin" title={t('error.signin.perceive')} subtitle={t('error.signin.understand')} onPress={() => router.push('/login')} /> : timetable.error && !timetable.week ? <ErrorState testID="tools-courses-error" error={timetable.error} onAction={timetable.reload} /> : courses.length === 0 ? <Text role="body" colorToken="text-secondary">{t('tools.dashboard.noCourses')}</Text> :
+      {timetable.loading && !timetable.week ? <LoadingState testID="tools-courses-loading" /> : timetable.error?.kind === 'signin' && !timetable.week ? <ListItem testID="tools-courses-signin" title={t('error.signin.perceive')} subtitle={t('error.signin.understand')} onPress={() => router.push('/login')} /> : timetable.error && !timetable.week ? <ErrorState testID="tools-courses-error" error={timetable.error} onAction={timetable.reload} /> : courses.length === 0 ? <Text role="body" colorToken="text-secondary" style={{ paddingHorizontal: theme.space('space_4') }}>{t('tools.dashboard.noCourses')}</Text> :
         courses.slice(0, 3).map((course, index) => <ListItem key={`${course.courseCode}:${index}`} title={course.courseName ?? course.courseCode} subtitle={t('tools.dashboard.courseLine', { start: formatClockTime(course.startTime), end: formatClockTime(course.endTime), venue: course.venue ?? t('tools.dashboard.noVenue') })} onPress={() => router.push('/tools/timetable')} />)}
       <ListItem testID="tools-timetable" title={t('tools.timetable')} onPress={() => router.push('/tools/timetable')} />
     </Surface>
@@ -145,12 +145,12 @@ export function ToolsDashboardContent({ onRequestError }: { onRequestError?: (er
         </View>
       </View>
     </Pressable>
-    <Surface testID="tools-today-todos" rounded="radius_large" padding="space_4" style={{ gap: theme.space('space_2') }}>
+    <Surface testID="tools-today-todos" rounded="radius_large" style={{ gap: theme.space('space_2'), paddingVertical: theme.space('space_3') }}>
       <SectionHeader title={t('tools.dashboard.todos')} variant="withAction" actionLabel={t('tools.todos.create')} onActionPress={() => router.push('/tools/todos/new')} />
       {todos.loading ? <LoadingState testID="tools-todos-loading" /> : todos.error?.kind === 'signin' ? <ListItem testID="tools-todos-signin" title={t('error.signin.perceive')} subtitle={t('error.signin.understand')} onPress={() => router.push('/login')} /> : todos.error ? <ErrorState testID="tools-todos-error" error={todos.error} onAction={todos.reload} /> : todos.data ? <>
-        <Text role="caption">{t('tools.dashboard.todoCount', { total: todos.data.total, completed: todos.data.completed })}</Text>
+        <Text role="caption" style={{ paddingHorizontal: theme.space('space_4') }}>{t('tools.dashboard.todoCount', { total: todos.data.total, completed: todos.data.completed })}</Text>
         {todos.data.top.length ? todos.data.top.map((todo) => <ListItem key={todo.id} testID={`tools-todo-${todo.id}`} title={todo.title} variant="select" selected={false}
-          onToggleSelect={() => { void toggleTodo(todo.id).then(() => notifyTodosChanged()).catch((error) => { void handleError(error); }); }} />) : <Text role="body" colorToken="text-secondary">{t('tools.dashboard.noTodos')}</Text>}
+          onToggleSelect={() => { void toggleTodo(todo.id).then(() => notifyTodosChanged()).catch((error) => { void handleError(error); }); }} />) : <Text role="body" colorToken="text-secondary" style={{ paddingHorizontal: theme.space('space_4') }}>{t('tools.dashboard.noTodos')}</Text>}
       </> : null}
       <ListItem testID="tools-todos" title={t('tools.todos.title')} onPress={() => router.push('/tools/todos')} />
     </Surface>

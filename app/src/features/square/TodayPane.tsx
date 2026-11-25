@@ -89,8 +89,8 @@ export function TodayPane(): React.ReactElement {
         gap: theme.space('space_6'),
       }}
     >
-      <Surface testID="today-timeline" rounded="radius_large" padding="space_4" style={{ gap: theme.space('space_3') }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+      <Surface testID="today-timeline" rounded="radius_large" style={{ gap: theme.space('space_3'), paddingVertical: theme.space('space_3') }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: theme.space('space_4') }}>
         <Badge text={t('square.today.title')} tone="neutral" />
         <Button testID="today-full-timetable" label={t('square.today.fullTimetable')} variant="link" size="small" onPress={() => router.push('/tools/timetable')} />
       </View>
@@ -113,7 +113,7 @@ export function TodayPane(): React.ReactElement {
             onAction={timetable.reload}
           />
         ) : courses.length === 0 ? (
-          <Text role="body" colorToken="text-secondary">
+          <Text role="body" colorToken="text-secondary" style={{ paddingHorizontal: theme.space('space_4') }}>
             {t('square.today.noCourses')}
           </Text>
         ) : (
@@ -163,7 +163,7 @@ export function TodayPane(): React.ReactElement {
             onPress={() => router.push('/system/moodle')}
           />
         ) : agenda.deadlines.length === 0 ? (
-          <Text role="body" colorToken="text-secondary">
+          <Text role="body" colorToken="text-secondary" style={{ paddingHorizontal: theme.space('space_4') }}>
             {t('square.today.noDeadlines')}
           </Text>
         ) : (

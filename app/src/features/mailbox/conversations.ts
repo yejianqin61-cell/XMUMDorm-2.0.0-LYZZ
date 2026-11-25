@@ -113,5 +113,10 @@ export function toMailboxError(error: unknown): AppError {
   if (error !== null && typeof error === 'object' && 'kind' in error) {
     return error as AppError;
   }
+  // 按真实原因分类，别把一切都报成「未知错误」
+  const status = (error as { status?: unknown } | null)?.status;
+  if (status === 401) return { kind: 'signin' };
+  if (status === 403) return { kind: 'permission' };
+  if (error instanceof TypeError) return { kind: 'unreachable' };
   return { kind: 'unknown' };
 }

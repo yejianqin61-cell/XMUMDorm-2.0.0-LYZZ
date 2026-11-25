@@ -67,8 +67,6 @@ export function TopTabStrip({
       accessibilityRole="tablist"
       style={{
         minHeight: theme.touchTarget,
-        borderBottomWidth: theme.borderWidth('border_width_hairline'),
-        borderBottomColor: theme.color['border-subtle'].value,
         backgroundColor: theme.color['bg-canvas'].value,
       }}
     >
