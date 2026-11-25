@@ -434,6 +434,7 @@ export const en: Record<MessageKey, string> = {
   // Square brand header and module entries (owner ruling, 2026-10-18)
   'screen.list.end': 'End of list',
   'square.brand': 'XMUM Dorm',
+  'square.header.search': 'Search Treehole',
   'square.brand.emblem': 'Xiamen University emblem',
   'square.module.schedule': 'Schedule',
   'square.module.guides': 'Guides',

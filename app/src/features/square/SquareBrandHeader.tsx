@@ -13,8 +13,13 @@
 import * as React from 'react';
 import { View } from 'react-native';
 import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
+import Bell from 'lucide-react-native/icons/bell';
+import Search from 'lucide-react-native/icons/search';
 
+import { IconButton } from '@/components/ui/IconButton';
 import { Text } from '@/components/ui/Text';
+import { useUnread } from '@/features/mailbox/useUnread';
 import { useTheme } from '@/design-system/theme';
 import { useI18n } from '@/i18n';
 
@@ -28,6 +33,8 @@ export const BRAND_EMBLEM_SIZE = 48;
 export function SquareBrandHeader(): React.ReactElement {
   const theme = useTheme();
   const { t, locale } = useI18n();
+  const router = useRouter();
+  const { total } = useUnread();
   const source = theme.scheme === 'dark' ? EMBLEM_DARK : EMBLEM_LIGHT;
 
   return (
@@ -37,7 +44,8 @@ export function SquareBrandHeader(): React.ReactElement {
         flexDirection: 'row',
         alignItems: 'center',
         gap: theme.space('space_3'),
-        paddingHorizontal: theme.space('space_4'),
+        paddingLeft: theme.space('space_4'),
+        paddingRight: theme.space('space_2'),
         paddingVertical: theme.space('space_2'),
       }}
     >
@@ -57,6 +65,11 @@ export function SquareBrandHeader(): React.ReactElement {
           {new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : 'en-GB', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'Asia/Kuala_Lumpur' }).format(new Date())}
         </Text>
       </View>
+      {/* 原型 Main 的两个顶栏动作（第四轮，所有者确认）：搜索走树洞搜索，铃铛进消息格 */}
+      <IconButton testID="square-header-search" Icon={Search} accessibilityLabel={t('square.header.search')}
+        onPress={() => router.setParams({ tab: 'confession' })} />
+      <IconButton testID="square-header-bell" Icon={Bell} accessibilityLabel={t('topbar.mailbox')} badgeCount={total ?? 0}
+        onPress={() => router.navigate('/(tabs)/mailbox' as never)} />
     </View>
   );
 }
