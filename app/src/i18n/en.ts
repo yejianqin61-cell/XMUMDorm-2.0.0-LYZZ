@@ -440,6 +440,9 @@ export const en: Record<MessageKey, string> = {
   // Square "Today" tab (2026-10-18)
   'square.today.ongoing': 'Now',
   'square.today.title': 'Today',
+  'square.today.hot': 'Trending',
+  'square.today.hotMore': 'Treehole',
+  'square.today.hotStats': '{likes} likes · {comments} comments',
   'square.today.fullTimetable': 'Timetable',
   'square.today.courses': 'Today classes',
   'square.today.noCourses': 'No classes today',

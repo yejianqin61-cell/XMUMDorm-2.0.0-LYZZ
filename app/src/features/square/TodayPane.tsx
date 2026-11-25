@@ -31,6 +31,7 @@ import { formatClockTime } from '@/features/me/dashboard';
 import type { TimetableMeeting } from '@/features/tools/timetable';
 import { SquareModuleEntries } from './SquareModuleEntries';
 import { AgentEntry } from './AgentEntry';
+import { HotPostCard } from './HotPostCard';
 import { agendaCourses, deadlineWhen } from './todayAgenda';
 import { useMoodleAgenda } from './useMoodleAgenda';
 import { useTodayTimetable } from './useTodayTimetable';
@@ -186,6 +187,7 @@ export function TodayPane(): React.ReactElement {
       {/* 常用入口（原型：时间轴之下的一排小卡，不再常驻在所有 Tab 上方） */}
       <SquareModuleEntries />
       <AgentEntry />
+      <HotPostCard />
     </ScrollView>
   );
 }

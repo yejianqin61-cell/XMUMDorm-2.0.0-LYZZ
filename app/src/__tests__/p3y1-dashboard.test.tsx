@@ -32,7 +32,7 @@ beforeEach(async () => {
 it('creates from the dashboard through the existing form route', async () => {
   const view = await renderApp(<ToolsDashboardContent />);
   await waitFor(() => expect(view.getByText('Read paper')).toBeTruthy());
-  await fireEvent.press(view.getByText('新增待办'));
+  await fireEvent.press(view.getByTestId('tools-todo-new'));
   expect(jest.requireMock('expo-router').__state.targets).toContain('/tools/todos/new');
   await fireEvent.press(view.getByTestId('tools-todos'));
   expect(jest.requireMock('expo-router').__state.targets).toContain('/tools/todos');

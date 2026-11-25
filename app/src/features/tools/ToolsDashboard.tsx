@@ -146,13 +146,18 @@ export function ToolsDashboardContent({ onRequestError }: { onRequestError?: (er
       </View>
     </Pressable>
     <Surface testID="tools-today-todos" rounded="radius_large" style={{ gap: theme.space('space_2'), paddingVertical: theme.space('space_3') }}>
-      <SectionHeader title={t('tools.dashboard.todos')} variant="withAction" actionLabel={t('tools.todos.create')} onActionPress={() => router.push('/tools/todos/new')} />
+      <SectionHeader title={t('tools.dashboard.todos')} />
       {todos.loading ? <LoadingState testID="tools-todos-loading" /> : todos.error?.kind === 'signin' ? <ListItem testID="tools-todos-signin" title={t('error.signin.perceive')} subtitle={t('error.signin.understand')} onPress={() => router.push('/login')} /> : todos.error ? <ErrorState testID="tools-todos-error" error={todos.error} onAction={todos.reload} /> : todos.data ? <>
         <Text role="caption" style={{ paddingHorizontal: theme.space('space_4') }}>{t('tools.dashboard.todoCount', { total: todos.data.total, completed: todos.data.completed })}</Text>
         {todos.data.top.length ? todos.data.top.map((todo) => <ListItem key={todo.id} testID={`tools-todo-${todo.id}`} title={todo.title} variant="select" selected={false}
           onToggleSelect={() => { void toggleTodo(todo.id).then(() => notifyTodosChanged()).catch((error) => { void handleError(error); }); }} />) : <Text role="body" colorToken="text-secondary" style={{ paddingHorizontal: theme.space('space_4') }}>{t('tools.dashboard.noTodos')}</Text>}
       </> : null}
       <ListItem testID="tools-todos" title={t('tools.todos.title')} onPress={() => router.push('/tools/todos')} />
+      {/* 原型 Tools：卡底一条虚线「新建」 */}
+      <Pressable testID="tools-todo-new" accessibilityLabel={t('tools.todos.create')} onPress={() => router.push('/tools/todos/new')}
+        style={{ marginHorizontal: theme.space('space_4'), minHeight: theme.touchTarget, alignItems: 'center', justifyContent: 'center', borderRadius: theme.radius('radius_medium'), borderStyle: 'dashed', borderWidth: theme.borderWidth('border_width_hairline'), borderColor: theme.color['border-strong'].value }}>
+        <Text role="label" colorToken="text-secondary">{`＋ ${t('tools.todos.create')}`}</Text>
+      </Pressable>
     </Surface>
   </View>;
 }
