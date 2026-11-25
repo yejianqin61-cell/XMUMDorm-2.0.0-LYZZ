@@ -4,12 +4,14 @@
  * ============================================
  * - Tabs: all / delivery / purchase / urgent
  * - Status: open / taken / done
- * - No private chat core: contact_info is returned in detail
+ * - No private chat core: contact_info 只给发布者、接单人和管理员（接单后可见）
+ * - 接单：发布者/管理员可切换状态（旧行为）；其他登录用户可认领待接单任务、也可放弃自己认领的
  */
 const express = require('express');
 const router = express.Router();
 const { query } = require('../database');
 const authenticateToken = require('../middleware/auth');
+const optionalAuth = require('../middleware/optionalAuth');
 const { checkSanction } = require('../middleware/checkSanction');
 const sensitiveWordFilter = require('../middleware/sensitiveWordFilter');
 const { requireCurrentTerms } = require('../services/termsAcceptance');
@@ -195,7 +197,7 @@ router.get('/me', authenticateToken, async (req, res, next) => {
 // Detail
 // GET /api/errands/:id
 // =========================
-router.get('/:id', async (req, res, next) => {
+router.get('/:id', optionalAuth, async (req, res, next) => {
   try {
     const id = toInt(req.params.id, 0);
     if (!id) {
@@ -222,6 +224,11 @@ router.get('/:id', async (req, res, next) => {
       return res.status(404).json({ status: -1, message: '任务不存在' });
     }
 
+    const viewerId = req.user ? Number(req.user.id) : null;
+    const canSeeContact = !!req.user
+      && (isAdmin(req) || Number(r.owner_id) === viewerId || (!!r.taker_id && Number(r.taker_id) === viewerId));
+    res.set('Cache-Control', 'private, no-store');
+
     res.json({
       status: 0,
       data: {
@@ -233,7 +240,8 @@ router.get('/:id', async (req, res, next) => {
         location: r.location,
         type: r.type,
         status: r.status,
-        contactInfo: r.contact_info || '',
+        contactInfo: canSeeContact ? r.contact_info || '' : '',
+        contactHidden: !canSeeContact,
         takenAt: r.taken_at,
         doneAt: r.done_at,
         createdAt: r.created_at,
@@ -296,7 +304,7 @@ router.post('/', authenticateToken, requireCurrentTerms, checkSanction, sensitiv
 // Take task
 // POST /api/errands/:id/take
 // =========================
-router.post('/:id/take', authenticateToken, async (req, res, next) => {
+router.post('/:id/take', authenticateToken, checkSanction, async (req, res, next) => {
   try {
     const id = toInt(req.params.id, 0);
     const userId = req.user && req.user.id;
@@ -311,10 +319,38 @@ router.post('/:id/take', authenticateToken, async (req, res, next) => {
     const canToggle = ownerId === Number(userId) || isAdmin(req);
 
     // toggle behavior:
-    // - open <-> taken (only owner/admin)
+    // - open <-> taken（发布者/管理员，不记录接单人）
+    // - open -> taken（其他用户认领，记录接单人）；taken -> open（仅认领者本人放弃）
     // - done: disallow toggle here
     if (status === 'done') return res.status(409).json({ status: -1, message: '该任务已完成，无法操作接单' });
-    if (!canToggle) return res.status(403).json({ status: -1, message: '仅发布者或管理员可切换接单状态' });
+
+    if (!canToggle) {
+      if (status === 'open') {
+        const r = await query(
+          `
+          UPDATE errands
+          SET status = 'taken', taken_by_user_id = ?, taken_at = NOW()
+          WHERE id = ? AND status = 'open';
+          `,
+          [userId, id]
+        );
+        if (!r.affectedRows) return res.status(409).json({ status: -1, message: '接单失败，请刷新后重试' });
+        return res.json({ status: 0, message: '已接单' });
+      }
+      if (status === 'taken' && Number(e.taken_by_user_id) === Number(userId)) {
+        const r = await query(
+          `
+          UPDATE errands
+          SET status = 'open', taken_by_user_id = NULL, taken_at = NULL
+          WHERE id = ? AND status = 'taken' AND taken_by_user_id = ?;
+          `,
+          [id, userId]
+        );
+        if (!r.affectedRows) return res.status(409).json({ status: -1, message: '取消接单失败，请刷新后重试' });
+        return res.json({ status: 0, message: '已取消接单' });
+      }
+      return res.status(403).json({ status: -1, message: '该任务已被接单' });
+    }
 
     if (status === 'open') {
       const r = await query(

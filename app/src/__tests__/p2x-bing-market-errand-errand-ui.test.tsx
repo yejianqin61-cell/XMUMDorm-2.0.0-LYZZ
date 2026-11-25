@@ -75,10 +75,15 @@ it('列表泄漏联系方式作为错误，不展示内容',async()=>{
  list.mockResolvedValue({list:[{...row,contactInfo:'test contact'}],page:1,pageSize:5,total:1});
  const v=await renderApp(<ErrandListScreen/>);await waitFor(()=>expect(v.getByTestId('errand-list-error')).toBeTruthy());expect(v.queryByText('test contact')).toBeNull();expect(v.queryByTestId('errand-row-2')).toBeNull();
 });
-it('详情展示联系信息，非所有者不出现状态操作',async()=>{
+it('接单前后端不给联系方式：显示提示、不给拨号复制',async()=>{
+ detail.mockResolvedValue({...full,contactInfo:'',contactHidden:true});me.mockResolvedValue({id:9,role:'student'});
+ const v=await renderApp(<ErrandDetailScreen errandId="2"/>);await waitFor(()=>expect(v.getByTestId('errand-contact-hidden')).toBeTruthy());
+ expect(v.getByText('接单后可见')).toBeTruthy();expect(v.queryByTestId('errand-dial')).toBeNull();
+});
+it('非所有者可认领待接单任务，但不能标记完成',async()=>{
  detail.mockResolvedValue(full);me.mockResolvedValue({id:9,role:'student'});
  const v=await renderApp(<ErrandDetailScreen errandId="2"/>);await waitFor(()=>expect(v.getByText('test contact')).toBeTruthy());
- expect(v.queryByTestId('errand-take')).toBeNull();expect(v.queryByTestId('errand-done')).toBeNull();
+ await waitFor(()=>expect(v.getByTestId('errand-take')).toBeTruthy());expect(v.getByText('接单')).toBeTruthy();expect(v.queryByTestId('errand-done')).toBeNull();
 });
 it('任务详情首屏显示报酬地点截止时间和状态摘要',async()=>{
  const task={...full,location:'Library',deadline:'2026-10-16T12:00:00.000Z'};detail.mockResolvedValue(task);me.mockResolvedValue({id:9,role:'student'});

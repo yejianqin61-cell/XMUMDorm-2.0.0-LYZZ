@@ -126,7 +126,9 @@ export function ErrandDetailScreen({published=false,errandId}:{published?:boolea
  React.useEffect(()=>{void load();return()=>{epoch.current++;};},[load]);
  React.useEffect(()=>{setReportOpen(false);setReportReason(null);setReportDetail('');},[errandId]);
  React.useEffect(()=>{if(report.state==='success'){setReportOpen(false);toast.show({message:t('screen.campus.report.success'),tone:'success'});}},[report.state,t,toast]);
- const canTake=!!(item&&viewer&&(viewer.id===item.ownerId||viewer.role==='admin')&&item.status!=='done');
+ const manages=!!(item&&viewer&&(viewer.id===item.ownerId||viewer.role==='admin'));
+ // 发布者/管理员切换状态；其他人认领待接单任务，或放弃自己认领的
+ const canTake=!!(item&&viewer&&item.status!=='done'&&(manages||item.status==='open'||viewer.id===item.takerId));
  const canDelete=!!(item&&viewer&&(viewer.id===item.ownerId||viewer.role==='admin'));
  const phone=item?.contactInfo.trim();
  const dialNumber=phone&&/^\+?[\d ()-]{5,24}$/.test(phone)?phone.replace(/[ ()-]/g,''):null;
@@ -162,12 +164,12 @@ export function ErrandDetailScreen({published=false,errandId}:{published?:boolea
  return <DetailScreen testID="errand-detail" title={item?.title??t('screen.errand.detail')} author={{kind:'named',name:item?.ownerName??t('screen.errand.owner')}} onReport={item&&report.state!=='success'?()=>setReportOpen(true):undefined} interactions={{}} onBack={back} onRetry={()=>void load()} state={loading?'loading':error?.kind==='content'?'empty':error?'error':item?'content':'empty'} error={error}
   empty={{kind:'noResult',title:t('screen.errand.unavailable'),actionLabel:t('screen.errand.back'),onAction:back}}
   body={item?<><View testID="errand-detail-summary" style={{gap:theme.space('space_2')}}><View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between'}}><Text role="title" emphasis="strong" colorToken="text-brand">{`RM ${item.reward.toFixed(2)}`}</Text><Badge text={t(statusKeys[item.status as 'open'|'taken'|'done'])} tone={item.status==='open'?'success':item.status==='taken'?'brand':'neutral'}/></View>{item.location||formatErrandDeadline(item.deadline,locale)?<Surface rounded="radius_large" padding="space_3" style={{gap:theme.space('space_1')}}>{item.location?<Text role="body">{item.location}</Text>:null}{formatErrandDeadline(item.deadline,locale)?<Text role="caption" colorToken="text-secondary">{formatErrandDeadline(item.deadline,locale)}</Text>:null}</Surface>:null}</View><Text role="body">{item.description}</Text>
-   <Surface testID="errand-contact-actions" rounded="radius_large" padding="space_3" style={{gap:theme.space('space_2')}}><Text role="caption" colorToken="text-secondary">{t('screen.errand.contact')}</Text><Text role="headline">{item.contactInfo}</Text>
-   <ContactCopy value={item.contactInfo}/>{dialNumber?<Button testID="errand-dial" label={t('screen.errand.dial')} onPress={()=>void dial()}/>:null}
+   <Surface testID="errand-contact-actions" rounded="radius_large" padding="space_3" style={{gap:theme.space('space_2')}}><Text role="caption" colorToken="text-secondary">{t('screen.errand.contact')}</Text>{item.contactInfo?<Text role="headline">{item.contactInfo}</Text>:<Text testID="errand-contact-hidden" role="body" colorToken="text-secondary">{t(session.isSignedIn?'screen.errand.contactAfterTake':'screen.errand.contactSignin')}</Text>}
+   {item.contactInfo?<ContactCopy value={item.contactInfo}/>:null}{dialNumber?<Button testID="errand-dial" label={t('screen.errand.dial')} onPress={()=>void dial()}/>:null}
    {contactError?<Text role="body">{t('screen.errand.dialFailed')}</Text>:null}</Surface>
    <View testID="errand-status-actions">{canDelete?<Button testID="errand-delete" disabled={busy||uncertain.current} label={t('screen.errand.delete')} onPress={()=>setConfirm('delete')}/>:null}
    {identityError?<Button label={t('screen.errand.identityFailed')} onPress={()=>void load()}/>:null}
-   {canTake?<Button testID="errand-take" disabled={busy||uncertain.current} label={t(item.status==='taken'?'screen.errand.untake':'screen.errand.take')} onPress={()=>setConfirm('take')}/>:null}
+   {canTake?<Button testID="errand-take" disabled={busy||uncertain.current} label={t(item.status==='taken'?'screen.errand.untake':manages?'screen.errand.take':'screen.errand.claim')} onPress={()=>setConfirm('take')}/>:null}
    {canDone?<Button testID="errand-done" disabled={busy||uncertain.current} label={t(item.status==='done'?'screen.errand.undo':'screen.errand.complete')} onPress={()=>setConfirm('done')}/>:null}
    {notice?<><Text role="body">{t(noticeKeys[notice])}</Text><Button testID="errand-detail-refresh" label={t('screen.errand.refresh')} onPress={()=>void load()}/></>:null}</View>
    <AlertDialog testID="errand-confirm" visible={confirm!==null} title={t('screen.errand.detail')} body={t(confirm==='delete'?'screen.errand.deleteConfirm':'screen.errand.confirmBody')} confirmLabel={t('screen.errand.confirm')} cancelLabel={t('action.cancel')} onCancel={()=>setConfirm(null)} onConfirm={()=>{if(confirm)void action(confirm);}}/>{reportPanel}
