@@ -19,7 +19,6 @@ export const PROTECTED_ROUTE_PREFIXES: readonly string[] = [
   '/me',
   '/mailbox',
   '/publish',
-  '/publish-center',
 ];
 
 const PUBLIC_ME_PATHS: readonly string[] = [

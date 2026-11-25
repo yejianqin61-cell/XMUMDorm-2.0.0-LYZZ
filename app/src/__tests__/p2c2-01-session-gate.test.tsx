@@ -83,7 +83,8 @@ describe('P2C2-01 A-01 启动与会话水合', () => {
       expect(routeRequiresAuth('/me')).toBe(false);
       expect(routeRequiresAuth('/me/edit')).toBe(true);
       expect(routeRequiresAuth('/mailbox')).toBe(true);
-      expect(routeRequiresAuth('/publish-center')).toBe(true);
+      // 第四轮 R4-32：游客可看发布中心（能发什么），选中后再登录；表单路由仍受保护
+      expect(routeRequiresAuth('/publish-center')).toBe(false);
       expect(routeRequiresAuth('/publish/confession')).toBe(true);
 
       expect(routeRequiresAuth('/')).toBe(false);

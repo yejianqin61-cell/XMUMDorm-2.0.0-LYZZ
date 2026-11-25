@@ -38,6 +38,7 @@ import { clearMoodleCache } from '@/features/tools/moodle/cache';
 import { setGuestMode } from '@/features/todos/guestMode';
 import { syncLocalTodosToAccount } from '@/features/todos/localTodos';
 import { createRemoteTodo } from '@/features/todos/todoApi';
+import { notifyTodosSynced } from '@/features/todos/todos';
 import type { AppError } from '@/i18n/errors';
 
 /* ────────────────────────── 状态机（纯函数） ────────────────────────── */
@@ -175,7 +176,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
         clearMoodleCache();
         await saveToken(result.token);
         // 游客期间建的待办补到账号（失败的留在本地，下次再试）
-        void syncLocalTodosToAccount(createRemoteTodo).catch(() => undefined);
+        void syncLocalTodosToAccount(createRemoteTodo).then(notifyTodosSynced).catch(() => undefined);
         dispatch({ type: 'login:success', identifier });
         return { ok: true };
       } catch (error) {
@@ -214,7 +215,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
         // 注册成功等同换账号，同样清旧 Moodle 快照（审计 D-3）
         clearMoodleCache();
         await saveToken(result.token);
-        void syncLocalTodosToAccount(createRemoteTodo).catch(() => undefined);
+        void syncLocalTodosToAccount(createRemoteTodo).then(notifyTodosSynced).catch(() => undefined);
         dispatch({ type: 'login:success', identifier: body.username });
         return { ok: true };
       } catch (error) {
@@ -228,7 +229,10 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
   const handleAuthFailure = React.useCallback(
     async (error: unknown, phase: AuthPhase = 'request'): Promise<AppError> => {
       const failure = classifyAuthFailure(error, phase);
-      if (isSessionInvalid(failure)) await markExpired();
+      // 401 = 这次请求根本没带令牌（带了坏令牌后端回 403）。手里明明有令牌却收到 401，
+      // 只可能是水合前发出的请求姗姗来迟 —— 不能因此把有效会话清掉。
+      const staleNoToken = failure === 'noToken' && readTokenSync() !== null;
+      if (isSessionInvalid(failure) && !staleNoToken) await markExpired();
       return authFailureToAppError(failure);
     },
     [markExpired]

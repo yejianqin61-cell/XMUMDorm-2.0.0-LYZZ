@@ -18,7 +18,7 @@ import type { AppError } from '@/i18n/errors';
 import { useSession } from '@/features/auth/session';
 import { timetableIdentity } from '@/features/tools/cacheIdentity';
 import { getTodos, toggleTodo, deleteTodo } from './todoApi';
-import { normalizeTodos, mergeTodos, notifyTodosChanged, TODO_PRIORITY_KEYS, toTodoError, type Todo } from './todos';
+import { normalizeTodos, mergeTodos, notifyTodosChanged, subscribeTodosSynced, TODO_PRIORITY_KEYS, toTodoError, type Todo } from './todos';
 
 export function TodoListScreen(): React.ReactElement {
   const badge = useMailboxBadge();
@@ -67,6 +67,8 @@ export function TodoListScreen(): React.ReactElement {
     setRows([]); setWriteError(null); void load('refresh');
     return () => { version.current += 1; loading.current = false; };
   }, [load, epoch]));
+
+  React.useEffect(() => subscribeTodosSynced(() => { void load('refresh'); }), [load]);
 
   const mutate = async (operation: () => Promise<unknown>) => {
     if (busyRef.current) return;

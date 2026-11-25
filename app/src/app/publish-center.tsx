@@ -32,14 +32,19 @@ export default function PublishCenterScreen(): React.ReactElement {
    */
   const { viewer } = useViewer();
 
-  const entries = React.useMemo(() => visibleEntries(viewer), [viewer]);
+  // 游客也能看「能发什么」：按普通已登录学生预览条目（社团类需要后端给的管理权，天然不出现）；
+  // 这只是展示预览，选中后先去登录，表单路由本身仍由会话门保护。
+  const entries = React.useMemo(
+    () => visibleEntries(viewer.signedIn ? viewer : { signedIn: true }),
+    [viewer]
+  );
 
   const openForm = React.useCallback(
     (id: string) => {
       // 关闭发布中心 → 再进表单：返回时仍落回点击中央发布格之前的位置（4.9.2-②）
-      router.push(formRouteFor(id as Parameters<typeof formRouteFor>[0]));
+      router.push(viewer.signedIn ? formRouteFor(id as Parameters<typeof formRouteFor>[0]) : '/login');
     },
-    [router]
+    [router, viewer.signedIn]
   );
 
   return (
