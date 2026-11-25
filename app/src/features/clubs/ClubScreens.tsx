@@ -7,10 +7,11 @@ import { Button } from '@/components/ui/Button';
 import { AlertDialog } from '@/components/ui/AlertDialog';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
-import { FilterChips } from '@/components/ui/FilterChips';
+import { UnderlineFilter } from '@/components/ui/UnderlineFilter';
 import { InlineNotice } from '@/components/ui/InlineNotice';
 import { Input } from '@/components/ui/Input';
 import { ListScreen, useListPagination } from '@/components/ui/ListScreen';
+import { Avatar } from '@/components/ui/Avatar';
 import { ListItem } from '@/components/ui/ListItem';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { MediaGrid } from '@/components/ui/MediaGrid';
@@ -36,10 +37,11 @@ function asPositiveId(value: string): number | null {
   return /^[1-9]\d*$/.test(value) && Number.isSafeInteger(Number(value)) ? Number(value) : null;
 }
 
-function appError(error: unknown): { kind: 'content' | 'permission' | 'unreachable' | 'unknown' } {
+function appError(error: unknown): { kind: 'content' | 'permission' | 'signin' | 'unreachable' | 'unknown' } {
   const status = (error as { status?: unknown } | null)?.status;
   if (status === 404) return { kind: 'content' };
-  if (status === 401 || status === 403) return { kind: 'permission' };
+  if (status === 401) return { kind: 'signin' };
+  if (status === 403) return { kind: 'permission' };
   return { kind: error instanceof TypeError ? 'unreachable' : 'unknown' };
 }
 
@@ -105,6 +107,7 @@ const CATEGORY_LABELS: Record<ClubCategory, MessageKey> = {
 export function ClubDiscoveryScreen({ embedded = false }: { embedded?: boolean } = {}): React.ReactElement {
   const router = useRouter();
   const { t } = useI18n();
+  const theme = useTheme();
   const { pagination, dispatch } = useListPagination({ initial: { hasMore: true } });
   const [rows, setRows] = React.useState<readonly ClubSummary[]>([]);
   const page = React.useRef(0);
@@ -171,20 +174,20 @@ export function ClubDiscoveryScreen({ embedded = false }: { embedded?: boolean }
 
   return (
     <FeatureScreen embedded={embedded} titleKey="clubs.title" showMailbox={false} testID="clubs-screen">
-      <SearchField
-        testID="club-search"
-        value={queryInput}
-        onChangeText={changeQueryInput}
-        onSubmit={submitQuery}
-        placeholder={t('clubs.search.placeholder')}
-      />
-      <FilterChips
+      <View style={{ paddingHorizontal: theme.space('space_4'), paddingTop: theme.space('space_2') }}>
+        <SearchField
+          testID="club-search"
+          value={queryInput}
+          onChangeText={changeQueryInput}
+          onSubmit={submitQuery}
+          placeholder={t('clubs.search.placeholder')}
+        />
+      </View>
+      <UnderlineFilter
         testID="club-filter"
-        itemTestIDPrefix="club-filter-chip"
-        options={CLUB_CATEGORIES.map((key) => ({ key, labelKey: CATEGORY_LABELS[key] }))}
-        selected={category ? [category] : []}
-        onToggle={toggleCategory}
-        onClear={() => toggleCategory(category ?? '')}
+        options={[{ key: 'all', labelKey: 'action.all' }, ...CLUB_CATEGORIES.map((key) => ({ key, labelKey: CATEGORY_LABELS[key] }))]}
+        selectedKey={category ?? 'all'}
+        onSelect={(key) => { if (key !== (category ?? 'all')) toggleCategory(key); }}
       />
       <ListScreen
         testID="club-list"
@@ -197,15 +200,17 @@ export function ClubDiscoveryScreen({ embedded = false }: { embedded?: boolean }
         onRetryAppend={() => void load('append')}
         labels={{
           retryLabel: t('action.retry'),
-          endLabel: t('clubs.end'),
+          endLabel: t('screen.list.end'),
           empty: { kind: 'noResult', title: t('clubs.empty'), actionLabel: t('action.refresh'), onAction: () => void load('refresh') },
         }}
         renderItem={(club) => (
-          <Button
+          <ListItem
             testID={`club-list-row-${club.id}`}
-            label={`${club.name} · ${t('clubs.followers', { n: club.followers })}`}
-            variant="secondary"
-            fullWidth
+            title={club.name}
+            subtitle={club.description.trim() || undefined}
+            meta={t(club.followers === 1 ? 'clubs.followers.one' : 'clubs.followers', { n: club.followers })}
+            leading={<Avatar size="space_8" uri={club.avatar ?? undefined} />}
+            variant="nav"
             onPress={() => router.push(`/clubs/${club.id}` as never)}
           />
         )}
@@ -221,7 +226,7 @@ export function ClubProfileScreen({ clubId }: { clubId: string }): React.ReactEl
   const id = asPositiveId(clubId);
   const [profile, setProfile] = React.useState<ClubProfile | null>(null);
   const [loading, setLoading] = React.useState(id !== null);
-  const [error, setError] = React.useState<{ kind: 'content' | 'permission' | 'unreachable' | 'unknown' } | null>(id === null ? { kind: 'content' } : null);
+  const [error, setError] = React.useState<{ kind: 'content' | 'permission' | 'signin' | 'unreachable' | 'unknown' } | null>(id === null ? { kind: 'content' } : null);
   const follow = useClubFollow({
     clubId: id ?? 0,
     following: profile?.basicInfo.viewer.following ?? false,
@@ -272,7 +277,7 @@ export function ClubProfileScreen({ clubId }: { clubId: string }): React.ReactEl
       <View style={{ gap: theme.space('space_3') }}>
         <Text role="title" emphasis="strong">{basicInfo.name}</Text>
         <Text role="body">{basicInfo.description}</Text>
-        <Text testID="club-profile-followers" role="body">{t('clubs.followers', { n: follow.followers })}</Text>
+        <Text testID="club-profile-followers" role="body">{t(follow.followers === 1 ? 'clubs.followers.one' : 'clubs.followers', { n: follow.followers })}</Text>
         <Button
           testID="club-profile-follow"
           label={t(follow.following ? 'clubs.unfollow' : 'clubs.follow')}
@@ -315,7 +320,7 @@ export function MyClubsScreen(): React.ReactElement {
     <Screen titleKey="clubs.my" showMailbox={false} testID="my-clubs-screen">
       {rows === null && error === null ? <LoadingState /> : error ? <ErrorState error={error} onAction={() => void load()} /> : displayRows.length === 0 ? <EmptyState kind="noResult" title={t('clubs.myEmpty')} actionLabel={t('action.refresh')} onAction={() => void load()} /> : (
         <View style={{ gap: theme.space('space_2') }}>
-          {displayRows.map((club) => <Button key={club.id} testID={`my-club-row-${club.id}`} label={`${club.name} · ${t('clubs.followers', { n: club.followers })}`} variant="secondary" fullWidth onPress={() => router.push(`/clubs/${club.id}` as never)} />)}
+          {displayRows.map((club) => <Button key={club.id} testID={`my-club-row-${club.id}`} label={`${club.name} · ${t(club.followers === 1 ? 'clubs.followers.one' : 'clubs.followers', { n: club.followers })}`} variant="secondary" fullWidth onPress={() => router.push(`/clubs/${club.id}` as never)} />)}
         </View>
       )}
     </Screen>

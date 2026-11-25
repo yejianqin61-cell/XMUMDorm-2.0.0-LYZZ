@@ -15,7 +15,7 @@ jest.mock('expo-router', () => ({
 }));
 jest.mock('expo-router/react-navigation', () => ({ usePreventRemove: jest.fn() }));
 jest.mock('@/features/auth/session', () => ({ useSession: () => ({
-  status: 'signedIn', handleAuthFailure: async (error: unknown) => error ?? { kind: 'unknown' },
+  status: 'signedIn', isSignedIn: true, handleAuthFailure: async (error: unknown) => error ?? { kind: 'unknown' },
 }) }));
 jest.mock('../../../shared/api/schedule', () => ({ getScheduleWeek: jest.fn(async (week: number) => ({ week, currentWeek: week, totalWeeks: 14, days: {} })) }));
 jest.mock('../../../shared/api/todos', () => ({ getTodayTodos: jest.fn(), createTodo: jest.fn() }));
@@ -32,7 +32,7 @@ beforeEach(async () => {
 it('creates from the dashboard through the existing form route', async () => {
   const view = await renderApp(<ToolsDashboardContent />);
   await waitFor(() => expect(view.getByText('Read paper')).toBeTruthy());
-  await fireEvent.press(view.getByText('新增待办'));
+  await fireEvent.press(view.getByTestId('tools-todo-new'));
   expect(jest.requireMock('expo-router').__state.targets).toContain('/tools/todos/new');
   await fireEvent.press(view.getByTestId('tools-todos'));
   expect(jest.requireMock('expo-router').__state.targets).toContain('/tools/todos');

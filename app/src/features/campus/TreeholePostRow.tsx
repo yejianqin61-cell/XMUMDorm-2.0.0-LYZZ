@@ -89,7 +89,8 @@ export function TreeholePostRow({
               {title}
             </Text>
           )}
-          {post.content.trim() ? (
+          {/* 标题与正文是同一句话时只显示一次 */}
+          {post.content.trim() && post.content.trim() !== title ? (
             <SearchHighlight
               testID={`treehole-content-${post.id}`}
               value={post.content}

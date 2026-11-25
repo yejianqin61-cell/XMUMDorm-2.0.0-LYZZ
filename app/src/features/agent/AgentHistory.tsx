@@ -29,7 +29,7 @@ export function AgentHistory({ agent }: { agent: ReturnType<typeof useAgent> }):
           const date = entry.created_at > 0 ? new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : 'en-GB', {
             timeZone: 'Asia/Kuala_Lumpur', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
           }).format(new Date(entry.created_at * 1000)) : t('screen.agent.earlier');
-          return <View key={entry.id} style={{ flexDirection: 'row', alignItems: 'center', borderBottomWidth: theme.borderWidth('border_width_hairline'), borderBottomColor: theme.color['border-subtle'].value }}>
+          return <View key={entry.id} style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Pressable testID={`agent-open-${entry.id}`} accessibilityLabel={title} disabled={agent.historyBusy} onPress={() => agent.openConversation(entry)}
               contentAlign="stretch" style={{ flex: 1, minWidth: 0, paddingVertical: theme.space('space_3'), gap: theme.space('space_1') }}>
               <Text role="body" colorToken="text-primary" numberOfLines={2}>{title}</Text>

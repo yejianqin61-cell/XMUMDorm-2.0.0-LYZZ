@@ -73,9 +73,11 @@ export function SettingsScreen(): React.ReactElement {
 
         <NotificationSettingsSection />
 
+        {session.isSignedIn ? <>
         <SectionHeader title={t('me.settings.account')} />
         <ListItem testID="settings-logout" title={t('auth.logout')} variant="action" onPress={() => void session.logout()} />
         <ListItem testID="settings-deactivate" title={t('me.settings.deactivate')} variant="danger" onPress={() => setDeactivateOpen(true)} />
+        </> : null}
         {deactivationFailed ? <InlineNotice testID="settings-deactivate-failed" tone="warning" message={t('me.settings.deactivate.failed')} /> : null}
 
         {entries.length > 0 ? (

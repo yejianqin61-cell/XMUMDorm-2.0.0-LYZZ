@@ -22,6 +22,8 @@ export type AppErrorKind =
   | 'certificate'
   | 'validation'
   | 'permission'
+  /** 游客（没登录）——不是「出错」：给一个去登录的主行动，⛔ 不用红色 */
+  | 'signin'
   | 'terms'
   | 'content'
   | 'conflict'
@@ -53,7 +55,7 @@ export type ErrorCopy = {
   understand: string;
   fix: string;
   /** 主行动的类型（⛔ 一个错误只给一个主行动） */
-  actionKind: 'retry' | 'edit' | 'refresh' | 'reopen' | 'switchAccount' | 'openExternal';
+  actionKind: 'retry' | 'edit' | 'refresh' | 'reopen' | 'switchAccount' | 'openExternal' | 'login';
 };
 
 export type Translate = (key: MessageKey, params?: Record<string, string | number>) => string;
@@ -89,6 +91,11 @@ const COPY_KEY: Record<AppErrorKind, { perceive: MessageKey; understand: Message
     understand: 'error.permission.understand',
     fix: 'error.permission.fix',
   },
+  signin: {
+    perceive: 'error.signin.perceive',
+    understand: 'error.signin.understand',
+    fix: 'error.signin.fix',
+  },
   terms: {
     perceive: 'error.terms.perceive',
     understand: 'error.terms.understand',
@@ -123,6 +130,7 @@ const ACTION_KIND: Record<AppErrorKind, ErrorCopy['actionKind']> = {
   certificate: 'openExternal',
   validation: 'edit',
   permission: 'switchAccount',
+  signin: 'login',
   terms: 'reopen',
   content: 'edit',
   conflict: 'refresh',

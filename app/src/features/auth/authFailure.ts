@@ -89,11 +89,12 @@ export function authFailureToAppError(
   switch (kind) {
     case 'noToken':
     case 'expiredToken':
-      return { kind: 'permission', target: options.fieldLabel };
+      // 没登录 ≠ 没权限：游客看到的是「去登录」，不是红锁
+      return { kind: 'signin' };
     case 'sanctioned':
-      return { kind: 'permission', params: { role: 'sanctioned' } };
+      return { kind: 'permission' };
     case 'accountUnavailable':
-      return { kind: 'permission', params: { role: 'active' } };
+      return { kind: 'permission' };
     case 'serviceUnavailable':
       return { kind: 'service' };
     case 'badCredentials':

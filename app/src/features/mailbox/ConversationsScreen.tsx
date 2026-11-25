@@ -94,7 +94,7 @@ export function ConversationsScreen(): React.ReactElement {
             },
             errorActionLabel: t('action.retry'),
             retryLabel: t('action.retry'),
-            endLabel: t('mailbox.conversations.end'),
+            endLabel: t('screen.list.end'),
           }}
           renderItem={(row) => {
             const peerName = conversationPeerName(row, t('mailbox.conversations.peerFallback'));

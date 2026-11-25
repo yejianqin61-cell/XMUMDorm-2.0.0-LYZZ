@@ -1,5 +1,5 @@
 import { parseYmd } from '../../../../shared/config/semesters';
-import { getTodos } from '../../../../shared/api/todos';
+import { getTodos } from './todoApi';
 import type { FormValues } from '@/components/ui/FormField';
 import type { MessageKey } from '@/i18n/zh';
 import type { AppError } from '@/i18n/errors';
@@ -50,4 +50,8 @@ export async function findTodo(id: number): Promise<Todo | null> {
 }
 const listeners = new Set<() => void>();
 export function notifyTodosChanged(): void { for (const listener of listeners) listener(); }
+const syncedListeners = new Set<() => void>();
+/** 游客待办补到账号之后：列表与工具页都要重新拉（登录回到原页时同步往往还没做完） */
+export function notifyTodosSynced(): void { for (const listener of syncedListeners) listener(); notifyTodosChanged(); }
+export function subscribeTodosSynced(listener: () => void): () => void { syncedListeners.add(listener); return () => { syncedListeners.delete(listener); }; }
 export function subscribeTodos(listener: () => void): () => void { listeners.add(listener); return () => { listeners.delete(listener); }; }

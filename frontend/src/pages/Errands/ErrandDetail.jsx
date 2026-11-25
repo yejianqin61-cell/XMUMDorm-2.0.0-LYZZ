@@ -19,7 +19,7 @@ function ErrandDetail() {
   const { user } = useAuth();
 
   const q = useQuery({
-    queryKey: QK.errandDetail(errandId),
+    queryKey: [...QK.errandDetail(errandId), user?.id ?? 'guest'],
     queryFn: async () => await getErrandDetail(errandId),
     enabled: Number.isFinite(errandId) && errandId > 0,
   });
@@ -31,7 +31,9 @@ function ErrandDetail() {
     const isAdmin = user?.role === 'admin';
     const isOwner = Number(e.owner?.id) === Number(user.id);
     if (e.status === 'done') return false;
-    return isAdmin || isOwner;
+    if (isAdmin || isOwner) return true;
+    // 其他用户：可认领待接单任务，或放弃自己认领的
+    return e.status === 'open' || Number(e.taker?.id) === Number(user.id);
   }, [e, user?.id, user?.role]);
 
   const takeMut = useMutation({
@@ -56,7 +58,9 @@ function ErrandDetail() {
   const isAdmin = user?.role === 'admin';
   const isOwner = Number(e.owner?.id) === Number(user?.id);
   const canDelete = isAdmin || isOwner;
-  const takeLabel = e.status === 'taken' ? (isZh ? '取消接单' : 'Untake') : (isZh ? '已接单' : 'Take task');
+  const takeLabel = e.status === 'taken'
+    ? (isZh ? '取消接单' : 'Untake')
+    : canDelete ? (isZh ? '已接单' : 'Mark taken') : (isZh ? '接单' : 'Take task');
 
   return (
     <div className="err-page">
@@ -116,7 +120,11 @@ function ErrandDetail() {
           <div className="err-detail-contact-title">{isZh ? '联系方式（无私聊）' : 'Contact (no chat)'}</div>
           <div className="err-detail-contact-row">
             <Phone size={16} aria-hidden />
-            <span className="err-wrap">{e.contactInfo}</span>
+            <span className="err-wrap">
+              {e.contactHidden
+                ? (user?.id ? (isZh ? '接单后可见' : 'Visible after you take the task') : (isZh ? '登录并接单后可见' : 'Sign in and take the task to see it'))
+                : e.contactInfo}
+            </span>
           </div>
         </div>
 
@@ -132,7 +140,7 @@ function ErrandDetail() {
           </button>
         </div>
 
-        {canTake ? (
+        {canTake && canDelete ? (
           <div className="err-owner-hint">
             {isZh
               ? '提醒：如果有人接单，请点击上面的按钮切换状态。'

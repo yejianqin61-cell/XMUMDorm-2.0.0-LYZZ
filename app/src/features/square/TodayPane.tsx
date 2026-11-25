@@ -19,14 +19,25 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { ListItem } from '@/components/ui/ListItem';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { SectionHeader } from '@/components/ui/SectionHeader';
+import { Surface } from '@/components/ui/Surface';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { clockMinutes } from '@/features/tools/timetableView';
+import { schoolClockMinutes } from '@/features/tools/todaySummary';
 import { Text } from '@/components/ui/Text';
 import { useTheme } from '@/design-system/theme';
 import { useI18n, type Translate } from '@/i18n';
 import { formatClockTime } from '@/features/me/dashboard';
 import type { TimetableMeeting } from '@/features/tools/timetable';
+import { SquareModuleEntries } from './SquareModuleEntries';
+import { AgentEntry } from './AgentEntry';
+import { HotPostCard } from './HotPostCard';
 import { agendaCourses, deadlineWhen } from './todayAgenda';
 import { useMoodleAgenda } from './useMoodleAgenda';
 import { useTodayTimetable } from './useTodayTimetable';
+import { useTodayTodos } from '@/features/todos/useTodayTodos';
+import { toggleTodo } from '@/features/todos/todoApi';
+import { notifyTodosChanged } from '@/features/todos/todos';
 
 /** 截止时间的单行文案（课程名 · 今天/明天/日期 + 时钟） */
 export function deadlineLine(
@@ -50,6 +61,9 @@ export function deadlineLine(
   };
 }
 
+/** 签到入口的时间窗：开课时刻前后各这么多分钟 */
+const CHECKIN_WINDOW_MIN = 15;
+
 export function TodayPane(): React.ReactElement {
   const theme = useTheme();
   const { t } = useI18n();
@@ -69,6 +83,31 @@ export function TodayPane(): React.ReactElement {
   );
 
   const loadingCourses = timetable.loading && timetable.week === null;
+  // 今日待办并入时间轴末尾（游客读本机待办）；取不到就不画，⛔ 不给首页多一个错误态
+  const todos = useTodayTodos();
+
+  // 原型 Main 的时间轴：**今天截止**的作业按时间插进课程之间；其余仍列在下方「Moodle 待交」
+  const indexed = (agenda.synced ? agenda.deadlines : []).map((deadline, index) => ({ deadline, index }));
+  const dueToday = indexed.filter((d) => deadlineWhen(now.getTime(), d.deadline.dueAt)?.kind === 'today');
+  const dueLater = indexed.filter((d) => !dueToday.includes(d));
+  const timeline = [
+    ...courses.map((course, index) => ({ kind: 'course' as const, at: clockMinutes(course.startTime) ?? 0, course, index })),
+    ...dueToday.map(({ deadline, index }) => ({ kind: 'deadline' as const, at: clockMinutes(deadlineWhen(now.getTime(), deadline.dueAt)?.clock) ?? 0, deadline, index })),
+  ].sort((a, b) => a.at - b.at);
+
+  const deadlineRow = ({ deadline, index }: (typeof indexed)[number]) => {
+    const line = deadlineLine(t, deadline, now.getTime());
+    return (
+      <ListItem
+        key={deadline.key}
+        testID={`today-deadline-${index}`}
+        title={line.title}
+        subtitle={line.subtitle}
+        leading={<Text role="label" emphasis="strong" colorToken="text-primary">{deadlineWhen(now.getTime(), deadline.dueAt)?.clock ?? ''}</Text>}
+        onPress={() => router.push('/system/moodle')}
+      />
+    );
+  };
 
   return (
     <ScrollView
@@ -82,24 +121,56 @@ export function TodayPane(): React.ReactElement {
         gap: theme.space('space_6'),
       }}
     >
+      <Surface testID="today-timeline" rounded="radius_large" style={{ gap: theme.space('space_3'), paddingVertical: theme.space('space_3') }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: theme.space('space_4') }}>
+        <Badge text={t('square.today.title')} tone="neutral" />
+        <Button testID="today-full-timetable" label={t('square.today.fullTimetable')} variant="link" size="small" onPress={() => router.push('/tools/timetable')} />
+      </View>
       <View testID="today-courses" style={{ gap: theme.space('space_2') }}>
         <SectionHeader title={t('square.today.courses')} />
         {loadingCourses ? (
           <LoadingState testID="today-courses-loading" />
+        ) : timetable.error?.kind === 'signin' && timetable.week === null ? (
+          // 游客：一行入口，别让一整屏中间只剩「去登录」
+          <ListItem
+            testID="today-courses-signin"
+            title={t('error.signin.perceive')}
+            subtitle={t('error.signin.understand')}
+            onPress={() => router.push('/login')}
+          />
         ) : timetable.error !== null && timetable.week === null ? (
           <ErrorState
             testID="today-courses-error"
             error={timetable.error}
             onAction={timetable.reload}
           />
-        ) : courses.length === 0 ? (
-          <Text role="body" colorToken="text-secondary">
+        ) : timeline.length === 0 ? (
+          <Text role="body" colorToken="text-secondary" style={{ paddingHorizontal: theme.space('space_4') }}>
             {t('square.today.noCourses')}
           </Text>
         ) : (
-          courses.map((course, index) => (
-            <ListItem
+          timeline.map((entry) => {
+            if (entry.kind === 'deadline') return deadlineRow(entry);
+            const { course, index } = entry;
+            const start = clockMinutes(course.startTime);
+            const end = clockMinutes(course.endTime);
+            const nowMin = schoolClockMinutes(now);
+            const ongoing = start !== null && end !== null && start <= nowMin && nowMin < end;
+            return (
+            <View
               key={`${course.courseCode}:${course.startTime ?? ''}:${index}`}
+              style={ongoing ? {
+                borderRadius: theme.radius('radius_medium'),
+                borderWidth: theme.borderWidth('border_width_brutal'),
+                borderColor: theme.color['action-accent'].value,
+              } : undefined}
+            >
+              {ongoing ? (
+                <View testID={`today-course-${index}-ongoing`} style={{ paddingHorizontal: theme.space('space_4'), paddingTop: theme.space('space_2'), alignItems: 'flex-start' }}>
+                  <Badge text={t('square.today.ongoing')} tone="accent" />
+                </View>
+              ) : null}
+            <ListItem
               testID={`today-course-${index}`}
               title={course.courseName ?? course.courseCode}
               subtitle={t('tools.dashboard.courseLine', {
@@ -107,13 +178,22 @@ export function TodayPane(): React.ReactElement {
                 end: formatClockTime(course.endTime),
                 venue: course.venue ?? t('tools.dashboard.noVenue'),
               })}
-              meta={formatClockTime(course.startTime)}
+              leading={<Text role="label" emphasis="strong" colorToken="text-primary">{formatClockTime(course.startTime)}</Text>}
               onPress={() => router.push('/tools/timetable')}
             />
-          ))
+              {start !== null && Math.abs(nowMin - start) <= CHECKIN_WINDOW_MIN ? (
+                // 开课前后 15 分钟给「去签到」直达签到系统（⛔ 不自动签到）
+                <View style={{ paddingHorizontal: theme.space('space_4'), paddingBottom: theme.space('space_3'), alignItems: 'flex-start' }}>
+                  <Button testID={`today-course-${index}-checkin`} label={t('square.today.checkin')} variant="primary" size="small" onPress={() => router.push('/system/checkin')} />
+                </View>
+              ) : null}
+            </View>
+            );
+          })
         )}
       </View>
 
+      {agenda.synced && dueLater.length === 0 && dueToday.length > 0 ? null : (
       <View testID="today-deadlines" style={{ gap: theme.space('space_2') }}>
         <SectionHeader title={t('square.today.deadlines')} />
         {!agenda.synced ? (
@@ -123,25 +203,29 @@ export function TodayPane(): React.ReactElement {
             subtitle={t('square.today.moodleSync')}
             onPress={() => router.push('/system/moodle')}
           />
-        ) : agenda.deadlines.length === 0 ? (
-          <Text role="body" colorToken="text-secondary">
+        ) : dueLater.length === 0 ? (
+          <Text role="body" colorToken="text-secondary" style={{ paddingHorizontal: theme.space('space_4') }}>
             {t('square.today.noDeadlines')}
           </Text>
         ) : (
-          agenda.deadlines.map((deadline, index) => {
-            const line = deadlineLine(t, deadline, now.getTime());
-            return (
-              <ListItem
-                key={deadline.key}
-                testID={`today-deadline-${index}`}
-                title={line.title}
-                subtitle={line.subtitle}
-                onPress={() => router.push('/system/moodle')}
-              />
-            );
-          })
+          dueLater.map(deadlineRow)
         )}
       </View>
+      )}
+      {todos.data && todos.data.top.length > 0 ? (
+        <View testID="today-todos" style={{ gap: theme.space('space_2') }}>
+          <SectionHeader title={t('tools.dashboard.todos')} />
+          {todos.data.top.map((todo) => (
+            <ListItem key={todo.id} testID={`today-todo-${todo.id}`} title={todo.title} variant="select" selected={false}
+              onToggleSelect={() => { void toggleTodo(todo.id).then(() => notifyTodosChanged()).catch(() => todos.reload()); }} />
+          ))}
+        </View>
+      ) : null}
+      </Surface>
+      {/* 常用入口（原型：时间轴之下的一排小卡，不再常驻在所有 Tab 上方） */}
+      <SquareModuleEntries />
+      <AgentEntry />
+      <HotPostCard />
     </ScrollView>
   );
 }

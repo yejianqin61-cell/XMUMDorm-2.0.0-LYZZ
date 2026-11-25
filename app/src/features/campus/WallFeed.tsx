@@ -330,7 +330,7 @@ function WallFeedSession({
       )}
       labels={{
         retryLabel: t('action.retry'),
-        endLabel: t('screen.campus.read.listEnd'),
+        endLabel: t('screen.list.end'),
         empty: {
           kind: 'firstRun',
           title: t('wall.feed.emptyReal'),

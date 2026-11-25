@@ -29,9 +29,10 @@ function asArticle(value: unknown): Article {
 function errorFor(error: unknown): AppError {
  if (error && typeof error === 'object') {
   const e = error as { kind?: AppError['kind']; status?: number; name?: string };
-  if (e.kind && ['offline','unreachable','timeout','validation','permission','content','conflict','unknown'].includes(e.kind)) return { kind: e.kind };
+  if (e.kind && ['offline','unreachable','timeout','validation','permission','signin','content','conflict','unknown'].includes(e.kind)) return { kind: e.kind };
   if (e.status === 404) return { kind: 'content' };
-  if (e.status === 401 || e.status === 403) return { kind: 'permission' };
+  if (e.status === 401) return { kind: 'signin' };
+  if (e.status === 403) return { kind: 'permission' };
   if (e.name === 'AbortError') return { kind: 'timeout' };
   if (error instanceof TypeError) return { kind: 'unreachable' };
  }
@@ -126,7 +127,8 @@ export function GuidesListScreen({ embedded = false }: { embedded?: boolean } = 
  React.useEffect(()=>{if(selectedTab!=='all'&&!tabs.some(tab=>tab.slug===selectedTab))setSelectedTab('all');},[selectedTab,tabs]);
  const navigationTabs=React.useMemo<SecondaryTabDefinition[]>(()=>tabs.length===0?[]:[
   {key:'all',labelKey:'square.guides.all' as MessageKey},
-  ...tabs.map(tab=>({key:tab.slug,label:locale==='zh'?(tab.nameZh||tab.nameEn):(tab.nameEn||tab.nameZh)})),
+  // 后端 tabs 里自带 slug=all 的「全部」，与我们前置的 all 重复会让 React key 冲突
+  ...tabs.filter(tab=>tab.slug!=='all').map(tab=>({key:tab.slug,label:locale==='zh'?(tab.nameZh||tab.nameEn):(tab.nameEn||tab.nameZh)})),
  ],[tabs,locale]);
  return <FeatureScreen embedded={embedded} titleKey="square.guides.title" showMailbox={false} testID="guides-screen">
   <TopTabStrip testID="guides-tabs" tabs={navigationTabs} selectedKey={selectedTab} onSelect={setSelectedTab}/>
@@ -137,7 +139,7 @@ export function GuidesListScreen({ embedded = false }: { embedded?: boolean } = 
    restoredScrollOffset={revision === 0 && initial.current ? restoredScrollOffset : 0}
    onScrollOffset={persistScrollOffset}
    onRefresh={refresh} onEndReached={append} onRetryRefresh={refresh} onRetryAppend={append}
-   labels={{ retryLabel: t('action.retry'), endLabel: t('square.guides.end'),
+   labels={{ retryLabel: t('action.retry'), endLabel: t('screen.list.end'),
     empty: { kind: 'noResult', title: t('square.guides.empty'), actionLabel: t('action.retry'), onAction: refresh } }}
    renderItem={row => <ListItem testID={`guide-row-${row.id}`} title={row.title} subtitle={row.summary}
     onPress={() => router.push(`/guides/${row.id}` as never)} />} />
@@ -189,7 +191,7 @@ export function GuideDetailScreen({ articleId }: { articleId: string }): React.R
  const back = () => router.canGoBack() ? router.back() : router.replace('/guides' as never);
  return <DetailScreen testID="guide-detail" title={article?.title ?? t('square.guides.title')}
   author={article?.authorInfo ? { kind: 'named', name: article.authorInfo.nickname || article.authorInfo.username || t('square.guides.author') } : { kind: 'anonymous' }}
-  interactions={actions.interactions} onToggleLike={actions.onToggleLike} comments={article ? actions.comments : undefined} onBack={back} onRetry={() => error?.kind === 'unknown' || error?.kind === 'content' ? back() : void load()} error={error}
+  interactions={actions.interactions} footer={article ? actions.footer : undefined} onToggleLike={actions.onToggleLike} comments={article ? actions.comments : undefined} onBack={back} onRetry={() => error?.kind === 'unknown' || error?.kind === 'content' ? back() : void load()} error={error}
   state={loading ? 'loading' : error ? 'error' : article ? 'content' : 'empty'}
   body={<View>
    {linkIssue ? <View>

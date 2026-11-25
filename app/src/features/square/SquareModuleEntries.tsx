@@ -35,8 +35,6 @@ export function SquareModuleEntries(): React.ReactElement {
         flexDirection: 'row',
         alignItems: 'flex-start',
         gap: theme.space('space_2'),
-        paddingHorizontal: theme.space('space_4'),
-        paddingVertical: theme.space('space_2'),
       }}
     >
       {SQUARE_MODULES.map((entry) => {
@@ -52,25 +50,25 @@ export function SquareModuleEntries(): React.ReactElement {
           >
             <View
               style={{
-                width: MODULE_TILE_SIZE,
-                height: MODULE_TILE_SIZE,
+                alignSelf: 'stretch',
+                paddingVertical: theme.space('space_3'),
                 borderRadius: theme.radius('radius_large'),
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: theme.color[entry.fill].value,
+                backgroundColor: theme.color['bg-surface'].value,
               }}
             >
-              <Icon source={entry.icon} size="large" tint={entry.iconTint} />
+              <Icon source={entry.icon} size="large" tint="brand" />
+              <Text
+                role="caption"
+                colorToken="text-primary"
+                numberOfLines={1}
+                maxFontSizeMultiplier={1.2}
+                style={{ marginTop: theme.space('space_1') }}
+              >
+                {label}
+              </Text>
             </View>
-            <Text
-              role="label"
-              emphasis="strong"
-              colorToken="text-primary"
-              numberOfLines={1}
-              maxFontSizeMultiplier={1.2}
-            >
-              {label}
-            </Text>
           </Pressable>
         );
       })}

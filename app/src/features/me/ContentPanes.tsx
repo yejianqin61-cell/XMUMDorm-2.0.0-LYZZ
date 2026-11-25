@@ -148,7 +148,7 @@ function MePostsPane({ active }: { active: boolean }): React.ReactElement {
           },
           errorActionLabel: t('action.retry'),
           retryLabel: t('action.retry'),
-          endLabel: t('mailbox.conversations.end'),
+          endLabel: t('screen.list.end'),
         }}
         renderItem={(item) => (
           <View
@@ -273,7 +273,7 @@ function MeOwnedPane({
           },
           errorActionLabel: t('action.retry'),
           retryLabel: t('action.retry'),
-          endLabel: t('mailbox.conversations.end'),
+          endLabel: t('screen.list.end'),
         }}
         renderItem={(row) => renderOwnedContentCard(row, kind, t, router)}
       />

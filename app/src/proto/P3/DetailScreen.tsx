@@ -25,6 +25,7 @@ import * as React from 'react';
 import { ScrollView, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { useTheme } from '@/design-system/theme';
+import { tapFeedback } from '@/shared/haptics';
 import type { AppError } from '@/i18n/errors';
 import { Button } from '@/components/ui/Button';
 import { CommentItem, commentAuthorLabel, type CommentAuthor } from '@/components/ui/CommentItem';
@@ -153,6 +154,8 @@ export type DetailScreenProps = {
   /** 评论区（可不给：如"跑腿详情永不出现输入框"那类页面） */
   comments?: DetailComments;
   labels: DetailLabels;
+  /** 粘性底栏（评论输入条等）：给了它就由 Screen 统一处理键盘与安全区 */
+  footer?: React.ReactNode;
   /** 顶栏插槽（README §5-2：两种口径都能接） */
   topBar?: React.ReactNode;
   topMode?: 'topbar' | 'overlay' | 'none';
@@ -183,6 +186,7 @@ export function DetailScreen({
   comments,
   labels,
   topBar,
+  footer,
   topMode = 'topbar',
   state = 'content',
   error = null,
@@ -207,7 +211,7 @@ export function DetailScreen({
     <Pressable
       key={kind}
       testID={testID ? `${testID}-${kind}` : undefined}
-      onPress={onPress}
+      onPress={onPress === undefined ? undefined : () => { if (kind === 'like' || kind === 'favorite') tapFeedback(); onPress(); }}
       disabled={onPress === undefined}
       accessibilityRole="button"
       // 播报里带上计数（读屏用户要能知道"现在几个赞"）
@@ -244,6 +248,7 @@ export function DetailScreen({
           testID={testID ? `${testID}-back` : undefined}
           onPress={onBack}
           accessibilityLabel={labels.back}
+          style={{ minWidth: theme.touchTarget, minHeight: theme.touchTarget, alignItems: 'center', justifyContent: 'center' }}
         >
           <Icon source={ChevronLeft} size="body" tint="primary" />
         </Pressable>
@@ -254,10 +259,20 @@ export function DetailScreen({
     </View>
   );
 
+  // 顶栏必须交给 Screen 的 header / headerOverlay 槽：只有走槽才会让出状态栏（宪法 17.2-1）
+  const headerSlot =
+    topMode === 'topbar' ? { header } : topMode === 'overlay' ? { headerOverlay: header } : {};
+
+  const live = {
+    like: onToggleLike !== undefined || interactions.likeCount !== undefined,
+    favorite: onToggleFavorite !== undefined || interactions.favoriteCount !== undefined,
+    comment: interactions.commentCount !== undefined,
+  };
+
   if (state !== 'content') {
     return (
-      <Screen topMode={topMode} testID={testID} style={style}>
-        {header}
+      <Screen topMode={topMode} {...headerSlot} testID={testID} style={style}>
+        {topMode === 'topbar' || topMode === 'overlay' ? null : header}
         {state === 'loading' ? (
           <LoadingState testID={testID ? `${testID}-loading` : undefined} />
         ) : state === 'error' ? (
@@ -281,8 +296,8 @@ export function DetailScreen({
   }
 
   return (
-    <Screen topMode={topMode} testID={testID} style={style}>
-      {header}
+    <Screen topMode={topMode} {...headerSlot} footer={footer} testID={testID} style={style}>
+      {topMode === 'topbar' || topMode === 'overlay' ? null : header}
       <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ paddingBottom: theme.space('space_8') }}>
         {hero}
         <View style={{ padding: theme.space('space_4'), gap: theme.space('space_3') }}>
@@ -325,26 +340,27 @@ export function DetailScreen({
           {body}
 
           {/* 互动条 */}
-          {!hideActions ? <View
+          {/* 视觉基线：分组靠表面色不靠横线；既没回调也没计数的动作不画（原先是一排点不动的灰按钮） */}
+          {!hideActions && (live.like || live.favorite || live.comment || onReport !== undefined) ? <View
             style={{
               flexDirection: 'row',
               alignItems: 'center',
-              borderTopWidth: theme.borderWidth('border_width_hairline'),
-              borderBottomWidth: theme.borderWidth('border_width_hairline'),
-              borderColor: theme.color['border-subtle'].value,
+              borderRadius: theme.radius('radius_large'),
+              backgroundColor: theme.color['bg-surface'].value,
+              paddingHorizontal: theme.space('space_1'),
             }}
           >
-            {action('like', labels.like, onToggleLike, interactions.liked === true, interactions.likeCount)}
-            {action(
+            {live.like ? action('like', labels.like, onToggleLike, interactions.liked === true, interactions.likeCount) : null}
+            {live.favorite ? action(
               'favorite',
               labels.favorite,
               onToggleFavorite,
               interactions.favorited === true,
               interactions.favoriteCount
-            )}
-            {action('comment', labels.comment, undefined, false, interactions.commentCount)}
+            ) : null}
+            {live.comment ? action('comment', labels.comment, undefined, false, interactions.commentCount) : null}
             <View style={{ flex: 1 }} />
-            {action('report', labels.report, onReport, false)}
+            {onReport !== undefined ? action('report', labels.report, onReport, false) : null}
           </View> : null}
         </View>
 

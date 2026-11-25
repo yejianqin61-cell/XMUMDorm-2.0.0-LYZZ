@@ -18,6 +18,9 @@ import type { AppError } from '@/i18n/errors';
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }));
 jest.mock('@/features/square/useTodayTimetable', () => ({ useTodayTimetable: () => mockTimetable }));
 jest.mock('@/features/square/useMoodleAgenda', () => ({ useMoodleAgenda: () => mockAgenda }));
+jest.mock('@/features/todos/useTodayTodos', () => ({ useTodayTodos: () => ({ data: mockTodos, loading: false, error: null, reload: jest.fn() }) }));
+jest.mock('@/features/todos/todoApi', () => ({ toggleTodo: jest.fn(async () => ({})) }));
+let mockTodos: { top: readonly { id: number; title: string }[] } | null = null;
 
 const mockPush = jest.fn();
 
@@ -59,6 +62,7 @@ function deadline(title: string, dueAt: number): AgendaDeadline {
 beforeEach(() => {
   mockTimetable = { week: weekWith([]), source: 'remote', loading: false, error: null, reload: jest.fn() };
   mockAgenda = { synced: true, deadlines: [] };
+  mockTodos = null;
 });
 
 describe('P3A6 今日 pane', () => {
@@ -99,6 +103,37 @@ describe('P3A6 今日 pane', () => {
     expect(view.getByText('Moodle 待交尚未同步')).toBeTruthy();
     await fireEvent.press(view.getByTestId('today-moodle-sync'));
     expect(mockPush).toHaveBeenCalledWith('/system/moodle');
+  });
+
+  it('今天截止的作业按时间插进课程之间；开课 15 分钟内给「去签到」', async () => {
+    // 马来西亚时间 2026-11-26 10:10
+    jest.useFakeTimers({ doNotFake: ['setImmediate', 'queueMicrotask', 'nextTick'] });
+    jest.setSystemTime(new Date('2026-11-26T02:10:00Z'));
+    try {
+      mockTimetable.week = weekWith([
+        { ...meeting('10:00:00', 'CS101'), endTime: '12:00:00' },
+        meeting('18:00:00', 'CS102'),
+      ]);
+      mockAgenda = { synced: true, deadlines: [deadline('Lab 3', Date.parse('2026-11-26T06:00:00Z'))] };
+      const view = await renderApp(<TodayPane />);
+      const text = JSON.stringify(view.toJSON());
+      expect(text.indexOf('CS101')).toBeLessThan(text.indexOf('Lab 3'));
+      expect(text.indexOf('Lab 3')).toBeLessThan(text.indexOf('CS102'));
+      expect(view.queryByTestId('today-deadlines')).toBeNull();
+      expect(view.queryByTestId('today-course-1-checkin')).toBeNull();
+      await fireEvent.press(view.getByTestId('today-course-0-checkin'));
+      expect(mockPush).toHaveBeenCalledWith('/system/checkin');
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('今日待办并入时间轴，点勾调用完成接口', async () => {
+    mockTodos = { top: [{ id: 5, title: '取快递' }] };
+    const view = await renderApp(<TodayPane />);
+    expect(view.getByTestId('today-todos')).toBeTruthy();
+    await fireEvent.press(view.getByTestId('today-todo-5'));
+    expect(jest.requireMock('@/features/todos/todoApi').toggleTodo).toHaveBeenCalledWith(5);
   });
 
   it('课表首次加载：显示 LoadingState，不显示空态', async () => {

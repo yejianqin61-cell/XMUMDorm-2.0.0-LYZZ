@@ -101,10 +101,10 @@ describe('TC-P1-06-2A · K06 ListItem：5 变体 + 行级语义 + 视觉控件�
   });
 });
 
-describe('TC-P1-06-3A · K07 SectionHeader：NB 白名单只取 2px 描边', () => {
-  it('用 2px（border_width_brutal）硬描边，⛔ 不是阴影', async () => {
+describe('TC-P1-06-3A · K07 SectionHeader：第四轮基线——不画横线，分组靠间距', () => {
+  it('无下边线，⛔ 不是阴影', async () => {
     const { getByTestId } = await wrap(<SectionHeader title="我的帖子" testID="sh" />);
-    expect(getByTestId('sh')).toHaveStyle({ borderBottomWidth: 2 });
+    expect(getByTestId('sh')).not.toHaveStyle({ borderBottomWidth: 2 });
     expect(readUi('SectionHeader.tsx')).not.toMatch(/shadowColor|shadowOffset|elevation/);
   });
 

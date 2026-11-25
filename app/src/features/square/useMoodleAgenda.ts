@@ -35,10 +35,15 @@ function snapshot(nowMs: number): MoodleAgenda {
 export function useMoodleAgenda(nowMs: number): MoodleAgenda {
   const [generation, setGeneration] = React.useState(0);
 
-  React.useEffect(
-    () => subscribeMoodleDataChanged(() => setGeneration((current) => current + 1)),
-    []
-  );
+  React.useEffect(() => {
+    let active = true;
+    // 缓存的写入方可能在**渲染期**同步通知（MoodleWorkspaceHost）→ 推到微任务里再 setState，
+    // 否则 React 报「渲染 A 时更新了 B」。
+    const unsubscribe = subscribeMoodleDataChanged(() => {
+      queueMicrotask(() => { if (active) setGeneration((current) => current + 1); });
+    });
+    return () => { active = false; unsubscribe(); };
+  }, []);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps -- `generation` 是缓存变化的版本号，必须进依赖
   return React.useMemo(() => snapshot(nowMs), [nowMs, generation]);

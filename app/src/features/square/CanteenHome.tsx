@@ -23,6 +23,7 @@ import { useCanteenResource } from './useCanteenResource';
 import { SearchField } from '@/components/ui/SearchField';
 import { FoodArticleFeed } from './FoodArticleFeed';
 import { CanteenRankings } from './CanteenRankings';
+import { PickResultCard, type PickedMeal } from './PickResultCard';
 import type { RankingTab } from './canteenRankingModel';
 
 export function CanteenHome({ embedded = false, rankingTabs = [{ key: 'hotProducts', labelKey: 'canteen.dishes' }] }: { embedded?: boolean; rankingTabs?: readonly RankingTab[] } = {}): React.ReactElement {
@@ -33,6 +34,7 @@ export function CanteenHome({ embedded = false, rankingTabs = [{ key: 'hotProduc
   const toast = useToast();
   const [query, setQuery] = React.useState('');
   const [picking, setPicking] = React.useState(false);
+  const [picked, setPicked] = React.useState<PickedMeal | null>(null);
 
   const regions = useCanteenResource(getRegions, normalizeRegions, [], { key: canteenCacheKey('regions'), ttlMs: CANTEEN_CACHE_TTL_MS.regions });
 
@@ -55,8 +57,10 @@ export function CanteenHome({ embedded = false, rankingTabs = [{ key: 'hotProduc
       const data = await pickRandomMeal();
       const id = (data as { id?: unknown } | null)?.id;
       if (typeof id === 'number') {
-        router.push({ pathname: '/canteen/product/[id]', params: { id: String(id) } });
+        const meal = data as { name?: unknown; shop_name?: unknown };
+        setPicked({ id, name: typeof meal.name === 'string' && meal.name ? meal.name : t('canteen.pick'), shop: typeof meal.shop_name === 'string' ? meal.shop_name : '' });
       } else {
+        setPicked(null);
         // `/pick-random` 在没有可推荐项时也可能给空 → **如实说**，⛔ 不假装跳转
         toast.show({ message: t('canteen.pickEmpty'), tone: 'info' });
       }
@@ -93,6 +97,8 @@ export function CanteenHome({ embedded = false, rankingTabs = [{ key: 'hotProduc
         )}
 
         {/* 「今天吃什么」：内容动作，不是发布入口（⛔ 不新建 `Fab`：组件定义 §2.6 无此 ID） */}
+        {picked ? <PickResultCard meal={picked} busy={picking} onAgain={() => { void pickForMe(); }}
+          onOpen={() => router.push({ pathname: '/canteen/product/[id]', params: { id: String(picked.id) } })} /> : null}
         <Button
           testID="canteen-pick"
           label={t('canteen.pick')}

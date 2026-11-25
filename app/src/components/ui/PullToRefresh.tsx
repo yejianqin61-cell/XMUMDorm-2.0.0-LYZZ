@@ -19,6 +19,7 @@ import * as React from 'react';
 import { RefreshControl, type RefreshControlProps } from 'react-native';
 
 import { useTheme } from '@/design-system/theme';
+import { tapFeedback } from '@/shared/haptics';
 
 export type RefreshControlSpec = {
   refreshing: boolean;
@@ -68,7 +69,8 @@ export function PullToRefresh({
       style={style}
       {...refreshControlProps({
         refreshing,
-        onRefresh,
+        // 下拉到位触发刷新时给一下轻触感
+        onRefresh: () => { tapFeedback(); onRefresh(); },
         tint: theme.color['icon-secondary'].value,
         spinner: theme.color['action-primary'].value,
         background: theme.color['bg-surface'].value,

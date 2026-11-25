@@ -110,32 +110,17 @@ export function GridCard({
           >
             {title}
           </Text>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'flex-end',
-              justifyContent: 'space-between',
-              gap: theme.space('space_2'),
-            }}
-          >
-            {meta ? (
-              <Text
-                role="caption"
-                colorToken="text-muted"
-                numberOfLines={1}
-                style={{ flexShrink: 1 }}
-              >
-                {meta}
-              </Text>
-            ) : (
-              <View />
-            )}
-            {highlight ? (
-              <Text role="label" emphasis="strong" colorToken="text-primary" numberOfLines={1}>
-                {highlight}
-              </Text>
-            ) : null}
-          </View>
+          {/* 价格/重点在上、分类在下：原先同一行并排，分类被价格挤成「El…」 */}
+          {highlight ? (
+            <Text role="label" emphasis="strong" colorToken="text-brand" numberOfLines={1}>
+              {highlight}
+            </Text>
+          ) : null}
+          {meta ? (
+            <Text role="caption" colorToken="text-muted" numberOfLines={1}>
+              {meta}
+            </Text>
+          ) : null}
         </View>
       </Pressable>
     </Surface>

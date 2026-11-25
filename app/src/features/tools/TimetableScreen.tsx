@@ -140,13 +140,8 @@ function OwnedTimetableScreen({ renderGrid, legacyControls }: { renderGrid: (pro
     mounted.current = true;
     const update = async (firstEntry: boolean) => {
       try {
-        let status = await notificationPermission.read();
-        if (firstEntry && status === 'undetermined') {
-          const asked = await AsyncStorage.getItem('@dorm:timetable-notification-requested');
-          if (!asked && active) {
-            status = await requestFirstTimetablePermission();
-          }
-        }
+        // 进课表页不再立刻弹系统授权（没有上下文）：只读状态，由页内「开启上课提醒」按钮在用户主动时才请求
+        const status = await notificationPermission.read();
         if (!active) return;
         setPermission(status);
         if (status === 'granted') await refreshRef.current();
@@ -203,14 +198,15 @@ function OwnedTimetableScreen({ renderGrid, legacyControls }: { renderGrid: (pro
   const closeSheet = React.useCallback(() => setSelected(null), []);
   return <Screen titleKey="tools.timetable" bottomMode="own" testID="screen-phase3-timetable" {...badge}>
     <View style={{ flex: 1, padding: theme.space('space_4'), gap: theme.space('space_3') }}>
-      {permission !== 'granted' ? <View style={{ gap: theme.space('space_1') }}>
+      {/* 游客看到的是「去登录」：此时再铺一段提醒说明 + 两个大按钮只会更乱 */}
+      {permission !== 'granted' && !(timetable.error?.kind === 'signin' && !shown) ? <View style={{ gap: theme.space('space_1') }}>
         <Text testID="timetable-reminder-explanation" role="body" colorToken="text-secondary">
           {t('me.settings.notifications.description')}
         </Text>
-        {permission === 'undetermined' ? <Button testID="timetable-reminder-request" variant="secondary"
-          label={t('action.retry')} onPress={() => { void retryPermission(); }} /> : null}
+        {permission === 'undetermined' ? <Button testID="timetable-reminder-request" variant="secondary" size="small"
+          label={t('timetable.reminder.enable')} onPress={() => { void retryPermission(); }} /> : null}
         {permission === 'denied' || permission === 'undetermined' ?
-          <Button testID="timetable-reminder-settings" variant="secondary"
+          <Button testID="timetable-reminder-settings" variant="ghost" size="small"
             label={t('me.settings.notifications.openSettings')}
             onPress={() => { void notificationPermission.openSettings(); }} /> : null}
         {permission === 'unavailable' ? <Text role="body">{t('me.settings.notifications.unavailable')}</Text> : null}

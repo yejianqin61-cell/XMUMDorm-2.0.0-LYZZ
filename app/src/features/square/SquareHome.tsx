@@ -8,9 +8,7 @@ import { CampusFeed } from '@/features/campus/CampusScreens';
 import { ErrandListScreen } from '@/features/errand/ErrandScreens';
 import { CanteenHome } from './CanteenHome';
 import { SquareBrandHeader } from './SquareBrandHeader';
-import { SquareModuleEntries } from './SquareModuleEntries';
 import { TodayPane } from './TodayPane';
-import { AgentEntry } from './AgentEntry';
 
 /**
  * ⚠️ 集合来自 `secondaryTabs.ts` 的**唯一真源**（`SQUARE_TABS`），⛔ 不在这里再写一份。
@@ -83,8 +81,6 @@ export function SquareHome({ tabBarHeight }: { tabBarHeight: number }): React.Re
       tabBarHeight={tabBarHeight}
     >
       {/* 常驻入口（所有者 2026-10-18：所有 Tab 都可见，不属于任何一个 pane） */}
-      <SquareModuleEntries />
-      <AgentEntry />
       <TopTabStrip testID="square-module-tabs" tabs={TABS} selectedKey={selected} onSelect={key => {
         dragging.current = false;
         select(readTab(key));

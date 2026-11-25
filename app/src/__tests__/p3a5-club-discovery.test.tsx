@@ -139,9 +139,9 @@ describe('P3A5-02 社团发现与主页', () => {
     api.listClubs.mockResolvedValue({ list: [CLUB], page: 1, pageSize: 20, hasMore: false });
     const view = await renderApp(<ClubDiscoveryScreen />);
 
-    await waitFor(() => expect(view.getByTestId('club-filter-chip-music')).toBeTruthy());
+    await waitFor(() => expect(view.getByTestId('club-filter-music')).toBeTruthy());
     api.listClubs.mockClear();
-    await fireEvent.press(view.getByTestId('club-filter-chip-music'));
+    await fireEvent.press(view.getByTestId('club-filter-music'));
     await waitFor(() => expect(api.listClubs).toHaveBeenCalledWith(expect.objectContaining({ category: 'music' })));
 
     api.listClubs.mockClear();
@@ -159,7 +159,7 @@ describe('P3A5-02 社团发现与主页', () => {
     const view = await renderApp(<ClubDiscoveryScreen />);
 
     await waitFor(() => expect(view.getByTestId('club-list-row-7')).toBeTruthy());
-    await fireEvent.press(view.getByTestId('club-filter-chip-music'));
+    await fireEvent.press(view.getByTestId('club-filter-music'));
     await waitFor(() => expect(api.listClubs).toHaveBeenCalledWith(expect.objectContaining({ category: 'music' })));
 
     api.listClubs.mockClear();
@@ -187,7 +187,7 @@ describe('P3A5-02 社团发现与主页', () => {
     await waitFor(() => expect(api.listClubs).toHaveBeenCalledTimes(1));
     const ORCHESTRA = { ...CLUB, id: 8, name: 'Orchestra' };
     api.listClubs.mockResolvedValueOnce({ list: [ORCHESTRA], page: 1, pageSize: 20, hasMore: false });
-    await fireEvent.press(view.getByTestId('club-filter-chip-music'));
+    await fireEvent.press(view.getByTestId('club-filter-music'));
     await waitFor(() => expect(view.getByTestId('club-list-row-8')).toBeTruthy());
 
     await act(async () => { resolveFirst({ list: [{ ...CLUB, id: 9, name: 'Stale' }], page: 1, pageSize: 20, hasMore: false }); });

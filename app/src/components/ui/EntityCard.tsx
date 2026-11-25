@@ -133,6 +133,8 @@ export function EntityCard({
   const metrics = injectedMetrics ?? entityMetrics({ domain, price, reward, score, reviewCount, status });
   const isPost = domain === 'post';
   const isListing = domain === 'listing';
+  // 价格/报酬是这类卡片的第一信息：放大加粗并用品牌色（原先与状态同字号挤在一起）
+  const emphasizeFirst = isListing || domain === 'errand' || domain === 'food';
   const media = hasMedia ? (
     <Image
       source={{ uri: mediaUri }}
@@ -186,13 +188,15 @@ export function EntityCard({
               style={{
                 flexDirection: 'row',
                 flexWrap: 'wrap',
+                alignItems: 'baseline',
+                justifyContent: emphasizeFirst ? 'space-between' : 'flex-start',
                 gap: theme.space('space_2'),
                 marginTop: theme.space('space_1'),
               }}
             >
                 {metrics.map((metric, index) => (
                 // 指标串可能重复（如两条都是"暂无价格"）→ key 里带上位置
-                <Text key={`metric-${index}`} role={isListing && index === 0 ? 'body' : 'caption'} emphasis={isListing && index === 0 ? 'strong' : 'regular'} colorToken={isListing && index === 0 ? 'text-primary' : 'text-secondary'}>
+                <Text key={`metric-${index}`} role={emphasizeFirst && index === 0 ? 'headline' : 'caption'} emphasis={emphasizeFirst && index === 0 ? 'strong' : 'regular'} colorToken={emphasizeFirst && index === 0 ? 'text-brand' : 'text-secondary'}>
                   {metric}
                 </Text>
               ))}
@@ -200,7 +204,7 @@ export function EntityCard({
           ) : null}
         </View>
       </Pressable>
-      {isPost && postActions ? <View style={{ flexDirection: 'row', borderTopWidth: theme.borderWidth('border_width_hairline'), borderColor: theme.color['border-subtle'].value, paddingHorizontal: theme.space('space_3'), gap: theme.space('space_3') }}>{postActions}</View> : null}
+      {isPost && postActions ? <View style={{ flexDirection: 'row', paddingHorizontal: theme.space('space_3'), gap: theme.space('space_3') }}>{postActions}</View> : null}
     </Surface>
   );
 }

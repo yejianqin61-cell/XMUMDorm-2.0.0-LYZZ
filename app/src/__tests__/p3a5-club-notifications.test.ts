@@ -24,6 +24,19 @@ describe('P3A5-05 社团通知接线', () => {
     expect(resolveNotificationRoute(row({ type, id }))).toBe(route);
   });
 
+  it.each([
+    ['post', 3, '/campus/3'],
+    ['announcement', 4, '/campus/4'],
+    ['confession', 5, '/campus/wall/5'],
+    ['marketplace_item', 6, '/market/6'],
+    ['marketplace_thread', 1, '/me/chat/1'],
+    ['product', 8, '/canteen/product/8'],
+    ['shop', 2, '/canteen/shop/2'],
+    ['handbook_article', 9, '/guides/9'],
+  ])('R4-31：%s 通知能跳到对应内容', (type, id, route) => {
+    expect(resolveNotificationRoute(row({ type, id }))).toBe(route);
+  });
+
   it('拒绝不可用、未知或无效目标，不将 Web path 作为 App 路由', () => {
     expect(resolveNotificationRoute(row({ available: false }))).toBeNull();
     expect(resolveNotificationRoute(row({ type: 'unknown', path: '/clubs/7' }))).toBeNull();

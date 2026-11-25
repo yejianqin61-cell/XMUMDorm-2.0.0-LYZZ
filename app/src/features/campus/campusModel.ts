@@ -85,14 +85,15 @@ export function errorFor(failure: unknown): AppError {
     const e = failure as { kind?: AppError['kind']; status?: number; name?: string };
     if (
       e.kind &&
-      ['offline', 'unreachable', 'timeout', 'validation', 'permission', 'content', 'conflict', 'unknown'].includes(
+      ['offline', 'unreachable', 'timeout', 'validation', 'permission', 'signin', 'content', 'conflict', 'unknown'].includes(
         e.kind
       )
     ) {
       return { kind: e.kind };
     }
     if (e.status === 404) return { kind: 'content' };
-    if (e.status === 401 || e.status === 403) return { kind: 'permission' };
+    if (e.status === 401) return { kind: 'signin' };
+    if (e.status === 403) return { kind: 'permission' };
     if (e.name === 'AbortError') return { kind: 'timeout' };
     if (failure instanceof TypeError) return { kind: 'unreachable' };
   }

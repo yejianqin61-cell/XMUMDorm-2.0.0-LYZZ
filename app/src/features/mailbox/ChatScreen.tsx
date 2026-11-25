@@ -17,6 +17,7 @@
  */
 
 import * as React from 'react';
+import { formatPostTime } from '../../../../shared/utils/formatTime';
 import { AppState, View } from 'react-native';
 import { useLocalSearchParams, useFocusEffect } from 'expo-router';
 
@@ -50,7 +51,7 @@ import { normalizeThreadRows, toMailboxError } from './conversations';
 import { useUnread } from './useUnread';
 
 export function ChatScreen(): React.ReactElement {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const theme = useTheme();
   const params = useLocalSearchParams<{ threadId?: string }>();
   const threadId = Number(params.threadId);
@@ -230,7 +231,7 @@ export function ChatScreen(): React.ReactElement {
             },
             errorActionLabel: t('action.retry'),
             retryLabel: t('action.retry'),
-            endLabel: t('mailbox.conversations.end'),
+            endLabel: t('screen.list.end'),
           }}
           renderItem={(message) => (
             <ChatBubble
@@ -238,7 +239,7 @@ export function ChatScreen(): React.ReactElement {
               mine={message.mine}
               content={message.content}
               senderLabel={message.mine ? undefined : message.senderName ?? undefined}
-              timeLabel={message.createdAt ?? undefined}
+              timeLabel={message.createdAt ? formatPostTime(message.createdAt, { locale }) : undefined}
               read={message.mine && message.id <= lastSeenRef.current}
               readLabel={t('mailbox.chat.read')}
             />

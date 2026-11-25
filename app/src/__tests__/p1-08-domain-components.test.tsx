@@ -427,6 +427,8 @@ describe('TC-P1-08-9A · K11 QuickActionGrid：列数由项数决定', () => {
     expect(quickActionColumns(2, 'grid')).toBe(2);
     expect(quickActionColumns(3, 'grid')).toBe(3);
     expect(quickActionColumns(4, 'grid')).toBe(2);
+    expect(quickActionColumns(5, 'grid')).toBe(3);
+    expect(quickActionColumns(6, 'grid')).toBe(3);
     expect(quickActionColumns(7, 'grid')).toBe(4);
     expect(quickActionColumns(7, 'list')).toBe(1);
   });

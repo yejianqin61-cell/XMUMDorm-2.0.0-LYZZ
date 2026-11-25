@@ -165,7 +165,7 @@ export function InputSheet({
           <Text
             role="label"
             emphasis="strong"
-            colorToken={sendBlocked ? 'text-disabled' : 'text-brand'}
+            colorToken={sendBlocked ? 'text-muted' : 'text-brand'}
           >
             {sendLabel}
           </Text>

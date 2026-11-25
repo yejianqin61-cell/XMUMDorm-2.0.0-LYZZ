@@ -197,6 +197,9 @@ export function Screen({
           onMailboxPress={onMailboxPress}
           rightActions={topBarActions}
         />
+      ) : resolvedTopMode === 'topbar' ? (
+        // 要顶栏却没给标题/自定义头：仍然要让出状态栏（否则内容直接画进状态栏）
+        <View testID="screen-top-inset" style={{ height: resolved.headerPaddingTop }} />
       ) : null}
       {topMode === 'overlay' && headerOverlay ? (
         // S7：覆盖层自己处理 insets —— 但**由本容器注入**，覆盖层不自己读（S2）

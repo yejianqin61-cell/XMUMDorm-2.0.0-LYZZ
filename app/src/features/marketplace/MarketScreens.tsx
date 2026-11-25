@@ -10,7 +10,9 @@ import {Badge} from '@/components/ui/Badge';
 import {SearchField} from '@/components/ui/SearchField';
 import {Button} from '@/components/ui/Button';
 import {Text} from '@/components/ui/Text';
-import {MediaGrid} from '@/components/ui/MediaGrid';
+import {Avatar} from '@/components/ui/Avatar';
+import {Surface} from '@/components/ui/Surface';
+import {MediaCarousel} from '@/components/ui/MediaCarousel';
 import {ReportSheet} from '@/components/ui/ReportSheet';
 import {useToast} from '@/components/ui/Toast';
 import {DetailScreen} from '@/proto/P3';
@@ -51,7 +53,7 @@ export function MarketListScreen({ embedded = false }: { embedded?: boolean } = 
   </View>
   {/* 分类 / 状态：下划线式筛选（⛔ 不用圆角按钮冒充 Tab，也不再加分区标题） */}
   <UnderlineFilter testID="market-category" options={categories} selectedKey={filters.category??'all'} onSelect={key=>select({...filters,category:key==='all'?undefined:key})}/>
-  <UnderlineFilter testID="market-status" options={['all','on_sale','sold'].map(key=>({key,labelKey:statusKeys[key as keyof typeof statusKeys]}))} selectedKey={filters.status??'all'} onSelect={status=>select({...filters,status:status==='all'?undefined:status})}/>
+  <UnderlineFilter tone="light" testID="market-status" options={['all','on_sale','sold'].map(key=>({key,labelKey:statusKeys[key as keyof typeof statusKeys]}))} selectedKey={filters.status??'all'} onSelect={status=>select({...filters,status:status==='all'?undefined:status})}/>
   {hasAppliedFilters?<View style={{paddingHorizontal:theme.space('space_4')}}><Button testID="market-filter-clear" label={t('action.clear')} variant="link" size="small" onPress={clearFilters}/></View>:null}
  </View>;
  return <FeatureScreen embedded={embedded} titleKey="screen.market.title" showMailbox={false} testID="market-screen">
@@ -99,7 +101,7 @@ function MarketFeed({filters,header}:{filters:Filters;header:React.ReactNode}):R
   {rows.length>0&&pagination.errorScope==='refresh'?<Button testID="market-refresh-retry" label={t('screen.market.refreshFailed')} onPress={refresh}/>:null}
   <ListScreen key={revision} testID="market-list" data={rows} keyExtractor={r=>String(r.id)} numColumns={2} pagination={pagination} listHeader={header} restoredScrollOffset={revision===0?initial.current?.scrollOffset??0:0} onScrollOffset={onScroll} scrollToTopSignal={scrollTopSignal}
    onRefresh={refresh} onEndReached={append} onRetryRefresh={refresh} onRetryAppend={append}
-   labels={{retryLabel:t('action.retry'),endLabel:t('screen.market.end'),empty:{kind:'noResult',title:t('screen.market.empty'),actionLabel:t('action.retry'),onAction:refresh}}}
+   labels={{retryLabel:t('action.retry'),endLabel: t('screen.list.end'),empty:{kind:'noResult',title:t('screen.market.empty'),actionLabel:t('action.retry'),onAction:refresh}}}
    renderItem={(r,index)=><View testID={`market-cell-${r.id}`} style={{marginBottom:theme.space('space_3'),paddingLeft:index%2===0?theme.space('space_4'):theme.space('space_2'),paddingRight:index%2===0?theme.space('space_2'):theme.space('space_4')}}>
     <GridCard testID={`market-row-${r.id}`} title={r.title} mediaUri={r.cover} meta={categoryLabel(r.category)} highlight={`RM ${r.price.toFixed(2)}`}
      badge={r.status==='sold'?<Badge text={t('screen.market.sold')} tone="neutral"/>:undefined}
@@ -111,7 +113,7 @@ function MarketFeed({filters,header}:{filters:Filters;header:React.ReactNode}):R
 type Detail=ReturnType<typeof readMarketDetail>;
 function safeCount(value:unknown):number|null{return typeof value==='number'&&Number.isSafeInteger(value)&&value>=0?value:null;}
 export function MarketDetailScreen({published=false,itemId}:{published?:boolean;itemId:string}):React.ReactElement {
- const {t}=useI18n();const router=useRouter();const session=useSession();const toast=useToast();const [item,setItem]=React.useState<Detail|null>(null),[count,setCount]=React.useState<number|null>(null);
+ const {t}=useI18n();const theme=useTheme();const router=useRouter();const session=useSession();const toast=useToast();const [item,setItem]=React.useState<Detail|null>(null),[count,setCount]=React.useState<number|null>(null);
  const [loading,setLoading]=React.useState(true),[error,setError]=React.useState<AppError|null>(null),[busy,setBusy]=React.useState(false),[notice,setNotice]=React.useState<'login'|'denied'|'failed'|null>(null);
  const [reportOpen,setReportOpen]=React.useState(false),[reportReason,setReportReason]=React.useState<string|null>(null),[reportDetail,setReportDetail]=React.useState('');
  const epoch=React.useRef(0),lock=React.useRef(false),uncertain=React.useRef(false);
@@ -140,8 +142,9 @@ export function MarketDetailScreen({published=false,itemId}:{published?:boolean;
   labels={{title:t('screen.campus.read.report'),reason:t('screen.campus.report.reason'),detail:t('screen.campus.report.detail'),submit:t('screen.campus.read.report'),cancel:t('action.cancel')}}/>;
  return <DetailScreen testID="market-detail" title={item?.title??t('screen.market.detail')} author={{kind:'named',name:item?.sellerName??t('screen.market.seller')}} onReport={item&&report.state!=='success'?()=>setReportOpen(true):undefined} interactions={{}} onBack={back} onRetry={()=>void load()} state={loading?'loading':error?.kind==='content'?'empty':error?'error':item?'content':'empty'} error={error}
   empty={{kind:'noResult',title:t('screen.market.unavailable'),actionLabel:t('screen.market.back'),onAction:back}}
-  hero={item&&item.images.length?<MediaGrid testID="market-media" variant="hero" uris={item.images} alt={item.images.map(()=>item.title)}/>:undefined}
+  hero={item&&item.images.length?<MediaCarousel zoomable testID="market-media" uris={item.images} alt={item.images.map(()=>item.title)} pageLabel={(i,n)=>`${i} / ${n}`}/>:undefined}
   body={item?<><View testID="market-detail-summary"><Text role="headline" emphasis="strong">{`RM ${item.price.toFixed(2)}`}</Text><Text role="label" colorToken="text-secondary">{t(item.status==='sold'?'screen.market.sold':'screen.market.on_sale')}</Text></View><Text role="body">{item.description}</Text>
+   <Surface testID="market-seller-card" rounded="radius_large" padding="space_3"><View style={{flexDirection:'row',alignItems:'center',gap:theme.space('space_3')}}><Avatar size="space_8"/><View style={{flex:1}}><Text role="label" emphasis="strong">{item.sellerName??'—'}</Text></View></View></Surface>
    <View testID="market-transaction-actions"><Button testID="market-want" disabled={busy} label={`${t(item.want?'screen.market.wanted':'screen.market.want')} · ${count??'—'}`} onPress={()=>void toggle()}/>
    {notice==='login'?<Button label={t('screen.market.login')} onPress={()=>router.push('/login')}/>:notice?<Text role="body">{t(notice==='denied'?'screen.market.denied':'screen.market.failed')}</Text>:null}</View>{reportPanel}</>:null}
   labels={{back:t('action.back'),like:t('screen.campus.read.like'),favorite:t('action.save'),comment:t('screen.campus.read.comments'),report:t('screen.campus.read.report'),countPlaceholder:'—',anonymous:t('screen.campus.read.anonymous'),comments:{anonymous:t('screen.campus.read.anonymous'),deleteLabel:t('screen.campus.read.delete'),replyLabel:t('screen.campus.read.reply'),likeLabel:t('screen.campus.read.like'),moreReplies:n=>String(n),collapse:t('screen.campus.read.collapse')},commentsEnd:t('screen.campus.read.end'),commentsRetry:t('action.retry')}}/>;

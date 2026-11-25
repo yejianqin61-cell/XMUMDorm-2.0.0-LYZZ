@@ -11,6 +11,7 @@ import { Button, ScrollView } from 'react-native';
 import { fireEvent } from '@testing-library/react-native';
 import { renderApp } from './helpers/renderApp';
 import { SquareHome } from '@/features/square/SquareHome';
+import { SquareModuleEntries } from '@/features/square/SquareModuleEntries';
 import { getSecondaryTabs } from '@/features/navigation/secondaryTabs';
 
 function mockModule(name: string) {
@@ -88,12 +89,15 @@ describe('首页同页模块 Tab（2026-10-18 集合）', () => {
     expect(view.getByTestId('feed-wall')).toBeTruthy();
   });
 
-  it('品牌头与 4 个模块入口常驻所有 Tab；入口直达独立路由', async () => {
-    const view = await renderApp(<SquareHome tabBarHeight={60} />);
-    expect(view.getByText('XMUM Dorm')).toBeTruthy();
+  it('品牌头常驻，模块入口不再常驻在 Tab 条上方', async () => {
+    const home = await renderApp(<SquareHome tabBarHeight={60} />);
+    expect(home.getByText('XMUM Dorm')).toBeTruthy();
+    expect(home.queryByTestId('square-module-market')).toBeNull();
+  });
+
+  it('4 个模块入口（今日内容里，时间轴之下）直达独立路由', async () => {
+    const view = await renderApp(<SquareModuleEntries />);
     expect(view.getByTestId('square-module-schedule')).toBeTruthy();
-    await fireEvent.press(view.getByTestId('top-tab-wall'));
-    expect(view.getByTestId('square-module-market')).toBeTruthy();
     await fireEvent.press(view.getByTestId('square-module-market'));
     expect(mockPush).toHaveBeenLastCalledWith('/market');
     await fireEvent.press(view.getByTestId('square-module-schedule'));

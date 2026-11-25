@@ -25,6 +25,7 @@ import {
   type OrgMembershipRow,
   type ResolvedViewer,
 } from './viewer';
+import { subscribeTermsAccepted } from './termsAcceptedSignal';
 
 export type ViewerState = ResolvedViewer & {
   /** 两个真源还在路上（首屏用；⛔ 不阻塞发布中心渲染） */
@@ -49,6 +50,9 @@ export function useViewer(): ViewerState {
     terms: boolean | null;
   }>(NO_ROWS);
   const [loading, setLoading] = React.useState(false);
+  // 在条款页接受后重新读取门控状态
+  const [revision, setRevision] = React.useState(0);
+  React.useEffect(() => subscribeTermsAccepted(() => setRevision((n) => n + 1)), []);
 
   React.useEffect(() => {
     if (!isSignedIn) {
@@ -75,7 +79,7 @@ export function useViewer(): ViewerState {
     return () => {
       cancelled = true;
     };
-  }, [isSignedIn]);
+  }, [isSignedIn, revision]);
 
   return React.useMemo<ViewerState>(
     () => ({

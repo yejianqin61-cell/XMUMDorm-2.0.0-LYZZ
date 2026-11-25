@@ -70,17 +70,21 @@ describe('P2C2-01 A-01 启动与会话水合', () => {
       expect(resolveGateAction('restoring', routeRequiresAuth(pathname))).toBe('splash');
     });
 
-    it('法务豁免不放开我的其他路由或法务子路径', () => {
-      for (const pathname of ['/me', '/me/settings', '/me/legal', '/me/legal/terms/edit', '/me/legal/privacy/edit']) {
+    it('游客可进「我的」「设置」「关于」，但不放开资料编辑、私信与法务编辑子路径', () => {
+      for (const pathname of ['/me', '/me/settings', '/me/legal']) {
+        expect(resolveGateAction('signedOut', routeRequiresAuth(pathname))).toBe('allow');
+      }
+      for (const pathname of ['/me/edit', '/me/conversations', '/me/legal/terms/edit', '/me/legal/privacy/edit']) {
         expect(resolveGateAction('signedOut', routeRequiresAuth(pathname))).toBe('toLogin');
       }
     });
 
     it('「我的」与发布链路要身份；广场/工具/校园里不要', () => {
-      expect(routeRequiresAuth('/me')).toBe(true);
-      expect(routeRequiresAuth('/me/settings')).toBe(true);
+      expect(routeRequiresAuth('/me')).toBe(false);
+      expect(routeRequiresAuth('/me/edit')).toBe(true);
       expect(routeRequiresAuth('/mailbox')).toBe(true);
-      expect(routeRequiresAuth('/publish-center')).toBe(true);
+      // 第四轮 R4-32：游客可看发布中心（能发什么），选中后再登录；表单路由仍受保护
+      expect(routeRequiresAuth('/publish-center')).toBe(false);
       expect(routeRequiresAuth('/publish/confession')).toBe(true);
 
       expect(routeRequiresAuth('/')).toBe(false);
@@ -120,7 +124,7 @@ describe('P2C2-01 A-01 启动与会话水合', () => {
 
     it('⚠️ 门本身在 `renderApp` 里**看不到**启动位：水合已经把状态推到 signedOut —— 这正是"不闪屏"想要的结果', async () => {
       routerState.replaced.length = 0;
-      routerState.pathname = '/me';
+      routerState.pathname = '/me/edit';
       const view = await renderApp(
         <SessionProvider>
           <SessionGate topInset={24} bottomInset={48} />

@@ -21,6 +21,7 @@ import { Pressable, ScrollView, View } from 'react-native';
 
 import { Text } from './Text';
 import { useTheme } from '@/design-system/theme';
+import { tapFeedback } from '@/shared/haptics';
 import { useI18n } from '@/i18n';
 import { assertNoOverflowMenu, resolveTransitionDuration } from '@/features/navigation/secondaryTabs';
 import type { SecondaryTabDefinition, SecondaryTabKey } from '@/features/navigation/secondaryTabs';
@@ -67,8 +68,6 @@ export function TopTabStrip({
       accessibilityRole="tablist"
       style={{
         minHeight: theme.touchTarget,
-        borderBottomWidth: theme.borderWidth('border_width_hairline'),
-        borderBottomColor: theme.color['border-subtle'].value,
         backgroundColor: theme.color['bg-canvas'].value,
       }}
     >
@@ -78,7 +77,7 @@ export function TopTabStrip({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: theme.space('space_2') }}
       >
-        {tabs.map((tab, index) => {
+        {tabs.filter((tab, i, all) => all.findIndex((x) => x.key === tab.key) === i).map((tab, index) => {
           const selected = tab.key === selectedKey;
           const label = tab.labelKey === undefined ? tab.label : t(tab.labelKey);
           return (
@@ -91,7 +90,7 @@ export function TopTabStrip({
                 // 初始深链接或字号/屏宽变化时，effect 可能早于布局测量。
                 if (selected) scrollRef.current?.scrollTo({ x: Math.max(0, x - theme.space('space_4')), animated: false });
               }}
-              onPress={() => onSelect(tab.key)}
+              onPress={() => { if (!selected) tapFeedback('select'); onSelect(tab.key); }}
               // 导航 Tab 的角色是 tab（⛔ 不是 button —— 那是筛选 Chips 的角色，R4）
               accessibilityRole="tab"
               accessibilityState={{ selected }}

@@ -26,7 +26,7 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn(), canGoBack: () => true }),
 }));
 const mockLogout = jest.fn();
-jest.mock('@/features/auth/session', () => ({ useSession: () => ({ logout: mockLogout }) }));
+jest.mock('@/features/auth/session', () => ({ useSession: () => ({ logout: mockLogout, isSignedIn: true }) }));
 jest.mock('../../../shared/api/users', () => ({ deactivateMyAccount: jest.fn() }));
 
 const users = require('../../../shared/api/users') as { deactivateMyAccount: jest.Mock };

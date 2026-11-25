@@ -9,7 +9,11 @@ import { Text } from '@/components/ui/Text';
 import { useTheme } from '@/design-system/theme';
 import { useI18n } from '@/i18n';
 import { getUploadUrl } from '../../../../shared/api/config';
+import { Badge, type BadgeTone } from '@/components/ui/Badge';
 import { ratingTierLabelKey, type CanteenComment } from './canteen';
+
+/** 五个评级档位用不同颜色的小标签：夯爆了黄、顶级绿、人上人蓝、NPC 灰、拉完了红 */
+const TIER_TONE: Record<string, BadgeTone> = { 夯爆了: 'accent', 顶级: 'success', 人上人: 'brand', NPC: 'neutral', 拉完了: 'danger' };
 
 /** Domain composition adds rating and media around the shared thread primitives. */
 export function DishCommentThread({ comments, onReply }: { comments: readonly CanteenComment[]; onReply?: (id: number) => void }): React.ReactElement {
@@ -27,7 +31,7 @@ export function DishCommentThread({ comments, onReply }: { comments: readonly Ca
     // An orphan retains its original parent id even when groupComments presents it as a group root.
     const depth = comment.parentId === null ? 0 : 1;
     return <Surface key={node.id} testID={`dish-comment-${node.id}`} rounded="radius_medium" bordered="subtle" padding="space_3">
-      {tier ? <View style={{ flexDirection: 'row' }}><Surface testID={`dish-comment-${node.id}-tier`} rounded="radius_small" bordered="subtle" padding="space_1"><Text role="caption" colorToken="text-secondary">{t(tier)}</Text></Surface></View> : null}
+      {tier ? <View style={{ flexDirection: 'row' }}><View testID={`dish-comment-${node.id}-tier`}><Badge text={t(tier)} tone={TIER_TONE[String(comment.rating)] ?? 'neutral'} /></View></View> : null}
       <CommentItem author={node.author} content={node.content} createdAtLabel={node.createdAtLabel} depth={depth} labels={labels}
         onReply={onReply && canReplyTo(depth) ? () => onReply(comment.id) : undefined} />
       {comment.images.length > 0 ? <MediaGrid testID={`dish-comment-${node.id}-images`} uris={comment.images.map(getUploadUrl)} alt={comment.images.map(() => comment.content)} /> : null}

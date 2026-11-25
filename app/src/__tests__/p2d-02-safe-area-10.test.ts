@@ -111,6 +111,8 @@ describe('P2D-02 安全区 10 条清单', () => {
       path.join('components', 'ui', 'BannerSlot.tsx'),
       // 2026-10-18：O06 BottomSheet 读窗口**高度**算半屏高度，不参与宽度断点
       path.join('components', 'ui', 'BottomSheet.tsx'),
+      // 第四轮：商品图全屏看图按窗口宽度分页（全屏弹层，不是大屏断点布局）
+      path.join('components', 'ui', 'ImageViewer.tsx'),
       path.join('components', 'ui', 'Screen.tsx'),
       // LoginLayout 按窗口尺寸安排品牌画，不等于实现平板断点。
       path.join('features', 'auth', 'LoginLayout.tsx'),

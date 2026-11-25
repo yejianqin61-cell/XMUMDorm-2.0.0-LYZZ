@@ -23,6 +23,8 @@ import Lock from 'lucide-react-native/icons/lock';
 import FileX from 'lucide-react-native/icons/file-x';
 import RefreshCw from 'lucide-react-native/icons/refresh-cw';
 import ShieldAlert from 'lucide-react-native/icons/shield-alert';
+import LogIn from 'lucide-react-native/icons/log-in';
+import { router } from 'expo-router';
 
 import { useTheme } from '@/design-system/theme';
 import { toErrorCopy, type AppError, type AppErrorKind } from '@/i18n/errors';
@@ -39,6 +41,7 @@ export const ERROR_ICON: Record<AppErrorKind, IconComponent> = {
   certificate: ShieldAlert,
   validation: CircleAlert,
   permission: Lock,
+  signin: LogIn,
   terms: Lock,
   content: FileX,
   conflict: RefreshCw,
@@ -78,7 +81,7 @@ export function ErrorState({
       ]}
     >
       {/* 错误双通道：图标 + 文案（⛔ 不得只靠颜色，宪法 2.1.1） */}
-      <Icon source={ERROR_ICON[error.kind] ?? CircleAlert} size="hero" tint="danger" />
+      <Icon source={ERROR_ICON[error.kind] ?? CircleAlert} size="hero" tint={error.kind === 'signin' ? 'secondary' : 'danger'} />
       <Text role="headline" emphasis="strong" colorToken="text-primary" align="center">
         {copy.perceive}
       </Text>
@@ -92,7 +95,7 @@ export function ErrorState({
       <Text role="body" colorToken="text-secondary" align="center">
         {copy.understand}
       </Text>
-      <Button label={copy.fix} variant="primary" onPress={onAction} />
+      <Button label={copy.fix} variant="primary" onPress={error.kind === 'signin' ? () => router.push('/login') : onAction} />
     </View>
   );
 }

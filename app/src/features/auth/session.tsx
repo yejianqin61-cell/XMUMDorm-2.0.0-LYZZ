@@ -35,6 +35,10 @@ import {
 } from './authFailure';
 import { clearToken, hydrateToken, readTokenSync, saveToken } from './tokenStore';
 import { clearMoodleCache } from '@/features/tools/moodle/cache';
+import { setGuestMode } from '@/features/todos/guestMode';
+import { syncLocalTodosToAccount } from '@/features/todos/localTodos';
+import { createRemoteTodo } from '@/features/todos/todoApi';
+import { notifyTodosSynced } from '@/features/todos/todos';
 import type { AppError } from '@/i18n/errors';
 
 /* ────────────────────────── 状态机（纯函数） ────────────────────────── */
@@ -66,7 +70,8 @@ export function sessionReducer(state: SessionState, action: SessionAction): Sess
     case 'login:success':
       return { status: 'signedIn', identifier: action.identifier };
     case 'session:expired':
-      return { status: 'expired', identifier: null };
+      // 只有「已登录」的会话才会过期；游客收到 401 只是游客
+      return state.status === 'signedIn' ? { status: 'expired', identifier: null } : state;
     case 'logout':
       return { status: 'signedOut', identifier: null };
     default:
@@ -130,7 +135,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
     };
   }, []);
 
+  const statusRef = React.useRef(state.status);
+  statusRef.current = state.status;
+  // 待办层要在 hook 之外知道「已确认未登录」→ 走本地存储（游客也能建待办）
+  React.useEffect(() => { setGuestMode(state.status === 'signedOut'); }, [state.status]);
+
   const markExpired = React.useCallback(async () => {
+    // 游客/水合中收到 401：没有会话可过期，什么都不动
+    if (statusRef.current !== 'signedIn') return;
     await clearToken();
     // 投稿凭据与草稿按账户隔离，续登后仍可核对超时的同一次发布。
     await clearNamespace({ preserveWallDrafts: true });
@@ -163,6 +175,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
         // 换账号：旧账号的 Moodle 快照不得进入新会话（审计 D-3）
         clearMoodleCache();
         await saveToken(result.token);
+        // 游客期间建的待办补到账号（失败的留在本地，下次再试）
+        void syncLocalTodosToAccount(createRemoteTodo).then(notifyTodosSynced).catch(() => undefined);
         dispatch({ type: 'login:success', identifier });
         return { ok: true };
       } catch (error) {
@@ -201,6 +215,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
         // 注册成功等同换账号，同样清旧 Moodle 快照（审计 D-3）
         clearMoodleCache();
         await saveToken(result.token);
+        void syncLocalTodosToAccount(createRemoteTodo).then(notifyTodosSynced).catch(() => undefined);
         dispatch({ type: 'login:success', identifier: body.username });
         return { ok: true };
       } catch (error) {
@@ -214,7 +229,10 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
   const handleAuthFailure = React.useCallback(
     async (error: unknown, phase: AuthPhase = 'request'): Promise<AppError> => {
       const failure = classifyAuthFailure(error, phase);
-      if (isSessionInvalid(failure)) await markExpired();
+      // 401 = 这次请求根本没带令牌（带了坏令牌后端回 403）。手里明明有令牌却收到 401，
+      // 只可能是水合前发出的请求姗姗来迟 —— 不能因此把有效会话清掉。
+      const staleNoToken = failure === 'noToken' && readTokenSync() !== null;
+      if (isSessionInvalid(failure) && !staleNoToken) await markExpired();
       return authFailureToAppError(failure);
     },
     [markExpired]

@@ -25,7 +25,7 @@ import { Button } from '@/components/ui/Button';
 import { ListItem } from '@/components/ui/ListItem';
 import { ListScreen, useListPagination } from '@/components/ui/ListScreen';
 import { Screen } from '@/components/ui/Screen';
-import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { UnderlineFilter } from '@/components/ui/UnderlineFilter';
 import { useTheme } from '@/design-system/theme';
 import { useI18n } from '@/i18n';
 import { TAB_BAR_HEIGHT } from '@/features/navigation/tabConfig';
@@ -46,28 +46,36 @@ import {
   type NotificationRow,
 } from './notifications';
 import { toMailboxError } from './conversations';
+import { readTokenSync, subscribeToken } from '@/features/auth/tokenStore';
 import { useUnread } from './useUnread';
 
 type StringHref = Extract<Href, string>;
 
 /**
  * 通知目标 → App 内路由。
- * 社团路由已注册后，只映射拥有稳定 App 路由的三种服务端目标。
- * 其余 `target.path` 仍是 Web 路径，不能直接推给 Expo Router。
+ * 按服务端 `target.type` 映射到**有稳定 App 路由**的目标；没有对应页面的类型返回 `null`（不可点）。
+ * `target.path` 是 Web 路径，⛔ 不能直接推给 Expo Router。
  */
+/** 服务端目标类型 → App 路由前缀（后面接目标 id） */
+const NOTIFICATION_ROUTE_PREFIX: Readonly<Record<string, string>> = {
+  club: '/clubs',
+  club_activity: '/clubs/activity',
+  club_post: '/clubs/post',
+  post: '/campus',
+  announcement: '/campus',
+  confession: '/campus/wall',
+  marketplace_item: '/market',
+  marketplace_thread: '/me/chat',
+  product: '/canteen/product',
+  shop: '/canteen/shop',
+  handbook_article: '/guides',
+};
+
 export function resolveNotificationRoute(row: NotificationRow): StringHref | null {
   const { target } = row;
   if (!target.available || !Number.isSafeInteger(target.id) || target.id <= 0) return null;
-  switch (target.type) {
-    case 'club':
-      return `/clubs/${target.id}` as StringHref;
-    case 'club_activity':
-      return `/clubs/activity/${target.id}` as StringHref;
-    case 'club_post':
-      return `/clubs/post/${target.id}` as StringHref;
-    default:
-      return null;
-  }
+  const prefix = NOTIFICATION_ROUTE_PREFIX[target.type];
+  return prefix ? (`${prefix}/${target.id}` as StringHref) : null;
 }
 
 export function MailboxScreen(): React.ReactElement {
@@ -111,9 +119,13 @@ export function MailboxScreen(): React.ReactElement {
     [dispatch]
   );
 
+  // 「消息」Tab 在启动时就挂载了（那时多半还没登录）：登录/换号后必须重新拉，否则一直停在旧的失败上
+  const [token, setToken] = React.useState<string | null>(() => readTokenSync());
+  React.useEffect(() => subscribeToken(setToken), []);
+
   React.useEffect(() => {
     void load('refresh', category);
-  }, [load, category]);
+  }, [load, category, token]);
 
   /** 单条已读：乐观更新 + 重新拉汇总（⛔ 不本地递减角标） */
   const markOneRead = React.useCallback(
@@ -126,9 +138,11 @@ export function MailboxScreen(): React.ReactElement {
         await markNotificationsReadBatch([row.id]);
       } finally {
         refreshUnread();
+        // 分类 Tab 上的未读数来自列表接口：读掉一条后重新拉，否则一直停在旧数字
+        void load('refresh', category);
       }
     },
-    [refreshUnread]
+    [refreshUnread, load, category]
   );
 
   const onPressRow = React.useCallback(
@@ -167,11 +181,11 @@ export function MailboxScreen(): React.ReactElement {
   const categoryOptions = React.useMemo(
     () =>
       NOTIFICATION_CATEGORIES.map((key) => ({
-        value: key,
-        label: t(`mailbox.category.${key}` as Parameters<typeof t>[0]),
+        key,
+        labelKey: `mailbox.category.${key}` as Parameters<typeof t>[0],
         count: counts[key] ?? 0,
       })),
-    [counts, t]
+    [counts]
   );
 
   const canClear = rows.some((row) => isClearable(row.type));
@@ -192,12 +206,11 @@ export function MailboxScreen(): React.ReactElement {
           }}
         >
           {/* 分类 = **页内筛选**（P2B-05 裁决），所以不进 `tabs` 槽位（4.8.1-R4） */}
-          <SegmentedControl
+          <UnderlineFilter
             testID="mailbox-categories"
             options={categoryOptions}
-            value={category}
-            withCount
-            onChange={(next) => setCategory(next as NotificationCategory)}
+            selectedKey={category}
+            onSelect={(next) => setCategory(next as NotificationCategory)}
           />
           <View style={{ flexDirection: 'row', gap: theme.space('space_2') }}>
             <Button
@@ -240,7 +253,7 @@ export function MailboxScreen(): React.ReactElement {
             },
             errorActionLabel: t('action.retry'),
             retryLabel: t('action.retry'),
-            endLabel: t('mailbox.conversations.end'),
+            endLabel: t('screen.list.end'),
           }}
           renderItem={(row) => {
             const openable = canOpenNotification(row);

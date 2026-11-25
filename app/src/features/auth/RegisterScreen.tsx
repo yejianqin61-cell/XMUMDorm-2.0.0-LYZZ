@@ -186,7 +186,10 @@ export function RegisterScreen(): React.ReactElement {
     <Form
       testID="register-form"
       form={form}
-      sections={[{ title: 'auth.register', fields }]}
+      sections={[
+        { title: 'auth.register.step1', fields: fields.filter((f) => ['email', 'sendCode', 'code'].includes(f.name)) },
+        { title: 'auth.register.step2', fields: fields.filter((f) => ['username', 'password'].includes(f.name)) },
+      ]}
       labels={labels}
       semantic="action"
       onSettled={() => router.replace('/(tabs)')}
