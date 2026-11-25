@@ -1,0 +1,175 @@
+.mail2todo,
+.mail2todo * {
+  box-sizing: border-box;
+}
+
+.mail2todo-open {
+  width: 100%;
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--color-border-default);
+  background: var(--color-bg-surface-soft);
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  cursor: pointer;
+}
+
+.mail2todo {
+  display: grid;
+  gap: var(--space-6);
+  margin-bottom: var(--space-6);
+  padding: var(--space-8);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-soft);
+  background: var(--color-bg-surface-strong);
+  box-shadow: var(--shadow-soft);
+  color: var(--color-text-primary);
+}
+
+.mail2todo-head,
+.mail2todo-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.mail2todo-hint,
+.mail2todo-summary {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-tertiary);
+}
+
+.mail2todo-summary {
+  padding: var(--space-4) var(--space-6);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-brand-soft);
+  color: var(--color-text-secondary);
+}
+
+.mail2todo-input,
+.mail2todo-title,
+.mail2todo-row input {
+  font: inherit;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+}
+
+.mail2todo-input {
+  width: 100%;
+  padding: var(--space-6);
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.mail2todo-count {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+}
+
+.mail2todo-primary {
+  border: 0;
+  border-radius: var(--radius-sm);
+  padding: var(--space-4) var(--space-8);
+  background: var(--color-brand-primary);
+  color: var(--color-text-on-brand);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mail2todo-primary:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.mail2todo-link {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 13px;
+  color: var(--color-brand-text);
+  cursor: pointer;
+}
+
+.mail2todo-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-4);
+}
+
+.mail2todo-item {
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+  padding: var(--space-6);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-soft);
+  background: var(--color-bg-surface);
+}
+
+.mail2todo-item.is-off {
+  opacity: 0.5;
+}
+
+.mail2todo-item > input[type='checkbox'] {
+  margin-top: 10px;
+}
+
+.mail2todo-fields {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.mail2todo-title {
+  width: 100%;
+  padding: var(--space-2) var(--space-4);
+  font-weight: 600;
+}
+
+.mail2todo-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  font-size: 13px;
+}
+
+.mail2todo-row input {
+  padding: var(--space-2) var(--space-4);
+}
+
+.mail2todo-tag {
+  padding: 1px var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-success-soft);
+  color: var(--color-success-text);
+  font-size: 12px;
+}
+
+.mail2todo-warn {
+  font-size: 12px;
+  color: var(--color-warning-text);
+}
+
+.mail2todo-note {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  overflow-wrap: anywhere;
+}

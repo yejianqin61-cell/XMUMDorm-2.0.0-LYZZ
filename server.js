@@ -190,6 +190,7 @@ app.use('/api/agent', agentRoutes);
 app.use('/internal/campus-agent/personal', agentPersonalRoutes);
 app.use('/api/preview', previewRoutes);
 app.use('/api/shop', require('./routes/shop'));
+app.use('/api/mail-reader', require('./routes/mailReader'));
 app.use('/api/date', require('./routes/date'));
 app.use('/api/contribute', require('./routes/contribute'));
 
