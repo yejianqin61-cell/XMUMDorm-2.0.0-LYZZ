@@ -860,7 +860,7 @@ export const zh = {
   'publish.bing.price': '价格',
   'publish.bing.type': '类型',
   'publish.bing.contact': '联系方式',
-  'publish.bing.contactHelp': '联系方式将在详情公开',
+  'publish.bing.contactHelp': '接单后对方才能看到',
   'publish.bing.location': '地点',
   'publish.bing.deadline': '截止时间',
   'publish.bing.deadlineHelp': '使用带时区的日期时间',

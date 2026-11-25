@@ -852,7 +852,7 @@ export const en: Record<MessageKey, string> = {
   'publish.bing.price': 'Price',
   'publish.bing.type': 'Type',
   'publish.bing.contact': 'Contact',
-  'publish.bing.contactHelp': 'Contact information is public on the detail page',
+  'publish.bing.contactHelp': 'Shown only to whoever takes the task',
   'publish.bing.location': 'Location',
   'publish.bing.deadline': 'Deadline',
   'publish.bing.deadlineHelp': 'Use a date and time with a timezone',

@@ -167,10 +167,10 @@ export function ErrandDetailScreen({published=false,errandId}:{published?:boolea
    <Surface testID="errand-contact-actions" rounded="radius_large" padding="space_3" style={{gap:theme.space('space_2')}}><Text role="caption" colorToken="text-secondary">{t('screen.errand.contact')}</Text>{item.contactInfo?<Text role="headline">{item.contactInfo}</Text>:<Text testID="errand-contact-hidden" role="body" colorToken="text-secondary">{t(session.isSignedIn?'screen.errand.contactAfterTake':'screen.errand.contactSignin')}</Text>}
    {item.contactInfo?<ContactCopy value={item.contactInfo}/>:null}{dialNumber?<Button testID="errand-dial" label={t('screen.errand.dial')} onPress={()=>void dial()}/>:null}
    {contactError?<Text role="body">{t('screen.errand.dialFailed')}</Text>:null}</Surface>
-   <View testID="errand-status-actions">{canDelete?<Button testID="errand-delete" disabled={busy||uncertain.current} label={t('screen.errand.delete')} onPress={()=>setConfirm('delete')}/>:null}
-   {identityError?<Button label={t('screen.errand.identityFailed')} onPress={()=>void load()}/>:null}
-   {canTake?<Button testID="errand-take" disabled={busy||uncertain.current} label={t(item.status==='taken'?'screen.errand.untake':manages?'screen.errand.take':'screen.errand.claim')} onPress={()=>setConfirm('take')}/>:null}
+   <View testID="errand-status-actions" style={{gap:theme.space('space_3')}}>{identityError?<Button label={t('screen.errand.identityFailed')} onPress={()=>void load()}/>:null}
+   {canTake?<Button testID="errand-take" variant={canDone?'secondary':'primary'} disabled={busy||uncertain.current} label={t(item.status==='taken'?'screen.errand.untake':manages?'screen.errand.take':'screen.errand.claim')} onPress={()=>setConfirm('take')}/>:null}
    {canDone?<Button testID="errand-done" disabled={busy||uncertain.current} label={t(item.status==='done'?'screen.errand.undo':'screen.errand.complete')} onPress={()=>setConfirm('done')}/>:null}
+   {canDelete?<Button testID="errand-delete" variant="danger" disabled={busy||uncertain.current} label={t('screen.errand.delete')} onPress={()=>setConfirm('delete')}/>:null}
    {notice?<><Text role="body">{t(noticeKeys[notice])}</Text><Button testID="errand-detail-refresh" label={t('screen.errand.refresh')} onPress={()=>void load()}/></>:null}</View>
    <AlertDialog testID="errand-confirm" visible={confirm!==null} title={t('screen.errand.detail')} body={t(confirm==='delete'?'screen.errand.deleteConfirm':'screen.errand.confirmBody')} confirmLabel={t('screen.errand.confirm')} cancelLabel={t('action.cancel')} onCancel={()=>setConfirm(null)} onConfirm={()=>{if(confirm)void action(confirm);}}/>{reportPanel}
   </>:null}
