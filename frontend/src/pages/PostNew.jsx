@@ -31,7 +31,7 @@ export default function PostNew() {
   const isEn = lang === 'en';
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const friendshipMode = ['study', 'activity'].includes(searchParams.get('friendship')) ? searchParams.get('friendship') : '';
+  const friendshipMode = ['friends', 'study', 'activity'].includes(searchParams.get('friendship')) ? searchParams.get('friendship') : '';
   const friendshipTagSlug = friendshipMode ? `friendship-${friendshipMode}` : '';
   const preselectTagSlug = friendshipTagSlug || (searchParams.get('tag') || '').trim();
   const tokenKey = token ?? 'guest';
@@ -267,7 +267,7 @@ export default function PostNew() {
           <button type="button" className="postnew-back" onClick={() => navigate(backTo)}>
             <ArrowLeft size={16} aria-hidden="true" />{isEn ? 'Back' : '返回'}
           </button>
-          <div><h1>{friendshipMode ? (isEn ? 'Publish a buddy post' : '发布搭子招募帖') : pageTitle}</h1><p className="postnew-intro">{friendshipMode ? (isEn ? 'Find a study or activity buddy through a post and comments.' : '发布学习或活动招募帖，通过评论交流。') : isAdmin ? (isEn ? 'Share an update with the campus.' : '向全校同学发布重要通知。') : (isEn ? 'Share a thought, a question, or a moment on campus.' : '分享校园日常，也聊聊此刻的想法。')}</p></div>
+          <div><h1>{friendshipMode ? (isEn ? 'Publish a friendship post' : '发布交友帖子') : pageTitle}</h1><p className="postnew-intro">{friendshipMode ? (isEn ? 'Meet classmates through a post and comments.' : '通过帖子和评论认识同学。') : isAdmin ? (isEn ? 'Share an update with the campus.' : '向全校同学发布重要通知。') : (isEn ? 'Share a thought, a question, or a moment on campus.' : '分享校园日常，也聊聊此刻的想法。')}</p></div>
         </div>
 
         {termsLoading || termsStatus?.accepted !== true ? (
@@ -346,7 +346,9 @@ export default function PostNew() {
               {friendshipMode ? (
                 <div className="postnew-tool postnew-declaration">
                   <div className="postnew-section-heading"><span className="postnew-label">{isEn ? 'Category' : '帖子分类'}</span></div>
-                  <p className="postnew-hint">{isEn ? (friendshipMode === 'study' ? 'Study buddy' : 'Activity buddy') : (friendshipMode === 'study' ? '学习搭子' : '活动搭子')}</p>
+                  <p className="postnew-hint">{isEn
+                    ? ({ friends: 'Make friends', study: 'Study buddy', activity: 'Activity buddy' }[friendshipMode])
+                    : ({ friends: '交朋友', study: '学习搭子', activity: '活动搭子' }[friendshipMode])}</p>
                   <p className="postnew-hint"><ShieldCheck size={15} aria-hidden="true" /> {isEn ? 'Do not include phone numbers, social handles, addresses, or other private details.' : '请勿填写电话、社交账号、住址等隐私信息。'}</p>
                 </div>
               ) : !isAdmin && allTags.length > 0 ? (

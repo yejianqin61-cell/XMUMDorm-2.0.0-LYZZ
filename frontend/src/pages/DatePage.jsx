@@ -9,6 +9,7 @@ import PostCard from '../components/PostCard';
 import './DatePage.css';
 
 const CATEGORIES = [
+  { key: 'friends', slug: 'friendship-friends', zh: '交朋友', en: 'Make friends' },
   { key: 'study', slug: 'friendship-study', zh: '学习搭子', en: 'Study buddies' },
   { key: 'activity', slug: 'friendship-activity', zh: '活动搭子', en: 'Activity buddies' },
 ];
@@ -63,10 +64,11 @@ export default function DatePage() {
         <div>
           <p className="date-eyebrow">{isEn ? 'CAMPUS COMMUNITY' : '校园社区'}</p>
           <h1>{isEn ? 'Meet through posts' : '交友'}</h1>
-          <p>{isEn ? 'Find study or activity buddies by sharing a post.' : '发帖寻找学习搭子、活动搭子，和同学自然认识。'}</p>
+          <p>{isEn ? 'Make friends and find study or activity buddies through posts.' : '通过帖子结识新朋友，寻找学习搭子或活动搭子。'}</p>
         </div>
         {isLoggedIn ? (
           <div className="date-compose-actions">
+            <Link className="date-compose" to="/post/new?friendship=friends"><PenLine size={17} aria-hidden />{isEn ? 'Make friends' : '发布交友帖'}</Link>
             <Link className="date-compose" to="/post/new?friendship=study"><PenLine size={17} aria-hidden />{isEn ? 'Find a study buddy' : '招募学习搭子'}</Link>
             <Link className="date-compose date-compose-secondary" to="/post/new?friendship=activity"><PenLine size={17} aria-hidden />{isEn ? 'Find an activity buddy' : '招募活动搭子'}</Link>
           </div>
