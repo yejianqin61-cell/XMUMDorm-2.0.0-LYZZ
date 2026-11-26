@@ -82,6 +82,7 @@ const MerchantShopEdit = lazy(() => import('../pages/MerchantShopEdit'));
 const Rankings = lazy(() => import('../pages/Rankings'));
 const ConfessionWall = lazy(() => import('../pages/ConfessionWall'));
 const ConfessionCompose = lazy(() => import('../pages/ConfessionCompose'));
+const DatePage = lazy(() => import('../pages/DatePage'));
 
 const Shop = lazy(() => import('../pages/Shop/Shop'));
 
@@ -154,6 +155,7 @@ export const layoutRoutes = (
     <Route path="about/errands/new" element={renderLazyRoute(PublishErrand)} />
     <Route path="about/errands/:id" element={renderLazyRoute(ErrandDetail)} />
     <Route path="about/join-us" element={renderLazyRoute(JoinUs)} />
+    <Route path="about/date" element={renderLazyRoute(DatePage)} />
     <Route path="about/links" element={renderLazyRoute(FriendlyLinks)} />
     <Route path="myzone" element={<MyZone />} />
     <Route path="user/:id" element={renderLazyRoute(UserZone)} />

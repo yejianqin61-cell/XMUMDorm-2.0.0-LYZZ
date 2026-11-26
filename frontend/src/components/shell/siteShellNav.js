@@ -11,6 +11,7 @@ import {
   ClipboardCheck,
   TreePine,
   ShoppingBag,
+  Smile,
   UserRound,
   UsersRound,
   UtensilsCrossed,
@@ -109,6 +110,14 @@ export const SITE_PRIMARY_NAV_ITEMS = [
     to: '/about/join-us',
     icon: HeartHandshake,
     matchPrefixes: ['/about/join-us'],
+  },
+  {
+    key: 'date',
+    labelZh: '交友',
+    labelEn: 'Meet',
+    to: '/about/date',
+    icon: Smile,
+    matchPrefixes: ['/about/date'],
   },
   {
     key: 'friendly-links',

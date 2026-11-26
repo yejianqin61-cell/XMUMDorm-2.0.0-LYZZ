@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ImagePlus, Send } from 'lucide-react';
+import { ArrowLeft, ImagePlus, Send, ShieldCheck } from 'lucide-react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Button from '../components/ui/Button';
@@ -31,7 +31,9 @@ export default function PostNew() {
   const isEn = lang === 'en';
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const preselectTagSlug = (searchParams.get('tag') || '').trim();
+  const friendshipMode = ['study', 'activity'].includes(searchParams.get('friendship')) ? searchParams.get('friendship') : '';
+  const friendshipTagSlug = friendshipMode ? `friendship-${friendshipMode}` : '';
+  const preselectTagSlug = friendshipTagSlug || (searchParams.get('tag') || '').trim();
   const tokenKey = token ?? 'guest';
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -103,6 +105,7 @@ export default function PostNew() {
     staleTime: POST_TAGS_STALE_MS,
     select: (data) => (Array.isArray(data) ? data : []),
   });
+  const friendshipTag = allTags.find((item) => item.slug === friendshipTagSlug);
 
   const tagLabel = (tag) => (isEn ? tag.name_en || tag.name_zh : tag.name_zh || tag.name_en);
 
@@ -161,6 +164,10 @@ export default function PostNew() {
 
     const trimmedTitle = title.trim();
     const trimmedContent = content.trim();
+    if (friendshipMode && !friendshipTag) {
+      showError(isEn ? 'Buddy-post categories are not ready yet. Please try again later.' : '搭子帖分类尚未初始化，请稍后再试。');
+      return;
+    }
     if (!isAdmin && !trimmedTitle) {
       showError(isEn ? 'Title is required' : '请输入标题');
       return;
@@ -187,7 +194,8 @@ export default function PostNew() {
         payload.type = 'announcement';
       } else {
         Object.assign(payload, attribution);
-        if (selectedTagIds.length > 0) payload.tagIds = selectedTagIds;
+        if (friendshipMode) payload.tagIds = [friendshipTag.id];
+        else if (selectedTagIds.length > 0) payload.tagIds = selectedTagIds;
       }
 
       const created = await createPost(payload);
@@ -227,7 +235,9 @@ export default function PostNew() {
       }
 
       const fromFoodSquare = preselectTagSlug === FOOD_SQUARE_TAG_SLUG;
-      if (fromFoodSquare) {
+      if (friendshipMode) {
+        navigate('/about/date', { replace: true });
+      } else if (fromFoodSquare) {
         navigate(created?.id ? `/post/${created.id}` : '/eat', { replace: true });
       } else {
         navigate(created?.id ? `/post/${created.id}` : '/', { replace: true });
@@ -248,7 +258,7 @@ export default function PostNew() {
   };
 
   const pageTitle = isAdmin ? (isEn ? 'Publish announcement' : '发布公告') : (isEn ? 'Publish post' : '发布帖子');
-  const backTo = preselectTagSlug === FOOD_SQUARE_TAG_SLUG ? '/eat' : '/';
+  const backTo = friendshipMode ? '/about/date' : preselectTagSlug === FOOD_SQUARE_TAG_SLUG ? '/eat' : '/';
 
   return (
     <div className="postnew-page">
@@ -257,7 +267,7 @@ export default function PostNew() {
           <button type="button" className="postnew-back" onClick={() => navigate(backTo)}>
             <ArrowLeft size={16} aria-hidden="true" />{isEn ? 'Back' : '返回'}
           </button>
-          <div><h1>{pageTitle}</h1><p className="postnew-intro">{isAdmin ? (isEn ? 'Share an update with the campus.' : '向全校同学发布重要通知。') : (isEn ? 'Share a thought, a question, or a moment on campus.' : '分享校园日常，也聊聊此刻的想法。')}</p></div>
+          <div><h1>{friendshipMode ? (isEn ? 'Publish a buddy post' : '发布搭子招募帖') : pageTitle}</h1><p className="postnew-intro">{friendshipMode ? (isEn ? 'Find a study or activity buddy through a post and comments.' : '发布学习或活动招募帖，通过评论交流。') : isAdmin ? (isEn ? 'Share an update with the campus.' : '向全校同学发布重要通知。') : (isEn ? 'Share a thought, a question, or a moment on campus.' : '分享校园日常，也聊聊此刻的想法。')}</p></div>
         </div>
 
         {termsLoading || termsStatus?.accepted !== true ? (
@@ -333,7 +343,13 @@ export default function PostNew() {
                 {imageNotice ? <p className="postnew-hint" role="status">{imageNotice}</p> : null}
               </div>
 
-              {!isAdmin && allTags.length > 0 ? (
+              {friendshipMode ? (
+                <div className="postnew-tool postnew-declaration">
+                  <div className="postnew-section-heading"><span className="postnew-label">{isEn ? 'Category' : '帖子分类'}</span></div>
+                  <p className="postnew-hint">{isEn ? (friendshipMode === 'study' ? 'Study buddy' : 'Activity buddy') : (friendshipMode === 'study' ? '学习搭子' : '活动搭子')}</p>
+                  <p className="postnew-hint"><ShieldCheck size={15} aria-hidden="true" /> {isEn ? 'Do not include phone numbers, social handles, addresses, or other private details.' : '请勿填写电话、社交账号、住址等隐私信息。'}</p>
+                </div>
+              ) : !isAdmin && allTags.length > 0 ? (
                 <div className="postnew-tool">
                   <div className="postnew-section-heading"><span className="postnew-label">{isEn ? 'Topics' : '选择标签'}</span><span className="postnew-count" aria-live="polite">{selectedTagIds.length}/3</span></div>
                   <p className="postnew-hint">{isEn ? 'Optional · Choose up to 3 topics to help others find your post.' : '选填 · 最多选择 3 个，让同学更容易找到你的帖子。'}</p>
